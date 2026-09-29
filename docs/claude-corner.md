@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "never show the deleted expense screen, i can see it
+  flashing" — a race only a phone loses. Headless Chrome never showed it, even
+  throttled: make it impossible by construction, say the check only guards,
+  and don't claim a reproduction you didn't get.
+
 - *2026-09-29* — "Consider the banner seen whenever the ledger is open",
   then a fold-back animation, then "remove the full history link". Three asks
   on one line in a row: each shrank it. The cap went with the link, or four of
@@ -72,7 +77,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — "Build D from this" with a page of four mocks. The letter is
   the whole spec: the mock's keyframes are the design, the app's own refusal
   animations are the vocabulary to say it in. Pick D, don't re-argue A–C.
-
-- *2026-09-29* — "have this say \"you'll have to scan it again\"" with a
-  screenshot of the dialog. The quote is the copy: set it verbatim in the
-  house's curly apostrophe, and touch nothing else in the dialog.

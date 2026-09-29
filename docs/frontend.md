@@ -268,7 +268,10 @@ API is reached with `fetch`.
   **Restore** — which asks nothing and turns the screen back into the live
   entry in place. The trash and Edit are gone. What else it brings back, a
   removed person or a cleared rate, is named under the band before the press
-  (`restoreEntryDrafts`). Deleting still leaves for the ledger. "Gone" is only
+  (`restoreEntryDrafts`). Deleting still leaves for the ledger, and the screen
+  never turns into its deleted self on the way: the live read lands before the
+  navigation does on a phone, so from the answer on it keeps drawing the entry
+  as it was. "Gone" is only
   an id this phone has never had.
 - **The ledger's new-changes line** (`components/new-edits.tsx`) sits under the
   you-owe card, drawn as a date line in full-ink text and with no chevron:

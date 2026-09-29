@@ -9,19 +9,22 @@ import { ConfirmDialog } from "./dialog";
 /**
  * Deleting an entry, from its row's long press or from its own screen: one
  * question, then a delete op, which the history can restore (ADR-0010). `ask`
- * puts the question; `dialog` is where it is drawn. `then` runs once deleted.
+ * puts the question; `dialog` is where it is drawn. `before` runs as the
+ * answer lands, ahead of the write; `then` once deleted.
  */
-export function useDeleteEntry({ groupId, me, kind, entryId, then }: {
+export function useDeleteEntry({ groupId, me, kind, entryId, before, then }: {
   groupId: string | undefined;
   me: string | undefined;
   kind: EntryKind;
   entryId: string;
+  before?: () => void;
   then?: () => void;
 }): { ask: () => void; asking: boolean; dialog: ReactNode } {
   const [asking, setAsking] = useState(false);
 
   async function remove() {
     if (!groupId || !me) return;
+    before?.();
     if (kind === "transfer") await deleteSettlement(groupId, me, entryId);
     else await deleteExpense(groupId, me, entryId);
     // Answered, so it closes. It used to go with its row, unmounted by the

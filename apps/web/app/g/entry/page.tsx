@@ -24,6 +24,7 @@ import { copy } from "@/lib/copy";
 import { money, moneyParts, plural, rateText, whenLabel } from "@/lib/format";
 import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
+import { markDeleted } from "@/lib/ledger-motion";
 import { markReturn } from "@/lib/nav";
 import { historyMeta } from "@/lib/row-meta";
 import { useBillEnglish, useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
@@ -82,8 +83,15 @@ function EntryScreen() {
   const parent = groupId ? entryParent(groupId, via) : "/";
   const data = useGroupData(groupId);
   const unclaimed = useClaimGate(groupId, data);
-  const live = data.expenses.find((e) => e.id === entryId)
+  // Deleted here, the screen is on its way to the ledger and keeps drawing the
+  // entry as it was: the live read lands before the navigation does, and must
+  // not flash the deleted screen on the way out.
+  const going = useRef(false);
+  const lastLive = useRef<Expense | Settlement>(undefined);
+  const found = data.expenses.find((e) => e.id === entryId)
     ?? data.settlements.find((s) => s.id === entryId);
+  if (found) lastLive.current = found;
+  const live = found ?? (going.current ? lastLive.current : undefined);
   // Deleted, it is drawn as it was, at the rates it was saved at, under a band
   // that says so and holds Restore (ADR-0031).
   const tombstoned = !live && entryId
@@ -96,8 +104,15 @@ function EntryScreen() {
   const settlement = row && !expense ? row as Settlement : undefined;
   const del = useDeleteEntry({
     groupId, me: data.me, kind: expense ? kindOf(expense) : "transfer", entryId: row?.id ?? "",
-    // Back to the ledger as it was left, less the row (lib/ledger-position.ts).
-    then: () => { if (groupId) { markReturn(route.group(groupId)); router.replace(route.group(groupId)); } },
+    before: () => { going.current = true; },
+    // Back to the ledger as it was left, where the row folds out
+    // (lib/ledger-position.ts, lib/ledger-motion.ts).
+    then: () => {
+      if (!groupId) return;
+      if (row) markDeleted(groupId, row.id);
+      markReturn(route.group(groupId));
+      router.replace(route.group(groupId));
+    },
   });
   const [restoring, setRestoring] = useState(false);
   const arriving = useArriving(groupId, entryId, !!row);

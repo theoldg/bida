@@ -235,6 +235,9 @@ line, whose band is its own edge, and under the last row.
   left with no rows folds in the same motion, after the row's blank space:
   it reads whole for as long as there is room for it. The last row takes no
   motion: it is gone and the empty state is up at once — too rare to earn one.
+  Deleted from its own screen, the row is drawn once more on the ledger that
+  screen goes back to (`markDeleted`) and goes the same way after `SAVED_BEAT`,
+  where it stands: no scroll, since the ledger is put back where it was left.
 - **A row that arrives** from another phone opens a gap (220ms) and fades in
   (180ms), at the slot's opacity so a dimmed row fades to its own 58% and not
   past it. No flash: the new-changes line already says it came. **Above what

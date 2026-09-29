@@ -554,9 +554,36 @@ await page.goto(`${base}/g?id=${g}`);
 await page.locator("a.row").filter({ hasText: "Coffee" }).click();
 await page.waitForURL(/\/g\/entry\?/);
 await page.getByRole("button", { name: "Delete" }).first().click();
+// The entry's screen must never redraw as deleted on its way out. A desktop's
+// navigation outruns the live read, so this guards more than it reproduces:
+// a phone is where the race was seen.
+await page.evaluate(() => {
+  const w = /** @type {any} */ (window);
+  w.__band = false;
+  // What was added, not what is left: the band can come and go in one task.
+  new MutationObserver((records) => {
+    for (const r of records) {
+      const nodes = r.type === "characterData" ? [r.target] : [...r.addedNodes];
+      if (nodes.some((n) => (n instanceof Element && (n.matches(".deletedband") || n.querySelector(".deletedband")))
+        || /^Deleted /.test(n.textContent ?? ""))) w.__band = true;
+    }
+  }).observe(document.body, { childList: true, subtree: true, characterData: true });
+});
 await page.getByRole("button", { name: "Delete" }).last().click();
 await page.waitForURL(/\/g\?id=/);
 report(true, "deleting from the entry screen goes back to the ledger");
+report(!await page.evaluate(() => /** @type {any} */ (window).__band),
+  "and the deleted screen never flashes on the way");
+// Back on the ledger the row is drawn once more, then folds out where it
+// stands after a beat — and the list is not scrolled to it.
+const goneRow = page.locator(".lslot").filter({ hasText: "Coffee" });
+await goneRow.first().waitFor({ timeout: PATIENCE });
+const scrollTop = () => page.locator(".scroll").first().evaluate((el) => el.scrollTop);
+const scrolledBefore = await scrollTop();
+await page.locator(".lslot[data-leaving]").filter({ hasText: "Coffee" }).waitFor({ timeout: PATIENCE });
+await goneRow.first().waitFor({ state: "detached", timeout: PATIENCE });
+report(await scrollTop() === scrolledBefore,
+  "the deleted row folds out of the ledger it goes back to, without a scroll");
 await page.goto(`${base}/g/history?id=${g}`);
 await page.waitForSelector(".tle");
 await page.getByRole("link", { name: /Coffee · deleted/ }).first().click();
