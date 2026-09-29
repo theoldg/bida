@@ -7,7 +7,7 @@ import { useSyncExternalStore } from "react";
 import { Avatar, signClass } from "@/components/bits";
 import { FitLine } from "@/components/fit-line";
 import { Icon } from "@/components/icons";
-import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "@/components/chrome";
+import { Body, Empty, LedgerSkeleton, Screen, Scroll, SkeletonRows, TopBar } from "@/components/chrome";
 import { InstallOfferCard } from "@/components/install";
 import { useGroupActions } from "@/components/group-actions";
 import { usePasteLink } from "@/components/paste-link";
@@ -46,7 +46,13 @@ export default function GroupsPage() {
   if (joining) return <JoiningFrame />;
 
   return (
-    <Screen>
+    <>
+    {/* A launch reopening a group shows the ledger's frame from the first
+        paint, not this list's (lib/resume-hint.ts). Both are always drawn and
+        globals.css picks, because the mark is set before React runs and the
+        prerender can't know it. */}
+    <LedgerSkeleton className="resumeframe" />
+    <Screen className="homeframe">
       <Body>
         {/* The app says its own name once, on the screen you land on. The
             name is the whole bar: a sub-line under it described the screen you
@@ -106,6 +112,7 @@ export default function GroupsPage() {
         </Scroll>
       </Body>
     </Screen>
+    </>
   );
 }
 

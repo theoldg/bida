@@ -239,6 +239,35 @@ export function SkeletonVeil({ onGone }: { onGone: () => void }) {
   );
 }
 
+/**
+ * The ledger while it loads (app/g/page.tsx). **Draw the whole frame** — a bare
+ * top bar looks like a tap that didn't land. With no `groupId` it is the groups
+ * list standing in for a launch that is reopening a group (lib/resume-hint.ts):
+ * the same pixels, so the handover to the real one doesn't blink, and FABs that
+ * go nowhere yet.
+ */
+export function LedgerSkeleton({ groupId, className }: { groupId?: string; className?: string }) {
+  return (
+    <Screen className={className}>
+      <Body>
+        <TopBar title=" " back={route.groups()} />
+        <Scroll><SkeletonSummary /><SkeletonRows count={6} days /></Scroll>
+      </Body>
+      {groupId ? (
+        <>
+          <ScanFab href={route.scan(groupId)} />
+          <Fab href={route.addEntry(groupId)} />
+        </>
+      ) : (
+        <>
+          <span className="fab fab-2" aria-hidden="true"><Icon name="cam" size={28} /></span>
+          <span className="fab" aria-hidden="true"><Icon name="plus" size={29} /></span>
+        </>
+      )}
+    </Screen>
+  );
+}
+
 export function Empty({ title, children }: { title: string; children?: ReactNode }) {
   return <div className="empty"><b>{title}</b>{children}</div>;
 }

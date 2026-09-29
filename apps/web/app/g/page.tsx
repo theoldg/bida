@@ -10,7 +10,7 @@ import {
 import { kindOf, myEffect, type EntryKind } from "@/lib/entry-kind";
 import { signClass } from "@/components/bits";
 import {
-  BadLink, Blank, Body, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows, SkeletonSummary,
+  BadLink, Blank, Body, Empty, Fab, LedgerSkeleton, QueryBoundary, ScanFab, Screen, Scroll,
   SkeletonVeil, TopBar,
 } from "@/components/chrome";
 import { FitLine } from "@/components/fit-line";
@@ -71,21 +71,11 @@ function GroupScreen() {
 
   if (!groupId) return <Blank title={copy.group.noGroup} back={route.groups()} />;
 
-  // **Draw the whole frame while loading** — a bare top bar looks like a tap
-  // that didn't land. It also covers the redirect above, rather than flashing
-  // somebody else's ledger.
+  // The whole frame while loading, which also covers the redirect above rather
+  // than flashing somebody else's ledger.
   if (data.loading || unclaimed) {
     sawSkeleton.current = true;
-    return (
-      <Screen>
-        <Body>
-          <TopBar title=" " back={route.groups()} />
-          <Scroll><SkeletonSummary /><SkeletonRows count={6} days /></Scroll>
-        </Body>
-        <ScanFab href={route.scan(groupId)} />
-        <Fab href={route.addEntry(groupId)} />
-      </Screen>
-    );
+    return <LedgerSkeleton groupId={groupId} />;
   }
   // A group deleted from the server takes this phone's copy with it
   // (lib/db/sync.ts), so the screen says "deleted" rather than "bad link".
