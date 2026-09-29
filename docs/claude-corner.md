@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "add a confirmation for going back from who-had-what in
+  quick split". The grid already asked — only once touched. The gap was the
+  untouched case, where the loss is the photo, not the taps. Find the guard
+  that exists before building a second one.
+
 - *2026-09-29* — "fix 5": the 410 gate. The doc called it the one write
   left; reading round it found two more on the same network path. A doc's
   "the only one" is a claim to check, not a fence around the ask.
@@ -73,8 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-28* — "fix the +1 other finding", then mid-turn "also remove the
   start again button". My crit had said move it; the owner said remove. The
   later, blunter word wins: take it, and drop the crit's item with it.
-
-- *2026-09-28* — "is it a mess?", then "so what's up with" a finding. Two of
-  my crit's items were one rule seen on two different buttons. Answer the
-  question with a verdict first; when my own finding is asked about, re-derive
-  it from the code before defending it.

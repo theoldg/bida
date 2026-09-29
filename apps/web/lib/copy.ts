@@ -822,6 +822,9 @@ export const copy = {
     /** Done is the way out of the answer, and the answer is not kept either. */
     doneTitle: "Finished with this split?",
     discardBody: "Nothing about it is kept.",
+    /** Back from the grid: the screen behind it can only scan again. */
+    backTitle: "Discard this receipt?",
+    backBody: "Going back means scanning the bill again.",
     split: "The split",
     copy: "Copy the split",
     copied: "Copied",

@@ -16,6 +16,8 @@ import { useQuickPeople, useScanCredential } from "@/lib/quick";
  * the entry form's detour wears (`components/who-had-what.tsx`) — the columns
  * are the people typed on `/quick`, the figures are bare because nothing here
  * converts, and Done goes forward to the answer rather than back to a form.
+ * Back always asks: `/quick` behind it can only scan again, so the bill read
+ * here is lost however little was tapped.
  */
 export default function QuickItemsPage() {
   const router = useRouter();
@@ -42,6 +44,7 @@ export default function QuickItemsPage() {
       format={(minor) => bare(minor, draft.currency)}
       saysCurrency={false}
       onDone={() => router.push(route.quickResult())}
+      leaving={{ title: copy.quick.backTitle, body: copy.quick.backBody }}
       onBack={() => goBack(() => router.back(), (to) => router.replace(to))} />
   );
 }

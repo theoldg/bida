@@ -44,7 +44,7 @@ const inColumn = (
  * where Done goes. Assumes a bill with lines on it.
  */
 export function WhoHadWhat({
-  title, people, draft, save, format, saysCurrency = true, onDone, onBack,
+  title, people, draft, save, format, saysCurrency = true, onDone, onBack, leaving,
 }: {
   title: string;
   /** The columns: everybody who might have been at this table. */
@@ -63,6 +63,12 @@ export function WhoHadWhat({
   onDone: () => void;
   /** Left without keeping it; the bill has been put back as it was found. */
   onBack: () => void;
+  /**
+   * Asks before *every* way back, in these words, not only once the grid is
+   * touched. A quick split's grid is the only way on to its bill: the screen
+   * behind it can only scan again, so leaving loses what was read.
+   */
+  leaving?: { title: string; body: string };
 }) {
   const items = draft.receiptItems ?? [];
   // Which language the bill's own words are read in. Device-local and
@@ -401,7 +407,7 @@ export function WhoHadWhat({
 
   /** Leaving undoes what this screen wrote; `finish` is the only way to keep it. */
   function mayLeave() {
-    if (touched) { setAsking(true); return false; }
+    if (touched || leaving) { setAsking(true); return false; }
     return true;
   }
 
@@ -687,9 +693,9 @@ export function WhoHadWhat({
       </Body>
 
       {asking ? (
-        <ConfirmDialog title={copy.items.discardTitle} confirm={copy.act.discard}
+        <ConfirmDialog title={leaving?.title ?? copy.items.discardTitle} confirm={copy.act.discard}
           danger={true} onConfirm={discard} onClose={() => setAsking(false)}>
-          <p>{copy.items.discardBody}</p>
+          <p>{leaving?.body ?? copy.items.discardBody}</p>
         </ConfirmDialog>
       ) : null}
     </Screen>
