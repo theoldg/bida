@@ -219,7 +219,8 @@ line, whose band is its own edge, and under the last row.
 
 - **A save lands on its row.** The form hands the ledger the entry it wrote
   (`markSaved`); the row wears a wash from its first frame — `--ink` at 13%, a
-  shade over `--press` — and after the you-owe card's beat (`ROLL_BEAT`),
+  shade over `--press` — and after a beat longer than the you-owe card's
+  (`SAVED_BEAT`, 600ms), so the screen has plainly arrived first,
   from wherever the ledger was put back to ([navigation.md](navigation.md)),
   is brought whole into the strip above the floating buttons, date line
   included when it heads its day, only as far as it has to and not at all if

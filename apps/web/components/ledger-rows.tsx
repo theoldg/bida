@@ -3,12 +3,11 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
   clearSaved, FADE_IN_MS, FADE_OUT_MS, FOLD_MS, foldFrame, foldTotal, OPEN_MS, peekSaved,
-  presence, runs, standard, STILL_MS, type LedgerItem, type Shown,
+  presence, runs, SAVED_BEAT, standard, STILL_MS, type LedgerItem, type Shown,
 } from "@/lib/ledger-motion";
 import { yieldPosition } from "@/lib/ledger-position";
 import { revealWhole, scrollTarget } from "@/lib/reveal";
 import { calmly, glide } from "@/lib/seek";
-import { ROLL_BEAT } from "@/lib/roll";
 
 /**
  * The ledger's rows, and how they move when the list changes under somebody
@@ -182,7 +181,7 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
     );
     if (reach === 0) release();
     else glide(box, scrollTarget(box, reach), release);
-  }, ROLL_BEAT);
+  }, SAVED_BEAT);
   return true;
 }
 

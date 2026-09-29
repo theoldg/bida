@@ -26,9 +26,10 @@ restating what the code enforces. What gets praised is deleting.
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
 - *2026-09-29* — ledger motion: a mock, three rounds of "the divider should…",
-  then "ship it with" three lines of letters. Each correction was about a
-  line or a frame, never the timing: in a mock, draw the real rules and
-  borders, or the feedback is spent on what the app already does.
+  then "ship it with" three lines of letters. The mock got corrections on
+  lines and frames; timing only got one once it shipped ("wait a little
+  longer"). Draw the real borders in a mock, and expect timing to be
+  judged live.
 
 - *2026-09-29* — "Add exact ledger position memory (not just row index) and
   use it only when navigating back". "Exact" meant the pixel and "only" meant

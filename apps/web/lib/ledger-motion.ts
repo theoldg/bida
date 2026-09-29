@@ -97,6 +97,12 @@ export const OPEN_MS = 220;
 export const FADE_IN_MS = 180;
 /** A list moving under a finger, or gliding after one, holds its changes this long past the last scroll. */
 export const STILL_MS = 300;
+/**
+ * How long a saved row sits washed before it is brought into view and let go:
+ * longer than the you-owe card's beat, so the screen has plainly arrived
+ * before anything on it moves.
+ */
+export const SAVED_BEAT = 600;
 
 // ------------------------------------------------------------- the saved row
 
