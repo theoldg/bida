@@ -184,8 +184,9 @@ identical. Two states cover the gap, and neither is a spinner:
   reads as a dead button. The tint fills the control, not the column of text
   inside it: a press inset from the row it sits in reads as a misaligned box
   rather than as an answer (`.billgroup > button.kv`). And the control is
-  as big as what it sits in, so the wash is its hit area: a who-had-what cell
-  is its whole rectangle between the rules, square, not a tile round the dot. The browser's own
+  as big as what it sits in, so the wash is its hit area. One exception: a
+  who-had-what cell is hit anywhere between the rules, but washes only a 32px
+  tile round its dot — rule to rule, a column read as one grey slab. The browser's own
   tap highlight is off (late, and it disagrees), with `touch-action:
   manipulation` to drop the 300ms double-tap wait.
 - **Waiting.** A list still coming out of Dexie draws `SkeletonRows`: same row
@@ -414,11 +415,10 @@ The same `-a`/`-b` pair restarts it, and it is exempt from the motion clamp on
 the same grounds. A cell that cannot be tapped like its neighbours doesn't look
 like them either — a run handed out unevenly wears the dot **broken into two
 overlapping squares** on everyone who had any of it, so no cell in that row
-reads as an ordinary assignment. **An empty cell shows its square**, pale in
-`--card-3`, so a fresh bill with nothing assigned still shows every place to
-tap, and a tap inks that same square in. The rows nobody ordered (tip, tax,
+reads as an ordinary assignment. **An empty cell draws nothing** — pale squares
+read as disabled ones — and a tap inks its square in. The rows nobody ordered (tip, tax,
 discounts) wear a 4px `--rule` **pip** instead: ink, since everyone does carry a
-share, but too small to be a target and no heavier than an empty cell.
+share, but too small to be a target.
 
 ## Rules that are not negotiable
 

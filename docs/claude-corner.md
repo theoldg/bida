@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "remove the faded squares for disabled cells", then "the pips
+  are fine" and "I meant the faded marks in unselected cells". An unclear noun
+  is a question, not a guess: ask which cells before the edit, not after.
+
 - *2026-09-29* — "imported groups: every expense has the same creation time
   and author". The log already knew which entries came in with the group; no
   new flag was needed to tell, only one to say from where. Read the log first.
@@ -76,7 +80,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "i dont see anything particularly wrong". The photographs argued the other
   way: a finding that needs a gallery to be felt is taste, not a bug. Show it
   plainly, and let the owner's eye be the verdict.
-
-- *2026-09-28* — "give a chevron to the kind switch", then mid-edit "but show
-  me a few variants first". A one-line change still earned a look: stop, keep
-  the edit as one of the variants, and publish the lot before committing.
