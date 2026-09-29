@@ -824,7 +824,7 @@ export const copy = {
     discardBody: "Nothing about it is kept.",
     /** Back from the grid: the screen behind it can only scan again. */
     backTitle: "Discard this receipt?",
-    backBody: "Going back means scanning the bill again.",
+    backBody: "You’ll have to scan it again.",
     split: "The split",
     copy: "Copy the split",
     copied: "Copied",

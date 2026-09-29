@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "have this say \"you'll have to scan it again\"" with a
+  screenshot of the dialog. The quote is the copy: set it verbatim in the
+  house's curly apostrophe, and touch nothing else in the dialog.
+
 - *2026-09-29* — "add a confirmation for going back from who-had-what in
   quick split". The grid already asked — only once touched. The gap was the
   untouched case, where the loss is the photo, not the taps. Find the guard
@@ -74,7 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   everything". "Everything" meant my list minus what I had argued stays apart;
   merging is where the bugs surface (an import failure never shown). Name what
   was left separate, and why, in the summary.
-
-- *2026-09-28* — "fix the +1 other finding", then mid-turn "also remove the
-  start again button". My crit had said move it; the owner said remove. The
-  later, blunter word wins: take it, and drop the crit's item with it.
