@@ -17,7 +17,7 @@ export function useDeleteEntry({ groupId, me, kind, entryId, then }: {
   kind: EntryKind;
   entryId: string;
   then?: () => void;
-}): { ask: () => void; dialog: ReactNode } {
+}): { ask: () => void; asking: boolean; dialog: ReactNode } {
   const [asking, setAsking] = useState(false);
 
   async function remove() {
@@ -29,6 +29,7 @@ export function useDeleteEntry({ groupId, me, kind, entryId, then }: {
 
   return {
     ask: () => setAsking(true),
+    asking,
     dialog: asking ? (
       <ConfirmDialog title={copy.entry.deleteTitle(copy.entryKind.label[kind].toLowerCase())}
         confirm={copy.act.delete} danger={true} onConfirm={remove} onClose={() => setAsking(false)}>

@@ -173,13 +173,15 @@ export function useHold(onHold: ((el: HTMLElement) => void) | null) {
  * `hold` on the row. The row is remembered, not the point, so the menu always
  * opens in the same place — and **the row is marked `data-held` while its menu
  * is open**, so it lifts out of a list that steps back behind it (`.rows` in
- * globals.css): which row the card belongs to is never a guess.
+ * globals.css): which row the card belongs to is never a guess. `asking` keeps
+ * it held after the card closes, while a question an item opened is still up —
+ * "Delete this expense?" is about the lifted row.
  */
-export function useLongPressMenu(actions: SheetAction[]) {
+export function useLongPressMenu(actions: SheetAction[], asking = false) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   const handlers = useHold(actions.length === 0 ? null : (el) => setAnchor(el.getBoundingClientRect()));
   return {
-    hold: { ...handlers, "data-held": anchor ? "" : undefined },
+    hold: { ...handlers, "data-held": anchor || asking ? "" : undefined },
     menu: anchor
       ? <RowMenu anchor={anchor} actions={actions} onClose={() => setAnchor(null)} />
       : null,
