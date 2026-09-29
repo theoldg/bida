@@ -302,7 +302,8 @@ self.addEventListener("push", (event) => {
       // A replaced notification buzzes again: it is news, not a correction.
       // Chrome refuses `renotify` without a tag.
       renotify: !!tag,
-      icon: "/icon-192.png",
+      // No `icon`: Android already badges the notification with the installed
+      // app's icon, so a second copy as the large image was only a duplicate.
       data: { url: sameOriginPath(data.url) },
     }),
   );
