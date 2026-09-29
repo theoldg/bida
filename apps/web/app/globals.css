@@ -1425,6 +1425,28 @@ dialog.scrim::backdrop { background: transparent }
   transition: opacity .18s ease-out, transform .18s cubic-bezier(.2, .8, .2, 1) }
 .rows .row[data-held]::after { opacity: 0 }
 
+/* The ledger's rows, flat: a date line is a slot of its own, beside the rows
+   rather than riding on its day's first one (components/ledger-rows.tsx). Each
+   row draws the line under it — kept transparent above a date line, whose band
+   is its own edge, and under the last — so a row's height never depends on
+   what follows it. The view holds still for rows landing above it by hand:
+   the browser's own scroll anchoring would do it twice, and Safari not at all. */
+.scroll:has(> .lrows) { overflow-anchor: none }
+.lrows > .lslot > .row { border-bottom: 1px solid var(--rule-soft) }
+.lrows > .lslot:has(+ .lslot > .daylabel) > .row,
+.lrows > .lslot:last-child > .row { border-bottom-color: transparent }
+.lslot[data-leaving] { pointer-events: none }
+/* The row a save just wrote: under the press wash, a shade stronger, from its
+   first frame until it has been brought into view, then let go. A colour
+   settling, so exempt from the motion clamp, like a refusal's flash. */
+.lslot.saved { position: relative }
+.lslot.saved::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: color-mix(in srgb, var(--ink) 13%, transparent) }
+.lslot.saved.released::after { animation: saved-wash .9s ease-out forwards }
+@keyframes saved-wash { to { opacity: 0 } }
+@media (prefers-reduced-motion: reduce) {
+  .lslot.saved.released::after { animation-duration: .9s !important } }
+
 /* A link with no password in it (components/keyless-link.tsx): a sentence,
    then a drawing of where the working link is — the group's top bar with its
    menu open and the invite row lit. The drawing reuses the menu's own classes,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Expense, Settlement } from "@bida/core";
-import { entryOf, ledgerRows, type LedgerRow } from "./ledger";
+import { entryOf, ledgerItems, ledgerRows, type LedgerRow } from "./ledger";
 
 const at = (d: number, h = 0, min = 0) => new Date(2026, 3, d, h, min).getTime();
 
@@ -50,5 +50,20 @@ describe("ledgerRows", () => {
       expense("next-morning", { occurredAt: at(5, 8), createdAt: at(5, 8) }),
     ], [transfer("late-night", { occurredAt: at(3, 23), createdAt: at(3, 23) })]);
     expect(ids(rows)).toEqual(["next-morning", "timeless", "late-night"]);
+  });
+});
+
+describe("ledgerItems", () => {
+  const label = (ts: number) => `d${new Date(ts).getDate()}`;
+
+  it("heads each day's run with one date line, keyed by the calendar day", () => {
+    const items = ledgerItems(
+      [expense("e1", { occurredAt: at(5, 9), createdAt: at(5, 9) }),
+        expense("e2", { occurredAt: at(5, 8), createdAt: at(5, 8) })],
+      [transfer("t1", { occurredAt: at(3, 9), createdAt: at(3, 9) })],
+      label,
+    );
+    expect(items.map((i) => i.key)).toEqual(["day:2026-4-5", "e1", "e2", "day:2026-4-3", "t1"]);
+    expect(items.filter((i) => i.kind === "day").map((i) => i.kind === "day" && i.label)).toEqual(["d5", "d3"]);
   });
 });

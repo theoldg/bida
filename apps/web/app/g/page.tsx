@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   payerList, resolvePayers, shareOf, splitParticipants,
   type Expense, type Member, type Settlement,
@@ -20,6 +20,7 @@ import { LedgerInstall, SkeletonBanner } from "@/components/install";
 import { NewEdits } from "@/components/new-edits";
 import { RollingFigure } from "@/components/rolling-figure";
 import { Icon } from "@/components/icons";
+import { LedgerRows } from "@/components/ledger-rows";
 import { useLongPressMenu } from "@/components/long-press";
 import { SyncBanner } from "@/components/sync-banner";
 import { copy } from "@/lib/copy";
@@ -27,7 +28,7 @@ import { useDeleteEntry } from "@/components/delete-entry";
 import { setLastOpenedGroup } from "@/lib/db/device";
 import { syncGroup } from "@/lib/db/sync";
 import { dayLabel, money } from "@/lib/format";
-import { entryOf, ledgerRows } from "@/lib/ledger";
+import { ledgerItems, type LedgerRow } from "@/lib/ledger";
 import { route } from "@/lib/group-link";
 import { keepShown, ROLL_BEAT, shownBefore } from "@/lib/roll";
 import { expenseMeta, transferMeta } from "@/lib/row-meta";
@@ -129,6 +130,7 @@ function GroupScreen() {
 
 function Ledger({ data }: { data: GroupData }) {
   const { group, expenses, settlements, memberById, me, balances } = data;
+  const items = useMemo(() => ledgerItems(expenses, settlements, dayLabel), [expenses, settlements]);
   if (!group) return null;
   // Read out once past the guard: both row components take them as props.
   const { id: gid, baseCurrency: base } = group;
@@ -137,10 +139,6 @@ function Ledger({ data }: { data: GroupData }) {
   // carries its own effect on your balance — what you put in for it, minus what
   // you owe for it — signed and coloured in the figure. They add up to `net`.
   const net = me ? balances.byMember[me] ?? 0 : 0;
-
-  const entries = ledgerRows(expenses, settlements);
-
-  let lastDay = "";
 
   return (
     <Scroll>
@@ -158,24 +156,13 @@ function Ledger({ data }: { data: GroupData }) {
       {/* Between where you stand and the rows, since it is why either moved. */}
       <NewEdits groupId={gid} currency={base} source={group.importedFrom} />
 
-      {entries.length === 0 ? (
+      {items.length === 0 ? (
         <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>
       ) : null}
 
-      <div className="rows">
-        {entries.map((entry) => {
-          const day = dayLabel(entryOf(entry).occurredAt);
-          const label = day === lastDay ? null : (lastDay = day);
-          return (
-            <div key={entryOf(entry).id}>
-              {label ? <div className="daylabel">{label}</div> : null}
-              {entry.row === "expense"
-                ? <ExpenseRow expense={entry.expense} gid={gid} base={base} me={me} memberById={memberById} />
-                : <SettlementRow settlement={entry.settlement} gid={gid} base={base} me={me} memberById={memberById} />}
-            </div>
-          );
-        })}
-      </div>
+      <LedgerRows groupId={gid} items={items} row={(entry: LedgerRow) => entry.row === "expense"
+        ? <ExpenseRow expense={entry.expense} gid={gid} base={base} me={me} memberById={memberById} />
+        : <SettlementRow settlement={entry.settlement} gid={gid} base={base} me={me} memberById={memberById} />} />
       <div style={{ height: 88 }} />
     </Scroll>
   );

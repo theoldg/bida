@@ -31,7 +31,8 @@ import { glide } from "@/lib/seek";
 import { dateInputValue, errorText, money, plural, withDate } from "@/lib/format";
 import { formParent, parseEntrySource, route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
-import { goUp, goBack } from "@/lib/nav";
+import { markSaved } from "@/lib/ledger-motion";
+import { goUp, goBack, sameScreen } from "@/lib/nav";
 import {
   blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, newEntryKey, openSplitTab, retimed,
   saveDraft,
@@ -465,6 +466,7 @@ function EditEntryScreen() {
     setFailed(undefined);
     const rate = foreign ? groupRate ?? "1" : "1";
     try {
+      let wrote = draft.entryId;
       if (transfer) {
         const input = {
           fromMember: draft.fromMember,
@@ -477,7 +479,7 @@ function EditEntryScreen() {
           note: draft.description.trim() || null,
         };
         if (draft.entryId) await editSettlement(groupId, actor, draft.entryId, input);
-        else await recordSettlement(groupId, actor, input);
+        else wrote = await recordSettlement(groupId, actor, input);
       } else {
         const input = {
           kind,
@@ -507,8 +509,10 @@ function EditEntryScreen() {
         if (draft.entryId) await editExpense(groupId, actor, draft.entryId, input);
         // Written under the id the form has been quoting its split with, so
         // the cent it showed on somebody's row is the cent the ledger keeps.
-        else await addExpense(groupId, actor, input, Date.now(), draft.newEntryId);
+        else wrote = await addExpense(groupId, actor, input, Date.now(), draft.newEntryId);
       }
+      // Landing on the ledger, the row is shown where it went (components/ledger-rows.tsx).
+      if (wrote && sameScreen(saveTo, route.group(groupId))) markSaved(groupId, wrote);
       leaving.current = true;
       // `goUp`, not a replace: the screen we are going back to is already
       // behind us, and replacing would leave it on the stack twice.

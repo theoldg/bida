@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — ledger motion: a mock, three rounds of "the divider should…",
+  then "ship it with" three lines of letters. Each correction was about a
+  line or a frame, never the timing: in a mock, draw the real rules and
+  borders, or the feedback is spent on what the app already does.
+
 - *2026-09-29* — "fix both failing checks". Three had been waved off as
   pre-existing flakes; one was a real race, one a stale expectation, one a
   hidden frame. "Also red on the base" says whose it is, not that it is noise.
@@ -71,7 +76,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   The box was built inside the row, on the 16px column, so the plus moved. "Nor
   the margins" leaves one answer: the box grows outward. Measure before and
   after; a screenshot hides a 12px shift.
-
-- *2026-09-29* — "forbid disabling the last person chip in who-had-what".
-  Small, exact, one screen: a guard in the handler and `disabled` on the chip,
-  a line in the doc. No crit, no alternatives — the ask was already the design.

@@ -208,6 +208,37 @@ identical. Two states cover the gap, and neither is a spinner:
   without it, never the thing that says an action worked. Off under
   `prefers-reduced-motion`.
 
+## The ledger moves
+
+The ledger changes under somebody looking at it in three ways, and each has
+one motion (`components/ledger-rows.tsx`, the arithmetic in
+`lib/ledger-motion.ts`). The list is flat: a date line is an item of its own,
+not a heading riding on its day's first row, so it can stay while a row beside
+it comes or goes. Every row draws the line under it — transparent above a date
+line, whose band is its own edge, and under the last row.
+
+- **A save lands on its row.** The form hands the ledger the entry it wrote
+  (`markSaved`); the row wears a wash from its first frame — `--ink` at 13%, a
+  shade over `--press` — and after the you-owe card's beat (`ROLL_BEAT`) is
+  brought whole into the strip above the floating buttons, date line
+  included when it heads its day, only as far as it has to and not at all if
+  it already shows. The wash lets go when it lands, over 0.9s. A colour
+  settling, so exempt from the motion clamp.
+- **A row that goes** fades (140ms), then its space folds (220ms). The divider
+  under it is the line above the row beneath, so it stays, rides up on that
+  row and lands on the line above — two lines closing into one. A date line
+  left with no rows folds in the same motion, after the row's blank space:
+  it reads whole for as long as there is room for it.
+- **A row that arrives** from another phone opens a gap (220ms) and fades in
+  (180ms), at the slot's opacity so a dimmed row fades to its own 58% and not
+  past it. No flash: the new-changes line already says it came. **Above what
+  you are reading, it grows the list upward instead** — the view is held by
+  hand, nothing under your eye moves, and nothing animates. A list moving
+  under a finger or still gliding takes no change until 300ms after it stops.
+  Into an empty ledger (a first pull), rows just appear.
+
+Under reduced motion the movement is instant and only the wash still plays.
+
 ## Type
 
 **One face: JetBrains Mono**, 400–700, loaded once by `next/font` and
@@ -471,6 +502,9 @@ share, but too small to be a target.
 
 ## Gotchas
 
+- **`.row:last-child` sees wrappers, not lists.** The ledger once wrapped each
+  row in a div of its own, which made every row a last child: two rows on one
+  day had no line between them for months, and nothing noticed.
 - Something wrong on "the app" rather than one screen is a shell bug: look at
   `.app` / `.appbody` / `.scroll` in `globals.css` first, and check the fix on a
   screen that overflows.
