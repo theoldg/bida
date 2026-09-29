@@ -78,8 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the results are the same page as the picker, they probably shouldnt". I was
   patching back inside one page; the owner saw it wanted to be two routes.
   When back needs special handling, ask whether the step is a screen.
-
-- *2026-09-28* — "scan the repo for things that are very similar", then "fix
-  everything". "Everything" meant my list minus what I had argued stays apart;
-  merging is where the bugs surface (an import failure never shown). Name what
-  was left separate, and why, in the summary.
