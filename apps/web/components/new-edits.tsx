@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CATCH_UP_MS, compareHlc, unseenRevisions, type ImportSource, type Revision } from "@bida/core";
-import { Icon } from "@/components/icons";
 import { foldAway } from "@/components/ledger-rows";
 import { RevisionEntry, type RevisionContext } from "@/components/revision";
 import { copy } from "@/lib/copy";
@@ -13,10 +11,6 @@ import { db } from "@/lib/db/dexie";
 import { opsForGroup } from "@/lib/db/fold";
 import { useLive } from "@/lib/db/live";
 import { plural } from "@/lib/format";
-import { route } from "@/lib/group-link";
-
-/** Past this many the line leaves the rest to the history screen. */
-const CAP = 4;
 
 /**
  * What changed on other phones since this one last showed it: a folded line
@@ -119,14 +113,9 @@ export function NewEdits({ groupId, currency, source }: {
       </button>
       {open ? (
         <div className="tl neweditslist">
-          {shown.slice(0, CAP).map((rev, i) => (
+          {shown.map((rev, i) => (
             <RevisionEntry key={rev.op.id} rev={rev} first={i === 0} context={context} />
           ))}
-          <Link href={route.history(groupId)} className="tlink neweditsmore">
-            <Icon name="clock" size={13} />
-            <span>{copy.group.groupHistory}</span>
-            <Icon name="chev" size={13} />
-          </Link>
         </div>
       ) : null}
     </div>

@@ -271,8 +271,9 @@ API is reached with `fetch`.
   (`restoreEntryDrafts`). Deleting still leaves for the ledger. "Gone" is only
   an id this phone has never had.
 - **The ledger's new-changes line** (`components/new-edits.tsx`) sits under the
-  you-owe card, drawn as a date line in full-ink text and with no chevron: "4 new changes", unfolding onto those revisions, capped
-  at four, with "Group history" always under them. New is `unseenRevisions`
+  you-owe card, drawn as a date line in full-ink text and with no chevron:
+  "4 new changes", unfolding onto every one of those revisions and nothing
+  else — no cap, since there is no link on to the rest. New is `unseenRevisions`
   (`core/history.ts`): an op numbered past `groupKeys.seenSeq` whose stamp is
   another phone's, your own laptop included, less a device claiming a name.
   **Showing it is seeing it**: the line stays up for as long

@@ -747,8 +747,7 @@ html[data-resuming="manual"] .ghost-manual { display: block }
    in full ink, not a date's muted, is what says it can be pressed. */
 .neweditsbar { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
   border-top: 1px solid var(--rule-soft); color: var(--ink) }
-.tl.neweditslist { margin: 0; padding: 14px 16px 0 42px; border-bottom: 1px solid var(--rule-soft) }/* Clear of the date line under it, which the timeline's own 15px can't give. */
-.tlink.neweditsmore { margin-top: 4px; margin-bottom: 14px }
+.tl.neweditslist { margin: 0; padding: 14px 16px 0 42px; border-bottom: 1px solid var(--rule-soft) }
 /* Under an entry's own timeline, lined up with its text (`.tl`'s 26px, less
    the link's own 6px of press room). */
 .tlink.entrygroup { margin: 2px 0 0 20px }
