@@ -10,7 +10,7 @@ import {
 import { kindOf, myEffect, type EntryKind } from "@/lib/entry-kind";
 import { signClass } from "@/components/bits";
 import {
-  BadLink, Blank, Body, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows, TopBar,
+  BadLink, Blank, Body, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows, SkeletonSummary, TopBar,
 } from "@/components/chrome";
 import { FitLine } from "@/components/fit-line";
 import { GroupMenu } from "@/components/group-menu";
@@ -73,7 +73,7 @@ function GroupScreen() {
       <Screen>
         <Body>
           <TopBar title=" " back={route.groups()} />
-          <Scroll><SkeletonRows count={6} /></Scroll>
+          <Scroll><SkeletonSummary /><SkeletonRows count={6} days /></Scroll>
         </Body>
         <ScanFab href={route.scan(groupId)} />
         <Fab href={route.addEntry(groupId)} />

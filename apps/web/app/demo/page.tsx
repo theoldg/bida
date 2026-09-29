@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { Body, Screen, Scroll, SkeletonRows, TopBar } from "@/components/chrome";
+import { Body, Screen, Scroll, SkeletonRows, SkeletonSummary, TopBar } from "@/components/chrome";
 import { copy } from "@/lib/copy";
 import { openDemo } from "@/lib/db/commands";
 import { route } from "@/lib/group-link";
@@ -42,7 +42,7 @@ export default function DemoPage() {
   return (
     <Screen><Body>
       <TopBar title={copy.demo.opening} back={route.groups()} />
-      <Scroll><SkeletonRows count={6} /></Scroll>
+      <Scroll><SkeletonSummary /><SkeletonRows count={6} days /></Scroll>
     </Body></Screen>
   );
 }

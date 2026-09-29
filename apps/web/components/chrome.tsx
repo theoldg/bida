@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Component, Suspense, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from "react";
+import { Component, Fragment, Suspense, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { isDemo } from "@bida/core";
 import { copy } from "../lib/copy";
 import { wantsDemo } from "../lib/db/commands";
@@ -166,21 +166,57 @@ export function Banner({ children, icon }: { children: ReactNode; icon?: IconNam
  */
 const SKELETON_WIDTHS = ["62%", "44%", "78%", "51%", "69%", "38%"];
 
-export function SkeletonRows({ count = 5 }: { count?: number }) {
+/**
+ * A bar standing in for one line of text. A no-break space beside it keeps the
+ * line box, so the placeholder is exactly as tall as the words it stands for.
+ */
+function SkelText({ width }: { width: number | string }) {
+  return <><span className="skel skeltext" style={{ width }} />{"\u00a0"}</>;
+}
+
+/**
+ * `days` breaks the rows with date lines where the ledger has them — every
+ * third row, a rhythm, not a promise.
+ */
+export function SkeletonRows({ count = 5, days = false }: { count?: number; days?: boolean }) {
   return (
     <div className="rows" aria-hidden="true">
       {Array.from({ length: count }, (_, i) => (
-        <div className="row skelrow" key={i} style={{ ["--d" as string]: `${i * 0.09}s` }}>
-          <div className="rmain">
-            <div className="skel" style={{ height: 9, width: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
-            <div className="skel" style={{ height: 7, width: "34%" }} />
+        <Fragment key={i}>
+          {days && i % 3 === 0
+            ? <div className="daylabel skelday"><SkelText width={i === 0 ? 44 : 76} /></div>
+            : null}
+          <div className="row skelrow" style={{ ["--d" as string]: `${i * 0.09}s` }}>
+            <div className="rmain">
+              <div className="skel" style={{ height: 9, width: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
+              <div className="skel" style={{ height: 7, width: "34%" }} />
+            </div>
+            <div className="ramt">
+              <div className="skel" style={{ height: 10, width: 54 }} />
+              <div className="skel" style={{ height: 7, width: 32 }} />
+            </div>
           </div>
-          <div className="ramt">
-            <div className="skel" style={{ height: 10, width: 54 }} />
-            <div className="skel" style={{ height: 7, width: 32 }} />
-          </div>
-        </div>
+        </Fragment>
       ))}
+    </div>
+  );
+}
+
+/**
+ * The you-owe card at the ledger's head, while it loads: the same card, lines
+ * and chevron, so the rows under it don't jump down when it arrives
+ * (`MySummary` in app/g/page.tsx).
+ */
+export function SkeletonSummary() {
+  return (
+    <div className="mysummary pad" aria-hidden="true">
+      <div className="card mysum skelsum" style={{ ["--chars" as string]: 9 }}>
+        <span className="mysumtext">
+          <span className="eyebrow"><SkelText width={92} /></span>
+          <span className="bignum"><SkelText width="7ch" /></span>
+        </span>
+        <Icon name="chev" size={20} className="mysumchev" />
+      </div>
     </div>
   );
 }

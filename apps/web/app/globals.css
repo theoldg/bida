@@ -1873,6 +1873,13 @@ button.amtnote:active { background: var(--hl-edge) }
 .skelrow:last-child { border-bottom: 1px solid var(--rule) }
 .skelrow .rmain { display: flex; flex-direction: column; gap: 6px }
 .skelrow .ramt { display: flex; flex-direction: column; gap: 5px; align-items: flex-end }
+/* A bar inside a line of text (`SkelText`), a little under the cap height and
+   centred on it, the way the words it stands for would sit. */
+.skeltext { display: inline-block; height: .72em; vertical-align: middle; max-width: 100% }
+/* The you-owe card and the date lines hold their place, and nothing in them is
+   pressable yet. The chevron is furniture, so it waits in the placeholder grey. */
+.skelsum, .skelday { pointer-events: none }
+.skelsum .mysumchev { color: var(--card-3) }
 
 /* ---- empty states ---- */
 .empty { padding: 40px 26px; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.5 }

@@ -191,7 +191,8 @@ identical. Two states cover the gap, and neither is a spinner:
   manipulation` to drop the 300ms double-tap wait.
 - **Waiting.** A list still coming out of Dexie draws `SkeletonRows`: same row
   height, same three columns, pulsing, staggered — arrival changes the text and
-  not the layout. The frame around it is real and tappable.
+  not the layout. The ledger's also holds the you-owe card (`SkeletonSummary`)
+  and its date lines, or the rows land a card's height lower than they waited. The frame around it is real and tappable.
 - **A tick, where neither of those reaches.** `lib/haptics.ts` — one 8ms
   vibration, and the only one the app has. It is spent on the two answers that
   land away from the thumb: a long press deciding it was a hold, where the menu
