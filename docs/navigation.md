@@ -134,11 +134,20 @@ light/dark switch and **About bida** are the two items in the top bar's kebab
 from `components/`; don't bring it back. A screen needing more destinations puts
 them behind a top-bar icon, not a second row — three icons is the ceiling.
 
-## Every screen opens at the top
+## The ledger comes back where you left it — on the way back only
 
 The app scrolls inside a div — one `.scroll` per screen — so the browser's own
-restoration, which knows only about the document, restores nothing, and the
-app keeps no offsets of its own: going back to a list lands at its head.
+restoration, which knows only about the document, restores nothing. Every
+screen opens at the top except the ledger reached **by going back**: the arrow
+or the device's button, or Save, Delete or Discard on a screen opened from it.
+A tap in from the list, a launch reopening the group, or a link opens it at the
+top too. `markReturn` (`lib/nav.ts`) is what tells the two apart — every
+traversal (`popstate`) and every exit's replace fallback marks one — and
+`lib/ledger-position.ts` keeps, per group and in memory, **the row at the top
+edge and how far above it that row sat**, not an offset: a save lands a row
+above it, and an offset would come back a row off. In the head of the list,
+where no row reaches the edge, it is the plain offset. It follows the cards
+above the rows for 1.2s as they arrive, and a finger ends that at once.
 
 ## Gotchas
 

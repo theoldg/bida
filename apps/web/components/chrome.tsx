@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Component, Fragment, Suspense, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
+import { Component, Fragment, Suspense, useEffect, useState, type ErrorInfo, type ReactNode, type Ref } from "react";
 import { isDemo } from "@bida/core";
 import { copy } from "../lib/copy";
 import { wantsDemo } from "../lib/db/commands";
@@ -56,14 +56,16 @@ export function Body({ children }: { children: ReactNode }) {
 
 /**
  * The one scrolling middle of a screen — a div, so the browser won't restore
- * its position, and nothing else does: every screen opens at the top.
+ * its position. Only the ledger's comes back, and only on a way back to it
+ * (`lib/ledger-position.ts`, which takes the `ref`); every other screen opens
+ * at the top.
  *
  * Also the scope the confirm key walks, in layout order (`walkFields`,
  * components/viewport.tsx). A dialog is deliberately not one: its Enter
  * submits the card.
  */
-export function Scroll({ children }: { children: ReactNode }) {
-  return <div className="scroll" onKeyDown={walkFields}>{children}</div>;
+export function Scroll({ children, ref }: { children: ReactNode; ref?: Ref<HTMLDivElement> }) {
+  return <div className="scroll" ref={ref} onKeyDown={walkFields}>{children}</div>;
 }
 
 /**

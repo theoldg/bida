@@ -28,7 +28,7 @@
  */
 import { useEffect, useRef } from "react";
 import { mark } from "./diag";
-import { sameScreen, takeOwnTraversal } from "./nav";
+import { markReturn, sameScreen, takeOwnTraversal } from "./nav";
 import { note } from "./press-trace";
 
 /** Only what's needed here; TypeScript's DOM lib has no Navigation API yet. */
@@ -104,7 +104,7 @@ function settleFloor(): void {
     const up = want.current?.up;
     mark("back.press", `floor  up=${up} active=${navigator.userActivation?.isActive ?? "?"}`);
     note("back floor");
-    if (up !== undefined) want.current?.swap(up);
+    if (up !== undefined) { markReturn(up); want.current?.swap(up); }
   };
   floor = { screen: want, watcher };
 }
@@ -168,7 +168,7 @@ function onNavigate(event: Event): void {
   // Out of the event's *task* before navigating again, not merely out of its
   // microtask checkpoint: a navigation started while the cancellation is still
   // unwinding is refused outright.
-  setTimeout(() => back.swap(up), 0);
+  setTimeout(() => { markReturn(up); back.swap(up); }, 0);
 }
 
 /**

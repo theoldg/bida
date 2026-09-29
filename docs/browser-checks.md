@@ -291,15 +291,18 @@ back button reads on the next press. Every assertion
 here reads `navigation.entries()` rather than `location`
 ([ADR-0007](decisions/0007-a-screen-is-a-route.md), `lib/nav.ts`).
 
-Six shapes, each the one a thumb makes: the walk in from the list, where every
+Seven, each the one a thumb makes: the walk in from the list, where every
 door into a group is pushed from `/` so the list stays underneath the ledger;
 the balance card, which pushes balances over the ledger, and the arrow on
 balances that goes back to it; an entry opened off the ledger, and the Save that
 returns to it; the tip jar, whose form has to unwind past the tip screen as
 well as itself; a cold load with nothing behind it, where the arrow puts the
 parent in this screen's place — the degradation, and the ordinary case of it;
-and the press guard on a half-typed form, cancelled outright with the dialog as
-the whole of the answer. Beside the cold load, the press no traversal can
+the press guard on a half-typed form, cancelled outright with the dialog as
+the whole of the answer; and the ledger's position, left with a row cut by the
+top edge and required back to the pixel after the arrow, the device's back and
+a Save that lands a row above it — while a tap in from the list opens at the
+top. That section alone reads the scroller, not the history. Beside the cold load, the press no traversal can
 carry: a launch's reopened ledger and a cold one each climb to the list on a
 close request with no tap first, and a screen above them doesn't. **Escape
 stands in for Android's button** there, being a close request too.
@@ -387,6 +390,10 @@ red when bunq moves.
   navigates with `goto`
   instead of pressing what a person would press. A `goto` is for arriving; from
   there, click.
+- **Playwright scrolls a row into view before clicking it.** A row cut by the
+  scroller's edge moves first, and the ledger records where that left it
+  (`lib/ledger-position.ts`). To leave a position intact, click a row wholly in
+  view.
 - **A skeleton row is `.rows .row` too**, and outlives the ledger's arrival by
   120ms in the veil that dissolves it (`SkeletonVeil`) when it was up 100ms. Count or wait for
   `.rows .row:not(.skelrow)`, or a count lands six rows high. And `/` holds
