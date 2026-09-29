@@ -270,7 +270,7 @@ function useEntryMenu(gid: string, me: string | undefined, kind: EntryKind, entr
   const { hold, menu } = useLongPressMenu([
     { label: copy.act.edit, icon: "edit", onSelect: () => router.push(route.editEntry(gid, entryId, "ledger")) },
     { label: copy.act.delete, icon: "trash", danger: true, onSelect: del.ask },
-  ]);
+  ], del.asking);
   return { hold, menu: <>{menu}{del.dialog}</> };
 }
 

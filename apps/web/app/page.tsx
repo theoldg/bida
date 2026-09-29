@@ -175,7 +175,7 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
   const { group, memberCount, entryCount, netMinor, lastActivity, newCount } = summary;
   // The group menu's two that make sense from outside a group (`useGroupActions`).
   const actions = useGroupActions(group.id);
-  const { hold, menu } = useLongPressMenu([...actions.copyLink, actions.forget]);
+  const { hold, menu } = useLongPressMenu([...actions.copyLink, actions.forget], actions.asking);
 
   return (
     <>

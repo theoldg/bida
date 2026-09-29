@@ -25,6 +25,8 @@ import type { SheetAction } from "./row-menu";
 export function useGroupActions(groupId: string, afterForget?: () => void): {
   copyLink: SheetAction[];
   forget: SheetAction;
+  /** Forget's question is up. */
+  asking: boolean;
   copied: boolean;
   dialogs: ReactNode;
 } {
@@ -45,6 +47,7 @@ export function useGroupActions(groupId: string, afterForget?: () => void): {
   return {
     copyLink: link.copy ? [{ label: copy.group.copyLink, icon: "link", onSelect: link.copy }] : [],
     forget: { label, icon: "trash", danger: true, onSelect: () => setAsking(true) },
+    asking,
     copied: link.copied,
     dialogs: (
       <>

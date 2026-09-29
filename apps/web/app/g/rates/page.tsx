@@ -101,7 +101,8 @@ function RatesScreen() {
               {currencies.map((c) => (
                 <RateRow key={c.currency} row={c} base={base}
                   onOpen={() => setAsk({ kind: "edit", currency: c.currency })}
-                  onDelete={() => askRemove(c.currency)} />
+                  onDelete={() => askRemove(c.currency)}
+                  asking={(ask?.kind === "remove" || ask?.kind === "blocked") && ask.currency === c.currency} />
               ))}
             </div>
           )}
@@ -161,12 +162,14 @@ function RatesScreen() {
  * as for entries, so the editor is only about the number. An unset rate has
  * nothing to delete, and an empty menu doesn't open.
  */
-function RateRow({ row, base, onOpen, onDelete }: {
+function RateRow({ row, base, onOpen, onDelete, asking }: {
   row: CurrencyInUse; base: string; onOpen: () => void; onDelete: () => void;
+  /** This row's removal question is up, so the row stays held under it. */
+  asking: boolean;
 }) {
   const { hold, menu } = useLongPressMenu(row.rate
     ? [{ label: copy.act.delete, icon: "trash", danger: true, onSelect: onDelete }]
-    : []);
+    : [], asking);
   return (
     <>
       <button className="row" type="button" onClick={onOpen} {...hold}>

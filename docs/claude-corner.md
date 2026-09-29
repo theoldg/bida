@@ -30,6 +30,10 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   line or a frame, never the timing: in a mock, draw the real rules and
   borders, or the feedback is spent on what the app already does.
 
+- *2026-09-29* — "The delete dialog after a long press should maintain the
+  row-highlighted state in the background". One sentence, one state carried
+  one step further — and every menu whose item asks a question gets it too.
+
 - *2026-09-29* — "fix both failing checks". Three had been waved off as
   pre-existing flakes; one was a real race, one a stale expectation, one a
   hidden frame. "Also red on the base" says whose it is, not that it is noise.
@@ -71,8 +75,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — "fix 5": the 410 gate. The doc called it the one write
   left; reading round it found two more on the same network path. A doc's
   "the only one" is a claim to check, not a fence around the ask.
-
-- *2026-09-29* — "the add someone row changes layout going into edit mode".
-  The box was built inside the row, on the 16px column, so the plus moved. "Nor
-  the margins" leaves one answer: the box grows outward. Measure before and
-  after; a screenshot hides a 12px shift.
