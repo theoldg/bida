@@ -298,10 +298,12 @@ async function main() {
         .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
       await page.waitForURL(/quick\/items/);
       // Everybody had the knots and the soda; a pizza each for the other two.
+      // A folded run's cell says "shared the 2" once anyone else is on it.
+      const any = (who, item) => new RegExp(`^${who} (had (all \\d+ )?|shared the \\d+ )${item}`);
       for (const label of [
         /^Ana had Ham pizza/, /^Bo had Cheese pizza/,
-        /^Ana had (all \d+ )?Garlic knots/, /^Bo had (all \d+ )?Garlic knots/, /^Cy had (all \d+ )?Garlic knots/,
-        /^Ana had (all \d+ )?Soda/, /^Bo had (all \d+ )?Soda/, /^Cy had (all \d+ )?Soda/,
+        any("Ana", "Garlic knots"), any("Bo", "Garlic knots"), any("Cy", "Garlic knots"),
+        any("Ana", "Soda"), any("Bo", "Soda"), any("Cy", "Soda"),
       ]) await page.getByRole("button", { name: label }).click();
       await page.waitForTimeout(150);
       await page.screenshot({ path: join(SHOTS, `${theme}-quick-items.png`) });
