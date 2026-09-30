@@ -115,7 +115,7 @@ doesn't outweigh what it replaces — to replace a bill already assigned. Each d
 names itself ("Scan", "Upload", "Type"); the screen around them
 has already named the job. Where the doors share a width the words are what has
 to fit; the chip register — content-sized, being `inline-flex`, over a bill
-already read — says "Edit" for "Type", the same way it says "Rescan" for "Scan" — and on `/g/scan` and `/quick` it draws what it
+already read — says "As text" for "Type", the same way it says "Rescan" for "Scan" — and on `/g/scan` and `/quick` it draws what it
 promises, since that result lands on another screen: a bill of four lines and a
 total, the arrow, and the expense that comes back split by that bill between
 three of the people splitting it. One drawing on both screens

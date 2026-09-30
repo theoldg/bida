@@ -1069,8 +1069,12 @@ export const copy = {
     typeIn: {
       /** Short, as three doors share a phone’s width. */
       open: "Type",
-      /** At the chip register a bill is already read, and the box opens on it (`billAsText`). */
-      edit: "Edit",
+      /**
+       * At the chip register a bill is already read, and the box opens on it
+       * (`billAsText`). Not "Edit": it stands under "Edit who-had-what", on a
+       * screen reached by "Edit", and the grid is the edit people mean.
+       */
+      asText: "As text",
       title: "The bill as text",
       /**
        * Asks for items (the Items tab needs lines) and no format: per-unit or
