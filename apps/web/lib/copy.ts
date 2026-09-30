@@ -1166,6 +1166,8 @@ export const copy = {
       currency ? `Tip and service, in ${currency}` : "Tip and service",
     /** Named for what a press does, like the theme switch. "As printed": the words on the paper. */
     translate: { on: "Show the bill in English", off: "Show the bill as printed" },
+    /** The two readings, on a history diff line. */
+    shown: { english: "In English", printed: "As printed" },
     /**
      * Which portion of a split line this is. Short: that line is the narrowest on
      * screen, and "1 of 2" wrapped, making portions uneven. `hadPortion` is the
@@ -1229,6 +1231,7 @@ export const copy = {
       splitMode: "Split mode",
       receipt: "Receipt",
       whoHadWhat: "Who had what",
+      billLanguage: "Bill shown",
       amount: "Amount",
       currency: "Currency",
       rate: "Rate",
@@ -1264,6 +1267,9 @@ export const copy = {
     changedReceipt: (who: string) => `${who} changed the receipt`,
     removedReceipt: (who: string) => `${who} removed the receipt`,
     changedWhoHadWhat: (who: string) => `${who} changed who had what`,
+    /** The translate toggle, saved with the bill (`receiptEnglish`). */
+    readBill: (who: string, english: boolean) =>
+      english ? `${who} showed the bill in English` : `${who} showed the bill as printed`,
     changedAmount: (who: string) => `${who} changed the amount`,
     changedCurrency: (who: string) => `${who} changed the currency`,
     changedRate: (who: string) => `${who} changed the rate`,

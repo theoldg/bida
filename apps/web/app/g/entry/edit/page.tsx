@@ -212,6 +212,7 @@ function EditEntryScreen() {
           categoryId: e.categoryId ?? null,
           receiptItems: e.receiptItems ?? null,
           receiptText: e.receiptText ?? null,
+          receiptEnglish: e.receiptEnglish === true ? true : null,
           receiptTip: e.receiptTip ?? null,
           receiptTax: e.receiptTax ?? null,
           receiptDiscounts: e.receiptDiscounts ?? null,
@@ -502,6 +503,7 @@ function EditEntryScreen() {
           // show it again.
           receiptItems: canScan ? draft.receiptItems ?? null : null,
           receiptText: canScan ? draft.receiptText ?? null : null,
+          receiptEnglish: canScan && draft.receiptEnglish === true ? true : null,
           receiptTip: canScan ? draft.receiptTip ?? null : null,
           receiptTax: canScan ? draft.receiptTax ?? null : null,
           receiptDiscounts: canScan ? draft.receiptDiscounts ?? null : null,

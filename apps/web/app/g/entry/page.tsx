@@ -26,7 +26,7 @@ import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
 import { markReturn } from "@/lib/nav";
 import { historyMeta } from "@/lib/row-meta";
-import { useBillEnglish, useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
+import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 
 /**
  * The title's type sizes, largest first, ending at the size it wraps at: a
@@ -395,10 +395,9 @@ function YourBalance({ up, down, net, currency }: {
 function ExpenseDetail({ expense, kind, group, data }: {
   expense: Expense; kind: EntryKind; group: Group; data: GroupData;
 }) {
-  // Which language this phone reads a scanned bill in — the toggle on the
-  // who-had-what bar, which the expense's own copy of the bill obeys too
-  // (`billLabel`).
-  const english = useBillEnglish();
+  // Which language the bill is read in — the toggle on the who-had-what bar,
+  // saved with the expense (`billLabel`).
+  const english = expense.receiptEnglish === true;
   const coSponsored = isCoSponsored(expense);
   const me = data.me;
   // One span, not a fragment: a scanned row's name sits in a flex box that

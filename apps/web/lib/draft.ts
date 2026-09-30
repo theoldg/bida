@@ -82,6 +82,8 @@ export interface EntryDraft {
   receiptAssignments?: string[][] | null;
   /** The bill as typed into "Type it in", so the dialog reopens holding it. */
   receiptText?: string | null;
+  /** Read in English rather than as printed, as on `Expense`. */
+  receiptEnglish?: boolean | null;
   /** Explicit tab choice; see `SplitTab`. */
   splitTab?: SplitTab;
   /** The title the last scan wrote, so a rescan can replace its own guess but not a typed title. */

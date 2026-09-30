@@ -109,6 +109,12 @@ export interface Expense {
   receiptAssignments?: Id[][] | null;
   /** The bill as typed into "Type it in", so the dialog reopens holding it. */
   receiptText?: string | null;
+  /**
+   * True when the bill is read in English rather than as printed — the grid's
+   * translate toggle, saved with the bill so every phone reads it alike
+   * (`billLabel`, ADR-0016). Written only when true.
+   */
+  receiptEnglish?: boolean | null;
   deletedAt?: number | null;
 }
 
@@ -120,8 +126,8 @@ export interface ReceiptDiscount {
   label: string;
   amount: string;
   /**
-   * The English of `label`, kept beside the original: which one shows is a
-   * device preference (`billLabel`). Absent on an English bill and on older ones.
+   * The English of `label`, kept beside the original: which one shows is the
+   * expense's `receiptEnglish` (`billLabel`). Absent on an English bill and on older ones.
    */
   labelEn?: string | null;
 }

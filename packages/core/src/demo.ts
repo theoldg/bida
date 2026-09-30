@@ -277,6 +277,9 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
         receiptInvolved: all,
         receiptAssignments: DEMO_BILL.map(({ who }) => who.map((name) => ids[name])),
         receiptText: demoBillText(),
+        // As if somebody at the table had tapped translate: a visitor can't
+        // read Huttese, and the toggle is there to turn it back.
+        receiptEnglish: true,
       },
     },
 

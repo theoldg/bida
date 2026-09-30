@@ -38,9 +38,9 @@ expense. The bill reads as printed everywhere by default, and the translation
 icon in the who-had-what bar switches every line to English — the grid, each
 person's copy of the bill on the entry screen, and the text a quick split is
 handed over as. It is drawn only where the model gave a translation on some
-line (`hasTranslation`), so never on a bill it called English, and remembered
-per phone and not per group (`DeviceRecord.billEnglish`): it is how one person
-reads, not a fact about the bill. A line the model left untranslated keeps its printed label rather than
+line (`hasTranslation`), so never on a bill it called English, and **saved with
+the expense** (`receiptEnglish`): tapping it is an edit like any other, in the
+history, and every phone reads that bill the way it was left. A line the model left untranslated keeps its printed label rather than
 going blank. `billLabel` (`web/lib/scan/items.ts`) is the only place either is
 chosen; the draft's own labels are never overwritten, or splitting a line would
 write the translation back as the bill's own words.

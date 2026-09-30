@@ -43,6 +43,8 @@ export interface ExpenseInput {
   receiptAssignments?: Id[][] | null;
   /** The bill as typed, when it was typed rather than photographed. */
   receiptText?: string | null;
+  /** Read in English rather than as printed. True or absent, like `dateOnly`. */
+  receiptEnglish?: boolean | null;
 }
 
 /**
@@ -106,6 +108,7 @@ export function expenseCreatePatch(
       receiptInvolved: input.receiptInvolved,
       receiptAssignments: input.receiptAssignments,
       receiptText: input.receiptText,
+      receiptEnglish: input.receiptEnglish ? true : null,
     }),
   };
 }
@@ -183,6 +186,7 @@ export async function editExpense(
     receiptInvolved: merged.receiptInvolved,
     receiptAssignments: merged.receiptAssignments,
     receiptText: merged.receiptText,
+    receiptEnglish: merged.receiptEnglish ? true : null,
   });
 
   // A save that moved nothing is a revision saying nothing happened.

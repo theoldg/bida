@@ -278,6 +278,16 @@ export function describe(
       || (field("receiptAssignments") && JSON.stringify(bill.was.eaters) !== JSON.stringify(bill.now.eaters))) {
       parts.push({ what: said.changedWhoHadWhat(who), label: named.whoHadWhat });
     }
+    // Stored only when true (`only`), so any change here is a flip.
+    if (field("receiptEnglish")) {
+      const english = rev.after["receiptEnglish"] === true;
+      const shown = copy.items.shown;
+      parts.push({
+        what: said.readBill(who, english),
+        label: named.billLanguage,
+        line: english ? { was: shown.printed, now: shown.english } : { was: shown.english, now: shown.printed },
+      });
+    }
     // Only the amount fields that actually changed reach here: a currency switch
     // at the same rate is a currency change with no amount change. Each figure is
     // printed in its own currency — `amountMinor` is the entry's, base the group's.

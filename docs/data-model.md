@@ -79,6 +79,8 @@ Expense {
   receiptText?,       // the bill as typed, or a photo's reading written out
                       // in English — so the box reopens holding it
                       // (receipt-scanning.md#typing-a-bill-in)
+  receiptEnglish?,    // true: the bill is read in English, not as printed —
+                      // the grid's translate toggle (ADR-0016)
   deletedAt?
 }
 ```

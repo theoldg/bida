@@ -12,7 +12,7 @@ import { copy } from "@/lib/copy";
 import { clearDraft, useDraft } from "@/lib/draft";
 import { bare } from "@/lib/format";
 import { route } from "@/lib/group-link";
-import { useBillEnglish, useFlash } from "@/lib/hooks";
+import { useFlash } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
 import {
   clearQuickPeople, quickShares, quickSummaryText, useQuickPeople, useScanCredential,
@@ -32,9 +32,6 @@ export default function QuickResultPage() {
   const router = useRouter();
   const cred = useScanCredential();
   const people = useQuickPeople();
-  // The grid's translation toggle reaches here: the answer, and the text it is
-  // handed over as, read in whichever language the bill was left in.
-  const english = useBillEnglish();
   const draft = useDraft(cred?.id);
   const [copied, setCopied] = useFlash();
   const [failed, setFailed] = useState(false);
@@ -56,7 +53,7 @@ export default function QuickResultPage() {
 
   if (!cred || !draft || !ready) return <Blank title={copy.quick.split} />;
 
-  const { totalMinor, shares } = quickShares(draft, people, english);
+  const { totalMinor, shares } = quickShares(draft, people);
   const title = draft.description.trim();
   const text = quickSummaryText(title, totalMinor, shares, draft.currency);
 

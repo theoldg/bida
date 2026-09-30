@@ -66,12 +66,6 @@ export interface DeviceRecord {
    */
   notifyNudgeCollapsed?: boolean;
   /**
-   * True while scanned bills are read in English rather than as printed.
-   * Absent is the original — see `billLabel` (lib/scan/items.ts). Device-local:
-   * the expense keeps both labels, and two phones may want different ones.
-   */
-  billEnglish?: boolean;
-  /**
    * What this phone scans with outside a group — a quick split
    * ([ADR-0035](../../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
    * Shaped like a group's id and secret, because that is what the scan endpoint

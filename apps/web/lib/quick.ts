@@ -175,11 +175,11 @@ interface QuickShare {
 export function quickShares(
   draft: EntryDraft,
   who: readonly QuickPerson[],
-  /** Read the bill's own words in English rather than as printed (`billLabel`). */
-  english = false,
 ): { totalMinor: number; shares: QuickShare[] } {
-  // Only the labels move: the arithmetic below reads amounts, and the text
-  // this ends on is the same bill in whichever language it is being read.
+  // The grid's translate toggle, left on the draft. Only the labels move: the
+  // arithmetic below reads amounts, and the text this ends on is the same bill
+  // in whichever language it is being read.
+  const english = draft.receiptEnglish === true;
   const items = billLabels(draft.receiptItems ?? [], english);
   const assignments = (draft.receiptAssignments ?? []).map((row) => new Set(row));
   const involved = new Set(draft.receiptInvolved ?? []);

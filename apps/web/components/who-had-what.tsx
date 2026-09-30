@@ -16,8 +16,6 @@ import {
   billLabel, foldedLine, hasTranslation, portions, receiptTotalMinor, runAssignment,
   unfoldAll,
 } from "../lib/scan/items";
-import { useBillEnglish } from "../lib/hooks";
-import { setBillEnglish } from "../lib/db/device";
 
 /**
  * The floor under how long the pointed column stays faint. The scroll is
@@ -71,11 +69,11 @@ export function WhoHadWhat({
   leaving?: { title: string; body: string };
 }) {
   const items = draft.receiptItems ?? [];
-  // Which language the bill's own words are read in. Device-local and
-  // remembered, so the expense this grid saves reads the same way afterwards
+  // Which language the bill's own words are read in — the draft's, so the
+  // expense this grid saves reads the same way afterwards, on every phone
   // (`billLabel`). **Never applied to `items` itself** — the labels on the
   // draft are the bill's, and splitting a line writes them back.
-  const english = useBillEnglish();
+  const english = draft.receiptEnglish === true;
   const said = (line: { label: string; labelEn?: string | null }) => billLabel(line, english);
   const [involved, setInvolved] = useState<Set<string>>(new Set());
   const [assignments, setAssignments] = useState<Set<string>[]>([]);
@@ -425,7 +423,8 @@ export function WhoHadWhat({
   // the model had something to translate (`hasTranslation`).
   const translate = hasTranslation(items, draft.receiptDiscounts) ? (
     <button type="button" className={`iconbtn${english ? " lit" : ""}`}
-      onClick={() => void setBillEnglish(!english)}
+      // Not a touch: a way of reading the bill, which leaving keeps.
+      onClick={() => save({ ...draft, receiptEnglish: english ? null : true })}
       aria-pressed={english} title={copy.items.translate[english ? "off" : "on"]}
       aria-label={copy.items.translate[english ? "off" : "on"]}>
       <Icon name="translate" size={17} />

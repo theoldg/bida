@@ -432,6 +432,17 @@ suite("describe", () => {
     expect(latest!.said).toBe("Theo changed who had what");
   });
 
+  // The translate toggle is saved with the bill, so it is somebody's edit.
+  it("names the bill being read in English, and back", async () => {
+    const { groupId, theo, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, { receiptEnglish: true });
+    const [on] = await described(groupId);
+    expect(on!.said).toBe("Theo showed the bill in English");
+    await editExpense(groupId, theo, expenseId, { receiptEnglish: null });
+    const [off] = await described(groupId);
+    expect(off!.said).toBe("Theo showed the bill as printed");
+  });
+
   // Splitting "Salad ×2" into portions is a change of shape, not of the bill:
   // "6 items → 7 items" for a fold and unfold is the failure.
   it("reads a line split into portions as the same receipt", async () => {
