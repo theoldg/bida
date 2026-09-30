@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { writeClipboardText } from "@/lib/clipboard";
@@ -74,6 +75,7 @@ export default function DiagPage() {
                 {stas ? copy.diag.on : copy.diag.off}
               </button>
             </div>
+            <Link className="diag-link" href={route.diagCrop()}>{copy.diag.cropLink}</Link>
           </div>
           {/* One <pre>, not a laid-out table: it is read on a phone, pasted
               into a message and diffed against the next one. */}

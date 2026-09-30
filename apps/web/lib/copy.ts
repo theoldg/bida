@@ -92,6 +92,20 @@ export const copy = {
     stasNote: "Send a bad photo, get insulted.",
     on: "On",
     off: "Off",
+    /** The door to app/diag/crop/page.tsx, under Staś mode. */
+    cropLink: "Test the scan crop",
+    crop: {
+      title: "Scan crop",
+      /** What the screen does, over the button. Nothing is sent anywhere. */
+      lede: "Pick photos of bills to see what a scan would send. Nothing leaves the phone.",
+      pick: "Pick photos",
+      loading: "Loading the crop model…",
+      loaded: (ms: number) => `Crop model ready in ${ms} ms`,
+      failed: "The crop model didn’t load. Scans will send the whole photo.",
+      working: "Working…",
+      /** No crop: the model found no bill, or wasn't there. */
+      whole: "whole photo",
+    },
   },
 
   /** Names Splitwise and Tricount, since "CSV" doesn't tell you it's the right button. */

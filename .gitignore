@@ -12,6 +12,8 @@ dist/
 coverage/
 *.tsbuildinfo
 shots/
+# Copied from node_modules at build (apps/web/scripts/scanic-assets.mjs).
+apps/web/public/scanic/
 # Throwaway measurement rigs: probe scripts, perf harnesses.
 *.tmp.*
 # Sessions that find the main clone busy take a worktree; they live here.

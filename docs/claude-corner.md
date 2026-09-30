@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-30* — "do proper research for the 3p options, I don't want to
+  debug custom logic for ages", with a heuristic half-written. Try the library
+  on the owner's own photo before writing one; "let's KISS" then cut the rules
+  around it too.
+
 - *2026-09-30* — "remove the "rest" buttons … does that make sense?" A
   question that is really a spec: build it. The edge it skipped — clearing the
   only payer collapsed straight back — was the agent's to find and settle.
@@ -74,7 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   or advise me otherwise?" The "or" invites a view, not a veto: agree in a
   line, then find where "up" really began — a reopen's skeleton started on
   another route.
-
-- *2026-09-29* — a digit spinner: mock of four, "B slightly slower", "make the
-  speed configurable for all", then "Ship C at 800ms". Put a knob on the mock
-  when feel is in question — the answer comes back as a number to ship.

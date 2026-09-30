@@ -379,6 +379,9 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return; // never the API — Dexie owns offline data
+  // The scan's crop model: versioned in its path and left to the HTTP cache,
+  // so a deploy — which drops this worker's cache — doesn't re-download 2.5 MB.
+  if (url.pathname.startsWith("/scanic/")) return;
 
   /**
    * Offline — or on a payload refused by `payloadFor` — Next's router hands the

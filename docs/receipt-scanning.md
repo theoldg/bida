@@ -60,7 +60,7 @@ nothing else would notice.
 ## The shape
 
 ```
-phone: capture or pick from library → downscale → base64 (+ a Turnstile token)
+phone: capture or pick from library → straighten + crop → downscale → base64 (+ a Turnstile token)
        — or the typed bill, straight to base64
   ↓ POST /api/groups/:id/scan   (body = the bill; bearer = group secret;
                                  X-Input: text for a typed one)

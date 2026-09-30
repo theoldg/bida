@@ -155,10 +155,9 @@ The rules that follow from it:
 - **The client never names the destination.** URL, model and key are Worker-side
   constants. A client-supplied URL would make this an open proxy to anywhere
   with our key attached.
-- **Downscale to ≤1024px long edge, JPEG ~0.7, target ≤200 KB**, encoded to
-  base64 in the browser. Vision models don't read a receipt better above that.
-  The Worker caps the body at `MAX_IMAGE_BYTES` (400 kB — that with room to
-  spare), refusing on `content-length` before a byte is streamed anywhere, and
+- **The phone crops and shrinks the photo; the Worker only refuses a big one**
+  ([below](#cropping-to-the-bill)). The Worker caps the body at
+  `MAX_IMAGE_BYTES` (400 kB, shared from core; the phone aims at 300), refusing on `content-length` before a byte is streamed anywhere, and
   counting again as it streams for the caller whose header lied. A typed bill has
   a cap of its own, two orders of magnitude below it (`MAX_TEXT_BYTES`): a body
   sent as text does not get to spend the image allowance.
@@ -178,6 +177,35 @@ The rules that follow from it:
 
 `sw.js` needs nothing: it ignores non-GET and cross-origin, and never caches
 `/api/*`.
+
+## Cropping to the bill
+
+A till roll photographed at arm's length is a third of the frame's width, and
+any fixed budget spent on the whole frame leaves its lines too few pixels to
+read. So `lib/scan/downscale.ts` straightens and crops at full resolution,
+then caps **pixels** (1024², JPEG 0.7) rather than the long edge — a tall crop
+under an edge cap would be narrower still — and shrinks further only if the
+base64 would pass 300 kB. Turning before shrinking resamples the print once
+at its sharpest.
+
+The corners come from [scanic](https://github.com/marquaye/scanic)'s ML
+detector (`lib/scan/find-bill.ts`): its paper-edge detector finds nothing on a
+white receipt on a white car, the model finds it. The turn is every edge's
+slope weighted by its length, since a thumb curls a roll's short ends; it is
+modulo a quarter turn, so a bill is never stood up from its side. It is a
+rotation, not a perspective warp. The kept box is 2% of the photo wider on
+each side, and **anything short of a confident answer sends the whole photo**
+— a scan never fails for want of a crop.
+
+- **The model (~2.5 MB) downloads when a scan door is tapped**, so it arrives
+  while the camera is up. It is ours, copied from `scanic-ml` into
+  `public/scanic/<version>/` at build, kept out of the precache and passed
+  through by `sw.js`, so the HTTP cache keeps it across deploys.
+- **Only scanic's ML half is bundled**, aliased as `scanic/ml` in
+  `next.config.mjs` and `vitest.config.ts`: the package exports the whole
+  library, and the whole library also brings a detector we don't use.
+- `/diag/crop` runs the real `prepareBill` on photos you pick and prints what
+  each step cost; nothing is sent.
 
 ## What the scan costs
 
@@ -332,6 +360,13 @@ payer. The photo is not stored at all
 ([product.md](product.md#deliberately-not-in-the-mvp)).
 
 ## Gotchas
+
+- **scanic's whole-library import 404s under Next.** It loads its ML half with
+  a `webpackIgnore`d relative import, resolved against `_next/static/chunks/`
+  where no such file is; hence the `scanic/ml` alias. Its ONNX runtime also has
+  a Node-only `new URL(…, import.meta.url)` webpack must not parse
+  (`parser: { url: false }` in `next.config.mjs`). **A missing model is silent
+  by design**, so check `/diag/crop` after touching either.
 
 - **Turnstile cannot be verified by a browser you automate.** Playwright is
   detected — headless renders no widget at all, headful renders the checkbox

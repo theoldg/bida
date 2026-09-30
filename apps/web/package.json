@@ -4,8 +4,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build && node scripts/precache.mjs",
+    "dev": "node scripts/scanic-assets.mjs && next dev",
+    "build": "node scripts/scanic-assets.mjs && next build && node scripts/precache.mjs",
     "start": "npx serve out",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -17,7 +17,9 @@
     "dexie-react-hooks": "^1.1.7",
     "next": "^15.1.6",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "scanic": "1.6.0",
+    "scanic-ml": "0.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.7",

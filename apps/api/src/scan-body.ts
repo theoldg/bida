@@ -3,7 +3,7 @@
  * envelope (core/scan-body.ts) without the Worker holding it, refusing
  * anything that isn't base64.
  */
-import { buildScanRequestBody, type ScanMedium, type ScanTone } from "@bida/core";
+import { MAX_IMAGE_BYTES, buildScanRequestBody, type ScanMedium, type ScanTone } from "@bida/core";
 
 export type { ScanMedium, ScanTone } from "@bida/core";
 
@@ -27,12 +27,12 @@ const ENVELOPE: Record<ScanTone, Record<ScanMedium, { prefix: Uint8Array; suffix
 };
 
 /**
- * The largest base64 body we wrap. A downscaled photo is ~200 KB JPEG, ~270 KB
- * base64 (`lib/scan/downscale.ts`); this leaves room and refuses a 50 MB
- * "photo". Text is capped at 4,000 characters on the phone (`BILL_TEXT_MAX`);
- * its ceiling here is an abuse limit that must still fit a three-byte script.
+ * The largest base64 body we wrap: a photo's is `MAX_IMAGE_BYTES`, shared with
+ * the phone that shrinks to fit under it. Text is capped at 4,000 characters on
+ * the phone (`BILL_TEXT_MAX`); its ceiling here is an abuse limit that must
+ * still fit a three-byte script.
  */
-export const MAX_IMAGE_BYTES = 400_000;
+export { MAX_IMAGE_BYTES };
 
 export const MAX_TEXT_BYTES = 16_000;
 

@@ -364,3 +364,10 @@ export type ScanLimitScope = keyof typeof SCAN_LIMITS;
  */
 export const BILL_TEXT_MAX = 4000;
 
+/**
+ * The largest base64 photo the Worker wraps. The phone aims well under it
+ * (`lib/scan/downscale.ts` shrinks until it fits), so hitting it means a
+ * caller that isn't ours — it refuses a 50 MB "photo" before forwarding a byte.
+ */
+export const MAX_IMAGE_BYTES = 400_000;
+

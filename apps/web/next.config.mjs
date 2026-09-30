@@ -1,4 +1,9 @@
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+
+const scanicMl = join(
+  dirname(createRequire(import.meta.url).resolve("scanic")), "scanic-mlDetector.js");
 
 // The app's one version (scripts/version.mjs), read from the root manifest at
 // build time and inlined by `env` below, so a phone can say which build it is
@@ -23,6 +28,11 @@ const nextConfig = {
     // webpack's production build doesn't map .js imports back to .ts files
     // without this.
     config.resolve.extensionAlias = { ".js": [".ts", ".tsx", ".js"] };
+    // The scan's crop model, without the rest of scanic (lib/scan/scanic-ml.d.ts).
+    config.resolve.alias["scanic/ml"] = scanicMl;
+    // Its ONNX runtime names a worker file with `new URL(…, import.meta.url)`
+    // on a path only Node takes; left to webpack, that is a missing module.
+    config.module.rules.push({ test: /scanic-ort\.wasm\.min\.js$/, parser: { url: false } });
     return config;
   },
 };

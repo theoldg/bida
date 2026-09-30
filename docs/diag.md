@@ -113,6 +113,10 @@ makes a scan insult whoever sent it a photo that isn't a receipt
 on a settings screen because finding it should cost a long-press, and because
 the report prints its state beside everything else this phone is doing.
 
+Under it, a link to **`/diag/crop`**: the scan's crop run on photos you pick,
+each with the model's box and the image a scan would send, and the timings
+([scan-worker.md](scan-worker.md#cropping-to-the-bill)).
+
 **`/diag` must never wait on the database.** It is opened *because* the
 database is not answering. Everything that can block is raced against a 2s
 patience window and the timeline, which needs no database at all, prints either

@@ -60,6 +60,12 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.8(react@19.2.8)
+      scanic:
+        specifier: 1.6.0
+        version: 1.6.0
+      scanic-ml:
+        specifier: 0.2.0
+        version: 0.2.0
     devDependencies:
       '@types/node':
         specifier: ^22.10.7
@@ -1326,6 +1332,13 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
+  scanic-ml@0.2.0:
+    resolution: {integrity: sha512-saBNPM6W7ubxJd9X3+5XEVal/YpBblfhBnU+Gkl7/QxIgVPWRrdVUnR10JC+nNYKQv2O9XQHBBdEMJWVB0tOgw==}
+
+  scanic@1.6.0:
+    resolution: {integrity: sha512-p9qYL9cITvQ/BOrafsJvhm++Y8NA8GfRnwngUASqAyKUTRHqMuJzcrCuHjveHxQg29tNuEORUBDAAcigvFigPg==}
+    engines: {node: '>=22'}
+
   scheduler@0.27.0:
     resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
 
@@ -2413,6 +2426,10 @@ snapshots:
       '@rollup/rollup-win32-x64-gnu': 4.63.0
       '@rollup/rollup-win32-x64-msvc': 4.63.0
       fsevents: 2.3.3
+
+  scanic-ml@0.2.0: {}
+
+  scanic@1.6.0: {}
 
   scheduler@0.27.0: {}
 

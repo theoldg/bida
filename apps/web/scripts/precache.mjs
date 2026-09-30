@@ -38,9 +38,11 @@ function routeFor(file) {
 // itself. Everything else in the export is something a screen needs to paint.
 // `/media/` is the install walkthrough: a megabyte only a browser tab ever shows,
 // since the installed app never reaches /install. `/og.png` is the link-preview
-// banner: only a chat app's scraper ever fetches it.
+// banner: only a chat app's scraper ever fetches it. `/scanic/` is the scan's
+// crop model, 2.5 MB fetched on the first scan tap and never from the cache.
 const skip = (f) =>
-  f.endsWith(".map") || f === "/sw.js" || f.startsWith("/media/") || f === "/og.png";
+  f.endsWith(".map") || f === "/sw.js" || f.startsWith("/media/") || f === "/og.png"
+  || f.startsWith("/scanic/");
 
 const files = (await walk(OUT)).filter((f) => !skip(f));
 const assets = files.map((f) => (f.endsWith(".html") ? routeFor(f) : f)).sort();

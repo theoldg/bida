@@ -17,6 +17,7 @@ import { BillTextDialog } from "./bill-text-dialog";
 import { ScanBusy } from "./scan-bar";
 import type { ScanAs } from "../lib/quick";
 import { warmTurnstile } from "../lib/scan/turnstile";
+import { warmBillFinder } from "../lib/scan/find-bill";
 
 export type { ScanState } from "../lib/scan/live";
 
@@ -235,8 +236,10 @@ export function useReceiptScan(
     live,
     refusal: typed ? null : said,
     disabled: !scanAs,
-    openCamera: () => cameraInput.current?.click(),
-    openLibrary: () => libraryInput.current?.click(),
+    // The crop model starts downloading at the tap, so it arrives while the
+    // camera is up rather than after the shutter (lib/scan/find-bill.ts).
+    openCamera: () => { void warmBillFinder(); cameraInput.current?.click(); },
+    openLibrary: () => { void warmBillFinder(); libraryInput.current?.click(); },
     openTyping: () => setTyping(true),
     inputs: (
       <>
