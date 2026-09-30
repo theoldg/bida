@@ -1083,6 +1083,12 @@ export const copy = {
       /** Only near the cap. */
       left: (n: number) => `${n} characters left`,
       full: "That’s the longest bill this will read. Trim it, or photograph it instead.",
+      /**
+       * A photograph's reading written back into the box (`billAsText`), in the
+       * words the typed prompt reads: "Tax on top" because tax inside the prices
+       * is read as none, and a deduction is written with its minus.
+       */
+      written: { tip: "Tip", tax: "Tax on top", discount: "Discount", total: "Total" },
     },
     /** The same screen, named for the step left: nobody assigned yet, or a change to one. */
     assignWhoHadWhat: "Assign who had what",

@@ -1,6 +1,50 @@
 import { describe, expect, it } from "vitest";
 import { BILL_TEXT_MAX } from "@bida/core";
-import { billTextLeft, billTextToBase64, cleanBillText } from "./text";
+import { billAsText, billTextLeft, billTextToBase64, cleanBillText } from "./text";
+
+describe("a photographed bill, written out", () => {
+  const extras = { tip: null, tax: null, discounts: [] };
+
+  it("uses the English, a count only where there was one, and the printed total", () => {
+    const text = billAsText({
+      items: [
+        { label: "Brochette poulet", labelEn: "Chicken skewer", amount: "39.00", quantity: 3 },
+        { label: "Coca-Cola", labelEn: null, amount: "10.00", quantity: null },
+        { label: "Thé", labelEn: "Tea", amount: "4.00", quantity: 1 },
+      ],
+      extras,
+    }, "53.00");
+    expect(text).toBe("3 Chicken skewer 39.00\nCoca-Cola 10.00\nTea 4.00\nTotal 53.00");
+  });
+
+  it("writes the extras so the typed prompt reads them back the same way", () => {
+    const text = billAsText({
+      items: [{ label: "Pizza", labelEn: null, amount: "20.00", quantity: null }],
+      extras: {
+        tip: "2.00",
+        tax: "1.50",
+        discounts: [
+          { label: "Bon", labelEn: "Voucher", amount: "5.00" },
+          // A negative tip or tax arrives as a deduction with no label (`readBill`).
+          { label: "", amount: "1.00" },
+        ],
+      },
+    }, null);
+    expect(text).toBe("Pizza 20.00\nTip 2.00\nTax on top 1.50\nVoucher -5.00\nDiscount -1.00");
+  });
+
+  it("keeps a line whose figure was unreadable, as its name alone", () => {
+    expect(billAsText({ items: [{ label: "Soup", labelEn: null, amount: "", quantity: null }], extras }, null))
+      .toBe("Soup");
+  });
+
+  it("never exceeds what the box will hold", () => {
+    const items = Array.from({ length: 400 }, () => (
+      { label: "A very long line item name", labelEn: null, amount: "1.00", quantity: null }
+    ));
+    expect(billAsText({ items, extras }, null).length).toBe(BILL_TEXT_MAX);
+  });
+});
 
 /**
  * A typed bill's two mechanical steps. Both are small and both are load-bearing:

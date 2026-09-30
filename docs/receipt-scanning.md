@@ -185,8 +185,13 @@ is the number a person is held to.
 **The text is kept, on the draft and on the saved expense** (`receiptText`), for
 the reason `receiptItems` is: reopening the box holds what was typed, on this
 phone or another, so correcting a misread bill is editing rather than retyping.
-A photograph clears it, the way it clears the grid — what is kept has to describe
-the bill actually on the draft. Nothing else shows it: the bill's own lines and
+A photograph replaces it, the way it replaces the grid — what is kept has to
+describe the bill actually on the draft — **with its own reading written out**
+(`billAsText`, `lib/scan/text.ts`): a line per item as a person would type it,
+"3 Chicken skewer 39.00", in the English labels, then tip, "Tax on top", each
+deduction with its minus, and the total only where the bill printed one. So a
+photo that misread one line is fixed in "Type it in" and re-read, not retaken.
+Nothing else shows it: the bill's own lines and
 each person's copy of them are the reading, and printing the raw text under them
 would be the same thing twice.
 

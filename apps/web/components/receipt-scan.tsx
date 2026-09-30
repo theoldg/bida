@@ -13,6 +13,7 @@ import {
 } from "../lib/scan";
 import { beginScan, clearScan, failScan, useLiveScan, type LiveScan } from "../lib/scan/live";
 import { unfoldAll } from "../lib/scan/items";
+import { billAsText } from "../lib/scan/text";
 import { BillTextDialog } from "./bill-text-dialog";
 import { ScanBusy } from "./scan-bar";
 import type { ScanAs } from "../lib/quick";
@@ -118,7 +119,7 @@ export function useReceiptScan(
     medium: ScanMedium,
     send: (sender: ScanAs, currency: string) => Promise<ScanResult>,
     /** Kept on the draft when this reading was of typed text, so reopening the
-        dialog holds what was typed rather than an empty box over a bill. */
+        dialog holds what was typed. Null for a photograph, which writes its own. */
     text: string | null,
   ) => {
     if (!groupId || !before.current) return;
@@ -182,10 +183,12 @@ export function useReceiptScan(
         // A fresh reading replaces whatever grid was saved before.
         receiptInvolved: null,
         receiptAssignments: null,
-        // And whatever the bill last arrived as. A photograph clears the text
-        // for the same reason it clears the grid: what is kept has to describe
-        // the bill that is actually on the draft.
-        receiptText: text,
+        // And whatever the bill last arrived as. A photograph writes its own
+        // reading out as text (`billAsText`), replacing what was typed for the
+        // same reason it replaces the grid: what is kept has to describe the
+        // bill that is actually on the draft — and "Type it in" then opens on
+        // it, so a misread line is corrected rather than retaken.
+        receiptText: text ?? (billAsText(bill, result.total) || null),
         // A bill with lines claims the Items tab, unless somebody has moved
         // off it while the model read (`tabAfterScan`).
         ...(scanTab !== undefined ? { splitTab: scanTab } : {}),

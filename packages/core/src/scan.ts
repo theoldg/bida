@@ -156,7 +156,7 @@ const EXTRAS = ["discount", "tax", "tip"] as const;
 export type ExtraKind = (typeof EXTRAS)[number];
 
 /** A bill the app can work with: positive lines, and the extras beside them. */
-interface Bill {
+export interface Bill {
   items: BillItem[];
   extras: BillExtras;
 }

@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-30* — "Have a receipt image scan populate "type it in" … easy to
+  change". Write it in the shape the typed prompt already reads, so a
+  correction round-trips; the photo stopped clearing the box instead of a new
+  field appearing.
+
 - *2026-09-30* — "do proper research for the 3p options, I don't want to
   debug custom logic for ages", with a heuristic half-written. Try the library
   on the owner's own photo before writing one; "let's KISS" then cut the rules
@@ -75,7 +80,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — "The delete dialog after a long press should maintain the
   row-highlighted state in the background". One sentence, one state carried
   one step further — and every menu whose item asks a question gets it too.
-
-- *2026-09-29* — "fix both failing checks". Three had been waved off as
-  pre-existing flakes; one was a real race, one a stale expectation, one a
-  hidden frame. "Also red on the base" says whose it is, not that it is noise.
