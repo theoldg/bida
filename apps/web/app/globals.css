@@ -1248,7 +1248,7 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 /* Chip scale, for replacing a bill that is already assigned. */
 .btn-pair.pair-xs { display: inline-flex }
 /* Content-sized, not equal thirds: equal thirds squeeze the glyph out of the
-   longest label, which is the one with room for "Type it in" in full. */
+   longest label. */
 .btn-pair.pair-xs .btn { flex: 0 0 auto; font-size: 10.5px; font-weight: 500;
   padding: 4.5px 7px; gap: 4px; color: var(--ink-2) }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;

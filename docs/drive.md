@@ -48,7 +48,7 @@ phone rather than the screen — the same family as `offline` — and the scan
 button is still the app's own, pressed by number: the hidden file input opens a
 real chooser, this answers it with a real (1×1) image the client really
 downscales, and only the round trip to Gemini is faked. It arms the Items tab's
-**Type it in** as well, the stub being on the URL and not on the medium: `fill`
+**Type** door as well, the stub being on the URL and not on the medium: `fill`
 the box and press **Read it**, and the fixture comes back rather than a reading
 of what was typed — which still drives the dialog, its bar, its refusal and the
 draft it fills. It is the one way to

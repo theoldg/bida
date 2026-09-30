@@ -339,7 +339,7 @@ export function ScanPair({
       {typeIn ? (
         <button type="button" className={half} disabled={disabled} onClick={open(scan.openTyping)}>
           <Icon name="edit" size={icon} />
-          {register === "xs" ? copy.scan.typeIn.openLong : copy.scan.typeIn.open}
+          {register === "xs" ? copy.scan.typeIn.edit : copy.scan.typeIn.open}
         </button>
       ) : null}
     </div>

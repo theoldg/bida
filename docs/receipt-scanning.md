@@ -101,8 +101,8 @@ whichever medium it starts from. What that costs is room: three doors share the
 width of a phone, so the door says **"Type"** at the two full-width registers,
 where a third of 360 pixels holds ten characters or a pencil and not both. At the
 chip register — a bill already read, the control standing among its figures —
-the box is sized by its contents and it says "Type it in" in full, the way the
-camera's door already says "Scan" in one place and "Rescan" in another
+it says **"Edit"**, because the box opens on that bill written out (below), the
+way the camera's door says "Scan" in one place and "Rescan" in another
 (`copy.scan.typeIn`).
 
 The box itself is rendered by `useReceiptScan`, never by a screen, and rides
@@ -190,7 +190,7 @@ describe the bill actually on the draft — **with its own reading written out**
 (`billAsText`, `lib/scan/text.ts`): a line per item as a person would type it,
 "3 Chicken skewer 39.00", in the English labels, then tip, "Tax on top", each
 deduction with its minus, and the total only where the bill printed one. So a
-photo that misread one line is fixed in "Type it in" and re-read, not retaken.
+photo that misread one line is fixed under "Edit" and re-read, not retaken.
 Nothing else shows it: the bill's own lines and
 each person's copy of them are the reading, and printing the raw text under them
 would be the same thing twice.

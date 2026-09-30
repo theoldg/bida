@@ -1067,9 +1067,10 @@ export const copy = {
      * one act with two doors. An invitation, not a noun like "Bill text".
      */
     typeIn: {
-      /** Short, as three doors share a phone's width; the chip register fits the whole phrase. */
+      /** Short, as three doors share a phone’s width. */
       open: "Type",
-      openLong: "Type it in",
+      /** At the chip register a bill is already read, and the box opens on it (`billAsText`). */
+      edit: "Edit",
       title: "The bill as text",
       /**
        * Asks for items (the Items tab needs lines) and no format: per-unit or
