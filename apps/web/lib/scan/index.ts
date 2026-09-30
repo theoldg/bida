@@ -1,5 +1,5 @@
 import {
-  AI_STUDIO_URL, buildScanRequestBody, checkScan,
+  AI_STUDIO_URL, buildScanRequestBody, checkScan, correctOneLine,
   scanCurrency, type ScanLimitScope, type ScanMedium, type ScanProblem, type ScanResult,
 } from "@bida/core";
 import { groupToken } from "../seal";
@@ -131,11 +131,15 @@ async function readBill(
     ? await readOnOwnKey(encode, medium, own)
     : await readOnSharedKey(encode, medium, groupId, secret);
 
-  const result = parseScanResponse(answer);
-  if (result.error) throw new ScanRejectedError(result.error);
+  const read = parseScanResponse(answer);
+  if (read.error) throw new ScanRejectedError(read.error);
+  const billCurrency = scanCurrency(read, currency);
+  // A faded digit the unit price and the total both contradict, mended before
+  // the check so everything downstream sees the figure that adds up.
+  const result = correctOneLine(read, billCurrency);
   // The medium goes with it: a photograph with no total is a cropped
   // photograph, and a typed bill with no total is Tuesday (`checkScan`).
-  const problem = checkScan(result, scanCurrency(result, currency), medium);
+  const problem = checkScan(result, billCurrency, medium);
   if (problem) throw new ScanUnreliableError(problem);
   return result;
 }

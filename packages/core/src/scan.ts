@@ -10,10 +10,11 @@ import type { ReceiptDiscount } from "./types.js";
 import { sameLocalDay } from "./when.js";
 
 /**
- * One bill line as the model returns it. Exactly one cost is filled: the
- * printed line total (`amount`), or a typed price-of-one (`unitAmount` plus
- * `quantity`). Asking for a figure the bill doesn't hold makes the model
- * invent one, so `lineMinor` multiplies.
+ * One bill line as the model returns it. A typed bill fills one cost: the line
+ * total (`amount`) or a price-of-one (`unitAmount` plus `quantity`) — asking
+ * for a figure the bill doesn't hold makes the model invent one, so
+ * `lineMinor` multiplies. A photo fills `amount`, and `unitAmount` too where
+ * the till prints it, which only `correctOneLine` reads.
  */
 export interface ScanLineItem {
   /** As written, in the bill's own language. */
@@ -277,6 +278,44 @@ function sumBill(result: ScanResult, currency: CurrencyCode): number | null {
   }
   const extras = extrasMinor(bill.extras, currency);
   return extras === null ? null : sum + extras;
+}
+
+/**
+ * A photo's reading with one line's printed total swapped for its count times
+ * its printed unit price, when that alone makes the bill come to its total —
+ * a washed-out 8 read as a 6 (docs/scan-reading.md#one-faded-figure). Else the
+ * reading as it came, for `checkScan` to judge.
+ *
+ * **One line, never a combination**: two lines that each disagree are tried
+ * one at a time, and if more than one would square the bill there is no way
+ * to say which, so none is taken. The total is what vouches for a correction;
+ * a bill that already adds up is never touched.
+ */
+export function correctOneLine(result: ScanResult, currency: CurrencyCode): ScanResult {
+  const total = readAmount(result.total, currency);
+  const sum = sumBill(result, currency);
+  if (total === null || sum === null || sum === total) return result;
+
+  let found: ScanResult | null = null;
+  for (const [i, item] of result.lineItems.entries()) {
+    const printed = readAmount(item.amount, currency);
+    const unit = readAmount(item.unitAmount, currency);
+    const count = item.quantity;
+    if (printed === null || printed <= 0 || unit === null || unit <= 0) continue;
+    if (count === null || !Number.isInteger(count) || count <= 0) continue;
+    const product = unit * count;
+    if (!Number.isSafeInteger(product) || product === printed) continue;
+    const fixed: ScanResult = {
+      ...result,
+      lineItems: result.lineItems.map((li, j) => (
+        j === i ? { ...li, amount: minorToDecimalString(product, currency) } : li
+      )),
+    };
+    if (sumBill(fixed, currency) !== total) continue;
+    if (found) return result;
+    found = fixed;
+  }
+  return found ?? result;
 }
 
 /** Did the bill itself state a total, as opposed to us being able to work one out? */

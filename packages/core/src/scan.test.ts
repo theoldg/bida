@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  billTotalMinor, checkScan, lineMinor, normalizeScan, readBill, receiptExtras, scanCurrency,
+  billTotalMinor, checkScan, correctOneLine, lineMinor, normalizeScan, readBill, receiptExtras, scanCurrency,
   type ScanDiscount, type ScanLineItem, type ScanResult,
 } from "./scan.js";
 
@@ -453,5 +453,95 @@ describe("normalizeScan, on a bill that states no total", () => {
   // Almost never a title, and this bill names no merchant at all.
   it("takes no description from a bill with no name in it", () => {
     expect(normalizeScan(typed, "EUR", NOW)).not.toHaveProperty("description");
+  });
+});
+
+/** A till line with both figures printed: "2 x 2.49" over "4.98". */
+const both = (amount: string, unitAmount: string, quantity: number): ScanLineItem =>
+  ({ label: "x", labelEn: null, amount, unitAmount, quantity });
+
+describe("correctOneLine", () => {
+  it("mends a faded 8 read as a 6 when the unit price and the total both say so", () => {
+    // The Aldi roll: 2 x 2.49 printed over a washed-out 4.98.
+    const result = {
+      ...blank, total: "95.80",
+      lineItems: [line("1.98"), both("4.96", "2.49", 2), line("1.80"), line("87.04")],
+    };
+    const fixed = correctOneLine(result, "EUR");
+    expect(fixed.lineItems[1]!.amount).toBe("4.98");
+    expect(checkScan(fixed, "EUR")).toBeNull();
+    // Only the one figure moves.
+    expect(fixed.lineItems.map((li) => li.amount)).toEqual(["1.98", "4.98", "1.80", "87.04"]);
+  });
+
+  it("never touches a bill that already adds up, whatever a unit price says", () => {
+    const result = { ...blank, total: "10.00", lineItems: [both("8.00", "4.50", 2), line("2.00")] };
+    expect(correctOneLine(result, "EUR")).toBe(result);
+  });
+
+  it("takes the one line that squares the bill and leaves another that disagrees", () => {
+    const result = {
+      ...blank, total: "20.00",
+      // The first disagrees but mending it gets nowhere; the second squares it.
+      lineItems: [both("3.00", "1.00", 2), both("6.00", "4.00", 2), line("9.00")],
+    };
+    const fixed = correctOneLine(result, "EUR");
+    expect(fixed.lineItems.map((li) => li.amount)).toEqual(["3.00", "8.00", "9.00"]);
+    expect(checkScan(fixed, "EUR")).toBeNull();
+  });
+
+  it("takes neither when two lines could each square it alone", () => {
+    const result = {
+      ...blank, total: "12.00",
+      lineItems: [both("4.00", "3.00", 2), both("4.00", "3.00", 2)],
+    };
+    expect(correctOneLine(result, "EUR")).toBe(result);
+  });
+
+  it("mends at most one line: two faded figures stay a mismatch", () => {
+    const result = {
+      ...blank, total: "20.00",
+      lineItems: [both("4.96", "2.49", 2), both("6.00", "3.51", 2), line("8.06")],
+    };
+    const fixed = correctOneLine(result, "EUR");
+    expect(fixed).toBe(result);
+    expect(checkScan(fixed, "EUR")).toBe("mismatch");
+  });
+
+  it("leaves a mismatch the unit price can't explain", () => {
+    const result = { ...blank, total: "11.00", lineItems: [both("4.96", "2.49", 2), line("5.00")] };
+    expect(correctOneLine(result, "EUR")).toBe(result);
+  });
+
+  it("counts the tip and the discounts in what the bill must come to", () => {
+    const result = {
+      ...blank, total: "10.00", tip: "1.00", discounts: [off("0.98")],
+      lineItems: [both("4.96", "2.49", 2), line("5.00")],
+    };
+    expect(correctOneLine(result, "EUR").lineItems[0]!.amount).toBe("4.98");
+  });
+
+  it("ignores a line with no count, no unit price or no printed total", () => {
+    const result = {
+      ...blank, total: "10.00",
+      lineItems: [
+        { label: "x", labelEn: null, amount: "4.96", unitAmount: "2.49", quantity: null },
+        { label: "x", labelEn: null, amount: "4.96", unitAmount: null, quantity: 2 },
+        each("2.49", 2),
+      ],
+    };
+    expect(correctOneLine(result, "EUR")).toBe(result);
+  });
+
+  it("leaves a bill with no total alone: nothing vouches for a correction", () => {
+    const result = { ...blank, lineItems: [both("4.96", "2.49", 2)] };
+    expect(correctOneLine(result, "EUR")).toBe(result);
+  });
+
+  it("writes the mended figure in the currency's own decimals", () => {
+    const yen = { ...blank, total: "1400", lineItems: [both("600", "300", 3), line("500")] };
+    expect(correctOneLine(yen, "JPY").lineItems[0]!.amount).toBe("900");
+    const dinar = { ...blank, total: "3.750", lineItems: [both("2.300", "1.250", 2), line("1.250")] };
+    expect(correctOneLine(dinar, "BHD").lineItems[0]!.amount).toBe("2.500");
   });
 });

@@ -222,13 +222,14 @@ describe("the two media", () => {
   });
 
   /**
-   * A till prints the line total, so a photo's is never computed; a typist writes
-   * the unit price and the total exists nowhere (`lineMinor`).
+   * A till prints the line total, so a photo's is never computed — its unit
+   * price is copied beside it, uncorrected, for `correctOneLine` to arbitrate;
+   * a typist writes the unit price and the total exists nowhere (`lineMinor`).
    */
   it("asks a photograph for the line total and a typed bill for either figure", async () => {
     const photo = promptOf(await wrapped("QUJD", "kind", "photo"));
     expect(photo).toContain("never a product you work out yourself");
-    expect(photo).toContain("Leave unitAmount null on every line");
+    expect(photo).toContain("don't correct either one from the other");
 
     const text = promptOf(await wrapped("QUJD", "kind", "text"));
     expect(text).toContain("Do not multiply and do not divide");

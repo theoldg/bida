@@ -85,8 +85,11 @@ const PHOTO_FIELDS_HEAD =
   + "that line — the figure in the receipt's own amount column, already multiplied out "
   + "where a count is printed (a line reading \"2 ... 18.00\" has amount \"18.00\", not "
   + "\"9.00\") — never the per-unit price, and never a product you work out yourself. "
-  + "Leave unitAmount null on every line: a till prints the extension, and that is the "
-  + "figure to return. ";
+  + "Where the receipt also prints the price of one unit for that line (a row like "
+  + "\"2 x 1.79\" above or beside it), return that as unitAmount, in the same "
+  + "normalized notation; otherwise leave unitAmount null. Copy both figures exactly as "
+  + "printed, even where the quantity times unitAmount doesn't come to the amount: "
+  + "don't correct either one from the other. ";
 
 /**
  * Casing is the only thing the reader may change about a label; words and
