@@ -183,6 +183,28 @@ describe("convertSplitMode", () => {
     }
   });
 
+  // A zero share is nobody: kept, it would light every row of an empty
+  // "as amounts" tab as in.
+  it("moves to exact with nobody in when there is nothing to hand out", () => {
+    const spec = convertSplitMode(0, { mode: "equal", members: ["a", "b", "c"] }, "exact");
+    expect(spec).toEqual({ mode: "exact", amounts: {} });
+    expect(splitParticipants(spec)).toEqual([]);
+  });
+
+  it("leaves out whoever a tiny total hands nothing", () => {
+    const spec = convertSplitMode(2, { mode: "equal", members: ["a", "b", "c"] }, "exact");
+    expect(spec.mode === "exact" && Object.values(spec.amounts)).toEqual([1, 1]);
+    expect(splitParticipants(spec)).toHaveLength(2);
+    expect(validateSplit(2, spec).ok).toBe(true);
+  });
+
+  it("reads a zero amount already written as out", () => {
+    const spec: SplitSpec = { mode: "exact", amounts: { a: 500, b: 0 } };
+    expect(splitParticipants(spec)).toEqual(["a"]);
+    expect(resolveSplit(500, spec).shares).toEqual({ a: 500 });
+    expect(shareOf(500, spec, "b")).toBe(0);
+  });
+
   it("survives converting a zero-total expense", () => {
     const spec = convertSplitMode(0, { mode: "equal", members: ["a", "b", "c"] }, "percent");
     expect(validateSplit(0, spec).ok).toBe(true);

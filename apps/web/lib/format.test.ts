@@ -32,10 +32,10 @@ describe("rateText", () => {
 
 describe("splitFooter", () => {
   it("never reports a zero total as a satisfied split", () => {
-    // A blank amount split "as amounts" with everyone on zero: 0 === 0, but
-    // "€0.00 of €0.00 allocated" would claim a settled split. It says nothing —
-    // the missing amount is the amount field's to report, flashing on Save.
-    const check = validateSplit(0, { mode: "exact", amounts: { a: 0, b: 0 } });
+    // A blank amount split evenly: 0 === 0, but "€0.00 of €0.00 allocated"
+    // would claim a settled split. It says nothing — the missing amount is the
+    // amount field's to report, flashing on Save.
+    const check = validateSplit(0, { mode: "equal", members: ["a", "b"] });
     expect(check.ok).toBe(true);
     expect(splitFooter(check, "EUR")).toBeNull();
   });

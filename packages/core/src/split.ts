@@ -51,14 +51,29 @@ function hash32(input: string): number {
   return h >>> 0;
 }
 
-/** Members named by a spec, always sorted, always deduplicated. */
+/**
+ * Members named by a spec, always sorted, always deduplicated. **In an `exact`
+ * split a zero is nobody**: the figure is the whole statement of being in, and
+ * typing 0 clears it — so a zero reads as out here too, whatever wrote it.
+ */
 export function splitParticipants(spec: SplitSpec): Id[] {
   const ids =
     spec.mode === "equal" ? spec.members
-    : spec.mode === "exact" ? Object.keys(spec.amounts)
+    : spec.mode === "exact" ? Object.keys(exactAmounts(spec.amounts))
     : spec.mode === "shares" || spec.mode === "receipt" ? Object.keys(spec.weights)
     : Object.keys(spec.bps);
   return [...new Set(ids)].sort();
+}
+
+/**
+ * An exact split's amounts with the zeros dropped — the only shape one is
+ * built in. Converting hands someone a zero when the total is zero or has
+ * fewer minor units than people, and a kept zero would read as "in".
+ */
+function exactAmounts(amounts: Record<Id, number>): Record<Id, number> {
+  const out: Record<Id, number> = {};
+  for (const [id, v] of Object.entries(amounts)) if (v !== 0) out[id] = v;
+  return out;
 }
 
 /** The same map, keyed in sorted order. */
@@ -246,7 +261,7 @@ export function ownCurrencySplit<S extends SplitSpec>(entry: SplitBearing & { sp
     const { shares } = resolveSplit(entry.amountMinor, { mode: "shares", weights: split.amounts }, {
       tiebreakSeed: entry.id,
     });
-    return { mode: "exact", amounts: shares } as S;
+    return { mode: "exact", amounts: exactAmounts(shares) } as S;
   } catch {
     return entry.split;
   }
@@ -367,7 +382,7 @@ export function convertSplitMode(
       return { mode: "equal", members: participants };
     case "exact": {
       const { shares } = resolveSplit(totalMinor, spec, options);
-      return { mode: "exact", amounts: shares };
+      return { mode: "exact", amounts: exactAmounts(shares) };
     }
     case "shares": {
       const weights: Record<Id, number> = {};

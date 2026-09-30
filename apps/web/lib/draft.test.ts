@@ -32,6 +32,14 @@ describe("the arithmetic tabs are independent", () => {
     expect(d.splits.exact).toEqual({ mode: "exact", amounts: { [A]: 3000, [B]: 3000, [C]: 3000 } });
   });
 
+  // Everybody is in Evenly by default, but a zero each is nobody: opened
+  // before the amount is typed, As amounts starts empty, with no row lit.
+  it("hands a first-time As amounts nobody while the total is still zero", () => {
+    const d = open(expense({ amountText: "" }), "exact", 0);
+    expect(d.splits.exact).toEqual({ mode: "exact", amounts: {} });
+    expect(splitParticipants(activeSplit(d))).toEqual([]);
+  });
+
   it("keeps somebody in As parts after Evenly leaves them out", () => {
     // The reported bug, in three taps: give Cy two parts, go back to Evenly,
     // drop Cy, come back. Cy's two parts are still there.

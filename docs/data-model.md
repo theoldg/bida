@@ -84,7 +84,9 @@ Expense {
 ```
 
 Split payloads: `equal { members[] }`, `exact { amounts }`, `shares { weights }`,
-`percent { bps }` (basis points), `receipt { weights }`. **`percent` is legacy
+`percent { bps }` (basis points), `receipt { weights }`. **An `exact` zero is
+nobody**: none is ever written, and `splitParticipants` reads one as out — so
+converting a zero total into "as amounts" starts with no one in. **`percent` is legacy
 and read-only** ([ADR-0010](decisions/0010-what-an-entry-is.md)); **`receipt` is
 the only mode nobody types** — a scanned bill writes it and `convertSplitMode`
 never converts into it ([ADR-0016](decisions/0016-receipts.md)).

@@ -30,6 +30,11 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   on the owner's own photo before writing one; "let's KISS" then cut the rules
   around it too.
 
+- *2026-09-30* — "everyone is highlighted, while no one should be … the state
+  is confusing". The row was the symptom; "neat and logical" asked for the
+  rule underneath. Two meanings of zero in one mode became one, in core, where
+  every reader of a split already looks.
+
 - *2026-09-30* — "remove the "rest" buttons … does that make sense?" A
   question that is really a spec: build it. The edge it skipped — clearing the
   only payer collapsed straight back — was the agent's to find and settle.
@@ -74,8 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — "fix both failing checks". Three had been waved off as
   pre-existing flakes; one was a real race, one a stale expectation, one a
   hidden frame. "Also red on the base" says whose it is, not that it is noise.
-
-- *2026-09-29* — "only fade the skeletons if up over 100 ms, otherwise cut...
-  or advise me otherwise?" The "or" invites a view, not a veto: agree in a
-  line, then find where "up" really began — a reopen's skeleton started on
-  another route.
