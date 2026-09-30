@@ -5,6 +5,7 @@ import {
 import { copy } from "./copy";
 import { printedBill } from "./scan/items";
 import { dayLabel, money, plural, rateText } from "./format";
+import { splitPhrase } from "./row-meta";
 
 /**
  * Which sentence the log gets for a revision (`copy.history` holds the words),
@@ -186,14 +187,12 @@ export function describe(
     if (rev.isCreate) {
       const amt = cash(field("baseAmountMinor")?.after);
       const split = field("split")?.after as SplitSpec | undefined;
-      const n = split ? splitParticipants(split).length : undefined;
-      const ways = n ? plural(n, copy.noun.way) : undefined;
-      const shared = kind === "income";
+      const n = split ? splitParticipants(split).length : 0;
+      // The ledger row's words (`splitPhrase`), so "as parts" isn't lost here.
+      const how = split?.mode && n ? splitPhrase(kind, n, split.mode) : undefined;
       return {
         what: rev.imported ? said.importedEntry(who, noun, from) : said.createdEntry(who, noun),
-        diff: amt !== undefined
-          ? { now: `${amt}${ways ? ` · ${shared ? copy.group.sharedWays(ways) : copy.group.splitWays(ways)}` : ""}` }
-          : undefined,
+        diff: amt !== undefined ? { now: how ? `${amt} · ${how}` : amt } : undefined,
       };
     }
     if (rev.isDelete) return { what: said.deletedEntry(who, noun) };
@@ -221,8 +220,10 @@ export function describe(
     if (split) {
       const was = split.before as SplitSpec | null;
       const now = split.after as SplitSpec;
-      // Who it is spent on, then how much each owes. Only the first, and moving a
-      // part between names reads "changed who's involved" over the same two names.
+      // Who it is spent on, then how much each owes — both, when both moved:
+      // adding Chewie while going from parts to evenly halved Han's share, and
+      // naming only the people never said so. An even split joined by one more
+      // reads "Evenly" either side, so it stays one line.
       const wasWho = namesOf(was);
       const nowWho = namesOf(now);
       const wasHow = shareLine(was, rev.before);
@@ -232,8 +233,9 @@ export function describe(
           what: said.changedInvolved(who), label: named.involved,
           diff: { was: wasWho || undefined, now: nowWho },
         });
-      } else if (JSON.stringify(proportions(was)) !== JSON.stringify(proportions(now))
-        && wasHow !== nowHow) {
+      }
+      if (wasHow !== nowHow && (wasWho !== nowWho
+        || JSON.stringify(proportions(was)) !== JSON.stringify(proportions(now)))) {
         parts.push({
           what: said.changedShares(who), label: named.split,
           diff: { was: wasHow || undefined, now: nowHow },

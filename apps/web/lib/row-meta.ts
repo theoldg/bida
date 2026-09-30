@@ -22,6 +22,18 @@ function ladder(rungs: string[]): string[] {
   return rungs.filter((rung, i) => rung !== rungs[i - 1]);
 }
 
+/**
+ * How the amount was cut, in full — "split 3 ways", "3 people, as parts". The
+ * ledger row's longest rung, and the history's word for the same thing: a
+ * parts split logged as "split 3 ways" reads as an even one.
+ */
+export function splitPhrase(kind: "expense" | "income", ways: number, mode: SplitSpec["mode"]): string {
+  if (mode !== "equal") {
+    return copy.group.splitAs(plural(ways, copy.noun.person), copy.split.mode[mode].toLowerCase());
+  }
+  return (kind === "income" ? copy.group.sharedWays : copy.group.splitWays)(plural(ways, copy.noun.way));
+}
+
 export function expenseMeta({ payer, coPayers, kind, ways, mode }: {
   payer: string;
   /** The names of whoever paid *besides* `payer`. */
@@ -43,9 +55,7 @@ export function expenseMeta({ payer, coPayers, kind, ways, mode }: {
 
   const count = plural(ways, copy.noun.way);
   const how = (kind === "income" ? copy.group.sharedWays : copy.group.splitWays)(count);
-  const howFull = mode === "equal"
-    ? how
-    : copy.group.splitAs(plural(ways, copy.noun.person), copy.split.mode[mode].toLowerCase());
+  const howFull = splitPhrase(kind, ways, mode);
 
   return ladder([
     joined(who, howFull),

@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
-  groupCreateOf, isCoSponsored, isImported, payerList, receiptExtras, resolvePayers, resolveEntrySplit,
-  restoreEntryDrafts, sortOps, splitParticipants,
+  groupCreateOf, isCoSponsored, isImported, ownCurrencySplit, payerList, receiptExtras, resolvePayers,
+  resolveEntrySplit, resolveSplit, restoreEntryDrafts, sortOps, splitParticipants,
   type CurrencyCode, type Expense, type Group, type Op, type Settlement,
 } from "@bida/core";
 import { Card, Eyebrow, KV, signClass } from "@/components/bits";
@@ -414,6 +414,14 @@ function ExpenseDetail({ expense, kind, group, data }: {
   try {
     shares = resolveEntrySplit(expense).shares;
   } catch { /* a broken split still deserves a readable screen */ }
+  // The same shares in the entry's own currency, beside the base ones as the
+  // payers' are: the form showed these figures, so the saved entry does too.
+  let ownShares: Record<string, number> = {};
+  if (foreign) {
+    try {
+      ownShares = resolveSplit(expense.amountMinor, ownCurrencySplit(expense), { tiebreakSeed: expense.id }).shares;
+    } catch { /* as above */ }
+  }
   // A receipt expense keeps its grid (ADR-0016), so each person's row opens
   // onto their copy of the bill. Seeded with the entry's id, the seed the saved
   // weights were rounded with, so these lines are those weights itemised.
@@ -472,7 +480,10 @@ function ExpenseDetail({ expense, kind, group, data }: {
               ? ` · ${(expense.split.bps[m.id] ?? 0) / 100}%`
               : "";
           const k = yours(m.id, m.name, detail);
-          const v = money(shares[m.id] ?? 0, group.baseCurrency);
+          const v = foreign ? <>
+            {money(shares[m.id] ?? 0, group.baseCurrency)}
+            <span style={{ color: "var(--muted)" }}> ({money(ownShares[m.id] ?? 0, expense.currency)})</span>
+          </> : money(shares[m.id] ?? 0, group.baseCurrency);
           const lines = bill?.[m.id];
           if (!lines?.length) return <KV key={m.id} k={k} v={v} />;
           return <MemberBill key={m.id} name={k} total={v} lines={lines}

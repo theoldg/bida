@@ -692,9 +692,6 @@ function EditEntryScreen() {
                 members={data.members}
                 me={data.me}
                 title={copy.entryKind.split[kind]}
-                totalMinor={baseMinor}
-                totalUnknown={foreign && groupRate === undefined}
-                currency={base}
                 amountMinor={amountMinor}
                 amountCurrency={draft.currency}
                 spec={activeSplit}

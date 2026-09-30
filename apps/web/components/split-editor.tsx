@@ -57,24 +57,15 @@ interface ReceiptTabProps {
   editItemsHref: string;
 }
 
-export function SplitEditor({ members, me, title, totalMinor, totalUnknown, currency, amountMinor, amountCurrency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt }: {
+export function SplitEditor({ members, me, title, amountMinor, amountCurrency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt }: {
   members: Member[];
   me: string | undefined;
   /** "Split" for both an expense and an income, "To" for a transfer — `copy.entryKind.split`. */
   title: string;
-  /** The expense total in the group's base currency — what the split divides. */
-  totalMinor: number;
   /**
-   * The total isn't zero, it's unknowable: a foreign amount with no rate arrives
-   * as 0. Shares read "—", not €0.00, and the footer stays out of it — the form
-   * above names the missing rate.
-   */
-  totalUnknown?: boolean;
-  currency: string;
-  /**
-   * The entry's amount in its own currency, and that currency. "As amounts"
-   * is typed against these, as the payers are: they are the figures on the
-   * bill, and they need no rate.
+   * The entry's amount in its own currency, and that currency — what the
+   * split divides and every share is shown in, as the payers are: they are
+   * the figures on the bill, and they need no rate.
    */
   amountMinor: number;
   amountCurrency: string;
@@ -100,11 +91,12 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
   // button of its own: touching any of the three arithmetic tabs converts it away.
   const legacy = spec.mode === "percent";
   const showReceipt = tab === "receipt" && receipt !== null;
-  // "As amounts" alone is in the entry's own currency; every other tab's
-  // read-out is what lands in a balance, so it is in the base.
+  // Every read-out is in the entry's own currency, the one the amount above
+  // and the payers are typed in: a WUP bill cut into CRD shares mixes two
+  // units on one form. The base figure is the entry screen's to show, beside it.
   const own = !showReceipt && spec.mode === "exact";
-  const divided = own ? amountMinor : totalMinor;
-  const shownCurrency = own ? amountCurrency : currency;
+  const divided = amountMinor;
+  const shownCurrency = amountCurrency;
   // Receipt draws its own split, and none until its grid is filled: an
   // arithmetic tab's split here would be a verdict on a tab nobody is using.
   const shown: SplitSpec | null = showReceipt ? receiptSplit : spec;
@@ -132,8 +124,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
   // "N of total allocated" only means something when typing amounts: Evenly
   // and As parts land on the total by construction, and Receipt's is derived.
   // Every mode still surfaces a real problem (nobody, over-allocated, no total).
-  // A missing rate leaves the base total unknowable, but not the amount typed.
-  const showFooter = (own || !totalUnknown) && foot !== null
+  const showFooter = foot !== null
     && (showReceipt ? !foot.ok : (own || !foot.ok));
 
   function toggle(memberId: string) {
@@ -215,7 +206,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
 
         <div className="splitlist">
           {showReceipt && receipt ? (
-            <ReceiptPanel {...receipt} members={members} me={me} currency={currency}
+            <ReceiptPanel {...receipt} members={members} me={me} currency={amountCurrency}
               shares={shares} included={included} />
           ) : members.map((m, i) => {
             const on = included.has(m.id);
@@ -284,9 +275,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
                   {m.name}
                 </span>
                 <span className="rmeta" style={{ display: "block" }}>
-                  {!on ? copy.split.notInvolved
-                    : totalUnknown ? copy.none
-                    : money(shares[m.id] ?? 0, currency)}
+                  {!on ? copy.split.notInvolved : money(shares[m.id] ?? 0, amountCurrency)}
                 </span>
               </span>
             );
@@ -341,7 +330,7 @@ function ReceiptPanel({
   members: Member[];
   me: string | undefined;
   currency: string;
-  /** Each involved member's share of the receipt, in the group's base currency. */
+  /** Each involved member's share of the receipt, in the bill's own currency. */
   shares: Record<string, number>;
   included: Set<string>;
 }) {

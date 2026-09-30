@@ -569,7 +569,11 @@ export function WhoHadWhat({
                             aria-label={folded
                               ? (run?.detailed
                                 ? copy.items.hadSome(m.name, said(item), line.count)
-                                : copy.items.hadAll(m.name, said(item), line.count))
+                                // Anybody else on the run makes it shared: "Leia had all 2"
+                                // beside "Luke had all 2" reads as four salads.
+                                : run && [...run.marks].some(([id, v]) => id !== m.id && v === "all")
+                                  ? copy.items.sharedAll(m.name, said(item), line.count)
+                                  : copy.items.hadAll(m.name, said(item), line.count))
                               : part
                                 ? copy.items.hadPortion(m.name, said(item), part.index, part.of)
                                 : copy.items.had(m.name, said(item))}>

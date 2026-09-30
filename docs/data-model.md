@@ -236,8 +236,10 @@ the figures on the bill, needing no rate. They sum to `amountMinor`, and
 `resolveEntrySplit` apportions `baseAmountMinor` by them — ask it, never
 `resolveSplit`, of a stored entry. Entries written before this hold base
 amounts summing to `baseAmountMinor`; the same call reads them unchanged and
-the form converts them on opening (`ownCurrencySplit`). The editor's other
-tabs read out in the base, since that is what lands in a balance.
+the form converts them on opening (`ownCurrencySplit`). Every tab reads out in
+the entry's own currency too, so a WUP bill is never cut into CRD shares; the
+entry screen puts the base figure first and the own one beside it, as it does
+for payers.
 
 **`remainderAbsorbedBy` is diagnostic, not UI.** Determinism outranks fairness:
 two phones folding the same ops must produce byte-identical splits or balances

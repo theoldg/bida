@@ -116,6 +116,56 @@ suite("describe", () => {
     expect(latest!.diff!.now).not.toContain("Marie");
   });
 
+  it("names the shares too when the people and the shares both moved", async () => {
+    // Parts to evenly while somebody joins: Theo's share halved, and a line
+    // naming only the people never said so.
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, {
+      split: { mode: "shares", weights: { [theo]: 2, [marie]: 1 } },
+    });
+    const cy = await addMember(groupId, theo, "Cy");
+    await editExpense(groupId, theo, expenseId, {
+      split: { mode: "equal", members: [theo, marie, cy] },
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo edited this expense");
+    expect(latest!.also).toEqual([
+      { label: "Who’s involved", was: "Marie, Theo", now: "Cy, Marie, Theo" },
+      { label: "Split", was: "Marie ×1 · Theo ×2", now: "Evenly" },
+    ]);
+  });
+
+  it("keeps one line for an even split somebody joined", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    const cy = await addMember(groupId, theo, "Cy");
+    await editExpense(groupId, theo, expenseId, {
+      split: { mode: "equal", members: [theo, marie, cy] },
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed who’s involved");
+  });
+
+  it("says how a new entry was split in the ledger's words", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Siurek", baseCurrency: "EUR", myName: "Theo",
+    });
+    const marie = await addMember(groupId, theo, "Marie");
+    await addExpense(groupId, theo, {
+      description: "Beers",
+      occurredAt: Date.now(),
+      amountMinor: 3_000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "shares", weights: { [theo]: 2, [marie]: 1 } },
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.diff!.now).toBe("€30.00 · 2 people, as parts");
+  });
+
   it("reads both lines of a split in one order, so the pair can be compared", async () => {
     // A member id is a hash of the name (ADR-0034) and `splitParticipants`
     // sorts by id, so the stored order has nothing to do with the read one:

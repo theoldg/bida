@@ -1186,6 +1186,8 @@ export const copy = {
     mergeItem: (label: string, n: number) => `Show the ${n} ${label} portions as one line`,
     had: (name: string, label: string) => `${name} had ${label}`,
     hadAll: (name: string, label: string, n: number) => `${name} had all ${n} ${label}`,
+    /** The same cell while somebody else is on every portion too. */
+    sharedAll: (name: string, label: string, n: number) => `${name} shared the ${n} ${label}`,
     /** A cell that cannot be tapped like the others: the tap opens the line. */
     hadSome: (name: string, label: string, n: number) =>
       `${name} had some of the ${n} ${label}. Open the line to see which`,

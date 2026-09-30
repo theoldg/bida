@@ -377,6 +377,9 @@ more than one moved, **no field outranks another**: the line says only that the
 entry was edited, and each field that moved gets a labelled was/now line under
 it. Ranking them would caption a revision "changed who's involved" and hide
 that the amount had gone back — the one thing an audit trail exists to answer.
+A split is two questions, who and how much each, and a save that moved both
+gets both lines; a new entry's line uses the ledger row's words
+(`splitPhrase`), so a parts split never reads as "split 3 ways".
 
 ## Gotchas
 
