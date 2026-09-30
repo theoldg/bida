@@ -1654,6 +1654,8 @@ dialog.scrim::backdrop { background: transparent }
 }
 .splitrow { display: flex; align-items: center; gap: 10px; padding: 7px 12px;
   border-bottom: 1px solid var(--rule-soft); position: relative }
+/* The shorthand above would undo `.inrow`'s stronger divider (it comes later). */
+.splitrow.inrow { border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent) }
 .splitin { width: 82px; text-align: right; background: transparent; border: 0;
   font: inherit; font-size: 14px; color: var(--ink);
   outline: none; font-variant-numeric: tabular-nums }

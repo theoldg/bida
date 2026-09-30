@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-30* — "add subtle dividers between selected rows (there already are
+  some between unselected)". The rule for it already existed; a shorthand
+  further down the file had quietly undone it. Look for the rule before
+  writing a new one.
+
 - *2026-09-30* — "as Luke, pretending to be a newcomer". Check every
   balance by hand as you go; they all held. What a stranger trips on is what
   isn't drawn: empty grid cells, a disabled Done that looks live, history that
@@ -76,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   flashing" — a race only a phone loses. Headless Chrome never showed it, even
   throttled: make it impossible by construction. The fold-out asked alongside
   it was tried on the phone and undone — "keep the bug fix".
-
-- *2026-09-29* — "Consider the banner seen whenever the ledger is open",
-  then a fold-back animation, then "remove the full history link". Three asks
-  on one line in a row: each shrank it. The cap went with the link, or four of
-  twelve would have been all anyone could reach.

@@ -525,6 +525,9 @@ share, but too small to be a target.
 - Something wrong on "the app" rather than one screen is a shell bug: look at
   `.app` / `.appbody` / `.scroll` in `globals.css` first, and check the fix on a
   screen that overflows.
+- **A later `border-bottom` shorthand undoes a state's colour.** `.splitrow`
+  sits below `.inrow` in `globals.css`, so its shorthand reset the stronger
+  divider and rows in the split merged into one wash; `.splitrow.inrow` restates it.
 - iOS Safari in a tab ignores `user-scalable=no` and lets `touch-action` stop
   only double-tap; `preventDefault` on `gesturestart` is what holds the scale.
 - No shadcn/ui dependency exists, and no component library's variable names sit
