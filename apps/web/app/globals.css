@@ -636,6 +636,11 @@ html[data-resuming="manual"] .ghost-manual { display: block }
   text-overflow: ellipsis }
 .rmeta { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; margin-top: 1px }
+/* A name with no line under it that stands as tall as one with, name centred:
+   the amount columns, where a line coming and going with the figure moved
+   every row below it. The sum is `.rtitle` plus `.rmeta`'s margin and line. */
+.rmain.solo { display: flex; flex-direction: column; justify-content: center;
+  min-height: calc(13.5px * 1.25 + 1px + 11px * 1.5) }
 /* A group row's new-changes count: ink, not colour — green and red are money's. */
 .rmeta .rnew { color: var(--ink); font-weight: 600 }
 .ramt { text-align: right; flex: none }

@@ -145,15 +145,12 @@ function PayersScreen() {
                     })}
                     style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 0,
                       opacity: on ? 1 : .45 }}>
-                    <span className="rmain">
+                    {/* No line under the name: the field beside it already is
+                        the figure, and an empty one already says "didn't pay" —
+                        same as the split editor's "as amounts". */}
+                    <span className="rmain solo">
                       <span className="rtitle" style={{ display: "block" }}>
                         {m.name}
-                      </span>
-                      <span className="rmeta" style={{ display: "block" }}>
-                        {/* The field beside this line already is the figure —
-                            a stray "€0.00" under it would say the same thing
-                            twice, same as the split editor's exact mode. */}
-                        {on ? "" : copy.payers.didnt[voice]}
                       </span>
                     </span>
                   </button>

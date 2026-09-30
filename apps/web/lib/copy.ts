@@ -955,10 +955,6 @@ export const copy = {
       expense: "Who paid",
       income: "Who received it",
     } as Voiced<string>,
-    didnt: {
-      expense: "didn’t pay",
-      income: "didn’t receive any",
-    } as Voiced<string>,
     contribution: {
       expense: (name: string) => `${name}’s contribution`,
       income: (name: string) => `How much ${name} received`,

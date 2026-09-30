@@ -271,19 +271,21 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             // The dimming rides on the name, not the button: the plus is the
             // affordance for putting someone back in and must stay legible on a
             // row that is otherwise faded out.
+            // In "as amounts" the field beside the name already is the figure,
+            // and an empty one says "not involved" by itself — so no line under
+            // it, and a name as tall as one with (`.solo`) so rows never move.
             const name = (
-              <span className="rmain" style={{ opacity: on ? 1 : .45 }}>
+              <span className={`rmain${typing ? " solo" : ""}`} style={{ opacity: on ? 1 : .45 }}>
                 <span className="rtitle" style={{ display: "block", fontSize: 13.5 }}>
                   {m.name}
                 </span>
-                <span className="rmeta" style={{ display: "block" }}>
-                  {/* In "as amounts" the field beside this line already is the figure,
-                      and a stray "€0.00" under it would contradict it. */}
-                  {!on ? copy.split.notInvolved
-                    : typing ? ""
-                    : totalUnknown ? copy.none
-                    : money(shares[m.id] ?? 0, currency)}
-                </span>
+                {typing ? null : (
+                  <span className="rmeta" style={{ display: "block" }}>
+                    {!on ? copy.split.notInvolved
+                      : totalUnknown ? copy.none
+                      : money(shares[m.id] ?? 0, currency)}
+                  </span>
+                )}
               </span>
             );
             const lead = { display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 } as const;
