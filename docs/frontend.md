@@ -277,8 +277,8 @@ API is reached with `fetch`.
   as it was. "Gone" is only
   an id this phone has never had.
 - **The ledger's new-changes line** (`components/new-edits.tsx`) sits under the
-  you-owe card, drawn as a date line in full-ink text, with a chevron under
-  the card's own that swings into a cross as it opens, because folding it clears it:
+  you-owe card, drawn as a date line in full-ink text, with a chevron at its
+  right edge that swings into a cross as it opens, because folding it clears it:
   "4 new changes", unfolding onto every one of those revisions and nothing
   else — no cap, since there is no link on to the rest. New is `unseenRevisions`
   (`core/history.ts`): an op numbered past `groupKeys.seenSeq` whose stamp is

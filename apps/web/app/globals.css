@@ -751,11 +751,11 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   border-top: 1px solid var(--rule-soft); color: var(--ink) }
 /* A down-chevron whose two strokes swing into a cross once open: folding it
    back clears the line, and a chevron alone promised it could be reopened.
-   20px and 15px in, so it centres on the you-owe card's `.mysumchev` above
-   (16px gutter + 1px border + 14px padding + 10px); a glyph at the bare row
-   edge sat in no column. Its negative margin keeps the line a date line's
-   height. */
-.neweditsglyph { width: 20px; height: 20px; flex: none; margin: -4px 15px -4px auto;
+   Its strokes stop 5px inside the 20px box, so -5px puts them on the row's
+   16px gutter, mirroring the text. Centring it under the you-owe card's
+   chevron was tried, and sat too far in. The negative block margin keeps the
+   line a date line's height. */
+.neweditsglyph { width: 20px; height: 20px; flex: none; margin: -4px -5px -4px auto;
   fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; color: var(--muted) }
 .neweditsglyph line { transform-box: view-box; transform-origin: 12px 12px;
   transition: transform .26s cubic-bezier(.2, .8, .2, 1) }
