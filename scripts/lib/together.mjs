@@ -39,7 +39,9 @@ export function annotation(level, title, text) {
     for (let j = i + 1; j < all.length && /^ {4,}\S/.test(all[j]); j++) detail.push(all[j]);
     return [line, ...detail];
   });
-  const tail = (failing.length ? failing : all).slice(-60).join("\n");
+  // The head of the failures (the first is the one to read), the tail of a crash.
+  const kept = failing.length ? failing.slice(0, 40) : all.slice(-40);
+  const tail = kept.map((l) => (l.length > 400 ? `${l.slice(0, 400)}…` : l)).join("\n");
   const escape = (s) => s.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
   console.log(`::${level} title=${escape(title).replace(/[:,]/g, " ")}::${escape(tail)}`);
 }
