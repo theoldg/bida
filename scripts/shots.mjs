@@ -100,9 +100,11 @@ async function addEntry(
     // Marie chips in 20,00; whoever was already paying takes the rest.
     await page.locator(".rows .row").filter({ hasText: "Marie" })
       .getByLabel(/contribution/).fill("2000");
-    // ...and the person who was already paying takes the remainder.
-    await page.locator(".rows .row").filter({ hasText: "Theo" })
-      .getByRole("button", { name: /the rest$/i }).click();
+    // ...and the person who was already paying takes the remainder: a tap on
+    // the name clears the whole amount they held, a second hands them the rest.
+    const theo = page.locator(".rows .row").filter({ hasText: "Theo" });
+    await theo.getByRole("button", { name: /^Clear/ }).click();
+    await theo.getByRole("button", { name: /the rest$/i }).click();
     await page.getByRole("button", { name: "Done" }).click();
     await page.waitForURL(/entry\/edit/);
   }
@@ -230,7 +232,7 @@ async function main() {
       await page.getByRole("button", { name: "As amounts" }).click();
       // 25 of the 120, deliberately: the shot is there to catch the shortfall
       // line reading in money, not "9500 minor units".
-      await page.getByLabel(/Marie.s amount/).fill("25");
+      await page.getByRole("textbox", { name: /Marie.s amount/ }).fill("25");
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-expense-split-amounts.png`) });
       process.stdout.write(`${theme}/expense-split-amounts `);

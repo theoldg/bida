@@ -159,7 +159,9 @@ API is reached with `fetch`.
   (`confirmAct`, `lib/viewport.ts`). That is what makes each column of figures
   a chain of its own rather than a stretch of one long one: the entry form runs
   amount → note → fold, and the split editor's "as amounts" runs first person →
-  … → last person → fold, started by the tap that picks a row. `walkFields`
+  … → last person → fold, started by a tap on a field. **A tap on a name in
+  either column is not a focus**: it clears a figure, hands an empty row what is
+  left, and types only when the column is already full or over (`tapAmount`). `walkFields`
   (`components/viewport.tsx`) is the whole of it, hung on `.scroll` because the
   next field is rarely a sibling; it walks that screen's fields in the order
   they are laid out and puts the caret at the *end* of what is already in one

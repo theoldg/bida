@@ -13,6 +13,7 @@ import { bare, money, payerProblemText } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 import { draftAmountMinor, saveDraft, useDraft } from "@/lib/draft";
+import { tapAmount, tapLabel } from "@/lib/tap-amount";
 
 /**
  * Who put the money in. The mirror of the split editor's "as amounts" tab,
@@ -21,7 +22,8 @@ import { draftAmountMinor, saveDraft, useDraft } from "@/lib/draft";
  *
  * Every field is open from the start; a zero or blank drops that person. With
  * nobody typed in, the draft collapses to a single payer (`payers: null`), so
- * clearing the fields is "back to one payer" without a button.
+ * clearing the fields is "back to one payer" without a button. A tap on a name
+ * clears that figure or hands it the rest (`tapAmount`), as in "as amounts".
  */
 export default function PayersPage() {
   return <QueryBoundary><PayersScreen /></QueryBoundary>;
@@ -104,12 +106,18 @@ function PayersScreen() {
     goBack(() => router.back(), (to) => router.replace(to));
   }
 
-  /** Hand the unallocated remainder to one person — the usual last step. */
-  function giveRest(memberId: string) {
-    const others = Object.entries(spec)
-      .filter(([id]) => id !== memberId)
-      .reduce((a, [, v]) => a + (v ?? 0), 0);
-    setAmount(memberId, Math.max(0, amountMinor - others));
+  /**
+   * A tap on the name: clear it, fill it with the rest, or type (`tapAmount`).
+   * Clearing the last payer leaves **nobody**, not the collapse typing gets:
+   * collapsing would hand `paidBy` the whole amount straight back, and the tap
+   * would look like it did nothing. Done stays shut until someone is tapped in.
+   */
+  function tapRow(memberId: string, fieldId: string) {
+    const tap = tapAmount(spec, memberId, amountMinor);
+    if (tap === "edit") { document.getElementById(fieldId)?.focus(); return; }
+    const others = Object.keys(spec).some((id) => id !== memberId && (spec[id] ?? 0) > 0);
+    if (tap.set === 0 && !others) { saveDraft(gid, { ...current, payers: {} }); return; }
+    setAmount(memberId, tap.set);
   }
 
   return (
@@ -129,7 +137,11 @@ function PayersScreen() {
               const last = i === data.members.length - 1;
               return (
                 <div key={m.id} className={`row${m.id === data.me ? " mine" : ""}`}>
-                  <label htmlFor={fieldId}
+                  <button type="button" onClick={() => tapRow(m.id, fieldId)}
+                    aria-label={tapLabel(tapAmount(spec, m.id, amountMinor), m.name, {
+                      clear: copy.payers.clear, giveRest: copy.payers.giveRest,
+                      edit: copy.payers.edit,
+                    })}
                     style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 0,
                       opacity: on ? 1 : .45 }}>
                     <span className="rmain">
@@ -143,16 +155,9 @@ function PayersScreen() {
                         {on ? "" : copy.payers.didnt[voice]}
                       </span>
                     </span>
-                  </label>
+                  </button>
 
                   <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    {/* Offered on a row with nothing in it too: somebody who
-                        hasn't typed an amount yet is exactly who you hand the
-                        shortfall to. */}
-                    {!check.ok ? (
-                      <button onClick={() => giveRest(m.id)} className="chip"
-                        aria-label={copy.payers.giveRest(m.name)}>{copy.payers.rest}</button>
-                    ) : null}
                     <MinorAmountInput id={fieldId} className="bignum splitin"
                       enterKeyHint={last ? "done" : "next"}
                       aria-label={copy.payers.contribution[voice](m.name)}

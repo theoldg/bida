@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-30* — "remove the "rest" buttons … does that make sense?" A
+  question that is really a spec: build it. The edge it skipped — clearing the
+  only payer collapsed straight back — was the agent's to find and settle.
+
 - *2026-09-30* — "'As amounts' split should be in the payment currency!"
   One line, but it moves stored data: the D1 log already holds base amounts.
   Read old and new with one rule, and let the form convert on opening.
@@ -74,7 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — a digit spinner: mock of four, "B slightly slower", "make the
   speed configurable for all", then "Ship C at 800ms". Put a knob on the mock
   when feel is in question — the answer comes back as a number to ship.
-
-- *2026-09-29* — "can we account for the banners in the skeletons? or does
-  that come from the database too?" A question with a fix inside: answer it
-  (no, the browser), then build it, and measure the drop before and after.

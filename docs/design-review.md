@@ -24,8 +24,8 @@ The owner looked at each of these and kept it:
 - Dialog cards narrower than the page behind them. *`settle-record`*
 - The slashed zero in the empty amount field. *`entry-expense`*
 - Scan and Support centred on the screen. *`scan`, `tip`*
-- "rest", "yours", "the other side: picking swaps them" and "Advanced" as
-  labels. *`expense-split-amounts`, `rate`, `transfer-who`, `groups-menu`*
+- "yours", "the other side: picking swaps them" and "Advanced" as
+  labels. *`rate`, `transfer-who`, `groups-menu`*
 - `$` on the tip jar in a group of another currency. *`tip`*
 - Times with a leading zero ("06:14 PM"), and the quick split's grey names.
 

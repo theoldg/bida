@@ -220,7 +220,7 @@ interface MinorAmountInputProps extends Omit<AmountInputProps, "value" | "onChan
 /**
  * The same field for editors that think in minor units (split amounts, payer
  * contributions). The text is local; it re-reads the model only when something
- * *else* changes it (the "rest" button, a mode switch).
+ * *else* changes it (a tap on the row's name, a mode switch).
  */
 export function MinorAmountInput({
   valueMinor, onChangeMinor, currency, ...rest

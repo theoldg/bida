@@ -963,8 +963,10 @@ export const copy = {
       expense: (name: string) => `${name}’s contribution`,
       income: (name: string) => `How much ${name} received`,
     } as Voiced<(name: string) => string>,
+    /** A row's tap, named by what it would do (`tapLabel`). */
+    clear: (name: string) => `Clear ${name}’s amount`,
     giveRest: (name: string) => `Give ${name} the rest`,
-    rest: "rest",
+    edit: (name: string) => `Type ${name}’s amount`,
     accountedFor: (allocated: string, total: string) => `${allocated} of ${total} accounted for`,
     nobody: {
       expense: "Nobody has put money in yet",
@@ -998,8 +1000,10 @@ export const copy = {
     fewerParts: (name: string) => `Fewer parts for ${name}`,
     moreParts: (name: string) => `More parts for ${name}`,
     amountFor: (name: string) => `${name}’s amount`,
+    /** A row's tap, named by what it would do (`tapLabel`). */
+    clear: (name: string) => `Clear ${name}’s amount`,
     giveRest: (name: string) => `Give ${name} the rest`,
-    rest: "rest",
+    edit: (name: string) => `Type ${name}’s amount`,
     notInvolved: "not involved",
     /** The footer's verdicts. Wording checked by lib/format.test.ts. */
     nobody: "Nobody is included yet",

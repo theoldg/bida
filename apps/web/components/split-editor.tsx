@@ -13,6 +13,7 @@ import { copy } from "../lib/copy";
 import { printedCount } from "../lib/scan/items";
 import { bare, money, plural, splitFooter } from "../lib/format";
 import type { SplitTab } from "../lib/draft";
+import { tapAmount, tapLabel } from "../lib/tap-amount";
 
 /**
  * Who the money was spent on, and how much each of them owes for it.
@@ -174,13 +175,12 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
     onChange({ mode: "exact", amounts });
   }
 
-  /** Hand whatever is unallocated to one person — the usual last keystroke. */
-  function giveRest(memberId: string) {
+  /** A tap on the name: clear it, fill it with the rest, or type (`tapAmount`). */
+  function tapRow(memberId: string, fieldId: string) {
     if (spec.mode !== "exact") return;
-    const others = Object.entries(spec.amounts)
-      .filter(([id]) => id !== memberId)
-      .reduce((a, [, v]) => a + (v ?? 0), 0);
-    onChange({ mode: "exact", amounts: { ...spec.amounts, [memberId]: Math.max(0, amountMinor - others) } });
+    const tap = tapAmount(spec.amounts, memberId, amountMinor);
+    if (tap === "edit") document.getElementById(fieldId)?.focus();
+    else setExact(memberId, tap.set);
   }
 
   return (
@@ -222,8 +222,9 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             // percentage), the toggle takes the whole row: a row that answers on its
             // left half only reads as broken. As parts and as amounts keep their controls.
             const wholeRow = spec.mode === "equal" || spec.mode === "percent";
-            // "As amounts" has nothing to toggle, so its left half is a label
-            // for the field rather than a button that would do nothing.
+            // "As amounts" has nothing to toggle: its left half clears the
+            // figure or fills it with the rest, and types only when neither
+            // means anything (`tapAmount`).
             const typing = spec.mode === "exact";
             const fieldId = `sp-${m.id}`;
             const end = spec.mode === "shares" ? (
@@ -239,12 +240,6 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
               </span>
             ) : spec.mode === "exact" ? (
               <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                {/* Offered on a row with nothing in it too: somebody who has
-                    typed no amount yet is exactly who you hand the rest to. */}
-                {check && !check.ok ? (
-                  <button type="button" className="chip" onClick={() => giveRest(m.id)}
-                    aria-label={copy.split.giveRest(m.name)}>{copy.split.rest}</button>
-                ) : null}
                 {/* Never disabled. Every row can be typed into, whoever any
                     other tab has ticked: typing is how somebody joins this one. */}
                 {/* A column of figures is typed down: the confirm key moves to the
@@ -293,7 +288,10 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             return (
               <div key={m.id} className={`splitrow${m.id === me ? " mine" : ""}`}>
                 {typing ? (
-                  <label htmlFor={fieldId} style={lead}>{name}</label>
+                  <button type="button" onClick={() => tapRow(m.id, fieldId)} style={lead}
+                    aria-label={tapLabel(tapAmount(spec.amounts, m.id, amountMinor), m.name, copy.split)}>
+                    {name}
+                  </button>
                 ) : (
                   <button type="button" onClick={() => toggle(m.id)}
                     aria-label={on ? copy.split.leaveOut(m.name) : copy.split.include(m.name)}
