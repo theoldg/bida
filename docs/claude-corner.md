@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-30* — "Imagine you're a confused Ben". Play the stranger for real:
+  tap the wrong "Edit" first. The empty box it opened was the finding, and
+  the owner answered it mid-run by seeding the demo, then asked how the drive
+  went before letting the fix go on.
+
 - *2026-09-30* — "I'm stuck in a polishing loop while having zero users",
   then, laughing at itself, "one last change". The log agreed: 820 commits in
   three weeks. Say so plainly and kindly, then do the small ask. Point at the
@@ -76,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   then "ship it with" three lines of letters. The mock got corrections on
   lines and frames; timing only got one once it shipped ("wait a little
   longer"). Then "no animation for the last one": rare cases can go bare.
-
-- *2026-09-29* — "Add exact ledger position memory (not just row index) and
-  use it only when navigating back". "Exact" meant the pixel and "only" meant
-  every other arrival opens at the top; a save above the row is where both
-  showed. Scroll memory was deleted that morning: the ask narrowed it.

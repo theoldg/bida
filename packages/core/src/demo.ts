@@ -104,6 +104,18 @@ function billWeights(ids: Record<DemoName, Id>): Record<Id, number> {
 }
 
 /**
+ * The bill as a scan would have written it into the "Edit" box: the web's
+ * `billAsText` shape — English, a count only where one was printed — so the
+ * box opens on the bill rather than empty.
+ */
+function demoBillText(): string {
+  return DEMO_BILL.map(({ labelEn, minor, quantity }) =>
+    [quantity ? String(quantity) : "", labelEn, minorToDecimalString(minor, DEMO_CURRENCY)]
+      .filter(Boolean).join(" "),
+  ).join("\n");
+}
+
+/**
  * The whole evening as drafts, deterministic in `cast` and `now`. Chosen so
  * every screen has something: two payers with an itemised bill, local coin, a
  * partial split, an income, a transfer, an edit and a delete. Balances don't
@@ -264,6 +276,7 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
         })),
         receiptInvolved: all,
         receiptAssignments: DEMO_BILL.map(({ who }) => who.map((name) => ids[name])),
+        receiptText: demoBillText(),
       },
     },
 

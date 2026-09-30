@@ -96,6 +96,14 @@ describe("demoOps", () => {
     }
   });
 
+  it("writes the cantina bill out, one English line per printed line", () => {
+    const dinner = foldOps(stamp()).expenses["demo-cantina"]!;
+    const lines = dinner.receiptText!.split("\n");
+    expect(lines).toHaveLength(dinner.receiptItems!.length);
+    expect(lines[0]).toBe("2 Jawa juice 24.00");
+    dinner.receiptItems!.forEach((item, i) => expect(lines[i]).toContain(item.amount));
+  });
+
   it("is money: positive integer minor units, everywhere", () => {
     const state = foldOps(stamp());
     const amounts = [
