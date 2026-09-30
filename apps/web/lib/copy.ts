@@ -105,6 +105,8 @@ export const copy = {
       working: "Working…",
       /** No crop: the model found no bill, or wasn't there. */
       whole: "whole photo",
+      /** The × on an image opened over the whole screen. */
+      close: "Close",
     },
   },
 

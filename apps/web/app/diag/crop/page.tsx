@@ -6,6 +6,7 @@ import { copy } from "@/lib/copy";
 import { route } from "@/lib/group-link";
 import { prepareBill, type PreparedBill } from "@/lib/scan/downscale";
 import { billFinderLoadMs, warmBillFinder } from "@/lib/scan/find-bill";
+import { ZoomView } from "./zoom-view";
 
 /**
  * The scan's crop as a smoke test: pick photos, see the box the model drew on
@@ -17,6 +18,8 @@ export default function DiagCropPage() {
   const [model, setModel] = useState<"idle" | "loading" | "failed" | number>("idle");
   const [results, setResults] = useState<Result[]>([]);
   const [working, setWorking] = useState(false);
+  /** The image open over the whole screen, either side of a row. */
+  const [zoomed, setZoomed] = useState<string | null>(null);
 
   // Object URLs outlive the screen unless given back.
   useEffect(() => () => { for (const r of results) URL.revokeObjectURL(r.url); }, [results]);
@@ -62,7 +65,8 @@ export default function DiagCropPage() {
               </p>
             )}
           </div>
-          {results.map((r, i) => <Row key={i} result={r} />)}
+          {results.map((r, i) => <Row key={i} result={r} onZoom={setZoomed} />)}
+          {zoomed ? <ZoomView src={zoomed} onClose={() => setZoomed(null)} /> : null}
         </Scroll>
       </Body>
     </Screen>
@@ -71,14 +75,17 @@ export default function DiagCropPage() {
 
 interface Result { name: string; bytes: number; url: string; bill: PreparedBill }
 
-function Row({ result: { name, bytes, url, bill } }: { result: Result }) {
+function Row({ result: { name, bytes, url, bill }, onZoom }: {
+  result: Result; onZoom: (src: string) => void;
+}) {
+  const sent = `data:image/jpeg;base64,${bill.base64}`;
   const { quad, box, source } = bill;
   const sentKb = Math.round((bill.base64.length * 3) / 4 / 1024);
   const pts = (ps: readonly { x: number; y: number }[]) => ps.map((p) => `${p.x},${p.y}`).join(" ");
   return (
     <div className="cropcheck">
       <div className="cropcheck-pair">
-        <div className="cropcheck-src">
+        <div className="cropcheck-src" onClick={() => onZoom(url)}>
           {/* eslint-disable-next-line @next/next/no-img-element -- a local object URL */}
           <img src={url} alt="" />
           {/* The model's corners, and the upright box the scan keeps. */}
@@ -92,7 +99,7 @@ function Row({ result: { name, bytes, url, bill } }: { result: Result }) {
           ) : null}
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element -- a data URL */}
-        <img className="cropcheck-out" src={`data:image/jpeg;base64,${bill.base64}`} alt="" />
+        <img className="cropcheck-out" src={sent} alt="" onClick={() => onZoom(sent)} />
       </div>
       <pre className="diag">{[
         name,

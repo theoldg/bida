@@ -1559,6 +1559,17 @@ dialog.scrim::backdrop { background: transparent }
 .cropcheck-src svg * { fill: none; stroke-width: 2px; vector-effect: non-scaling-stroke }
 .cropcheck-quad { stroke: var(--credit); stroke-dasharray: 6 4 }
 .cropcheck-box { stroke: var(--brand) }
+.cropcheck-src, .cropcheck-out { cursor: zoom-in }
+
+/* One image over everything, moved by hand (app/diag/crop/zoom-view.tsx):
+   `touch-action: none` hands every finger to it, since the page never zooms. */
+.zoomview { position: fixed; inset: 0; z-index: 100; background: #000; overflow: hidden;
+  touch-action: none; display: flex; align-items: center; justify-content: center }
+.zoomview img { max-width: 100%; max-height: 100%; transform-origin: center;
+  user-select: none; -webkit-user-select: none }
+.zoomview-close { position: absolute; top: calc(env(safe-area-inset-top) + 8px); right: 8px;
+  width: 44px; height: 44px; border: 0; border-radius: 22px; font-size: 26px; line-height: 1;
+  color: #fff; background: rgb(0 0 0 / 55%) }
 
 /* A readout: preformatted text that scrolls sideways on its own. Small and mono
    because it is a log (app/diag/page.tsx) or a spreadsheet
