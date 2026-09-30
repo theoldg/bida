@@ -745,11 +745,26 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 @keyframes roll-close { to { width: 0 } }
 
 /* The ledger's new-edits line (components/new-edits.tsx): drawn as a date
-   line, since it is furniture of the list until pressed. No chevron: one at
-   the row's edge sat in no column with the cards' above it, and its text
-   in full ink, not a date's muted, is what says it can be pressed. */
+   line, since it is furniture of the list until pressed; its text in full
+   ink, not a date's muted, says it can be pressed. */
 .neweditsbar { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
   border-top: 1px solid var(--rule-soft); color: var(--ink) }
+/* A down-chevron whose two strokes swing into a cross once open: folding it
+   back clears the line, and a chevron alone promised it could be reopened.
+   20px and 15px in, so it centres on the you-owe card's `.mysumchev` above
+   (16px gutter + 1px border + 14px padding + 10px); a glyph at the bare row
+   edge sat in no column. Its negative margin keeps the line a date line's
+   height. */
+.neweditsglyph { width: 20px; height: 20px; flex: none; margin: -4px 15px -4px auto;
+  fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; color: var(--muted) }
+.neweditsglyph line { transform-box: view-box; transform-origin: 12px 12px;
+  transition: transform .26s cubic-bezier(.2, .8, .2, 1) }
+/* Folded, each stroke is shortened and set at half of the chevron's V. */
+.neweditsglyph line:first-child { transform: translate(-3px, .5px) rotate(45deg) scaleX(.57) }
+.neweditsglyph line:last-child { transform: translate(3px, .5px) rotate(-45deg) scaleX(.57) }
+.newedits.on .neweditsglyph { color: var(--ink) }
+.newedits.on .neweditsglyph line:first-child { transform: rotate(45deg) }
+.newedits.on .neweditsglyph line:last-child { transform: rotate(-45deg) }
 .tl.neweditslist { margin: 0; padding: 14px 16px 0 42px; border-bottom: 1px solid var(--rule-soft) }
 /* Under an entry's own timeline, lined up with its text (`.tl`'s 26px, less
    the link's own 6px of press room). */

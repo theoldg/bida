@@ -110,6 +110,12 @@ export function NewEdits({ groupId, currency, source }: {
     <div ref={box} key={done.size} className={`newedits${open ? " on" : ""}`}>
       <button type="button" className="daylabel neweditsbar" aria-expanded={open} onClick={toggle}>
         <span>{plural(shown.length, copy.noun.newChange)}</span>
+        {/* One glyph, two strokes: a chevron while folded, swinging into a
+            cross as it opens, since folding it back is what clears it. */}
+        <svg className="neweditsglyph" viewBox="0 0 24 24" aria-hidden="true">
+          <line x1="4.5" y1="12" x2="19.5" y2="12" />
+          <line x1="4.5" y1="12" x2="19.5" y2="12" />
+        </svg>
       </button>
       {open ? (
         <div className="tl neweditslist">
