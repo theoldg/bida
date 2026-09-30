@@ -1,9 +1,9 @@
 import { payerList, resolvePayers } from "./payers.js";
 import type { Op } from "./ops.js";
 import { atCurrentRates } from "./rates.js";
-import { canonicalSplit, resolveSplit, splitParticipants } from "./split.js";
+import { canonicalSplit, resolveEntrySplit, splitParticipants } from "./split.js";
 import type { CurrencyCode } from "./money.js";
-import { alive, type DevicePush, type Expense, type GroupState, type Id, type Settlement, type SplitSpec } from "./types.js";
+import { alive, type DevicePush, type Expense, type GroupState, type Id, type Settlement } from "./types.js";
 
 /**
  * Who hears about a command, and what about (docs/notifications.md#what-is-said).
@@ -88,12 +88,12 @@ function involved(entry: Entry | undefined): Id[] {
 }
 
 /** Shares at one total, so a mode swap that means the same thing isn't a move. */
-function sharesAt(total: number, split: SplitSpec, seed: Id): string {
+function sharesAt(total: number, e: Expense): string {
   try {
-    const { shares } = resolveSplit(total, split, { tiebreakSeed: seed });
+    const { shares } = resolveEntrySplit({ ...e, baseAmountMinor: total });
     return JSON.stringify(Object.keys(shares).sort().map((id) => [id, shares[id]]));
   } catch {
-    return JSON.stringify(canonicalSplit(split));
+    return JSON.stringify(canonicalSplit(e.split));
   }
 }
 
@@ -110,7 +110,7 @@ function moved(before: Entry, after: Entry): MovedField[] {
   if (a.currency !== b.currency) out.push("currency");
   if (before.kind === "expense" && after.kind === "expense") {
     const total = after.row.baseAmountMinor;
-    if (sharesAt(total, before.row.split, before.row.id) !== sharesAt(total, after.row.split, after.row.id)) {
+    if (sharesAt(total, before.row) !== sharesAt(total, after.row)) {
       out.push("split");
     }
     if (payersAt(total, before.row) !== payersAt(total, after.row)) out.push("payers");
@@ -135,8 +135,8 @@ function seen(entry: Entry, to: Id): NoticeEntry {
   let share: number | null = null;
   if (splitParticipants(e.split).includes(to)) {
     try {
-      // Seeded with the id, as `computeBalances` is, so the cent lands where the ledger puts it.
-      share = resolveSplit(e.baseAmountMinor, e.split, { tiebreakSeed: e.id }).shares[to] ?? 0;
+      // As `computeBalances` reads it, so the cent lands where the ledger puts it.
+      share = resolveEntrySplit(e).shares[to] ?? 0;
     } catch {
       share = null;
     }

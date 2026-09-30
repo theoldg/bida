@@ -55,7 +55,7 @@ interface ReceiptTabProps {
   editItemsHref: string;
 }
 
-export function SplitEditor({ members, me, title, totalMinor, totalUnknown, currency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt }: {
+export function SplitEditor({ members, me, title, totalMinor, totalUnknown, currency, amountMinor, amountCurrency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt }: {
   members: Member[];
   me: string | undefined;
   /** "Split" for both an expense and an income, "To" for a transfer — `copy.entryKind.split`. */
@@ -69,6 +69,13 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
    */
   totalUnknown?: boolean;
   currency: string;
+  /**
+   * The entry's amount in its own currency, and that currency. "As amounts"
+   * is typed against these, as the payers are: they are the figures on the
+   * bill, and they need no rate.
+   */
+  amountMinor: number;
+  amountCurrency: string;
   /** What the arithmetic tab now showing holds — this editor edits only it. */
   spec: SplitSpec;
   /**
@@ -91,21 +98,22 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
   // button of its own: touching any of the three arithmetic tabs converts it away.
   const legacy = spec.mode === "percent";
   const showReceipt = tab === "receipt" && receipt !== null;
+  // "As amounts" alone is in the entry's own currency; every other tab's
+  // read-out is what lands in a balance, so it is in the base.
+  const own = !showReceipt && spec.mode === "exact";
+  const divided = own ? amountMinor : totalMinor;
+  const shownCurrency = own ? amountCurrency : currency;
   // Receipt draws its own split, and none until its grid is filled: an
   // arithmetic tab's split here would be a verdict on a tab nobody is using.
   const shown: SplitSpec | null = showReceipt ? receiptSplit : spec;
   const included = new Set(shown ? splitParticipants(shown) : []);
-  const check = shown ? validateSplit(totalMinor, shown, opts) : null;
+  const check = shown ? validateSplit(divided, shown, opts) : null;
 
   let shares: Record<string, number> = {};
   if (shown) {
-    try { shares = resolveSplit(totalMinor, shown, opts).shares; } catch { /* incomplete */ }
+    try { shares = resolveSplit(divided, shown, opts).shares; } catch { /* incomplete */ }
   }
 
-  // "N of total allocated" only means something when typing amounts: Evenly
-  // and As parts land on the total by construction, and Receipt's is derived.
-  // Every mode still surfaces a real problem (nobody, over-allocated, no total).
-  const isExactTab = !showReceipt && !legacy && spec.mode === "exact";
   // Receipt's own shortfall outranks the arithmetic: while the tab has no
   // split of its own, whatever spec is underneath (often "equal") is not what
   // is being judged, so its verdict would be a verdict on nothing.
@@ -118,9 +126,13 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
   // the control. **It must never fall through to the arithmetic underneath**:
   // that spec is not what a save would write.
   const foot = receiptMissing ? null
-    : check !== null ? splitFooter(check, currency) : null;
-  const showFooter = !totalUnknown && foot !== null
-    && (showReceipt ? !foot.ok : (isExactTab || !foot.ok));
+    : check !== null ? splitFooter(check, shownCurrency) : null;
+  // "N of total allocated" only means something when typing amounts: Evenly
+  // and As parts land on the total by construction, and Receipt's is derived.
+  // Every mode still surfaces a real problem (nobody, over-allocated, no total).
+  // A missing rate leaves the base total unknowable, but not the amount typed.
+  const showFooter = (own || !totalUnknown) && foot !== null
+    && (showReceipt ? !foot.ok : (own || !foot.ok));
 
   function toggle(memberId: string) {
     const next = new Set(included);
@@ -168,7 +180,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
     const others = Object.entries(spec.amounts)
       .filter(([id]) => id !== memberId)
       .reduce((a, [, v]) => a + (v ?? 0), 0);
-    onChange({ mode: "exact", amounts: { ...spec.amounts, [memberId]: Math.max(0, totalMinor - others) } });
+    onChange({ mode: "exact", amounts: { ...spec.amounts, [memberId]: Math.max(0, amountMinor - others) } });
   }
 
   return (
@@ -241,9 +253,9 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
                 <MinorAmountInput id={fieldId} className="bignum splitin"
                   enterKeyHint={i === members.length - 1 ? "done" : "next"}
                   aria-label={copy.split.amountFor(m.name)}
-                  currency={currency}
+                  currency={amountCurrency}
                   valueMinor={spec.amounts[m.id] ?? 0}
-                  placeholder={bare(0, currency)}
+                  placeholder={bare(0, amountCurrency)}
                   onChangeMinor={(minor) => setExact(m.id, minor)} />
               </span>
             ) : spec.mode === "percent" ? (

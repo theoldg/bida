@@ -1,6 +1,6 @@
 import { minorToDecimalString } from "./money.js";
 import { resolvePayers } from "./payers.js";
-import { resolveSplit } from "./split.js";
+import { resolveEntrySplit } from "./split.js";
 import { alive, type Expense, type GroupState, type Id, type Settlement } from "./types.js";
 
 /**
@@ -9,7 +9,7 @@ import { alive, type Expense, type GroupState, type Id, type Settlement } from "
  * column per member.
  *
  * **A member's cell is `paid − owed`**, so rows sum to zero and column totals
- * are balances. Figures come from `resolvePayers`/`resolveSplit` under
+ * are balances. Figures come from `resolvePayers`/`resolveEntrySplit` under
  * `computeBalances`'s seeds, so the `Total balance` foot equals `byMember` to
  * the cent. Everything is in base currency: the caller reprices first
  * (`atCurrentRates`, ADR-0005).
@@ -140,7 +140,7 @@ function expenseRow(e: Expense, formatDay: (ts: number) => string): Row {
 
   let shares: Record<Id, number> | undefined;
   try {
-    shares = resolveSplit(e.baseAmountMinor, e.split, { tiebreakSeed: e.id }).shares;
+    shares = resolveEntrySplit(e).shares;
   } catch {
     // Unapportionable (also in `computeBalances`' `problems`). Kept with every
     // column zero: dropping it loses money, and apportioning only the payers

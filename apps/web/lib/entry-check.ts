@@ -138,8 +138,10 @@ export function checkEntry(input: {
 
   // The split editor shows its own arithmetic; this only needs to know
   // whether what it currently says can be saved.
+  // As amounts is typed in the entry's own currency, like the payers below.
   const splitOk = transfer
-    || validateSplit(baseMinor, effectiveSplit, { tiebreakSeed: splitSeed(draft) }).ok;
+    || validateSplit(effectiveSplit.mode === "exact" ? amountMinor : baseMinor, effectiveSplit,
+      { tiebreakSeed: splitSeed(draft) }).ok;
 
   // Payers are checked against the amount in the entry's own currency: that is
   // the number people typed and the number they'd check against a receipt.

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
-  payerList, resolvePayers, shareOf, splitParticipants,
+  payerList, resolvePayers, resolveEntrySplit, splitParticipants,
   type Expense, type Member, type Settlement,
 } from "@bida/core";
 import { kindOf, myEffect, type EntryKind } from "@/lib/entry-kind";
@@ -233,7 +233,7 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
   const involved = me ? splitParticipants(expense.split).includes(me) : false;
   const putIn = me ? resolvePayers(expense)[me] ?? 0 : 0;
   const share = me && involved
-    ? shareOf(expense.baseAmountMinor, expense.split, me, { tiebreakSeed: expense.id })
+    ? resolveEntrySplit(expense).shares[me] ?? 0
     : 0;
   const myNet = myEffect(me, { kind, putIn, share });
   const mine = putIn !== 0 || involved;

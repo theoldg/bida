@@ -83,6 +83,21 @@ describe("computeBalances", () => {
     expect(after.settledMinor).toEqual({ a: -500, b: 500 });
   });
 
+  it("reads a foreign exact split in the entry's own currency and balances in the base", () => {
+    const b = new OpBuilder();
+    b.push("group", GROUP, "create", { name: "g", baseCurrency: "EUR" });
+    b.push("member", "a", "create", { name: "A", colorSeed: 0 });
+    b.push("member", "b", "create", { name: "B", colorSeed: 0 });
+    b.push("expense", "e1", "create", {
+      description: "tajine", occurredAt: 0, amountMinor: 100000, currency: "MAD",
+      rateToBase: "0.0917", baseAmountMinor: 9170, paidBy: "a",
+      split: { mode: "exact", amounts: { a: 60000, b: 40000 } }, attachmentIds: [],
+    });
+    const r = computeBalances(foldOps(b.ops));
+    expect(r.problems).toEqual([]);
+    expect(r.byMember).toEqual({ a: 3668, b: -3668 });
+  });
+
 
   it("ignores tombstoned expenses", () => {
     const b = new OpBuilder();

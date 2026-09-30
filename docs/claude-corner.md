@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-30* — "'As amounts' split should be in the payment currency!"
+  One line, but it moves stored data: the D1 log already holds base amounts.
+  Read old and new with one rule, and let the form convert on opening.
+
 - *2026-09-30* — "Can we trigger background sync when a notification
   arrives?" Four turns followed, each cutting the design down: a cache, not the
   database; a stash that never moves the cursor. Say the cost plainly and let
@@ -74,7 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — "can we account for the banners in the skeletons? or does
   that come from the database too?" A question with a fix inside: answer it
   (no, the browser), then build it, and measure the drop before and after.
-
-- *2026-09-29* — "i can see the homescreen flashing" on a reopen. The skeleton
-  was honest, but it was the wrong screen's: a flash is judged by its frame,
-  not its data. Prove the check fails without the fix before trusting it.

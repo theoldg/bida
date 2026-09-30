@@ -7,7 +7,7 @@ import type { ArithmeticSplit, ArithmeticMode, Id, SplitSpec } from "./types.js"
  */
 
 interface SplitResult {
-  /** memberId -> minor units, in the expense's base currency. Sums to the total. */
+  /** memberId -> minor units. Sums to the total. */
   shares: Record<Id, number>;
   /** Members handed an extra minor unit. Diagnostic only; the UI never shows it. */
   remainderAbsorbedBy: Id[];
@@ -199,6 +199,69 @@ export function resolveSplit(
   }
 
   return distribute(BigInt(totalMinor), weightsOf(spec, participants), options.tiebreakSeed);
+}
+
+/** The fields of an entry its split is read against — everything the two below need. */
+interface SplitBearing {
+  id: Id;
+  amountMinor: number;
+  baseAmountMinor: number;
+  split: SplitSpec;
+}
+
+/**
+ * An entry's shares in BASE currency, summing to `baseAmountMinor`. **Ask this,
+ * never `resolveSplit` on an entry**: an `exact` split is typed in the entry's
+ * own currency, as its payers are, and apportions the base total by those
+ * amounts at read time — with the entry id as seed, so the cent a conversion
+ * leaves lands where every device puts it.
+ *
+ * An entry written before that held base amounts. They sum to `baseAmountMinor`
+ * instead, and the same apportioning hands them back unchanged; one entry in
+ * the base currency reads the same either way.
+ */
+export function resolveEntrySplit(entry: SplitBearing): SplitResult {
+  const { split } = entry;
+  const seed = { tiebreakSeed: entry.id };
+  if (split.mode !== "exact") return resolveSplit(entry.baseAmountMinor, split, seed);
+  const sum = exactSum(split.amounts);
+  if (sum === entry.baseAmountMinor) return resolveSplit(entry.baseAmountMinor, split, seed);
+  if (sum !== entry.amountMinor) {
+    throw new SplitError(`exact split allocates ${sum} but the expense is ${entry.amountMinor}`);
+  }
+  return resolveSplit(entry.baseAmountMinor, { mode: "shares", weights: split.amounts }, seed);
+}
+
+/**
+ * The split as its editor shows it: an `exact` one in the entry's own currency.
+ * A pre-change entry's base amounts are apportioned back over `amountMinor`
+ * (see `resolveEntrySplit`); anything else is handed over as it is.
+ */
+export function ownCurrencySplit<S extends SplitSpec>(entry: SplitBearing & { split: S }): S {
+  const split: SplitSpec = entry.split;
+  if (split.mode !== "exact") return entry.split;
+  try {
+    const sum = exactSum(split.amounts);
+    if (sum === entry.amountMinor || sum !== entry.baseAmountMinor) return entry.split;
+    const { shares } = resolveSplit(entry.amountMinor, { mode: "shares", weights: split.amounts }, {
+      tiebreakSeed: entry.id,
+    });
+    return { mode: "exact", amounts: shares } as S;
+  } catch {
+    return entry.split;
+  }
+}
+
+/** An exact split's total, validated as `resolveSplit` would. */
+function exactSum(amounts: Record<Id, number>): number {
+  let sum = 0;
+  for (const [id, v] of Object.entries(amounts)) {
+    if (!Number.isSafeInteger(v)) {
+      throw new SplitError(`exact amount for ${id} must be an integer, got ${v}`);
+    }
+    sum += v;
+  }
+  return sum;
 }
 
 /** Non-throwing check, so the UI can render a half-finished split. */

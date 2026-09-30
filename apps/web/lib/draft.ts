@@ -230,13 +230,17 @@ function arithmeticSplit(draft: EntryDraft): SplitSpec {
  * opened for the first time is converted from `arithmeticSplit` — once, in a
  * handler, not kept in sync. A scanned bill is never the basis: its weights
  * would read as parts somebody chose.
+ *
+ * `baseMinor` is what the base-currency tabs divide; As amounts divides the
+ * entry's own amount instead (`resolveEntrySplit`).
  */
-export function openSplitTab(draft: EntryDraft, tab: SplitTab, totalMinor: number): SplitInputs {
+export function openSplitTab(draft: EntryDraft, tab: SplitTab, baseMinor: number): SplitInputs {
   if (tab === "receipt") return draft.splits;
   const kept = { ...draft.splits };
   // The first arithmetic tab converts a legacy percent split away for good.
   delete kept.percent;
   if (kept[tab]) return kept;
+  const totalMinor = tab === "exact" ? draftAmountMinor(draft) : baseMinor;
   return withSplit(kept, convertSplitMode(totalMinor, arithmeticSplit(draft), tab, {
     tiebreakSeed: splitSeed(draft),
   }));

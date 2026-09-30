@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  addsUp, canonicalSplit, convertSplitMode, resolveSplit, shareOf, splitParticipants,
+  addsUp, canonicalSplit, convertSplitMode, ownCurrencySplit, resolveEntrySplit, resolveSplit, shareOf, splitParticipants,
   upgradeReceiptSplit, validateSplit,
 } from "./split.js";
 import type { SplitSpec } from "./types.js";
@@ -313,5 +313,69 @@ describe("a receipt split", () => {
   it("converts away into a mode somebody types", () => {
     expect(convertSplitMode(3000, spec, "equal")).toEqual({ mode: "equal", members: ["a", "b"] });
     expect(convertSplitMode(3000, spec, "exact")).toEqual({ mode: "exact", amounts: { a: 2000, b: 1000 } });
+  });
+});
+
+describe("resolveEntrySplit — exact amounts in the entry's own currency", () => {
+  // 1000 MAD at 0.0917 → €91.70; amounts typed in dirham.
+  const entry = (amounts: Record<string, number>, amountMinor = 100000, baseAmountMinor = 9170) => ({
+    id: "e1", amountMinor, baseAmountMinor, split: { mode: "exact" as const, amounts },
+  });
+
+  it("apportions the base total by the own-currency amounts", () => {
+    expect(resolveEntrySplit(entry({ a: 60000, b: 40000 })).shares).toEqual({ a: 5502, b: 3668 });
+  });
+
+  it("sums to the base total exactly when the conversion leaves a cent", () => {
+    for (const base of [1, 2, 9170, 9171, 33333, 1_000_001]) {
+      const r = resolveEntrySplit(entry({ a: 33334, b: 33333, c: 33333 }, 100000, base));
+      expect(sum(r.shares)).toBe(base);
+    }
+  });
+
+  it("works out of a 3-decimal currency into a 0-decimal base", () => {
+    // 12.345 KWD → ¥5,800; amounts in fils.
+    const r = resolveEntrySplit(entry({ a: 10000, b: 2345 }, 12345, 5800));
+    expect(r.shares).toEqual({ a: 4698, b: 1102 });
+  });
+
+  it("is deterministic whatever order the amounts arrive in", () => {
+    const a = resolveEntrySplit(entry({ a: 1, b: 1, c: 1 }, 3, 100));
+    const b = resolveEntrySplit(entry({ c: 1, b: 1, a: 1 }, 3, 100));
+    expect(a.shares).toEqual(b.shares);
+    expect(sum(a.shares)).toBe(100);
+  });
+
+  it("reads a pre-change entry's base amounts unchanged", () => {
+    expect(resolveEntrySplit(entry({ a: 5000, b: 4170 })).shares).toEqual({ a: 5000, b: 4170 });
+  });
+
+  it("is plain resolveSplit in the base currency", () => {
+    expect(resolveEntrySplit(entry({ a: 700, b: 300 }, 1000, 1000)).shares).toEqual({ a: 700, b: 300 });
+  });
+
+  it("refuses amounts matching neither total", () => {
+    expect(() => resolveEntrySplit(entry({ a: 50000 }))).toThrow(/allocates 50000/);
+  });
+
+  it("leaves every other mode to resolveSplit over the base", () => {
+    const r = resolveEntrySplit({ id: "e1", amountMinor: 100000, baseAmountMinor: 9170,
+      split: { mode: "equal", members: ["a", "b"] } });
+    expect(sum(r.shares)).toBe(9170);
+  });
+});
+
+describe("ownCurrencySplit", () => {
+  it("converts a pre-change base-currency exact split back over the own amount", () => {
+    const s = ownCurrencySplit({ id: "e1", amountMinor: 100000, baseAmountMinor: 9170,
+      split: { mode: "exact", amounts: { a: 5000, b: 4170 } } });
+    expect(s).toEqual({ mode: "exact", amounts: { a: 54526, b: 45474 } });
+  });
+
+  it("hands anything else over as it is", () => {
+    const own = { mode: "exact" as const, amounts: { a: 60000, b: 40000 } };
+    expect(ownCurrencySplit({ id: "e1", amountMinor: 100000, baseAmountMinor: 9170, split: own })).toBe(own);
+    const even = { mode: "equal" as const, members: ["a"] };
+    expect(ownCurrencySplit({ id: "e1", amountMinor: 100000, baseAmountMinor: 9170, split: even })).toBe(even);
   });
 });

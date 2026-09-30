@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  minorToDecimalString, receiptExtras,
+  minorToDecimalString, ownCurrencySplit, receiptExtras,
   type RateSource,
 } from "@bida/core";
 import { handOffReceiptTotal } from "@/lib/scan/items";
@@ -201,7 +201,9 @@ function EditEntryScreen() {
           // above), even over everyone. The bill itself is reopened from the
           // receipt fields below, and Receipt recomputes its split from them
           // (ADR-0016).
-          ...(e.split.mode === "receipt" ? {} : { splits: withSplit({}, e.split) }),
+          // An exact split written before it was typed in the entry's own
+          // currency is converted to it here, once (`ownCurrencySplit`).
+          ...(e.split.mode === "receipt" ? {} : { splits: withSplit({}, ownCurrencySplit({ ...e, split: e.split })) }),
           fromMember: me,
           toMember: data.members.find((m) => m.id !== me)?.id ?? me,
           occurredAt: e.occurredAt,
@@ -691,6 +693,8 @@ function EditEntryScreen() {
                 totalMinor={baseMinor}
                 totalUnknown={foreign && groupRate === undefined}
                 currency={base}
+                amountMinor={amountMinor}
+                amountCurrency={draft.currency}
                 spec={activeSplit}
                 receiptSplit={receiptSplit}
                 seed={splitSeed(draft)}

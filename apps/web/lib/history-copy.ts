@@ -156,15 +156,21 @@ export function describe(
    * What each person is down for, in the mode's words — "Evenly", "Ana ×2 ·
    * Bo ×1", "Ana €12.00 · Bo €8.00". For when only the shares changed.
    */
-  const shareLine = (spec: SplitSpec | null | undefined): string => {
+  const shareLine = (spec: SplitSpec | null | undefined, state: State): string => {
     if (!spec) return "";
+    // As amounts is in the entry's own currency — unless written before it
+    // was, when it sums to the base amount instead (`resolveEntrySplit`).
+    const exactCurrency = spec.mode === "exact"
+      && Object.values(spec.amounts).reduce((a, b) => a + b, 0) === state["baseAmountMinor"]
+      && state["baseAmountMinor"] !== state["amountMinor"]
+      ? currency : ownCurrency(state);
     if (spec.mode === "equal") return copy.split.mode.equal;
     // A receipt's weights are minor units, not chosen numbers ("Teo ×3943
     // parts"); the sentence above says who had what changed.
     if (spec.mode === "receipt") return copy.split.mode.receipt;
     return inNameOrder(spec).map(([id, name]) => {
       const value = spec.mode === "shares" ? copy.history.parts(spec.weights[id] ?? 0)
-        : spec.mode === "exact" ? money(spec.amounts[id] ?? 0, currency)
+        : spec.mode === "exact" ? money(spec.amounts[id] ?? 0, exactCurrency)
           : copy.history.percent((spec.bps[id] ?? 0) / 100);
       return copy.history.shareOf(name, value);
     }).join(" · ");
@@ -219,8 +225,8 @@ export function describe(
       // part between names reads "changed who's involved" over the same two names.
       const wasWho = namesOf(was);
       const nowWho = namesOf(now);
-      const wasHow = shareLine(was);
-      const nowHow = shareLine(now);
+      const wasHow = shareLine(was, rev.before);
+      const nowHow = shareLine(now, rev.after);
       if (wasWho !== nowWho) {
         parts.push({
           what: said.changedInvolved(who), label: named.involved,

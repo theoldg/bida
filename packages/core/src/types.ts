@@ -21,7 +21,10 @@ export type ExpenseKind = "expense" | "income";
 
 export type SplitSpec =
   | { mode: "equal"; members: Id[] }
-  /** Exact minor amounts in the expense's BASE currency. Must sum to the total. */
+  /**
+   * Exact minor amounts in the entry's OWN currency, as its payers are. Sum to
+   * `amountMinor`; `resolveEntrySplit` apportions the base total by them.
+   */
   | { mode: "exact"; amounts: Record<Id, number> }
   /** Arbitrary positive weights. 2 shares to one person, 1 to another. */
   | { mode: "shares"; weights: Record<Id, number> }

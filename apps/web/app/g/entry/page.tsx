@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
-  groupCreateOf, isCoSponsored, isImported, payerList, receiptExtras, resolvePayers, resolveSplit,
+  groupCreateOf, isCoSponsored, isImported, payerList, receiptExtras, resolvePayers, resolveEntrySplit,
   restoreEntryDrafts, sortOps, splitParticipants,
   type CurrencyCode, type Expense, type Group, type Op, type Settlement,
 } from "@bida/core";
@@ -413,7 +413,7 @@ function ExpenseDetail({ expense, kind, group, data }: {
   const foreign = expense.currency !== group.baseCurrency;
   let shares: Record<string, number> = {};
   try {
-    shares = resolveSplit(expense.baseAmountMinor, expense.split, { tiebreakSeed: expense.id }).shares;
+    shares = resolveEntrySplit(expense).shares;
   } catch { /* a broken split still deserves a readable screen */ }
   // A receipt expense keeps its grid (ADR-0016), so each person's row opens
   // onto their copy of the bill. Seeded with the entry's id, the seed the saved

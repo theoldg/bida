@@ -1,5 +1,5 @@
 import { resolvePayers } from "./payers.js";
-import { resolveSplit } from "./split.js";
+import { resolveEntrySplit } from "./split.js";
 import { alive, type GroupState, type Id } from "./types.js";
 
 /**
@@ -68,7 +68,7 @@ export function computeBalances(state: GroupState): BalanceReport {
     try {
       // Seeded with the expense id so leftover cents rotate between
       // members instead of always landing on the same person.
-      shares = resolveSplit(e.baseAmountMinor, e.split, { tiebreakSeed: e.id }).shares;
+      shares = resolveEntrySplit(e).shares;
     } catch (err) {
       problems.push({
         expenseId: e.id,

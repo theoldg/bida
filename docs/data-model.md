@@ -227,6 +227,14 @@ a different person each time while staying identical across devices *and* across
 the save) →
 return the map plus `remainderAbsorbedBy`.
 
+**An `exact` split is typed in the entry's own currency**, as its payers are:
+the figures on the bill, needing no rate. They sum to `amountMinor`, and
+`resolveEntrySplit` apportions `baseAmountMinor` by them — ask it, never
+`resolveSplit`, of a stored entry. Entries written before this hold base
+amounts summing to `baseAmountMinor`; the same call reads them unchanged and
+the form converts them on opening (`ownCurrencySplit`). The editor's other
+tabs read out in the base, since that is what lands in a balance.
+
 **`remainderAbsorbedBy` is diagnostic, not UI.** Determinism outranks fairness:
 two phones folding the same ops must produce byte-identical splits or balances
 diverge, and the seeded draw buys fairness inside that constraint.

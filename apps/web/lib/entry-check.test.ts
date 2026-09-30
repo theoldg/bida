@@ -210,6 +210,17 @@ describe("checkEntry", () => {
     expect(c.blocker).not.toBeNull();
     expect(check(expense({ payers: { [THEO]: 3000, [MARIE]: 1000 } })).ready).toBe(true);
   });
+
+  it("checks an as-amounts split against the amount in the entry's own currency", () => {
+    const amounts = (a: Record<string, number>) => expense({
+      currency: "MAD", amountText: "500.00", splitTab: "exact",
+      splits: { exact: { mode: "exact", amounts: a } },
+    });
+    const rates = [rate("MAD", "0.0921")];
+    expect(check(amounts({ [THEO]: 30000, [MARIE]: 20000 }), rates).ready).toBe(true);
+    // The same money converted to euros is not what was typed.
+    expect(check(amounts({ [THEO]: 2763, [MARIE]: 1842 }), rates).ready).toBe(false);
+  });
 });
 
 describe("needsRate", () => {

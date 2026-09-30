@@ -44,6 +44,12 @@ describe("the arithmetic tabs are independent", () => {
     expect(splitParticipants(activeSplit(d))).toEqual([A, B, C]);
   });
 
+  it("starts As amounts in the entry's own currency, not the base", () => {
+    // 90.00 MAD, whatever the euro total handed in: the fields are dirham.
+    const d = open(expense({ currency: "MAD" }), "exact", 828);
+    expect(d.splits.exact).toEqual({ mode: "exact", amounts: { [A]: 3000, [B]: 3000, [C]: 3000 } });
+  });
+
   it("keeps the amounts typed into As amounts when Evenly changes", () => {
     let d = open(expense(), "exact");
     d = { ...d, splits: withSplit(d.splits, { mode: "exact", amounts: { [A]: 5000, [B]: 4000 } }) };
@@ -65,7 +71,8 @@ describe("the arithmetic tabs are independent", () => {
     // 3000 each, and 10 000 over three is one of them a cent heavier.
     for (const first of ["equal", "shares", "exact"] as const) {
       for (const total of [9000, 10_000, 1]) {
-        const d = open(expense(), first, total);
+        // Same currency, so the typed amount is the base total As amounts divides.
+        const d = open(expense({ amountText: (total / 100).toFixed(2) }), first, total);
         const spec = activeSplit(d);
         const allocated = spec.mode === "exact"
           ? Object.values(spec.amounts).reduce((a, b) => a + b, 0) : total;

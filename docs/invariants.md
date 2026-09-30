@@ -46,7 +46,7 @@ missing a refusal yields a state with no trace to repair from.
 | Invariant | Held by | Status |
 |---|---|---|
 | Money is an integer, minor units, positive | types, `core/money.ts` | held |
-| A split resolves to exactly `baseAmountMinor` | `core/split.ts` | held |
+| A split resolves to exactly `baseAmountMinor` | `core/split.ts` (`resolveEntrySplit`) | held |
 | Balances sum to zero | derived on read, `touch()` | held |
 | One rate per currency per group | natural key (the currency code) | held |
 | One identity row per device per group | natural key (the node id) | held |
