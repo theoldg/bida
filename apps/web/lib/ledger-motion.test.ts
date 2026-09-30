@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
-  awaitRoll, clearDeleted, clearSaved, foldFrame, letRoll, foldTotal, markDeleted, markSaved, peekDeleted, peekSaved, presence, runs, standard,
+  awaitRoll, clearSaved, foldFrame, letRoll, foldTotal, markSaved, peekSaved, presence, runs, standard,
   type LedgerItem, type Shown,
 } from "./ledger-motion";
 
@@ -78,20 +78,6 @@ describe("standard", () => {
     expect(standard(1)).toBeCloseTo(1);
     expect(standard(0.5)).toBeGreaterThan(0.8);
     for (let t = 0; t < 1; t += 0.05) expect(standard(t + 0.05)).toBeGreaterThanOrEqual(standard(t));
-  });
-});
-
-describe("the deleted row", () => {
-  afterEach(clearDeleted);
-
-  it("is handed to the same group's ledger, fresh, until cleared", () => {
-    markDeleted("g", "e1", 1000);
-    expect(peekDeleted("other", 1000)).toBeNull();
-    expect(peekSaved("g", 1000)).toBeNull();
-    expect(peekDeleted("g", 2000)).toBe("e1");
-    expect(peekDeleted("g", 20_000)).toBeNull();
-    clearDeleted();
-    expect(peekDeleted("g", 2000)).toBeNull();
   });
 });
 

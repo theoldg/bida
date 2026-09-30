@@ -31,7 +31,7 @@ import { dayLabel, money } from "@/lib/format";
 import { ledgerItems, type LedgerRow } from "@/lib/ledger";
 import { route } from "@/lib/group-link";
 import { useLedgerPosition } from "@/lib/ledger-position";
-import { awaitRoll, peekSaved, SAVED_BEAT, clearDeleted, peekDeleted } from "@/lib/ledger-motion";
+import { awaitRoll, peekSaved } from "@/lib/ledger-motion";
 import { keepShown, ROLL_BEAT, shownBefore } from "@/lib/roll";
 import { expenseMeta, transferMeta } from "@/lib/row-meta";
 import { useClaimGate, useDevice, useGroupData } from "@/lib/hooks";
@@ -131,26 +131,8 @@ function GroupScreen() {
 // ------------------------------------------------------------- expenses
 
 function Ledger({ data }: { data: GroupData }) {
-  const { group, expenses, settlements, memberById, me, balances, withTombstones } = data;
-  // Back from deleting on its own screen, the row is drawn once more, as it
-  // was, and let go after a beat so it folds out where it stands.
-  const [gone, setGone] = useState(() => group ? peekDeleted(group.id) : null);
-  useEffect(() => {
-    if (!gone) return;
-    clearDeleted();
-    const timer = setTimeout(() => setGone(null), SAVED_BEAT);
-    return () => clearTimeout(timer);
-  }, [gone]);
-  const items = useMemo(() => {
-    const expense = gone ? withTombstones.expenses[gone] : undefined;
-    const settlement = gone ? withTombstones.settlements[gone] : undefined;
-    const live = expenses.some((e) => e.id === gone) || settlements.some((s) => s.id === gone);
-    return ledgerItems(
-      expense && !live ? [...expenses, expense] : expenses,
-      settlement && !live ? [...settlements, settlement] : settlements,
-      dayLabel,
-    );
-  }, [expenses, settlements, gone, withTombstones]);
+  const { group, expenses, settlements, memberById, me, balances } = data;
+  const items = useMemo(() => ledgerItems(expenses, settlements, dayLabel), [expenses, settlements]);
   const scroll = useRef<HTMLDivElement>(null);
   useLedgerPosition(scroll, group?.id ?? "");
   if (!group) return null;

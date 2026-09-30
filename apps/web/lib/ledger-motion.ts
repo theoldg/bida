@@ -131,28 +131,6 @@ export function clearSaved(): void {
 }
 
 /**
- * What a delete from an entry's own screen just removed: the ledger it goes
- * back to draws that row once more and folds it out after a beat, where it
- * stands — no scroll, since the ledger is put back where it was left, row in
- * view. The same one-navigation hand-off as a save, read once.
- */
-let deleted: { groupId: string; entryId: string; at: number } | null = null;
-
-export function markDeleted(groupId: string, entryId: string, now = Date.now()): void {
-  deleted = { groupId, entryId, at: now };
-}
-
-/** The entry to fold out, if a delete for this group is still fresh; it stays until `clearDeleted`. */
-export function peekDeleted(groupId: string, now = Date.now()): string | null {
-  if (!deleted || deleted.groupId !== groupId || now - deleted.at > SAVED_FOR_MS) return null;
-  return deleted.entryId;
-}
-
-export function clearDeleted(): void {
-  deleted = null;
-}
-
-/**
  * The summary's roll, held while a save is landing: a saved row near the top
  * takes the ledger up to the banner, and the figure rolls once it is there,
  * not off screen. The card waits (`awaitRoll`); the ledger says go

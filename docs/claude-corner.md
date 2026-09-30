@@ -27,8 +27,8 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 
 - *2026-09-29* — "never show the deleted expense screen, i can see it
   flashing" — a race only a phone loses. Headless Chrome never showed it, even
-  throttled: make it impossible by construction, say the check only guards,
-  and don't claim a reproduction you didn't get.
+  throttled: make it impossible by construction. The fold-out asked alongside
+  it was tried on the phone and undone — "keep the bug fix".
 
 - *2026-09-29* — "Consider the banner seen whenever the ledger is open",
   then a fold-back animation, then "remove the full history link". Three asks

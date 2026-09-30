@@ -24,7 +24,6 @@ import { copy } from "@/lib/copy";
 import { money, moneyParts, plural, rateText, whenLabel } from "@/lib/format";
 import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
-import { markDeleted } from "@/lib/ledger-motion";
 import { markReturn } from "@/lib/nav";
 import { historyMeta } from "@/lib/row-meta";
 import { useBillEnglish, useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
@@ -105,14 +104,8 @@ function EntryScreen() {
   const del = useDeleteEntry({
     groupId, me: data.me, kind: expense ? kindOf(expense) : "transfer", entryId: row?.id ?? "",
     before: () => { going.current = true; },
-    // Back to the ledger as it was left, where the row folds out
-    // (lib/ledger-position.ts, lib/ledger-motion.ts).
-    then: () => {
-      if (!groupId) return;
-      if (row) markDeleted(groupId, row.id);
-      markReturn(route.group(groupId));
-      router.replace(route.group(groupId));
-    },
+    // Back to the ledger as it was left, less the row (lib/ledger-position.ts).
+    then: () => { if (groupId) { markReturn(route.group(groupId)); router.replace(route.group(groupId)); } },
   });
   const [restoring, setRestoring] = useState(false);
   const arriving = useArriving(groupId, entryId, !!row);

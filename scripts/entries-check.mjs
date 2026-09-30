@@ -574,16 +574,6 @@ await page.waitForURL(/\/g\?id=/);
 report(true, "deleting from the entry screen goes back to the ledger");
 report(!await page.evaluate(() => /** @type {any} */ (window).__band),
   "and the deleted screen never flashes on the way");
-// Back on the ledger the row is drawn once more, then folds out where it
-// stands after a beat — and the list is not scrolled to it.
-const goneRow = page.locator(".lslot").filter({ hasText: "Coffee" });
-await goneRow.first().waitFor({ timeout: PATIENCE });
-const scrollTop = () => page.locator(".scroll").first().evaluate((el) => el.scrollTop);
-const scrolledBefore = await scrollTop();
-await page.locator(".lslot[data-leaving]").filter({ hasText: "Coffee" }).waitFor({ timeout: PATIENCE });
-await goneRow.first().waitFor({ state: "detached", timeout: PATIENCE });
-report(await scrollTop() === scrolledBefore,
-  "the deleted row folds out of the ledger it goes back to, without a scroll");
 await page.goto(`${base}/g/history?id=${g}`);
 await page.waitForSelector(".tle");
 await page.getByRole("link", { name: /Coffee · deleted/ }).first().click();
