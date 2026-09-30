@@ -18,10 +18,10 @@ import { runTogether } from "./lib/together.mjs";
  * Every `*-check.mjs`, by the `pnpm <name>` that runs it alone — slowest
  * first, so a capped run starts the long ones before the queue forms.
  */
-const CHECKS = ["entries", "homescreen", "offline", "stall", "nav", "demo", "claim", "keyboard", "tricount"];
+const CHECKS = ["entries", "homescreen", "offline", "stall", "nav", "demo", "claim", "keyboard", "tricount", "driver"];
 
 /**
- * How many chromiums at once. Each check wants about a core; nine on a
+ * How many chromiums at once. Each check wants about a core; ten on a
  * four-core cloud container starve the pages past the app's own timers, which
  * is where this suite's flakes came from (docs/browser-checks.md#gotchas). A laptop
  * with the cores runs them all together, as before. `VERIFY_JOBS` overrides.

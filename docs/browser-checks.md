@@ -38,7 +38,7 @@ phone's IndexedDB directly, for what no screen shows; wait on an app write with
 
 Every context `newPhone` makes waits `PATIENCE` — 30s — rather than
 playwright's default, and it is the ceiling these checks give their own waits
-too: `pnpm verify` runs nine browsers at once, so the machine is never the one
+too: `pnpm verify` runs ten browsers at once, so the machine is never the one
 a smaller number was written on. Nothing reaches that ceiling on a machine that
 is keeping up. `settle(page, ms)` is the other half — a pause the *page* keeps,
 for the few places that have to out-wait one of the app's own timers.
@@ -349,6 +349,17 @@ currencies, and an entry whose shares miss by a cent.
 talks to bunq (`apps/api/src/tricount.ts`) is the half no check can hold. Try a
 real link by hand after touching those constants, since nothing here will go
 red when bunq moves.
+
+## `pnpm driver` — the text driver still works
+
+`pnpm drive` is how an agent looks at the app ([drive.md](drive.md)), and no
+check touched it, so it would rot quietly until someone needed it mid-task.
+This runs it the way that agent does — `start`, `do`, `stop` as separate
+processes — in a `DRIVE_DIR` of its own, so a session already open survives:
+a screen read and numbered, a press, keys typed, a shot in each theme, a stale
+number refused and its batch dropped, a second phone apart from the first, and
+a `stop` that takes the Worker with it. It asserts the driver's contract, not
+the app's: a screen changing its words should not turn it red.
 
 ## Gotchas
 

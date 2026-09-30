@@ -29,6 +29,7 @@
     "nav": "node scripts/nav-check.mjs",
     "tricount": "node scripts/tricount-check.mjs",
     "demo": "node scripts/demo-check.mjs",
+    "driver": "node scripts/driver-check.mjs",
     "shots": "node scripts/shots.mjs",
     "readme-shots": "node scripts/readme-shots.mjs",
     "icons": "node scripts/icons.mjs",

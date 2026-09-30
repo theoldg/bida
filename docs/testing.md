@@ -15,6 +15,7 @@ pnpm homescreen   # the invite an iOS icon is added with, both ends of it
 pnpm demo         # /demo lands on a populated ledger, and holds no key
 pnpm nav          # where the back arrow goes, and what it leaves on the stack
 pnpm tricount     # a Tricount link, pasted, all the way to a balanced group
+pnpm driver       # the text driver still starts, reads, presses, photographs and stops
 pnpm shots        # PNGs into shots/ (gitignored)
 pnpm readme-shots # the six pictures in README.md, into docs/media/ (committed)
 pnpm drive        # the app as text, one command at a time: one screen's shot, a bug, two phones — [drive.md](drive.md)
@@ -37,12 +38,12 @@ missing or stale — so none of them needs a build step in front of it, and none
 of them wastes 25 seconds when nothing has changed. `pnpm verify` does that
 build once and then runs them together (`scripts/verify.mjs`): they share
 nothing to collide over, each serving the export on its own port 0, and the
-build is the one thing nine of them starting at once would have raced on.
+build is the one thing ten of them starting at once would have raced on.
 
 **What they do share is the machine.** Each check wants about a core, so
 `verify` runs as many at once as the machine has cores (`VERIFY_JOBS`
-overrides), slowest first: a laptop runs all nine together, a four-core cloud
-container four at a time. Nine chromiums on four cores starve the pages past
+overrides), slowest first: a laptop runs all ten together, a four-core cloud
+container four at a time. Ten chromiums on four cores starve the pages past
 the app's own timers, and that is where every flake this suite has had came
 from. The cap is load-shedding, not the fix: a check that only fails under load
 is still betting on how fast the machine is, and the bet is the bug (*A pause

@@ -73,7 +73,15 @@ test tells you if its arithmetic is wrong.
 
 **It runs as a daemon** because replaying the whole story to take one more step
 loses what makes these bugs bugs — IndexedDB, the service worker, a group's
-accumulated history. Its state lives in `.drive/`, gitignored.
+accumulated history. Its state lives in `.drive/` (or `DRIVE_DIR`), gitignored.
+
+**It is maintained like the app.** A quirk you hit in it — a misread line, a
+press that lands wrong, a command that should exist — is yours to fix in the
+same push, without asking
+([standing-instructions](standing-instructions.md#workflow)).
+[`pnpm driver`](browser-checks.md#pnpm-driver--the-text-driver-still-works),
+part of `pnpm verify`, proves it still runs start to stop; a new command earns
+a line there.
 
 ## Looking at one screen
 

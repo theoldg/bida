@@ -40,7 +40,8 @@ import { join } from "node:path";
 import { ROOT, ensureBuild, serveWorker, launch, newPhone } from "./lib/harness.mjs";
 import { PHOTO, receiptList, stubScan } from "./lib/receipts.mjs";
 
-const DIR = join(ROOT, ".drive");
+// `DRIVE_DIR` lets `pnpm driver` run a session of its own beside yours.
+const DIR = process.env.DRIVE_DIR ?? join(ROOT, ".drive");
 const IN = join(DIR, "in.jsonl");
 const RESP = join(DIR, "resp");
 const READY = join(DIR, "ready.json");
