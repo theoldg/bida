@@ -12,6 +12,7 @@ import {
 import { db, type DeviceRecord } from "./db/dexie";
 import { useLive } from "./db/live";
 import { getDevice } from "./db/device";
+import { applyStash } from "./db/sync";
 import { writeClipboardText } from "./clipboard";
 import { copy } from "./copy";
 import { byWhen } from "./format";
@@ -189,7 +190,24 @@ const EMPTY_REPORT: BalanceReport = {
   problems: [],
 };
 
+/**
+ * Whether what the worker pulled ahead for this group is in (`applyStash`).
+ * Held as loading until then, so a group opened from a notification draws
+ * with the news already in it rather than animating it in a moment later.
+ */
+function useStashApplied(groupId: string | undefined): boolean {
+  const [applied, setApplied] = useState<string>();
+  useEffect(() => {
+    if (!groupId) return;
+    let live = true;
+    void applyStash(groupId).then(() => { if (live) setApplied(groupId); });
+    return () => { live = false; };
+  }, [groupId]);
+  return !groupId || applied === groupId;
+}
+
 export function useGroupData(groupId: string | undefined): GroupData {
+  const stashed = useStashApplied(groupId);
   const rows = useLive("groupData", async () => {
     if (!groupId) return undefined;
     const d = db();
@@ -206,7 +224,7 @@ export function useGroupData(groupId: string | undefined): GroupData {
   }, [groupId]);
 
   return useMemo(() => {
-    if (!rows) {
+    if (!rows || !stashed) {
       return {
         group: undefined, members: [], memberById: new Map(),
         nameOf: () => copy.unknown, hasLeft: () => false,
@@ -253,7 +271,7 @@ export function useGroupData(groupId: string | undefined): GroupData {
       pendingOps: rows.pending,
       loading: false,
     };
-  }, [rows, groupId]);
+  }, [rows, stashed, groupId]);
 }
 
 /**

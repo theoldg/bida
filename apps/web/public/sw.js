@@ -273,7 +273,7 @@ self.addEventListener("activate", (event) => {
       legacy = Promise.resolve(rec);
       const store = await caches.open(LEGACY);
       await store.put("/legacy", new Response(JSON.stringify(rec)));
-      const keep = new Set([CACHE_NAME, LEGACY, ...Object.values(builds).filter(Boolean)]);
+      const keep = new Set([CACHE_NAME, LEGACY, PULLS, ...Object.values(builds).filter(Boolean)]);
       await Promise.all(keys.filter((k) => !keep.has(k)).map((k) => caches.delete(k)));
     })(),
   );
@@ -295,7 +295,7 @@ self.addEventListener("push", (event) => {
   }
   const title = typeof data.title === "string" && data.title ? data.title : "bida";
   const tag = typeof data.tag === "string" && data.tag ? data.tag : undefined;
-  event.waitUntil(
+  event.waitUntil(Promise.all([
     self.registration.showNotification(title, {
       body: typeof data.body === "string" ? data.body : "",
       tag,
@@ -307,8 +307,41 @@ self.addEventListener("push", (event) => {
       icon: "/notify-blank.png",
       data: { url: sameOriginPath(data.url) },
     }),
-  );
+    tag ? pullAhead(tag).catch(() => undefined) : undefined,
+  ]));
 });
+
+/**
+ * The pull ahead (docs/sync.md#the-pull-ahead): the page leaves each group's
+ * bearer and cursor here after every sync, and the app applies what this
+ * leaves before it draws the group (`applyStash`, lib/db/sync.ts). The names
+ * are `lib/db/stash.ts`'s: change them together.
+ */
+const PULLS = "bida-pull";
+
+/**
+ * Pull the group a notification is about, and keep the answer sealed as the
+ * server sent it. **Nothing here is ever the only copy**: a stash lost, late or
+ * never written leaves the ops to the ordinary pull, which still starts from
+ * the page's own cursor. A group id is the notification's `tag`.
+ */
+async function pullAhead(groupId) {
+  const cache = await caches.open(PULLS);
+  const base = `/pull/${encodeURIComponent(groupId)}`;
+  const found = await cache.match(`${base}/cursor`);
+  if (!found) return;
+  const cursor = await found.json();
+  if (typeof cursor.token !== "string" || typeof cursor.since !== "number") return;
+  const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/ops`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${cursor.token}` },
+    body: JSON.stringify({ ops: [], since: cursor.since }),
+  });
+  if (!res.ok) return;
+  await cache.put(`${base}/ops`, new Response(await res.text(), {
+    headers: { "Content-Type": "application/json" },
+  }));
+}
 
 /** Only a path of this app — a notification must not open somewhere else. */
 function sameOriginPath(url) {

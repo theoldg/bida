@@ -1,7 +1,7 @@
 import {
   MAX_DRIFT_MS, SealError, createHlcState, encryptPush, hlcReceive, isAhead, openOp, parseHlc,
   chunk, sealOp, toBase64,
-  type Op, type SealedOp,
+  type GroupCrypto, type Op, type SealedOp,
 } from "@bida/core";
 import { keepNote, started } from "../diag";
 import { errorText } from "../format";
@@ -13,6 +13,7 @@ import { db, type StoredOp, type Unreadable } from "./dexie";
 import { VERSION } from "../version";
 import { groupState, rebuild } from "./fold";
 import { whenVisible } from "./visible";
+import { leaveCursor, stashKey, stashes } from "./stash";
 
 /**
  * The sync engine (docs/sync.md). A single-flight push+pull per group over
@@ -22,7 +23,8 @@ import { whenVisible } from "./visible";
  *
  * **This is the boundary the plaintext stops at** (ADR-0036). Anything that
  * adds a second path to the server has to come through here, or the about
- * screen's guarantee stops being true.
+ * screen's guarantee stops being true. The worker's pull ahead is one: it
+ * carries only sealed bytes and the bearer, and is opened here (`applyStash`).
  */
 
 /**
@@ -88,19 +90,28 @@ async function pushPullGroup(
     throw new SyncHttpError(res.status, await res.text().catch(() => ""));
   }
   const response = (await res.json()) as PushPullResponse;
-  // Opened before anything is stored, so a half-applied pull can't happen. A
-  // *wrong key* never gets here (its token would be a 403), so a `SealError` is
-  // one row this build can't read — a newer build's kind or seal format, or an
-  // impossible stamp a peer can mint on purpose. **Skip it and keep the rest**:
-  // failing the pull would refetch it forever and sync would never succeed.
-  //
-  // A stamp more than a day ahead is held back the same way (`isAhead`): a fast
-  // clock's op is late, not lost, and `retryAt` is when the cursor winds back.
+  return { response, ...(await openPulled(crypto, response.ops)) };
+}
+
+/**
+ * Open what the server handed back, before anything is stored, so a
+ * half-applied pull can't happen. A *wrong key* never gets here (its token
+ * would be a 403), so a `SealError` is one row this build can't read — a newer
+ * build's kind or seal format, or an impossible stamp a peer can mint on
+ * purpose. **Skip it and keep the rest**: failing the pull would refetch it
+ * forever and sync would never succeed.
+ *
+ * A stamp more than a day ahead is held back the same way (`isAhead`): a fast
+ * clock's op is late, not lost, and `retryAt` is when the cursor winds back.
+ */
+async function openPulled(
+  crypto: GroupCrypto, sealed: readonly SealedOp[],
+): Promise<Omit<PushPullResult, "response">> {
   const now = Date.now();
   const pulled: Op[] = [];
   const unreadable: number[] = [];
   let retryAt: number | undefined;
-  for (const op of response.ops) {
+  for (const op of sealed) {
     let opened: Op;
     try {
       opened = await openOp(crypto, op);
@@ -117,7 +128,7 @@ async function pushPullGroup(
     }
     pulled.push(opened);
   }
-  return { response, pulled, unreadable, retryAt };
+  return { pulled, unreadable, retryAt };
 }
 
 /**
@@ -207,6 +218,26 @@ function skipped(
 function worthAnotherLook(record: Unreadable | undefined, now: number): record is Unreadable {
   if (!record) return false;
   return record.build !== VERSION || (record.retryAt !== undefined && now >= record.retryAt);
+}
+
+/**
+ * Store ops the server handed back, inside the caller's transaction over
+ * `ops` and `device`. Adopts every stamp stored, so this device's next op
+ * sorts after them. Otherwise correcting a fast-clocked peer's expense stamps
+ * the correction *before* the create and the fold discards it — the amount
+ * snaps back. Same transaction as the ops, like `appendOps`: a tab dying here
+ * must not leave the clock behind the log.
+ */
+async function storePulled(pulled: readonly Op[]): Promise<void> {
+  const d = db();
+  await d.ops.bulkPut(pulled.map((op): StoredOp => ({ ...op, pending: 0 })));
+  const device = await getDevice();
+  const now = Date.now();
+  let clock = createHlcState(device.nodeId, device.hlcPhysical, device.hlcCounter);
+  for (const op of pulled) clock = hlcReceive(clock, op.hlc, now);
+  await d.device.put({
+    ...device, hlcPhysical: clock.physical, hlcCounter: clock.counter,
+  });
 }
 
 /** One run per group at a time — see `syncGroup`. */
@@ -300,19 +331,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
         if (seq !== undefined) await d.ops.update(op.id, { seq, pending: 0 });
       }
       if (pulled.length > 0) {
-        await d.ops.bulkPut(pulled.map((op): StoredOp => ({ ...op, pending: 0 })));
-        // Adopt every stamp just stored, so this device's next op sorts after them.
-        // Otherwise correcting a fast-clocked peer's expense stamps the correction
-        // *before* the create and the fold discards it — the amount snaps back. Same
-        // transaction as the ops, like `appendOps`: a tab dying here must not leave
-        // the clock behind the log.
-        const device = await getDevice();
-        const now = Date.now();
-        let clock = createHlcState(device.nodeId, device.hlcPhysical, device.hlcCounter);
-        for (const op of pulled) clock = hlcReceive(clock, op.hlc, now);
-        await d.device.put({
-          ...device, hlcPhysical: clock.physical, hlcCounter: clock.counter,
-        });
+        await storePulled(pulled);
       }
       await d.groupKeys.put({
         ...current,
@@ -338,6 +357,8 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     pushed += pending.length;
     pulledCount += pulled.length;
   }
+
+  await leaveCursor(groupId, key.secret, since).catch((err: unknown) => keepNote("stash", errorText(err)));
 
   // Only now: a notification about an op still on this phone would open to
   // nothing on the phone it reaches. Its own failures are its own.
@@ -367,6 +388,53 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   return { pushed, pulled: pulledCount };
 }
 
+
+/** One apply per group at a time: every screen of the group asks on mounting. */
+const applying = new Map<string, Promise<void>>();
+
+/**
+ * Store what the worker pulled ahead for a group, and fold it, so the screen
+ * about to draw the group draws it current rather than animating the pull in.
+ * Never fails and never throws: the ordinary pull is right behind it.
+ */
+export function applyStash(groupId: string): Promise<void> {
+  let run = applying.get(groupId);
+  if (!run) {
+    run = applyStashOnce(groupId)
+      .catch((err: unknown) => keepNote("stash", errorText(err)))
+      .finally(() => { applying.delete(groupId); });
+    applying.set(groupId, run);
+  }
+  return run;
+}
+
+async function applyStashOnce(groupId: string): Promise<void> {
+  const cache = await stashes();
+  const res = await cache?.match(stashKey(groupId));
+  if (!cache || !res) return;
+  // Deleted first: a stash that fails to apply would fail again on every open.
+  // One the worker writes in between is lost, and the ordinary pull fetches it.
+  await cache.delete(stashKey(groupId));
+  const d = db();
+  const key = await d.groupKeys.get(groupId);
+  if (!key) return;
+  const { ops } = (await res.json()) as PushPullResponse;
+  const { pulled } = await openPulled(await groupCrypto(groupId, key.secret), ops);
+  const held = await d.ops.bulkGet(pulled.map((op) => op.id));
+  const fresh = pulled.filter((_, i) => !held[i]);
+  if (fresh.length === 0) return;
+
+  await whenVisible("stash.commit");
+  const done = started("stash", `${fresh.length} ops`);
+  const stored = await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
+    // Forgotten and erased since: storing would put back half a group.
+    if (!(await d.groupKeys.get(groupId))) return false;
+    await storePulled(fresh);
+    return true;
+  });
+  if (stored) await rebuild(groupId);
+  done(stored ? undefined : "gone");
+}
 
 /** `/notify`'s cap per request — the Worker's `MAX_NOTIFY_PER_BATCH`. */
 const NOTIFY_BATCH = 40;

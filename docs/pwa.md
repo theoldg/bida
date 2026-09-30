@@ -96,7 +96,7 @@ outlive what a person thinks of as quitting. `activate` writes down **which buil
 window is running** (in memory and in the `bida-legacy` cache, since the browser
 stops idle workers) and keeps every cache still spoken for: those pages go on
 being served their own build, so their next tap can't mix an old router with a
-new payload. A cache nothing is on is deleted, so the cost is one kept shell per
+new payload. A cache nothing is on is deleted — never `bida-pull`, which is data rather than a build ([sync.md](sync.md#the-pull-ahead)) — so the cost is one kept shell per
 window somebody left open, and a window that closes takes its cache with it.
 Keeping only the newest other cache is not enough: two deploys later a page
 further back is served a stranger's `/g.txt`.

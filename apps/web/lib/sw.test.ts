@@ -21,15 +21,25 @@ interface Sandbox {
   payloadFor: (url: URL, request: unknown, clientId: string) =>
     Promise<{ redirectedTo?: string; body?: string; failed?: boolean }>;
   reuse: (cache: unknown, urls: string[]) => Promise<string[]>;
+  pullAhead: (groupId: string) => Promise<void>;
   caches: { open: (name: string) => Promise<unknown> };
+  fetch: (url: string, init: RequestInit) => Promise<{ ok: boolean; text?: () => Promise<string> }>;
+  /** Every listener the worker added, to fire one by hand. */
+  listeners: Record<string, (event: unknown) => void>;
 }
 
 /** Every cache in the fake origin, as `{ [cacheName]: { [key]: body } }`. */
 type Caches = Record<string, Record<string, string>>;
 
 function load(stored: Caches): Sandbox {
+  const listeners: Record<string, (event: unknown) => void> = {};
   const context: Record<string, unknown> = {
-    self: { addEventListener() {}, location: { origin: "https://bida.bid" }, clients: {} },
+    listeners,
+    self: {
+      addEventListener(type: string, listener: (event: unknown) => void) { listeners[type] = listener; },
+      location: { origin: "https://bida.bid" },
+      clients: { matchAll: async () => [] },
+    },
     URL,
     URLSearchParams,
     caches: {
@@ -57,7 +67,13 @@ function load(stored: Caches): Sandbox {
     // Only where it lands matters here, and a relative URL — which is what the
     // worker redirects to, and what a browser resolves against the worker's own
     // scope — is one Node's `Response.redirect` refuses to parse.
-    Response: { redirect: (to: string) => ({ redirectedTo: to }), error: () => ({ failed: true }) },
+    Response: Object.assign(
+      // Built only to be put in a cache, which keeps the body.
+      function Response(this: { body: string }, body: string) { this.body = body; },
+      { redirect: (to: string) => ({ redirectedTo: to }), error: () => ({ failed: true }) },
+    ),
+    JSON,
+    encodeURIComponent,
     async fetch() { return { ok: false, body: "network" }; },
   };
   createContext(context);
@@ -188,5 +204,53 @@ describe("installing a build over an earlier one", () => {
       ["/_next/static/x.js"],
     );
     expect(left).toEqual(["/_next/static/x.js"]);
+  });
+});
+
+describe("pulling ahead when a notification lands", () => {
+  const cursor = { "/pull/g%201/cursor": JSON.stringify({ token: "tok", since: 7 }) };
+
+  it("asks from the page's cursor with its bearer, and keeps the answer as sent", async () => {
+    const stored: Caches = { "bida-pull": { ...cursor } };
+    const sw = load(stored);
+    const asked: { url: string; init: RequestInit }[] = [];
+    sw.fetch = async (url, init) => {
+      asked.push({ url, init });
+      return { ok: true, text: async () => "sealed answer" };
+    };
+
+    await sw.pullAhead("g 1");
+
+    expect(asked).toHaveLength(1);
+    expect(asked[0]!.url).toBe("/api/groups/g%201/ops");
+    expect((asked[0]!.init.headers as Record<string, string>).Authorization).toBe("Bearer tok");
+    expect(JSON.parse(asked[0]!.init.body as string)).toEqual({ ops: [], since: 7 });
+    expect(stored["bida-pull"]!["/pull/g%201/ops"]).toBe("sealed answer");
+  });
+
+  it("does nothing for a group the page left no cursor for", async () => {
+    const sw = load({});
+    let asked = false;
+    sw.fetch = async () => { asked = true; return { ok: true }; };
+    await sw.pullAhead("g 1");
+    expect(asked).toBe(false);
+  });
+
+  it("keeps no refusal: the page's own pull hears it", async () => {
+    const stored: Caches = { "bida-pull": { ...cursor } };
+    const sw = load(stored);
+    sw.fetch = async () => ({ ok: false });
+    await sw.pullAhead("g 1");
+    expect(Object.keys(stored["bida-pull"]!)).toEqual(["/pull/g%201/cursor"]);
+  });
+
+  it("survives a new build taking over, which deletes every other cache", async () => {
+    const stored: Caches = { "bida-pull": { ...cursor }, "bida-shell-old": {} };
+    const sw = load(stored);
+    let done: Promise<unknown> = Promise.resolve();
+    sw.listeners.activate!({ waitUntil: (p: Promise<unknown>) => { done = p; } });
+    await done;
+    expect(stored["bida-pull"]).toEqual(cursor);
+    expect(stored["bida-shell-old"]).toBeUndefined();
   });
 });

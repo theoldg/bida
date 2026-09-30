@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-30* — "Can we trigger background sync when a notification
+  arrives?" Four turns followed, each cutting the design down: a cache, not the
+  database; a stash that never moves the cursor. Say the cost plainly and let
+  the owner trim it — "Do it" came once the design was theirs.
+
 - *2026-09-30* — "the big amount's color should fade when spinning". One
   line, one fix: the words and colour wait for the roll, then fade with it.
   Sample the computed colour through the roll before calling it done.
@@ -73,7 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — "i can see the homescreen flashing" on a reopen. The skeleton
   was honest, but it was the wrong screen's: a flash is judged by its frame,
   not its data. Prove the check fails without the fix before trusting it.
-
-- *2026-09-29* — "the long hold menus are a bit bare", then a mock with
-  toggles, then a phone screenshot of the ticks: "I like these settings". The
-  screenshot is the spec; the one thing named to drop is the only change.

@@ -42,10 +42,11 @@ its latest. Each
 notification is `tag`ged with the group id, so a group's latest replaces its
 last. Tapping opens `/g/entry?id=&e=` for one entry, deleted or not — a
 deleted one's screen is where Restore is — and `/g?id=` for several, where the
-new-edits line already folds what changed. The tap usually
-beats the sync that brings the entry in, so an entry screen missing its entry
-shows "Fetching the latest…" through one sync of the group, and says "Gone"
-only if it is still missing after.
+new-edits line already folds what changed. The worker pulls the group as the
+notification lands ([sync.md](sync.md#the-pull-ahead)), so the entry is usually
+there by the tap; where it is not, an entry screen missing its entry shows
+"Fetching the latest…" through one sync of the group, and says "Gone" only if
+it is still missing after.
 
 ## How it works
 
@@ -76,7 +77,8 @@ only if it is still missing after.
   that isn't the subscription's — never a reason to clear one.
 - **Showing** (`public/sw.js`) — always something, as both platforms demand;
   `renotify`, so a group's latest replaces its last and still buzzes; a tap
-  focuses or opens the url, kept same-origin.
+  focuses or opens the url, kept same-origin. Alongside, the group is pulled
+  ahead ([sync.md](sync.md#the-pull-ahead)).
 - **Leaving** (`forgetGroup`) writes `push: null` first, and the group is kept
   on the phone until the sync that pushes it, then erased. That sync heals
   nothing: forgetting drops the claim. Rejoining puts the subscription back.

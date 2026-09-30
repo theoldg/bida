@@ -219,7 +219,7 @@ that lives on ([below](#a-forgotten-group-is-erased)).
 
 `apps/web/lib/db/sync.ts`, which is also **the boundary the plaintext stops
 at**: ops are plain in Dexie and on every screen, and the `sealOp`/`openOp` pair
-in `pushPullGroup` is the whole of why the server holds ciphertext. A pulled op
+in `pushPullGroup` (and `applyStash`, [below](#the-pull-ahead)) is the whole of why the server holds ciphertext. A pulled op
 is opened before anything is stored, so a run never half-applies. One that will
 not open is skipped rather than fatal — it is counted on the group key and
 printed on `/diag` — since the same row comes back on every retry and would
@@ -303,6 +303,25 @@ a sync in flight can be lost or half put back. **The id stays in
 ([ios.md](ios.md#a-in-detail)), and without it the next launch would bring the
 group back. Opening the invite link again is a join, and asks who you are.
 A group an older build only hid is erased by the next `syncAll`.
+
+### The pull ahead
+
+**A notification pulls its group before anyone opens it.** After every sync
+the page leaves the group's bearer (the token, never the secret) and `lastSeq`
+in the `bida-pull` cache (`lib/db/stash.ts`). A push for the group — its `tag`
+— makes `sw.js` pull with them and keep the answer, sealed. Every screen of the
+group waits in `useGroupData` for `applyStash`, which opens the ops, stores the
+ones not held, adopts their stamps and rebuilds, so a group opened from a
+notification draws with the news in it — even offline — instead of animating
+the pull in. Cache Storage and plain JS, so the worker needs no bundle and
+never takes a database lock.
+
+**Applying a stash never moves `lastSeq`**, so the ordinary pull behind it
+starts where it always would and fetches the same ops again. That is the whole
+of its safety: a stash that is old, partial, lost or never written costs speed,
+never an op. No flag records that one was applied — it is deleted before
+applying, and a second copy stores nothing. The cursor leaves with the group
+(`erase`), and `activate` keeps the cache when it wipes old shells.
 
 ## Conflicts
 

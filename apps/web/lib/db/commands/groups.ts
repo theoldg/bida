@@ -10,6 +10,7 @@ import { reconcilePush } from "../../push";
 import { forgetShown } from "../../roll";
 import type { CarriedGroup } from "../../group-link";
 import { appendOps } from "./append";
+import { dropStash } from "../stash";
 
 /**
  * A group, who this phone is in it, and who else is: created together, with
@@ -212,6 +213,8 @@ async function erase(groupId: Id, deleted: boolean): Promise<boolean> {
   });
   if (!gone) return false;
   forgetShown(groupId);
+  // The worker's cursor holds the group's bearer; nothing of the group stays.
+  await dropStash(groupId).catch(() => {});
 
   // The device record has one writer (../device.ts), so it is patched after
   // the transaction rather than inside it — which only reads it.
