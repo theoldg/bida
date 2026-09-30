@@ -136,9 +136,13 @@ report(await page.getByRole("button", { name: "Receipt" }).count() === 0, "an in
 // voice is the title's and the verdict's: read the whole screen.
 await page.getByRole("button", { name: "Multi-recipient" }).click();
 await page.waitForURL(/\/g\/payers/);
+// The URL moves before the screen is drawn: wait for its rows, not the address.
+await page.waitForFunction(() => document.querySelectorAll(".rows .row, .rows .splitrow").length > 0,
+  null, { timeout: PATIENCE }).catch(() => {});
 const payerScreen = await page.locator("body").innerText();
-report(/receive/.test(payerScreen) && !/pay/.test(payerScreen),
-  "the payers screen asks an income in the income's voice");
+const incomeVoice = /receive/.test(payerScreen) && !/pay/.test(payerScreen);
+report(incomeVoice, "the payers screen asks an income in the income's voice",
+  incomeVoice ? undefined : payerScreen.match(/.*(receive|pay).*/g)?.join(" · ") ?? payerScreen.slice(0, 300));
 await page.getByRole("button", { name: "Done" }).click();
 await page.waitForURL(/entry\/edit/);
 await save(2);

@@ -26,11 +26,20 @@ process.stdout.on("error", () => {});
  * On GitHub Actions, pin a message to the run — the one piece of a run the
  * API hands out without a download: a job's log lives on a blob host the
  * agent environment cannot reach, and its annotations are plain JSON
- * (scripts/push.mjs reads them back). The tail, since a failure prints last.
+ * (scripts/push.mjs reads them back). The harness's `FAIL` lines with the
+ * detail under each, since a check's passes outnumber them fifty to one; the
+ * tail when there are none, since a crash prints last.
  */
 export function annotation(level, title, text) {
   if (!process.env.GITHUB_ACTIONS) return;
-  const tail = text.trimEnd().split("\n").slice(-60).join("\n");
+  const all = text.trimEnd().split("\n");
+  const failing = all.flatMap((line, i) => {
+    if (!/^FAIL  /.test(line)) return [];
+    const detail = [];
+    for (let j = i + 1; j < all.length && /^ {4,}\S/.test(all[j]); j++) detail.push(all[j]);
+    return [line, ...detail];
+  });
+  const tail = (failing.length ? failing : all).slice(-60).join("\n");
   const escape = (s) => s.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
   console.log(`::${level} title=${escape(title).replace(/[:,]/g, " ")}::${escape(tail)}`);
 }
