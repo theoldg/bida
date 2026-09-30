@@ -5,10 +5,15 @@ disagree, without a phone or a screenshot. It is the harness
 [browser-checks.md](browser-checks.md#scriptslibharnessmjs--what-the-browser-checks-share) describes, driven by hand.*
 
 A live session you send one command at a time, and that answers with the screen
-written out in words. Stress-test any nontrivial behaviour here before calling
-it done — owner's instruction,
-[standing-instructions](standing-instructions.md#workflow) — and what it turns
-up is usually the test worth writing.
+written out in words. **It is how an agent looks at the app** — the default for
+anything short of the full photo set or a checked-in test
+([standing-instructions](standing-instructions.md#workflow)):
+
+- **One screen** — a change you just made, in either theme. Below.
+- **A bug** — reproduce it step by step, with the state a replay would lose.
+- **A feature to stress** — any nontrivial behaviour, before calling it done;
+  what it turns up is usually the test worth writing.
+- **A blind walk** — the app as a stranger gets it (the reader, below).
 
 ```bash
 pnpm drive start &                                   # holds the session open
@@ -25,6 +30,7 @@ pnpm drive stop
 | `\n` in a `fill` or `type` | the newline a one-line command cannot hold, written the way the dump writes one back — the box that most wants one is the typed bill's, whose lines are the items |
 | `hold <n>` | long-press — the only way to the row menus |
 | `offline on\|off` | cut this phone's network, or restore it |
+| `theme light\|dark` | the phone's colour scheme — every screen has both looks to get right |
 | `receipt <name>` · `receipt list` · `receipt off` | hand this phone a canned bill, so the next reading answers with it — a photograph or one typed in |
 | `clipboard` | read what the page copied — how the invite link travels |
 | `shot [name]` | save a screenshot to `.drive/shots/` — for what words can't settle: colour, crowding, where the eye lands |
@@ -68,6 +74,21 @@ test tells you if its arithmetic is wrong.
 **It runs as a daemon** because replaying the whole story to take one more step
 loses what makes these bugs bugs — IndexedDB, the service worker, a group's
 accumulated history. Its state lives in `.drive/`, gitignored.
+
+## Looking at one screen
+
+```bash
+pnpm drive start &
+pnpm drive do "goto /demo"            # a group with history, in one step
+pnpm drive do "click 11" "fill 3 90"  # numbers from the answer above
+pnpm drive do "shot split" "theme dark" "shot split-dark"
+```
+
+`/demo` is a real group — four people, every kind of entry, a split off a
+bill ([product.md](product.md)) — so most screens are two or three commands
+from it; `/new` or `/quick` start from nothing. The PNGs land in
+`.drive/shots/`. `start` builds when the source has moved; restart the
+session after any other rebuild (Gotchas).
 
 ## What the reader shows you
 

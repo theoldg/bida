@@ -46,9 +46,11 @@ to remove more from this list than you add.
   For a *manual* deploy the owner pastes the token in-session — keep it in a
   scratch file outside the repo, never a tracked one.
   [hosting.md](hosting.md#the-cloudflare_api_token).
-- **Keep a screenshot loop, and don't lean on it.** *2026-08-27* — "efficient
-  and easy to run for you, but don't overuse it." `pnpm shots` after building or
-  changing a screen, not after every edit. [shots.md](shots.md).
+- **Keep a screenshot loop, and don't lean on it.** *2026-08-27, narrowed
+  2026-09-30* — "efficient and easy to run for you, but don't overuse it", then
+  "use drive for one offs". One screen is `pnpm drive … shot`; `pnpm shots` is
+  for every screen at once, after building or reshaping several, not after
+  every edit. [drive.md](drive.md#looking-at-one-screen) · [shots.md](shots.md).
 - **Drive nontrivial behaviour by hand before calling it done.** *2026-09-04* —
   "use the text driver to manually stress test features when nontrivial
   behaviour is introduced or modified … this can catch bugs and inform test

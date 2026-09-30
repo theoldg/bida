@@ -17,7 +17,7 @@ pnpm nav          # where the back arrow goes, and what it leaves on the stack
 pnpm tricount     # a Tricount link, pasted, all the way to a balanced group
 pnpm shots        # PNGs into shots/ (gitignored)
 pnpm readme-shots # the six pictures in README.md, into docs/media/ (committed)
-pnpm drive        # drive the app as text — [drive.md](drive.md)
+pnpm drive        # the app as text, one command at a time: one screen's shot, a bug, two phones — [drive.md](drive.md)
 pnpm run docs     # links resolve, ADRs indexed, claude-corner within size, ~30ms
 pnpm run rules    # the decisions one line could reverse, checked against the code, ~30ms
 pnpm bump         # the number this deploy will show — [hosting.md](hosting.md#versions)
@@ -29,7 +29,7 @@ pnpm bump         # the number this deploy will show — [hosting.md](hosting.md
 | [browser-checks.md](browser-checks.md) | Writing or fixing a browser check, or reading why one went red |
 | [shots.md](shots.md) | Photographing screens, or refreshing the README's pictures |
 | [on-a-phone.md](on-a-phone.md) | Holding an iPhone: what no headless browser can check |
-| [drive.md](drive.md) | Reproducing a bug by driving the app as text |
+| [drive.md](drive.md) | Looking at the app yourself: one screen, a bug, a feature to stress |
 
 **The browser checks build for themselves.** `ensureBuild()` compares `apps/web`
 and `packages/core` against `apps/web/out` and runs the build only when it is

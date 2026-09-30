@@ -26,6 +26,7 @@
  *   hold <n>            long-press it, for menus a tap cannot open
  *   back | forward | reload | screen | wait <ms>
  *   offline on|off      cut this phone's network, or restore it
+ *   theme light|dark    the phone's colour scheme, for a shot of either look
  *   receipt <name>      hand this phone a canned receipt — see `receipt list`
  *                       (it answers a typed bill — "Type" or "As text" — as well)
  *   shot [name]         save a screenshot of this phone to .drive/shots/
@@ -569,6 +570,9 @@ async function start() {
       case "reload": await page.reload(); break;
       case "wait": await page.waitForTimeout(Number(args[0] ?? 500)); break;
       case "offline": await ctx.setOffline(args[0] !== "off"); break;
+      // The phone's own setting, not the app's: every screen has two looks to get
+      // right, and a one-off shot of only the light one is half a look.
+      case "theme": await page.emulateMedia({ colorScheme: args[0] === "dark" ? "dark" : "light" }); break;
       case "forget": await ctx.close(); phones.delete(who); return { who, url: "(phone thrown away)", title: "", lines: [], noise: [] };
       // Scanning needs a camera and a network, so a button-presser can't reach the
       // who-had-what grid otherwise. Like `offline`, this sets up the world, not the

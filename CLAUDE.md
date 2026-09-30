@@ -86,7 +86,9 @@ pnpm session && pnpm check
   version, typecheck, tests and the static export build — six stages at once,
   ~30s. Nothing else gates a push, so anything you want caught belongs in it.
   `pnpm verify` drives the built app in a real browser and `pnpm shots`
-  photographs it — [testing.md](docs/testing.md). A push to `dev` auto-deploys
+  photographs all of it — [testing.md](docs/testing.md). **To look at the app
+  yourself** — one screen, a bug, two phones syncing — `pnpm drive`
+  ([drive.md](docs/drive.md)). A push to `dev` auto-deploys
   to the dev Worker; production moves when the owner fast-forwards `main` —
   [hosting.md](docs/hosting.md#dev-and-production).
 - **Code.** TypeScript strict, no un-narrowed `any`. `packages/core` is pure —

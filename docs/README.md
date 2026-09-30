@@ -34,7 +34,7 @@ them tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 | ↳ [browser-checks.md](browser-checks.md) | Writing, fixing or reading a browser check |
 | ↳ [shots.md](shots.md) | Photographing screens, and the README's pictures |
 | ↳ [on-a-phone.md](on-a-phone.md) | An iPhone in hand: what no headless browser can check |
-| [drive.md](drive.md) | Reproducing a bug or stressing a screen without a phone |
+| [drive.md](drive.md) | **Looking at the app yourself** — one screen's shot, a bug, a feature to stress |
 | [decisions/](decisions/README.md) | About to reverse an architectural choice |
 | [claude-corner.md](claude-corner.md) | **Every session, briefly.** How the owner asks, and what agents get wrong here |
 

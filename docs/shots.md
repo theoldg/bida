@@ -6,6 +6,10 @@ of the [testing](testing.md) docs; both scripts stand on the harness in
 
 ## `pnpm shots` — photograph every screen
 
+*One screen is not this: `pnpm drive … shot` reaches it in a few commands and
+doesn't stake the picture on seventy other scenes —
+[drive.md](drive.md#looking-at-one-screen).*
+
 One browser launch, one PNG per route per theme, no human and no phone. Run it
 after building or changing a screen, **not after every edit** — owner's
 instruction, [standing-instructions](standing-instructions.md#workflow).
