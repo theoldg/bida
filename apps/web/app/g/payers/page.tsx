@@ -7,7 +7,7 @@ import { primaryPayer, validatePayers } from "@bida/core";
 import { MinorAmountInput } from "@/components/amount-input";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
-import { Icon } from "@/components/icons";
+import { Icon, TapMark } from "@/components/icons";
 import { copy } from "@/lib/copy";
 import { bare, money, payerProblemText } from "@/lib/format";
 import { route } from "@/lib/group-link";
@@ -131,6 +131,7 @@ function PayersScreen() {
             {data.members.map((m, i) => {
               const on = (spec[m.id] ?? 0) > 0;
               const fieldId = `payer-${m.id}`;
+              const tap = tapAmount(spec, m.id, amountMinor);
               // A column of figures is what a confirm key is for: it walks to
               // the next person rather than closing the keyboard between each
               // one. The last row has nowhere to go, and says so.
@@ -138,7 +139,7 @@ function PayersScreen() {
               return (
                 <div key={m.id} className={`row${m.id === data.me ? " mine" : ""}`}>
                   <button type="button" onClick={() => tapRow(m.id, fieldId)}
-                    aria-label={tapLabel(tapAmount(spec, m.id, amountMinor), m.name, {
+                    aria-label={tapLabel(tap, m.name, {
                       clear: copy.payers.clear, giveRest: copy.payers.giveRest,
                       edit: copy.payers.edit,
                     })}
@@ -158,6 +159,7 @@ function PayersScreen() {
                   </button>
 
                   <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <TapMark tap={tap} />
                     <MinorAmountInput id={fieldId} className="bignum splitin"
                       enterKeyHint={last ? "done" : "next"}
                       aria-label={copy.payers.contribution[voice](m.name)}

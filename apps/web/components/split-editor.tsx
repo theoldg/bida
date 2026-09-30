@@ -8,7 +8,7 @@ import {
 import { MinorAmountInput } from "./amount-input";
 import { Failure } from "./chrome";
 import { ScanPair, type ReceiptScan } from "./receipt-scan";
-import { Icon } from "./icons";
+import { Icon, TapMark } from "./icons";
 import { copy } from "../lib/copy";
 import { printedCount } from "../lib/scan/items";
 import { bare, money, plural, splitFooter } from "../lib/format";
@@ -227,6 +227,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             // means anything (`tapAmount`).
             const typing = spec.mode === "exact";
             const fieldId = `sp-${m.id}`;
+            const tap = typing ? tapAmount(spec.amounts, m.id, amountMinor) : "edit";
             const end = spec.mode === "shares" ? (
               <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <button type="button" onClick={() => setWeight(m.id, -1)} aria-label={copy.split.fewerParts(m.name)}
@@ -240,6 +241,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
               </span>
             ) : spec.mode === "exact" ? (
               <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                <TapMark tap={tap} />
                 {/* Never disabled. Every row can be typed into, whoever any
                     other tab has ticked: typing is how somebody joins this one. */}
                 {/* A column of figures is typed down: the confirm key moves to the
@@ -289,7 +291,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
               <div key={m.id} className={`splitrow${m.id === me ? " mine" : ""}`}>
                 {typing ? (
                   <button type="button" onClick={() => tapRow(m.id, fieldId)} style={lead}
-                    aria-label={tapLabel(tapAmount(spec.amounts, m.id, amountMinor), m.name, copy.split)}>
+                    aria-label={tapLabel(tap, m.name, copy.split)}>
                     {name}
                   </button>
                 ) : (

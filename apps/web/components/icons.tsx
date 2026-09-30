@@ -3,8 +3,10 @@
  * a couple of dozen paths, which is why there is no icon library in
  * package.json.
  */
+import type { AmountTap } from "../lib/tap-amount";
+
 export type IconName =
-  | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"
+  | "chev" | "back" | "plus" | "cross" | "cam" | "off" | "check" | "clock"
   | "users" | "arrow" | "sync" | "trash" | "edit" | "link"
   | "image" | "split" | "merge" | "share" | "import" | "sun" | "moon" | "fx" | "more" | "info"
   | "mail" | "dollar" | "sliders" | "translate";
@@ -18,6 +20,7 @@ export function IconSprite() {
         <symbol id="i-chev" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><path d="M9 6l6 6-6 6" /></symbol>
         <symbol id="i-back" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><path d="M15 6l-6 6 6 6" /></symbol>
         <symbol id="i-plus" viewBox="0 0 24 24" {...S} strokeWidth="2.4"><path d="M12 5v14M5 12h14" /></symbol>
+        <symbol id="i-cross" viewBox="0 0 24 24" {...S} strokeWidth="2.4"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></symbol>
         <symbol id="i-cam" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
           <path d="M3 8.5A2 2 0 015 6.5h2l1.4-2h7.2L17 6.5h2a2 2 0 012 2V18a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           <circle cx="12" cy="13" r="3.4" />
@@ -187,6 +190,21 @@ export function FlipLabel({ label, done, on }: {
         <Icon name="check" size={16} />
         {done}
       </span>
+    </span>
+  );
+}
+
+/**
+ * What a tap on a name in a column of amounts would do (`tapAmount`): a plus
+ * where it fills the rest, a cross where it clears. Nothing where it would only
+ * open the field — that is what the field already looks like. The slot keeps
+ * its width either way so the figures stay in one column.
+ */
+export function TapMark({ tap }: { tap: AmountTap }) {
+  return (
+    <span style={{ width: 16, flex: "none", display: "flex", justifyContent: "center", color: "var(--muted)" }}>
+      {tap === "edit" ? null
+        : tap.set > 0 ? <Icon name="plus" size={14} /> : <Icon name="cross" size={12} />}
     </span>
   );
 }

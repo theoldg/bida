@@ -161,7 +161,8 @@ API is reached with `fetch`.
   amount → note → fold, and the split editor's "as amounts" runs first person →
   … → last person → fold, started by a tap on a field. **A tap on a name in
   either column is not a focus**: it clears a figure, hands an empty row what is
-  left, and types only when the column is already full or over (`tapAmount`). `walkFields`
+  left, and types only when the column is already full or over (`tapAmount`).
+  A grey plus or cross beside the field says which (`TapMark`); typing gets none. `walkFields`
   (`components/viewport.tsx`) is the whole of it, hung on `.scroll` because the
   next field is rarely a sibling; it walks that screen's fields in the order
   they are laid out and puts the caret at the *end* of what is already in one
