@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-30* — "as Luke, pretending to be a newcomer". Check every
+  balance by hand as you go; they all held. What a stranger trips on is what
+  isn't drawn: empty grid cells, a disabled Done that looks live, history that
+  forgets a split's mode.
+
 - *2026-09-30* — "Imagine you're a confused Ben". Play the stranger for real:
   tap the wrong "Edit" first. The empty box it opened was the finding, and
   the owner answered it mid-run by seeding the demo, then asked how the drive
@@ -76,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   then a fold-back animation, then "remove the full history link". Three asks
   on one line in a row: each shrank it. The cap went with the link, or four of
   twelve would have been all anyone could reach.
-
-- *2026-09-29* — ledger motion: a mock, three rounds of "the divider should…",
-  then "ship it with" three lines of letters. The mock got corrections on
-  lines and frames; timing only got one once it shipped ("wait a little
-  longer"). Then "no animation for the last one": rare cases can go bare.
