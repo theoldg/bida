@@ -28,6 +28,7 @@
  *   offline on|off      cut this phone's network, or restore it
  *   receipt <name>      hand this phone a canned receipt — see `receipt list`
  *                       (it answers a typed bill — "Type" or "Edit" — as well)
+ *   shot [name]         save a screenshot of this phone to .drive/shots/
  *   clipboard           read what the page put on this phone's clipboard
  *   forget              throw this phone away and start it factory-fresh
  *   html [n]            markup and computed style — for calibrating the reader
@@ -598,6 +599,14 @@ async function start() {
           "press the app's own scan or upload button; a scan is a round trip, so read the screen again if it is still working",
           "the stub answers a typed bill too: press \"Type\" (\"Edit\" over a bill), fill the box and press \"Read it\"",
         ]);
+      }
+      // The words are the point; a picture settles what they can't — colour,
+      // crowding, what a person's eye lands on first. Saved, never read back.
+      case "shot": {
+        mkdirSync(join(DIR, "shots"), { recursive: true });
+        const file = join(DIR, "shots", `${(args[0] ?? `shot-${Date.now()}`).replace(/[^\w-]/g, "_")}.png`);
+        await page.screenshot({ path: file });
+        return { who, url: page.url().replace(base, ""), title: "", lines: [`saved ${file.replace(ROOT + "/", "")}`], noise: noise.splice(0) };
       }
       case "clipboard": {
         const text = await page.evaluate(() => navigator.clipboard.readText());

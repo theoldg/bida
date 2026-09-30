@@ -27,6 +27,7 @@ pnpm drive stop
 | `offline on\|off` | cut this phone's network, or restore it |
 | `receipt <name>` · `receipt list` · `receipt off` | hand this phone a canned bill, so the next reading answers with it — a photograph or one typed in |
 | `clipboard` | read what the page copied — how the invite link travels |
+| `shot [name]` | save a screenshot to `.drive/shots/` — for what words can't settle: colour, crowding, where the eye lands |
 | `screen` · `wait <ms>` | look again, or give something time to settle |
 | `forget` | throw this phone away and start it factory-fresh |
 | `html [n]` | markup and computed style, for calibrating the reader |
