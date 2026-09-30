@@ -132,10 +132,11 @@ report(await page.getByText("Received by").count() > 0, "an income relabels the 
 report(await page.getByRole("button", { name: "Receipt" }).count() === 0, "an income offers no Receipt tab");
 
 // On an income the payer question is "who received it", and every line of
-// the screen must stay in that voice (never "didn't pay").
+// the screen must stay in that voice. The rows carry names alone, so the
+// voice is the title's and the verdict's: read the whole screen.
 await page.getByRole("button", { name: "Multi-recipient" }).click();
 await page.waitForURL(/\/g\/payers/);
-const payerScreen = await page.locator(".rows").innerText();
+const payerScreen = await page.locator("body").innerText();
 report(/receive/.test(payerScreen) && !/pay/.test(payerScreen),
   "the payers screen asks an income in the income's voice");
 await page.getByRole("button", { name: "Done" }).click();
