@@ -14,7 +14,7 @@
 # in the main clone, and git won't lend a branch to two working trees. It gets
 # `origin/dev` as base and upstream instead (the harness branches from
 # elsewhere, which would leave `pnpm bump` comparing against the wrong tree).
-# Push with `git push origin HEAD:dev`.
+# Push with `pnpm push`, which pushes `HEAD:dev`.
 #
 # **In the main clone**, move to `dev` and carry over any commits made on the
 # assigned branch. `main` is a release pointer the owner fast-forwards by hand,
@@ -49,7 +49,7 @@ if [ "$(git rev-parse --git-dir)" != "$(git rev-parse --git-common-dir)" ]; then
   else
     echo "note: $work and origin/dev have both moved; rebase before pushing" >&2
   fi
-  echo "worktree on $work, tracking origin/dev — push with: git push origin HEAD:dev"
+  echo "worktree on $work, tracking origin/dev — push with: pnpm push"
   exit 0
 fi
 

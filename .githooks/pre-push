@@ -1,11 +1,10 @@
 #!/bin/sh
-# Everything CI-shaped, on the machine making the push
-# (docs/standing-instructions.md#workflow). The deploy workflow
-# (.github/workflows/deploy.yml) only rebuilds and ships, so a build failing
-# there would fail on `main` with nothing to gate it.
+# The checks that take seconds, on the machine making the push, so a mistake
+# is found before it leaves; the build and the browser checks run on GitHub
+# (docs/testing.md#where-each-check-runs).
 #
 # A pass is stamped against its tree (scripts/lib/check-stamp.mjs), so
-# `pnpm check` then `git push` pays for the gate once — no reason to reach
+# `pnpm check` then `pnpm push` pays for the gate once — no reason to reach
 # for `--no-verify`.
 #
 # Wired up by the root postinstall (`git config core.hooksPath .githooks`),

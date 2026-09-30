@@ -1,6 +1,6 @@
 /**
  * The gate's memory: what tree did `pnpm check` last pass over? Each push runs
- * it twice (session, then `pre-push`), and the second run's thirty seconds is
+ * it twice (session, then `pre-push`), and paying for the second run is
  * what tempts `--no-verify`. So a pass is stamped, and a run over the same
  * tree exits.
  *

@@ -22,6 +22,19 @@ export const ROOT = resolve(import.meta.dirname, "../..");
 // fake red on a green tree.
 process.stdout.on("error", () => {});
 
+/**
+ * On GitHub Actions, pin a message to the run — the one piece of a run the
+ * API hands out without a download: a job's log lives on a blob host the
+ * agent environment cannot reach, and its annotations are plain JSON
+ * (scripts/push.mjs reads them back). The tail, since a failure prints last.
+ */
+export function annotation(level, title, text) {
+  if (!process.env.GITHUB_ACTIONS) return;
+  const tail = text.trimEnd().split("\n").slice(-60).join("\n");
+  const escape = (s) => s.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+  console.log(`::${level} title=${escape(title).replace(/[:,]/g, " ")}::${escape(tail)}`);
+}
+
 const runJob = (job) => new Promise((done) => {
   const at = Date.now();
   const child = spawn(job.run[0], job.run.slice(1), { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] });
@@ -41,9 +54,10 @@ const runJob = (job) => new Promise((done) => {
 
 /**
  * Run them all, print the report, and hand back whatever failed. `limit` caps
- * how many run at once — the rest queue, in the order given.
+ * how many run at once — the rest queue, in the order given. `annotate: false`
+ * keeps a failure off the run's annotations, for a caller that will try again.
  */
-export async function runTogether(label, jobs, { limit = jobs.length } = {}) {
+export async function runTogether(label, jobs, { limit = jobs.length, annotate = true } = {}) {
   const started = Date.now();
   const how = limit < jobs.length ? `${limit} at a time` : "together";
   console.log(`${label}  ${jobs.map((j) => j.name).join(" ")} — ${how}\n`);
@@ -60,6 +74,7 @@ export async function runTogether(label, jobs, { limit = jobs.length } = {}) {
   for (const job of failed) {
     console.log(`\n──── ${job.name} ${"─".repeat(Math.max(0, 66 - job.name.length))}`);
     console.log(job.output.trimEnd());
+    if (annotate) annotation("error", `${label}: ${job.name} failed`, job.output);
   }
 
   if (!failed.length) {

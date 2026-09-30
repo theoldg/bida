@@ -5,7 +5,8 @@
  * (like the `/g` directory trap).
  *
  * Chromium comes from PLAYWRIGHT_BROWSERS_PATH, already on disk in the agent
- * environment. Never run `playwright install`.
+ * environment: never run `playwright install` there. GitHub installs its own
+ * (.github/workflows/deploy.yml).
  */
 import { createServer } from "node:http";
 import { spawn, spawnSync } from "node:child_process";

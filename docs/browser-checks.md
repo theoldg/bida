@@ -1,8 +1,9 @@
 # Browser checks
 
 *For: anyone writing, fixing or reading a browser check. Part of the
-[testing](testing.md) docs, which say how `pnpm verify` runs them and why
-nothing gates them. What each check is *for* is its own section; the Gotchas
+[testing](testing.md) docs, which say how `pnpm verify` runs them on GitHub at
+every push, and why nothing waits on them but the pusher. What each check is
+*for* is its own section; the Gotchas
 are what every one of them has had to learn.*
 
 ## `scripts/lib/harness.mjs` — what the browser checks share

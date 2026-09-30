@@ -77,12 +77,12 @@ export matters more than it looks.
 `apps/api` is the one Worker: static assets plus the sync API backed by D1.
 
 **Automatic:** every push runs
-[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) — build the
-web export, then `wrangler deploy` at the branch's environment — using the
-`CLOUDFLARE_API_TOKEN` repo secret (Settings → Secrets and variables →
-Actions). It does not re-run typecheck/test; that's the local pre-push hook's
-job (see [working agreements](../CLAUDE.md#working-agreements)), so a push that
-skips the hook (`--no-verify`) can still deploy.
+[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) — `pnpm check
+--ci`, build the web export, then `wrangler deploy` at the branch's environment
+— using the `CLOUDFLARE_API_TOKEN` repo secret (Settings → Secrets and variables →
+Actions). Any step failing deploys nothing, so a push that skipped the hook
+still cannot ship a broken build; on `dev` the browser checks run beside it
+([testing.md](testing.md#where-each-check-runs)).
 
 **Manually**, e.g. from a phone session with no local hook:
 

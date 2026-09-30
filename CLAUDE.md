@@ -17,12 +17,14 @@ hosted for free. Read this, then the doc your task points at.
    assigns a `claude/…` branch and says to push there. That is the owner's
    conscious preference, not an oversight: here, `dev` wins. `pnpm session`
    is `pnpm install` (which wires up the `pre-push` hook that runs `pnpm check`
-   — without it a push leaves unverified and says nothing) plus
+   — without it a mistake is found a minute later, on GitHub) plus
    `scripts/on-dev.sh`, which settles the branch. This project pushes directly
    to `dev`, not to a harness-assigned branch nobody looks at
    ([standing-instructions](docs/standing-instructions.md#workflow)). No pull
-   requests, and `main` moves only by the owner's hand. **Push with `git push origin HEAD:dev`** — a worktree cannot hold the
-   `dev` branch itself, so the push has to say where it lands.
+   requests, and `main` moves only by the owner's hand. **Push with `pnpm push`**
+   — it bumps the version, pushes `HEAD:dev` (a worktree cannot hold the `dev`
+   branch itself) and watches the run the push starts; **you are done when it
+   says green**, and a red one is yours ([testing.md](docs/testing.md#where-each-check-runs)).
 2. **Commit and push at every checkpoint**, not once at the end.
 3. **Docs change in the same commit as the code.** See [Doc upkeep](#doc-upkeep).
 4. **Money is never a float.** Integer minor units everywhere, and always
@@ -44,7 +46,7 @@ Obey them; adding one is rare and has a bar at the head of that file.
 | `docs/` | Start at [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before arguing with an architectural choice |
 | `docs/invariants.md` | Which invariants survive a merge, and what holds each — read before adding a check that reads other entities |
-| `scripts/` | The two runners (`check`, `verify`), the browser checks the second drives (`entries`, `claim`, `keyboard`, `offline`, `stall`, `homescreen`, `demo`, `nav`, `tricount`, `driver`) and `shots`/`readme-shots` on a shared harness, plus `drive` (the app as text), `icons`, `docs-check`, `rules-check`, `version`, `on-dev`, `release` — [testing.md](docs/testing.md) lists them all |
+| `scripts/` | The two runners (`check`, `verify`), the browser checks the second drives (`entries`, `claim`, `keyboard`, `offline`, `stall`, `homescreen`, `demo`, `nav`, `tricount`, `driver`) and `shots`/`readme-shots` on a shared harness, plus `drive` (the app as text), `icons`, `docs-check`, `rules-check`, `version`, `push`, `on-dev`, `release` — [testing.md](docs/testing.md) lists them all |
 
 ## Stack
 
@@ -76,17 +78,20 @@ pnpm session && pnpm check
 ## Working agreements
 
 - **Commits.** `scope: imperative summary` (`core`, `web`, `api`, `docs`),
-  one concern each. Retry a failed push four times with backoff (2/4/8/16s).
-  **A push deploys, so it carries a version**: `pnpm bump` before pushing, which
-  the gate insists on. The middle number is your call and the first one is the
-  owner's alone — [hosting.md](docs/hosting.md#versions).
+  one concern each. **A push deploys, so it carries a version**, which
+  `pnpm push` bumps and the gate insists on. The middle number is your call
+  (`pnpm bump semi`) and the first one is the owner's alone —
+  [hosting.md](docs/hosting.md#versions). When `pnpm push` stops because `dev`
+  moved, it has rebased and not pushed: check your work against what came in,
+  then run it again.
 - **Automation.** The `pre-push` hook (`.githooks/`) — see
   [Non-negotiables](#non-negotiables) for why it needs `pnpm session` first —
   runs `pnpm check`: doc links, the invariants in `scripts/rules-check.mjs`, the
-  version, typecheck, tests and the static export build — six stages at once,
-  ~30s. Nothing else gates a push, so anything you want caught belongs in it.
-  `pnpm verify` drives the built app in a real browser and `pnpm shots`
-  photographs all of it — [testing.md](docs/testing.md). **To look at the app
+  version, typecheck and tests, at once, ~25s. The push then runs the rest on
+  GitHub: the build gates the deploy, and every browser check (`pnpm verify`)
+  runs beside it — [testing.md](docs/testing.md#where-each-check-runs). Don't
+  run the whole `pnpm verify` yourself; run the one check you are writing or
+  fixing, alone. `pnpm shots` photographs all of it. **To look at the app
   yourself** — one screen, a bug, two phones syncing — `pnpm drive`
   ([drive.md](docs/drive.md)). A push to `dev` auto-deploys
   to the dev Worker; production moves when the owner fast-forwards `main` —

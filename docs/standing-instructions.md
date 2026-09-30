@@ -41,11 +41,16 @@ to remove more from this list than you add.
   ([hosting.md](hosting.md#dev-and-production)).
 - **A push deploys — to whichever world the branch owns.** *2026-08-28,
   widened 2026-09-14* — the token is a GitHub Actions repo secret the owner set
-  up themselves; never ask them to paste one for a deploy. CI-shaped checks run
-  on the machine making the push (the `pre-push` hook), never as a cloud job.
-  For a *manual* deploy the owner pastes the token in-session — keep it in a
+  up themselves; never ask them to paste one for a deploy. For a *manual* deploy the owner pastes the token in-session — keep it in a
   scratch file outside the repo, never a tracked one.
   [hosting.md](hosting.md#the-cloudflare_api_token).
+- **Ship with `pnpm push`, and stand down only on green.** *2026-09-30* —
+  "keep the dev loop as fast as possible", "uniformize testing to the GitHub
+  machines", and the push "can watch the action progress and only stand down
+  once that passes". Seconds of checks on your machine, the minutes on GitHub;
+  a red run is yours to fix, a flake it reports is not yours to chase, and a
+  rebase it made "needs to be checked by the agent" before pushing again —
+  [testing.md](testing.md#where-each-check-runs).
 - **Keep a screenshot loop, and don't lean on it.** *2026-08-27, narrowed
   2026-09-30* — "efficient and easy to run for you, but don't overuse it", then
   "use drive for one offs". One screen is `pnpm drive … shot`; `pnpm shots` is

@@ -4,8 +4,9 @@
 says which of the testing docs your task needs.*
 
 ```bash
-pnpm check        # links · rules · version · typecheck · tests · export build — pre-push, ~30s
-pnpm verify       # every browser check against a real build, ~50s (~90s on a 4-core container)
+pnpm push         # bump, push to dev, watch the run until green or red — how a session ships
+pnpm check        # links · rules · version · typecheck · tests — pre-push, ~25s
+pnpm verify       # every browser check against a real build — on GitHub, at every push
 pnpm entries      # just the three kinds of entry, end to end
 pnpm claim        # a name still being typed, and the button that acts on it
 pnpm keyboard     # what a phone keyboard does to a form: the act under it, the confirm key
@@ -21,7 +22,7 @@ pnpm readme-shots # the six pictures in README.md, into docs/media/ (committed)
 pnpm drive        # the app as text, one command at a time: one screen's shot, a bug, two phones — [drive.md](drive.md)
 pnpm run docs     # links resolve, ADRs indexed, claude-corner within size, ~30ms
 pnpm run rules    # the decisions one line could reverse, checked against the code, ~30ms
-pnpm bump         # the number this deploy will show — [hosting.md](hosting.md#versions)
+pnpm bump         # the number this deploy will show; `push` does it for you — [hosting.md](hosting.md#versions)
 ```
 
 | Read | When you are |
@@ -32,30 +33,46 @@ pnpm bump         # the number this deploy will show — [hosting.md](hosting.md
 | [on-a-phone.md](on-a-phone.md) | Holding an iPhone: what no headless browser can check |
 | [drive.md](drive.md) | Looking at the app yourself: one screen, a bug, a feature to stress |
 
+## Where each check runs
+
+| | Where | Gates |
+|---|---|---|
+| `pnpm check` | `pre-push`, on your machine; again on GitHub (`--ci`) | the push, then the deploy |
+| the build | GitHub, in the deploy job | the deploy: a red build ships nothing |
+| `pnpm verify` | GitHub, beside the deploy, every push to `dev` | nothing — `pnpm push` waits on it |
+
+**Your machine runs only what takes seconds**, so the loop stays fast; what
+takes minutes runs on one named GitHub image (`.github/workflows/deploy.yml`),
+so a verdict does not depend on which container a session got. `pnpm push`
+watches the run its push started and ends on it: green is done, red is yours.
+It prints the failures pinned to the run — `::error` annotations, the one part
+of a run the API serves without a log download, which the agent environment
+cannot reach. The deploy does not wait for `verify`, so the owner is trying the
+change on dev while it runs; a red `verify` is dev serving a change you still
+owe a fix.
+
+**A browser check that fails on GitHub runs once more, alone** (`verify
+--retry`). Failing alone is a real failure. Passing alone is a flake: the run
+stays green and `pnpm push` prints it. It is still a bug — a check that only
+fails under load is betting on the machine's speed (*A pause is not a wait*, in
+[browser-checks.md](browser-checks.md#gotchas)) — but not yours to chase
+mid-task unless you touched what it drives.
+
+**Don't run the whole `pnpm verify` yourself.** Run the one check you are
+writing or fixing, alone (`pnpm <name>`). Locally, `verify` runs as many at once
+as the machine has cores (`VERIFY_JOBS` overrides): ten chromiums on four cores
+starve the pages past the app's own timers, which is where every flake this
+suite has had came from.
+
 **The browser checks build for themselves.** `ensureBuild()` compares `apps/web`
 and `packages/core` against `apps/web/out` and runs the build only when it is
-missing or stale — so none of them needs a build step in front of it, and none
-of them wastes 25 seconds when nothing has changed. `pnpm verify` does that
-build once and then runs them together (`scripts/verify.mjs`): they share
-nothing to collide over, each serving the export on its own port 0, and the
-build is the one thing ten of them starting at once would have raced on.
+missing or stale. `pnpm verify` does that build once and then runs them
+together: each serves the export on its own port 0, and the build is the one
+thing ten of them starting at once would have raced on.
 
-**What they do share is the machine.** Each check wants about a core, so
-`verify` runs as many at once as the machine has cores (`VERIFY_JOBS`
-overrides), slowest first: a laptop runs all ten together, a four-core cloud
-container four at a time. Ten chromiums on four cores starve the pages past
-the app's own timers, and that is where every flake this suite has had came
-from. The cap is load-shedding, not the fix: a check that only fails under load
-is still betting on how fast the machine is, and the bet is the bug (*A pause
-is not a wait*, in [browser-checks.md](browser-checks.md#gotchas)). A check that fails alone is a real failure, every time,
-so rerun the named one on its own before believing anything else.
-
-`pnpm check` is the gate — nothing else stands between an edit and production,
-so the three things that gate nothing else are in it. The build, because `next
-build` catches what `tsc` cannot (a prerender touching `window`, a
-client-boundary mistake, a `precache.mjs` that throws) and the deploy workflow
-only rebuilds and ships, so a build that fails there fails on `main`. And
-`pnpm run rules`, because a decision in an ADR is one careless import away
+**What gates, and why.** The build, because `next build` catches what `tsc`
+cannot (a prerender touching `window`, a client-boundary mistake, a
+`precache.mjs` that throws). `pnpm run rules`, because a decision in an ADR is one careless import away
 from being reversed by someone who never read it — an import or a
 `Date.now()` in `packages/core`, a browser dialog in `apps/web`
 ([ADR-0008](decisions/0008-hand-rolled-interface.md)), a live read without its
@@ -64,26 +81,25 @@ for another is in the script: written down as a decision, reversible in one
 line, invisible to every test. Style isn't on the list — there is no linter here
 on purpose. And the version, because a push to `dev` deploys and a deploy has to
 show a new number: the stage fails a tree that differs from what `dev` is serving
-and still calls itself the same thing ([hosting.md](hosting.md#versions)). CI
-cannot check that one — it clones shallow, with no `dev` to compare against.
+and still calls itself the same thing ([hosting.md](hosting.md#versions)). It
+is the one stage GitHub skips — it clones shallow, with no `dev` to compare
+against.
 
 **A pass is stamped and not repeated.** The stamp is a hash of every file git
-tracks or would track, plus the env files it ignores and the build reads
-(`scripts/lib/check-stamp.mjs`), so `pnpm check` then `git push` runs the gate
+tracks or would track, plus the env files it ignores
+(`scripts/lib/check-stamp.mjs`), so `pnpm check` then a push runs the gate
 once — and committing in between does not invalidate it, because the contents
 are what is hashed and they did not move. Anything that did move re-runs it;
 `pnpm check --force` re-runs it regardless.
 
-**Its six stages run at once** (`scripts/check.mjs`), because none of them
-reads what another writes — so the gate costs the slowest one, the build, and
-not the sum. Each keeps its output instead of printing it: a pass is six lines
-and a digest, a failure spills only the stages that failed and names the
-`pnpm run <stage>` that reproduces each alone. Nothing stops at the first
-failure, so one run tells you everything that is broken.
+**Its stages run at once** (`scripts/check.mjs`), because none of them reads
+what another writes — so the gate costs the slowest one, not the sum. Each
+keeps its output instead of printing it: a pass is a line and a digest each, a
+failure spills only the stages that failed and names the `pnpm run <stage>`
+that reproduces each alone. Nothing stops at the first failure, so one run
+tells you everything that is broken.
 
-The flip side: **the [browser checks](browser-checks.md) gate nothing**, so one can go red and
-stay red. Run `pnpm verify` after touching a screen, not only when something
-feels wrong.
+## Unit tests
 
 `packages/core` gets real coverage; the bar is in
 [CLAUDE.md](../CLAUDE.md#working-agreements). The web app gets less, and not all

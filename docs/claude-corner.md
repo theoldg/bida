@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-30* — "I'm going to sleep, anything you need me to clarify or
+  decide". List the open choices, each with the default you'll take, then
+  drive it home. The one answer that came back — a clean rebase "needs to be
+  checked by the agent" — was the one no default would have guessed.
+
 - *2026-09-30* — "add subtle dividers between selected rows (there already are
   some between unselected)". The rule for it already existed; a shorthand
   further down the file had quietly undone it. Look for the rule before
@@ -76,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-30* — "the big amount's color should fade when spinning". One
   line, one fix: the words and colour wait for the roll, then fade with it.
   Sample the computed colour through the roll before calling it done.
-
-- *2026-09-29* — "never show the deleted expense screen, i can see it
-  flashing" — a race only a phone loses. Headless Chrome never showed it, even
-  throttled: make it impossible by construction. The fold-out asked alongside
-  it was tried on the phone and undone — "keep the bug fix".

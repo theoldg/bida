@@ -5,6 +5,13 @@ name: Deploy
 # commit it just fast-forwarded `main` to, because a push made with the built-in
 # `GITHUB_TOKEN` deliberately does not trigger another workflow — so the release
 # button has to ask for the deploy rather than let the push cause one.
+#
+# Two jobs, side by side (docs/testing.md#where-each-check-runs):
+# - `deploy` is the gate: the fast checks and the build, then the deploy. Any
+#   of them failing ships nothing, and the Worker keeps the last good build.
+# - `verify` drives every browser check against its own build, on a push to
+#   `dev` only, while the owner is already trying the deploy. It gates nothing;
+#   `pnpm push` waits on it, and a red one is the pusher's to fix.
 on:
   push:
     branches: [main, dev]
@@ -19,9 +26,16 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     env:
       TARGET: ${{ inputs.target || (github.ref == 'refs/heads/main' && 'production' || 'dev') }}
+    # Two pushes close together must not land out of order: an older deploy
+    # finishing last would put the older build back. One at a time per world;
+    # a push waiting behind a newer one is skipped, and `pnpm push` says so.
+    concurrency:
+      group: deploy-${{ inputs.target || (github.ref == 'refs/heads/main' && 'production' || 'dev') }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v5
         with:
@@ -32,6 +46,10 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # What `pre-push` ran, again, for a push that skipped it (an edit on
+      # github.com, a clone without `pnpm session`). All but the version, which
+      # a shallow clone cannot compare (scripts/check.mjs).
+      - run: pnpm check --ci
       # Not a secret: a Turnstile *site* key identifies the widget in the page
       # source, and this one only works on the domains the widget names — both
       # hostnames are on that list, so one build serves either Worker. Here
@@ -52,3 +70,31 @@ jobs:
         run: pnpm --filter @bida/api run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+  verify:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    # Named, not `-latest`: this is the machine the browser checks are
+    # calibrated on, and it moves only when someone moves it here.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The chromium playwright-core was built against, not whatever Chrome the
+      # runner image carries this month: the same browser on every run.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ hashFiles('pnpm-lock.yaml') }}
+      # Every check launches headless, which is the shell alone.
+      - run: pnpm exec playwright-core install --with-deps --only-shell chromium
+      # Its own build, without the Turnstile key, as `pnpm verify` builds on a
+      # laptop: the checks stub the scan, and a real widget would call out.
+      - run: pnpm verify --retry

@@ -73,9 +73,9 @@ D1 fails with a generic `Authentication error [code: 10000]`, and `wrangler
 whoami` succeeding proves nothing about that. `wrangler` reads the variable
 straight out of the environment, so the same token works for a manual deploy.
 
-The workflow does not run migrations and does not run tests. Migrations are
-yours to apply by hand, in the same window as the push that needs them. Tests
-run in the `pre-push` hook, which `pnpm install` wires up.
+The workflow runs the tests before it deploys, and the browser checks beside
+it on `dev`, but it does not run migrations: those are yours to apply by hand,
+in the same window as the push that needs them.
 
 ## Receipt scanning
 

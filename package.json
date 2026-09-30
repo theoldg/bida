@@ -1,6 +1,6 @@
 {
   "name": "bida",
-  "version": "1.2.15",
+  "version": "1.2.16",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -13,6 +13,7 @@
     "session": "pnpm install && sh scripts/on-dev.sh",
     "release": "sh scripts/release.sh",
     "bump": "node scripts/version.mjs",
+    "push": "node scripts/push.mjs",
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
     "build": "pnpm -r --if-present build",

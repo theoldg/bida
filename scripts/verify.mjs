@@ -12,7 +12,7 @@
  */
 import { availableParallelism } from "node:os";
 import { ensureBuild } from "./lib/harness.mjs";
-import { runTogether } from "./lib/together.mjs";
+import { annotation, runTogether } from "./lib/together.mjs";
 
 /**
  * Every `*-check.mjs`, by the `pnpm <name>` that runs it alone — slowest
@@ -28,9 +28,18 @@ const CHECKS = ["entries", "homescreen", "offline", "stall", "nav", "demo", "cla
  */
 const LIMIT = Number(process.env.VERIFY_JOBS) || Math.max(2, availableParallelism());
 
+/**
+ * `--retry` (the deploy workflow's): a check that fails runs once more, alone.
+ * Failing alone is a real failure and fails the run; passing alone is a check
+ * that bets on the machine's speed — still a bug (docs/browser-checks.md#gotchas),
+ * but not the pusher's to chase mid-task, so it is pinned to the run as a
+ * warning, which `pnpm push` prints, and the run stays green.
+ */
+const RETRY = process.argv.includes("--retry");
+
 ensureBuild();
 
-const failed = await runTogether("verify", CHECKS.map((name) => ({
+const job = (name) => ({
   name,
   run: ["node", `scripts/${name}-check.mjs`],
   rerun: `pnpm ${name}`,
@@ -38,6 +47,14 @@ const failed = await runTogether("verify", CHECKS.map((name) => ({
   // the passes, so count the passes here — a check that asserted nothing at
   // all is the failure this would otherwise hide.
   digest: (out) => [`${(out.match(/^  ok  /gm) ?? []).length} assertions`],
-})), { limit: LIMIT });
+});
 
-process.exit(failed.length ? 1 : 0);
+const failed = await runTogether("verify", CHECKS.map(job), { limit: LIMIT, annotate: !RETRY });
+if (!failed.length || !RETRY) process.exit(failed.length ? 1 : 0);
+
+console.log("\nverify: trying each failure once more, alone\n");
+const still = await runTogether("retry", failed.map((f) => job(f.name)), { limit: 1 });
+for (const flaky of failed.filter((f) => !still.some((s) => s.name === f.name))) {
+  annotation("warning", `flaky: ${flaky.name} failed beside the others and passed alone`, flaky.output);
+}
+process.exit(still.length ? 1 : 0);

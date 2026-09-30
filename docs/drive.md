@@ -160,11 +160,11 @@ nothing in ARIA is read as `nothing marked as chosen` rather than guessed at.
   app, not before, or you are testing a blank tab rather than the offline app.
 - **`html` is the one deliberate cheat.** It is for building the reader, not for
   using it; reading it during a blind run defeats the point.
-- **Don't run `pnpm check` while a session is open.** It rebuilds `apps/web/out`
-  under the running Worker, which then serves 404 for every path — including the
-  app shell, so the next `goto` fails with an HTTP error that looks like a bug
-  in the app. Restart the daemon after any build. A `git push` counts: pre-push
-  runs `pnpm check`.
+- **Don't build while a session is open** — `pnpm run build`, or a browser
+  check finding the build stale. It rebuilds `apps/web/out` under the running
+  Worker, which then serves 404 for every path — including the app shell, so
+  the next `goto` fails with an HTTP error that looks like a bug in the app.
+  Restart the daemon after any build.
 - **A reload does not pick up a rebuild.** The phone has the service worker,
   which is cache-first: the CSS and JS it already precached are what it keeps
   serving, so a fix you just built shows up as the bug you just fixed. Restart
