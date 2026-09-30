@@ -636,11 +636,16 @@ html[data-resuming="manual"] .ghost-manual { display: block }
   text-overflow: ellipsis }
 .rmeta { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; margin-top: 1px }
-/* A name with no line under it that stands as tall as one with, name centred:
-   the amount columns, where a line coming and going with the figure moved
-   every row below it. The sum is `.rtitle` plus `.rmeta`'s margin and line. */
-.rmain.solo { display: flex; flex-direction: column; justify-content: center;
-  min-height: calc(13.5px * 1.25 + 1px + 11px * 1.5) }
+/* A name with no line under it that stands exactly as tall as one with, name
+   centred: the amount columns, which must match Evenly and As parts beside
+   them. The height comes from a real title-and-line pair drawn invisibly in
+   the same grid cell (`SoloName`), never from arithmetic on the font — a
+   phone that rounds line boxes its own way would put the two apart. */
+.rmain.solo { display: grid }
+.rmain.solo > * { grid-area: 1 / 1; min-width: 0 }
+.rmain.solo > .rtitle { align-self: center }
+.sologhost { visibility: hidden }
+.sologhost > * { display: block }
 /* A group row's new-changes count: ink, not colour — green and red are money's. */
 .rmeta .rnew { color: var(--ink); font-weight: 600 }
 .ramt { text-align: right; flex: none }

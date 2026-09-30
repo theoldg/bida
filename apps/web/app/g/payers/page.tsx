@@ -8,6 +8,7 @@ import { MinorAmountInput } from "@/components/amount-input";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
 import { Icon, TapMark } from "@/components/icons";
+import { SoloName } from "@/components/bits";
 import { copy } from "@/lib/copy";
 import { bare, money, payerProblemText } from "@/lib/format";
 import { route } from "@/lib/group-link";
@@ -148,11 +149,7 @@ function PayersScreen() {
                     {/* No line under the name: the field beside it already is
                         the figure, and an empty one already says "didn't pay" —
                         same as the split editor's "as amounts". */}
-                    <span className="rmain solo">
-                      <span className="rtitle" style={{ display: "block" }}>
-                        {m.name}
-                      </span>
-                    </span>
+                    <SoloName name={m.name} />
                   </button>
 
                   <span style={{ display: "flex", alignItems: "center", gap: 8 }}>

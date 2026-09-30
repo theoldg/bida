@@ -26,6 +26,24 @@ export function Chip({ children, variant, style }: {
   return <span className={`chip${variant ? ` ${variant}` : ""}`} style={style}>{children}</span>;
 }
 
+/**
+ * A row's name with no line under it, as tall as a name with one and centred
+ * in that height — the amount columns, beside tabs whose rows carry a line.
+ * The height is an invisible title-and-line pair, so it is whatever the
+ * device makes of those two lines (`.rmain.solo`).
+ */
+export function SoloName({ name, style }: { name: string; style?: CSSProperties }) {
+  return (
+    <span className="rmain solo" style={style}>
+      <span className="sologhost" aria-hidden="true">
+        <span className="rtitle">&nbsp;</span>
+        <span className="rmeta">&nbsp;</span>
+      </span>
+      <span className="rtitle">{name}</span>
+    </span>
+  );
+}
+
 export function Card({ children, style, className }: {
   children: ReactNode; style?: CSSProperties; className?: string;
 }) {

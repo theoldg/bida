@@ -9,6 +9,7 @@ import { MinorAmountInput } from "./amount-input";
 import { Failure } from "./chrome";
 import { ScanPair, type ReceiptScan } from "./receipt-scan";
 import { Icon, TapMark } from "./icons";
+import { SoloName } from "./bits";
 import { copy } from "../lib/copy";
 import { printedCount } from "../lib/scan/items";
 import { bare, money, plural, splitFooter } from "../lib/format";
@@ -273,19 +274,20 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             // row that is otherwise faded out.
             // In "as amounts" the field beside the name already is the figure,
             // and an empty one says "not involved" by itself — so no line under
-            // it, and a name as tall as one with (`.solo`) so rows never move.
-            const name = (
-              <span className={`rmain${typing ? " solo" : ""}`} style={{ opacity: on ? 1 : .45 }}>
+            // it, and a name as tall as one with (`SoloName`) so rows match the
+            // other tabs and never move.
+            const name = typing ? (
+              <SoloName name={m.name} style={{ opacity: on ? 1 : .45 }} />
+            ) : (
+              <span className="rmain" style={{ opacity: on ? 1 : .45 }}>
                 <span className="rtitle" style={{ display: "block", fontSize: 13.5 }}>
                   {m.name}
                 </span>
-                {typing ? null : (
-                  <span className="rmeta" style={{ display: "block" }}>
-                    {!on ? copy.split.notInvolved
-                      : totalUnknown ? copy.none
-                      : money(shares[m.id] ?? 0, currency)}
-                  </span>
-                )}
+                <span className="rmeta" style={{ display: "block" }}>
+                  {!on ? copy.split.notInvolved
+                    : totalUnknown ? copy.none
+                    : money(shares[m.id] ?? 0, currency)}
+                </span>
               </span>
             );
             const lead = { display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 } as const;
