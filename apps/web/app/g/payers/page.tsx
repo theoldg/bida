@@ -138,7 +138,7 @@ function PayersScreen() {
               // one. The last row has nowhere to go, and says so.
               const last = i === data.members.length - 1;
               return (
-                <div key={m.id} className={`row${m.id === data.me ? " mine" : ""}`}>
+                <div key={m.id} className={`row${on ? " inrow" : ""}${m.id === data.me ? " mebar" : ""}`}>
                   <button type="button" onClick={() => tapRow(m.id, fieldId)}
                     aria-label={tapLabel(tap, m.name, {
                       clear: copy.payers.clear, giveRest: copy.payers.giveRest,

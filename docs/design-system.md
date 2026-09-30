@@ -147,6 +147,10 @@ tinted, so a row's own green or red stays the only colour on the line — and th
 *only* way you are marked, since a member is always printed by name, never
 replaced by "You".
 
+**The split and the payers take the pair apart.** There the question on the
+screen is who is in, so the wash marks every row that is in the split or put
+money in (`.inrow`), and you keep only the bar (`.mebar`).
+
 **The wash eats soft hairlines.** A `--rule-soft` line is invisible against it,
 so wherever a washed row abuts something — the row below it, or the split
 editor's mode tabs above it — that boundary is redrawn at 14% ink or it reads as

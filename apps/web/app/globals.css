@@ -239,11 +239,14 @@ input, textarea, .selectable {
 
 /* The highlighter: a wash laid *over* the rows that are yours, plus a left edge
    bar so it survives colour-blindness. Never the only signal, and never on the
-   ledger — there almost every row is yours (see `.notmine` below). */
-.mine {
+   ledger — there almost every row is yours (see `.notmine` below).
+   The two amount-and-people editors (the split, /g/payers) pull the pair
+   apart: the wash marks who is *in* (`.inrow`), the bar alone marks you
+   (`.mebar`) — there, who is in is the question on the screen. */
+.mine, .inrow {
   background: var(--hl);
 }
-.mine::before {
+.mine::before, .mebar::before {
   content: "";
   position: absolute;
   left: 0; top: 0; bottom: 0;
@@ -705,7 +708,7 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .share.debit { color: var(--debit) }
 /* Two highlighted rows in a row would otherwise merge into one grey block:
    the ordinary hairline is invisible against the wash. */
-.mine { border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent) }
+.mine, .inrow { border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent) }
 .notmine { opacity: .58 }
 .notmine .rtitle { font-weight: 500 }
 /* The ledger's "you owe" card, and the way to the balances. JetBrains Mono
@@ -1616,10 +1619,10 @@ dialog.scrim::backdrop { background: transparent }
   border-radius: var(--r-s); overflow: hidden }
 .splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft) }
 .splitlist { padding: 0; overflow: hidden }
-/* The tabs' soft rule is invisible against a `.mine` wash, so a first row that
-   is yours gets the stronger colour on the lid's line. Not a border on the row:
+/* The tabs' soft rule is invisible against the wash, so a first row that is
+   in the split gets the stronger colour on the lid's line. Not a border on the row:
    `.splitlist` clips it. */
-.splitbox:has(.splitlist > .splitrow.mine:first-child) .seg {
+.splitbox:has(.splitlist > .splitrow.inrow:first-child) .seg {
   border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent);
 }
 .splitrow { display: flex; align-items: center; gap: 10px; padding: 7px 12px;

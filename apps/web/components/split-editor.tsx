@@ -292,7 +292,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             );
             const lead = { display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 } as const;
             return (
-              <div key={m.id} className={`splitrow${m.id === me ? " mine" : ""}`}>
+              <div key={m.id} className={`splitrow${on ? " inrow" : ""}${m.id === me ? " mebar" : ""}`}>
                 {typing ? (
                   <button type="button" onClick={() => tapRow(m.id, fieldId)} style={lead}
                     aria-label={tapLabel(tap, m.name, copy.split)}>
