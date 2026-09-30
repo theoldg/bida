@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-30* — "I'm stuck in a polishing loop while having zero users",
+  then, laughing at itself, "one last change". The log agreed: 820 commits in
+  three weeks. Say so plainly and kindly, then do the small ask. Point at the
+  demo link, not the chevron.
+
 - *2026-09-30* — "Have a receipt image scan populate "type it in" … easy to
   change". Write it in the shape the typed prompt already reads, so a
   correction round-trips; the photo stopped clearing the box instead of a new
@@ -76,7 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   use it only when navigating back". "Exact" meant the pixel and "only" meant
   every other arrival opens at the top; a save above the row is where both
   showed. Scroll memory was deleted that morning: the ask narrowed it.
-
-- *2026-09-29* — "The delete dialog after a long press should maintain the
-  row-highlighted state in the background". One sentence, one state carried
-  one step further — and every menu whose item asks a question gets it too.

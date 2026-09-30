@@ -75,7 +75,7 @@ export default function DiagPage() {
                 {stas ? copy.diag.on : copy.diag.off}
               </button>
             </div>
-            <Link className="diag-link" href={route.diagCrop()}>{copy.diag.cropLink}</Link>
+            <Link className="btn btn-s diag-link" href={route.diagCrop()}>{copy.diag.cropLink}</Link>
           </div>
           {/* One <pre>, not a laid-out table: it is read on a phone, pasted
               into a message and diffed against the next one. */}
