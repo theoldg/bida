@@ -15,9 +15,12 @@ import { calmly } from "@/lib/seek";
  * figure that changed while the card was away (a save, a reopen) rolls from
  * it after `wait`. A change arriving while mounted rolls at once. Reduced
  * motion puts the figure in place. Settled, it is plain text again.
+ * `onStart` fires as the figure sets off toward `minor` — past `wait` and any
+ * hold, or at once when nothing rolls — so what dresses it can move with it.
  */
-export function RollingFigure({ minor, currency, from = null, wait = 0, hold }: {
+export function RollingFigure({ minor, currency, from = null, wait = 0, hold, onStart }: {
   minor: number; currency: CurrencyCode; from?: number | null; wait?: number;
+  onStart?: () => void;
   /**
    * Holds any roll at its old figure until `go` is called, then rolls with
    * whatever is left of `wait` (lib/ledger-motion.ts `awaitRoll`); returns
@@ -62,6 +65,14 @@ export function RollingFigure({ minor, currency, from = null, wait = 0, hold }: 
     const t = setTimeout(() => setRoll(null), roll.wait + rollTime(roll.plan));
     return () => clearTimeout(t);
   }, [roll, held]);
+
+  const started = useRef(onStart);
+  started.current = onStart;
+  useEffect(() => {
+    if (held) return;
+    const t = setTimeout(() => started.current?.(), roll?.wait ?? 0);
+    return () => clearTimeout(t);
+  }, [roll, held, minor]);
 
   const figure = money(minor, currency);
   if (!roll) return <>{figure}</>;

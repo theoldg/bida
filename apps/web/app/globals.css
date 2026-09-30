@@ -710,8 +710,11 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .mysum { display: flex; align-items: center; justify-content: space-between; gap: 12px;
   color: inherit; white-space: nowrap }
 .mysum.credit { color: var(--credit) } .mysum.debit { color: var(--debit) }
+/* Its sign changes as the figure sets off rolling, so the colour takes the
+   roll's time to follow; `a.card`'s press wash keeps its own. */
+a.mysum { transition: background-image .2s ease, color .8s ease }
 .mysumtext { display: flex; flex-direction: column; gap: 2px; min-width: 0 }
-.mysum .eyebrow { font-size: 13px; color: inherit }
+.mysum .eyebrow { font-size: 13px; color: inherit; transition: color .8s ease }
 .mysum:not(.credit, .debit) .eyebrow { color: var(--muted) }
 .mysum .bignum { line-height: 1.1;
   font-size: min(var(--mysum-max), (100cqi - 60px) / (var(--chars) * .6)) }

@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-30* — "the big amount's color should fade when spinning". One
+  line, one fix: the words and colour wait for the roll, then fade with it.
+  Sample the computed colour through the roll before calling it done.
+
 - *2026-09-29* — "never show the deleted expense screen, i can see it
   flashing" — a race only a phone loses. Headless Chrome never showed it, even
   throttled: make it impossible by construction. The fold-out asked alongside
@@ -73,7 +77,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — "the long hold menus are a bit bare", then a mock with
   toggles, then a phone screenshot of the ticks: "I like these settings". The
   screenshot is the spec; the one thing named to drop is the only change.
-
-- *2026-09-29* — "Build D from this" with a page of four mocks. The letter is
-  the whole spec: the mock's keyframes are the design, the app's own refusal
-  animations are the vocabulary to say it in. Pick D, don't re-argue A–C.

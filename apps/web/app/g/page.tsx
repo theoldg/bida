@@ -179,7 +179,6 @@ function Ledger({ data }: { data: GroupData }) {
  * sum shrinks to fit rather than running under the chevron.
  */
 function MySummary({ net, base, gid }: { net: number; base: string; gid: string }) {
-  const label = net < 0 ? copy.group.you.owe : net > 0 ? copy.group.you.owed : copy.group.you.square;
   // Unsigned, unlike every other figure: "You owe" already says the direction,
   // and a "-" reads as arithmetic rather than debt.
   const figure = money(Math.abs(net), base);
@@ -191,15 +190,25 @@ function MySummary({ net, base, gid }: { net: number; base: string; gid: string 
   const [hold] = useState(() => peekSaved(gid) === null ? undefined
     : (go: () => void) => awaitRoll(gid, go));
   useEffect(() => keepShown(gid, net, base), [gid, net, base]);
+  // The sign the card is dressed in — colour and words — trails `net` until
+  // the figure sets off, so a settle-up fades from red as it rolls to zero
+  // rather than arriving already neutral.
+  const [tone, setTone] = useState(() => before ?? net);
+  const latest = useRef(net);
+  latest.current = net;
+  // A flip of sign alone rolls nothing, so nothing would start it.
+  useEffect(() => setTone((t) => (Math.abs(t) === Math.abs(net) ? net : t)), [net]);
+  const label = tone < 0 ? copy.group.you.owe : tone > 0 ? copy.group.you.owed : copy.group.you.square;
   return (
     <div className="mysummary pad">
-      <Link href={route.balances(gid)} className={`card mysum ${signClass(net)}`}
+      <Link href={route.balances(gid)} className={`card mysum ${signClass(tone)}`}
         style={{ "--chars": figure.length } as CSSProperties}>
         <span className="mysumtext">
           <span className="eyebrow">{label}</span>
           <span className="bignum">
             <RollingFigure minor={Math.abs(net)} currency={base}
-              from={before === null ? null : Math.abs(before)} wait={ROLL_BEAT} hold={hold} />
+              from={before === null ? null : Math.abs(before)} wait={ROLL_BEAT} hold={hold}
+              onStart={() => setTone(latest.current)} />
           </span>
         </span>
         <Icon name="chev" size={20} className="mysumchev" />

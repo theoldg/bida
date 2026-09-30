@@ -377,7 +377,9 @@ smaller, 800ms apiece and 100ms apart from the left; the rest never move. One
 trigger covers a save, a sync and a reopen — the card keeps the net it last
 drew per group in localStorage (`lib/roll.ts`, erased with the group) and rolls
 from it, a beat after mounting; a group's first view, and reduced motion, just
-show the figure. Rows involving neither
+show the figure. The card's words and colour keep the old sign until the
+figure sets off, then fade over the roll, so a settle-up greys as it rolls to
+zero. Rows involving neither
 your money nor your share drop to `opacity: .58`; the rest are plain rows, with
 no wash or coloured edge. An expense or income on the entry screen repeats its row's figure as
 its card's last line, "Your balance", written out as `effectSum` (the same
