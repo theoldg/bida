@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-01* — "Block publishing to main until the latest checks are green
+  (wait if still going, refuse if failed)". Every way to release needs the
+  gate, the button and the laptop both; and gate one pinned commit, so what
+  passed is what ships. Prove the refusal on a real red run.
+
 - *2026-09-30* — "I'm going to sleep, anything you need me to clarify or
   decide". List the open choices, each with the default you'll take, then
   drive it home. The one answer that came back — a clean rebase "needs to be
@@ -77,7 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   arrives?" Four turns followed, each cutting the design down: a cache, not the
   database; a stash that never moves the cursor. Say the cost plainly and let
   the owner trim it — "Do it" came once the design was theirs.
-
-- *2026-09-30* — "the big amount's color should fade when spinning". One
-  line, one fix: the words and colour wait for the roll, then fade with it.
-  Sample the computed colour through the roll before calling it done.

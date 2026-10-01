@@ -11,8 +11,36 @@ name: Release dev to main
 on:
   workflow_dispatch:
 
+#
+# And only a commit dev has passed whole: `gate` pins dev's tip, waits for the
+# run its push started, and refuses unless every job is green
+# (scripts/release-gate.mjs). What it passed is exactly what is released, even
+# if dev moves meanwhile.
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+    outputs:
+      sha: ${{ steps.pin.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: dev
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - id: pin
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - run: node scripts/release-gate.mjs "${{ steps.pin.outputs.sha }}"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
   fast-forward:
+    needs: gate
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -26,7 +54,7 @@ jobs:
       - id: ff
         run: |
           git fetch origin dev
-          git merge --ff-only origin/dev
+          git merge --ff-only "${{ needs.gate.outputs.sha }}"
           git push origin HEAD:main
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "released $(git rev-parse --short HEAD): $(git log -1 --pretty=%s)" >> "$GITHUB_STEP_SUMMARY"

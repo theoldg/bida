@@ -219,11 +219,15 @@ what keeps ["never wipe it again"](standing-instructions.md#product) true.
 pointer at what production is serving, and releasing is the owner's — a button
 on github.com → Actions → **Release dev to main** → *Run workflow*
 ([`release.yml`](../.github/workflows/release.yml)), which needs no laptop and
-no token. By hand it is the same two commands:
+no token, or `pnpm release` from one.
 
-```bash
-git checkout main && git merge --ff-only dev && git push && git checkout dev
-```
+**Both release only a commit dev has passed whole.** They pin `dev`'s tip, wait
+for the run its push started, and refuse unless every job of it — the deploy
+gate and the browser checks — concluded `success`
+([`release-gate.mjs`](../scripts/release-gate.mjs)): a red `verify` gates
+nothing on dev, but it does gate production. A cancelled job refuses too; a
+re-run that went green counts. What was gated is what is pushed, even if `dev`
+moves meanwhile. A bare `git push origin dev:main` skips the gate — don't.
 
 `--ff-only` is the rail, not a formality: it refuses exactly when something
 landed on `main` behind the branch's back, and the fix is `git merge main` from

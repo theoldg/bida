@@ -30,7 +30,8 @@ pnpm bump         # the number this deploy will show; `push` does it for you —
 |---|---|---|
 | `pnpm check` | `pre-push`, on your machine; again on GitHub (`--ci`) | the push, then the deploy |
 | the build | GitHub, in the deploy job | the deploy: a red build ships nothing |
-| `pnpm verify` | GitHub, beside the deploy, every push to `dev` | nothing — `pnpm push` waits on it |
+| `pnpm verify` | GitHub, beside the deploy, every push to `dev` | the release — `pnpm push` waits on it |
+| the whole run | — | the release: `main` gets only a commit whose `dev` run is green ([hosting.md](hosting.md#dev-and-production)) |
 
 **Your machine runs only what takes seconds**, so the loop stays fast; what
 takes minutes runs on one named GitHub image (`.github/workflows/deploy.yml`),

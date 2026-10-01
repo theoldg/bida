@@ -13,6 +13,10 @@
 # `origin/dev` — what the dev Worker serves — so unpushed local commits are
 # not in it, and the script says so.
 #
+# Only a commit dev has passed whole: `release-gate.mjs` waits for the run its
+# push to `dev` started and refuses unless every job is green. It runs after
+# the confirmation, so you can walk away while it waits.
+#
 # Pushed with your credentials, so it triggers deploy.yml normally. (The
 # workflow has to request the deploy by hand because its GITHUB_TOKEN push
 # triggers nothing.)
@@ -58,8 +62,11 @@ if git show-ref --quiet refs/heads/dev &&
   git log --oneline origin/dev..dev >&2
 fi
 
+# Pinned once: what is gated is what is pushed, even if dev moves meanwhile.
+sha=$(git rev-parse origin/dev)
+
 echo "releasing to production:"
-git log --oneline --no-decorate origin/main..origin/dev
+git log --oneline --no-decorate "origin/main..$sha"
 echo
 
 if [ -z "$yes" ]; then
@@ -67,7 +74,7 @@ if [ -z "$yes" ]; then
     echo "not a terminal — re-run as \`pnpm release --yes\` if you mean it" >&2
     exit 1
   fi
-  printf "push %s to main? [y/N] " "$(git rev-parse --short origin/dev)"
+  printf "push %s to main? [y/N] " "$(git rev-parse --short "$sha")"
   read -r reply
   case "$reply" in
     y|Y|yes|Yes) ;;
@@ -75,8 +82,10 @@ if [ -z "$yes" ]; then
   esac
 fi
 
+node "$(dirname "$0")/release-gate.mjs" "$sha" || { echo "nothing pushed" >&2; exit 1; }
+
 # No --force, ever: the refusal is the safety story.
-git push origin "$(git rev-parse origin/dev):refs/heads/main"
+git push origin "$sha:refs/heads/main"
 
 git fetch origin --quiet
 # Keep a local `main`, if there is one, pointing where production is.
