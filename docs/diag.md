@@ -120,7 +120,7 @@ each with the model's box and the image a scan would send, and the timings; tap 
 **`/diag` must never wait on the database.** It is opened *because* the
 database is not answering. Everything that can block is raced against a 2s
 patience window and the timeline, which needs no database at all, prints either
-way; `pnpm stall` fails if it waits. **The window is one window for the whole
+way; `pnpm verify stall` fails if it waits. **The window is one window for the whole
 report: start every blocking question before awaiting any of them**, or each
 line waits out its own two seconds after the one above. A new line in
 `collect()` goes up with the others.

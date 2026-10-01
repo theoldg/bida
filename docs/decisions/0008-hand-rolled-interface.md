@@ -22,7 +22,7 @@ wheel in the OS's typeface that can show a name and nothing else.
   verbatim, never remapped onto a component library's variable names.
 - **`components/dialog.tsx` is the app's dialog**: `Dialog`, `ConfirmDialog`, `NoticeDialog`,
   `PromptDialog`, `ChoiceDialog`. No `window.prompt`, `window.confirm` or
-  `<select>` remains in `apps/web`, and `entries-check` asserts it so the next
+  `<select>` remains in `apps/web`, and `checks/entries` asserts it so the next
   one can't land quietly.
 - **It is a real `<dialog>` opened with `showModal()`.** Focus, Escape and the
   inertness of the screen behind are the platform's; ours is the scrim, the

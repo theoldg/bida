@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm nav` — where the back arrow goes, and what it leaves on the stack.
+ * `pnpm verify nav` — where the back arrow goes, and what it leaves on the stack.
  *
  * The destination is the easy half. The half that fails silently is the
  * **shape of the history behind it** — what the device's back button does
@@ -11,7 +11,7 @@
  * So every assertion here reads `navigation.entries()`, never `location`.
  */
 import { ensureBuild, launch, newPhone, openGroupsList, reporter, serveExport, settle }
-  from "./lib/harness.mjs";
+  from "../lib/harness.mjs";
 
 ensureBuild();
 const { base, close } = await serveExport();

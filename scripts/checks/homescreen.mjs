@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm homescreen` — the invite that rides onto the home screen (docs/ios.md).
+ * `pnpm verify homescreen` — the invite that rides onto the home screen (docs/ios.md).
  *
  * Only an iPhone can say which URL WebKit writes into an "Add to Home Screen"
  * bookmark. Everything around it is checked here, all of it the kind that
@@ -12,7 +12,7 @@
 import {
   ensureBuild, serveExport, launch, newPhone, newGroup, openGroupsList, asInstalledApp, PATIENCE, reporter,
   readStore, readDevice, untilDevice,
-} from "./lib/harness.mjs";
+} from "../lib/harness.mjs";
 
 ensureBuild();
 const { base, close } = await serveExport();
@@ -360,7 +360,7 @@ report(androidFolded && await androidAdd.waitFor({ timeout: 2000 }).then(() => t
 // ---- the icon's first launch ---------------------------------------------
 // An invite nobody has picked a name in yet: this launch is the join the tab
 // never finished, and it must hand the invite on without anyone pasting. Where
-// the join goes from there is the join screen's own business (`pnpm claim`).
+// the join goes from there is the join screen's own business (`pnpm verify claim`).
 const fresh = await iphone();
 const freshPage = await fresh.newPage();
 await asInstalledApp(freshPage);

@@ -145,8 +145,8 @@ manifest its head got (`static`, `carry:<n>`); the app's `first load` is the URL
 the icon opened, and `install.app` what it did with it
 ([diag.md](diag.md)).
 
-`pnpm homescreen` covers everything around that step in the engine that is
-actually to hand ([browser-checks.md](browser-checks.md#pnpm-homescreen--the-invite-that-rides-onto-the-home-screen)),
+`pnpm verify homescreen` covers everything around that step in the engine that is
+actually to hand ([browser-checks.md](browser-checks.md#pnpm-verify-homescreen--the-invite-that-rides-onto-the-home-screen)),
 Android included: it must get the static `start_url: "/"`, since it shares
 storage and needs none of this.
 
@@ -224,7 +224,7 @@ an icon would carry and there is nothing here a tab could lose — `/demo` lays
 the story down again ([sync.md](sync.md#the-demo-group-has-no-key)). Its ledger
 draws no card under the mark that says nothing here syncs, and a list holding
 only the demo is still someone looking around, so it counts as no group to
-lose. `pnpm homescreen` holds both.
+lose. `pnpm verify homescreen` holds both.
 
 Android is on the ledger for the same reason iOS is, and it is not about
 eviction: `lib/launch.ts` reopens the group you were last in, and `/join`
@@ -283,7 +283,7 @@ out of it. Past that: a named app (`Instagram`, `FBAN`…), Android's `; wv)`,
 or an iOS page with no `Safari/` token. Chrome Custom Tabs carries no `wv` and
 is rightly let through: it is Chrome, storage and menus and all.
 
-`pnpm homescreen` drives both halves, the near misses included.
+`pnpm verify homescreen` drives both halves, the near misses included.
 
 ## Open questions for the owner
 

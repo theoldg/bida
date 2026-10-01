@@ -7,16 +7,7 @@ says which of the testing docs your task needs.*
 pnpm push         # bump, push to dev, watch the run until green or red — how a session ships
 pnpm check        # links · rules · version · typecheck · tests — pre-push, ~25s
 pnpm verify       # every browser check against a real build — on GitHub, at every push
-pnpm entries      # just the three kinds of entry, end to end
-pnpm claim        # a name still being typed, and the button that acts on it
-pnpm keyboard     # what a phone keyboard does to a form: the act under it, the confirm key
-pnpm offline      # just every screen with the network cut
-pnpm stall        # what a screen does when reading this phone's database stops working
-pnpm homescreen   # the invite an iOS icon is added with, both ends of it
-pnpm demo         # /demo lands on a populated ledger, and holds no key
-pnpm nav          # where the back arrow goes, and what it leaves on the stack
-pnpm tricount     # a Tricount link, pasted, all the way to a balanced group
-pnpm driver       # the text driver still starts, reads, presses, photographs and stops
+pnpm verify nav   # one of them (or several, named) — each is a file in scripts/checks/, [browser-checks.md](browser-checks.md) says what it holds
 pnpm shots        # PNGs into shots/ (gitignored)
 pnpm readme-shots # the six pictures in README.md, into docs/media/ (committed)
 pnpm drive        # the app as text, one command at a time: one screen's shot, a bug, two phones — [drive.md](drive.md)
@@ -59,7 +50,7 @@ fails under load is betting on the machine's speed (*A pause is not a wait*, in
 mid-task unless you touched what it drives.
 
 **Don't run the whole `pnpm verify` yourself.** Run the one check you are
-writing or fixing, alone (`pnpm <name>`). Locally, `verify` runs as many at once
+writing or fixing, alone (`pnpm verify <name>`). Locally, `verify` runs as many at once
 as the machine has cores (`VERIFY_JOBS` overrides): ten chromiums on four cores
 starve the pages past the app's own timers, which is where every flake this
 suite has had came from.

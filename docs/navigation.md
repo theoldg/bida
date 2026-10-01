@@ -2,8 +2,8 @@
 
 *For: anyone adding a route, a link or a way off a screen. Part of the
 [frontend](frontend.md) docs; the argument for a route per screen is
-[ADR-0007](decisions/0007-a-screen-is-a-route.md), and `pnpm nav`
-([browser-checks.md](browser-checks.md#pnpm-nav--where-the-back-arrow-goes-and-what-it-leaves-behind))
+[ADR-0007](decisions/0007-a-screen-is-a-route.md), and `pnpm verify nav`
+([browser-checks.md](browser-checks.md#pnpm-verify-nav--where-the-back-arrow-goes-and-what-it-leaves-behind))
 holds what this doc promises.*
 
 Every route, then the rules every screen keeps, then how the device's back
@@ -180,7 +180,7 @@ does a saved row, which glides into view from the restored place
   believing its dialog is up, and on `/new` that belief is what every further
   press is answered with: `ask` is already `"discard"`, so setting it renders
   nothing, and the back button and the arrow both go dead with nothing on
-  screen. `pnpm nav` drives it.
+  screen. `pnpm verify nav` drives it.
 - **A cancelled back press leaves the browser counting from the entry the
   press was heading for**, not from the screen still on show — for the rest of
   that task, and on a real phone for longer than that. So `history.go(-1)`

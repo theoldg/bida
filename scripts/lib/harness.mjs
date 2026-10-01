@@ -80,7 +80,7 @@ const isFile = (p) => existsSync(p) && statSync(p).isFile();
  * what ships.
  *
  * `intercept(path, res)` gets first refusal on every request; returning true
- * means handled (how offline-check drops an asset and rewrites the worker's
+ * means handled (how checks/offline drops an asset and rewrites the worker's
  * revision). Port 0, so checks never collide.
  */
 export async function serveExport({ intercept } = {}) {

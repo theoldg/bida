@@ -49,7 +49,7 @@ cache-first** — so a launch and every tap after it paint without the network.
   installed app on a build it can't paint, and a failed install deletes its own
   half-filled cache so the next `activate` can't mistake it for the previous build. If the export outgrows what a phone
   should hold on first visit, split the manifest; don't go back to a hand list.
-- `scripts/offline-check.mjs` is the regression test — run it after touching
+- `scripts/checks/offline.mjs` is the regression test — run it after touching
   `sw.js`.
 
 ## Rejected

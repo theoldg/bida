@@ -64,7 +64,7 @@ to remove more from this list than you add.
   [drive.md](drive.md). **The driver is kept alive**, *2026-09-30* — "make sure
   the driver code is alive and maintained, include permission to fix any quirks
   in passing, without asking": a quirk you hit in it is fixed then and there,
-  in the same push, and `pnpm driver` says it still works.
+  in the same push, and `pnpm verify driver` says it still works.
 - **Keep the docs and ADRs short.** *2026-08-30, restated 2026-09-03* — the
   owner had 32 ADRs folded into 11, then: "every time i make a request, the ADRs,
   owner preferences and whatnot get more inflated. compress those back down."

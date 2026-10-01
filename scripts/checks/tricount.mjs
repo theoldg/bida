@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm tricount` — a Tricount link, pasted, all the way to a balanced group.
+ * `pnpm verify tricount` — a Tricount link, pasted, all the way to a balanced group.
  *
  * `core/tricount.ts` is tested against the shape; this proves the *wiring* —
  * the link field, the key pulled from the paste, the WebCrypto key in the
@@ -13,7 +13,7 @@
  * by hand. Everything on this side is under test, refusals included.
  */
 import { onePhone, PATIENCE }
-  from "./lib/harness.mjs";
+  from "../lib/harness.mjs";
 
 const { base, close, browser, ctx, page, report, finish } = await onePhone();
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm driver` — the text driver (`pnpm drive`, docs/drive.md) still starts,
+ * `pnpm verify driver` — the text driver (`pnpm drive`, docs/drive.md) still starts,
  * reads a screen, presses what it numbered, photographs in both themes, keeps
  * two phones apart, refuses a stale number and stops.
  *
@@ -13,7 +13,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { ROOT, ensureBuild, reporter } from "./lib/harness.mjs";
+import { ROOT, ensureBuild, reporter } from "../lib/harness.mjs";
 
 const { report: said, finish } = reporter(null);
 // A screen is long; it is worth printing only beside a failure.

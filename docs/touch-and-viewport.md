@@ -3,7 +3,7 @@
 *For: anyone handling a press, a hold, a dialog, a field or the height of the
 screen. Part of the [frontend](frontend.md) docs. Every item here is something
 a phone did that no desktop browser does — read the heading that matches your
-change before writing the handler. `pnpm entries` and `pnpm keyboard`
+change before writing the handler. `pnpm verify entries` and `pnpm verify keyboard`
 ([browser-checks.md](browser-checks.md)) hold the ones a headless browser can
 fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
 
@@ -14,7 +14,7 @@ fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
   the hold from pointer events and answers whichever comes first; the finger's
   later `contextmenu` and lifting click are swallowed on `document`, because
   they land on the menu's veil, which closes on either. A right click proves
-  nothing about it; `pnpm entries` holds with touch.
+  nothing about it; `pnpm verify entries` holds with touch.
 - **A finger that opened a menu and then moves is not scrolling**, and the
   browser has already decided it is: pans are allowed everywhere
   (`touch-action: pan-x pan-y` on `html, body`), so sliding off the held row
@@ -39,7 +39,7 @@ fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
   actually landed, since a touch's `pointerup` goes to whatever its
   `pointerdown` went to however far the finger has moved. `clickGuard`
   (`lib/click-guard.ts`) eats a click that turns up after that, because by then
-  the card is gone and it would land on the row underneath. `pnpm entries`
+  the card is gone and it would land on the row underneath. `pnpm verify entries`
   sends the clickless tap by hand; a real one in Chromium always brings its
   click.
 - **`click` is the *last* event of a touch, and acting earlier leaves the rest
@@ -51,7 +51,7 @@ fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
   position. iOS is immune: the tap that brings no click brings no compatibility
   mouse events either. `clickGuard` guards `click` and `contextmenu` and
   nothing else; the `/diag` trace stops when the card unmounts, so it cannot
-  see this. `pnpm entries` asks where that `mousedown` landed, not whether the
+  see this. `pnpm verify entries` asks where that `mousedown` landed, not whether the
   dialog survived — mid-screen it lands on the card and survives regardless.
 - **A press and a lift on different elements make no `click` at all.** Chrome
   delivers the `mouseup` to whatever is under the finger by then and fires
@@ -110,7 +110,7 @@ fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
   is finished as far as it is concerned, `scroll-margin-bottom` and all, and the
   button under it stays behind them. Only ever upward: a keyboard closing must
   not drag the list down to re-hang the field at the bottom of the screen.
-  `pnpm keyboard` holds all four ([browser-checks.md](browser-checks.md#pnpm-keyboard--a-form-under-a-phone-keyboard)). **A gap with nobody typing is not a keyboard** and is
+  `pnpm verify keyboard` holds all four ([browser-checks.md](browser-checks.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)). **A gap with nobody typing is not a keyboard** and is
   never paid as one (`lib/viewport.ts`): the difference between the two
   viewports is a keyboard only while something has the caret; otherwise a
   browser that reports the two differently gets permanent padding at the foot

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm stall` — what the app does when reading this phone's database stops
+ * `pnpm verify stall` — what the app does when reading this phone's database stops
  * working: without lib/db/live.ts, an installed PWA hangs on skeleton rows
  * with nothing in the console.
  *
@@ -19,7 +19,7 @@
  */
 import {
   ensureBuild, launch, newPhone, newGroup, openGroupsList, PATIENCE, reporter, serveExport, readDevice, untilDevice,
-} from "./lib/harness.mjs";
+} from "../lib/harness.mjs";
 
 ensureBuild();
 

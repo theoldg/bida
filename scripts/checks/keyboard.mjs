@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm keyboard` — the act a list of names is typed for survives the keyboard.
+ * `pnpm verify keyboard` — the act a list of names is typed for survives the keyboard.
  *
  * Four screens ask for people in the same add row and end on an act below it,
  * on the scroll rather than a pinned foot: `/new`'s Create, the picker's
@@ -18,7 +18,7 @@
  * *and* act above the keys.
  */
 import { onePhone, newGroup, PATIENCE, settle }
-  from "./lib/harness.mjs";
+  from "../lib/harness.mjs";
 
 const { base, close, browser, ctx, page, report, finish } = await onePhone();
 

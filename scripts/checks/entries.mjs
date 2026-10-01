@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm entries` — can you add, edit and read back all three kinds of entry?
+ * `pnpm verify entries` — can you add, edit and read back all three kinds of entry?
  *
  * The command tests prove the arithmetic; they can't prove the *form* is
  * wired to it — a stuck Save, a control writing the wrong field, a detail
@@ -11,8 +11,8 @@
  * builds first if it has to. ADR-0010.
  */
 import { onePhone, PATIENCE, pick, newGroup, openGroupsList, settle }
-  from "./lib/harness.mjs";
-import { PHOTO, stubScan } from "./lib/receipts.mjs";
+  from "../lib/harness.mjs";
+import { PHOTO, stubScan } from "../lib/receipts.mjs";
 
 const { base, close, browser, ctx, page, report, finish } = await onePhone();
 

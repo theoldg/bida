@@ -85,7 +85,7 @@ after the build by `apps/web/scripts/precache.mjs` — nothing to drift, no
 earlier one already cached (the name is the content) and fetches only the rest:
 routes and payloads name the build, so they always are. The three things that
 make cache-first safe are [ADR-0004](decisions/0004-static-export-and-offline.md). Run `node
-scripts/offline-check.mjs` after touching either file: it walks every screen
+scripts/checks/offline.mjs` after touching either file: it walks every screen
 with the network cut, then installs a deploy over a half-dead network, and a good one
 across three open pages.
 
@@ -128,7 +128,7 @@ says the precache is done, since a worker that never claims a first visit leaves
 `controller` null for the whole of that page's life. In between,
 `components/update.tsx` offers a Reload at the foot of the groups list, **only in
 the installed app** — a tab has the browser's own, and the install nudge shows on
-exactly the phones this doesn't. `offline-check` holds three pages open across a
+exactly the phones this doesn't. `checks/offline` holds three pages open across a
 deploy: untouched, in use, and on a group.
 
 ## Gotchas
@@ -150,14 +150,14 @@ deploy: untouched, in use, and on a group.
   worker can serve that reload an old shell or an old `/g.txt` naming chunks
   this build doesn't have — a screen with pieces missing until relaunch, since
   the router keeps the payload it was handed. Every read goes through `lookup()`, which opens `CACHE_NAME` — or,
-  for a page still running the previous build, that build's cache; `offline-check` plants a cache the precache never heard of and fails
+  for a page still running the previous build, that build's cache; `checks/offline` plants a cache the precache never heard of and fails
   on anything but a 404.
 - **A page left on the old build breaks on its next tap.** It fetches the new
   build's `/g.txt`, Next refuses a payload from a build it didn't boot with and
   navigates to the bare route, dropping the query string — where the group id
   lives. The screen lands on "No group". So `sw.js` serves
   such a page its own build's cache until it reloads (`previousFor`), and
-  `offline-check` taps through a group on one across a deploy.
+  `checks/offline` taps through a group on one across a deploy.
 - **An installed Android app's status bar is the manifest's `theme_color`, and
   nothing can change it after install.** It is compiled into the app when the
   browser builds it, so it cannot be media-scoped and no meta tag reaches it —

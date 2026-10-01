@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm demo` — `bida.bid/demo` lands on a group somebody already used, and
+ * `pnpm verify demo` — `bida.bid/demo` lands on a group somebody already used, and
  * that group holds no key.
  *
  * The seed's arithmetic is core's (`packages/core/src/demo.test.ts`). This
@@ -15,8 +15,8 @@
  */
 import {
   onePhone, newPhone, PATIENCE, readStore, readDevice, putDevice,
-} from "./lib/harness.mjs";
-import { PHOTO, stubScan } from "./lib/receipts.mjs";
+} from "../lib/harness.mjs";
+import { PHOTO, stubScan } from "../lib/receipts.mjs";
 
 const { base, close, browser, ctx, page, report, finish } = await onePhone();
 

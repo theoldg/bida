@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm claim` — a name typed into the add row is filed by its plus and by
+ * `pnpm verify claim` — a name typed into the add row is filed by its plus and by
  * nothing else.
  *
  * The gap between typed and filed (components/name-adder.tsx) is what only a
@@ -18,7 +18,7 @@
  */
 import {
   newGroup, newPhone, onePhone, PATIENCE, settle, readDevice, putDevice, untilDevice,
-} from "./lib/harness.mjs";
+} from "../lib/harness.mjs";
 
 const { base, close, browser, ctx, page, report, finish } = await onePhone();
 
@@ -190,7 +190,7 @@ const g = new URL(page.url()).searchParams.get("id");
 await page.goto(`${base}/g/claim?id=${g}`);
 await page.waitForSelector(".rows button.row");
 report(await page.locator(".rmark svg").count() === 1, "re-opening it ticks whoever this phone is");
-// "Have the app?" is an iOS tab's (pnpm homescreen); this browser's taps
+// "Have the app?" is an iOS tab's (pnpm verify homescreen); this browser's taps
 // already reach wherever the app is.
 report(await page.getByText("Have the app?").count() === 0, "and offers no link to paste elsewhere");
 

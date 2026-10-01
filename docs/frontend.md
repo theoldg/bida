@@ -92,7 +92,7 @@ API is reached with `fetch`.
   read through `splitSeed`). The leftover minor unit goes by `tiebreakSeed`,
   which is the entry's id — so a form pricing its rows under a placeholder id
   shows the cent on one row and writes it to another. `addExpense`
-  takes the id rather than minting one. `pnpm entries` holds it.
+  takes the id rather than minting one. `pnpm verify entries` holds it.
 - **Each split tab is its own input** (`SplitInputs`, ADR-0010): the editor
   draws and edits the tab showing, `openSplitTab` is the one place a newly
   opened tab is handed a starting point, and `activeSplit` says which spec is
@@ -131,7 +131,7 @@ API is reached with `fetch`.
 - **A press already spending the draft is the form's own `saving` flag.**
   `checkEntry` answers whether the entry *may* be saved, which is a question
   about the form, not whether a save is in flight; without the flag a double
-  tap before `router.replace` records the entry twice. `pnpm entries` presses
+  tap before `router.replace` records the entry twice. `pnpm verify entries` presses
   Save twice.
 - **The invite link is `components/invite.tsx`** (`useCopyLink`), written once for the People
   screen's top bar, the groups list's row menu and the group's own menu. `navigator.clipboard.writeText` rejects on an insecure
@@ -174,8 +174,8 @@ API is reached with `fetch`.
   better answer than either of these: the add row files the name and hands the
   caret back, a dialog submits its card. Four fields ask for `"next"`: the entry
   form's amount, `/new`'s group name, and each row but the last of the two
-  columns — the split editor's "as amounts" and `/g/payers`. `pnpm keyboard`
-  walks both columns ([browser-checks.md](browser-checks.md#pnpm-keyboard--a-form-under-a-phone-keyboard)).
+  columns — the split editor's "as amounts" and `/g/payers`. `pnpm verify keyboard`
+  walks both columns ([browser-checks.md](browser-checks.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)).
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**
   — `ConfirmDialog`, `PromptDialog`, `NoticeDialog` (read, then Close) and
   `ChoiceDialog`, which is every picker in
@@ -229,7 +229,7 @@ API is reached with `fetch`.
   **follows the list down**, as a browser scrolls to a field only as it takes
   focus, and this one never lets go — clear of the keyboard, and far enough
   clear that the act the list ends on comes up with it, per the `--kb` Gotcha in
-  [touch-and-viewport.md](touch-and-viewport.md#the-screen-and-the-keyboard-over-it). `pnpm claim` holds all of it ([browser-checks.md](browser-checks.md#pnpm-claim--the-name-that-has-not-been-filed-yet)).
+  [touch-and-viewport.md](touch-and-viewport.md#the-screen-and-the-keyboard-over-it). `pnpm verify claim` holds all of it ([browser-checks.md](browser-checks.md#pnpm-verify-claim--the-name-that-has-not-been-filed-yet)).
 - **"Which one are you?" is one screen, `components/who-picker.tsx`**, ending
   both ways into a group: joining, and creating one — including a group of one
   (`/new` and `/import` share `components/create-as.tsx`, which keeps a failed

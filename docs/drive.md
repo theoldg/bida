@@ -79,7 +79,7 @@ accumulated history. Its state lives in `.drive/` (or `DRIVE_DIR`), gitignored.
 press that lands wrong, a command that should exist — is yours to fix in the
 same push, without asking
 ([standing-instructions](standing-instructions.md#workflow)).
-[`pnpm driver`](browser-checks.md#pnpm-driver--the-text-driver-still-works),
+[`pnpm verify driver`](browser-checks.md#pnpm-verify-driver--the-text-driver-still-works),
 part of `pnpm verify`, proves it still runs start to stop; a new command earns
 a line there.
 

@@ -46,7 +46,7 @@ Obey them; adding one is rare and has a bar at the head of that file.
 | `docs/` | Start at [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before arguing with an architectural choice |
 | `docs/invariants.md` | Which invariants survive a merge, and what holds each — read before adding a check that reads other entities |
-| `scripts/` | The two runners (`check`, `verify`), the browser checks the second drives (`entries`, `claim`, `keyboard`, `offline`, `stall`, `homescreen`, `demo`, `nav`, `tricount`, `driver`) and `shots`/`readme-shots` on a shared harness, plus `drive` (the app as text), `icons`, `docs-check`, `rules-check`, `version`, `push`, `on-dev`, `release` — [testing.md](docs/testing.md) lists them all |
+| `scripts/` | The two runners (`check`, `verify`), the browser checks the second drives (`checks/`, one file each — `pnpm verify <name>` runs one) and `shots`/`readme-shots` on a shared harness, plus `drive` (the app as text), `push`, `icons`, `docs-check`, `rules-check`, `version`, `on-dev`, `release` — [testing.md](docs/testing.md) lists them all |
 
 ## Stack
 

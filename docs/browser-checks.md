@@ -24,7 +24,7 @@ await browser.close(); close(); finish();
 ```
 
 `serveExport({ intercept })` gets first refusal on every request — that is how
-offline-check drops an asset and forges a service-worker revision, which is what
+checks/offline drops an asset and forges a service-worker revision, which is what
 lets one run cover both a deploy that must fail to install and a good one taken
 from the groups list with a second tab still open on the old worker.
 `serveWorker()` is the other server: `wrangler dev` with a throwaway D1, so the
@@ -44,7 +44,7 @@ a smaller number was written on. Nothing reaches that ceiling on a machine that
 is keeping up. `settle(page, ms)` is the other half — a pause the *page* keeps,
 for the few places that have to out-wait one of the app's own timers.
 
-## `pnpm entries` — the form is wired to the commands
+## `pnpm verify entries` — the form is wired to the commands
 
 The command tests prove an income's sign reaches the balances and that a
 transfer edit writes only what changed. They cannot prove the *form* reaches
@@ -83,7 +83,7 @@ beside it ([navigation.md](navigation.md#routing)).
 every assertion here follows a `waitForFunction` on the row count. Skipping
 that is what makes a check like this flake.
 
-## `pnpm claim` — the name that has not been filed yet
+## `pnpm verify claim` — the name that has not been filed yet
 
 The add row lets a name be typed and not yet filed, and only its own plus files
 one (`components/name-adder.tsx`). What goes wrong there is never arithmetic: a
@@ -122,7 +122,7 @@ before any script already wears it, so the summary never moves — while backing
 alone — and must be remembered, so the launch after it lands on the list until
 the group is opened again (`apps/web/lib/launch.ts`).
 
-## `pnpm keyboard` — a form under a phone keyboard
+## `pnpm verify keyboard` — a form under a phone keyboard
 
 Four screens ask for people in that same row, and each ends on the act those
 people are for — Create, "Continue as …", the scan pair, "Change who you are" —
@@ -152,7 +152,7 @@ worth having — the entry form's note folds rather than diving into the column
 underneath, and the add row, which is a `<form>`, still files the name and
 hands the caret back ([frontend.md](frontend.md#state)).
 
-## `pnpm stall` — a read of this phone's database that dies
+## `pnpm verify stall` — a read of this phone's database that dies
 
 It holds the defect no screen can report: an installed Android app hanging on
 its skeleton rows, indefinitely, with nothing in the console
@@ -189,7 +189,7 @@ visible however the tabs are arranged, so `visibilityState` is overridden in
 the page rather than a second tab brought forward; the navigation it lies to is
 a real one.
 
-## `pnpm demo` — the demo group, and the key it must not have
+## `pnpm verify demo` — the demo group, and the key it must not have
 
 The seed's arithmetic is core's own (`demo.test.ts`: the balances clear to zero
 under `settle`, every amount is a positive integer minor unit, any permutation
@@ -227,7 +227,7 @@ The assertion worth having is the quiet one: `groupKeys` stays empty
 change that would start pushing tourists into a D1 that gets no further resets,
 and nothing else would notice, because the demo would carry on looking perfect.
 
-## `pnpm homescreen` — the invite that rides onto the home screen
+## `pnpm verify homescreen` — the invite that rides onto the home screen
 
 One step of this cannot be checked anywhere but an iPhone: which URL WebKit
 writes into the bookmark when someone taps Add to Home Screen
@@ -281,9 +281,9 @@ ones a webview's most resembles, each proved *not* refused
 ([ios.md](ios.md#the-in-app-browser--refused)).
 
 It needs no server beyond the static export: the join screen's own work is
-`pnpm claim`'s subject, and what this one asserts is which URL each end reaches.
+`pnpm verify claim`'s subject, and what this one asserts is which URL each end reaches.
 
-## `pnpm nav` — where the back arrow goes, and what it leaves behind
+## `pnpm verify nav` — where the back arrow goes, and what it leaves behind
 
 The arrow's destination is the half the other checks already stumble over on
 their way somewhere else. This one watches **the shape of the history behind
@@ -328,7 +328,7 @@ did *not* move — a cancelled press has nothing to announce, so that one takes 
 group is built once, by the section that walks in through `/new`, and every
 other section stands on it.
 
-## `pnpm tricount` — a Tricount link, pasted, all the way to a balanced group
+## `pnpm verify tricount` — a Tricount link, pasted, all the way to a balanced group
 
 `core/tricount.ts` is tested against the shape exhaustively, and none of those
 tests can prove the **wiring**: that the link field is on the import screen,
@@ -351,7 +351,7 @@ talks to bunq (`apps/api/src/tricount.ts`) is the half no check can hold. Try a
 real link by hand after touching those constants, since nothing here will go
 red when bunq moves.
 
-## `pnpm driver` — the text driver still works
+## `pnpm verify driver` — the text driver still works
 
 `pnpm drive` is how an agent looks at the app ([drive.md](drive.md)), and no
 check touched it, so it would rot quietly until someone needed it mid-task.
@@ -437,10 +437,10 @@ the app's: a screen changing its words should not turn it red.
   away**: a check, unlike a thumb, can push the next screen before the late
   traversal lands, and then it lands on top of that push, taking the page back.
   After a Back that traverses, wait for `navigation.currentEntry.index` to
-  drop, as `pnpm offline` does.
+  drop, as `pnpm verify offline` does.
 - **And a check must not bet on that window either** — a pause sampling the
   "still stuck" moment breaks whenever `SWALLOWED_MS` changes. The stuck moment
-  is not worth asserting anyway — in `pnpm nav` §9 `history.go` is stubbed to a no-op, so a traversal
+  is not worth asserting anyway — in `pnpm verify nav` §9 `history.go` is stubbed to a no-op, so a traversal
   cannot be what moved the screen, and landing at the destination at all is
   already proof the repair did it. Where the intermediate state genuinely is
   the assertion, **record it instead of sampling it**: §10 hangs a
@@ -448,10 +448,10 @@ the app's: a screen changing its words should not turn it red.
   repair is quicker than a round trip to ask.
 - **A check that hangs fails after five minutes** (`HUNG_MS`, the harness's
   reporter), naming the last thing it reported. Playwright's `close` and
-  `bringToFront` take no timeout, and `pnpm offline` under load has hung in its
+  `bringToFront` take no timeout, and `pnpm verify offline` under load has hung in its
   teardown for good — before the watchdog, that stalled `pnpm verify` with it.
 - **One flake is still open**, rare (none in the last dozen `pnpm verify`s on a
-  four-core container), green alone: `pnpm offline` "tap a suggested
+  four-core container), green alone: `pnpm verify offline` "tap a suggested
   transfer" — the page reaches balances, then is found back on the ledger. Not
   a late Back (the check waits for that now); its failure prints the history
   stack, which is the next clue.
@@ -459,11 +459,11 @@ the app's: a screen changing its words should not turn it red.
   `ensureBuild()` itself, so the ones still queued see stale sources and
   rebuild `out/` under the ones running: a run of red that is none of theirs.
 - **Quiet is not done.** A loop that stops when two samples agree has waited
-  for quiescence, not the answer: `pnpm offline` read the shell caches that
+  for quiescence, not the answer: `pnpm verify offline` read the shell caches that
   way and, on a loaded box, stopped before `activate` had deleted the old one.
   Poll for the state the assertions expect, `PATIENCE` as the ceiling.
 - **`setOffline` is the page's network, not the browser's.** The update check
-  for `sw.js` goes out anyway — so a lever `offline-check` holds up for one
+  for `sw.js` goes out anyway — so a lever `checks/offline` holds up for one
   section (a forged revision, a blocked asset) is read by an install nobody
   asked for, which then finishes against the server as it is *later*. Put the
   lever back before the navigation that could ask, not when the section reads

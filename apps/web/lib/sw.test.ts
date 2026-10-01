@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from "vitest";
  * `public/sw.js` is a classic worker script, so it is read off disk and run
  * in a context with the Cache API stubbed; its top-level functions land on
  * that context's global. Worth it because a mis-routed navigation is
- * invisible until a phone shows the wrong screen. `pnpm offline` drives the
+ * invisible until a phone shows the wrong screen. `pnpm verify offline` drives the
  * real thing.
  */
 const SOURCE = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");

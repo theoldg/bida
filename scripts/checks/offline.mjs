@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm offline` — does the built app actually work with the network cut?
+ * `pnpm verify offline` — does the built app actually work with the network cut?
  *
  * Seeds a group through the real UI over a local server, lets the service
  * worker install, pulls the plug, then walks every screen and saves an
@@ -12,7 +12,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { asInstalledApp, ensureBuild, OUT, PATIENCE, serveExport, launch, newPhone, openGroupsList,
-  reporter, newGroup } from "./lib/harness.mjs";
+  reporter, newGroup } from "../lib/harness.mjs";
 
 ensureBuild();
 

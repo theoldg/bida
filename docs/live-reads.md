@@ -1,8 +1,8 @@
 # Live reads
 
 *For: anyone reading from Dexie, or chasing a screen that sits on its skeleton
-rows. Part of the [frontend](frontend.md) docs. `pnpm stall`
-([browser-checks.md](browser-checks.md#pnpm-stall--a-read-of-this-phones-database-that-dies))
+rows. Part of the [frontend](frontend.md) docs. `pnpm verify stall`
+([browser-checks.md](browser-checks.md#pnpm-verify-stall--a-read-of-this-phones-database-that-dies))
 drives what this doc describes, and [`/diag`](diag.md) is how a phone reports
 it.*
 
@@ -79,9 +79,9 @@ reports a failed read by throwing during render; without a boundary every error
 cannot read, because it is how `useLiveQuery` says "no answer yet": a read that
 legitimately has nothing to report has to say `null` — a group with no key row
 (the demo, permanently) would otherwise be a read that never answers.
-`pnpm demo` waits out the watchdog to hold that one.
+`pnpm verify demo` waits out the watchdog to hold that one.
 
-`pnpm stall` drives both halves in a browser; `lib/db/live.test.ts` pins the
+`pnpm verify stall` drives both halves in a browser; `lib/db/live.test.ts` pins the
 Dexie behaviour itself, so an upgrade that fixes it tells us.
 
 ## Gotchas

@@ -37,7 +37,7 @@ screen` block says which manifest each load got and which URL the icon opened.
 - **Delete and Forget**, from the hold and from the kebab: the confirm dialog
   must outlive the tap that opened it.
 
-**The keyboard** — `pnpm keyboard` fakes one; the accessory bar is real.
+**The keyboard** — `pnpm verify keyboard` fakes one; the accessory bar is real.
 
 - The four screens that ask for people (`/new`, claim, payers, the scan pair):
   the act under the add row has to be reachable with the keys up.

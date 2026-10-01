@@ -274,7 +274,7 @@ Scanning is the one thing that would otherwise have been a second cost, since
 the demo scans under **this phone's own scan credential**, the one a quick
 split already carries ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)),
 so the camera works there and the demo's id still reaches the server in
-nothing. `useScanAs` is the whole of that choice, and `pnpm demo` watches the
+nothing. `useScanAs` is the whole of that choice, and `pnpm verify demo` watches the
 requests to hold it.
 
 **Every attempt is written down.** A success stamps `groupKeys.lastSyncedAt`
