@@ -10,6 +10,7 @@ import { RegisterServiceWorker } from "@/components/register-sw";
 import { StartSync } from "@/components/start-sync";
 import { ThemeScript } from "@/components/theme";
 import { copy } from "@/lib/copy";
+import { preview } from "@/lib/preview";
 import { arrivalScript } from "@/lib/diag";
 import { resumeScript } from "@/lib/resume-hint";
 import { manifestScript, type WebManifest } from "@/lib/install";
@@ -30,35 +31,11 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: copy.app.name,
   description: copy.app.description,
-  // **A link to this app is nearly always sent in a chat**, so the preview card
-  // is the first thing anyone sees. The tags are static and say nothing about a
-  // group: the secret lives in the fragment, which never reaches a scraper.
-  //
   // Absolute URLs via `metadataBase`, pinned to production: the build is
   // byte-identical on both Workers (docs/hosting.md#dev-and-production) and
   // only production links get shared.
   metadataBase: new URL("https://bida.bid"),
-  openGraph: {
-    type: "website",
-    siteName: copy.app.name,
-    title: copy.app.name,
-    description: copy.app.description,
-    // **No `og:url`** — as a root default every route would claim to be
-    // `https://bida.bid`, and Messenger on iOS then pastes an invite as that bare
-    // origin, path and fragment gone. Without it a scraper uses the fetched URL.
-    //
-    // **A wide banner, not the square icon**: a square puts most chat apps in
-    // their compact card, a thumbnail the size of an emoji. The page cannot pick
-    // an image per app, so one 1200×630 keeps its point inside the centre square
-    // some crop to. Drawn by `pnpm icons` from design/brand/banner.svg.
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: copy.app.banner }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: copy.app.name,
-    description: copy.app.description,
-    images: [{ url: "/og.png", alt: copy.app.banner }],
-  },
+  ...preview(copy.app.name),
   // No `manifest`: `manifestScript` writes the link first in the head, because
   // an iOS tab needs a different one. **Name the icons**, or every cold load
   // takes a /favicon.ico 404.

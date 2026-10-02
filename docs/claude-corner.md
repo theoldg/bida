@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-02* — "Let's workshop the text title first", mid-build. Copy is
+  the owner's to pick: offer a short table and a pick, keep the plumbing
+  parked, and don't push a placeholder past the interruption. Their answer
+  beat every option in the table.
+
 - *2026-10-02* — "yes please build a". The plan promised to move the keyboard
   padding to the column; the code already had a cheaper shape (`.foot` pays
   `--kb` itself), so the dock copied that, and the dead `--act-below` went too.
@@ -78,7 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-30* — "remove the "rest" buttons … does that make sense?" A
   question that is really a spec: build it. The edge it skipped — clearing the
   only payer collapsed straight back — was the agent's to find and settle.
-
-- *2026-09-30* — "'As amounts' split should be in the payment currency!"
-  One line, but it moves stored data: the D1 log already holds base amounts.
-  Read old and new with one rule, and let the form convert on opening.

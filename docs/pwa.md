@@ -47,9 +47,12 @@ device record remembers the fold. The same card sits atop each real group's
 ledger (`LedgerInstall`), folded on every visit and remembering nothing.
 
 **A link to this app is nearly always sent in a chat**, so `metadata` in the
-layout also carries Open Graph and Twitter tags for the card a chat app draws. They are
-static and say nothing about the group, which they could not anyway: the secret
-is in the fragment and never leaves the phone. `metadataBase` is pinned to
+layout also carries Open Graph and Twitter tags for the card a chat app draws,
+built by `lib/preview.ts`. They are static and say nothing about the group,
+which they could not anyway: the secret is in the fragment and never leaves the
+phone. `/join`, where every invite lands, swaps only the card's title for
+`copy.app.invite` — the banner already says the name — and keeps "bida" in the
+tab. `metadataBase` is pinned to
 `https://bida.bid` because a crawler has no page to resolve a relative URL
 against and the build is byte-identical on both Workers
 ([hosting.md](hosting.md#dev-and-production)). **There must be no `og:url`** —
