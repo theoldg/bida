@@ -1,7 +1,7 @@
 {
   "name": "bida",
   "short_name": "bida",
-  "description": "No-nonsense expense splitter.",
+  "description": "Split things. Mostly bills.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

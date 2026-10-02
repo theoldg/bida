@@ -44,11 +44,11 @@ export const copy = {
   app: {
     name: "bida",
     /** The page description: the line under "bida" in a pasted-link preview. Never shown in-app. */
-    description: "No-nonsense expense splitter.",
+    description: "Split things. Mostly bills.",
     /** Alt text for the preview banner, public/og.png — what the picture says. */
     /** An invite's preview title. The banner already says "bida" and the slogan, and the group's name can't be had (docs/pwa.md). */
     invite: "Join the group",
-    banner: "bida, no-nonsense expense splitter: a receipt split between Ana and Ben",
+    banner: "bida, split things, mostly bills: a receipt split between Ana and Ben",
   },
 
   /** Buttons. One verb each — a button never says "OK". */

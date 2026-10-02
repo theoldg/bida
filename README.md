@@ -4,7 +4,9 @@
 
 <h1 align="center">bida</h1>
 
-<p align="center">Lightweight, full-featured and free Splitwise/Tricount alternative.</p>
+<p align="center"><i>Split things. Mostly bills.</i></p>
+
+<p align="center">bida is an expense splitter app similar to Splitwise or Tricount. It's free and it works in the browser, no accounts needed. Also, it lets you scan and split receipts by items.</p>
 
 <p align="center">
   <a href="https://bida.bid"><b>bida.bid</b></a>

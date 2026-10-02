@@ -2,8 +2,8 @@
   <rect width="1200" height="630" fill="#e8e8e5"/>
   <text x="600" y="134" font-size="120" font-weight="700" fill="#16171a" letter-spacing="-4" text-anchor="middle">bida</text>
   <g font-size="48" fill="#5e6268" text-anchor="middle">
-    <text x="600" y="204">no-nonsense</text>
-    <text x="600" y="260">expense splitter</text>
+    <text x="600" y="204">split things,</text>
+    <text x="600" y="260">mostly bills.</text>
   </g>
   <!-- The logo's receipt, rising from the bottom edge: the ÷ and two shares clear it. -->
   <g transform="translate(384 322) scale(1.2)">
