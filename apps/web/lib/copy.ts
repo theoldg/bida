@@ -155,7 +155,7 @@ export const copy = {
     /** The phone is off the network — its own failure, not the link's. */
     tricountOffline: "This phone can’t reach the internet, and a Tricount link has to be fetched.",
     /** Tricount is not answering us. Nothing about the link is wrong. */
-    tricountDown: "Tricount isn’t answering. Tricount has no official way to export a group, so bida reads it the way Tricount’s own app does, and that can stop working without warning. Exporting from Tricount to a file and choosing it above still works.",
+    tricountDown: "Tricount isn’t answering. Tricount has no official way to export a group, so bida reads it the way Tricount’s own app does, and that can stop working without warning. Try again in a while.",
     /** Picked something that is plainly not a ledger (`looksLikeCsv`). */
     notFile: "That isn’t a spreadsheet file. In Splitwise, open the group, then Export as spreadsheet.",
     tooBig: "That file is far too big to be a group’s ledger.",
