@@ -101,16 +101,11 @@ fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
   scroll-padding is where a field mid-form stops. A dialog sits outside the
   shell and pays the same toll: the scrim spends `--kb` as bottom padding, so a
   card is centred in what is left rather than behind the keys. `.foot` pays it
-  too, for the screens that pin an act. **An act that scrolls has to be scrolled to**: the four
-  screens that ask for people put Create, "Continue as …", the scan pair or
-  "Change who you are" under the add row, so the field asks for that much room
-  beneath itself (`--act-below`) and `bringIntoView` spends it. It has to be
-  spent in script, because `scrollIntoView`'s `nearest` reads "already in view"
-  off the field's own box — a field the browser has just parked above the keys
-  is finished as far as it is concerned, `scroll-margin-bottom` and all, and the
-  button under it stays behind them. Only ever upward: a keyboard closing must
-  not drag the list down to re-hang the field at the bottom of the screen.
-  `pnpm verify keyboard` holds all four ([browser-checks.md](browser-checks.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)). **A gap with nobody typing is not a keyboard** and is
+  too, for the screens that pin an act, and so does `.whodock`, the act docked
+  under a list of people or a form: a sibling of `.scroll` rather than its last
+  row, so the keys lift it with them and the scroller above it shrinks by as
+  much. That scroller pays no keyboard room of its own — the dock is it.
+  `pnpm verify keyboard` holds the docked ones ([browser-checks.md](browser-checks.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)). **A gap with nobody typing is not a keyboard** and is
   never paid as one (`lib/viewport.ts`): the difference between the two
   viewports is a keyboard only while something has the caret; otherwise a
   browser that reports the two differently gets permanent padding at the foot

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Body, Failure, Screen, Scroll, TopBar } from "./chrome";
+import { Body, Failure, Screen, TopBar } from "./chrome";
 import { WhoPicker } from "./who-picker";
 import { copy } from "../lib/copy";
 import { errorText } from "../lib/format";
@@ -46,22 +46,19 @@ export function CreateAs({ title, names, picked: first, onAdd, onBack, create, f
     <Screen>
       <Body>
         <TopBar title={title} back={{ ask: () => { onBack(); return false; } }} />
-        <Scroll>
-          <h2 className="question">{copy.claim.title}</h2>
-          <WhoPicker
-            people={names.map((who) => ({ id: who, name: who }))}
-            picked={picked}
-            addPlaceholder={copy.claim.addPlaceholder}
-            onPick={setPicked}
-            // A name already on the list cannot be filed here either — it is a
-            // row a tap above, and tapping it says the same thing.
-            onAdd={(who) => {
-              onAdd(who);
-              return { id: who, name: who };
-            }}
-            onContinue={save} />
-          {failed ? <div className="pad"><Failure>{failedText(failed)}</Failure></div> : null}
-        </Scroll>
+        <WhoPicker
+          people={names.map((who) => ({ id: who, name: who }))}
+          picked={picked}
+          addPlaceholder={copy.claim.addPlaceholder}
+          onPick={setPicked}
+          // A name already on the list cannot be filed here either — it is a
+          // row a tap above, and tapping it says the same thing.
+          onAdd={(who) => {
+            onAdd(who);
+            return { id: who, name: who };
+          }}
+          onContinue={save}
+          after={failed ? <div className="pad"><Failure>{failedText(failed)}</Failure></div> : null} />
       </Body>
     </Screen>
   );

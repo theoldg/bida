@@ -140,30 +140,29 @@ export default function QuickPage() {
               onDraft={setTyping}
               flash={refusal.flash} onFlashEnd={refusal.onFlashEnd} />
           </div>
-
-          {/* The act the screen ends on, under the people it needs first — and
-              sticky (`.whodock`), so a long table of them scrolls under it. */}
-          <div className="pad whodock" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
-            {/* Always tappable: an unfiled name or fewer than two people blooms the
-                plus beside "Add someone" instead. */}
-            <ScanPair scan={scan} register="lg"
-              disabled={refusal.live}
-              refuse={() => {
-                if (typing !== null || people.length < 2) { refusal.refuse(); return true; }
-                return false;
-              }} />
-
-            {/* No "try again" beside either message: the control above is
-                still enabled, and it is the retry. */}
-            {scan.refusal ? <Failure>{scan.refusal}</Failure> : null}
-            {noLines && scan.live?.state !== "scanning"
-              ? <Failure>{copy.quick.noLines}</Failure> : null}
-
-            {/* The same disclosure the group's scan screen carries: the photo
-                goes to Google's model, which may train on it. */}
-            <p className="scanterms">{copy.scan.terms}</p>
-          </div>
         </Scroll>
+        {/* The act the screen ends on, under the people it needs first —
+            docked (`.whodock`), so a long table of them scrolls above it. */}
+        <div className="pad whodock" style={{ paddingTop: 18 }}>
+          {/* Always tappable: an unfiled name or fewer than two people blooms the
+              plus beside "Add someone" instead. */}
+          <ScanPair scan={scan} register="lg"
+            disabled={refusal.live}
+            refuse={() => {
+              if (typing !== null || people.length < 2) { refusal.refuse(); return true; }
+              return false;
+            }} />
+
+          {/* No "try again" beside either message: the control above is
+              still enabled, and it is the retry. */}
+          {scan.refusal ? <Failure>{scan.refusal}</Failure> : null}
+          {noLines && scan.live?.state !== "scanning"
+            ? <Failure>{copy.quick.noLines}</Failure> : null}
+
+          {/* The same disclosure the group's scan screen carries: the photo
+              goes to Google's model, which may train on it. */}
+          <p className="scanterms">{copy.scan.terms}</p>
+        </div>
       </Body>
 
       {asking ? (

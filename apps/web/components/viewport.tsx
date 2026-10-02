@@ -3,28 +3,18 @@
 import { useEffect } from "react";
 import { mark } from "../lib/diag";
 import { note } from "../lib/press-trace";
-import { caretOnPress, confirmAct, gapOf, isTyping, landsOn, reachOf } from "../lib/viewport";
+import { caretOnPress, confirmAct, gapOf, isTyping, landsOn } from "../lib/viewport";
 
 /**
- * Bring a field into view, and whatever it says has to come up with it.
- *
- * `nearest` covers an ordinary field. The add row also needs room for the act
- * below it, declared as `scroll-margin-bottom` (`--act-below`, globals.css) —
- * which the browser skips when it thinks the field is already in view, exactly
- * the keyboard case. The remainder is paid here (`reachOf`).
+ * Bring a field into view. `nearest`, so a field already in view stays put.
+ * Every screen's act is docked beside the scroller (`.whodock`), never under
+ * a field inside it, so the field is all there is to bring.
  *
  * Shared by name-adder.tsx, `follow` below, and on top of the browser's own
  * scroll on focus.
  */
 export function bringIntoView(el: Element) {
   el.scrollIntoView({ block: "nearest" });
-  const room = parseFloat(getComputedStyle(el).scrollMarginBottom);
-  if (!room) return;
-  const box = el.closest(".scroll");
-  if (!box) return;
-  const stop = box.getBoundingClientRect().bottom
-    - (parseFloat(getComputedStyle(box).scrollPaddingBottom) || 0);
-  box.scrollTop += reachOf({ bottom: el.getBoundingClientRect().bottom, room, stop });
 }
 
 /**
@@ -35,7 +25,8 @@ export function bringIntoView(el: Element) {
  * On iOS the keyboard and its accessory bar overlay the `100dvh` shell rather
  * than shortening it, so `.scroll` ends behind them. `.scroll` spends the
  * covered strip as trailing space and `scroll-padding-bottom`, so every scroll
- * stops short of the keyboard.
+ * stops short of the keyboard — unless a dock follows it (`.whodock`), which
+ * pays the strip as its own padding and so lifts its button above the keys.
  *
  * **Set on `<html>`, not the shell**: dialogs and the FAB live outside it and
  * need the same value.

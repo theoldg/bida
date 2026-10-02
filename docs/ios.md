@@ -294,6 +294,9 @@ is rightly let through: it is Chrome, storage and menus and all.
 
 ## Gotchas
 
+- **`position: sticky` doesn't exempt anything from the rubber-band**: an act
+  stuck to a scroller's foot bounces with it. A button that must hold still is
+  a sibling of `.scroll`, not a row in it (`.whodock`, `.homepair`).
 - `looksIos` has to catch iPadOS, which calls itself a Mac
   ([lib/install.ts](../apps/web/lib/install.ts)).
 - **An iOS home-screen app drops the `Safari/` token exactly as a webview

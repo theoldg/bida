@@ -126,12 +126,10 @@ the group is opened again (`apps/web/lib/launch.ts`).
 
 Four screens ask for people in that same row, and each ends on the act those
 people are for — Create, "Continue as …", the scan pair, "Change who you are" —
-sitting *below* the row on the scroll. So the scroll that lifts the field over
-the keyboard is the same one that can leave the act behind it, and what holds
-the two together is a single number, `--act-below`
-([touch-and-viewport.md](touch-and-viewport.md#the-screen-and-the-keyboard-over-it)). Nothing else here would notice that number
-going stale: a button gains a line, a row gains padding, and the fix is quietly
-a few pixels short on a phone nobody in this repo is holding.
+docked under the scroller (`.whodock`), which pays the keyboard's strip as its
+own padding ([touch-and-viewport.md](touch-and-viewport.md#the-screen-and-the-keyboard-over-it)).
+Lose that padding, or put the act back inside the scroller, and the button sits
+under the keys on a phone nobody in this repo is holding.
 
 There is no keyboard in a headless browser, so one is faked where the app reads
 it — `visualViewport.height` — and everything after that is the app's own:
@@ -140,7 +138,7 @@ it — `visualViewport.height` — and everything after that is the app's own:
 field *and* the act still above the top of the keys. The list is ten people
 deep on every screen on purpose: three fit above a keyboard whatever the scroll
 does, and a check that passes with the fix deleted is worse than none — with
-`--act-below` at zero, all five assertions fail.
+the dock's `--kb` padding gone, all five assertions fail.
 
 The confirm key is the other half, and it needs no faking — a headless browser
 presses Enter like any other. It walks the two screens the fix is really for,

@@ -33,8 +33,7 @@ import { nameTaken } from "@bida/core";
  * While the field holds anything the row draws as a box (`globals.css`): the
  * name is *not* on the list yet.
  *
- * The row **follows the list down**, keeping the list's act in view below it
- * (`--act-below`, globals.css).
+ * The row **follows the list down**, staying in view as names are filed.
  */
 export interface AddNameHandle {
   /** Throw away whatever is in the field, filing nothing. */
@@ -83,9 +82,7 @@ export function AddName({
 
   // The list grows above this row, so past a screenful the field is below the
   // fold. **Follow after the render that added the name, not in the handler**,
-  // with `nearest`. The field is the target because the focus and keyboard
-  // scrolls aim at it too, so one `scroll-margin-bottom` lines all three up
-  // (`bringIntoView`, components/viewport.tsx).
+  // with `nearest` (`bringIntoView`, components/viewport.tsx).
   const count = taken.length;
   const seen = useRef(count);
   useEffect(() => {

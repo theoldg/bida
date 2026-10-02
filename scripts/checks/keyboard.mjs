@@ -2,12 +2,11 @@
 /**
  * `pnpm verify keyboard` — the act a list of names is typed for survives the keyboard.
  *
- * Four screens ask for people in the same add row and end on an act below it,
- * on the scroll rather than a pinned foot: `/new`'s Create, the picker's
- * "Continue as …", the quick split's scan pair, the people menu's "Change who
- * you are". The scroll that lifts the field over the keyboard can leave the
- * act under it; one number, `--act-below`, keeps them together, and nothing
- * else notices it going stale.
+ * Four screens ask for people in the same add row and end on an act docked
+ * under the scroller (`.whodock`): `/new`'s Create, the picker's "Continue as
+ * …", the quick split's scan pair, the people menu's "Change who you are". The
+ * dock pays the keyboard's strip as its own padding, which is what lifts the
+ * act above the keys; nothing else notices that going missing.
  *
  * Also the confirm key: on a field promising "next" it must move the caret to
  * the field below (`walkFields`, components/viewport.tsx).
@@ -91,12 +90,11 @@ async function clears(label, actSelector) {
   const seen = await page.evaluate((selector) => {
     const input = document.querySelector(".addname");
     const act = document.querySelector(selector);
-    const scroll = document.querySelector(".scroll");
-    if (!input || !act || !scroll) return { missing: !input ? "add row" : !act ? selector : ".scroll" };
+    const shell = document.querySelector(".app");
+    if (!input || !act || !shell) return { missing: !input ? "add row" : !act ? selector : ".app" };
     const kb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--kb"));
-    // The top of the keys. The scroller ends behind them, so its own bottom
-    // edge says nothing on its own.
-    const keys = scroll.getBoundingClientRect().bottom - kb;
+    // The top of the keys: they overlay the shell's foot rather than shorten it.
+    const keys = shell.getBoundingClientRect().bottom - kb;
     return {
       kb,
       act: Math.round(keys - act.getBoundingClientRect().bottom),

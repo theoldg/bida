@@ -126,10 +126,8 @@ rather than "Bad link", one with no password, from anywhere, opens that
 group's screen, and an empty read opens a box to paste into
 by hand — at once, since on iOS asking the clipboard again is another Paste
 bubble to tap rather than a free retry ([ios.md](ios.md#gotchas)). The box is the same routing on what lands in it
-(`readPastedLink`, `usePasteLink`, `lib/paste.ts`) — (`.homepair`, which takes the `margin-top: auto` in a full-height
-`.homescroll` to settle at the foot of a short list, and `position: sticky;
-bottom: 0` to stay there — floating ungrounded over the rows, as the FABs do —
-once a long one would otherwise scroll it out of reach), with nothing under them — the
+(`readPastedLink`, `usePasteLink`, `lib/paste.ts`) — (`.homepair`, docked at the
+foot of the screen under the scroller), with nothing under them — the
 light/dark switch and **About bida** are the two items in the top bar's kebab
 (`HomeMenu`), the same card the group screen's opens. `Tabs` was deleted
 from `components/`; don't bring it back. A screen needing more destinations puts

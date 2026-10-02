@@ -712,25 +712,22 @@ function EditEntryScreen() {
             )}
 
           </div>
-
-          {/* The form's last row, sticky (`.whodock`): under the split while the
-              form fits, stopped at the scroller's foot once a long split pushes
-              it off — never a bar pinned to the shell, which fights the keyboard
-              (it overlays the shell; this rides the scroller, which ends behind
-              it). Always pressable: `save` answers with the refusal flash on
-              whatever is missing. */}
-          <div className="pad whodock" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
-            {failed ? (
-              <p className="failure" role="alert" style={{ margin: "0 2px 9px" }}>
-                {copy.form.saveFailed(failed)}
-              </p>
-            ) : null}
-            <button type="button" className="btn btn-p btn-lg" onClick={save}
-              disabled={saving || refusing || seeking}>
-              {saving ? <span className="spinner" /> : null}{copy.act.save}
-            </button>
-          </div>
         </Scroll>
+        {/* The form's last row, docked (`.whodock`): under the split while the
+            form fits, at the foot of the screen once a long split scrolls above
+            it, and above the keyboard while one is up. Always pressable: `save`
+            answers with the refusal flash on whatever is missing. */}
+        <div className="pad whodock" style={{ paddingTop: 18 }}>
+          {failed ? (
+            <p className="failure" role="alert" style={{ margin: "0 2px 9px" }}>
+              {copy.form.saveFailed(failed)}
+            </p>
+          ) : null}
+          <button type="button" className="btn btn-p btn-lg" onClick={save}
+            disabled={saving || refusing || seeking}>
+            {saving ? <span className="spinner" /> : null}{copy.act.save}
+          </button>
+        </div>
       </Body>
 
       {ask === "discard" ? (

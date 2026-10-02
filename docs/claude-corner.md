@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-02* — "yes please build a". The plan promised to move the keyboard
+  padding to the column; the code already had a cheaper shape (`.foot` pays
+  `--kb` itself), so the dock copied that, and the dead `--act-below` went too.
+  Say where the build left the plan.
+
 - *2026-10-01* — "Block publishing to main until the latest checks are green
   (wait if still going, refuse if failed)". Every way to release needs the
   gate, the button and the laptop both; and gate one pinned commit, so what
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-30* — "'As amounts' split should be in the payment currency!"
   One line, but it moves stored data: the D1 log already holds base amounts.
   Read old and new with one rule, and let the form convert on opening.
-
-- *2026-09-30* — "Can we trigger background sync when a notification
-  arrives?" Four turns followed, each cutting the design down: a cache, not the
-  database; a stash that never moves the cursor. Say the cost plainly and let
-  the owner trim it — "Do it" came once the design was theirs.

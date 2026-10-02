@@ -58,15 +58,15 @@ destructive actions (`.btn-d`, "Remove") take `--debit` as an outline, not
 a fill — losing that warning to consistency would be a worse trade. With hue
 spent, **size is the emphasis left**: a screen whose one act ends it gives that
 act the full width of the screen at `.btn-lg` — taller and heavier, still square
-and still flat. It is the last row of the scroll, not a pinned bar: pinned, it
-fights the phone keyboard, which overlays the shell rather than shortening it.
-Where the screen has no scroll of its own to ride — the who-had-what grid owns
-its, sideways as well as down — the button sits in the fixed foot, and that
-band pays `--kb` in its place. Where a list of people can outgrow the screen —
-"Which one are you?", `/g/payers`, the entry form, `/new`, `/quick`, People —
-the last row is sticky (`.whodock`): under the rows while they fit, stopped at
-the scroller's foot once they don't, and on `/g/payers` the verdict line rides
-in it with the button. The entry form, the
+and still flat. Where a list of people can outgrow the screen — "Which one are
+you?", `/g/payers`, the entry form, `/new`, `/quick`, People — it is docked
+(`.whodock`): beside the scroller rather than in it, which is only as tall as
+its rows, so the button sits right under them while they fit and at the foot
+of the screen once they don't. Outside the scroller, iOS's rubber-band never
+carries it; it pays `--kb` itself, so it rides above the keyboard while one is
+up. On `/g/payers` the verdict line rides in it with the button. The
+who-had-what grid, which owns its scroll sideways as well as down, ends on the
+fixed foot instead. The entry form, the
 new-group form, the who-had-what grid and those two all end this way. `/g/scan` is the
 one exception: it holds a picture and the button that picture explains, and at
 the foot the button is a long way from the only thing explaining it, so the two
@@ -84,10 +84,8 @@ FAB pair's own gap between them — near enough to read as one pair, with the
 margin around it doing the separating. "New group" is the inked one and takes
 the right, where a thumb rests, with "Quick split" outlined beside it — and, on an iOS home-screen app only,
 "Paste link" outlined on the far left ([navigation.md](navigation.md#one-navigation)). The
-pair is sticky (`.homepair`), floating over the list once there are enough
-groups to scroll — ungrounded, as the FABs it echoes are, so two figures pass
-over the rows rather than a dock cutting the screen in two; they never go out
-of reach either.
+pair is docked at the foot of the screen (`.homepair`), under the scroller
+rather than in it, so a long list scrolls above it and never out of reach.
 
 **Balances has a corner of its own.** The ledger's two never appear there — it
 is a reading, not a place you add to — so the tip jar takes the spot

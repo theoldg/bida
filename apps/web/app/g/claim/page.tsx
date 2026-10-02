@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BadLink, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { BadLink, Body, QueryBoundary, Screen, TopBar } from "@/components/chrome";
 import { useInstallOffer } from "@/components/install";
 import { JoiningFrame } from "@/components/joining";
 import { UseInApp } from "@/components/use-in-app";
@@ -76,17 +76,14 @@ function ClaimScreen() {
       <Body>
         <TopBar title={copy.claim.join(group.name)} back={route.groups()} />
 
-        <Scroll>
-          <h2 className="question">{copy.claim.title}</h2>
-          <WhoPicker
-            people={data.members.map((m) => ({ id: m.id, name: m.name }))}
-            picked={picked ?? data.me}
-            addPlaceholder={copy.claim.addPlaceholder}
-            onPick={setPicked}
-            onAdd={add}
-            onContinue={proceed}
-          />
-        </Scroll>
+        <WhoPicker
+          people={data.members.map((m) => ({ id: m.id, name: m.name }))}
+          picked={picked ?? data.me}
+          addPlaceholder={copy.claim.addPlaceholder}
+          onPick={setPicked}
+          onAdd={add}
+          onContinue={proceed}
+        />
         {/* Under the scroll, not at the list's end: a group of twenty people
             would push it out of sight, and it is for someone who shouldn't be
             picking a name here at all. */}

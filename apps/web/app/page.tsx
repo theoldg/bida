@@ -78,46 +78,45 @@ export default function GroupsPage() {
           right={<HomeMenu />} />
 
         <Scroll>
-          <div className="homescroll">
-            {/* undefined is "Dexie hasn't answered yet", not "no groups". */}
-            {groups === undefined ? <SkeletonRows count={4} /> : null}
+          {/* undefined is "Dexie hasn't answered yet", not "no groups". */}
+          {groups === undefined ? <SkeletonRows count={4} /> : null}
 
-            {/* An install offer goes first, once there is a group to lose: an iOS
-              tab's warning or Chrome's prompt (components/install.tsx), and in the
-              installed app the notifications offer in its place. The group it
-              names leads the iOS carry — the top row, which the app would reopen
-              (lib/launch.ts).
+          {/* An install offer goes first, once there is a group to lose: an iOS
+            tab's warning or Chrome's prompt (components/install.tsx), and in the
+            installed app the notifications offer in its place. The group it
+            names leads the iOS carry — the top row, which the app would reopen
+            (lib/launch.ts).
 
-              The demo doesn't count: it has no key, so no icon would carry it, and
-              `/demo` lays it down again anyway (docs/sync.md#the-demo-group-has-no-key). */}
-            {lead ? <InstallOfferCard groupId={lead.group.id} /> : null}
+            The demo doesn't count: it has no key, so no icon would carry it, and
+            `/demo` lays it down again anyway (docs/sync.md#the-demo-group-has-no-key). */}
+          {lead ? <InstallOfferCard groupId={lead.group.id} /> : null}
 
-            {/* An empty list is only empty once nothing is on its way: an icon
-              added to keep someone's groups must not greet them with "No
-              groups yet" while those groups are still coming down. */}
-            {groups && groups.length === 0 && arriving !== undefined ? (
-              arriving > 0 ? (
-                <Empty title={copy.groups.arriving.title}>{copy.groups.arriving.body}</Empty>
-              ) : (
-                <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
-              )
-            ) : null}
+          {/* An empty list is only empty once nothing is on its way: an icon
+            added to keep someone's groups must not greet them with "No
+            groups yet" while those groups are still coming down. */}
+          {groups && groups.length === 0 && arriving !== undefined ? (
+            arriving > 0 ? (
+              <Empty title={copy.groups.arriving.title}>{copy.groups.arriving.body}</Empty>
+            ) : (
+              <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
+            )
+          ) : null}
 
-            {/* A forgotten group folds out the way a deleted entry does
-              (components/ledger-rows.tsx). */}
-            <LedgerRows opens={false} items={rows} row={(summary: GroupSummary) => <GroupRow summary={summary} />} />
+          {/* A forgotten group folds out the way a deleted entry does
+            (components/ledger-rows.tsx). */}
+          <LedgerRows opens={false} items={rows} row={(summary: GroupSummary) => <GroupRow summary={summary} />} />
 
-            {/* The update offer, at the foot: it draws only in the installed
-              app, so it never appears alongside the install cards above,
-              which draw only outside it — the notifications card is the one
-              it can share the screen with. */}
-            <UpdateNudge />
-
-            {/* The act this screen exists for, under the list where a thumb rests; its
-              `margin-top: auto` drops it to the foot however short the list is. */}
-            <StartTiles />
-          </div>
+          {/* The update offer, at the foot: it draws only in the installed
+            app, so it never appears alongside the install cards above,
+            which draw only outside it — the notifications card is the one
+            it can share the screen with. */}
+          <UpdateNudge />
         </Scroll>
+
+        {/* The act this screen exists for, at the foot where a thumb rests —
+            beside the scroller, not in it, so a long list scrolls above it and
+            its rubber-band never carries the pair. */}
+        <StartTiles />
       </Body>
     </Screen>
     </>
@@ -131,7 +130,7 @@ export default function GroupsPage() {
  * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md))
  * so it is outlined. An iOS home-screen app gets a third, `PasteLinkTile`.
  *
- * **Sticky (`.homepair`)**, or a long list scrolls it off the bottom.
+ * **Docked (`.homepair`)**, under the scroller rather than in it.
  */
 function StartTiles() {
   return (

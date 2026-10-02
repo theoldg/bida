@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { AddName, type AddNameHandle } from "./name-adder";
 import { Icon } from "./icons";
+import { Scroll } from "./chrome";
 import { copy } from "../lib/copy";
 
 /** One name to pick from. On `/new` the id *is* the name — nothing is written
@@ -24,10 +25,11 @@ export interface Who {
  * (components/name-adder.tsx), and the filed row is then ticked.
  *
  * **Under the list, not in a `Foot`**, so it sits by the tap that lit it;
- * `.whodock` is sticky for lists too long to fit. `.btn-lg`, like Create and
- * Save (docs/design-system.md).
+ * docked beside the scroller (`.whodock`), so a list too long to fit scrolls
+ * above it. That is why the picker draws the screen's `Scroll` itself.
+ * `.btn-lg`, like Create and Save (docs/design-system.md).
  */
-export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onContinue }: {
+export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onContinue, after }: {
   people: readonly Who[];
   /** Whoever is already selected — a group re-opened from its invite link
       preselects the name this phone last claimed. */
@@ -40,6 +42,8 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
    */
   onAdd: (name: string) => Who | Promise<Who>;
   onContinue: (id: string) => void | Promise<void>;
+  /** Drawn in the scroller under the list — a failure to report. */
+  after?: ReactNode;
 }) {
   const [busy, setBusy] = useState(false);
   // Whoever the add row just filed. On `/g/claim` the row arrives via a Dexie
@@ -61,39 +65,41 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
 
   return (
     <>
-      <div className="rows">
-        {/* Picking a name is the plainest way of saying the row being typed was
-            a false start, so it goes — one question, one answer on screen. */}
-        {people.map((p) => (
-          // The check mark is a shape, and a shape says nothing to a screen
-          // reader — without `aria-pressed` nothing on the row names the pick.
-          <button key={p.id} className="row" aria-pressed={p.id === picked}
-            onClick={() => { adder.current?.clear(); onPick(p.id); }}>
-            <div className="rmain">
-              <div className="rtitle">{p.name}</div>
-            </div>
-            <span className="rmark">
-              {p.id === picked
-                ? <Icon name="check" size={16} style={{ color: "var(--brand)" }} />
-                : null}
-            </span>
-          </button>
-        ))}
+      <Scroll>
+        <h2 className="question">{copy.claim.title}</h2>
+        <div className="rows">
+          {/* Picking a name is the plainest way of saying the row being typed was
+              a false start, so it goes — one question, one answer on screen. */}
+          {people.map((p) => (
+            // The check mark is a shape, and a shape says nothing to a screen
+            // reader — without `aria-pressed` nothing on the row names the pick.
+            <button key={p.id} className="row" aria-pressed={p.id === picked}
+              onClick={() => { adder.current?.clear(); onPick(p.id); }}>
+              <div className="rmain">
+                <div className="rtitle">{p.name}</div>
+              </div>
+              <span className="rmark">
+                {p.id === picked
+                  ? <Icon name="check" size={16} style={{ color: "var(--brand)" }} />
+                  : null}
+              </span>
+            </button>
+          ))}
 
-        {/* Filing a name here is picking it. A name already on the list can't be
-            filed — its row is the same answer. */}
-        <AddName placeholder={addPlaceholder} taken={people.map((p) => p.name)} handle={adder}
-          onAdd={async (name) => {
-            const who = await onAdd(name);
-            setAdded(who);
-            onPick(who.id);
-          }} />
-      </div>
+          {/* Filing a name here is picking it. A name already on the list can't be
+              filed — its row is the same answer. */}
+          <AddName placeholder={addPlaceholder} taken={people.map((p) => p.name)} handle={adder}
+            onAdd={async (name) => {
+              const who = await onAdd(name);
+              setAdded(who);
+              onPick(who.id);
+            }} />
+        </div>
+        {after}
+      </Scroll>
 
-      {/* Sticky once the list outgrows the screen: stops at the scroller's
-          foot with names passing under. Opaque, or they'd show through.
-          `bottom: 0` is the scroller's foot, which on `/g/claim` is above the
-          "Have the app?" dock. */}
+      {/* Outside the scroller, so its rubber-band never moves the button. On
+          `/g/claim` the "Have the app?" dock follows it. */}
       <div className="pad whodock">
         <button className="btn btn-p btn-lg" onClick={() => void proceed()} disabled={busy || !chosen}>
           {chosen ? copy.claim.continueAs(chosen.name) : copy.claim.pickFirst}

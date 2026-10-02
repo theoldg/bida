@@ -166,29 +166,28 @@ function PayersScreen() {
               );
             })}
           </div>
-
-          {/* The verdict and the way out travel together, sticky as on "Which
-              one are you?": on a long list they wait at the foot with names
-              passing under, on a short one they sit right below the rows. */}
-          <div className="pad whodock" style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
-            {/* Tick when it adds up, words alone when it doesn't — same as the
-                split footer, and for the same reason. */}
-            <div className={`splitfoot alone ${check.ok ? "ok" : "bad"}`}>
-              {check.ok ? <Icon name="check" size={14} style={{ flex: "none" }} /> : null}
-              <span>
-                {check.ok
-                  ? copy.payers.accountedFor(
-                      money(check.allocatedMinor, currency), money(amountMinor, currency))
-                  : payerProblemText(check, currency, voice)}
-              </span>
-            </div>
-            <button type="button" className="btn btn-p btn-lg" disabled={!check.ok}
-              style={{ marginTop: 10 }}
-              onClick={() => goBack(() => router.back(), (to) => router.replace(to))}>
-              {copy.act.done}
-            </button>
-          </div>
         </Scroll>
+        {/* The verdict and the way out travel together, docked as on "Which
+            one are you?" (`.whodock`): right below the rows on a short list, at
+            the foot of the screen with the names scrolling above on a long one. */}
+        <div className="pad whodock">
+          {/* Tick when it adds up, words alone when it doesn't — same as the
+              split footer, and for the same reason. */}
+          <div className={`splitfoot alone ${check.ok ? "ok" : "bad"}`}>
+            {check.ok ? <Icon name="check" size={14} style={{ flex: "none" }} /> : null}
+            <span>
+              {check.ok
+                ? copy.payers.accountedFor(
+                    money(check.allocatedMinor, currency), money(amountMinor, currency))
+                : payerProblemText(check, currency, voice)}
+            </span>
+          </div>
+          <button type="button" className="btn btn-p btn-lg" disabled={!check.ok}
+            style={{ marginTop: 10 }}
+            onClick={() => goBack(() => router.back(), (to) => router.replace(to))}>
+            {copy.act.done}
+          </button>
+        </div>
       </Body>
 
       {asking ? (

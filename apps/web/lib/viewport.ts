@@ -73,32 +73,6 @@ export function caretOnPress(keyboardUp: boolean, typing: boolean): CaretAction 
   return keyboardUp ? "hold" : "blur";
 }
 
-/** One look at a field being scrolled to, and the line it has to clear. */
-interface ReachReading {
-  /** The field's bottom edge. */
-  bottom: number;
-  /** What has to stay visible *under* it — its `scroll-margin-bottom`, which is
-      how a field says the act its screen ends on travels with it
-      (`--act-below`, globals.css). Zero for an ordinary field. */
-  room: number;
-  /** Where a scroll has to stop: the scroller's bottom edge less the strip the
-      keyboard covers (`scroll-padding-bottom`). */
-  stop: number;
-}
-
-/**
- * How much further a scroller must go for a field *and the room it asks for*
- * to clear the keys. `scrollIntoView`'s `nearest` judges by the field's own
- * box, so a field already parked above the keyboard counts as done and what
- * sits under it stays hidden.
- *
- * Never negative — only ever scrolls **up**, so a closing keyboard doesn't
- * drag the list down.
- */
-export function reachOf(r: ReachReading): number {
-  return Math.max(0, Math.round(r.bottom + r.room - r.stop));
-}
-
 /**
  * Whether a keyboard opens for this element. Buttons and checkboxes are inputs
  * too, so types are named rather than the tag alone.

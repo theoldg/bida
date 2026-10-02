@@ -127,16 +127,15 @@ function MembersScreen() {
 
             <AddName placeholder={copy.members.addPlaceholder} taken={names} onAdd={add} />
           </div>
-
-          {/* Its own button, with the weight of "Edit" on an entry: it rewrites
-              whose name every future entry is signed with. Your current name is the
-              check mark in the list. Sticky (`.whodock`) under a long list. */}
-          <div className="pad whodock" style={{ paddingTop: 4, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
-            <button className="btn btn-s" onClick={() => setAsk({ kind: "who" })}>
-              {copy.members.whoChange}
-            </button>
-          </div>
         </Scroll>
+        {/* Its own button, with the weight of "Edit" on an entry: it rewrites
+            whose name every future entry is signed with. Your current name is the
+            check mark in the list. Docked under the scroller (`.whodock`). */}
+        <div className="pad whodock" style={{ paddingTop: 4 }}>
+          <button className="btn btn-s" onClick={() => setAsk({ kind: "who" })}>
+            {copy.members.whoChange}
+          </button>
+        </div>
       </Body>
 
       {ask?.kind === "who" && me ? (

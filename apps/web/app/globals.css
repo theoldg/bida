@@ -420,12 +420,10 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 
 /* The two ways to start: a group, or a bill with people who are not one. Two
    separate jobs, so two squares echoing the ledger's two FABs rather than one
-   box cut in two. `margin-top: auto` settles it at the foot of a short list;
-   `position: sticky; bottom: 0` pins it over a long one (`.scroll` is the
-   containing block). No ground behind it — each tile is opaque — and the
-   bottom padding holds them clear of the edge. */
-.homepair { padding: 16px 16px max(28px, calc(env(safe-area-inset-bottom) + 12px));
-  margin-top: auto; position: sticky; bottom: 0; z-index: 1 }
+   box cut in two. A sibling of `.scroll`, under it at the foot of the screen —
+   in the scroller, iOS's rubber-band would carry it. The bottom padding holds
+   the tiles clear of the edge. */
+.homepair { flex: none; padding: 16px 16px max(28px, calc(env(safe-area-inset-bottom) + 12px)) }
 /* Centred rather than full-bleed: a half-screen square would outweigh the list.
    The gap keeps the two reading as one pair. */
 .starttiles { display: flex; justify-content: center; gap: 20px }
@@ -442,11 +440,6 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 /* The scan FAB's voice (`.fab-2`): outlined in ink on paper rather than
    inverted — the same weight of destination, half the voice. */
 .start-s { background: var(--card); color: var(--ink); border: 1.5px solid var(--ink) }
-
-/* The column the start pair falls to the bottom of.
-   Full height even when the list is two rows, so "bottom" means the bottom of
-   the screen rather than wherever the content happened to stop. */
-.homescroll { display: flex; flex-direction: column; min-height: 100% }
 
 /* The install card's title doubles as its disclosure (components/install.tsx).
    A row, not a `.kv`: that one is the bill's, and carries the two-column
@@ -514,10 +507,18 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .installclip { display: block; width: 220px; height: auto; margin: 4px auto 12px;
   border: 1px solid var(--rule); border-radius: var(--r-l) }
 /* The act under a list of people (who-picker, /new, /quick, People, payers,
-   the entry form): in flow under the last name while the list fits, stuck to
-   the foot of the scroller once it doesn't. Opaque — the names pass behind it —
-   in the shell's own background, which the table has none of to inherit. */
-.whodock { position: sticky; bottom: 0; z-index: 1; background: var(--card) }
+   the entry form). A sibling of `.scroll`, not its last row: anything inside
+   the scroller rides iOS's rubber-band, sticky or not. The scroller before it
+   is only as tall as its content, so the dock sits right under the last name
+   while the list fits and at the foot of the screen once it doesn't.
+   It pays `--kb` like `.foot`: the keyboard overlays the shell, so the
+   padding is what lifts the button above it — and shrinks the scroller by as
+   much. That scroller needs no keyboard room of its own: the dock is it. */
+.appbody > .whodock { flex: none; background: var(--card);
+  padding-bottom: calc(var(--kb) + max(12px, env(safe-area-inset-bottom))) }
+/* On `/g/claim` the "Have the app?" card is under it and owns the edge. */
+.appbody > .whodock:has(+ .inappdock) { padding-bottom: calc(var(--kb) + 14px) }
+.scroll:has(+ .whodock) { flex: 0 1 auto; padding-bottom: 0; scroll-padding-bottom: 0 }
 /* "Have the app?" pinned under the claim list, iOS tab only (components/use-in-app.tsx):
    a lower-contrast card holding the link in a box that is its own copy button.
    Out of the way while a name is typed: the keyboard leaves room for the field
@@ -602,14 +603,6 @@ html[data-resuming="manual"] .ghost-manual { display: block }
    the button (`.row` is already positioned). Disabled still swallows the press. */
 .addrow .iconbtn { position: relative }
 .addrow .iconbtn::before { content: ""; position: absolute; inset: -8px }
-/* Every list of names ends on the act it was typed for, *below* the add row on
-   the scroll. A field lifted above the keyboard leaves that act behind it, so
-   the field asks for this much room under itself and components/viewport.tsx
-   spends it. Cut for the tallest case, the quick split's scan pair (101px below
-   the field). A screen whose act outgrows it raises it on its own scroller;
-   `pnpm keyboard` catches that (docs/browser-checks.md). */
-:root { --act-below: 104px }
-.addname { scroll-margin-bottom: var(--act-below) }
 /* A name in the field is *not* on the list: nothing files it but the plus. So
    while there is one, the row becomes a box on its own ground, ringed in the
    hard rule — on the 16px column every box below it stands on (the screen's
