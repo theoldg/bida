@@ -115,15 +115,29 @@ function demoBillText(): string {
   ).join("\n");
 }
 
+/** One sitting: who wrote these ops, and when. History reads both off the op. */
+export interface DemoStep {
+  by: Id;
+  at: number;
+  ops: OpDraft[];
+}
+
 /**
- * The whole evening as drafts, deterministic in `cast` and `now`. Chosen so
- * every screen has something: two payers with an itemised bill, local coin, a
- * partial split, an income, a transfer, an edit and a delete. Balances don't
- * cancel, so settle-up has transfers to propose. Dates follow the tour, not
- * the story: the ledger is newest first, so the cantina is the latest day
- * and the passage the day before, as the features a visitor sees first.
+ * The trip as it was written down, deterministic in `cast` and `now`: each
+ * step its own author and moment, so history reads as four people keeping a
+ * ledger over nine days rather than one phone writing it in one go.
+ * `openDemo` appends each step as its own batch and the HLC follows this
+ * order, so **steps are chronological**, and each falls before `now`'s day
+ * (the test holds both).
+ *
+ * Chosen so every screen has something: two payers with an itemised bill,
+ * local coin, a partial split, an income, a transfer, an edit and a delete.
+ * Balances don't cancel, so settle-up has transfers to propose. Entry dates
+ * follow the tour, not the story: the ledger is newest first, so the cantina
+ * is the latest day and the passage the day before, as the features a visitor
+ * sees first.
  */
-export function demoOps(cast: DemoCast, now: number): OpDraft[] {
+export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
   const { ids } = cast;
   const all = DEMO_NAMES.map((name) => ids[name]);
   const equal = (members: readonly Id[]): SplitSpec => ({ mode: "equal", members: [...members] });
@@ -140,44 +154,74 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
     rateToBase: "1",
     baseAmountMinor: minor,
   });
+  /** A moment `daysAgo` days back, at a local hour; before 23:00, so a DST day can't push it into the next. */
+  const at = (daysAgo: number, hour: number, minute = 0) =>
+    dayBefore(now, daysAgo) + (hour * 60 + minute) * 60_000;
+  const step = (by: DemoName, when: number, ...ops: OpDraft[]): DemoStep =>
+    ({ by: ids[by], at: when, ops });
+
+  /** Written whole twice — created, then edited — so it is named once. */
+  const passage = {
+    occurredAt: dayBefore(now, 2),
+    dateOnly: true,
+    createdAt: dayBefore(now, 2),
+    paidBy: ids.Ben,
+    split: equal([ids.Ben, ids.Luke]),
+  };
 
   return [
-    {
-      entity: "group",
-      entityId: DEMO_GROUP_ID,
-      kind: "create",
-      patch: {
-        name: "Passage to Alderaan",
-        baseCurrency: DEMO_CURRENCY,
-        createdAt: dayBefore(now, 9),
-        archivedAt: null,
+    step("Luke", at(9, 10, 12),
+      {
+        entity: "group",
+        entityId: DEMO_GROUP_ID,
+        kind: "create",
+        patch: {
+          name: "Passage to Alderaan",
+          baseCurrency: DEMO_CURRENCY,
+          createdAt: dayBefore(now, 9),
+          archivedAt: null,
+        },
       },
-    },
-    ...DEMO_NAMES.map((name): OpDraft => ({
-      entity: "member",
-      entityId: ids[name],
-      kind: "create",
-      patch: { name, colorSeed: cast.colorSeeds[name], deletedAt: null },
-    })),
-    // Without a claim the personal lens is blank and the claim gate blocks the demo.
-    {
-      entity: "identity",
-      entityId: cast.deviceNodeId,
-      kind: "create",
-      patch: { memberId: ids[DEMO_ME], claimedAt: dayBefore(now, 9) },
-    },
+      ...DEMO_NAMES.map((name): OpDraft => ({
+        entity: "member",
+        entityId: ids[name],
+        kind: "create",
+        patch: { name, colorSeed: cast.colorSeeds[name], deletedAt: null },
+      })),
+      // Without a claim the personal lens is blank and the claim gate blocks the demo.
+      {
+        entity: "identity",
+        entityId: cast.deviceNodeId,
+        kind: "create",
+        patch: { memberId: ids[DEMO_ME], claimedAt: dayBefore(now, 9) },
+      },
+    ),
     // One rate row, so /g/rates has something and editing it moves every WUP entry.
-    {
+    step("Chewie", at(8, 9, 40), {
       entity: "rate",
       entityId: DEMO_FOREIGN,
       kind: "create",
       patch: {
         rate: DEMO_RATE, source: "typed", asOf: dayBefore(now, 8), deletedAt: null,
       },
-    },
-
+    }),
+    // So history is not all creates: deleted, further down.
+    step("Han", at(8, 18, 5), {
+      entity: "expense",
+      entityId: ENTRY.greedo,
+      kind: "create",
+      patch: {
+        description: "Greedo’s finder’s fee",
+        occurredAt: dayBefore(now, 8),
+        dateOnly: true,
+        createdAt: dayBefore(now, 8),
+        ...inWup(30_000),
+        paidBy: ids.Han,
+        split: equal(all),
+      },
+    }),
     // Priced by the registry above.
-    {
+    step("Han", at(6, 14, 22), {
       entity: "expense",
       entityId: ENTRY.docking,
       kind: "create",
@@ -190,9 +234,9 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
         paidBy: ids.Han,
         split: equal(all),
       },
-    },
+    }),
     // One that leaves two people out: the faded row, nothing to do with you.
-    {
+    step("Chewie", at(5, 22, 47), {
       entity: "expense",
       entityId: ENTRY.dejarik,
       kind: "create",
@@ -205,9 +249,9 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
         paidBy: ids.Han,
         split: equal([ids.Han, ids.Chewie]),
       },
-    },
+    }),
     // Same shape as an expense; the sign is applied only in `computeBalances`.
-    {
+    step("Luke", at(4, 11, 30), {
       entity: "expense",
       entityId: ENTRY.speeder,
       kind: "create",
@@ -221,9 +265,9 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
         paidBy: ids.Luke,
         split: equal(all),
       },
-    },
+    }),
     // A transfer: it moves a debt, it does not create one.
-    {
+    step("Luke", at(3, 16, 8), {
       entity: "settlement",
       entityId: ENTRY.advance,
       kind: "create",
@@ -237,25 +281,25 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
         note: "Two thousand now, at the booth",
         deletedAt: null,
       },
-    },
+    }),
     // Fronted by somebody else, leaving Han and Chewie (being paid) out.
-    {
+    step("Ben", at(2, 19, 51), {
       entity: "expense",
       entityId: ENTRY.passage,
       kind: "create",
-      patch: {
-        description: "Passage to Alderaan",
-        occurredAt: dayBefore(now, 2),
-        dateOnly: true,
-        createdAt: dayBefore(now, 2),
-        ...inCredits(1_500_000),
-        paidBy: ids.Ben,
-        split: equal([ids.Ben, ids.Luke]),
-      },
-    },
+      patch: { description: "Passage to Alderaan", ...inCredits(1_500_000), ...passage },
+    }),
+    // Edited in two fields, so the diff shows more than one number. An entry is
+    // written whole (docs/sync.md), so the patch carries unchanged fields too.
+    step("Ben", at(1, 8, 15), {
+      entity: "expense",
+      entityId: ENTRY.passage,
+      kind: "update",
+      patch: { description: "Passage to Alderaan, no questions", ...inCredits(1_700_000), ...passage },
+    }),
     // Two payers (`paidBy` is the larger) and itemised, so each person's split is
     // what they ordered (ADR-0016).
-    {
+    step("Luke", at(1, 21, 36), {
       entity: "expense",
       entityId: ENTRY.cantina,
       kind: "create",
@@ -281,48 +325,21 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
         // read Huttese, and the toggle is there to turn it back.
         receiptEnglish: true,
       },
-    },
-
-    // So history is not all creates.
-    {
-      entity: "expense",
-      entityId: ENTRY.greedo,
-      kind: "create",
-      patch: {
-        description: "Greedo’s finder’s fee",
-        occurredAt: dayBefore(now, 8),
-        dateOnly: true,
-        createdAt: dayBefore(now, 8),
-        ...inWup(30_000),
-        paidBy: ids.Han,
-        split: equal(all),
-      },
-    },
-    {
+    }),
+    step("Luke", at(1, 22, 3), {
       entity: "expense",
       entityId: ENTRY.greedo,
       kind: "delete",
-      // The fold stamps `deletedAt` from the op's clock and ignores the patch.
+      // The fold stamps `deletedAt` from the op's `createdAt` and ignores the patch.
       patch: {},
       note: "Han settled that one at the table",
-    },
-    // Edited in two fields, so the diff shows more than one number. An entry is
-    // written whole (docs/sync.md), so the patch carries unchanged fields too.
-    {
-      entity: "expense",
-      entityId: ENTRY.passage,
-      kind: "update",
-      patch: {
-        description: "Passage to Alderaan, no questions",
-        occurredAt: dayBefore(now, 2),
-        dateOnly: true,
-        createdAt: dayBefore(now, 2),
-        ...inCredits(1_700_000),
-        paidBy: ids.Ben,
-        split: equal([ids.Ben, ids.Luke]),
-      },
-    },
+    }),
   ];
+}
+
+/** The timeline's ops alone, in order: the log one phone ends up holding. */
+export function demoOps(cast: DemoCast, now: number): OpDraft[] {
+  return demoTimeline(cast, now).flatMap((s) => s.ops);
 }
 
 /**
@@ -331,9 +348,10 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
  * new day or timezone doesn't read as a new seed.
  */
 export function demoStamp(): string {
-  const dated = /^(occurredAt|createdAt|claimedAt|asOf)$/;
+  const dated = /^(occurredAt|createdAt|claimedAt|asOf|at)$/;
+  // The timeline, not the ops: who wrote what is part of the story too.
   const json = JSON.stringify(
-    demoOps(demoCast("stamp"), 0),
+    demoTimeline(demoCast("stamp"), 0),
     (key, value) => (dated.test(key) ? 0 : value),
   );
   // FNV-1a, base 36. A fingerprint, not a digest: nothing here is secret.

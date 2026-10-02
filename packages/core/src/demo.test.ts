@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { computeBalances } from "./balance.js";
 import {
-  DEMO_GROUP_ID, DEMO_ME, DEMO_NAMES, demoOps, demoStamp, isDemo, type DemoCast,
+  DEMO_GROUP_ID, DEMO_NAMES, demoOps, demoStamp, demoTimeline, isDemo, type DemoCast,
 } from "./demo.js";
 import { foldOps } from "./fold.js";
 import { createHlcState, hlcSend, type HlcState } from "./hlc.js";
@@ -21,26 +21,27 @@ const CAST: DemoCast = {
   deviceNodeId: "node0001",
 };
 
-/** The drafts, stamped the way `appendOps` stamps them: one HLC run, in order. */
+/** The timeline, stamped the way `openDemo` stamps it: one HLC run, a batch per step. */
 function stamp(now = NOW, node = "node0001"): Op[] {
   let clock: HlcState = createHlcState(node);
-  return demoOps(CAST, now).map((draft, i) => {
-    const sent = hlcSend(clock, now);
+  let i = 0;
+  return demoTimeline(CAST, now).flatMap((step) => step.ops.map((draft) => {
+    const sent = hlcSend(clock, step.at);
     clock = sent.state;
     return {
-      id: `demo-op-${String(i).padStart(3, "0")}`,
+      id: `demo-op-${String(i++).padStart(3, "0")}`,
       groupId: DEMO_GROUP_ID,
       entity: draft.entity,
       entityId: draft.entityId,
       kind: draft.kind,
       patch: draft.patch,
       hlc: sent.hlc,
-      actor: CAST.ids[DEMO_ME],
+      actor: step.by,
       note: draft.note ?? null,
-      createdAt: now,
+      createdAt: step.at,
       seq: null,
     };
-  });
+  }));
 }
 
 describe("isDemo", () => {
@@ -59,7 +60,7 @@ describe("demoOps", () => {
     expect(alive(state.members).map((m) => m.name).sort())
       .toEqual([...DEMO_NAMES].sort());
     // This phone is one of them, or the ledger's personal lens is blank.
-    expect(Object.values(state.identities)[0]?.memberId).toBe(CAST.ids[DEMO_ME]);
+    expect(Object.values(state.identities)[0]?.memberId).toBe(CAST.ids.Luke);
   });
 
   it("gives every screen something to say", () => {
@@ -104,6 +105,24 @@ describe("demoOps", () => {
     dinner.receiptItems!.forEach((item, i) => expect(lines[i]).toContain(item.amount));
     // Saved translated, as if somebody at the table had tapped the toggle.
     expect(dinner.receiptEnglish).toBe(true);
+  });
+
+  it("reads as a trip written down by everybody, in order, before today", () => {
+    const steps = demoTimeline(CAST, NOW);
+    // The HLC follows the steps, so history only reads in story order if the
+    // moments do too — and a moment from later today would be a step ahead of
+    // the phone's own clock.
+    const today = new Date(NOW);
+    today.setHours(0, 0, 0, 0);
+    steps.forEach((step, i) => {
+      expect(step.at).toBeLessThan(today.getTime());
+      if (i > 0) expect(step.at).toBeGreaterThan(steps[i - 1]!.at);
+    });
+    // Not one phone's monologue: every member wrote something.
+    expect(new Set(steps.map((s) => s.by))).toEqual(new Set(Object.values(CAST.ids)));
+    // And the delete is dated with its step, not with when the demo was opened.
+    const greedo = foldOps(stamp()).expenses["demo-greedo"]!;
+    expect(greedo.deletedAt).toBe(steps.at(-1)!.at);
   });
 
   it("is money: positive integer minor units, everywhere", () => {

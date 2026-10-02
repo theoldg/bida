@@ -1,5 +1,5 @@
 import {
-  demoCast, demoOps, demoStamp, memberIdFor, DEMO_GROUP_ID, DEMO_ME, type Id,
+  demoCast, demoStamp, demoTimeline, memberIdFor, DEMO_GROUP_ID, DEMO_ME, type Id,
 } from "@bida/core";
 import { db } from "../dexie";
 import { getDevice, setMe, unhideGroup, updateDevice } from "../device";
@@ -20,7 +20,8 @@ import { eraseGroupLocally } from "./groups";
 
 /**
  * Create the demo, or reopen the one already here. Idempotent because the id
- * is a constant; one `appendOps` batch, so history reads as one arrival.
+ * is a constant; one `appendOps` batch per step of `demoTimeline`, so history
+ * reads as the trip it tells, each change by its own author.
  *
  * Except: **a build whose seed changed throws the old demo away** (`demoStamp`)
  * — the demo is this version's pitch, not a group anyone keeps.
@@ -36,7 +37,12 @@ export async function openDemo(now = Date.now()): Promise<Id> {
   }
   if (!(await db().groups.get(DEMO_GROUP_ID))) {
     const device = await getDevice();
-    await appendOps(DEMO_GROUP_ID, me, demoOps(demoCast(device.nodeId), now), now);
+    // Unstamped until the last step lands: a tab that dies between steps
+    // leaves a half-told story, which the next visit then erases and retells.
+    await updateDevice({ demoSeed: undefined });
+    for (const step of demoTimeline(demoCast(device.nodeId), now)) {
+      await appendOps(DEMO_GROUP_ID, step.by, step.ops, step.at);
+    }
     await updateDevice({ demoSeed: stamp });
   }
 
