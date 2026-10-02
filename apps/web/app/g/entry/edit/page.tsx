@@ -713,10 +713,13 @@ function EditEntryScreen() {
 
           </div>
 
-          {/* The form's last row, not a bar pinned to the bottom, which fights the
-              keyboard (it overlays the shell). Always pressable: `save` answers
-              with the refusal flash on whatever is missing. */}
-          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+          {/* The form's last row, sticky (`.whodock`): under the split while the
+              form fits, stopped at the scroller's foot once a long split pushes
+              it off — never a bar pinned to the shell, which fights the keyboard
+              (it overlays the shell; this rides the scroller, which ends behind
+              it). Always pressable: `save` answers with the refusal flash on
+              whatever is missing. */}
+          <div className="pad whodock" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             {failed ? (
               <p className="failure" role="alert" style={{ margin: "0 2px 9px" }}>
                 {copy.form.saveFailed(failed)}
