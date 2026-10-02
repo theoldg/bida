@@ -308,6 +308,9 @@ Recognise these if you ever propose one:
 
 ## Gotchas
 
+- **`actions/setup-node@v5` caches by itself.** Seeing `packageManager` in
+  `package.json`, it runs pnpm to find the cache, so a job that never installs
+  pnpm (the release `gate`) fails there unless it says `package-manager-cache: false`.
 - **A Google Cloud budget does not stop spend.** It emails while the meter
   runs; capping for real needs a billing-export → Pub/Sub → function that
   disables the billing account. `SCAN_LIMITS.global` is the only hard brake we
