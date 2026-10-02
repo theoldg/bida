@@ -196,10 +196,11 @@ export default function NewGroupPage() {
               flash={flashClass(refusedFields.list)} onFlashEnd={settled("list")} />
           </div>
 
-          {/* The screen's one act, at the foot of the form, scrolling with the
-              fields so the keyboard never sits on it. Never grey: a blank name or
-              empty list points at itself (design-system.md). */}
-          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+          {/* The screen's one act, at the foot of the form, sticky (`.whodock`) so
+              a long list of people scrolls under it rather than pushing it off.
+              It rides the scroller, so the keyboard never sits on it. Never grey:
+              a blank name or empty list points at itself (design-system.md). */}
+          <div className="pad whodock" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             <button type="button" className="btn btn-p btn-lg" onClick={next}
               disabled={refusing}>
               {copy.act.create}

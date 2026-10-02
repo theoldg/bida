@@ -130,8 +130,8 @@ function MembersScreen() {
 
           {/* Its own button, with the weight of "Edit" on an entry: it rewrites
               whose name every future entry is signed with. Your current name is the
-              check mark in the list. */}
-          <div className="pad" style={{ paddingTop: 4 }}>
+              check mark in the list. Sticky (`.whodock`) under a long list. */}
+          <div className="pad whodock" style={{ paddingTop: 4, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             <button className="btn btn-s" onClick={() => setAsk({ kind: "who" })}>
               {copy.members.whoChange}
             </button>

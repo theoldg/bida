@@ -141,8 +141,9 @@ export default function QuickPage() {
               flash={refusal.flash} onFlashEnd={refusal.onFlashEnd} />
           </div>
 
-          {/* The act the screen ends on, under the people it needs first. */}
-          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+          {/* The act the screen ends on, under the people it needs first — and
+              sticky (`.whodock`), so a long table of them scrolls under it. */}
+          <div className="pad whodock" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             {/* Always tappable: an unfiled name or fewer than two people blooms the
                 plus beside "Add someone" instead. */}
             <ScanPair scan={scan} register="lg"
