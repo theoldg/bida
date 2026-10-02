@@ -2,7 +2,7 @@
 /**
  * `pnpm verify driver` — the text driver (`pnpm drive`, docs/drive.md) still starts,
  * reads a screen, presses what it numbered, photographs in both themes, keeps
- * two phones apart, refuses a stale number and stops.
+ * two phones apart, answers a file chooser, refuses a stale number and stops.
  *
  * It is how an agent looks at the app, and nothing else runs it: a driver that
  * rotted would be found by the next agent who needed it, mid-task. This drives
@@ -10,7 +10,7 @@
  * directory of its own, so a session already open is left alone.
  */
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ROOT, ensureBuild, reporter } from "../lib/harness.mjs";
@@ -74,6 +74,15 @@ try {
   report(/^bruno · /m.test(other) && !other.includes("Passage to Alderaan"),
     "as: a second name is a second phone, with nothing of the first", other.slice(0, 300));
   report(run("as me screen").includes("/g/entry/edit"), "and the first is where it was left");
+
+  // A file from disk, through the app's own chooser: how a Splitwise export gets in.
+  const csv = join(DIR, "flat.csv");
+  writeFileSync(csv, "Date,Description,Category,Cost,Currency,Ana,Ben\n\n"
+    + "2026-08-01,Rent,General,10.00,EUR,5.00,-5.00\n\n2026-08-02,Total balance, , ,EUR,5.00,-5.00\n");
+  const importing = run("as bruno goto /import");
+  const plan = run(`file ${csv}`, `click ${numbered(importing, /"Choose a file"/)}`, "wait 1000", "screen");
+  report(plan.includes("/import/plan") && plan.includes("Create the group"),
+    "file: the next chooser is answered with it", plan.slice(-500));
 
   report(run("fly 3").includes("no such command: fly"), "an unknown command says so");
 

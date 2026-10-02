@@ -29,6 +29,7 @@
  *   theme light|dark    the phone's colour scheme, for a shot of either look
  *   receipt <name>      hand this phone a canned receipt — see `receipt list`
  *                       (it answers a typed bill — "Type" or "As text" — as well)
+ *   file <path>         answer the next file chooser with a file from disk, once
  *   shot [name]         save a screenshot of this phone to .drive/shots/
  *   clipboard           read what the page put on this phone's clipboard
  *   forget              throw this phone away and start it factory-fresh
@@ -604,6 +605,19 @@ async function start() {
           "press the app's own scan or upload button; a scan is a round trip, so read the screen again if it is still working",
           "the stub answers a typed bill too: press \"Type\" (\"As text\" over a bill), fill the box and press \"Read it\"",
         ]);
+      }
+      // The import's chooser, or any other that wants a real file: answered once,
+      // with a file from disk, so a ledger from elsewhere can be walked in by
+      // the app's own button. A receipt's chooser is persistent, so the two
+      // would race; one at a time.
+      case "file": {
+        const say = (lines) => ({ who, url: page.url().replace(base, ""), title: "", lines, noise: noise.splice(0) });
+        if (phones.get(who).chooser) return say(["a receipt is armed on this phone: `receipt off` first"]);
+        const path = args.join(" ");
+        const full = path.startsWith("/") ? path : join(ROOT, path);
+        if (!existsSync(full)) throw new Error(`no such file: ${path}`);
+        page.once("filechooser", (chooser) => chooser.setFiles(full).catch(() => {}));
+        return say([`the next file chooser this phone opens is answered with ${path}`]);
       }
       // The words are the point; a picture settles what they can't — colour,
       // crowding, what a person's eye lands on first. Saved, never read back.

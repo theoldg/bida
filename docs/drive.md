@@ -33,6 +33,7 @@ pnpm drive stop
 | `theme light\|dark` | the phone's colour scheme — every screen has both looks to get right |
 | `receipt <name>` · `receipt list` · `receipt off` | hand this phone a canned bill, so the next reading answers with it — a photograph or one typed in |
 | `clipboard` | read what the page copied — how the invite link travels |
+| `file <path>` | answer the next file chooser with a file from disk, once — how an export from Splitwise or anywhere else reaches **Import a group** |
 | `shot [name]` | save a screenshot to `.drive/shots/` — for what words can't settle: colour, crowding, where the eye lands |
 | `screen` · `wait <ms>` | look again, or give something time to settle |
 | `forget` | throw this phone away and start it factory-fresh |

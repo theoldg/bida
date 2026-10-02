@@ -358,7 +358,8 @@ check touched it, so it would rot quietly until someone needed it mid-task.
 This runs it the way that agent does — `start`, `do`, `stop` as separate
 processes — in a `DRIVE_DIR` of its own, so a session already open survives:
 a screen read and numbered, a press, keys typed, a shot in each theme, a stale
-number refused and its batch dropped, a second phone apart from the first, and
+number refused and its batch dropped, a second phone apart from the first, a
+file chooser answered from disk, and
 a `stop` that takes the Worker with it. It asserts the driver's contract, not
 the app's: a screen changing its words should not turn it red.
 
