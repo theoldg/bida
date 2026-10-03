@@ -62,37 +62,49 @@ function write(groupId: Id, actor: Id, drafts: readonly OpDraft[], now = Date.no
   return appendOps(groupId, actor, drafts, now, { notify: true });
 }
 
-/** The `create` patch for an expense — the form's and the importer's. */
-export function expenseCreatePatch(
-  input: ExpenseInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
+/**
+ * An expense's content as both writes put it: the payer side normalised, the
+ * split canonical, the base figure re-derived from the registry. A create and
+ * an edit differ only in what they do with an absence (`only`, `wholeEntity`).
+ */
+function expenseContent(
+  input: ExpenseInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>,
 ) {
   const rateToBase = rateToWrite(input.currency, input.rateToBase, base, rates);
+  // The payer fields are derived together — `paidBy` must never name somebody
+  // who isn't in `payers`.
   const payer = normalisePayers(input);
   return {
-    // Written only for an income: an ordinary expense is the absence of this
-    // field, on every op ever appended, and stays that way.
-    ...(input.kind === "income" ? { kind: "income" } : {}),
+    // An ordinary expense is the *absence* of `kind`, on every op ever
+    // appended: null here, which a create leaves off and an edit writes.
+    kind: input.kind === "income" ? "income" : null,
     description: input.description,
     occurredAt: input.occurredAt,
-    createdAt: now,
+    dateOnly: input.dateOnly ? true : null,
     amountMinor: input.amountMinor,
     currency: input.currency,
     rateToBase,
     baseAmountMinor: toBase({ ...input, rateToBase }, base),
     paidBy: payer.paidBy,
-    // Canonical from the very first op, so an edit that re-picks the same
-    // people compares equal to it — see `canonicalSplit`.
+    payers: payer.payers,
+    // Canonical from the very first op: `sameValue` sorts object keys but not
+    // arrays, so re-picking the same people would otherwise read as an edit.
     split: canonicalSplit(input.split),
-    // Absent on an ordinary expense — see `only`. No `deletedAt` either: the
-    // id is fresh, so a create is never a tombstone.
-    ...only({
-      dateOnly: input.dateOnly ? true : null,
-      categoryId: input.categoryId,
-      payers: payer.payers,
-      attachmentIds: input.attachmentIds,
-      ...receiptOf(input),
-    }),
+    categoryId: input.categoryId,
+    attachmentIds: input.attachmentIds,
+    ...receiptOf(input),
   };
+}
+
+/**
+ * The `create` patch for an expense — the form's and the importer's. Absent
+ * fields are left off (`only`); no `deletedAt` either, since a fresh id is
+ * never a tombstone.
+ */
+export function expenseCreatePatch(
+  input: ExpenseInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
+) {
+  return { createdAt: now, ...only(expenseContent(input, base, rates)) };
 }
 
 /**
@@ -132,40 +144,12 @@ export async function editExpense(
   const existing = await db().expenses.get(expenseId);
   if (!existing) throw new Error(`unknown expense: ${expenseId}`);
 
-  const merged = { ...existing, ...changes } as ExpenseInput & { deletedAt?: number | null };
-  // `sameValue` sorts object keys but not arrays, so toggling a member out and
-  // back in would reorder `members` and read as an edit (`canonicalSplit`).
-  const split = canonicalSplit(merged.split);
-  const before = { ...existing, split: canonicalSplit(existing.split) };
-
-  // The payer fields are derived together — `paidBy` must never name somebody
-  // who isn't in `payers` — and a whole write carries both regardless.
-  const payer = normalisePayers({ ...merged, split });
   const { base, rates } = await valuationOf(groupId);
-  const rateToBase = rateToWrite(merged.currency, merged.rateToBase, base, rates);
+  const patch = wholeEntity(expenseContent({ ...existing, ...changes }, base, rates));
 
-  const patch = wholeEntity({
-    // An expense is the *absence* of `kind` (see `addExpense`), so an ordinary
-    // one writes null rather than "expense": the two are the same value to the
-    // fold, and null is what every op already written means.
-    kind: merged.kind === "income" ? "income" : null,
-    description: merged.description,
-    occurredAt: merged.occurredAt,
-    dateOnly: merged.dateOnly ? true : null,
-    amountMinor: merged.amountMinor,
-    currency: merged.currency,
-    rateToBase,
-    baseAmountMinor: toBase({ ...merged, rateToBase }, base),
-    paidBy: payer.paidBy,
-    payers: payer.payers,
-    split,
-    categoryId: merged.categoryId,
-    attachmentIds: merged.attachmentIds,
-    ...receiptOf(merged),
-  });
-
-  // A save that moved nothing is a revision saying nothing happened.
-  if (!movesAnything(before, patch)) return;
+  // A save that moved nothing is a revision saying nothing happened — measured
+  // against the stored split made canonical too, as the patch's is.
+  if (!movesAnything({ ...existing, split: canonicalSplit(existing.split) }, patch)) return;
   await write(groupId, actor, [
     { entity: "expense", entityId: expenseId, kind: "update", patch, note: note ?? null },
   ]);
@@ -196,9 +180,9 @@ export interface SettlementInput {
   note?: string | null;
 }
 
-/** The `create` patch for a transfer — the form's and the importer's. */
-export function settlementCreatePatch(
-  input: SettlementInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
+/** A transfer's content as both writes put it — see `expenseContent`. */
+function settlementContent(
+  input: SettlementInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>,
 ) {
   const rateToBase = rateToWrite(input.currency, input.rateToBase, base, rates);
   return {
@@ -209,9 +193,16 @@ export function settlementCreatePatch(
     rateToBase,
     baseAmountMinor: toBase({ ...input, rateToBase }, base),
     occurredAt: input.occurredAt,
-    createdAt: now,
-    ...only({ dateOnly: input.dateOnly ? true : null, note: input.note }),
+    dateOnly: input.dateOnly ? true : null,
+    note: input.note,
   };
+}
+
+/** The `create` patch for a transfer — the form's and the importer's. */
+export function settlementCreatePatch(
+  input: SettlementInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
+) {
+  return { createdAt: now, ...only(settlementContent(input, base, rates)) };
 }
 
 export async function recordSettlement(
@@ -248,21 +239,8 @@ export async function editSettlement(
   const existing = await db().settlements.get(settlementId);
   if (!existing) throw new Error(`unknown settlement: ${settlementId}`);
 
-  const merged = { ...existing, ...changes };
   const { base, rates } = await valuationOf(groupId);
-  const rateToBase = rateToWrite(merged.currency, merged.rateToBase, base, rates);
-
-  const patch = wholeEntity({
-    fromMember: merged.fromMember,
-    toMember: merged.toMember,
-    amountMinor: merged.amountMinor,
-    currency: merged.currency,
-    rateToBase,
-    baseAmountMinor: toBase({ ...merged, rateToBase }, base),
-    occurredAt: merged.occurredAt,
-    dateOnly: merged.dateOnly ? true : null,
-    note: merged.note,
-  });
+  const patch = wholeEntity(settlementContent({ ...existing, ...changes }, base, rates));
 
   if (!movesAnything(existing, patch)) return;
   await write(groupId, actor, [
