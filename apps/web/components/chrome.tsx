@@ -14,28 +14,18 @@ import { KeylessLink } from "./keyless-link";
 import { walkFields } from "./viewport";
 import { Icon, type IconName } from "./icons";
 
-/**
- * The app frame: a fixed head, one scrolling middle, an optional fixed foot.
- * Everything is one column at phone width and stays that way — this is a
- * pocket app, not a responsive site.
- */
+/** A fixed head, one scrolling middle, an optional fixed foot. One column, always: a pocket app. */
 export function Screen({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={`app${className ? ` ${className}` : ""}`}>
-      {/* Here rather than on the screens, because it belongs to all of them:
-          every screen in the app is a `Screen`, and the read that stalled
-          could be any of the nine that check `data.loading`. */}
+      {/* Here, because the read that stalled could belong to any screen. */}
       <StallNotice />
       {children}
     </div>
   );
 }
 
-/**
- * A read of this phone's database that has stopped answering, drawn over the
- * skeleton that would otherwise look like a slow phone forever. The why is in
- * `lib/db/live.ts`.
- */
+/** Over a skeleton that would otherwise look like a slow phone forever (lib/db/live.ts). */
 function StallNotice() {
   const { stalled, blocked } = useStalled();
   if (!stalled) return null;
@@ -43,8 +33,7 @@ function StallNotice() {
     <div className="stall" role="alert">
       <Icon name="sync" size={15} style={{ flex: "none" }} />
       <span>{blocked ? copy.db.blocked : copy.db.stalled}</span>
-      {/* One button for both. Blocked clears when the other copy closes, and
-          asking again is how this one finds out that it has. */}
+      {/* Blocked too: asking again is how this copy learns the other closed. */}
       <button className="stall-act" onClick={retryLive}>{copy.act.retry}</button>
     </div>
   );
@@ -55,24 +44,17 @@ export function Body({ children }: { children: ReactNode }) {
 }
 
 /**
- * The one scrolling middle of a screen — a div, so the browser won't restore
- * its position. Only the ledger's comes back, and only on a way back to it
- * (`lib/ledger-position.ts`, which takes the `ref`); every other screen opens
- * at the top.
- *
- * Also the scope the confirm key walks, in layout order (`walkFields`,
- * components/viewport.tsx). A dialog is deliberately not one: its Enter
- * submits the card.
+ * A div, so the browser won't restore its position; only the ledger's comes
+ * back (`lib/ledger-position.ts` takes the `ref`). Also the scope the confirm
+ * key walks; a dialog's Enter submits the card instead.
  */
 export function Scroll({ children, ref }: { children: ReactNode; ref?: Ref<HTMLDivElement> }) {
   return <div className="scroll" ref={ref} onKeyDown={walkFields}>{children}</div>;
 }
 
 /**
- * What a screen's back arrow is. A path climbs to that ancestor; `true` is a
- * plain back; and `{ ask }` is a screen that would lose typed work, whose
- * `ask()` returns false when it put a question up instead of leaving. Give it
- * `up` as well when the arrow climbs rather than steps back.
+ * A path climbs to that ancestor; `true` is a plain back. `{ ask }` guards
+ * typed work: `ask()` returns false when it put a question up instead.
  */
 export type Back = string | true | { ask: () => boolean; up?: string };
 
@@ -85,11 +67,8 @@ export function TopBar({ title, sub, back, mid, right }: {
   const run = up !== undefined
     ? () => goUp(up, (to) => router.replace(to))
     : () => goBack(() => router.back(), (to) => router.replace(to));
-  /** The arrow: ask first where there is something to ask about. */
   const press = () => { if (!guard || guard.ask()) run(); };
-  // The device's back button does exactly what this arrow does
-  // (lib/back-button.ts). `back === true` is the one that needs no help: it
-  // *is* a plain back, so the button is already right.
+  // The device's back button does what the arrow does; a plain back needs no help.
   useBackButton(back === undefined || back === true ? undefined
     : { up, mayLeave: guard?.ask, swap: (to) => router.replace(to) });
   return (
@@ -99,9 +78,7 @@ export function TopBar({ title, sub, back, mid, right }: {
           <Icon name="back" size={17} />
         </button>
       ) : typeof back === "string" ? (
-        /* A real anchor, but not a plain push: the arrow names a parent, and
-           going up unwinds the history to it rather than stacking another
-           entry on top (lib/nav.ts). */
+        /* Going up unwinds the history rather than stacking an entry (lib/nav.ts). */
         <Link className="iconbtn back" href={back} aria-label={copy.act.back}
           onClick={(e) => { e.preventDefault(); run(); }}>
           <Icon name="back" size={17} />
@@ -111,9 +88,6 @@ export function TopBar({ title, sub, back, mid, right }: {
         <h3>{title}</h3>
         {sub ? <div className="sub">{sub}</div> : null}
       </div>
-      {/* Centred on the bar itself: a control that belongs to the whole
-          screen. Out of the flow, so the title is capped short of it
-          (`.capped`). */}
       {mid ? <div className="topbar-mid">{mid}</div> : null}
       {right ? <div className="spacer" style={{ display: "flex", gap: 8, alignItems: "center" }}>{right}</div> : null}
     </div>
@@ -124,11 +98,7 @@ export function Fab({ href, label = copy.group.addEntry }: { href: string; label
   return <Link href={href} className="fab" aria-label={label}><Icon name="plus" size={29} /></Link>;
 }
 
-/**
- * The second way an expense starts: photograph the bill. Beside the "+", the
- * same size, outlined — the "+" stays the only figure-ground inversion
- * (ADR-0023).
- */
+/** Outlined: the "+" stays the only figure-ground inversion (ADR-0023). */
 export function ScanFab({ href }: { href: string }) {
   return (
     <Link href={href} className="fab fab-2" aria-label={copy.scan.title}>
@@ -137,11 +107,7 @@ export function ScanFab({ href }: { href: string }) {
   );
 }
 
-/**
- * The balances' own button: what a scan costs, and where to chip in
- * (app/g/tip). Outlined (ADR-0023), and the only FAB with a word, because an
- * ask isn't guessable. The ledger's two never appear there.
- */
+/** The only FAB with a word: an ask isn't guessable. */
 export function SupportFab({ href }: { href: string }) {
   return (
     <Link href={href} className="fab fab-2 fab-w">
@@ -159,24 +125,15 @@ export function Banner({ children, icon }: { children: ReactNode; icon?: IconNam
   );
 }
 
-/**
- * The ledger's shape, drawn while it comes out of IndexedDB. Fixed widths, not
- * random: the static export renders this at build time and must match.
- */
+/** Not random: the static export renders this at build time and must match. */
 const SKELETON_WIDTHS = ["62%", "44%", "78%", "51%", "69%", "38%"];
 
-/**
- * A bar standing in for one line of text. A no-break space beside it keeps the
- * line box, so the placeholder is exactly as tall as the words it stands for.
- */
+/** The no-break space keeps the line box, so the bar is as tall as its words. */
 function SkelText({ width }: { width: number | string }) {
   return <><span className="skel skeltext" style={{ width }} />{"\u00a0"}</>;
 }
 
-/**
- * `days` breaks the rows with date lines where the ledger has them — every
- * third row, a rhythm, not a promise.
- */
+/** `days`: a date line every third row, a rhythm, not a promise. */
 export function SkeletonRows({ count = 5, days = false }: { count?: number; days?: boolean }) {
   return (
     <div className="rows" aria-hidden="true">
@@ -201,11 +158,7 @@ export function SkeletonRows({ count = 5, days = false }: { count?: number; days
   );
 }
 
-/**
- * The you-owe card at the ledger's head, while it loads: the same card, lines
- * and chevron, so the rows under it don't jump down when it arrives
- * (`MySummary` in app/g/page.tsx).
- */
+/** The same card as `MySummary`, so the rows under it don't jump when it arrives. */
 export function SkeletonSummary() {
   return (
     <div className="mysummary pad" aria-hidden="true">
@@ -221,17 +174,13 @@ export function SkeletonSummary() {
 }
 
 /**
- * The loading ledger, laid over the real one as it arrives and dissolved away
- * over 120ms, once it has been up long enough to be seen — a cross-fade of everything at once, the balance's figure
- * included, since the veil is opaque and the ledger under it is already whole.
- * A copy of the frame rather than the frame itself: its top bar is drawn, not
- * a `TopBar`, so nothing registers a back button twice. `onGone` unmounts it;
- * `head` is the same banner the skeleton wore (`LedgerSkeleton`).
+ * The loading ledger, dissolved over the real one once it arrives. Its top bar
+ * is drawn, not a `TopBar`, so nothing registers a back button twice.
  */
 export function SkeletonVeil({ head, onGone }: { head?: ReactNode; onGone: () => void }) {
   return (
     <div className="skelveil" aria-hidden="true"
-      // Its own animation only: the bars' pulse bubbles here too, and never ends.
+      // The bars' never-ending pulse bubbles here too.
       onAnimationEnd={(e) => { if (e.target === e.currentTarget) onGone(); }}>
       <div className="topbar">
         <span className="iconbtn back"><Icon name="back" size={17} /></span>
@@ -243,12 +192,9 @@ export function SkeletonVeil({ head, onGone }: { head?: ReactNode; onGone: () =>
 }
 
 /**
- * The ledger while it loads (app/g/page.tsx). **Draw the whole frame** — a bare
- * top bar looks like a tap that didn't land. With no `groupId` it is the groups
- * list standing in for a launch that is reopening a group (lib/resume-hint.ts):
- * the same pixels, so the handover to the real one doesn't blink, and FABs that
- * go nowhere yet. `head` is `SkeletonBanner` (components/install.tsx),
- * passed in so the frame stays free of what the banners import.
+ * The whole frame: a bare top bar looks like a tap that didn't land. With no
+ * `groupId`, a launch reopening a group (lib/resume-hint.ts), with FABs that go
+ * nowhere yet. `head` is passed in, so the frame stays free of the banners' imports.
  */
 export function LedgerSkeleton({ groupId, className, head }: {
   groupId?: string; className?: string; head?: ReactNode;
@@ -278,38 +224,22 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
   return <div className="empty"><b>{title}</b>{children}</div>;
 }
 
-/**
- * Something the app tried and couldn't do, said next to what was tried. Not an
- * `alert()`, which covers the form you'd need to read to understand it.
- */
+/** Said next to what was tried: an `alert()` covers the form you'd need to read. */
 export function Failure({ children }: { children: ReactNode }) {
   return <p className="failure" role="alert">{children}</p>;
 }
 
 /**
- * The frame with nothing in it yet — a screen whose group hasn't come out of
- * IndexedDB. The title is blank unless the screen knows it without the ledger.
- *
- * **`back` has to be the parent the *loaded* screen will name**: it drives the
- * device back button too (lib/back-button.ts), so a press during the load
- * would otherwise land somewhere the arrow never goes.
+ * A screen whose group hasn't loaded. `back` must be the parent the loaded
+ * screen will name: it drives the device back button during the load too.
  */
 export function Blank({ title = " ", back = true }: { title?: string; back?: Back }) {
   return <Screen><Body><TopBar title={title} back={back} /></Body></Screen>;
 }
 
 /**
- * A link naming a group this phone doesn't have — every `/g` screen needs one,
- * or a stale bookmark leaves just a back arrow. Offers the group list; no
- * title, since the heading says what's wrong.
- *
- * **Except the demo's id, which goes to `/demo`.** An address copied off
- * somebody's demo names a group the next phone hasn't got and can't join —
- * the demo has no key — but its id is a constant, so it can only be asking
- * for the demo. `/demo` lays one down and comes back to the ledger, from
- * whichever `/g` screen was copied: a first visit is too early to learn that
- * only one address works. `wantsDemo` says when, and why not on the screen's
- * own read.
+ * A link naming a group this phone doesn't have. The demo's id is a constant,
+ * so an address copied off somebody's demo goes to `/demo` (`wantsDemo`).
  */
 export function BadLink() {
   const router = useRouter();
@@ -335,30 +265,17 @@ export function BadLink() {
   );
 }
 
-/**
- * A fixed bar under the scroll holding the screen's one act. Only for a button
- * that ends the screen — a decision that fits in a paragraph is a dialog
- * (ADR-0008).
- */
+/** Only for a button that ends the screen; a decision is a dialog (ADR-0008). */
 export function Foot({ children }: { children: ReactNode }) {
   return <div className="foot">{children}</div>;
 }
 
-/**
- * Every screen reads its group id from the query string, and Next needs that
- * hook behind a Suspense boundary in a static export. Not an error boundary:
- * `ReadErrorBoundary` sits in the root layout for that.
- */
+/** Next needs `useSearchParams` behind Suspense in a static export. */
 export function QueryBoundary({ children }: { children: ReactNode }) {
   return <Suspense fallback={<div className="app" />}>{children}</Suspense>;
 }
 
-/**
- * `dexie-react-hooks` reports a failed read by **throwing during render**, so
- * any Dexie error `liveQuery` doesn't swallow (lib/db/live.ts) would white-
- * screen the tree. Here it is a sentence and a button, around the whole app
- * in app/layout.tsx. A class because React has no hook for error boundaries.
- */
+/** `dexie-react-hooks` throws a failed read during render, which would white-screen the app. */
 export class ReadErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   override state = { failed: false };
 
@@ -367,8 +284,7 @@ export class ReadErrorBoundary extends Component<{ children: ReactNode }, { fail
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo) {
-    // The screen says what a person can do; this is for whoever is looking at
-    // a phone over USB, and it is the only trace the failure leaves.
+    // The only trace, for whoever is looking at a phone over USB.
     console.error("bida: a screen failed to read the database", error, info.componentStack);
   }
 
@@ -379,9 +295,7 @@ export class ReadErrorBoundary extends Component<{ children: ReactNode }, { fail
         <Body>
           <Empty title={copy.db.broken.title}>{copy.db.broken.body}</Empty>
         </Body>
-        {/* A reload, not a retry: this tree is already half-built, and the
-            service worker serves the shell from cache, so it costs nothing
-            and works offline. */}
+        {/* Not a retry: the tree is half-built, and the shell reloads from cache. */}
         <Foot>
           <button type="button" className="btn btn-p btn-lg" onClick={() => location.reload()}>
             {copy.act.reload}
