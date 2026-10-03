@@ -1,12 +1,7 @@
 /**
- * Shared plumbing for the browser checks — a build, a server speaking the
- * static export's dialect, a phone-shaped browser, and a group with people in
- * it. Written once, so a new check inherits every gotcha already paid for
- * (like the `/g` directory trap).
- *
- * Chromium comes from PLAYWRIGHT_BROWSERS_PATH, already on disk in the agent
- * environment: never run `playwright install` there. GitHub installs its own
- * (.github/workflows/deploy.yml).
+ * Shared plumbing for the browser checks, so a new check inherits every gotcha
+ * already paid for. Never run `playwright install` in the agent environment:
+ * chromium is already on disk. GitHub installs its own.
  */
 import { createServer } from "node:http";
 import { spawn, spawnSync } from "node:child_process";
@@ -19,12 +14,7 @@ import { ROOT } from "./together.mjs";
 
 export { ROOT };
 export const OUT = join(ROOT, "apps/web/out");
-/**
- * The agent environment ships a chromium at a fixed path; a laptop has
- * whatever `playwright install` left in its cache instead. Try the fixed path,
- * then the cache, then let playwright-core name its own default — so the same
- * check runs in both places without an env var.
- */
+/** The agent environment's fixed path, else playwright-core's own default (a laptop's cache). */
 const EXECUTABLE = (() => {
   if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
   if (existsSync("/opt/pw-browsers/chromium")) return "/opt/pw-browsers/chromium";
@@ -33,7 +23,6 @@ const EXECUTABLE = (() => {
 
 /* ---- the build ---------------------------------------------------------- */
 
-/** Source trees whose mtime decides whether `out/` is stale. */
 const SOURCES = ["apps/web", "packages/core", "pnpm-lock.yaml"];
 const SKIP = new Set(["node_modules", ".next", "out", ".git"]);
 
@@ -49,10 +38,7 @@ function newestMtime(path) {
   return newest;
 }
 
-/**
- * Build the static export if it is missing or older than the sources — the
- * check's own precondition — skipping the ~25s when nothing changed.
- */
+/** Skips the ~25s build when nothing changed. */
 export function ensureBuild() {
   const built = statSync(join(OUT, "index.html"), { throwIfNoEntry: false })?.mtimeMs ?? 0;
   const source = Math.max(...SOURCES.map((s) => newestMtime(join(ROOT, s))));
@@ -76,12 +62,8 @@ const MIME = {
 const isFile = (p) => existsSync(p) && statSync(p).isFile();
 
 /**
- * Serve the real static export — not `next dev`, whose quirks differ from
- * what ships.
- *
- * `intercept(path, res)` gets first refusal on every request; returning true
- * means handled (how checks/offline drops an asset and rewrites the worker's
- * revision). Port 0, so checks never collide.
+ * The real static export, not `next dev`, whose quirks differ from what ships.
+ * `intercept(path, res)` returning true means handled.
  */
 export async function serveExport({ intercept } = {}) {
   const server = createServer(async (req, res) => {
@@ -89,9 +71,7 @@ export async function serveExport({ intercept } = {}) {
     if (await intercept?.(path, res)) return;
     if (path.endsWith("/")) path += "index.html";
     let file = join(OUT, path);
-    // `/g` is both out/g.html and out/g/ (its child routes live in there), so a
-    // bare directory hit falls through to the sibling .html rather than reading
-    // the directory — serving the directory is an EISDIR crash.
+    // `/g` is both out/g.html and out/g/; reading the directory is an EISDIR crash.
     if (!isFile(file) && isFile(`${file}.html`)) file = `${file}.html`;
     if (!isFile(file)) { res.writeHead(404, { "content-type": "text/plain" }); return res.end("not found"); }
     res.writeHead(200, { "content-type": MIME[extname(file)] ?? "application/octet-stream" });
@@ -102,13 +82,9 @@ export async function serveExport({ intercept } = {}) {
 }
 
 /**
- * Serve the app as production does: one Worker in front of the static export
- * and the sync API, on a throwaway D1. ~10s of `wrangler dev` boot, for the
- * one thing `serveExport` can't fake — two phones syncing through the real
- * API. Use only when a check needs that.
- *
- * A fresh database directory per call, and migrations run against *that*
- * directory — run anywhere else, the Worker silently gets a table-less DB.
+ * As production serves it, on a throwaway D1: ~10s of boot, only for two
+ * phones syncing through the real API. Migrations must run against the same
+ * `--persist-to`, or the Worker silently gets a table-less DB.
  */
 export async function serveWorker({ state } = {}) {
   const api = join(ROOT, "apps/api");
@@ -120,10 +96,8 @@ export async function serveWorker({ state } = {}) {
   if (migrate.status !== 0) throw new Error(`d1 migrations failed:\n${migrate.stderr ?? ""}`);
 
   const port = await freePort();
-  // `wrangler dev` wraps the `workerd` it spawns, and signalling the wrapper
-  // alone leaves multi-gigabyte processes behind until `start` can't launch.
-  // `detached` makes it a process-group leader so one signal takes the family;
-  // the exit hooks fire it even if the caller never reaches `close`.
+  // Signalling the wrapper alone leaves multi-gigabyte `workerd`s behind;
+  // `detached` makes it a group leader, so one signal takes the family.
   const child = spawn("npx", [
     "wrangler", "dev", "--port", String(port), "--persist-to", persist,
   ], { cwd: api, stdio: ["ignore", "pipe", "pipe"], detached: true });
@@ -151,7 +125,6 @@ export async function serveWorker({ state } = {}) {
   return { base, close };
 }
 
-/** An unused port, asked of the OS rather than guessed. */
 function freePort() {
   return new Promise((ok) => {
     const probe = createServer();
@@ -165,34 +138,19 @@ function freePort() {
 /* ---- the browser -------------------------------------------------------- */
 
 /**
- * How long any one wait may take before it counts as a failure — a ceiling,
- * never a schedule. Playwright's own default: `pnpm verify` runs seven
- * chromiums at once, each several times slower than alone. A navigation gets
- * twice it, going through the service worker and back as a document load.
- *
- * **The rule this is the fallback for:** a wait that gates an assertion waits
- * for the condition, not a duration. `waitForTimeout(400)` passes on a fast
- * machine and fails on a slow one. Use it only to assert something did *not*
- * happen, where there is no condition to wait for.
+ * A ceiling, never a schedule: `pnpm verify` runs several chromiums at once.
+ * A wait that gates an assertion waits for the condition, not a duration —
+ * `waitForTimeout` only to assert something did *not* happen.
  */
 export const PATIENCE = 30_000;
 
 export const launch = () => chromium.launch(EXECUTABLE ? { executablePath: EXECUTABLE } : {});
 
-/**
- * Make this page look like the app installed to a home screen.
- * `components/update.tsx` draws its offer only when standalone, and neither
- * Playwright nor CDP media emulation can set `display-mode` — so the query
- * itself is answered, for this page and its navigations. What counts as
- * "installed" is `lib/install.ts`'s, tested there.
- */
+/** Nothing can emulate `display-mode`, so the query itself is answered. */
 export async function asInstalledApp(page) {
   await page.addInitScript(() => {
     const real = window.matchMedia.bind(window);
-    // Only this one query is answered here; the theme asks about
-    // prefers-color-scheme through the same function and must still get a real
-    // answer. CDP's media emulation does not cover display-mode, and nothing
-    // reads these beyond `.matches`.
+    // The theme's prefers-color-scheme still gets a real answer.
     window.matchMedia = (query) => (query.includes("display-mode")
       ? {
         matches: query.includes("standalone"), media: query, onchange: null,
@@ -203,11 +161,7 @@ export async function asInstalledApp(page) {
   });
 }
 
-/**
- * A phone: 390×844, touch, mobile — what every screen is designed against.
- * Every wait through this context gets `PATIENCE`, sized for a machine running
- * all of `pnpm verify`.
- */
+/** 390×844, touch: what every screen is designed against. A navigation gets twice `PATIENCE`. */
 export async function newPhone(browser, opts = {}) {
   const ctx = await browser.newContext({
     viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, ...opts,
@@ -219,18 +173,10 @@ export async function newPhone(browser, opts = {}) {
 
 /* ---- reporting ---------------------------------------------------------- */
 
-/**
- * How long a whole check may run before it is called hung. The slowest takes
- * ~90s under `pnpm verify`; playwright's `close` and `bringToFront` have no
- * timeout of their own, and a starved chromium has left one waiting for good.
- */
+/** The slowest check takes ~90s; `close` and `bringToFront` have no timeout of their own. */
 const HUNG_MS = 5 * 60_000;
 
-/**
- * A pass/fail tally that owns the exit code — a check that reports failures and
- * exits 0 is a check nothing is watching. It also owns the watchdog: a hung
- * check fails, naming the last thing it reported, instead of stalling verify.
- */
+/** Owns the exit code, and a watchdog that fails a hung check naming its last report. */
 export function reporter(page) {
   let failures = 0;
   let last = "(nothing reported yet)";
@@ -246,7 +192,6 @@ export function reporter(page) {
   page?.on("pageerror", (e) => report(false, "uncaught page error", e.message));
   return {
     report,
-    /** Print the verdict and exit non-zero if anything failed. */
     finish() {
       console.log(failures ? `\n${failures} failed` : "\nall checks passed");
       process.exit(failures ? 1 : 0);
@@ -254,10 +199,7 @@ export function reporter(page) {
   };
 }
 
-/**
- * How most checks start: the export built and served, one phone with one page,
- * and a reporter watching it. `browser` is there for a second phone.
- */
+/** How most checks start. `browser` is there for a second phone. */
 export async function onePhone() {
   ensureBuild();
   const { base, close } = await serveExport();
@@ -269,14 +211,9 @@ export async function onePhone() {
 
 /* ---- the phone's own store ---------------------------------------------- */
 
-/**
- * Straight out of IndexedDB rather than through the app, for what no screen
- * shows: keys held, a device flag, a write that has to land before a relaunch.
- * The database keeps the name from before the rename (apps/web/lib/db/dexie.ts).
- */
+/** For what no screen shows. Named from before the rename (apps/web/lib/db/dexie.ts). */
 const DB = "hajsik";
 
-/** Every row of one store. */
 export const readStore = (page, store) => page.evaluate(([db, name]) => new Promise((ok, fail) => {
   const open = indexedDB.open(db);
   open.onerror = () => fail(open.error);
@@ -287,7 +224,6 @@ export const readStore = (page, store) => page.evaluate(([db, name]) => new Prom
   };
 }), [DB, store]);
 
-/** The device record, or null before the app has written one. */
 export const readDevice = (page) => page.evaluate((db) => new Promise((ok, fail) => {
   const open = indexedDB.open(db);
   open.onerror = () => fail(open.error);
@@ -298,7 +234,7 @@ export const readDevice = (page) => page.evaluate((db) => new Promise((ok, fail)
   };
 }), DB);
 
-/** Write the device record back whole — read it with `readDevice`, change it, put it. */
+/** Writes the record whole: read, change, put. */
 export const putDevice = (page, row) => page.evaluate(([db, next]) => new Promise((ok, fail) => {
   const open = indexedDB.open(db);
   open.onerror = () => fail(open.error);
@@ -309,11 +245,7 @@ export const putDevice = (page, row) => page.evaluate(([db, next]) => new Promis
   };
 }), [DB, row]);
 
-/**
- * Until the device record passes `test`, which runs here, in node. An app
- * write that lands from an effect after a screen draws is waited for, never
- * paused on. Rejects after `timeout`.
- */
+/** `test` runs here, in node. */
 export async function untilDevice(page, test, timeout = PATIENCE) {
   const end = Date.now() + timeout;
   for (;;) {
@@ -327,66 +259,42 @@ export async function untilDevice(page, test, timeout = PATIENCE) {
 /* ---- driving the app ---------------------------------------------------- */
 
 /**
- * Wait `ms` on the page's own clock, then two frames for what it started.
- *
- * `page.waitForTimeout` is node's clock, idle while the page is starved — so
- * a pause covering an app timer (a 500ms long press, a flash) can end before
- * that timer runs under load. Measured in the page, both are late together.
- * The two frames are the render.
- *
- * Only where the page stays put: a navigation destroys the context this waits
- * in. To prove nothing happened, use `waitForTimeout`.
+ * `ms` on the page's own clock, then two frames: node's clock runs on while the
+ * page is starved, so a pause covering an app timer can end before it fires.
+ * Not across a navigation, which destroys the context this waits in.
  */
 export const settle = (page, ms = 0) => page.evaluate((n) => new Promise((ok) => {
   setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(() => ok())), n);
 }), ms).catch(() => {});
 
-/**
- * Open a picker and take a row out of it — every picker is one of these,
- * never a `<select>` (ADR-0008). By row, not role name: an option's
- * accessible name carries its note too.
- */
+/** By row, not role name: an option's accessible name carries its note too. */
 export async function pick(page, opener, row) {
   await page.locator(opener).click();
   await page.waitForSelector(".dlist");
   await page.locator(".drow-pick").filter({ hasText: row }).first().click();
-  // The dialog's own closing, on its clock rather than on node's (`settle`).
   await settle(page, 120);
 }
 
-/**
- * Create a group through the real UI rather than by poking IndexedDB, so a
- * check fails loudly when a screen it isn't looking at breaks. Returns the
- * group id. `onForm` runs on the filled-in create screen before Create.
- */
+/** Through the real UI, so a check fails loudly when a screen it isn't looking at breaks. */
 export async function newGroup(page, base, { name, me, members = [], onForm }) {
   await page.goto(`${base}/new`);
   await page.locator("#g-name").fill(name);
-  // Everybody goes in the same inline row, you included — there is no "you"
-  // field; the screen ends by asking which name is yours.
   for (const member of [me, ...members]) {
     await page.getByLabel("Add someone").fill(member);
     await page.keyboard.press("Enter");
   }
   await onForm?.();
   await page.getByRole("button", { name: "Create" }).click();
-  // Which one are you, asked of every group including a group of one.
   await page.locator("button.row").filter({ hasText: me }).first().click();
   await page.getByRole("button", { name: `Continue as ${me}` }).click();
   await page.waitForURL(/\/g\?id=/);
   return new URL(page.url()).searchParams.get("id");
 }
 
-/**
- * Launch the app and end up on the groups list. A phone that has opened a
- * group is put straight back into it (`apps/web/lib/launch.ts`), so the list
- * is one Back away, as for a thumb.
- */
+/** A phone that has opened a group is put back into it, so the list is one Back away. */
 export async function openGroupsList(page, base) {
   await page.goto(`${base}/`);
-  // The resume is a `replace` a tick after load, so a URL read early would skip
-  // the coming hop. The screen says when it's decided: `/` draws the skeleton
-  // while deciding (app/page.tsx). Wait for that, never a fixed pause.
+  // The resume is a `replace` a tick after load; `/` draws the skeleton until it decides.
   await page.waitForFunction(
     () => window.location.pathname !== "/" || !document.querySelector(".skelrow"),
     null, { timeout: PATIENCE },
