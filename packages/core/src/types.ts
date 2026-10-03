@@ -5,39 +5,25 @@ export type Id = string;
 
 export type SplitMode = "equal" | "exact" | "shares" | "percent" | "receipt";
 
-/**
- * The modes a person can *type*. `receipt` is excluded: its weights are read
- * off a scanned bill, so nothing converts into it and no editor tab writes it.
- */
+/** `receipt`'s weights are read off a scanned bill: no editor tab writes it. */
 export type ArithmeticMode = Exclude<SplitMode, "receipt">;
 
 /**
- * Which way an entry moves money. `income` is structurally an expense — same
- * payers, split and positive `amountMinor` — with the sign applied once, in
- * `computeBalances`. Absent means `expense`. A transfer is a `Settlement`.
- * ADR-0010.
+ * `income` is an expense whose sign is applied once, in `computeBalances`;
+ * absent means `expense`. A transfer is a `Settlement`. ADR-0010.
  */
 export type ExpenseKind = "expense" | "income";
 
 export type SplitSpec =
   | { mode: "equal"; members: Id[] }
-  /**
-   * Exact minor amounts in the entry's OWN currency, as its payers are. Sum to
-   * `amountMinor`; `resolveEntrySplit` apportions the base total by them.
-   */
+  /** In the entry's own currency, summing to `amountMinor`; the base total is apportioned by them. */
   | { mode: "exact"; amounts: Record<Id, number> }
-  /** Arbitrary positive weights. 2 shares to one person, 1 to another. */
   | { mode: "shares"; weights: Record<Id, number> }
   /** Basis points (10000 = 100%) so percentages stay integers. */
   | { mode: "percent"; bps: Record<Id, number> }
-  /**
-   * A scanned bill's weights: each line divided among whoever had it, plus
-   * their tip share (ADR-0016). Same arithmetic as `shares`, kept separate
-   * because a bill read out is not parts somebody chose.
-   */
+  /** `shares` arithmetic, kept apart because a bill read out is not parts somebody chose. ADR-0016. */
   | { mode: "receipt"; weights: Record<Id, number> };
 
-/** A split in one of those modes: whatever an editor tab can hold. */
 export type ArithmeticSplit = Extract<SplitSpec, { mode: ArithmeticMode }>;
 
 export interface Group {
@@ -46,11 +32,10 @@ export interface Group {
   baseCurrency: CurrencyCode;
   createdAt: number;
   archivedAt?: number | null;
-  /** What the group was imported from, named in its history; absent for one made here. */
   importedFrom?: ImportSource | null;
 }
 
-/** Where an import came from: a tricount link, or a spreadsheet file (Splitwise's, bida's, Tricount's). */
+/** `file` is any spreadsheet: Splitwise's, bida's, Tricount's. */
 export type ImportSource = "tricount" | "file";
 
 export interface Member {
@@ -62,107 +47,74 @@ export interface Member {
   deletedAt?: number | null;
 }
 
-/**
- * The bill behind an expense, kept on it so "who had what" reopens on any
- * device (ADR-0016). A type of its own because the draft, the form's input and
- * both writes carry it whole — `receiptOf` moves it between them.
- */
+/** The bill behind an expense, kept on it so "who had what" reopens on any device. ADR-0016. */
 export interface Receipt {
-  /** The last scan's lines. */
   receiptItems?: ReceiptItem[] | null;
-  /** A separate tip/service line from the same scan, printed as-is. */
   receiptTip?: string | null;
-  /** Tax charged on top of the lines, printed as-is. `BillExtras`. */
+  /** Charged on top of the lines. */
   receiptTax?: string | null;
-  /** What the bill took off, one entry per printed deduction. `BillExtras`. */
   receiptDiscounts?: ReceiptDiscount[] | null;
-  /** Who was marked present, last time the who-had-what grid was saved. */
   receiptInvolved?: Id[] | null;
-  /** Per-item member ids, same order as `receiptItems`, last time it was saved. */
+  /** Parallel to `receiptItems`. */
   receiptAssignments?: Id[][] | null;
-  /** The bill as typed into "Type it in", so the dialog reopens holding it. */
+  /** The bill as typed into "Type it in". */
   receiptText?: string | null;
-  /**
-   * True when the bill is read in English rather than as printed — the grid's
-   * translate toggle, saved with the bill so every phone reads it alike
-   * (`billLabel`, ADR-0016). Written only when true.
-   */
+  /** The translate toggle, saved so every phone reads the bill alike (`billLabel`). Written only when true. */
   receiptEnglish?: boolean | null;
 }
 
 export interface Expense extends Receipt {
   id: Id;
   groupId: Id;
-  /** Which way this entry runs. Absent means `expense`. See `ExpenseKind`. */
   kind?: ExpenseKind | null;
   description: string;
   categoryId?: string | null;
   occurredAt: number;
   /**
-   * `occurredAt` is local midnight of a day with no meaningful time (a receipt
-   * prints a date, not an hour). Absent, not `false`, otherwise.
-   * docs/data-model.md#a-day-without-a-time.
+   * `occurredAt` is local midnight of a day with no time. Absent, not `false`,
+   * otherwise. docs/data-model.md#a-day-without-a-time.
    */
   dateOnly?: boolean | null;
-  /**
-   * When this was added, wall-clock, never touched by an edit. Breaks same-day
-   * ties in list order; `occurredAt` is the editable date.
-   */
+  /** Never touched by an edit: breaks same-day ties in list order. */
   createdAt?: number;
-  /** Amount in `currency`. */
   amountMinor: number;
   currency: CurrencyCode;
-  /** Rate to the group's base currency, frozen at entry. "1" when identical. */
+  /** "1" when `currency` is the base. */
   rateToBase: Rate;
-  /** amountMinor converted to base currency. Stored, not recomputed. ADR-0005. */
+  /** Stored, not recomputed. ADR-0005. */
   baseAmountMinor: number;
-  /** The single payer, or the largest one when `payers` is set. Always present: a row needs one name. */
+  /** The largest payer when `payers` is set. Always present: a row needs one name. */
   paidBy: Id;
-  /** Co-payers: memberId -> amount in this expense's currency, summing to `amountMinor`. Absent means `paidBy` paid it all. */
+  /** In `currency`, summing to `amountMinor`. Absent means `paidBy` paid it all. */
   payers?: Record<Id, number> | null;
   split: SplitSpec;
-  /** Receipt photos. Absent, not `[]`, when none — nothing appends an `attachment` op yet. */
+  /** Absent, not `[]`: nothing appends an `attachment` op yet. */
   attachmentIds?: Id[];
   deletedAt?: number | null;
 }
 
-/**
- * One deduction on the bill, as a positive magnitude. Nobody ordered it, so
- * it comes off everybody in proportion to what they did order. ADR-0016.
- */
+/** A positive magnitude, taken off everybody in proportion to what they ordered. ADR-0016. */
 export interface ReceiptDiscount {
   label: string;
   amount: string;
-  /**
-   * The English of `label`, kept beside the original: which one shows is the
-   * expense's `receiptEnglish` (`billLabel`). Absent on an English bill and on older ones.
-   */
+  /** Absent on an English bill. `receiptEnglish` picks which label shows. */
   labelEn?: string | null;
 }
 
-/**
- * One line of a scanned bill. `amount` is the printed line total; `quantity`
- * ("2x") is shown and never multiplied. ADR-0016.
- */
+/** `amount` is the printed line total; `quantity` ("2x") is shown and never multiplied. ADR-0016. */
 export interface ReceiptItem {
-  /** As the bill printed it, in the bill's own language. */
+  /** In the bill's own language. */
   label: string;
-  /** The English of `label`, or absent when the bill is already English. `ReceiptDiscount.labelEn`. */
   labelEn?: string | null;
   amount: string;
-  /** The count printed on the receipt, or null when none was. Display only. */
   quantity?: number | null;
-  /**
-   * How many portions a line was unfolded into on the grid. Consecutive lines
-   * with the same label and count are one unfold, which lets them merge back.
-   */
+  /** Portions a line was unfolded into; consecutive lines with the same label and count merge back. */
   portionOf?: number | null;
 }
 
 /**
- * A **transfer**: money handed between people. Separate from `Expense` so it
- * never inflates what the trip cost (ADR-0010). Named `Settlement` because the
- * op log says `settlement`; renaming it buys a migration and nothing else.
+ * A transfer, kept apart from `Expense` so it never inflates what the trip
+ * cost (ADR-0010). The op log says `settlement`; renaming buys only a migration.
  */
 export interface Settlement {
   id: Id;
@@ -174,9 +126,9 @@ export interface Settlement {
   rateToBase: Rate;
   baseAmountMinor: number;
   occurredAt: number;
-  /** A day and no time of day. Same rule and same reason as `Expense.dateOnly`. */
+  /** As `Expense.dateOnly`. */
   dateOnly?: boolean | null;
-  /** When this settlement was recorded, wall-clock. Same tiebreak role as `Expense.createdAt`. */
+  /** As `Expense.createdAt`. */
   createdAt?: number;
   note?: string | null;
   deletedAt?: number | null;
@@ -187,52 +139,42 @@ export interface Settlement {
  * ends every op it stamped — which is what lets everybody read `Op.actor`. ADR-0003.
  */
 export interface Identity {
-  /** The device's HLC node id. */
   id: Id;
   groupId: Id;
-  /** The member this device claims to be, as of `claimedAt`. */
   memberId: Id;
   claimedAt: number;
-  /**
-   * This device's Web Push subscription, or null once it stopped listening.
-   * Absent on a device that never asked. docs/notifications.md.
-   */
+  /** Null once it stopped listening, absent if it never asked. docs/notifications.md. */
   push?: DevicePush | null;
 }
 
-/**
- * How much a phone wants to hear. A setting of the phone, not of a group, so
- * every group's identity carries the same one. "Nothing" is no subscription.
- */
+/** A setting of the phone, so every group's identity carries the same one. "Nothing" is no subscription. */
 export type NotifyScope = "own" | "all";
 
-/** What a sender needs to encrypt to one device (RFC 8291), address it, and filter for it. */
+/** What a sender needs to encrypt to one device (RFC 8291). */
 export interface DevicePush {
   endpoint: string;
-  /** The device's P-256 public key, base64url, uncompressed. */
+  /** P-256, base64url, uncompressed. */
   p256dh: string;
-  /** The 16-byte auth secret, base64url. */
+  /** 16 bytes, base64url. */
   auth: string;
-  /** Entries this device's member is in, or everything. Absent reads as "own". */
+  /** Absent reads as "own". */
   scope?: NotifyScope;
 }
 
-/** Where a rate came from — the only provenance the app can honestly show. */
 export type RateSource = "fetched" | "typed";
 
 /**
- * One line of the group's rate registry. Entries are valued at it on read
- * (ADR-0005), so fixing a rate follows through every entry. `id` is the
- * currency code so two phones editing one currency merge. Never the base.
+ * Entries are valued at the registry on read, so fixing a rate follows through
+ * every entry (ADR-0005). Never the base currency.
  */
 export interface ExchangeRate {
-  /** The currency this values. Doubles as the entity id — one row per currency. */
+  /** The currency, as the id, so two phones editing one currency merge. */
   id: CurrencyCode;
   groupId: Id;
-  /** 1 unit of `id` = `rate` units of the group's base currency. */
+  /** 1 `id` = `rate` of the base currency. */
   rate: Rate;
   source: RateSource;
-  /** The feed's own date for a fetched rate; when it was typed, for a typed one. */
+  /** The feed's own date, or when it was typed. */
   asOf: number;
   deletedAt?: number | null;
 }
@@ -259,11 +201,10 @@ export interface GroupState {
   expenses: Record<Id, Expense>;
   settlements: Record<Id, Settlement>;
   attachments: Record<Id, Attachment>;
-  /** Keyed by device node id, not by member: one row per device. */
+  /** One per device, not per member. */
   identities: Record<Id, Identity>;
-  /** The group's exchange-rate registry, keyed by currency code. See `ExchangeRate`. */
   rates: Record<CurrencyCode, ExchangeRate>;
-  /** Highest HLC applied. Cheap way to know whether a fold is up to date. */
+  /** Highest applied: tells whether a fold is up to date. */
   lastHlc: Hlc | undefined;
 }
 
@@ -280,11 +221,9 @@ export function emptyGroupState(): GroupState {
   };
 }
 
-/** Entities that are alive: not tombstoned. */
 /**
- * A state from row arrays, keyed by id. The one builder for readers holding
- * rows rather than a log: a hand-built state missing a field is wrong in a way
- * nothing catches. Unpriced, tombstones kept — filter and reprice outside.
+ * For readers holding rows rather than a log: a hand-built state missing a
+ * field is wrong in a way nothing catches. Unpriced, tombstones kept.
  */
 export function stateFromRows(rows: {
   group: Group | undefined;
@@ -305,6 +244,7 @@ export function stateFromRows(rows: {
   };
 }
 
+/** Not tombstoned. */
 export function alive<T extends { deletedAt?: number | null }>(
   record: Record<string, T>,
 ): T[] {
