@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-03* — "Delete and trim a bunch of comments". Half a comment was
+  the name it sat over; a ref called `before` needed a paragraph that
+  `latestScanAs` doesn't. Keep the why, the platform quirk and the trap.
+  Rename before you rewrite.
+
 - *2026-10-03* — "anything bloated or tangled up?", then "Fix all". The knot
   was a shape copied, not a big file: eight receipt fields spelled out eight
   times. Answer with a ranked list, then say which smalls you left as not
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   then, laughing at itself, "one last change". The log agreed: 820 commits in
   three weeks. Say so plainly and kindly, then do the small ask. Point at the
   demo link, not the chevron.
-
-- *2026-09-30* — "Have a receipt image scan populate "type it in" … easy to
-  change". Write it in the shape the typed prompt already reads, so a
-  correction round-trips; the photo stopped clearing the box instead of a new
-  field appearing.
