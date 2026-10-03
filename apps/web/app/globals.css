@@ -1105,18 +1105,15 @@ dialog.scrim::backdrop { background: transparent }
   background: var(--card); border-bottom: 1px solid var(--rule) }
 .diag-act .hint:first-child { margin-top: 0; margin-bottom: 9px }
 
-/* Staś mode, under the copy button. A `.btn` rather than a checkbox, which
-   would be the app's only one (app/diag/page.tsx). */
+/* A `.btn`, not a checkbox, which would be the app's only one. */
 .diag-stas { display: flex; align-items: center; justify-content: space-between; gap: 12px;
   margin-top: 10px }
 .diag-stas .btn { width: auto; flex: none; padding: 7px 16px; font-size: 12.5px }
 .diag-stas-name { font-size: 13px; font-weight: 600; color: var(--ink) }
 .diag-stas-note { font-size: 11.5px; color: var(--ink-2); margin-top: 1px }
-/* The door to /diag/crop: a `.btn-s`, so it reads as something to press. */
 .diag-link { margin-top: 10px }
 
-/* /diag/crop: each photo with the model's box over it, beside what a scan
-   would send, then the numbers (app/diag/crop/page.tsx). */
+/* /diag/crop */
 .cropcheck-model { font-size: 12px; color: var(--ink-2); margin: 8px 0 0 }
 .cropcheck { padding: 12px 16px; border-bottom: 1px solid var(--rule) }
 .cropcheck-pair { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px }
@@ -1130,8 +1127,7 @@ dialog.scrim::backdrop { background: transparent }
 .cropcheck-box { stroke: var(--brand) }
 .cropcheck-src, .cropcheck-out { cursor: zoom-in }
 
-/* One image over everything, moved by hand (app/diag/crop/zoom-view.tsx):
-   `touch-action: none` hands every finger to it, since the page never zooms. */
+/* Moved by hand: the page never zooms, so every finger is handed to it. */
 .zoomview { position: fixed; inset: 0; z-index: 100; background: #000; overflow: hidden;
   touch-action: none; display: flex; align-items: center; justify-content: center }
 .zoomview img { max-width: 100%; max-height: 100%; transform-origin: center;
@@ -1140,17 +1136,13 @@ dialog.scrim::backdrop { background: transparent }
   width: 44px; height: 44px; border: 0; border-radius: 22px; font-size: 26px; line-height: 1;
   color: #fff; background: rgb(0 0 0 / 55%) }
 
-/* A readout: preformatted text that scrolls sideways on its own. Small and mono
-   because it is a log (app/diag/page.tsx) or a spreadsheet
-   (app/g/export/page.tsx), meant to be pasted elsewhere. */
+/* A log or a spreadsheet to paste elsewhere, scrolling sideways on its own. */
 .diag { font-family: var(--f-mono); font-size: 10.5px; line-height: 1.55; white-space: pre;
   overflow-x: auto; padding: 12px 16px; color: var(--ink) }
 
 .banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: 12.5px; flex: none;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge); font-weight: 500 }
-/* A read of this phone's database that stopped answering
-   (components/chrome.tsx). Styled like `.banner` and set above the screen's
-   head, so it doesn't look like part of the skeleton still loading. */
+/* Above the screen's head, so it doesn't look like part of the skeleton. */
 .stall { display: flex; align-items: center; gap: 9px; padding: 9px 16px; flex: none;
   font-size: 12.5px; font-weight: 500;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge) }
@@ -1158,20 +1150,14 @@ dialog.scrim::backdrop { background: transparent }
 .stall-act { flex: none; font-size: 12.5px; font-weight: 700; text-decoration: underline;
   text-underline-offset: 3px; padding: 2px 0 }
 .stall-act:active { opacity: .6 }
-/* A failure reads like `.hint` in the one colour this design spends on trouble:
-   it sits where the hint would, under whatever was being attempted. */
 .failure { font-size: 12px; color: var(--debit); line-height: 1.5; font-weight: 500; margin: 8px 2px 0 }
-/* The screen's last act, pinned under the scroll rather than floating over it.
-   The keyboard overlays the shell rather than shortening it
-   (components/viewport.tsx), so the foot pays `--kb` as padding — without
-   it the one button a form ends on sits behind the keyboard being typed on. */
+/* Pays `--kb`, or the button a form ends on sits behind the keyboard. */
 .foot { flex: none; border-top: 1px solid var(--rule); padding: 11px 16px;
   padding-bottom: calc(var(--kb) + max(11px, env(safe-area-inset-bottom))) }
 
 /* ---- the amount input ----
-   A real <input>, not a rendered figure driven by a hand-built keypad: it has
-   a caret you can put in the middle of a number, and inputMode="decimal" opens
-   the phone's own digit keyboard. It hugs its own figure — see `.autosize`. */
+   A real <input>, not a hand-built keypad: a caret mid-number, and the phone's
+   own digit keyboard. */
 .amount {
   font-family: var(--f-mono);
   font-variant-numeric: tabular-nums;
@@ -1186,17 +1172,14 @@ dialog.scrim::backdrop { background: transparent }
   padding: 0;
   min-width: 1ch;
   max-width: 100%;
-  /* Right-aligned so the caret sits after the figure, not on the "0"
-     placeholder. The row is centred, so the field still looks centred. */
+  /* So the caret sits after the figure; the row is centred. */
   text-align: right;
   caret-color: var(--brand);
 }
-/* The caret is the focus signal here; a focus ring around a field this large,
-   sized to hug its own text, reads as a box drawn round a single digit. */
+/* The caret is the focus signal; a ring reads as a box round one digit. */
 .amount:focus-visible { outline: none }
 .amount::placeholder { color: var(--muted); opacity: .35 }
-/* An empty centred field's caret lands on the placeholder's "0" and reads as a
-   struck-through zero. */
+/* The caret on the "0" reads as a struck-through zero. */
 .amount:focus::placeholder { color: transparent }
 
 /* ---- segmented control ---- */
@@ -1206,23 +1189,19 @@ dialog.scrim::backdrop { background: transparent }
 .seg button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-s); font-weight: 600 }
 
 /* ---- the split editor, inline on the expense form ---- */
-/* A list inside a card rather than full-bleed `.row`s: between two fields a
-   full-width list reads as a different screen. */
-/* Tabs and the tab they opened are one box: attached, the mode buttons read as
-   the lid of the list they govern. The border lives here, once. */
+/* In a card: between two fields a full-width list reads as another screen.
+   The tabs are the lid of the list they govern. */
 .splitbox { background: var(--card-2); border: 1px solid var(--rule-soft);
   border-radius: var(--r-s); overflow: hidden }
 .splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft) }
 .splitlist { padding: 0; overflow: hidden }
-/* The tabs' soft rule is invisible against the wash, so a first row that is
-   in the split gets the stronger colour on the lid's line. Not a border on the row:
-   `.splitlist` clips it. */
+/* The soft rule is invisible against a first row's wash. */
 .splitbox:has(.splitlist > .splitrow.inrow:first-child) .seg {
   border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent);
 }
 .splitrow { display: flex; align-items: center; gap: 10px; padding: 7px 12px;
   border-bottom: 1px solid var(--rule-soft); position: relative }
-/* The shorthand above would undo `.inrow`'s stronger divider (it comes later). */
+/* The shorthand above would undo `.inrow`'s stronger divider. */
 .splitrow.inrow { border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent) }
 .splitin { width: 82px; text-align: right; background: transparent; border: 0;
   font: inherit; font-size: 14px; color: var(--ink);
@@ -1231,14 +1210,11 @@ dialog.scrim::backdrop { background: transparent }
   font-weight: 600; border-top: 1px solid var(--rule-soft) }
 .splitfoot.ok { background: var(--credit-bg); color: var(--credit) }
 .splitfoot.bad { background: var(--debit-bg); color: var(--debit) }
-/* Same verdict, standing on its own rather than closing a split card — /g/payers
-   asks the identical question of the payer side. */
+/* The same verdict on /g/payers, standing alone. */
 .splitfoot.alone { border-top: 0; border-radius: var(--r-m) }
 
 /* ---- money fields ----
-   Every money field is wrapped in one of these. The underline is the only
-   thing saying "you can type here", and it takes the brand colour while
-   focused — the caret alone is not enough of a signal. */
+   The underline is the only thing saying "you can type here". */
 .amountfield { display: inline-flex; align-items: baseline; position: relative;
   border-bottom: 1.5px solid var(--rule); transition: border-color .12s ease, background .12s ease }
 .amountfield:focus-within { border-bottom-color: var(--brand) }
@@ -1246,17 +1222,13 @@ dialog.scrim::backdrop { background: transparent }
 .amountfield.bad, .amountfield.bad input { border-bottom-color: var(--debit); color: var(--debit) }
 .amountfield.big { border-bottom-width: 2px; padding: 0 9px 2px; border-radius: var(--r-s) var(--r-s) 0 0 }
 .amountfield.big:focus-within { background: var(--card-2) }
-/* An auto-sized field takes its width from a hidden copy of its own text in the
-   same grid cell, not from the input's `size` attribute — `size` uses the
-   font's average advance, which overshoots JetBrains Mono digits badly (a
-   seven-figure amount came out wider than the phone). `minmax(0, max-content)`
-   lets a genuinely too-wide number scroll instead of overflowing. */
+/* Sized by a hidden copy of its text in the same cell: `size` overshoots mono
+   digits badly. A too-wide number scrolls instead of overflowing. */
 .amountfield.autosize { display: inline-grid; grid-template-columns: minmax(0, max-content); min-width: 0 }
 .amountfield.autosize > * { grid-area: 1 / 1 }
-/* 2px of caret room, carried by the mirror too so the boxes agree. */
+/* Caret room, on the mirror too. */
 .amountfield.autosize > .amount { padding-right: 2px }
-/* The input must contribute *no* width of its own, or the column sizes to an
-   <input>'s default 20-character intrinsic width instead of to the mirror. */
+/* No width of its own, or the column sizes to an <input>'s default 20 characters. */
 .amountfield.autosize > input.amount { width: 100%; min-width: 0 }
 .amountsizer { visibility: hidden; white-space: pre; min-width: 0; max-width: none; pointer-events: none }
 .amountfield:has(> input:disabled) { border-bottom-color: transparent }
@@ -1264,42 +1236,31 @@ dialog.scrim::backdrop { background: transparent }
 .field .amountfield { flex: 1 }
 .rateinput { width: 78px; background: transparent; border: 0; font: inherit; color: inherit;
   outline: none }
-/* In the rate dialog the field is the point of the screen rather than a note
-   under an amount, so it gets the room a long reciprocal needs. */
+/* Room for a long reciprocal. */
 .rateinput.wide { width: 100%; font-size: 15px; font-weight: 600; text-align: right }
 
 /* ---- the rate dialog ----
-   The same number said both ways round, one line each. `1 PLN =` and the unit
-   are fixed columns so the two fields line up under one another and the eye
-   reads down the pair rather than across it. */
+   The same number both ways round, the fields lined up in one column. */
 .ratepair { display: flex; flex-direction: column; gap: 9px; margin-top: 13px }
 .rateside { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline;
   gap: 8px; font-family: var(--f-mono); font-size: 13px }
 .ratelead, .rateunit { color: var(--muted); white-space: nowrap }
 .rateside .amountfield { min-width: 0 }
-/* Where the number came from, and the one tap that asks the feed again. */
 .ratefrom { display: flex; align-items: center; justify-content: space-between; gap: 10px;
   margin-top: 10px; font-size: 12px; color: var(--muted) }
 .ratefrom .chip { flex: none }
-/* A rate on the registry's rows. Mono like every other figure, but not the
-   colour money gets — a rate isn't credit or debit (ADR-0023). */
+/* Not money's colour: a rate isn't credit or debit. */
 .ratecell { font-family: var(--f-mono); font-size: 13px; font-weight: 600; color: var(--ink) }
-/* The typed amount and its converted figure, and the currency chip and rate
-   control beneath them: two grid rows so both amounts share a right edge and
-   both controls share a left edge, instead of each line centring on its own. */
+/* A grid, so both amounts share a right edge and both controls a left one. */
 .amtgrid { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, max-content);
   justify-content: center; align-items: center; column-gap: 7px; row-gap: 4px }
 .amtgrid > :nth-child(odd) { justify-self: end }
 .amtgrid > :nth-child(even) { justify-self: start }
-/* The entry form's rate line: a button opening where the group's rate lives.
-   Right-padded to the big amount's inset (9px wrapper + 2px caret room) so the
-   last digits line up. */
+/* Padded to the big amount's inset so the last digits line up. */
 .ratelink { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted);
   border: 0; background: none; padding: 0 11px 0 0 }
 .ratelink .bad { color: var(--debit) }
-/* Under the amount: where it came from — the scan that typed it. A third row of
-   `.amtgrid`, so it ends on the amount's last digit like `.ratelink`.
-   `justify-self` comes from the grid's odd/even rule. */
+/* The scan that typed the amount, ending on its last digit like `.ratelink`. */
 .amtnotes { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
   gap: 6px; margin-top: 3px; padding-right: 11px }
 .amtnote { font-size: 11px; color: var(--hl-ink); background: var(--hl);
@@ -1311,21 +1272,17 @@ button.amtnote:active { background: var(--hl-edge) }
 .field { display: flex; align-items: center; gap: 10px; background: var(--card-2);
   border: 1px solid var(--rule-soft); border-radius: var(--r-s); padding: 10px 12px }
 .field label { font-size: 13px; color: var(--muted); width: 62px; flex: none }
-/* "Received by" is the longest payer heading and wraps at the default width.
-   One width for all, so the row doesn't jump as the kind changes. */
+/* Fits "Received by", so the row doesn't jump as the kind changes. */
 .field label.fieldlabel, .fieldlabel {
   font-size: 13px; color: var(--muted); width: 92px; flex: none; white-space: nowrap }
 .field input, .field .pick { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font: inherit; font-size: 14px; font-weight: 600; color: var(--ink) }
 .field input::placeholder { color: var(--muted); font-weight: 500 }
-/* A value that is picked rather than typed. The whole line is the button, and
-   the chevron is the only mark that it opens something (ADR-0008). */
+/* Picked, not typed: the whole line is the button. */
 .field .pick { display: flex; align-items: center; gap: 8px; text-align: left }
 .field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .field .pick .pchev { color: var(--muted); flex: none }
-/* The payer field, single-payer state: who paid and the door to more payers
-   share one row. Each control carries the padding itself rather than `.field`,
-   so a press lights only that control. */
+/* Two controls in one field, each carrying its padding so a press lights only it. */
 .field.field-row { padding: 0; gap: 0 }
 .field-row .pick, .field-row .pick-sub {
   display: flex; align-items: center; padding: 10px 12px;
@@ -1333,81 +1290,45 @@ button.amtnote:active { background: var(--hl-edge) }
 .field-row .pick:active, .field-row .pick-sub:active {
   background-image: linear-gradient(var(--press), var(--press)); transition-duration: 0s }
 .field-row .pick { gap: 10px }
-/* The door shrinks to its own text and gives the rest to the name, which is
-   the part that can be long; its own padding is what separates the two. */
 .field-row .pick-sub { flex: none; gap: 4px; padding-left: 6px;
   font-size: 12px; font-weight: 500; color: var(--muted) }
 
-/* ---- save refusal ----
-   A tap on Save that can't go through blooms the offending field red — **the
-   whole of it**, ground included; a red edge around grey writing gets missed.
-   No keyframe names 0% or 100%, so both ends come from the element's computed
-   style and it fades back to whatever the field was, in both themes and while
-   focused.
-   Lopsided on purpose: red in ~90ms, held ~180ms, ~330ms easing out. Fast
-   enough to read as caused by the tap; a symmetric flash reads as a scold.
-   Two names (-a/-b, alternated per refusal) are the restart mechanism: an
-   unchanged class list wouldn't replay it, and a React `key` would remount the
-   <input> and take focus and IME composition with it.
-   The form removes the class when the flash ends, and must: the class is also
-   what keeps the pressed button spent (`lib/refusal.ts`). Left on, Save stays
-   greyed for good. */
-/* Text and, through `currentColor`, the icons beside it — the words on a row
-   the grid is pointing at, or the label on a control that is what's missing. */
+/* ---- save refusal (lib/refusal.ts) ----
+   The whole field blooms red: a red edge around grey writing gets missed. No
+   keyframe names 0% or 100%, so it fades back to whatever the field was.
+   Lopsided, fast in and slow out: a symmetric flash reads as a scold. -a/-b
+   alternate so a second refusal replays. */
 @keyframes refuse-text-a { 15%, 45% { color: var(--debit) } }
 @keyframes refuse-text-b { 15%, 45% { color: var(--debit) } }
-/* For writing on a ground that has itself gone `--debit`: `--brand-ink` is the
-   one ink token readable on it in both themes. */
+/* `--brand-ink` is the one ink readable on `--debit` in both themes. */
 @keyframes refuse-ink-a { 15%, 45% { color: var(--brand-ink) } }
 @keyframes refuse-ink-b { 15%, 45% { color: var(--brand-ink) } }
-/* The amount is a field, so its rule goes with its plate: the figure ends up
-   in a red block capped by the red line it is typed on. */
 @keyframes refuse-plate-a { 15%, 45% {
   background-color: var(--debit-wash); border-bottom-color: var(--debit) } }
 @keyframes refuse-plate-b { 15%, 45% {
   background-color: var(--debit-wash); border-bottom-color: var(--debit) } }
 
-/* **The fill**: ground, border and label all go red at once. For controls with
-   no edge to bloom (the ink-block doors, the rate badge) and for fields.
-   `--debit` has `--brand`'s polarity in both themes, so `--brand-ink` reads on
-   top of it — ink blocks' labels need no animation of their own; a field's do
-   (`refuse-ink`). `border-color` goes too: a leftover frame reads as a
-   half-refusal. */
+/* Ground, border and label at once: a leftover frame reads as a half-refusal. */
 @keyframes refuse-fill-a { 15%, 45% {
   background: var(--debit); border-color: var(--debit); color: var(--brand-ink) } }
 @keyframes refuse-fill-b { 15%, 45% {
   background: var(--debit); border-color: var(--debit); color: var(--brand-ink) } }
 
-/* The amount: plate, rule and figure. The plate carries it, since the usual
-   "0" is a `::placeholder`, which **cannot be animated** (below). The input's
-   colour is for a typed nought, which is refused too. */
+/* The plate carries it: the "0" is a `::placeholder`, which can't be animated. */
 .amountfield.flash-a { animation: refuse-plate-a .6s ease-in-out }
 .amountfield.flash-b { animation: refuse-plate-b .6s ease-in-out }
 .amountfield.flash-a input { animation: refuse-text-a .6s ease-in-out }
 .amountfield.flash-b input { animation: refuse-text-b .6s ease-in-out }
-/* A field fills whole: ground, border, label ("What:" says *which* field) and
-   any writing in it (`refuse-fill`, below). */
 .field.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .field.flash-b { animation: refuse-fill-b .6s ease-in-out }
 .field.flash-a label, .field.flash-a input { animation: refuse-ink-a .6s ease-in-out }
 .field.flash-b label, .field.flash-b input { animation: refuse-ink-b .6s ease-in-out }
-/* On the Items tab what is missing is a step, so the control that takes it —
-   the scan pair or the door to the grid — fills, labels and icons with it. */
-/* The add row's plus, when a name is still unfiled in the field
-   (components/name-adder.tsx). It fills: 15px of glyph is too little ink for a
-   colour change to carry a refusal. */
+/* Controls fill: 15px of glyph is too little ink for a colour change to carry it. */
 .btn-pair.flash-a, .btn.flash-a, .amtnote.flash-a, .iconbtn.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .btn-pair.flash-b, .btn.flash-b, .amtnote.flash-b, .iconbtn.flash-b { animation: refuse-fill-b .6s ease-in-out }
 
-/* When the name field itself is what's wrong — empty, or a name already on the
-   list — the row blooms instead (components/name-adder.tsx): its box washes
-   `--debit-wash` inside a `--debit` edge, the writing goes red — the
-   placeholder for empty, the input's colour for typed — and the plus fills,
-   pointing at the press that answers it. The box is the row's resting one
-   (above), so the wash moves nothing.
-   A `::placeholder` animation ends as a pseudo-element event, which refusal
-   handlers ignore; the row's and the input's own are what tell the screen the
-   flash is over. */
+/* A name field that is empty or taken: the row washes and the plus fills,
+   pointing at the press that answers it. */
 @keyframes refuse-wash-a { 15%, 45% { background-color: var(--debit-wash); border-color: var(--debit) } }
 @keyframes refuse-wash-b { 15%, 45% { background-color: var(--debit-wash); border-color: var(--debit) } }
 .addrow.flash-a { animation: refuse-wash-a .6s ease-in-out }
@@ -1417,31 +1338,19 @@ button.amtnote:active { background: var(--hl-edge) }
 .addrow.flash-a .iconbtn { animation: refuse-fill-a .6s ease-in-out }
 .addrow.flash-b .iconbtn { animation: refuse-fill-b .6s ease-in-out }
 
-/* **A `::placeholder` cannot be animated.** Blink silently drops the animation,
-   so the placeholder is mixed from `currentColor` instead, which the input's
-   animation moves. 47% of it matches `--muted` at rest on a light ground. The
-   amount's "0" keeps `--muted` and leaves it to the plate: at .35 opacity no
-   fixed share of `currentColor` is both that faint at rest and visible at peak. */
+/* Blink drops a `::placeholder` animation, so it is mixed from the animated
+   `currentColor`; 47% matches `--muted` at rest. */
 .field.flash-a input::placeholder, .field.flash-b input::placeholder,
 .addrow.flash-a .addname::placeholder, .addrow.flash-b .addname::placeholder {
   color: color-mix(in srgb, currentColor 47%, transparent) }
 
-/* A refused Done on the who-had-what grid blooms every line nobody has been
-   given: its words go `--debit` — all three text parts named, because two carry
-   their own `--muted` — and so does every empty cell, below. No wash across the
-   row: the cells say it, where to tap included.
-   The class is on the row, so the cells' pointer animation must stop
-   propagating or it ends the refusal early (components/who-had-what.tsx); the
-   words are what end it. */
+/* A refused Done blooms every line nobody has been given. All three text parts
+   are named: two carry their own `--muted`. */
 .itemtable tr.flash-a .itemname, .itemtable tr.flash-a .itemamount,
 .itemtable tr.flash-a .itemqty { animation: refuse-text-a .6s ease-in-out }
 .itemtable tr.flash-b .itemname, .itemtable tr.flash-b .itemamount,
 .itemtable tr.flash-b .itemqty { animation: refuse-text-b .6s ease-in-out }
-/* And every empty cell in it plays its own press in red: the 32px tile in
-   `--debit-wash` with the square solid `--debit` inside. An empty cell draws
-   nothing at rest, so without this the row says what is missing but not where
-   to tap — and the tap's own feedback is the shape that says "tap here". Both
-   ends are stopped at the cell like the pointer's. */
+/* Each empty cell plays its own press in red, saying where to tap. */
 @keyframes refuse-square-a { 15%, 45% { background-color: var(--debit) } }
 @keyframes refuse-square-b { 15%, 45% { background-color: var(--debit) } }
 @keyframes refuse-tile-a { 15%, 45% { opacity: 1; background-color: var(--debit-wash) } }
@@ -1451,10 +1360,7 @@ button.amtnote:active { background: var(--hl-edge) }
 .itemtable tr.flash-a .itemwho > .itemcell:has(.dot.off)::before { animation: refuse-tile-a .6s ease-in-out }
 .itemtable tr.flash-b .itemwho > .itemcell:has(.dot.off)::before { animation: refuse-tile-b .6s ease-in-out }
 
-/* The one exemption from the reduced-motion clamp, deliberately: that query is
-   about movement, and this is a colour settling — clamped, it is no signal.
-   Wins on specificity over the clamp's `*`. Scoped to `animation-duration`:
-   `.amountfield` also transitions border-color for focus, which stays clamped. */
+/* Exempt from the motion clamp: a colour settling, and clamped it is no signal. */
 @media (prefers-reduced-motion: reduce) {
   .amountfield.flash-a, .amountfield.flash-b,
   .field.flash-a, .field.flash-b,
@@ -1476,15 +1382,11 @@ button.amtnote:active { background: var(--hl-edge) }
 }
 
 /* ---- balance bars ---- */
-/* One grid for every row, each row a subgrid of it, so the figures share one
-   column as wide as the longest and every bar ends at the same place. Below
-   Chrome 117 `subgrid` is dropped and each row sizes its own, as before. */
+/* Subgrid, so every bar ends at the same place. */
 .balrows { display: grid; grid-template-columns: 1fr auto; column-gap: 11px; padding: 14px 0 4px }
 .balrow { position: relative; display: grid; grid-column: 1 / -1;
   grid-template-columns: 1fr auto; grid-template-columns: subgrid; gap: 11px;
   align-items: center; padding: 9px 16px }
-/* A grid child won't shrink below its content without min-width: 0, and the
-   40 characters maxLength allows can be one unbroken word. */
 .balrow > * { min-width: 0 }
 .balname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .balgone { margin-left: 6px; font-size: 11px; font-weight: 500; color: var(--ink-2) }
@@ -1495,10 +1397,7 @@ button.amtnote:active { background: var(--hl-edge) }
 .axis { height: 100%; width: 1px; background: var(--rule); position: absolute; left: 50%; top: 0 }
 
 /* ---- version-history timeline ---- */
-/* The rail is drawn a piece per revision, dot centre to the next dot's centre,
-   so it ends on the oldest dot: that dot is where the history begins, and a
-   line running on past it began nowhere. `last-of-type`, since the new-edits
-   list ends in a link rather than a revision. */
+/* Drawn dot to dot, so the rail ends where the history begins. */
 .tl { position: relative; padding-left: 26px }
 .tle { position: relative; padding: 0 0 15px }
 .tle::before { content: ""; position: absolute; left: -21.5px; top: 5px; width: 9px; height: 9px;
@@ -1514,57 +1413,41 @@ button.amtnote:active { background: var(--hl-edge) }
   flex-direction: column; gap: 2px }
 .was { color: var(--debit); text-decoration: line-through; text-decoration-thickness: 1px; opacity: .8 }
 .now2 { color: var(--credit) }
-/* The rest of what one revision changed: an entry is saved whole, so a revision
-   often moves several fields, and a moved amount must never go missing. */
+/* A revision often moves several fields; a moved amount must never go missing. */
 .also { margin-top: 5px; display: flex; flex-direction: column; gap: 2px }
 .alsoi { font-family: var(--f-mono); font-size: 11px; display: flex; flex-wrap: wrap;
   align-items: baseline; gap: 6px }
 .alsoi .lbl { font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase;
   color: var(--muted) }
 .note { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px }
-/* Where a whole-group revision leads: the entry it was about, as a link in
-   the run of the text rather than a button under it — `.aboutlink`'s
-   underline. Padded past the text on every side so the press wash has room,
-   and pulled back by the same so the words still line up with the sentence. */
+/* Padded for the press wash and pulled back so the words stay in line. */
 .tlink { display: flex; width: fit-content; align-items: center; gap: 3px;
   margin: 1px -6px -3px; padding: 3px 6px; border-radius: var(--r-s);
   font-size: 12.5px; font-weight: 600; color: var(--ink);
   text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--rule) }
 .tlink svg { color: var(--muted); flex: none }
 
-/* A note under a control, explaining what it does and how far it reaches. */
 .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 8px 2px 0 }
 
-/* ---- the demo's mark (components/demo.tsx) ----
-   The one card that never folds or dismisses: every demo screen works, so
-   "this is not yours" has to stay put. A left rule sets it apart, since colour
-   is spent on money (ADR-0023). */
+/* ---- the demo's mark ----
+   Never folds: every demo screen works, so "this is not yours" stays put. */
 .demomark { border-left: 2px solid var(--muted); border-radius: var(--r-s) }
 .demomarkhead { display: flex; align-items: center; gap: 6px; color: var(--ink) }
 
 /* ---- skeletons ----
-   Hold the shape of the rows to come — same height, same columns — so arrival
-   changes text, not layout. Fixed widths so the export and the browser agree;
-   the pulse is staggered, since rows breathing in unison look broken. */
+   Arrival changes text, not layout. Staggered: rows breathing in unison look broken. */
 .skel { background: var(--card-3); border-radius: 2px;
   animation: skelpulse 1.4s ease-in-out infinite; animation-delay: var(--d, 0s) }
 @keyframes skelpulse { 0%, 100% { opacity: 1 } 50% { opacity: .42 } }
 .skelrow { pointer-events: none }
-/* A real last row drops its divider because the list ends there. A skeleton's
-   never does: something always follows it — more rows, or the New group row. */
+/* Something always follows a skeleton. */
 .skelrow:last-child { border-bottom: 1px solid var(--rule) }
 .skelrow .rmain { display: flex; flex-direction: column; gap: 6px }
 .skelrow .ramt { display: flex; flex-direction: column; gap: 5px; align-items: flex-end }
-/* A bar inside a line of text (`SkelText`), a little under the cap height and
-   centred on it, the way the words it stands for would sit. */
 .skeltext { display: inline-block; height: .72em; vertical-align: middle; max-width: 100% }
-/* The you-owe card and the date lines hold their place, and nothing in them is
-   pressable yet. The chevron is furniture, so it waits in the placeholder grey. */
 .skelsum, .skelday { pointer-events: none }
 .skelsum .mysumchev { color: var(--card-3) }
-/* The ledger's hand-off (`SkeletonVeil`): the loading frame, opaque, over the
-   screen that replaced it, fading out. Under the FABs, which both frames share,
-   and never in the way of a tap. */
+/* Under the FABs, which both frames share. */
 .skelveil { position: absolute; inset: 0; z-index: 3; background: var(--card);
   display: flex; flex-direction: column; pointer-events: none;
   animation: skelveil .12s ease-out forwards }
@@ -1576,40 +1459,29 @@ button.amtnote:active { background: var(--hl-edge) }
 .empty b { display: block; font-size: 14px; color: var(--ink); letter-spacing: -.02em;
   margin-bottom: 4px; font-weight: 700 }
 /* ---- import ----
-   The Tricount link: one line, monospaced, so you can see it came over whole.
-   `components/copy-link.tsx`'s box is spelled the same above — both rules land
-   on both elements, so a property added here lands there too. */
+   Both `.linkbox` rules land on both elements: a property added here lands there too. */
 .linkbox { display: block; width: 100%; margin-top: 6px; background: var(--card-2);
   color: var(--ink); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   padding: 9px 11px; font-family: var(--f-mono); font-size: 11.5px; line-height: 1.5;
   text-overflow: ellipsis; outline: none }
 .linkbox::placeholder { color: var(--muted) }
-/* What a fetch costs, under its button (app/import/page.tsx). Qualified by the
-   section, since `.aboutsect p` would otherwise set the size. Centred and
-   balanced under the button. */
+/* Qualified, or `.aboutsect p` sets the size. */
 .aboutsect p.fineprint { margin: 9px 2px 0; font-size: 11px; line-height: 1.45;
   color: var(--muted); text-align: center; text-wrap: balance }
 
-/* Turnstile's widget — normally no pixel at all (`interaction-only`). When a
-   challenge does need a tap it must be reachable, or the scan waits out its
-   timeout: above the bottom bar, over everything. */
+/* Normally invisible; a challenge needing a tap must be reachable. */
 .turnstile { position: fixed; left: 50%; z-index: 7;
   bottom: calc(env(safe-area-inset-bottom) + 76px); transform: translateX(-50%) }
 
-/* A suggested payment on the balances screen. It wears the chevron of the
-   ledger card that led here, since the row is a card that opens something. */
 .suggestrow { display: flex; align-items: center; gap: 9px; padding: 11px 8px 11px 12px;
   position: relative; width: 100%; text-align: left }
 .suggestchev { color: var(--ink); flex: none; margin-left: 2px }
 
-/* ---- settling up, in a dialog
-   A suggested payment is confirmed in a card, not the entry form: nothing here
-   is yours to change. Two names, the arrow and the figure — no avatars. */
+/* ---- settling up: a card, not the form, since nothing here is yours to change ---- */
 .settle { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 5px 0 1px }
 .settleflow { display: flex; align-items: center; justify-content: center; gap: 11px;
   max-width: 100% }
-/* A long name is cut rather than wrapped: the two sides read as one line, and
-   a name that wrapped would push the arrow off it. */
+/* Cut, not wrapped: a wrapped name pushes the arrow off the line. */
 .settlename { font-size: 16.5px; font-weight: 600; color: var(--ink); min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .settlearrow { color: var(--muted); flex: none }
