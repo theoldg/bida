@@ -299,6 +299,9 @@ await touristPage.goto(`${base}/demo`);
 // only mean the ledger never drew.
 const marked = await touristPage.locator(".demomark").waitFor({ timeout: PATIENCE })
   .then(() => true, () => false);
+// Where it was when the mark didn't come: the only clue a red run leaves.
+const stuck = marked ? "" : ` (at ${new URL(touristPage.url()).pathname}`
+  + `${await touristPage.locator(".skelrow").count() ? ", on its skeleton" : ""})`;
 const demoBanner = () => touristPage.getByRole("button", { name: "Keep your groups on this phone" });
 const quietLedger = await demoBanner().count() === 0;
 await openGroupsList(touristPage, base);
@@ -306,7 +309,7 @@ const listed = await touristPage.locator(".rows .row").count();
 const quietList = await demoBanner().count() === 0;
 report(marked && quietLedger && listed > 0 && quietList,
   "the demo's ledger, and a list holding only the demo, ask nothing about the home screen",
-  `${listed} rows`);
+  `marked ${marked}${stuck} · ledger quiet ${quietLedger} · ${listed} rows · list quiet ${quietList}`);
 
 // ---- which one are you, in a tab ------------------------------------------
 // Someone who already has the app can't be told apart from a tab, so the claim

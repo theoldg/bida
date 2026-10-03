@@ -14,8 +14,8 @@ import { route } from "@/lib/group-link";
  * copies.
  *
  * **Nothing in the app links here** — not the empty groups list, not a start
- * tile, not `/about`, not the README. The demo is a group somebody sends you
- * to; a door inside the app would make it a feature of the app.
+ * tile, not `/about`. The demo is a group somebody sends you to (the README
+ * does, being outside the app); a door inside it would make it a feature.
  *
  * A screen, not a router redirect, because opening it is a write: this waits on
  * Dexie and the skeleton is what the wait looks like. `replace`, so back out of
