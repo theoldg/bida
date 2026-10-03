@@ -1,25 +1,18 @@
 /**
- * "Add it to your home screen" — the browser state behind the install nudge.
- *
  * Chrome fires `beforeinstallprompt` once, early, and only that event can open
  * the sheet later — so the listener goes on at module load, not in an effect.
- * Safari fires nothing: on iOS the share sheet is the only path, hence the
- * "manual" offer.
  */
 
 import { keepNote } from "./diag";
 import { formatInvites, type CarriedGroup } from "./group-link";
 import { signal } from "./signal";
 
-/** What, if anything, this browser lets us offer. */
 export type InstallOffer =
-  /** Already running from the home screen. */
   | "installed"
   /** A captured prompt: one tap installs it. */
   | "ready"
   /** No API — say where the button is (iOS). */
   | "manual"
-  /** Nothing to offer: a desktop browser, or one that neither installs nor tells us. */
   | "none";
 
 interface InstallPromptEvent extends Event {
@@ -27,11 +20,7 @@ interface InstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-/**
- * The decision itself, as a function of three facts — pure, so the awkward
- * combinations (iOS Safari already installed, Chrome that never fired) are
- * testable without a browser.
- */
+/** Pure, so the awkward combinations are testable without a browser. */
 export function offerFrom(
   { standalone, hasPrompt, ios }: { standalone: boolean; hasPrompt: boolean; ios: boolean },
 ): InstallOffer {
@@ -45,11 +34,7 @@ export function looksIos(ua: string, platform: string, touchPoints: number): boo
   return /iPad|iPhone|iPod/.test(ua) || (platform === "MacIntel" && touchPoints > 1);
 }
 
-/**
- * The iOS browser's name, for copy that is read at a glance. Every other iOS
- * browser (Firefox, Edge) marks itself, and an in-app web view drops the
- * `Safari/` token — so only an unmarked `Safari/` is Safari.
- */
+/** Other iOS browsers mark themselves and web views drop `Safari/`, so only an unmarked one is Safari. */
 export function iosBrowser(ua: string): "Safari" | "Chrome" | undefined {
   if (/CriOS\//.test(ua)) return "Chrome";
   if (/Safari\//.test(ua) && !/FxiOS|EdgiOS|OPiOS|OPT\/|YaBrowser|DuckDuckGo|GSA\//.test(ua)) return "Safari";
@@ -62,8 +47,7 @@ const { emit: announce, subscribe } = signal();
 
 if (typeof window !== "undefined") {
   window.addEventListener("beforeinstallprompt", (event) => {
-    // Without this Chrome shows its own mini-infobar, which is the OS menu
-    // version of the button we are about to draw ourselves.
+    // Or Chrome shows its own mini-infobar beside our button.
     event.preventDefault();
     captured = event as InstallPromptEvent;
     announce();
@@ -87,17 +71,12 @@ export function installOffer(): InstallOffer {
   });
 }
 
-/**
- * Running from the home screen on iOS, where a tapped join link opens in
- * Safari — whose storage isn't the app's — so the groups list offers to paste
- * one instead. Android opens in-scope links in the installed app.
- */
+/** Where a tapped join link opens in Safari, whose storage isn't the app's. */
 export function iosHomeScreenApp(): boolean {
   if (typeof window === "undefined") return false;
   return isStandalone() && looksIos(navigator.userAgent, navigator.platform, navigator.maxTouchPoints);
 }
 
-/** Running as an installed app rather than in a browser page, on any platform. */
 export function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(display-mode: standalone)").matches
@@ -105,10 +84,7 @@ export function isStandalone(): boolean {
     || (navigator as Navigator & { standalone?: boolean }).standalone === true;
 }
 
-/**
- * Open the browser's install sheet; resolves once answered. The event is spent
- * either way (one prompt per event); Chrome fires a fresh one if it offers again.
- */
+/** The event is spent either way; Chrome fires a fresh one if it offers again. */
 export async function promptInstall(): Promise<boolean> {
   const event = captured;
   if (!event) return false;
@@ -128,15 +104,10 @@ export interface WebManifest {
 }
 
 /**
- * The manifest an iOS tab's home-screen icon is added with: the app's own,
- * starting at `/install#<carry>`, so the icon's first launch brings every group
- * (docs/ios.md).
- *
- * Every URL absolute: it is handed over as a `blob:`, against which relative
- * members can't resolve. `id` is pinned to the original's, so it stays one app.
- *
- * **Self-contained on purpose** — no imports, helpers or spread: its source is
- * pasted into `manifestScript`, which runs before any bundle.
+ * Starts at `/install#<carry>`, so the icon's first launch brings every group
+ * (docs/ios.md). Every URL absolute, since a `blob:` can't resolve relative
+ * ones. **Self-contained** — no imports or spread: its source is pasted into
+ * `manifestScript`.
  */
 export function carriedManifest(base: WebManifest, carry: string, origin: string): WebManifest {
   return Object.assign({}, base, {
@@ -152,16 +123,10 @@ const STATIC_MANIFEST = "/manifest.webmanifest";
 const CARRY = "bida.carry";
 
 /**
- * The app's manifest link, written by an inline script at the top of every
- * page's head — the HTML carries none.
- *
- * **Safari takes the manifest the page *loaded* with** — a link swapped 41ms in
- * is ignored. So in an iOS tab it is written before anything reads the head,
- * from something synchronous: localStorage, kept by `keepCarried`. Elsewhere,
- * or with no groups, it is the static manifest.
- *
- * `data-carry` records what it was built with (`headIsStale`). `looksIos` and
- * `isStandalone` are restated here for the same reason as above.
+ * An inline script at the top of every head: Safari takes the manifest the
+ * page *loaded* with, and ignores a link swapped 41ms in. So it reads
+ * localStorage, the one synchronous store. `looksIos` and `isStandalone` are
+ * restated inside for the same reason `carriedManifest` is self-contained.
  */
 export function manifestScript(base: WebManifest): string {
   return `(function(){var l=document.createElement("link");l.rel="manifest";l.href="${STATIC_MANIFEST}";`
@@ -173,10 +138,7 @@ export function manifestScript(base: WebManifest): string {
     + `}catch(e){}document.head.appendChild(l)})()`;
 }
 
-/**
- * Keep the iOS tab's copy of what an icon would carry, in localStorage for the
- * next load's manifest. Only an iOS tab needs this second copy.
- */
+/** For the next load's manifest. Only an iOS tab needs this second copy. */
 export function keepCarried(groups: readonly CarriedGroup[]): void {
   if (installOffer() !== "manual") return;
   const carry = formatInvites(groups);
@@ -190,11 +152,7 @@ export function keepCarried(groups: readonly CarriedGroup[]): void {
   keepNote("install.carry", `${groups.length} groups, ${groups.filter((g) => g.me).length} named`);
 }
 
-/**
- * Whether this page's manifest was built from a carry that has since changed.
- * Safari won't read a swapped link, so only a reload fixes it;
- * `reloadCostsNothing` (lib/update.ts) says where that is harmless.
- */
+/** Safari won't read a swapped link, so only a reload fixes a stale one. */
 export function headIsStale(): boolean {
   const link = document.head.querySelector('link[rel="manifest"]');
   const built = link?.getAttribute("data-carry");
