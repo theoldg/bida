@@ -171,7 +171,7 @@ The rules that follow from it:
 - **Whoever is paying for the scan is the id in the path.** A group, or — for
   a quick split — the phone, which carries an id and a secret shaped like a
   group's and introduces the pair with an empty `POST …/ops` before each scan
-  (`lib/quick.ts`, ADR-0035). One per phone rather than one per bill, because
+  (`lib/scan/credential.ts`, ADR-0035). One per phone rather than one per bill, because
   a stable caller is the unit the budget counts, and that path parameter is
   what it keys on.
 

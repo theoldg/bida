@@ -16,10 +16,8 @@ import { route } from "@/lib/group-link";
 import { useDevice } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
 import { useRefusal } from "@/lib/refusal";
-import {
-  addQuickPerson, clearQuickPeople, registerScanCredential, removeQuickPerson,
-  useQuickPeople, useScanCredential,
-} from "@/lib/quick";
+import { addQuickPerson, clearQuickPeople, removeQuickPerson, useQuickPeople } from "@/lib/quick";
+import { registerScanCredential, useScanCredential } from "@/lib/scan/credential";
 
 /**
  * A bill split with people who are not a group (ADR-0035): who is splitting,

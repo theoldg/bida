@@ -16,7 +16,7 @@ import { unfoldAll } from "../lib/scan/items";
 import { billAsText } from "../lib/scan/text";
 import { BillTextDialog } from "./bill-text-dialog";
 import { ScanBusy } from "./scan-bar";
-import type { ScanAs } from "../lib/quick";
+import type { ScanAs } from "../lib/scan/credential";
 import { warmTurnstile } from "../lib/scan/turnstile";
 import { warmBillFinder } from "../lib/scan/find-bill";
 

@@ -9,7 +9,8 @@ import { copy } from "@/lib/copy";
 import { saveDraft, useDraft } from "@/lib/draft";
 import { bare } from "@/lib/format";
 import { route } from "@/lib/group-link";
-import { useQuickPeople, useScanCredential } from "@/lib/quick";
+import { useQuickPeople } from "@/lib/quick";
+import { useScanCredential } from "@/lib/scan/credential";
 
 /**
  * Who had what, on a bill that belongs to no group (ADR-0035). The same grid

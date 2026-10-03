@@ -9,7 +9,7 @@ import { copy } from "@/lib/copy";
 import { blankDraft, draftSeedKey, newEntryKey, seedDraft } from "@/lib/draft";
 import { route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
-import { useScanAs } from "@/lib/quick";
+import { useScanAs } from "@/lib/scan/credential";
 import { clearScan, getLiveScan } from "@/lib/scan/live";
 
 /**

@@ -11,7 +11,7 @@ import { handOffReceiptTotal } from "@/lib/scan/items";
 import { Card, Chip } from "@/components/bits";
 import { AmountInput, clipAmountToCurrency } from "@/components/amount-input";
 import { useReceiptScan } from "@/components/receipt-scan";
-import { useScanAs } from "@/lib/quick";
+import { useScanAs } from "@/lib/scan/credential";
 import { SplitEditor } from "@/components/split-editor";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ChoiceDialog, ConfirmDialog } from "@/components/dialog";

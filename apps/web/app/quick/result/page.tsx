@@ -14,9 +14,8 @@ import { bare } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useFlash } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
-import {
-  clearQuickPeople, quickShares, quickSummaryText, useQuickPeople, useScanCredential,
-} from "@/lib/quick";
+import { clearQuickPeople, quickShares, quickSummaryText, useQuickPeople } from "@/lib/quick";
+import { useScanCredential } from "@/lib/scan/credential";
 
 /**
  * What the bill came to, per person — the end of a quick split (ADR-0035).
