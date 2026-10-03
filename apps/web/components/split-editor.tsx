@@ -17,41 +17,20 @@ import type { SplitTab } from "../lib/draft";
 import { tapAmount, tapLabel } from "../lib/tap-amount";
 
 /**
- * Who the money was spent on, and how much each of them owes for it.
- *
- * **Inline on the expense form, never a route of its own**: an expense is one
- * thought, and a round trip answers a question the form was already asking.
- *
- * Three arithmetic modes. `SplitSpec`'s `percent` variant still folds and
- * renders for old expenses, but **nothing new is written in it** — touching
- * any tab converts one away for good.
- *
- * A fourth tab, "Items", assigns a scanned bill (`/g/entry/items`, ADR-0016)
- * and produces a `receipt` split, a mode of its own. **This editor never
- * writes one** — it arrives as `receiptSplit`.
- *
- * **Each tab holds its own answer.** The tab bar only reports a tap; the draft
- * hands a newly opened tab its starting point (`openSplitTab`), once.
+ * Inline on the form, never a route: an expense is one thought. Nothing new is
+ * written as `percent`; touching any tab converts one away. The receipt split
+ * is never written here: it arrives as `receiptSplit` (ADR-0016). The tab bar
+ * only reports a tap; the draft hands a new tab its start (`openSplitTab`).
  */
 
-/** The three arithmetic tabs, in display order. "Items" is the fourth. */
 const MODES = ["equal", "shares", "exact"] as const;
 
 interface ReceiptTabProps {
   items: { label: string; amount: string }[] | null;
-  /** The scan, whole: its state, its clock and its two doors — `useReceiptScan`. */
   scan: ReceiptScan;
-  /**
-   * This tab hasn't produced a split yet (`checkEntry`'s `receiptMissing`). It
-   * suppresses the arithmetic verdict underneath, and a refused Save blooms the
-   * control instead (`flash`).
-   */
+  /** `checkEntry`'s `receiptMissing`: suppresses the arithmetic verdict underneath. */
   missing: boolean;
-  /**
-   * The refusal flash's class, for whichever control takes the outstanding step
-   * — the scan pair with no bill, the grid's door with nobody assigned. Empty
-   * while no flash runs.
-   */
+  /** For whichever control takes the outstanding step. Empty while no flash runs. */
   flash: string;
   onFlashEnd: (e: React.AnimationEvent) => void;
   editItemsHref: string;
@@ -60,72 +39,45 @@ interface ReceiptTabProps {
 export function SplitEditor({ members, me, title, amountMinor, amountCurrency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt }: {
   members: Member[];
   me: string | undefined;
-  /** "Split" for both an expense and an income, "To" for a transfer — `copy.entryKind.split`. */
   title: string;
-  /**
-   * The entry's amount in its own currency, and that currency — what the
-   * split divides and every share is shown in, as the payers are: they are
-   * the figures on the bill, and they need no rate.
-   */
+  /** In the entry's own currency, as the payers are: the figures on the bill need no rate. */
   amountMinor: number;
   amountCurrency: string;
-  /** What the arithmetic tab now showing holds — this editor edits only it. */
+  /** The arithmetic tab now showing — the only thing this edits. */
   spec: SplitSpec;
-  /**
-   * What the receipt reads off its bill, or null while the grid is unfilled.
-   * Drawn, never edited here.
-   */
+  /** Null while the grid is unfilled. */
   receiptSplit: SplitSpec | null;
   seed: string;
   onChange: (next: ArithmeticSplit) => void;
   tab: SplitTab;
   onTabChange: (next: SplitTab) => void;
-  /**
-   * The Items tab, or null where a bill makes no sense — an income has no
-   * receipt.
-   */
+  /** Null on an income, which has no receipt. */
   receipt: ReceiptTabProps | null;
 }) {
   const opts = { tiebreakSeed: seed };
-  // A legacy percent split shows its rows and its numbers, but offers no mode
-  // button of its own: touching any of the three arithmetic tabs converts it away.
+  // Shows its numbers but has no tab: touching any tab converts it away.
   const legacy = spec.mode === "percent";
   const showReceipt = tab === "receipt" && receipt !== null;
-  // Every read-out is in the entry's own currency, the one the amount above
-  // and the payers are typed in: a WUP bill cut into CRD shares mixes two
-  // units on one form. The base figure is the entry screen's to show, beside it.
-  const own = !showReceipt && spec.mode === "exact";
-  const divided = amountMinor;
-  const shownCurrency = amountCurrency;
-  // Receipt draws its own split, and none until its grid is filled: an
-  // arithmetic tab's split here would be a verdict on a tab nobody is using.
+  const typingAmounts = !showReceipt && spec.mode === "exact";
+  // Receipt draws none until its grid is filled: the spec underneath isn't what a save would write.
   const shown: SplitSpec | null = showReceipt ? receiptSplit : spec;
   const included = new Set(shown ? splitParticipants(shown) : []);
-  const check = shown ? validateSplit(divided, shown, opts) : null;
+  const check = shown ? validateSplit(amountMinor, shown, opts) : null;
 
   let shares: Record<string, number> = {};
   if (shown) {
-    try { shares = resolveSplit(divided, shown, opts).shares; } catch { /* incomplete */ }
+    try { shares = resolveSplit(amountMinor, shown, opts).shares; } catch { /* incomplete */ }
   }
 
-  // Receipt's own shortfall outranks the arithmetic: while the tab has no
-  // split of its own, whatever spec is underneath (often "equal") is not what
-  // is being judged, so its verdict would be a verdict on nothing.
+  // `splitFooter`, not `check`, decides: a zero total is satisfied but never gets a tick.
+  // A receipt short of its split says nothing here; a refused Save blooms its control.
   const receiptMissing = showReceipt && (receipt?.missing ?? false);
-  // **`splitFooter`, not `check`, decides the wording and whether there is a
-  // footer**: a zero total is arithmetically satisfied and must never show a
-  // tick.
-  //
-  // An Items tab short of its split says nothing here — a refused Save blooms
-  // the control. **It must never fall through to the arithmetic underneath**:
-  // that spec is not what a save would write.
   const foot = receiptMissing ? null
-    : check !== null ? splitFooter(check, shownCurrency) : null;
-  // "N of total allocated" only means something when typing amounts: Evenly
-  // and As parts land on the total by construction, and Receipt's is derived.
-  // Every mode still surfaces a real problem (nobody, over-allocated, no total).
+    : check !== null ? splitFooter(check, amountCurrency) : null;
+  // "N of total allocated" only means something when typing amounts; every
+  // mode still surfaces a real problem.
   const showFooter = foot !== null
-    && (showReceipt ? !foot.ok : (own || !foot.ok));
+    && (showReceipt ? !foot.ok : (typingAmounts || !foot.ok));
 
   function toggle(memberId: string) {
     const next = new Set(included);
@@ -138,7 +90,6 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
         if (next.has(memberId)) weights[memberId] = 1; else delete weights[memberId];
         return onChange({ mode: "shares", weights });
       }
-      // "As amounts" has no toggle: `setExact` is the whole control.
       case "exact": return;
       case "percent": {
         const bps = { ...spec.bps };
@@ -156,10 +107,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     onChange({ mode: "shares", weights });
   }
 
-  /**
-   * In "as amounts" the figure *is* the statement: having one puts you in the
-   * split, clearing it takes you out. **No tick to set first.**
-   */
+  /** Having a figure puts you in the split, clearing it takes you out. No tick to set first. */
   function setExact(memberId: string, minor: number) {
     if (spec.mode !== "exact") return;
     const amounts = { ...spec.amounts };
@@ -184,11 +132,9 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
         </span>
       </div>
 
-      {/* Tabs and the tab's contents are one box — `.splitbox`. */}
       <div className="splitbox">
         <div className="seg">
-          {/* `aria-pressed`, not just the class: which mode is on is the whole
-              state of this control, and painting it says so only to an eye. */}
+          {/* `aria-pressed`: painting it says so only to an eye. */}
           {MODES.map((mode) => {
             const on = !showReceipt && !legacy && spec.mode === mode;
             return (
@@ -210,13 +156,9 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
               shares={shares} included={included} />
           ) : members.map((m, i) => {
             const on = included.has(m.id);
-            // Where the right side is only a read-out (Evenly's tick/plus, a legacy
-            // percentage), the toggle takes the whole row: a row that answers on its
-            // left half only reads as broken. As parts and as amounts keep their controls.
+            // Where the right side is only a read-out, the toggle takes the whole
+            // row: one that answers on its left half only reads as broken.
             const wholeRow = spec.mode === "equal" || spec.mode === "percent";
-            // "As amounts" has nothing to toggle: its left half clears the
-            // figure or fills it with the rest, and types only when neither
-            // means anything (`tapAmount`).
             const typing = spec.mode === "exact";
             const fieldId = `sp-${m.id}`;
             const tap = typing ? tapAmount(spec.amounts, m.id, amountMinor) : "edit";
@@ -234,11 +176,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
             ) : spec.mode === "exact" ? (
               <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <TapMark tap={tap} />
-                {/* Never disabled. Every row can be typed into, whoever any
-                    other tab has ticked: typing is how somebody joins this one. */}
-                {/* A column of figures is typed down: the confirm key moves to the
-                    next person, and the last row says "done" (`walkFields`,
-                    components/viewport.tsx). */}
+                {/* Never disabled: typing is how somebody joins. Enter walks down (`walkFields`). */}
                 <MinorAmountInput id={fieldId} className="bignum splitin"
                   enterKeyHint={i === members.length - 1 ? "done" : "next"}
                   aria-label={copy.split.amountFor(m.name)}
@@ -252,21 +190,13 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
                 {(spec.bps[m.id] ?? 0) / 100}%
               </span>
             ) : (
-              <span style={{
-                // Ink, not credit green: being in the split is not a credit,
-                // and green is reserved for money.
-                color: on ? "var(--ink)" : "var(--muted)",
-              }}>
+              // Ink, not green: being in the split is not a credit.
+              <span style={{ color: on ? "var(--ink)" : "var(--muted)" }}>
                 <Icon name={on ? "check" : "plus"} size={16} />
               </span>
             );
-            // The dimming rides on the name, not the button: the plus is the
-            // affordance for putting someone back in and must stay legible on a
-            // row that is otherwise faded out.
-            // In "as amounts" the field beside the name already is the figure,
-            // and an empty one says "not involved" by itself — so no line under
-            // it, and a name as tall as one with (`SoloName`) so rows match the
-            // other tabs and never move.
+            // The dimming rides on the name, so the plus stays legible. When typing,
+            // the field is the figure, so no line under the name (`SoloName`).
             const name = typing ? (
               <SoloName name={m.name} style={{ opacity: on ? 1 : .45 }} />
             ) : (
@@ -300,8 +230,6 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
             );
           })}
 
-          {/* Only the satisfied verdict wears a glyph. The unsatisfied one used
-              the offline icon, which says "no wifi" and nothing about a split. */}
           {showFooter && foot ? (
             <div className={`splitfoot ${foot.ok ? "ok" : "bad"}`}>
               {foot.ok ? <Icon name="check" size={14} style={{ flex: "none" }} /> : null}
@@ -315,13 +243,8 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
 }
 
 /**
- * The fourth tab's content: the scan control before there's a bill, then
- * "edit who-had-what" plus that control at chip scale. Works on a saved
- * expense too (ADR-0016); a fresh reading replaces the items/tip and resets
- * the grid.
- *
- * **What the typing door opens is rendered by `useReceiptScan`, never here**:
- * the reading reshapes this panel, which would unmount a dialog inside it.
+ * The typing door's dialog is rendered by `useReceiptScan`, never here: the
+ * reading reshapes this panel, which would unmount it.
  */
 function ReceiptPanel({
   items, scan, flash, onFlashEnd, editItemsHref,
@@ -330,7 +253,7 @@ function ReceiptPanel({
   members: Member[];
   me: string | undefined;
   currency: string;
-  /** Each involved member's share of the receipt, in the bill's own currency. */
+  /** In the bill's own currency. */
   shares: Record<string, number>;
   included: Set<string>;
 }) {
@@ -338,16 +261,11 @@ function ReceiptPanel({
     const involved = members.filter((m) => included.has(m.id));
     return (
       <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-        {/* The step outstanding on a scanned bill is assigning it, so this is
-            the control a refused Save blooms — an ink block, which takes the
-            flash as a fill rather than a border. */}
+        {/* What a refused Save blooms, as a fill rather than a border. */}
         <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-p${flash}`} onAnimationEnd={onFlashEnd}
           style={{ textDecoration: "none", justifyContent: "space-between" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Icon name="users" size={16} />
-            {/* Nobody on the bill means it has never been assigned, so "Assign"
-                rather than "Edit". `included` is read off the receipt split, which
-                doesn't exist until the grid is filled. */}
             {included.size === 0 ? copy.scan.assignWhoHadWhat : copy.scan.editWhoHadWhat}
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 500, opacity: .85 }}>
@@ -365,8 +283,6 @@ function ReceiptPanel({
           </div>
         ))}
         <div>
-          {/* Nothing to refuse here: with a bill on screen the outstanding
-              step is the door above, not another photograph. */}
           <ScanPair scan={scan} register="xs" />
           {scan.refusal ? (
             <Failure>{scan.refusal} {copy.scan.keptOld}</Failure>
@@ -378,19 +294,13 @@ function ReceiptPanel({
 
   return (
     <div style={{ padding: 12 }}>
-      {/* The halves name their two doors and not the job, which the line
-          under them says: a photograph is what fills this tab. With no bill
-          yet, this is the control a refused Save fills. */}
       <div data-refuse="receipt">
         <ScanPair scan={scan} register="s" flash={flash} onFlashEnd={onFlashEnd} />
       </div>
       {scan.refusal ? (
-        /* No "try again" beside the message: the control is right above it,
-           still enabled, and it is the retry. */
+        /* No "try again": the control right above is the retry. */
         <Failure>{scan.refusal}</Failure>
       ) : (
-        /* The same disclosure, drawn the same way, as the scanning screens
-           carry under their own control. */
         <p className="scanterms" style={{ marginTop: 7 }}>{copy.scan.terms}</p>
       )}
     </div>
