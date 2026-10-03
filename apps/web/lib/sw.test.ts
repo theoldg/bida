@@ -20,7 +20,7 @@ interface Sandbox {
   previousFor: (clientId: string) => Promise<string | null | undefined>;
   payloadFor: (url: URL, request: unknown, clientId: string) =>
     Promise<{ redirectedTo?: string; body?: string; failed?: boolean }>;
-  reuse: (cache: unknown, urls: string[]) => Promise<string[]>;
+  reuseFromEarlierBuilds: (cache: unknown, urls: string[]) => Promise<string[]>;
   pullAhead: (groupId: string) => Promise<void>;
   caches: { open: (name: string) => Promise<unknown> };
   fetch: (url: string, init: RequestInit) => Promise<{ ok: boolean; text?: () => Promise<string> }>;
@@ -177,7 +177,7 @@ describe("which build a page is running", () => {
 describe("installing a build over an earlier one", () => {
   async function install(stored: Caches, urls: string[]) {
     const sw = load(stored);
-    const left = await sw.reuse(await sw.caches.open(CACHE_NAME), urls);
+    const left = await sw.reuseFromEarlierBuilds(await sw.caches.open(CACHE_NAME), urls);
     return { left, cached: stored[CACHE_NAME] };
   }
 

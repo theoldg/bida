@@ -1,39 +1,34 @@
 /**
- * App-shell precache — never the API. Dexie is the offline data layer; caching
- * `/api/*` here would be a second, disagreeing source of truth.
- * See docs/pwa.md.
+ * App-shell precache — never the API: Dexie is the offline data layer, and a
+ * cached `/api/*` would be a second, disagreeing truth (docs/pwa.md).
  *
- * Both lists below are stamped in by `scripts/precache.mjs` after the export is
- * written, from the files actually on disk. **Don't edit them, and never add a
- * hand-maintained route list**: it drifts from the app.
+ * Both lists are stamped in by `scripts/precache.mjs` from the files on disk.
+ * Never hand-maintain a route list here: it drifts from the app.
  */
 const REVISION = "__PRECACHE_REVISION__";
 const ASSETS = ["__PRECACHE_ASSETS__"];
 const CACHE_NAME = `bida-shell-${REVISION}`;
+const SHELL_PREFIX = "bida-shell-";
+/** `{ builds: { [clientId]: cacheName | null } }` for open pages on earlier builds. */
+const LEGACY = "bida-legacy";
+/** The pull ahead's stash (docs/sync.md#the-pull-ahead); names shared with lib/db/stash.ts. */
+const PULLS = "bida-pull";
 
 /**
- * Next fetches an RSC payload — `/g.txt?id=…&_rsc=…` — on every in-app tap, and
- * a static export's payload for a route is one file whose query string is only
- * ever app state. **Match on the path alone** and the whole app navigates from
- * cache; miss them and every tap is a network round trip that fails on a train.
+ * Next fetches an RSC payload (`/g.txt?id=…&_rsc=…`) on every in-app tap. The
+ * query is only app state, so payloads are matched on the path alone and the
+ * whole app navigates from cache.
  */
 function isPayload(url) {
   return url.pathname.endsWith(".txt");
 }
 
-/**
- * `/g.txt` is the payload for `/g`. Nothing else in the export ends in .txt.
- *
- * The root's is `/index.txt`, which is not `/index`: that route does not exist,
- * and a redirect to it is a 404 where the groups list should be. The Worker
- * holds the same rule for phones with no worker yet (`apps/api/src/payload.ts`).
- */
+/** `/g.txt` is `/g`; the root's is `/index.txt`. Mirrored in apps/api/src/payload.ts. */
 function routeOf(url) {
   const path = url.pathname.slice(0, -".txt".length);
   return path === "/index" ? "/" : path || "/";
 }
 
-/** The same route, still carrying the state the payload URL was asked for. */
 function routeWithQuery(url) {
   const params = new URLSearchParams(url.search);
   params.delete("_rsc");
@@ -42,35 +37,21 @@ function routeWithQuery(url) {
 }
 
 /**
- * **Never `caches.match`** — it searches *every* cache in the origin.
- * `controllerchange` fires before `activate`, so a page reloaded onto this
- * build would be answered from the previous build's cache: an old shell or
- * `/g.txt` naming chunks this build doesn't have, and a screen drawn with
- * pieces missing (the bottom nav among them) until relaunch.
- *
- * The exception is a page still open on the previous build (`previousFor`):
- * it is served from *that* build's cache, the only place its files exist.
+ * Never `caches.match`, which searches every cache: `controllerchange` fires
+ * before `activate`, so a reloaded page would be answered from the previous
+ * build's cache and drawn with pieces missing.
  */
 function lookup(key, cacheName = CACHE_NAME) {
   return caches.open(cacheName).then((cache) => cache.match(key, { ignoreSearch: true }));
 }
 
 /**
- * This worker activates by itself (see `install`), so pages booted on earlier
- * builds are still on screen when it takes over. Their next tap asks for that
- * build's payload and chunks, gone from this cache and the server — and a new
- * payload handed to an old router turns a group into "No group". So
- * `activate` records which build each open page runs and keeps those caches
- * until they reload (lib/update.ts).
- *
- * **Record each page's build, never just "the previous one"**: at the deploy
- * after, a page two builds back would be pointed at a build it never ran and
- * served a stranger's `/g.txt`. The cost is one kept cache per open window.
- *
- * Kept in a cache as well as memory: an idle worker can be stopped any time.
+ * This worker activates by itself, so pages booted on earlier builds are still
+ * open, and their next tap asks for files only their build's cache holds.
+ * `activate` records each open page's build (not just "the previous one") and
+ * keeps those caches until the pages reload (lib/update.ts). Persisted, since
+ * an idle worker can be stopped any time.
  */
-const LEGACY = "bida-legacy";
-/** `{ builds: { [clientId]: cacheName } }` — every open page not on this build. */
 let legacy;
 
 function readRecord() {
@@ -88,14 +69,8 @@ function legacyRecord() {
 }
 
 /**
- * Which build `clientId` is running, as a cache to answer it from:
- *
- * - a cache name — an earlier build, still here to be served from;
- * - `null` — an earlier build whose cache has gone;
- * - `undefined` — this build, or a page we have never met.
- *
- * The middle one is not the same as the last, and reading it as such is what
- * `payloadFor` is about.
+ * The cache an earlier-build page is answered from: a name, `null` when that
+ * build's cache is gone, or `undefined` for a page on this build.
  */
 async function previousFor(clientId) {
   if (!clientId) return undefined;
@@ -106,19 +81,10 @@ async function previousFor(clientId) {
 }
 
 /**
- * A payload, for a page that may not be on this build.
- *
- * Next reads the build id out of every payload, and when it isn't its own it
- * hard-navigates to **`res.url`**. From a cache that is the key, which is the
- * path alone — so the query, and with it the group, is lost, and the screen
- * says the link is missing its password.
- *
- * So an earlier build is served its own payload, and where that cache has
- * gone, **fail rather than hand it this build's**: the router's `catch` is the
- * only give-up path that falls back to the URL *it asked for*
- * (`fetch-server-response.js`), keeping the query, and the navigate branch
- * below turns that `.txt` back into the route. A redirect can't: `fetch`
- * follows it onto another query-less key.
+ * A page on an earlier build gets its own payload, or an error — never this
+ * build's. Next hard-navigates to a foreign payload's `res.url`, which from a
+ * cache is the query-less key, losing the group. The router's `catch` falls
+ * back to the URL it asked for, query intact.
  */
 async function payloadFor(url, request, clientId) {
   const previous = await previousFor(clientId);
@@ -145,12 +111,7 @@ async function cacheFirst(cacheKey, request, clientId) {
   return res;
 }
 
-/**
- * **All-or-nothing**, because this worker activates the moment it installs: a
- * precache with holes replaces a complete one and the app can't paint. Likely,
- * on mobile data. So: batches, one retry for stragglers, then throw — a failed
- * install leaves the running worker and its cache alone.
- */
+/** Returns the URLs that failed. */
 async function addAll(cache, urls) {
   const failed = [];
   for (let i = 0; i < urls.length; i += 12) {
@@ -162,18 +123,14 @@ async function addAll(cache, urls) {
 }
 
 /**
- * Copy what an earlier build already holds; return what is left to fetch.
- *
- * Only `/_next/static/`: every name there carries its content hash or the
- * build id, so the same URL is the same bytes — never a route or a payload,
- * which change under the same name. Without this a deploy refetched all of
- * the ~120 files on every phone and every open tab, and on dev (where every
- * file wakes the Worker) that is what spent the daily request quota.
+ * Copies `/_next/static/` files an earlier build already holds — their names
+ * carry a content hash, so same URL, same bytes. Without it every deploy
+ * refetched the whole app on every phone. Returns what is left to fetch.
  */
-async function reuse(cache, urls) {
+async function reuseFromEarlierBuilds(cache, urls) {
   const earlier = await Promise.all(
     (await caches.keys())
-      .filter((k) => k.startsWith("bida-shell-") && k !== CACHE_NAME)
+      .filter((k) => k.startsWith(SHELL_PREFIX) && k !== CACHE_NAME)
       .map((k) => caches.open(k)),
   );
   const left = [];
@@ -188,32 +145,31 @@ async function reuse(cache, urls) {
   return left;
 }
 
+/**
+ * All-or-nothing, with one retry: this worker activates the moment it installs,
+ * and a precache with holes would replace a complete one. A failed install
+ * leaves the running worker alone.
+ *
+ * It never waits for the last client to close: one forgotten tab (iOS keeps
+ * them alive) would pin a phone on an old build indefinitely.
+ */
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      const missing = await addAll(cache, await addAll(cache, await reuse(cache, ASSETS)));
+      const missing = await addAll(cache, await addAll(cache, await reuseFromEarlierBuilds(cache, ASSETS)));
       if (missing.length) {
-        // Or the next `activate` takes this half-filled cache for the previous
-        // build, and keeps it in place of the one pages are really running.
+        // Or the next `activate` mistakes this half-filled cache for a real build.
         await caches.delete(CACHE_NAME);
         throw new Error(`precache incomplete: ${missing.length} of ${ASSETS.length} missing`);
       }
       await self.skipWaiting();
     })(),
   );
-  // **Activate as soon as the whole build is cached**, never waiting for the
-  // last client to close: one forgotten tab (and iOS keeps them alive) pins a
-  // phone on an old build indefinitely. Open pages keep their build through
-  // `previousFor` and reload once harmless (lib/update.ts).
 });
 
-/**
- * `skip-waiting` is what older builds ask for from their update offer. This
- * worker never waits, so it is a no-op — kept so a page on such a build can
- * still take a worker that is mid-install.
- */
 self.addEventListener("message", (event) => {
+  // Sent by older builds' update offer; kept so they can still take a worker mid-install.
   if (event.data && event.data.type === "skip-waiting") self.skipWaiting();
   if (event.data && event.data.type === "clients" && event.ports[0]) {
     event.waitUntil(describeClients(event.source, event.ports[0]));
@@ -221,11 +177,9 @@ self.addEventListener("message", (event) => {
 });
 
 /**
- * Every copy of the app open on this origin, for /diag. Another copy is the
- * prime suspect for a database that stops answering: a background tab frozen
- * mid-transaction keeps its lock (docs/live-reads.md#a-live-read-can-die).
- * Paths only — a join link's secret is in the fragment, and this report is
- * pasted into messages.
+ * Every open copy of the app, for /diag: a frozen background tab holding a
+ * lock is the prime suspect for a database that stops answering. Paths only,
+ * since the report gets pasted into messages.
  */
 async function describeClients(source, port) {
   const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
@@ -236,19 +190,11 @@ async function describeClients(source, port) {
       path: new URL(c.url).pathname,
       visibility: c.visibilityState,
       focused: c.focused,
-      // Chrome's Page Lifecycle state, where it is exposed: "frozen" is the finding.
       lifecycle: c.lifecycleState,
     })),
   });
 }
 
-/**
- * Pages this worker's predecessor controlled are now this worker's (no
- * `clients.claim`: a first visit stays uncontrolled until its next launch).
- * Record which build each open page runs and keep those caches; delete the
- * rest. **A page met before keeps the build it was known by**; only a new one
- * is assumed to be on the build immediately before.
- */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
@@ -257,14 +203,12 @@ self.addEventListener("activate", (event) => {
         self.clients.matchAll({ type: "window", includeUncontrolled: true }),
         readRecord(),
       ]);
-      // `caches.keys()` is in creation order, so the newest other shell cache
-      // is the build a page we have not seen before is most likely running.
-      const newest = keys.filter((k) => k.startsWith("bida-shell-") && k !== CACHE_NAME).pop() ?? null;
+      // `caches.keys()` is in creation order: the newest other shell is the
+      // best guess for a page we have not met.
+      const newest = keys.filter((k) => k.startsWith(SHELL_PREFIX) && k !== CACHE_NAME).pop() ?? null;
       const builds = {};
-      // Every window open *now* booted before this worker, so none is on this
-      // build. **`null` is the honest answer where the guess has nothing to point
-      // at** (cache gone, or no earlier build): dropped, `cacheFirst` would hand
-      // the page this build's payload, the one answer worse than none.
+      // Every open window booted before this worker. `null` where the guess
+      // points nowhere: `cacheFirst` would otherwise hand it this build's payload.
       for (const client of open) {
         const cache = before.builds[client.id] ?? newest;
         builds[client.id] = cache && cache !== CACHE_NAME && keys.includes(cache) ? cache : null;
@@ -280,18 +224,16 @@ self.addEventListener("activate", (event) => {
 });
 
 /**
- * A notification another phone wrote (docs/notifications.md): the browser has
- * already decrypted it, so `data` is the sender's JSON — `{ title, body, url,
- * tag }`, every word from its `copy.notify`. **Something is always shown**:
- * both platforms demand it, and iOS revokes a subscription that stays silent.
- * `tag` is the group id, so a group's latest replaces its last.
+ * A notification another phone wrote, already decrypted: `{ title, body, url,
+ * tag }`. Something is always shown — iOS revokes a subscription that stays
+ * silent. `tag` is the group id, so a group's latest replaces its last.
  */
 self.addEventListener("push", (event) => {
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    // Not ours to read; the title alone still honours the rule above.
+    // Unreadable: the default title still shows something.
   }
   const title = typeof data.title === "string" && data.title ? data.title : "bida";
   const tag = typeof data.tag === "string" && data.tag ? data.tag : undefined;
@@ -299,11 +241,9 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(title, {
       body: typeof data.body === "string" ? data.body : "",
       tag,
-      // A replaced notification buzzes again: it is news, not a correction.
-      // Chrome refuses `renotify` without a tag.
+      // A replacement is news, so it buzzes again. Chrome refuses `renotify` without a tag.
       renotify: !!tag,
-      // Blank on purpose: the app's own icon would repeat the badge beside it,
-      // and with no icon at all Android draws a grey letter avatar there.
+      // Blank: the app icon would repeat the badge, and no icon draws a grey letter.
       icon: "/notify-blank.png",
       data: { url: sameOriginPath(data.url) },
     }),
@@ -312,18 +252,9 @@ self.addEventListener("push", (event) => {
 });
 
 /**
- * The pull ahead (docs/sync.md#the-pull-ahead): the page leaves each group's
- * bearer and cursor here after every sync, and the app applies what this
- * leaves before it draws the group (`applyStash`, lib/db/sync.ts). The names
- * are `lib/db/stash.ts`'s: change them together.
- */
-const PULLS = "bida-pull";
-
-/**
- * Pull the group a notification is about, and keep the answer sealed as the
- * server sent it. **Nothing here is ever the only copy**: a stash lost, late or
- * never written leaves the ops to the ordinary pull, which still starts from
- * the page's own cursor. A group id is the notification's `tag`.
+ * Pull the notified group and stash the sealed answer for the app to apply
+ * before it draws (`applyStash`). Never the only copy: a lost stash leaves the
+ * ops to the ordinary pull.
  */
 async function pullAhead(groupId) {
   const cache = await caches.open(PULLS);
@@ -343,7 +274,7 @@ async function pullAhead(groupId) {
   }));
 }
 
-/** Only a path of this app — a notification must not open somewhere else. */
+/** A notification must never open another site. */
 function sameOriginPath(url) {
   if (typeof url !== "string") return "/";
   try {
@@ -354,7 +285,6 @@ function sameOriginPath(url) {
   }
 }
 
-/** A tap: the app if it is open, taken to the url; otherwise opened there. */
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || "/";
@@ -378,48 +308,28 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/")) return; // never the API — Dexie owns offline data
-  // The scan's crop model: versioned in its path and left to the HTTP cache,
-  // so a deploy — which drops this worker's cache — doesn't re-download 2.5 MB.
+  if (url.pathname.startsWith("/api/")) return;
+  // The crop model is versioned in its path: the HTTP cache keeps its 2.5 MB across deploys.
   if (url.pathname.startsWith("/scanic/")) return;
 
-  /**
-   * Offline — or on a payload refused by `payloadFor` — Next's router hands the
-   * *payload* URL to the browser as a navigation, which served literally is a
-   * screenful of `1:"$Sreact.fragment"`. **Redirect a document request for a
-   * payload to its route**, never serve the shell in place: back arrows
-   * (lib/nav.ts) and `reloadCostsNothing` (lib/update.ts) read the address.
-   *
-   * The Worker holds the same rule for phones with no worker yet
-   * (`apps/api/src/payload.ts`). Change one and change the other.
-   */
+  // Offline, Next navigates to the payload URL itself, which served as-is is a
+  // screenful of RSC. Redirect to the route, query kept: `?id=` is the group.
+  // Mirrored in apps/api/src/payload.ts.
   if (request.mode === "navigate" && isPayload(url)) {
-    // The query is not decoration: `?id=` is which group the screen is of, so
-    // it carries across rather than landing on a bare route that can only say
-    // the link has no password. `_rsc` is the router's own and goes.
     event.respondWith(Response.redirect(routeWithQuery(url), 302));
     return;
   }
 
-  // Everything is precached under a per-build revision, so it is all
-  // cache-first: every paint skips the network. A deploy arrives when the new
-  // worker installs (sw.js is revalidated on navigation, and lib/update.ts asks
-  // on every resume).
   if (isPayload(url)) {
     event.respondWith(payloadFor(url, request, event.clientId));
     return;
   }
 
   if (request.mode === "navigate") {
-    event.respondWith(
-      // `cacheFirst` only reaches the network on a miss, so the catch is a dead
-      // network on a route this build hasn't cached: the app's own front door
-      // is a better answer than the browser's error page.
-      cacheFirst(url.pathname, request).catch(() => lookup("/")),
-    );
+    // A miss with no network: the front door beats the browser's error page.
+    event.respondWith(cacheFirst(url.pathname, request).catch(() => lookup("/")));
     return;
   }
 
-  // Hashed, immutable build output, plus icons and the manifest.
   event.respondWith(cacheFirst(request, request, event.clientId));
 });

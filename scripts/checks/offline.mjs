@@ -45,7 +45,7 @@ const { base, close } = await serveExport({
 /**
  * A payload, never a hashed chunk: the forged build is this one renamed, so
  * every chunk is one the install copies from the old cache and never fetches
- * (`reuse` in public/sw.js). A payload is always fetched.
+ * (`reuseFromEarlierBuilds` in public/sw.js). A payload is always fetched.
  */
 const ASSET_TO_DROP = JSON.parse(
   (await readFile(join(OUT, "sw.js"), "utf8")).match(/const ASSETS = (\[[\s\S]*?\]);/)[1],
