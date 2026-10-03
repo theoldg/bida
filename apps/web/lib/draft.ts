@@ -2,10 +2,12 @@
 
 import { useSyncExternalStore } from "react";
 import {
-  convertSplitMode, newId, parseMinor, receiptExtras, sameLocalDay,
-  type ArithmeticMode, type ArithmeticSplit, type Receipt, type ReceiptItem, type SplitMode, type SplitSpec,
+  convertSplitMode, minorToDecimalString, newId, ownCurrencySplit, parseMinor, receiptExtras, receiptOf,
+  sameLocalDay,
+  type ArithmeticMode, type ArithmeticSplit, type Expense, type Receipt, type ReceiptItem, type Settlement,
+  type SplitMode, type SplitSpec,
 } from "@bida/core";
-import type { EntryKind } from "./entry-kind";
+import { kindOf, type EntryKind } from "./entry-kind";
 import { receiptBreakdown, receiptTotalMinor, type MemberLine } from "./scan/items";
 import { clearScan } from "./scan/live";
 import { signal } from "./signal";
@@ -371,5 +373,50 @@ export function blankDraft(
     // Whatever is being typed is being typed now, so it has a time.
     dateOnly: false,
     categoryId: null,
+  };
+}
+
+/** The draft that edits a saved expense or income. */
+export function expenseDraft(e: Expense, me: string, members: string[]): EntryDraft {
+  return {
+    ...blankDraft(kindOf(e), me, e.currency, members),
+    entryId: e.id,
+    // `minorToDecimalString`, never `bare`: this is the canonical text
+    // `parseMinor` reads back, and `bare` groups thousands. "1,234.50"
+    // fails to parse (amount silently 0) and "25,000" JPY parses as 25.
+    amountText: minorToDecimalString(e.amountMinor, e.currency),
+    description: e.description,
+    paidBy: e.paidBy,
+    payers: e.payers ?? null,
+    // A receipt's weights are the bill's, so they are not handed to the
+    // arithmetic tabs: those start where a fresh entry's do, even over
+    // everyone, and Receipt recomputes its split from the bill (ADR-0016).
+    // An exact split written before it was typed in the entry's own currency
+    // is converted to it here, once (`ownCurrencySplit`).
+    ...(e.split.mode === "receipt" ? {} : { splits: withSplit({}, ownCurrencySplit({ ...e, split: e.split })) }),
+    occurredAt: e.occurredAt,
+    dateOnly: e.dateOnly === true,
+    recordedAt: e.createdAt ?? e.occurredAt,
+    categoryId: e.categoryId ?? null,
+    ...receiptOf(e),
+    // The tab *is* the mode — a receipt included. The exception is a percent
+    // split, which has no tab of its own: `legacyPercent` draws it, and the
+    // first tap converts it away.
+    splitTab: e.split.mode === "percent" ? undefined : e.split.mode,
+  };
+}
+
+/** The draft that edits a saved transfer. */
+export function transferDraft(s: Settlement, me: string, members: string[]): EntryDraft {
+  return {
+    ...blankDraft("transfer", me, s.currency, members),
+    entryId: s.id,
+    amountText: minorToDecimalString(s.amountMinor, s.currency),
+    description: s.note ?? "",
+    fromMember: s.fromMember,
+    toMember: s.toMember,
+    occurredAt: s.occurredAt,
+    dateOnly: s.dateOnly === true,
+    recordedAt: s.createdAt ?? s.occurredAt,
   };
 }

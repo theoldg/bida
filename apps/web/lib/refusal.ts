@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { seekTarget } from "./reveal";
+import { glide } from "./seek";
 
 /**
  * A press that cannot go through, and the flash that answers it.
@@ -62,8 +64,8 @@ export function flashClass(r: Refusal): string {
 }
 
 /**
- * A refusal on one control, for a screen with one thing to refuse; forms with
- * several keep their own record (`app/g/entry/edit/page.tsx`).
+ * A refusal on one control, for a screen with one thing to refuse; a form with
+ * several takes `useRefusals`.
  *
  * `onFlashEnd` takes **nothing** when the fix arrives before the animation
  * ends (`components/name-adder.tsx`): the class comes off, no `animationend`
@@ -89,6 +91,88 @@ export function useRefusal(): {
     onFlashEnd: (e) => {
       if (e?.pseudoElement) return;
       setState((r) => ({ ...r, live: false }));
+    },
+  };
+}
+
+/**
+ * Refusals on several controls at once, for a form whose Save can point at
+ * more than one (`app/g/entry/edit/page.tsx`). Each control carries
+ * `data-refuse="<key>"` inside the page's `.scroll`, with `flash(key)` on its
+ * class and `onFlashEnd(key)` beside it.
+ *
+ * `missing` is what is missing as of this render. With the keyboard up the
+ * form is a strip of a few rows, and a flash out of view is a press that did
+ * nothing, so unless a refused control is wholly in view the nearest is
+ * scrolled to — and it blooms off what is *still* missing when the scroll
+ * lands: a field fixed mid-scroll has nothing to bloom.
+ */
+export function useRefusals<K extends string>(missing: Record<K, boolean>): {
+  flash: (key: K) => string;
+  onFlashEnd: (key: K) => (e: React.AnimationEvent) => void;
+  /** A refusal is on screen or being scrolled to, so the pressed control is spent. */
+  spent: boolean;
+  refuse: (aimed: Partial<Record<K, boolean>>) => void;
+} {
+  const keys = Object.keys(missing) as K[];
+  const [state, setState] = useState(
+    () => Object.fromEntries(keys.map((k) => [k, NOT_REFUSED])) as Record<K, Refusal>,
+  );
+  const [seeking, setSeeking] = useState(false);
+  const missingNow = useRef(missing);
+  missingNow.current = missing;
+
+  // A flash whose field stopped being missing ends here, by hand — see
+  // `staleFlashes`.
+  useEffect(() => {
+    const stale = staleFlashes(state, missingNow.current);
+    if (stale.length === 0) return;
+    setState((r) => {
+      const next = { ...r };
+      for (const k of stale) next[k] = { ...r[k], live: false };
+      return next;
+    });
+  });
+
+  const bloom = (aimed: Partial<Record<K, boolean>>) =>
+    setState((r) => {
+      const next = { ...r };
+      for (const k of keys) if (aimed[k]) next[k] = refused(r[k]);
+      return next;
+    });
+
+  return {
+    flash: (key) => flashClass(state[key]),
+    // Only the control's own animation counts — the placeholder is a
+    // pseudo-element on the same clock.
+    onFlashEnd: (key) => (e) => {
+      if (e.pseudoElement) return;
+      setState((r) => ({ ...r, [key]: { ...r[key], live: false } }));
+    },
+    spent: seeking || keys.some((k) => state[k].live),
+    refuse: (aimed) => {
+      // One journey at a time: a second press mid-scroll would start another.
+      if (seeking) return;
+      const box = document.querySelector<HTMLElement>(".scroll");
+      if (!box) { bloom(aimed); return; }
+      const targets = keys.flatMap((k) => {
+        const el = aimed[k] ? box.querySelector(`[data-refuse="${k}"]`) : null;
+        return el ? [el] : [];
+      });
+      // The band a control can be read in: the scroller less its scroll
+      // padding, which at the bottom is the keyboard it is drawn over (`--kb`).
+      const view = box.getBoundingClientRect();
+      const pad = getComputedStyle(box);
+      const target = seekTarget(box, targets, {
+        top: view.top + (parseFloat(pad.scrollPaddingTop) || 0),
+        bottom: view.bottom - (parseFloat(pad.scrollPaddingBottom) || 0),
+      });
+      if (target === null) { bloom(aimed); return; }
+      setSeeking(true);
+      glide(box, target, () => {
+        setSeeking(false);
+        bloom(stillMissing(aimed, missingNow.current));
+      });
     },
   };
 }

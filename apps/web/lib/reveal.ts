@@ -59,6 +59,21 @@ export function scrollTarget(
 }
 
 /**
+ * Where `box` must scroll to bring the nearest of `targets` wholly into
+ * `band` — or null when one is in view already, or the scroller can't move,
+ * and the refusal should flash where things stand.
+ */
+export function seekTarget(box: HTMLElement, targets: readonly Element[], band: ViewBand): number | null {
+  const reach = nearestOutOfView(targets.map((el) => {
+    const { top, bottom } = el.getBoundingClientRect();
+    return { top, bottom };
+  }), band);
+  if (reach === null) return null;
+  const target = scrollTarget(box, reach);
+  return target === box.scrollTop ? null : target;
+}
+
+/**
  * What to add to `scrollTop` to show all of one box (a just-opened run of
  * portions). **The top wins when it cannot all fit** — the label and first
  * portion say which line opened.

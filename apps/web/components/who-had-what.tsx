@@ -8,7 +8,7 @@ import { ConfirmDialog } from "./dialog";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { useRefusal } from "../lib/refusal";
-import { nearestOutOfView, revealWhole, scrollTarget } from "../lib/reveal";
+import { revealWhole, scrollTarget, seekTarget } from "../lib/reveal";
 import { glide } from "../lib/seek";
 import { bare, distinctInitials, priced } from "../lib/format";
 import { receiptWeights, type EntryDraft } from "../lib/draft";
@@ -355,22 +355,18 @@ export function WhoHadWhat({
     // The cells are what is sticky, not the row around them (globals.css):
     // `thead`'s own box stays where the table put it, halfway up the bill.
     const head = box?.querySelector("thead th");
-    const seen = lines.flatMap((line, li) => {
+    const aimed = lines.flatMap((line, li) => {
       const el = lineMissing[li] ? rowEl.current[line.start] : null;
-      if (!el) return [];
-      const { top, bottom } = el.getBoundingClientRect();
-      return [{ top, bottom }];
+      return el ? [el] : [];
     });
-    if (!box || seen.length === 0) { refusal.refuse(); return; }
+    if (!box) { refusal.refuse(); return; }
     // The header is sticky, so the top of the scroller is not where a row
     // becomes visible — it is where it goes underneath something.
     const view = box.getBoundingClientRect();
-    const reach = nearestOutOfView(seen, {
+    const target = seekTarget(box, aimed, {
       top: head ? head.getBoundingClientRect().bottom : view.top, bottom: view.bottom,
     });
-    if (reach === null) { refusal.refuse(); return; }
-    const target = scrollTarget(box, reach);
-    if (target === box.scrollTop) { refusal.refuse(); return; }
+    if (target === null) { refusal.refuse(); return; }
     setSeeking(true);
     glide(box, target, () => {
       setSeeking(false);

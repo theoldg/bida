@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import {
-  minorToDecimalString, ownCurrencySplit, receiptExtras, receiptOf,
-  type RateSource,
+  minorToDecimalString, receiptExtras, receiptOf,
+  type Group, type RateSource,
 } from "@bida/core";
 import { handOffReceiptTotal } from "@/lib/scan/items";
 import { Card, Chip } from "@/components/bits";
@@ -22,21 +22,19 @@ import { TransferSides } from "@/components/transfer-sides";
 import {
   addExpense, editExpense, editSettlement, recordSettlement, setRate,
 } from "@/lib/db/commands";
-import { ENTRY_KINDS, kindOf, type EntryKind } from "@/lib/entry-kind";
+import { ENTRY_KINDS, type EntryKind } from "@/lib/entry-kind";
 import { copy } from "@/lib/copy";
 import { checkEntry, needsRate } from "@/lib/entry-check";
-import { flashClass, NOT_REFUSED, refused, staleFlashes, stillMissing, type Refusal } from "@/lib/refusal";
-import { nearestOutOfView, scrollTarget } from "@/lib/reveal";
-import { glide } from "@/lib/seek";
+import { useRefusals } from "@/lib/refusal";
 import { dateInputValue, errorText, money, plural, withDate } from "@/lib/format";
-import { formParent, parseEntrySource, route } from "@/lib/group-link";
-import { useClaimGate, useGroupData } from "@/lib/hooks";
+import { formParent, parseEntrySource, route, type EntrySource } from "@/lib/group-link";
+import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 import { markSaved } from "@/lib/ledger-motion";
 import { goUp, goBack, sameScreen } from "@/lib/nav";
 import {
-  blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, newEntryKey, openSplitTab, retimed,
-  saveDraft,
-  seedDraft, splitSeed, useDraft, withSplit, type EntryDraft, type SplitTab,
+  blankDraft, clearDraft, draftSeedKey, expenseDraft, getDraft, isDraftDirty, newEntryKey, openSplitTab,
+  retimed, saveDraft, seedDraft, splitSeed, transferDraft, useDraft, withSplit,
+  type EntryDraft, type SplitTab,
 } from "@/lib/draft";
 
 /**
@@ -49,202 +47,51 @@ export default function EditEntryPage() {
 }
 
 /**
- * What a refused Save can bloom: two fields, the Items tab's step (a photo or
- * the who-had-what grid), and the rate badge when the group has no rate for
- * the currency — that badge is the whole fix, with no field here to point at.
+ * The route: reads the link, seeds the draft and owns its lifetime, and draws
+ * a dead end where there is nothing to edit. `EntryForm` is the form.
  */
-const REFUSABLE = ["amount", "title", "receipt", "rate"] as const;
-type Refusable = typeof REFUSABLE[number];
-
 function EditEntryScreen() {
-  const router = useRouter();
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const entryId = params.get("e") ?? undefined;
   const wantedKind = params.get("kind") as EntryKind | null;
-  // Which screen sent us here, when it wasn't the ledger's "+" — the balances
-  // tab's settle-up row, or an entry reached from the history feed or a
-  // "can't remove this yet" list. Saving goes back there (lib/group-link.ts).
-  const via = parseEntrySource(params.get("via"));
-  const saveTo = groupId ? formParent(groupId, entryId, via) : "/";
   // A link may hand a new entry its name (the tip screen does). Nothing else is
   // seeded from a query: a figure arriving by link is a figure nobody typed.
-  const prefill = { title: params.get("title") ?? undefined };
+  const prefillTitle = params.get("title") ?? undefined;
 
   const data = useGroupData(groupId);
   const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
-  const scan = useReceiptScan(groupId, useScanAs(groupId));
-  const [ask, setAsk] = useState<null | "discard" | "currency" | "payer" | "kind">(null);
-  /** Which currency's rate is being set, if any. See `pickCurrency`. */
-  const [askRate, setAskRate] = useState<string | null>(null);
-  const [failed, setFailed] = useState<string>();
-  /**
-   * A save in flight. **Every button that writes needs one** (`ConfirmDialog`,
-   * `RateDialog`, `NameAdder`, `WhoPicker` all hold it): two taps on Save land
-   * before `router.replace` does and both pass `ready` — a transfer written
-   * twice, for twice the money.
-   *
-   * Cleared only on failure: a save that worked is navigating away, and a press
-   * during that must still find the button spent.
-   */
-  const [saving, setSaving] = useState(false);
-  // Save is always tappable; a tap while invalid flips this, which puts the
-  // blocker sentence on screen — an untouched form shows no errors. What is
-  // *missing* rather than wrong blooms its own control instead, with no flag.
-  const [attemptedSave, setAttemptedSave] = useState(false);
-  /**
-   * The refusal flash, per field (`lib/refusal.ts`), so a field that wasn't the
-   * problem this time stays quiet.
-   */
-  const [refusedFields, setRefused] = useState<Record<Refusable, Refusal>>({
-    amount: NOT_REFUSED, title: NOT_REFUSED, receipt: NOT_REFUSED, rate: NOT_REFUSED,
-  });
-  const refuse = (fields: Partial<Record<Refusable, boolean>>) =>
-    setRefused((r) => {
-      const next = { ...r };
-      for (const f of REFUSABLE) if (fields[f]) next[f] = refused(r[f]);
-      return next;
-    });
-  /**
-   * What is missing as of the latest render. A refusal that scrolls first reads
-   * it when the scroll lands: a field fixed mid-scroll has nothing to bloom, and
-   * a flash on it would lock Save for nothing.
-   */
-  const missingNow = useRef<Partial<Record<Refusable, boolean>>>({});
-  /**
-   * Scrolling to what a refusal points at. Save is spent for the travel as well
-   * as the flash, or a second press would start a second journey.
-   */
-  const [seeking, setSeeking] = useState(false);
-  /**
-   * A flash whose field stopped being missing ends here, by hand. The flash can
-   * leave with its element (the Items tab switched away, "set rate" gone), and
-   * an animation removed mid-flight never fires `animationend`, so Save would
-   * stay spent for good (design-system.md's Gotchas).
-   */
-  useEffect(() => {
-    const stale = staleFlashes(refusedFields, missingNow.current);
-    if (stale.length === 0) return;
-    setRefused((r) => {
-      const next = { ...r };
-      for (const f of stale) next[f] = { ...r[f], live: false };
-      return next;
-    });
-  });
-  /**
-   * A refusal is still on screen, and Save is spent for exactly as long. Read
-   * off the flash rather than a timer of its own, so the two can't drift.
-   */
-  const refusing = REFUSABLE.some((f) => refusedFields[f].live);
-  /**
-   * The flash is over. Only the field's own animation counts — the placeholder
-   * is a pseudo-element on the same clock, and `pseudoElement` is how an
-   * animation event says which of the two it is.
-   */
-  const settled = (field: Refusable) => (e: React.AnimationEvent) => {
-    if (e.pseudoElement) return;
-    setRefused((r) => ({ ...r, [field]: { ...r[field], live: false } }));
-  };
-
-  /**
-   * **The rate dialog opens for whatever currency the draft is *in*, never for
-   * the act of picking one** — a scan picks one too (`/g/scan` fills the draft
-   * before navigating here), and a photographed MAD receipt would otherwise
-   * arrive at the draft's old rate.
-   *
-   * The ref keeps it to one ask: dismissing leaves the currency as it was, and
-   * the effect would reopen it. `pickCurrency` clears it, so picking the same
-   * currency again does ask again.
-   */
-  const rateAsked = useRef<string | null>(null);
-  useEffect(() => {
-    if (!draft || !data.group) return;
-    if (rateAsked.current === draft.currency) return;
-    if (!needsRate(data.rates, data.group.baseCurrency, draft.currency)) return;
-    rateAsked.current = draft.currency;
-    setAskRate(draft.currency);
-  }, [draft, data.group, data.rates]);
 
   // What this screen was opened *on*: an entry's id, or — creating — everything
   // the link asked for. Returning from the payers editor or the grid re-mounts
   // with the same key, so the draft survives; a different link replaces a
   // leftover draft rather than inheriting it.
-  const seedKey = entryId ?? newEntryKey(wantedKind, prefill);
+  const seedKey = entryId ?? newEntryKey(wantedKind, { title: prefillTitle });
 
   // Seed the draft once the group is loaded: from the entry being edited —
-  // which is looked up in both tables, since one id parameter covers all three
-  // kinds — or blank, in the kind the caller asked for.
+  // looked up in both tables, since one id parameter covers all three kinds —
+  // or blank, in the kind the caller asked for.
   useEffect(() => {
     if (!groupId || data.loading || !data.group) return;
     if (draftSeedKey(groupId) === seedKey) return;
     const me = data.me ?? data.members[0]?.id;
     if (!me) return;
-    const base = data.group.baseCurrency;
+    const members = data.members.map((m) => m.id);
 
     if (entryId) {
       const e = data.expenses.find((x) => x.id === entryId);
-      if (e) {
-        seedDraft(groupId, {
-          ...blankDraft(kindOf(e), me, base, data.members.map((m) => m.id)),
-          entryId,
-          // `minorToDecimalString`, never `bare`: this is the canonical text
-          // `parseMinor` reads back, and `bare` groups thousands. "1,234.50"
-          // fails to parse (amount silently 0) and "25,000" JPY parses as 25.
-          amountText: minorToDecimalString(e.amountMinor, e.currency),
-          currency: e.currency,
-          description: e.description,
-          paidBy: e.paidBy,
-          payers: e.payers ?? null,
-          // A receipt's weights are the bill's, so they are not handed to the
-          // arithmetic tabs: those start where a fresh entry's do (`blankDraft`
-          // above), even over everyone. The bill itself is reopened from the
-          // receipt fields below, and Receipt recomputes its split from them
-          // (ADR-0016).
-          // An exact split written before it was typed in the entry's own
-          // currency is converted to it here, once (`ownCurrencySplit`).
-          ...(e.split.mode === "receipt" ? {} : { splits: withSplit({}, ownCurrencySplit({ ...e, split: e.split })) }),
-          fromMember: me,
-          toMember: data.members.find((m) => m.id !== me)?.id ?? me,
-          occurredAt: e.occurredAt,
-          dateOnly: e.dateOnly === true,
-          recordedAt: e.createdAt ?? e.occurredAt,
-          categoryId: e.categoryId ?? null,
-          ...receiptOf(e),
-          // The tab *is* the mode — a receipt included. The exception is a
-          // percent split, which has no tab of its own: `legacyPercent` draws
-          // it, and the first tap converts it away.
-          splitTab: e.split.mode === "percent" ? undefined : e.split.mode,
-        }, seedKey);
-        return;
-      }
-      const s = data.settlements.find((x) => x.id === entryId);
-      if (!s) return;
-      seedDraft(groupId, {
-        ...blankDraft("transfer", me, base, data.members.map((m) => m.id)),
-        entryId,
-        amountText: minorToDecimalString(s.amountMinor, s.currency),
-        currency: s.currency,
-        description: s.note ?? "",
-        fromMember: s.fromMember,
-        toMember: s.toMember,
-        occurredAt: s.occurredAt,
-        dateOnly: s.dateOnly === true,
-        recordedAt: s.createdAt ?? s.occurredAt,
-      }, seedKey);
+      const s = e ? undefined : data.settlements.find((x) => x.id === entryId);
+      const seeded = e ? expenseDraft(e, me, members) : s ? transferDraft(s, me, members) : undefined;
+      if (seeded) seedDraft(groupId, seeded, seedKey);
       return;
     }
-
     const kind: EntryKind = wantedKind && ENTRY_KINDS.includes(wantedKind) ? wantedKind : "expense";
-    const blank = blankDraft(kind, me, base, data.members.map((m) => m.id));
     seedDraft(groupId, {
-      ...blank,
-      ...(prefill.title ? { description: prefill.title } : {}),
+      ...blankDraft(kind, me, data.group.baseCurrency, members),
+      ...(prefillTitle ? { description: prefillTitle } : {}),
     }, seedKey);
-    // `prefill` is rebuilt each render; the query params behind it are what
-    // actually change, and the draft is only ever seeded once per entry.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId, entryId, seedKey, wantedKind, prefill.title, data.loading, data.group, data.members, data.me, data.expenses, data.settlements]);
+  }, [groupId, entryId, seedKey, wantedKind, prefillTitle, data.loading, data.group, data.members, data.me, data.expenses, data.settlements]);
 
   // Nothing is stored, so a reload or a closed tab loses what's typed. Let the
   // browser say so, the same way it does for any other half-filled form.
@@ -304,10 +151,93 @@ function EditEntryScreen() {
   if (!groupId) return <BadLink />;
   if (!data.loading && !data.group) return <BadLink />;
   if (unclaimed || !data.group || !draft) return <Blank title={title} />;
-  const group = data.group;
+  return (
+    <EntryForm groupId={groupId} group={data.group} data={data} draft={draft}
+      via={parseEntrySource(params.get("via"))} leaving={leaving} />
+  );
+}
+
+function EntryForm({ groupId, group, data, draft, via, leaving }: {
+  groupId: string;
+  group: Group;
+  data: GroupData;
+  draft: EntryDraft;
+  /**
+   * Which screen sent us here, when it wasn't the ledger's "+" — the balances
+   * tab's settle-up row, or an entry reached from the history feed or a
+   * "can't remove this yet" list. Saving goes back there (lib/group-link.ts).
+   */
+  via: EntrySource | undefined;
+  /** Set once this form has answered for its draft and is on its way out. */
+  leaving: RefObject<boolean>;
+}) {
+  const router = useRouter();
+  const scan = useReceiptScan(groupId, useScanAs(groupId));
+  const saveTo = formParent(groupId, draft.entryId, via);
   const base = group.baseCurrency;
   const kind = draft.kind;
   const transfer = kind === "transfer";
+
+  const [ask, setAsk] = useState<null | "discard" | "currency" | "payer" | "kind">(null);
+  /** Which currency's rate is being set, if any. See `pickCurrency`. */
+  const [askRate, setAskRate] = useState<string | null>(null);
+  const [failed, setFailed] = useState<string>();
+  /**
+   * A save in flight. **Every button that writes needs one** (`ConfirmDialog`,
+   * `RateDialog`, `NameAdder`, `WhoPicker` all hold it): two taps on Save land
+   * before `router.replace` does and both pass `ready` — a transfer written
+   * twice, for twice the money.
+   *
+   * Cleared only on failure: a save that worked is navigating away, and a press
+   * during that must still find the button spent.
+   */
+  const [saving, setSaving] = useState(false);
+  // Save is always tappable; a tap while invalid flips this, which puts the
+  // blocker sentence on screen — an untouched form shows no errors. What is
+  // *missing* rather than wrong blooms its own control instead, with no flag.
+  const [attemptedSave, setAttemptedSave] = useState(false);
+
+  // What the entry is worth and whether Save may light — one function, so the
+  // arithmetic behind that button has a test suite rather than a screen to
+  // mount (lib/entry-check.ts). The form reads its answers; it writes nothing.
+  const {
+    activeTab, canScan, activeSplit, receiptSplit, effectiveSplit, receiptTotal, receiptLocksAmount,
+    onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, receiptMissing, ready,
+    amountMissing, titleMissing,
+  } = checkEntry({
+    draft, base, rates: data.rates,
+    liveMembers: data.members.map((m) => m.id),
+    nameOf: data.nameOf,
+  });
+
+  /**
+   * What a refused Save can bloom: two fields, the Items tab's step (a photo or
+   * the who-had-what grid), and the rate badge when the group has no rate for
+   * the currency — that badge is the whole fix, with no field here to point at.
+   */
+  const missing = {
+    amount: amountMissing, title: titleMissing, receipt: receiptMissing,
+    rate: foreign && groupRate === undefined,
+  };
+  const refusals = useRefusals(missing);
+
+  /**
+   * **The rate dialog opens for whatever currency the draft is *in*, never for
+   * the act of picking one** — a scan picks one too (`/g/scan` fills the draft
+   * before navigating here), and a photographed MAD receipt would otherwise
+   * arrive at the draft's old rate.
+   *
+   * The ref keeps it to one ask: dismissing leaves the currency as it was, and
+   * the effect would reopen it. `pickCurrency` clears it, so picking the same
+   * currency again does ask again.
+   */
+  const rateAsked = useRef<string | null>(null);
+  useEffect(() => {
+    if (rateAsked.current === draft.currency) return;
+    if (!needsRate(data.rates, base, draft.currency)) return;
+    rateAsked.current = draft.currency;
+    setAskRate(draft.currency);
+  }, [draft.currency, base, data.rates]);
 
   // Merges against the latest saved draft, not this render's `draft`: some
   // handlers (switching split tabs) call patch() twice, and a stale closure
@@ -324,59 +254,8 @@ function EditEntryScreen() {
   function pickCurrency(currency: string) {
     patch({ currency });
     rateAsked.current = currency;
-    if (needsRate(data.rates, data.group?.baseCurrency, currency)) setAskRate(currency);
+    if (needsRate(data.rates, base, currency)) setAskRate(currency);
   }
-
-  // What the entry is worth and whether Save may light — one function, so the
-  // arithmetic behind that button has a test suite rather than a screen to
-  // mount (lib/entry-check.ts). The form reads its answers; it writes nothing.
-  const check = checkEntry({
-    draft, base, rates: data.rates,
-    liveMembers: data.members.map((m) => m.id),
-    nameOf: data.nameOf,
-  });
-  const {
-    activeTab, canScan, activeSplit, receiptSplit, effectiveSplit, receiptTotal, receiptLocksAmount,
-    onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, receiptMissing, ready,
-    amountMissing, titleMissing,
-  } = check;
-  missingNow.current = {
-    amount: amountMissing, title: titleMissing, receipt: receiptMissing,
-    rate: foreign && groupRate === undefined,
-  };
-
-  /**
-   * A refusal, once what it points at can be seen. With the keyboard up the form
-   * is a strip of a few rows, and a flash out of view is a press that did
-   * nothing: unless a refused control is wholly in view, the nearest is scrolled
-   * to, and then it blooms off a fresh reading of what is still missing.
-   */
-  const refuseInView = (fields: Partial<Record<Refusable, boolean>>) => {
-    const box = document.querySelector<HTMLElement>(".scroll");
-    const seen = REFUSABLE.flatMap((f) => {
-      const el = fields[f] ? box?.querySelector(`[data-refuse="${f}"]`) : null;
-      if (!el) return [];
-      const { top, bottom } = el.getBoundingClientRect();
-      return [{ top, bottom }];
-    });
-    if (!box || seen.length === 0) { refuse(fields); return; }
-    // The band a control can be read in: the scroller less its scroll padding,
-    // which at the bottom is the keyboard it is drawn over (`--kb`).
-    const view = box.getBoundingClientRect();
-    const pad = getComputedStyle(box);
-    const reach = nearestOutOfView(seen, {
-      top: view.top + (parseFloat(pad.scrollPaddingTop) || 0),
-      bottom: view.bottom - (parseFloat(pad.scrollPaddingBottom) || 0),
-    });
-    if (reach === null) { refuse(fields); return; }
-    const target = scrollTarget(box, reach);
-    if (target === box.scrollTop) { refuse(fields); return; }
-    setSeeking(true);
-    glide(box, target, () => {
-      setSeeking(false);
-      refuse(stillMissing(fields, missingNow.current));
-    });
-  };
 
   /**
    * Switching tabs. Two handoffs, each only into a tab with nothing of its own
@@ -384,7 +263,7 @@ function EditEntryScreen() {
    * gives the amount field Receipt's derived total — without it the expense
    * silently becomes worth zero (ADR-0016). A tab holding an answer keeps it.
    */
-  const changeTab = (splitTab: SplitTab) => {
+  function changeTab(splitTab: SplitTab) {
     const handoff = handOffReceiptTotal(
       activeTab, splitTab, draft.receiptItems, receiptExtras(draft), draft.currency,
     );
@@ -393,13 +272,13 @@ function EditEntryScreen() {
       splits: openSplitTab(draft, splitTab, baseMinor),
       ...(handoff !== null ? { amountText: handoff } : {}),
     });
-  };
+  }
 
   /**
    * Change which of the three this is, keeping what the new kind can use.
    * Leaving Receipt takes the same handoff as a tab switch.
    */
-  const changeKind = (next: EntryKind) => {
+  function changeKind(next: EntryKind) {
     if (next === kind) return;
     const leavingReceipt = onReceiptTab && next !== "expense";
     const handoff = leavingReceipt
@@ -417,16 +296,16 @@ function EditEntryScreen() {
         : {}),
       ...(handoff !== null ? { amountText: handoff } : {}),
     });
-  };
+  }
 
   const coPayers = Object.entries(draft.payers ?? {}).filter(([, v]) => v > 0);
 
-  // Leaving throws the draft away — there is nowhere for it to be kept — so ask
-  // first, but only once something has actually been typed.
-  /** May we leave? Not with a typed draft — ask, and stay put. */
+  /**
+   * May we leave? Leaving throws the draft away — there is nowhere for it to be
+   * kept — so not with a typed draft: ask, and stay put.
+   */
   function mayLeave() {
     if (leaving.current) return true;
-    if (!groupId) return true;
     if (isDraftDirty(groupId)) { setAsk("discard"); return false; }
     clearDraft(groupId);
     return true;
@@ -435,29 +314,22 @@ function EditEntryScreen() {
   function discard() {
     // Once, however many presses land in the window the repair above needs:
     // each would ask for its own traversal and schedule its own repair.
-    if (!groupId || leaving.current) return;
+    if (leaving.current) return;
     leaving.current = true;
     goBack(() => router.back(), (to) => router.replace(to));
   }
 
-  // An arrow, not a hoisted `function`: a declaration is created before the
-  // guard above runs, so TypeScript wouldn't carry "draft exists" into it and
-  // every read had to assert it back.
-  const save = async () => {
+  async function save() {
     // Every write below is signed by whoever this phone said it was. It has
     // said — `useClaimGate` sends a phone that hasn't to the screen that asks
     // — so this is the compiler being shown that, not a fallback.
     const actor = data.me;
     if (!ready) {
       setAttemptedSave(true);
-      if (seeking) return;
-      refuseInView({
-        amount: amountMissing, title: titleMissing, receipt: receiptMissing,
-        rate: foreign && groupRate === undefined,
-      });
+      refusals.refuse(missing);
       return;
     }
-    if (saving || !groupId || !actor) return;
+    if (saving || !actor) return;
     setSaving(true);
     setFailed(undefined);
     const rate = foreign ? groupRate ?? "1" : "1";
@@ -511,7 +383,7 @@ function EditEntryScreen() {
       setSaving(false);
       setFailed(errorText(err));
     }
-  };
+  }
 
   /**
    * Which kinds this screen can still become. Everything, on a new entry.
@@ -549,10 +421,10 @@ function EditEntryScreen() {
                 and the scan's badge share a right edge; the currency chip and rate
                 control share a left one. `.amountfield` is rendered by `AmountInput`,
                 so the refusal's `animationend` is caught here on the way up. */}
-            <div className="amtgrid" data-refuse="amount" onAnimationEnd={settled("amount")}>
+            <div className="amtgrid" data-refuse="amount" onAnimationEnd={refusals.onFlashEnd("amount")}>
               <AmountInput
                 className="amount"
-                fieldClassName={`big${flashClass(refusedFields.amount)}`}
+                fieldClassName={`big${refusals.flash("amount")}`}
                 aria-label={copy.form.amount(draft.currency)}
                 enterKeyHint="next"
                 placeholder="0"
@@ -581,8 +453,8 @@ function EditEntryScreen() {
                       {rateOk ? money(baseMinor, base) : copy.none}
                     </span>
                   </button>
-                  <button type="button" data-refuse="rate" className={`amtnote${flashClass(refusedFields.rate)}`}
-                    onAnimationEnd={settled("rate")}
+                  <button type="button" data-refuse="rate" className={`amtnote${refusals.flash("rate")}`}
+                    onAnimationEnd={refusals.onFlashEnd("rate")}
                     onClick={() => setAskRate(draft.currency)}>
                     {copy.rates.setRate()}
                   </button>
@@ -609,7 +481,7 @@ function EditEntryScreen() {
               />
             ) : null}
 
-            <div className={`field${flashClass(refusedFields.title)}`} data-refuse="title" onAnimationEnd={settled("title")}>
+            <div className={`field${refusals.flash("title")}`} data-refuse="title" onAnimationEnd={refusals.onFlashEnd("title")}>
               {transfer ? null : <label htmlFor="what">{copy.form.what}</label>}
               {/* The end of the field chain: the split's figures are a chain of their
                   own, so a press here folds the keyboard (`walkFields`,
@@ -656,7 +528,7 @@ function EditEntryScreen() {
                   onClick={() => {
                     // The payers screen divides the amount, so with none it would split a
                     // zero. The tap doesn't travel — it flashes the amount field.
-                    if (amountMissing) { if (!seeking) refuseInView({ amount: true }); return; }
+                    if (amountMissing) { refusals.refuse({ amount: true }); return; }
                     router.push(route.payers(groupId));
                   }}>
                   <span>{copy.form.multiPayer[kind === "income" ? "income" : "expense"]}</span>
@@ -690,8 +562,8 @@ function EditEntryScreen() {
                   items: draft.receiptItems ?? null,
                   scan,
                   missing: receiptMissing,
-                  flash: flashClass(refusedFields.receipt),
-                  onFlashEnd: settled("receipt"),
+                  flash: refusals.flash("receipt"),
+                  onFlashEnd: refusals.onFlashEnd("receipt"),
                   editItemsHref: route.items(groupId, via),
                 } : null}
               />
@@ -710,7 +582,7 @@ function EditEntryScreen() {
             </p>
           ) : null}
           <button type="button" className="btn btn-p btn-lg" onClick={save}
-            disabled={saving || refusing || seeking}>
+            disabled={saving || refusals.spent}>
             {saving ? <span className="spinner" /> : null}{copy.act.save}
           </button>
         </div>
@@ -718,7 +590,7 @@ function EditEntryScreen() {
 
       {ask === "discard" ? (
         <ConfirmDialog
-          title={entryId ? copy.form.discardTitleEdits : copy.form.discardTitle(copy.entryKind.label[kind].toLowerCase())}
+          title={draft.entryId ? copy.form.discardTitleEdits : copy.form.discardTitle(copy.entryKind.label[kind].toLowerCase())}
           confirm={copy.act.discard}
           danger={true} onConfirm={discard} onClose={() => setAsk(null)}>
           <p>{copy.form.discardBody}</p>
@@ -760,7 +632,7 @@ function EditEntryScreen() {
 
       {/* The same dialog the registry screen opens, so a rate set from here
           is the group's rate and not a number private to this entry. */}
-      {askRate !== null && groupId ? (
+      {askRate !== null ? (
         <RateDialog
           currency={askRate}
           base={base}

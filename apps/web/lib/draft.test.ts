@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { withDate } from "./format";
-import { resolveSplit, splitParticipants, startOfLocalDay, type SplitSpec } from "@bida/core";
 import {
-  activeSplit, activeSplitTab, blankDraft, draftReceiptSplit, legacyPercent, newEntryKey,
-  openSplitTab, receiptWeights, retimed, splitSeed, tabAfterScan, withSplit,
+  resolveSplit, splitParticipants, startOfLocalDay, type Expense, type Settlement, type SplitSpec,
+} from "@bida/core";
+import {
+  activeSplit, activeSplitTab, blankDraft, draftReceiptSplit, expenseDraft, legacyPercent, newEntryKey,
+  openSplitTab, receiptWeights, retimed, splitSeed, tabAfterScan, transferDraft, withSplit,
   type EntryDraft, type SplitTab,
 } from "./draft";
 
@@ -184,6 +186,44 @@ describe("a blank draft", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe("a draft that edits a saved entry", () => {
+  const saved: Expense = {
+    id: "e1", groupId: "g", description: "Dinner", occurredAt: 1000, createdAt: 900,
+    amountMinor: 123450, currency: "EUR", rateToBase: "1", baseAmountMinor: 123450, paidBy: B,
+    split: { mode: "exact", amounts: { [A]: 23450, [B]: 100000 } },
+  };
+
+  it("reads the amount back as text parseMinor takes, never grouped", () => {
+    expect(expenseDraft(saved, A, MEMBERS).amountText).toBe("1234.50");
+  });
+
+  it("opens on the entry's own tab, holding its split", () => {
+    const d = expenseDraft(saved, A, MEMBERS);
+    expect(activeSplitTab(d)).toBe("exact");
+    expect(activeSplit(d)).toEqual(saved.split);
+    expect(d.recordedAt).toBe(900);
+  });
+
+  it("leaves a receipt's weights off the arithmetic tabs and keeps the bill", () => {
+    const items = [{ label: "Soup", amount: "4.00" }];
+    const d = expenseDraft(
+      { ...saved, split: { mode: "receipt", weights: { [A]: 1 } }, receiptItems: items }, A, MEMBERS,
+    );
+    expect(d.splitTab).toBe("receipt");
+    expect(d.splits).toEqual({ equal: { mode: "equal", members: MEMBERS } });
+    expect(d.receiptItems).toEqual(items);
+  });
+
+  it("gives a transfer its own two sides and its note", () => {
+    const s: Settlement = {
+      id: "s1", groupId: "g", fromMember: C, toMember: B, amountMinor: 500, currency: "EUR",
+      rateToBase: "1", baseAmountMinor: 500, occurredAt: 1000, note: "Taxi",
+    };
+    const d = transferDraft(s, A, MEMBERS);
+    expect(d).toMatchObject({ kind: "transfer", entryId: "s1", fromMember: C, toMember: B, description: "Taxi" });
   });
 });
 
