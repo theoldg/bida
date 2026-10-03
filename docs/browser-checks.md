@@ -83,48 +83,9 @@ beside it ([navigation.md](navigation.md#routing)).
 every assertion here follows a `waitForFunction` on the row count. Skipping
 that is what makes a check like this flake.
 
-## `pnpm verify claim` — the name that has not been filed yet
-
-The add row lets a name be typed and not yet filed, and only its own plus files
-one (`components/name-adder.tsx`). What goes wrong there is never arithmetic: a
-blur that must do nothing, a plus that must take the caret rather than file or
-sit dead on an empty row and must refuse a name the list already holds, a
-refusal that must bloom whichever of the two (the plus, or the field's own
-text) is what has to change and must end the moment a key is pressed — taking
-the button it had spent back with it — and a screen whose button must not read
-intent out of a field nobody has pressed anything on. All of it looks perfect in jsdom.
-
-So the press is made by hand and **held**: `locator.click()` re-resolves the
-button and quietly retries a press that missed, and an instant down-up is over
-before React has re-rendered, so either shortcut reports a green on a build
-where the press and the screen disagree about what is under the finger. Both
-doors are walked, because their add rows differ where it matters — on `/new`
-the list is state and grows in the same tick, on `/g/claim` it is a Dexie write
-that arrives whenever it arrives, and the tick has to follow it there.
-
-The two acts that refuse rather than acting without enough people are checked
-here too — `/new`'s Create (an unfiled name, or nobody on the list yet) and a
-quick split's scan pair (an unfiled name, or fewer than two people): the plus
-blooms over an unfiled name and the placeholder over a list that is simply too
-short, the button is spent for the length of the flash, then both come back —
-or come back early, because typing ended the flash.
-
-It ends on the other half of that question: a phone that has answered it is
-never asked again. The invite link is copied out of People and opened a second
-time — it must land in the group, not back on the picker, with the groups list
-left in the history entry under it, so the device's back button climbs the app
-rather than leaving for wherever the link was tapped. Backing out of *that*
-group must stay on the list: a document that loaded on `/join` never drew the
-list, and its first arrival there must not be read as a launch. Then the app is launched, which
-reopens the group last open without painting the list's frame on the way —
-and on an iOS tab, whose ledger opens under the install offer, the first frame
-before any script already wears it, so the summary never moves — while backing out of that one must leave the list
-alone — and must be remembered, so the launch after it lands on the list until
-the group is opened again (`apps/web/lib/launch.ts`).
-
 ## `pnpm verify keyboard` — a form under a phone keyboard
 
-Four screens ask for people in that same row, and each ends on the act those
+Four screens ask for people in the same add row (`components/name-adder.tsx`), and each ends on the act those
 people are for — Create, "Continue as …", the scan pair, "Change who you are" —
 docked under the scroller (`.whodock`), which pays the keyboard's strip as its
 own padding ([touch-and-viewport.md](touch-and-viewport.md#the-screen-and-the-keyboard-over-it)).
@@ -278,8 +239,7 @@ matters more — the home-screen app, Brave and DuckDuckGo, whose agents are the
 ones a webview's most resembles, each proved *not* refused
 ([ios.md](ios.md#the-in-app-browser--refused)).
 
-It needs no server beyond the static export: the join screen's own work is
-`pnpm verify claim`'s subject, and what this one asserts is which URL each end reaches.
+It needs no server beyond the static export: what it asserts is which URL each end reaches.
 
 ## `pnpm verify nav` — where the back arrow goes, and what it leaves behind
 
@@ -325,41 +285,6 @@ did *not* move — a cancelled press has nothing to announce, so that one takes 
 `settle` ([above](#scriptslibharnessmjs--what-the-browser-checks-share)). The
 group is built once, by the section that walks in through `/new`, and every
 other section stands on it.
-
-## `pnpm verify tricount` — a Tricount link, pasted, all the way to a balanced group
-
-`core/tricount.ts` is tested against the shape exhaustively, and none of those
-tests can prove the **wiring**: that the link field is on the import screen,
-that the key comes out of what was pasted rather than out of the host, that
-WebCrypto makes a key the request carries, and that the plan the reader hands
-back builds the group the CSV path would
-([data-model.md](data-model.md#reading-a-tricount-back)).
-
-So the fixture is one trip holding both readings that are rules rather than
-recoveries — an expense split three ways and a repayment as a `BALANCE` — and
-the assertion at the end is the **balances screen**, to the cent, because a
-transfer read backwards or an income unflipped shows nowhere else. Then five
-refusals, which is where a reader this liberal is most likely to be wrong: not
-a link at all, a link that opens nothing, tricount not answering, two
-currencies, and an entry whose shares miss by a cent.
-
-**`/api/tricount` is stubbed and everything else is real** — the bargain
-`stubScan` makes about Gemini. Tricount publishes no API, so the half that
-talks to bunq (`apps/api/src/tricount.ts`) is the half no check can hold. Try a
-real link by hand after touching those constants, since nothing here will go
-red when bunq moves.
-
-## `pnpm verify driver` — the text driver still works
-
-`pnpm drive` is how an agent looks at the app ([drive.md](drive.md)), and no
-check touched it, so it would rot quietly until someone needed it mid-task.
-This runs it the way that agent does — `start`, `do`, `stop` as separate
-processes — in a `DRIVE_DIR` of its own, so a session already open survives:
-a screen read and numbered, a press, keys typed, a shot in each theme, a stale
-number refused and its batch dropped, a second phone apart from the first, a
-file chooser answered from disk, and
-a `stop` that takes the Worker with it. It asserts the driver's contract, not
-the app's: a screen changing its words should not turn it red.
 
 ## Gotchas
 

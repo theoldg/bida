@@ -76,7 +76,7 @@ jobs:
     # Named, not `-latest`: this is the machine the browser checks are
     # calibrated on, and it moves only when someone moves it here.
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       WRANGLER_SEND_METRICS: "false"
     steps:
@@ -97,4 +97,8 @@ jobs:
       - run: pnpm exec playwright-core install --with-deps --only-shell chromium
       # Its own build, without the Turnstile key, as `pnpm verify` builds on a
       # laptop: the checks stub the scan, and a real widget would call out.
+      # One at a time: side by side on the runner's four cores they starved
+      # each other past the app's own timers, and flaked.
       - run: pnpm verify --retry
+        env:
+          VERIFY_JOBS: "1"

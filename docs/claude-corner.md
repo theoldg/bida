@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-03* — "maybe some of them are useless what do you think?", then
+  "Cut everything". A flaky suite was a question about worth, not speed: name
+  which checks earn their place, and expect the owner to cut further than you
+  dared to suggest.
+
 - *2026-10-03* — "ordered by last modification time, not most recently dated
   entry". One line, and the word chosen was exact: an edit is a modification,
   so read the op log, not the entries. Take the owner's noun literally.
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   debug custom logic for ages", with a heuristic half-written. Try the library
   on the owner's own photo before writing one; "let's KISS" then cut the rules
   around it too.
-
-- *2026-09-30* — "everyone is highlighted, while no one should be … the state
-  is confusing". The row was the symptom; "neat and logical" asked for the
-  rule underneath. Two meanings of zero in one mode became one, in core, where
-  every reader of a split already looks.

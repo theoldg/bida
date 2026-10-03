@@ -41,7 +41,7 @@ import { join } from "node:path";
 import { ROOT, ensureBuild, serveWorker, launch, newPhone } from "./lib/harness.mjs";
 import { PHOTO, receiptList, stubScan } from "./lib/receipts.mjs";
 
-// `DRIVE_DIR` lets `pnpm verify driver` run a session of its own beside yours.
+// `DRIVE_DIR` lets a second session run beside yours.
 const DIR = process.env.DRIVE_DIR ?? join(ROOT, ".drive");
 const IN = join(DIR, "in.jsonl");
 const RESP = join(DIR, "resp");

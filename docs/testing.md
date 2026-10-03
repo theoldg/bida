@@ -51,8 +51,8 @@ fails under load is betting on the machine's speed (*A pause is not a wait*, in
 mid-task unless you touched what it drives.
 
 **Don't run the whole `pnpm verify` yourself.** Run the one check you are
-writing or fixing, alone (`pnpm verify <name>`). Locally, `verify` runs as many at once
-as the machine has cores (`VERIFY_JOBS` overrides): ten chromiums on four cores
+writing or fixing, alone (`pnpm verify <name>`). On GitHub they run one at a time
+(`VERIFY_JOBS=1`); locally, as many at once as the machine has cores (`VERIFY_JOBS` overrides): seven chromiums on four cores
 starve the pages past the app's own timers, which is where every flake this
 suite has had came from.
 
@@ -60,7 +60,7 @@ suite has had came from.
 and `packages/core` against `apps/web/out` and runs the build only when it is
 missing or stale. `pnpm verify` does that build once and then runs them
 together: each serves the export on its own port 0, and the build is the one
-thing ten of them starting at once would have raced on.
+thing seven of them starting at once would have raced on.
 
 **What gates, and why.** The build, because `next build` catches what `tsc`
 cannot (a prerender touching `window`, a client-boundary mistake, a

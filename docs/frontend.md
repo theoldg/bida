@@ -229,7 +229,7 @@ API is reached with `fetch`.
   **follows the list down**, as a browser scrolls to a field only as it takes
   focus, and this one never lets go — clear of the keyboard, and far enough
   clear that the act the list ends on comes up with it, per the `--kb` Gotcha in
-  [touch-and-viewport.md](touch-and-viewport.md#the-screen-and-the-keyboard-over-it). `pnpm verify claim` holds all of it ([browser-checks.md](browser-checks.md#pnpm-verify-claim--the-name-that-has-not-been-filed-yet)).
+  [touch-and-viewport.md](touch-and-viewport.md#the-screen-and-the-keyboard-over-it).
 - **"Which one are you?" is one screen, `components/who-picker.tsx`**, ending
   both ways into a group: joining, and creating one — including a group of one
   (`/new` and `/import` share `components/create-as.tsx`, which keeps a failed

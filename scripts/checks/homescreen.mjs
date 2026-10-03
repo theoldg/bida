@@ -287,30 +287,6 @@ report(folded && await heldPage.getByRole("button", { name: "Add bida to home sc
   .waitFor({ timeout: 2000 }).then(() => true, () => false),
   "a group's ledger asks an iOS tab too, folded");
 
-// ---- but never about the demo ---------------------------------------------
-// The demo holds no key, so an icon carries nothing for it
-// (docs/sync.md#the-demo-group-has-no-key), and a rescue banner would
-// contradict its "nothing here syncs" mark. Its own phone, because the demo
-// joins whatever list it opens on.
-const tourist = await iphone();
-const touristPage = await tourist.newPage();
-await touristPage.goto(`${base}/demo`);
-// The mark is the proof this ran at all: without it an absent banner would
-// only mean the ledger never drew.
-const marked = await touristPage.locator(".demomark").waitFor({ timeout: PATIENCE })
-  .then(() => true, () => false);
-// Where it was when the mark didn't come: the only clue a red run leaves.
-const stuck = marked ? "" : ` (at ${new URL(touristPage.url()).pathname}`
-  + `${await touristPage.locator(".skelrow").count() ? ", on its skeleton" : ""})`;
-const demoBanner = () => touristPage.getByRole("button", { name: "Keep your groups on this phone" });
-const quietLedger = await demoBanner().count() === 0;
-await openGroupsList(touristPage, base);
-const listed = await touristPage.locator(".rows .row").count();
-const quietList = await demoBanner().count() === 0;
-report(marked && quietLedger && listed > 0 && quietList,
-  "the demo's ledger, and a list holding only the demo, ask nothing about the home screen",
-  `marked ${marked}${stuck} · ledger quiet ${quietLedger} · ${listed} rows · list quiet ${quietList}`);
-
 // ---- which one are you, in a tab ------------------------------------------
 // Someone who already has the app can't be told apart from a tab, so the claim
 // list offers them the link to paste there, with its own copy button.
@@ -362,8 +338,7 @@ report(androidFolded && await androidAdd.waitFor({ timeout: 2000 }).then(() => t
 
 // ---- the icon's first launch ---------------------------------------------
 // An invite nobody has picked a name in yet: this launch is the join the tab
-// never finished, and it must hand the invite on without anyone pasting. Where
-// the join goes from there is the join screen's own business (`pnpm verify claim`).
+// never finished, and it must hand the invite on without anyone pasting.
 const fresh = await iphone();
 const freshPage = await fresh.newPage();
 await asInstalledApp(freshPage);

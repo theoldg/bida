@@ -5,7 +5,7 @@
  *
  * The checks `pnpm check` can't afford: run in series they take minutes, so
  * GitHub runs them at every push (docs/testing.md#where-each-check-runs).
- * Together they cost the slowest one.
+ * Together they cost the slowest one; GitHub runs them one at a time.
  *
  * **A check is a file in `scripts/checks/`**, named for what it checks; this
  * finds them there, so adding one is adding the file.
@@ -26,7 +26,7 @@ import { annotation, runTogether } from "./lib/together.mjs";
  * the rest follow in name order. Only an ordering hint — a check missing here
  * still runs.
  */
-const SLOW = ["entries", "homescreen", "offline", "stall", "nav", "demo", "claim"];
+const SLOW = ["entries", "homescreen", "offline", "stall", "nav", "demo"];
 const rank = (name) => (SLOW.includes(name) ? SLOW.indexOf(name) : SLOW.length);
 const ALL = readdirSync(join(ROOT, "scripts/checks"))
   .filter((f) => f.endsWith(".mjs"))
