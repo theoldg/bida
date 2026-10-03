@@ -5,11 +5,7 @@ import { FlipCheck, Icon, type IconName } from "./icons";
 import { clickGuard } from "../lib/click-guard";
 import { note, tracePress } from "../lib/press-trace";
 
-/**
- * How long a lift waits for the click that should follow it. A working click
- * comes ~5ms after the lift, so this is only ever spent on a press that was
- * never going to bring one.
- */
+/** A working click comes ~5ms after the lift, so this is only spent on a press that brings none. */
 const CLICK_GRACE_MS = 150;
 
 export interface SheetAction {
@@ -20,23 +16,15 @@ export interface SheetAction {
 }
 
 /**
- * A handful of actions for the row that was long-pressed or right-clicked — a
- * small card, not a dimming dialog (that is for a decision with a sentence).
+ * Hangs off the row's corner, never off the finger, so a second press finds
+ * the item where it was.
  *
- * **It hangs off the row's bottom right corner, never off the finger**, so a
- * second press finds the item where it was. Flipped above the row when there
- * isn't room below, and kept off the screen edges.
+ * **An item's click may never come** on iOS, so the lift answers, but only
+ * after waiting to see: acting on `pointerup` outright lets the `mousedown`
+ * that follows land on whatever the action drew. On Android it dismissed the
+ * confirm dialog the item had just opened (docs/touch-and-viewport.md).
  *
- * **An item's click may never come**: on iOS a tap can land whole on one and
- * bring no `click`. **So the lift answers — but only after waiting to see.**
- * Acting on `pointerup` outright is worse: `touchend`, `mousedown` and
- * `mouseup` still follow, onto whatever the action drew — on Android that
- * `mousedown` dismissed the confirm dialog the item had just opened
- * (docs/touch-and-viewport.md; `lib/press-trace.ts`).
- *
- * An invisible veil catches the outside tap that closes it; Escape and a
- * scroll (captured on `document` — the scroller is `.scroll`) close it too, so
- * the row's position can't go stale under it.
+ * A scroll closes it, so the row's position can't go stale under it.
  */
 export function RowMenu({ anchor, actions, onClose }: {
   /** The pressed row, in viewport coordinates. */
@@ -45,9 +33,7 @@ export function RowMenu({ anchor, actions, onClose }: {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 
-  // First, so the recorder hears everything the effects below add. Every way
-  // out notes itself, so a card that vanished without a press shows in the
-  // trace (lib/press-trace.ts).
+  // First, so the recorder hears the effects below. Every way out notes itself.
   useEffect(() => tracePress("menu.trace", `items=${actions.length}`), []);
 
   // An action list that grows while open (the groups list's invite link
@@ -59,8 +45,7 @@ export function RowMenu({ anchor, actions, onClose }: {
     drew.current = actions.length;
   });
 
-  // Positioned after the first paint, once the card's real size is known —
-  // a guessed size would either clip at the screen edge or leave a gap.
+  // Once the card's real size is known; a guess would clip or leave a gap.
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -69,8 +54,6 @@ export function RowMenu({ anchor, actions, onClose }: {
     const gap = 4;
     const below = anchor.bottom + gap;
     setPos({
-      // Right edges aligned, so the card sits under the end of the row it
-      // belongs to rather than under the finger.
       left: Math.max(margin, Math.min(anchor.right - width, window.innerWidth - width - margin)),
       top: below + height + margin <= window.innerHeight
         ? below
@@ -78,32 +61,27 @@ export function RowMenu({ anchor, actions, onClose }: {
     });
   }, [anchor]);
 
-  // A row-anchored card can't be a modal dialog, so **it moves focus in itself
-  // and hands it back on the way out** — or Escape and Tab act on the page
-  // behind the veil.
+  // Not a modal dialog, so it moves focus in and back itself, or Escape and
+  // Tab act on the page behind.
   const opener = useRef<Element | null>(null);
   useEffect(() => {
     opener.current = document.activeElement;
     return () => {
       const back = opener.current;
-      // A menu action can unmount the row it was opened from — forgetting the
-      // group is one — and can open a dialog of its own, which takes focus
-      // after this runs.
+      // The action may have unmounted the row, or opened a dialog that takes focus after this.
       if (back instanceof HTMLElement && back.isConnected) back.focus();
     };
   }, []);
 
   useEffect(() => {
-    // Hidden until placed, and hidden elements can't take focus, so wait for
-    // the position. `preventScroll`, because a scroll closes this menu.
+    // Hidden can't take focus. `preventScroll`, because a scroll closes this menu.
     if (!pos) return;
     ref.current?.querySelector<HTMLButtonElement>(".rowmenu-item")
       ?.focus({ preventScroll: true });
   }, [pos]);
 
   useEffect(() => {
-    // Spent here, or it is also a close request, and one on a screen at the
-    // bottom of the stack climbs out of it (lib/back-button.ts).
+    // Spent here, or it also climbs out of the screen (lib/back-button.ts).
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") { e.preventDefault(); note("esc"); onClose(); }
     }
@@ -116,9 +94,7 @@ export function RowMenu({ anchor, actions, onClose }: {
     };
   }, [onClose]);
 
-  /** The pointer whose press started on an item, so its lift can finish there. */
   const finger = useRef(-1);
-  /** A lift still waiting to see whether its click is coming. */
   const waiting = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(waiting.current), []);
   const choose = (a: SheetAction) => {
@@ -140,19 +116,13 @@ export function RowMenu({ anchor, actions, onClose }: {
             onPointerUp={(e) => {
               if (e.pointerId !== finger.current) return;
               finger.current = -1;
-              // A touch's `pointerup` goes to its `pointerdown`'s element
-              // however far the finger has moved, so where it landed is asked
-              // rather than assumed: sliding off "Delete" calls that press off.
+              // `pointerup` goes to the pressed element however far the finger
+              // moved; sliding off "Delete" calls that press off.
               const under = document.elementFromPoint(e.clientX, e.clientY);
               if (!e.currentTarget.contains(under)) return;
-              // The click, when there is one, is a few ms behind this — so wait
-              // for it rather than take the lift outright, and act only if none
-              // comes. See CLICK_GRACE_MS.
               waiting.current = setTimeout(() => {
                 note("no click");
-                // It can still turn up late, and the card has gone with the
-                // press: it would land on the row underneath, or on the screen
-                // the action just opened.
+                // A late click would land on whatever is now underneath.
                 clickGuard().expire();
                 choose(a);
               }, CLICK_GRACE_MS);
@@ -170,17 +140,10 @@ export function RowMenu({ anchor, actions, onClose }: {
   );
 }
 
-/**
- * The same card, opened by tapping an icon button — for a top bar whose
- * actions outgrow it. Hangs off the button, right edge on the screen's.
- */
+/** The same card off an icon button, for a top bar whose actions outgrow it. */
 export function MenuButton({ icon, label, actions, confirmed = false }: {
   icon: IconName; label: string; actions: SheetAction[];
-  /**
-   * An action in the menu just did something and the card closed on the tap, so
-   * the icon flips to a check (`FlipCheck`) — the same flip copying the link
-   * shows everywhere else.
-   */
+  /** An action just did something: the icon flips to a check, as copying the link does elsewhere. */
   confirmed?: boolean;
 }) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
