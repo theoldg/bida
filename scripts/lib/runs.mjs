@@ -98,6 +98,7 @@ export function report(jobs) {
       if (/build/.test(job.steps?.find((s) => s.conclusion === "failure")?.name ?? "")) say("      (`pnpm run build` reproduces it here)");
     }
     if (job.name === "deploy" && job.conclusion === "cancelled") say("\nnote  a newer push is deploying over this one");
+    if (job.name === "verify" && job.conclusion === "cancelled") say("\nnote  a newer push cancelled this verify; its own run has the verdict");
   }
   return red;
 }

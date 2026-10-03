@@ -77,6 +77,11 @@ jobs:
     # calibrated on, and it moves only when someone moves it here.
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # A newer push makes this run's verdict moot: cancel it rather than queue
+    # behind it. Cancelled is not red (scripts/lib/runs.mjs).
+    concurrency:
+      group: verify-dev
+      cancel-in-progress: true
     env:
       WRANGLER_SEND_METRICS: "false"
     steps:

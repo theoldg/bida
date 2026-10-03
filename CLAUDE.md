@@ -15,9 +15,9 @@ hosted for free. Read this, then the doc your task points at.
    No pull requests; `main` moves only by the owner's hand.
 2. **Push with `pnpm push` at every checkpoint.** It bumps the version, pushes
    `HEAD:dev` and watches the run. Run it in the background and start the next
-   task once it prints `watch:`; read its verdict before your next push. Red is
-   yours to fix; the session is done when the last push is green
-   ([testing.md](docs/testing.md#where-each-check-runs)).
+   task once it prints `watch:`. A newer push cancels a `verify` still running,
+   since its own run covers both. Red is yours to fix; the session is done when
+   the last push is green ([testing.md](docs/testing.md#where-each-check-runs)).
 3. **Docs change in the same commit as the code.** See [Doc upkeep](#doc-upkeep).
 4. **Money is never a float.** Integer minor units everywhere, and always
    positive — an income's sign is applied in `computeBalances` and nowhere else.
