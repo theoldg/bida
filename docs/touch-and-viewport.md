@@ -98,9 +98,13 @@ fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
   viewport is what's left: `components/viewport.tsx` writes the covered
   strip to `--kb`, and `.scroll` spends `--kb` plus air as both padding and
   `scroll-padding-bottom`. Padding is what a last row can scroll into;
-  scroll-padding is where a field mid-form stops. A dialog sits outside the
-  shell and pays the same toll: the scrim spends `--kb` as bottom padding, so a
-  card is centred in what is left rather than behind the keys. `.foot` pays it
+  scroll-padding is where a field mid-form stops. **The strip is measured
+  from the shell's own foot, not `innerHeight`**: installed the two agree, but
+  in a browser tab the toolbars part them — Chrome's shell runs past the layout
+  viewport (Save under the suggestion strip), Brave's stops short of it (Save a
+  thumb above the keys). A dialog sits outside the shell, fixed to the layout
+  viewport, so it pays `--kb-fixed`, measured from `innerHeight`, as the
+  scrim's bottom padding: the card centres in what is left, not behind the keys. `.foot` pays it
   too, for the screens that pin an act, and so does `.whodock`, the act docked
   under a list of people or a form: a sibling of `.scroll` rather than its last
   row, so the keys lift it with them and the scroller above it shrinks by as

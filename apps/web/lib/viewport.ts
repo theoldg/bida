@@ -18,8 +18,16 @@
 
 /** One look at the two viewports, and who has the caret. */
 interface ViewportReading {
-  /** The layout viewport — the height `100dvh` is laid out against. */
-  inner: number;
+  /**
+   * Where the box paying for the keyboard ends, in the layout viewport's
+   * coordinates: the shell's `getBoundingClientRect().bottom`, or
+   * `innerHeight` for a box fixed to the viewport. **Not `innerHeight` for the
+   * shell** — only installed do the two agree. In a browser tab `100dvh` and
+   * the layout viewport part by the toolbars: Chrome's shell runs past it and
+   * the keys were paid short, Save under the suggestion strip; Brave's stops
+   * short of it and they were paid long, Save floating a thumb above them.
+   */
+  floor: number;
   /** The visible viewport: what is on screen right now. */
   visible: number;
   /** How far the visible viewport has been panned down the layout one. */
@@ -49,7 +57,7 @@ export function gapOf(v: ViewportReading): ViewportGap {
   // A magnified page has a smaller visible viewport by definition, and the
   // difference is the magnification, not something sitting on the screen.
   if (Math.abs(v.scale - 1) > 0.01) return none;
-  const covered = Math.round(v.inner - v.visible - v.offset);
+  const covered = Math.round(v.floor - v.visible - v.offset);
   if (covered <= NOISE) return none;
   return v.typing ? { kb: covered, unexplained: 0 } : { kb: 0, unexplained: covered };
 }

@@ -12,7 +12,8 @@ export function bringIntoView(el: Element) {
 
 /**
  * The one place the visual viewport is measured: how much the keyboard covers,
- * as `--kb` on `<html>` (dialogs and the FAB live outside the shell).
+ * on `<html>` — `--kb` of the shell, `--kb-fixed` of a box fixed to the layout
+ * viewport (a dialog's scrim), which a browser tab sizes differently.
  *
  * On iOS the keyboard overlays the `100dvh` shell rather than shortening it,
  * so `.scroll` and `.whodock` pay the covered strip as padding themselves.
@@ -28,11 +29,14 @@ export function MeasureViewport() {
 
     function measure() {
       if (!view) return;
-      const { kb, unexplained } = gapOf({
-        inner: window.innerHeight, visible: view.height, offset: view.offsetTop,
+      const shell = document.querySelector(".app")?.getBoundingClientRect().bottom;
+      const seen = {
+        visible: view.height, offset: view.offsetTop,
         scale: view.scale, typing: isTyping(document.activeElement),
-      });
+      };
+      const { kb, unexplained } = gapOf({ ...seen, floor: shell ?? window.innerHeight });
       root.style.setProperty("--kb", `${kb}px`);
+      root.style.setProperty("--kb-fixed", `${gapOf({ ...seen, floor: window.innerHeight }).kb}px`);
       // A dialog centred in what the keyboard leaves moves with each step, and
       // a card moving between press and lift gets no click (lib/press-trace.ts).
       if (kb !== lastKb) { note(`kb ${lastKb}->${kb}`); lastKb = kb; }
@@ -42,7 +46,8 @@ export function MeasureViewport() {
       if (unexplained !== reportedGap) {
         reportedGap = unexplained;
         mark("viewport.gap", unexplained
-          ? `${unexplained}px of the layout viewport is off screen — `
+          ? `${unexplained}px of the shell is off screen — `
+            + `shell ${shell === undefined ? "none" : Math.round(shell)}, `
             + `inner ${Math.round(window.innerHeight)}, visible ${Math.round(view.height)}`
             + `+${Math.round(view.offsetTop)}`
           : "gone");
@@ -78,6 +83,7 @@ export function MeasureViewport() {
       document.removeEventListener("focusin", measure);
       document.removeEventListener("focusout", measure);
       root.style.removeProperty("--kb");
+      root.style.removeProperty("--kb-fixed");
       root.removeAttribute("data-kb");
     };
   }, []);

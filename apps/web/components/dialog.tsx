@@ -31,16 +31,16 @@ export function Dialog({ title, onClose, children }: {
     /**
      * **First, so the recorder is listening before anything it must explain** —
      * `showModal()` moves focus, which folds the keyboard and moves the card
-     * (`--kb`, globals.css). Every way out notes itself, so a card that vanished
+     * (`--kb-fixed`, globals.css). Every way out notes itself, so a card that vanished
      * with no press behind it shows in the trace (lib/press-trace.ts).
      */
     const stop = tracePress("dialog.trace", title, () => {
       /**
        * **Where the card was when the finger landed, against what was on screen.**
        * The card is laid out in the layout viewport with the keyboard paid as
-       * padding (`--kb`); while that payment is wrong the card sits over the keys
+       * padding (`--kb-fixed`); while that payment is wrong the card sits over the keys
        * and taps never reach the page. It is wrong while a blurred field's keyboard
-       * retracts, since `--kb` drops the moment focus leaves (lib/viewport.ts).
+       * retracts, since `--kb-fixed` drops the moment focus leaves (lib/viewport.ts).
        */
       const box = card.current?.getBoundingClientRect();
       const view = window.visualViewport;

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { caretOnPress, confirmAct, gapOf, landsOn } from "./viewport";
 
 /** A phone with nothing covering it: the two viewports agree. */
-const PHONE = { inner: 844, visible: 844, offset: 0, scale: 1, typing: false };
+const PHONE = { floor: 844, visible: 844, offset: 0, scale: 1, typing: false };
 
 describe("what a gap between the two viewports means", () => {
   it("is nothing when they agree", () => {
@@ -22,6 +22,15 @@ describe("what a gap between the two viewports means", () => {
     // The bug this exists for: a layout viewport taller than the screen, which
     // paid itself out as permanent padding at the foot of every list.
     expect(gapOf({ ...PHONE, visible: 797 })).toEqual({ kb: 0, unexplained: 47 });
+  });
+
+  // The shell, not the layout viewport, is what the keys cover: a browser tab
+  // sizes the two apart, and the keyboard was paid by the wrong one.
+  it("measures from where the shell ends, past the layout viewport or short of it", () => {
+    expect(gapOf({ ...PHONE, floor: 900, visible: 528, typing: true }))
+      .toEqual({ kb: 372, unexplained: 0 });
+    expect(gapOf({ ...PHONE, floor: 790, visible: 528, typing: true }))
+      .toEqual({ kb: 262, unexplained: 0 });
   });
 
   it("ignores a pixel or two of toolbar settling, typing or not", () => {

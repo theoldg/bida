@@ -90,11 +90,12 @@ async function clears(label, actSelector) {
   const seen = await page.evaluate((selector) => {
     const input = document.querySelector(".addname");
     const act = document.querySelector(selector);
-    const shell = document.querySelector(".app");
-    if (!input || !act || !shell) return { missing: !input ? "add row" : !act ? selector : ".app" };
+    if (!input || !act) return { missing: !input ? "add row" : selector };
     const kb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--kb"));
-    // The top of the keys: they overlay the shell's foot rather than shorten it.
-    const keys = shell.getBoundingClientRect().bottom - kb;
+    // The top of the keys is the foot of what is visible — not the shell's foot
+    // less `--kb`, which would only check the app against its own arithmetic.
+    const view = window.visualViewport;
+    const keys = view.offsetTop + view.height;
     return {
       kb,
       act: Math.round(keys - act.getBoundingClientRect().bottom),

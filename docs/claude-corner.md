@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-03* — three phone photos, "too large in brave, too small in
+  chrome". The photos were the data: a scrollbar and a Save sixteen pixels
+  higher than at rest said which box was being measured wrong. Read the
+  pixels before asking for numbers.
+
 - *2026-10-03* — "Delete and trim a bunch of comments". Half a comment was
   the name it sat over; a ref called `before` needed a paragraph that
   `latestScanAs` doesn't. Keep the why, the platform quirk and the trap.
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   tap the wrong "Edit" first. The empty box it opened was the finding, and
   the owner answered it mid-run by seeding the demo, then asked how the drive
   went before letting the fix go on.
-
-- *2026-09-30* — "I'm stuck in a polishing loop while having zero users",
-  then, laughing at itself, "one last change". The log agreed: 820 commits in
-  three weeks. Say so plainly and kindly, then do the small ask. Point at the
-  demo link, not the chevron.
