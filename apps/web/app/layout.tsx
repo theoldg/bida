@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ReadErrorBoundary } from "@/components/chrome";
 import { IconSprite } from "@/components/icons";
@@ -18,15 +17,6 @@ import { CarryToHomeScreen } from "@/components/install";
 import { EmbeddedGate } from "@/components/embedded";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-
-// One face for the whole app; hierarchy is weight and tracking. Self-hosted
-// by next/font at build time, so the PWA renders offline.
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-mono",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: copy.app.name,
@@ -75,8 +65,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // `data-theme`, which <ThemeScript /> writes before React runs
     // (components/theme.tsx). The export is prerendered light, so a dark phone
     // genuinely disagrees with the server HTML.
-    <html lang="en" className={mono.variable} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* The face's Latin file (globals.css), fetched before the CSS asks for it. */}
+        <link rel="preload" href="/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2"
+          crossOrigin="anonymous" />
         <script dangerouslySetInnerHTML={{ __html: manifestScript(manifest) }} />
       </head>
       <body>

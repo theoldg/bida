@@ -11,9 +11,9 @@
  * Chromium comes from the same place the browser checks take it — never run
  * `playwright install`.
  */
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { ROOT, OUT, ensureBuild, launch } from "./lib/harness.mjs";
+import { ROOT, launch } from "./lib/harness.mjs";
 
 const svg = await readFile(join(ROOT, "design/brand/logo.svg"), "utf8");
 
@@ -59,25 +59,14 @@ if (svg.split(PAPER).length !== 2) throw new Error(`logo.svg must hold exactly o
 const devSvg = svg.replace(PAPER, 'fill="#86b4ea"');
 
 /**
- * The banner is set in JetBrains Mono, and the one copy of that face on hand is
- * the one next/font self-hosts in the export. Its @font-face rules are lifted
- * from the built CSS with each file inlined, so the banner draws the app's own
- * glyphs — and the render fails rather than fall back to another mono.
+ * The banner is set in JetBrains Mono, from the app's own committed Latin file
+ * (apps/web/public/fonts/, globals.css) inlined, so it draws the app's glyphs
+ * — and the render fails rather than fall back to another mono.
  */
-async function exportFontFaces() {
-  ensureBuild();
-  const dir = join(OUT, "_next/static/css");
-  const css = (await Promise.all((await readdir(dir)).map((f) => readFile(join(dir, f), "utf8")))).join("");
-  const faces = css.match(/@font-face\{[^}]*font-family:\s*["']?JetBrains Mono["']?;[^}]*\}/g);
-  if (!faces) throw new Error("no JetBrains Mono @font-face in the export's CSS");
-  const inlined = [];
-  for (const face of faces) {
-    const url = face.match(/url\((\/_next\/static\/media\/[^)]+\.woff2)\)/)?.[1];
-    if (!url) throw new Error(`@font-face without a woff2 in the export: ${face}`);
-    const data = (await readFile(join(OUT, url))).toString("base64");
-    inlined.push(face.replace(url, `data:font/woff2;base64,${data}`));
-  }
-  return inlined.join("\n");
+async function latinFace() {
+  const data = (await readFile(join(ROOT, "apps/web/public/fonts/jetbrains-mono-latin.woff2"))).toString("base64");
+  return `@font-face{font-family:"JetBrains Mono";font-weight:400 700;`
+    + `src:url(data:font/woff2;base64,${data}) format("woff2")}`;
 }
 
 await mkdir(join(ROOT, "apps/web/public/dev"), { recursive: true });
@@ -106,7 +95,7 @@ try {
   const banner = await readFile(join(ROOT, "design/brand/banner.svg"), "utf8");
   const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
   await page.setContent(
-    `<style>${await exportFontFaces()}
+    `<style>${await latinFace()}
      html,body{margin:0;width:1200px;height:630px;overflow:hidden}
      svg{display:block;width:100%;height:100%}</style>${banner}`,
   );
