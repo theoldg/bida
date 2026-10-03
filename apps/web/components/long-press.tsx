@@ -7,38 +7,27 @@ import { RowMenu, type SheetAction } from "./row-menu";
 
 /** iOS's own long-press default; Android's is 400–500ms. */
 const HOLD_MS = 500;
-/**
- * A resting finger drifts. Past this it is a scroll, not a hold — and, once
- * the hold has been answered, past this it is a reach for the menu.
- */
+/** Before the hold, past this is a scroll; after it, a reach for the menu. */
 const SLOP_PX = 10;
 /**
- * Once a touch hold is answered, the finger still down owns the rest of the
- * gesture — and three things want it.
- *
- * The browser wants its next move as a scroll (pans are allowed everywhere),
- * which fires `pointercancel` and sends no click. But that move is the hand
- * reaching for the menu, as with a phone's own long-press menus. **So the
- * scroll is refused**, and the item under the finger at the lift is chosen —
- * after `SLOP_PX` of travel, since a finger that never moved picked nothing.
- *
- * The other two, Android's `contextmenu` and the lift's click, outlive the
- * finger and hit-test wherever it ended, so they are `clickGuard`'s
- * (`lib/click-guard.ts`).
+ * The finger still down once a touch hold is answered. Its next move is the
+ * hand reaching for the menu, so the browser's scroll is refused and the item
+ * under the finger at the lift is chosen, as with a phone's own long-press
+ * menus. Android's `contextmenu` and the lift's click outlive the finger, so
+ * they are `clickGuard`'s.
  */
 function heldFinger(from: { x: number; y: number } | null) {
   let hot: Element | null = null;
 
-  /** The menu item under the finger, once it has moved far enough to mean it. */
+  // A finger that never moved picked nothing.
   const itemAt = (at: { clientX: number; clientY: number }) =>
     from && Math.hypot(at.clientX - from.x, at.clientY - from.y) > SLOP_PX
       ? document.elementFromPoint(at.clientX, at.clientY)?.closest(".rowmenu-item") ?? null
       : null;
 
-  // A sliding finger gets the tap wash too, or it reaches "Delete" with nothing
-  // saying which row it is over. Set on the node: the menu doesn't re-render
-  // while a finger crosses it.
-  const warm = (item: Element | null) => {
+  // Or a sliding finger reaches "Delete" with nothing saying which item it is
+  // over. On the node: no re-render per item crossed.
+  const highlight = (item: Element | null) => {
     if (item === hot) return;
     hot?.classList.remove("rowmenu-hot");
     item?.classList.add("rowmenu-hot");
@@ -46,26 +35,20 @@ function heldFinger(from: { x: number; y: number } | null) {
   };
 
   const keep = (e: TouchEvent) => { if (e.cancelable) e.preventDefault(); };
-  const onMove = (e: globalThis.PointerEvent) => warm(itemAt(e));
-  /** The finger is gone; only the events it has already caused are still due. */
+  const onMove = (e: globalThis.PointerEvent) => highlight(itemAt(e));
   const release = () => {
-    warm(null);
+    highlight(null);
     document.removeEventListener("touchmove", keep, { capture: true });
     document.removeEventListener("pointermove", onMove, true);
   };
-  // Not passive, or `preventDefault` is ignored and the scroller takes the
-  // touch anyway — the one listener here that has to say so out loud.
+  // Not passive, or `preventDefault` is ignored.
   document.addEventListener("touchmove", keep, { passive: false, capture: true });
   document.addEventListener("pointermove", onMove, true);
-  // Nothing may still be holding the scroller off once the guard is done, so
-  // the two halves end together — a second finger landing mid-hold ends both.
+  // Ends with the guard, so nothing holds the scroller off after it.
   const guard = clickGuard(release);
 
   return {
-    /**
-     * The finger lifted at `at`, or was taken away. Choosing is a real click on
-     * the item, so a slide and a tap share the handler.
-     */
+    /** `at` is absent when the gesture was taken away. A real click, so a slide and a tap share the handler. */
     lifted: (at?: { clientX: number; clientY: number }) => {
       const item = at ? itemAt(at) : null;
       release();
@@ -76,29 +59,17 @@ function heldFinger(from: { x: number; y: number } | null) {
 }
 
 /**
- * Handlers that call `onHold` on a touch hold or a right click; spread them on
- * the element. `onHold` null leaves the press ordinary.
- *
- * **iOS never sends `contextmenu` for a touch**, so a touch hold is timed here
- * from pointer events. Android sends both, so whichever lands first wins and
- * the other is swallowed. `pointercancel` is a scroll; a second finger is a
- * pinch. `NoLongPress` swallows `contextmenu` everywhere; `stopPropagation`
- * keeps it off a press answered here.
+ * Handlers that call `onHold` on a touch hold or a right click; `null` leaves
+ * the press ordinary. iOS never sends `contextmenu` for a touch, so the hold is
+ * timed from pointer events; Android sends both, and the first to land wins.
  */
 export function useHold(onHold: ((el: HTMLElement) => void) | null) {
-  // The latest `onHold`, read when the timer fires rather than when it was set.
   const latest = useRef(onHold);
   latest.current = onHold;
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const start = useRef<{ id: number; x: number; y: number } | null>(null);
-  /** This press has been answered by a hold, and its finger is still down. */
   const held = useRef<ReturnType<typeof heldFinger> | null>(null);
-  /**
-   * The element a touch is being held on, marked `data-holding` so its wash
-   * can build over `HOLD_MS` rather than arrive — a hold is seen coming, and a
-   * row says it can be held. Set on the node, like `.rowmenu-hot`: a re-render
-   * per press would be spent on a class.
-   */
+  /** Marked `data-holding`, so its wash builds over `HOLD_MS`: a hold is seen coming. */
   const pressed = useRef<HTMLElement | null>(null);
 
   const disarm = () => {
@@ -107,23 +78,18 @@ export function useHold(onHold: ((el: HTMLElement) => void) | null) {
     delete pressed.current?.dataset.holding;
     pressed.current = null;
   };
-  // A row can leave mid-hold — the hold that opens /diag navigates — and its
-  // finger's lift then never reaches it.
+  // A row can leave mid-hold (the one that opens /diag navigates), and the lift never reaches it.
   useEffect(() => () => { disarm(); held.current?.lifted(); }, []);
 
   const fire = (el: HTMLElement) => {
     disarm();
     if (!latest.current || !el.isConnected) return;
-    // The one press in the app with no wash under it — the finger is still
-    // down and the menu opens above it, so the tick is what says the hold
-    // landed (lib/haptics.ts).
+    // The finger hides the menu's arrival: the tick is what says the hold landed.
     tick();
     latest.current(el);
   };
 
-  // Only a lift chooses: `pointercancel` is the gesture being taken away —
-  // a second finger, a system edge swipe — and says nothing about where the
-  // first one was going.
+  // `pointercancel` (a second finger, an edge swipe) says nothing about where the finger was going.
   const lift = (e?: PointerEvent<HTMLElement>) => {
     disarm();
     held.current?.lifted(e?.type === "pointerup" ? e : undefined);
@@ -141,8 +107,7 @@ export function useHold(onHold: ((el: HTMLElement) => void) | null) {
       pressed.current = el;
       el.dataset.holding = "";
       timer.current = setTimeout(() => {
-        // Read before `fire`, which disarms: where the hold landed is what a
-        // later slide is measured against.
+        // Before `fire` disarms: a later slide is measured from here.
         held.current = heldFinger(start.current);
         fire(el);
       }, HOLD_MS);
@@ -159,9 +124,7 @@ export function useHold(onHold: ((el: HTMLElement) => void) | null) {
       if (!latest.current) return;
       e.preventDefault();
       e.stopPropagation();
-      // A touch's `contextmenu` (Android, when it beats the timer) comes with
-      // its finger still down and its click still to come; a mouse's with
-      // neither. A touch's arriving after the timer never gets here.
+      // Android's, beating the timer, comes with its finger still down; a mouse's doesn't.
       if (start.current) held.current = heldFinger(start.current);
       fire(e.currentTarget);
     },
@@ -169,13 +132,10 @@ export function useHold(onHold: ((el: HTMLElement) => void) | null) {
 }
 
 /**
- * A small menu of actions on a long press or right click (`useHold`); spread
- * `hold` on the row. The row is remembered, not the point, so the menu always
- * opens in the same place — and **the row is marked `data-held` while its menu
- * is open**, so it lifts out of a list that steps back behind it (`.rows` in
- * globals.css): which row the card belongs to is never a guess. `asking` keeps
- * it held after the card closes, while a question an item opened is still up —
- * "Delete this expense?" is about the lifted row.
+ * A menu of actions on a long press or right click; spread `hold` on the row.
+ * The row is marked `data-held` while its menu is open, so it lifts out of the
+ * list behind it. `asking` keeps it lifted while a question an item opened is
+ * up: "Delete this expense?" is about that row.
  */
 export function useLongPressMenu(actions: SheetAction[], asking = false) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);

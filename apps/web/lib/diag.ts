@@ -1,85 +1,61 @@
 /**
- * A flight recorder for the things that make this app wait.
+ * A flight recorder for the things that make this app wait, read on /diag.
+ * A slow `indexedDB.open`, a read queued behind `rebuild`'s lock and a dead
+ * live read look identical except on a timeline.
  *
- * An installed phone pausing on skeleton rows for ten seconds is over before
- * devtools can be attached, and a slow `indexedDB.open`, a read queued behind
- * `rebuild`'s lock and a dead live read look identical — except on a timeline.
- *
- * **Always on**: a debug flag records nothing on the launch that goes wrong.
- * The cost is a bounded array and a `performance.now()` per event.
- *
- * Read it on /diag — long-press the wordmark on the groups list.
- *
- * **The last few pages' timelines are kept too**, in `localStorage`, never a
- * table: it has to work when IndexedDB is what's broken, and people kill the
- * app before thinking to look.
+ * Always on: a debug flag records nothing on the launch that goes wrong. The
+ * last few pages' timelines are kept in `localStorage`, never a table: it has
+ * to work when IndexedDB is what's broken.
  */
 
-/** One thing that happened, or took a while. */
 interface DiagEvent {
-  /** Milliseconds since this page started. One clock for every line. */
+  /** Milliseconds since this page started. */
   at: number;
-  /** A dotted name: `live.start`, `sync.push`, `rebuild`. */
+  /** Dotted: `live.start`, `sync.push`, `rebuild`. */
   what: string;
-  /** How long it took, for the ones that end. */
+  /** For spans. */
   ms?: number;
-  /** Whatever makes the line worth reading — a key, a count, a reason. */
   info?: string;
-  /**
-   * Creation order, not printed: breaks ties within a millisecond, so a
-   * `rebuild` and the read waiting on it never swap places.
-   */
+  /** Breaks ties within a millisecond, so a `rebuild` and the read waiting on it never swap. */
   seq: number;
 }
 
-/**
- * Enough for a launch and a couple of resumes. The oldest go first; the report
- * prints both ends when it wraps, since the launch is at the start.
- */
+/** A launch and a couple of resumes; the oldest go first. */
 const LIMIT = 400;
 
 const events: DiagEvent[] = [];
 let seq = 0;
-/** Wall-clock of the page load, so the relative timeline can be placed in a day. */
 const startedAt = Date.now();
 
 const now = (): number =>
   typeof performance !== "undefined" ? performance.now() : Date.now() - startedAt;
 
-/** Record that something happened. */
-export function mark(what: string, info?: string): void {
-  events.push({ at: Math.round(now()), what, info, seq: seq++ });
+function record(event: DiagEvent): void {
+  events.push(event);
   if (events.length > LIMIT) events.splice(0, events.length - LIMIT);
 }
 
-/** Spans that have begun and not ended. */
+export function mark(what: string, info?: string): void {
+  record({ at: Math.round(now()), what, info, seq: seq++ });
+}
+
+/** Unfinished spans, reported too: a read hanging right now is why somebody opened /diag. */
 const running = new Set<DiagEvent>();
 
-/**
- * Record that something *started*, and get back the way to say it finished.
- * The duration is the point.
- */
+/** Returns the call that ends the span; a second call is a no-op. */
 export function started(what: string, info?: string): (info?: string) => void {
   const from = now();
   const span: DiagEvent = { at: Math.round(from), what, info, seq: seq++ };
-  // Held while it runs, so a read hanging *right now* — the reason somebody
-  // opened this screen — is in the report.
   running.add(span);
   return (done?: string) => {
-    if (!running.delete(span)) return; // already finished; a double call is a no-op
+    if (!running.delete(span)) return;
     span.ms = Math.round(now() - from);
     if (done !== undefined) span.info = done;
-    events.push(span);
-    if (events.length > LIMIT) events.splice(0, events.length - LIMIT);
+    record(span);
   };
 }
 
-
-/**
- * The timeline in the order things *started*, so one span shows inside
- * another — "what was it waiting on" is always an overlap. Running spans are
- * included, with how long they've been going.
- */
+/** In start order, so "what was it waiting on" shows as an overlap. */
 export function timeline(): DiagEvent[] {
   const live = [...running].map((span): DiagEvent => ({
     ...span,
@@ -89,7 +65,6 @@ export function timeline(): DiagEvent[] {
   return [...events, ...live].sort((a, b) => a.at - b.at || a.seq - b.seq);
 }
 
-/** When the page this timeline describes was loaded. */
 export function loadedAt(): number {
   return startedAt;
 }
@@ -97,14 +72,9 @@ export function loadedAt(): number {
 /* ---- surviving the relaunch ------------------------------------------- */
 
 const KEEP = "bida.diag.pages";
-/**
- * How many page logs to keep, this one included. More than one because a
- * paste loads `/join` as a second page, which would overwrite the one that
- * hung.
- */
+/** This one included. Not just one: a paste loads `/join` as a page that would overwrite the one that hung. */
 const PAGES = 5;
 
-/** One page's timeline, as kept: when it loaded, where, and what it recorded. */
 interface KeptPage { at: number; url: string; events: DiagEvent[] }
 
 const readKept = (): KeptPage[] => {
@@ -115,43 +85,34 @@ const readKept = (): KeptPage[] => {
   }
 };
 
-/**
- * Every other page's kept timeline, **newest first**. Read when asked, not at
- * load: a page opened after this one is often the one that matters.
- */
+/** Newest first. Read when asked, not at load: a page opened after this one often matters most. */
 export function otherPages(): KeptPage[] {
   return readKept().filter((page) => page.at !== startedAt).sort((a, b) => b.at - a.at);
 }
 
-/**
- * Keep this page's timeline for the next one, in its own slot. On `pagehide`
- * and on going hidden; neither fires when the OS kills the process, so best
- * effort.
- */
+/** Best effort: nothing fires when the OS kills the process. */
 function save(): void {
   try {
-    // `timeline()`, not `events`: a read still hanging when the app is
-    // backgrounded or killed is precisely what the next page needs to see.
+    // `timeline()`, so a read still hanging is kept too.
     const mine: KeptPage = { at: startedAt, url: hideSecrets(location.pathname + location.search + location.hash), events: timeline() };
     const kept = [...readKept().filter((page) => page.at !== startedAt), mine]
       .sort((a, b) => a.at - b.at).slice(-PAGES);
     localStorage.setItem(KEEP, JSON.stringify(kept));
   } catch {
-    // A full or disabled localStorage costs the kept logs, nothing else.
+    // Costs the kept logs, nothing else.
   }
 }
 
 let watching = false;
 
-/** Start keeping the timeline across pages. Idempotent; called by `arm()`. */
+/** Idempotent. */
 export function keep(): void {
   if (watching || typeof window === "undefined") return;
   watching = true;
   try {
+    // A leftover from when one log was kept.
     localStorage.removeItem("bida.diag.last");
-  } catch {
-    // Only a leftover from when one log was kept.
-  }
+  } catch { /* nothing to clean */ }
   addEventListener("pagehide", save);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") save();
@@ -165,12 +126,7 @@ export function forget(): void {
   running.clear();
 }
 
-/**
- * One line per event, fixed-width, **newest first**. Plain text: read on a
- * phone, pasted into a message. Newest first because a phone pastes the top of
- * a long report; the timestamps still show containment, and `timeline()`
- * keeps start order.
- */
+/** Fixed-width, newest first: a phone pastes the top of a long report. */
 export function format(rows: readonly DiagEvent[] = timeline()): string {
   return [...rows]
     .reverse()
@@ -184,10 +140,7 @@ export function format(rows: readonly DiagEvent[] = timeline()): string {
 
 /* ---- the home-screen hand-off ----------------------------------------- */
 
-/**
- * A URL with every group secret in its fragment masked:
- * `#id.secret~id.secret` → `#id.…~id.…`. The report is pasted into chats.
- */
+/** `#id.secret~id.secret` → `#id.…~id.…`: the report is pasted into chats. */
 export function hideSecrets(url: string): string {
   const hash = url.indexOf("#");
   return hash < 0 ? url : url.slice(0, hash) + url.slice(hash).replace(/\.[A-Za-z0-9_-]+/g, ".…");
@@ -197,24 +150,22 @@ const ARRIVALS = "bida.diag.arrivals";
 const FIRST = "bida.diag.first";
 const NOTES = "bida.diag.notes";
 
-/** One page load: where it landed, how, and whether as the home-screen app. */
 interface Arrival {
-  at: number; url: string; nav: string; app: boolean;
-  /** The manifest the head was given (`manifestScript`): `static`, `carry:<groups>`, or `none`. */
+  at: number; url: string; nav: string;
+  /** Opened as the home-screen app. */
+  app: boolean;
+  /** `static`, `carry:<groups>`, or `none` (`manifestScript`). */
   mf?: string;
 }
 
 /**
- * Every page load's URL, written by an inline script before Next runs — to
- * answer which URL the home-screen icon opened (docs/ios.md, experiment A),
- * since the router rewrites the address before /diag is opened. The first load
- * in a storage is kept apart: on iOS the home-screen app has its own storage,
- * so that is the icon's first launch. `hideSecrets`'s mask, inlined because
- * this runs before any bundle.
+ * Every page load's URL, recorded before Next rewrites it: which URL did the
+ * home-screen icon open (docs/ios.md)? The first load is kept apart, since the
+ * iOS home-screen app has its own storage. Inlines `hideSecrets`: no bundle has run.
  */
 export const arrivalScript = `try{var l=location,n=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0],e={at:Date.now(),url:l.pathname+l.search+l.hash.replace(/\\.[A-Za-z0-9_-]+/g,".…"),nav:n?n.type:"?",app:matchMedia("(display-mode: standalone)").matches||navigator.standalone===true},m=document.querySelector("link[rel=manifest]"),c=localStorage.getItem("bida.carry");e.mf=!m?"none":m.href.indexOf("blob:")===0?"carry:"+(c?c.split("~").length:"?"):"static";a=JSON.parse(localStorage.getItem("${ARRIVALS}")||"[]");a.push(e);localStorage.setItem("${ARRIVALS}",JSON.stringify(a.slice(-12)));if(!localStorage.getItem("${FIRST}"))localStorage.setItem("${FIRST}",JSON.stringify(e))}catch(x){}`;
 
-/** A timeline mark that also outlives the session — for steps that happen once. */
+/** A mark that outlives the session, for steps that happen once. */
 export function keepNote(what: string, info?: string): void {
   mark(what, info);
   try {
@@ -222,11 +173,10 @@ export function keepNote(what: string, info?: string): void {
     held.push({ at: Date.now(), what, info });
     localStorage.setItem(NOTES, JSON.stringify(held.slice(-30)));
   } catch {
-    // No localStorage costs the note's second life, not the mark.
+    // Costs the note's second life, not the mark.
   }
 }
 
-/** The arrivals and notes above, as the report's lines. */
 export function handoff(): string {
   const read = <T>(key: string, otherwise: T): T => {
     try { return (JSON.parse(localStorage.getItem(key) ?? "null") as T | null) ?? otherwise; }
