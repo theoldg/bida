@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  billTotalMinor, checkScan, correctOneLine, lineMinor, normalizeScan, readBill, receiptExtras, scanCurrency,
+  billTotalMinor, checkScan, correctOneLine, lineMinor, normalizeScan, readBill, receiptExtras, receiptOf, scanCurrency,
   type ScanDiscount, type ScanLineItem, type ScanResult,
 } from "./scan.js";
 
@@ -283,6 +283,25 @@ describe("receiptExtras", () => {
 
   it("is all-null on an expense that was never scanned", () => {
     expect(receiptExtras({})).toEqual({ tip: null, tax: null, discounts: [] });
+  });
+});
+
+describe("receiptOf", () => {
+  it("names every field, null where the source has none", () => {
+    const bill = receiptOf({ receiptTip: "3.00", receiptInvolved: ["a"] });
+    expect(bill).toEqual({
+      receiptItems: null, receiptTip: "3.00", receiptTax: null, receiptDiscounts: null,
+      receiptInvolved: ["a"], receiptAssignments: null, receiptText: null, receiptEnglish: null,
+    });
+  });
+
+  it("writes English only when it is true", () => {
+    expect(receiptOf({ receiptEnglish: false }).receiptEnglish).toBeNull();
+    expect(receiptOf({ receiptEnglish: true }).receiptEnglish).toBe(true);
+  });
+
+  it("carries the bill and nothing that sits beside it", () => {
+    expect(Object.keys(receiptOf({ description: "x" } as never))).not.toContain("description");
   });
 });
 

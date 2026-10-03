@@ -62,7 +62,35 @@ export interface Member {
   deletedAt?: number | null;
 }
 
-export interface Expense {
+/**
+ * The bill behind an expense, kept on it so "who had what" reopens on any
+ * device (ADR-0016). A type of its own because the draft, the form's input and
+ * both writes carry it whole — `receiptOf` moves it between them.
+ */
+export interface Receipt {
+  /** The last scan's lines. */
+  receiptItems?: ReceiptItem[] | null;
+  /** A separate tip/service line from the same scan, printed as-is. */
+  receiptTip?: string | null;
+  /** Tax charged on top of the lines, printed as-is. `BillExtras`. */
+  receiptTax?: string | null;
+  /** What the bill took off, one entry per printed deduction. `BillExtras`. */
+  receiptDiscounts?: ReceiptDiscount[] | null;
+  /** Who was marked present, last time the who-had-what grid was saved. */
+  receiptInvolved?: Id[] | null;
+  /** Per-item member ids, same order as `receiptItems`, last time it was saved. */
+  receiptAssignments?: Id[][] | null;
+  /** The bill as typed into "Type it in", so the dialog reopens holding it. */
+  receiptText?: string | null;
+  /**
+   * True when the bill is read in English rather than as printed — the grid's
+   * translate toggle, saved with the bill so every phone reads it alike
+   * (`billLabel`, ADR-0016). Written only when true.
+   */
+  receiptEnglish?: boolean | null;
+}
+
+export interface Expense extends Receipt {
   id: Id;
   groupId: Id;
   /** Which way this entry runs. Absent means `expense`. See `ExpenseKind`. */
@@ -95,26 +123,6 @@ export interface Expense {
   split: SplitSpec;
   /** Receipt photos. Absent, not `[]`, when none — nothing appends an `attachment` op yet. */
   attachmentIds?: Id[];
-  /** The last scan's lines, on the expense so "who had what" reopens on any device. ADR-0016. */
-  receiptItems?: ReceiptItem[] | null;
-  /** A separate tip/service line from the same scan, printed as-is. */
-  receiptTip?: string | null;
-  /** Tax charged on top of the lines, printed as-is. `BillExtras`. */
-  receiptTax?: string | null;
-  /** What the bill took off, one entry per printed deduction. `BillExtras`. */
-  receiptDiscounts?: ReceiptDiscount[] | null;
-  /** Who was marked present, last time the who-had-what grid was saved. */
-  receiptInvolved?: Id[] | null;
-  /** Per-item member ids, same order as `receiptItems`, last time it was saved. */
-  receiptAssignments?: Id[][] | null;
-  /** The bill as typed into "Type it in", so the dialog reopens holding it. */
-  receiptText?: string | null;
-  /**
-   * True when the bill is read in English rather than as printed — the grid's
-   * translate toggle, saved with the bill so every phone reads it alike
-   * (`billLabel`, ADR-0016). Written only when true.
-   */
-  receiptEnglish?: boolean | null;
   deletedAt?: number | null;
 }
 

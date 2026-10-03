@@ -38,7 +38,8 @@ Gemini key, which the envelope used to make impossible.
 
 **The parsed bill lives on the expense, not in the draft.** `receiptItems`,
 `receiptTip`, `receiptInvolved`, `receiptAssignments` and `receiptText` are
-ordinary optional fields on `Expense`, travelling in the op's `patch` like `description` — so they
+ordinary optional fields on `Expense` — together the `Receipt` type, which
+`receiptOf` carries whole between an expense, the draft and a write — travelling in the op's `patch` like `description` — so they
 sync, replay and fold with no change to `Op`, `fold.ts`, the D1 schema or the
 Dexie schema, and the grid reopens later from any device. Ops already written
 in the old shape are upgraded in one place, `upgradeReceiptSplit`, where ops

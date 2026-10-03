@@ -6,7 +6,7 @@
 
 import { isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money.js";
 import type { ScanMedium } from "./scan-body.js";
-import type { ReceiptDiscount } from "./types.js";
+import type { Receipt, ReceiptDiscount } from "./types.js";
 import { sameLocalDay } from "./when.js";
 
 /**
@@ -252,15 +252,29 @@ export function extrasMinor(extras: BillExtras, currency: CurrencyCode): number 
 }
 
 /** The extras as an entry keeps them — three flat fields on `Expense` and on the draft. */
-export function receiptExtras(source: {
-  receiptTip?: string | null;
-  receiptTax?: string | null;
-  receiptDiscounts?: ReceiptDiscount[] | null;
-}): BillExtras {
+export function receiptExtras(source: Receipt): BillExtras {
   return {
     tip: source.receiptTip ?? null,
     tax: source.receiptTax ?? null,
     discounts: source.receiptDiscounts ?? [],
+  };
+}
+
+/**
+ * The whole bill off an expense, a draft or an input, in the shape every write
+ * takes it: each field null when absent, and `receiptEnglish` true or null.
+ * `receiptOf({})` is no bill at all.
+ */
+export function receiptOf(source: Receipt): { [K in keyof Receipt]-?: NonNullable<Receipt[K]> | null } {
+  return {
+    receiptItems: source.receiptItems ?? null,
+    receiptTip: source.receiptTip ?? null,
+    receiptTax: source.receiptTax ?? null,
+    receiptDiscounts: source.receiptDiscounts ?? null,
+    receiptInvolved: source.receiptInvolved ?? null,
+    receiptAssignments: source.receiptAssignments ?? null,
+    receiptText: source.receiptText ?? null,
+    receiptEnglish: source.receiptEnglish === true ? true : null,
   };
 }
 

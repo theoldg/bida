@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import {
   convertSplitMode, newId, parseMinor, receiptExtras, sameLocalDay,
-  type ArithmeticMode, type ArithmeticSplit, type ReceiptDiscount, type ReceiptItem, type SplitMode, type SplitSpec,
+  type ArithmeticMode, type ArithmeticSplit, type Receipt, type ReceiptItem, type SplitMode, type SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 import { receiptBreakdown, receiptTotalMinor, type MemberLine } from "./scan/items";
@@ -32,8 +32,9 @@ export type SplitInputs = { [M in ArithmeticMode]?: Extract<SplitSpec, { mode: M
  * editor and grid routes keeps it. **In memory only** — never on the op log,
  * never persisted; leaving discards it after a warning (`isDraftDirty`).
  * One draft covers all three kinds so switching kind keeps amount, date and words.
+ * The bill rides on it exactly as on `Expense` (`Receipt`).
  */
-export interface EntryDraft {
+export interface EntryDraft extends Receipt {
   /** Which of the three this is. The form's kind chip writes it. */
   kind: EntryKind;
   /**
@@ -68,22 +69,6 @@ export interface EntryDraft {
   /** The clock reading the time of day came from; what `retimed` measures against. Never saved. */
   recordedAt: number;
   categoryId: string | null;
-  /** The parsed bill, as on `Expense`; saved so "Edit who-had-what" reopens it anywhere. ADR-0016. */
-  receiptItems?: ReceiptItem[] | null;
-  /** A separate tip/service line from the same scan, printed as-is. */
-  receiptTip?: string | null;
-  /** Tax charged on top of the lines, printed as-is. `BillExtras`. */
-  receiptTax?: string | null;
-  /** What the bill took off, one entry per printed deduction. `BillExtras`. */
-  receiptDiscounts?: ReceiptDiscount[] | null;
-  /** Who was marked present, last time the who-had-what grid was saved. */
-  receiptInvolved?: string[] | null;
-  /** Per-item member ids, same order as `receiptItems`, last time it was saved. */
-  receiptAssignments?: string[][] | null;
-  /** The bill as typed into "Type it in", so the dialog reopens holding it. */
-  receiptText?: string | null;
-  /** Read in English rather than as printed, as on `Expense`. */
-  receiptEnglish?: boolean | null;
   /** Explicit tab choice; see `SplitTab`. */
   splitTab?: SplitTab;
   /** The title the last scan wrote, so a rescan can replace its own guess but not a typed title. */

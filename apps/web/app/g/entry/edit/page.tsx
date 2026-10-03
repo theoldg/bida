@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  minorToDecimalString, ownCurrencySplit, receiptExtras,
+  minorToDecimalString, ownCurrencySplit, receiptExtras, receiptOf,
   type RateSource,
 } from "@bida/core";
 import { handOffReceiptTotal } from "@/lib/scan/items";
@@ -210,14 +210,7 @@ function EditEntryScreen() {
           dateOnly: e.dateOnly === true,
           recordedAt: e.createdAt ?? e.occurredAt,
           categoryId: e.categoryId ?? null,
-          receiptItems: e.receiptItems ?? null,
-          receiptText: e.receiptText ?? null,
-          receiptEnglish: e.receiptEnglish === true ? true : null,
-          receiptTip: e.receiptTip ?? null,
-          receiptTax: e.receiptTax ?? null,
-          receiptDiscounts: e.receiptDiscounts ?? null,
-          receiptInvolved: e.receiptInvolved ?? null,
-          receiptAssignments: e.receiptAssignments ?? null,
+          ...receiptOf(e),
           // The tab *is* the mode — a receipt included. The exception is a
           // percent split, which has no tab of its own: `legacyPercent` draws
           // it, and the first tap converts it away.
@@ -501,14 +494,7 @@ function EditEntryScreen() {
           // An income has no bill. Turning an expense into one clears the scan
           // rather than leaving a receipt hanging off an entry that can never
           // show it again.
-          receiptItems: canScan ? draft.receiptItems ?? null : null,
-          receiptText: canScan ? draft.receiptText ?? null : null,
-          receiptEnglish: canScan && draft.receiptEnglish === true ? true : null,
-          receiptTip: canScan ? draft.receiptTip ?? null : null,
-          receiptTax: canScan ? draft.receiptTax ?? null : null,
-          receiptDiscounts: canScan ? draft.receiptDiscounts ?? null : null,
-          receiptInvolved: canScan ? draft.receiptInvolved ?? null : null,
-          receiptAssignments: canScan ? draft.receiptAssignments ?? null : null,
+          ...receiptOf(canScan ? draft : {}),
         };
         if (draft.entryId) await editExpense(groupId, actor, draft.entryId, input);
         // Written under the id the form has been quoting its split with, so

@@ -1,7 +1,7 @@
 import {
-  canonicalSplit, newId, primaryPayer, restoreEntryDrafts,
+  canonicalSplit, newId, primaryPayer, receiptOf, restoreEntryDrafts,
   type CurrencyCode, type EntryEntity, type ExchangeRate, type ExpenseKind, type Id, type OpDraft, type Rate,
-  type ReceiptDiscount, type ReceiptItem, type SplitSpec,
+  type Receipt, type SplitSpec,
 } from "@bida/core";
 import { db } from "../dexie";
 import { groupState } from "../fold";
@@ -16,7 +16,7 @@ import { rateToWrite, toBase, valuationOf } from "./rates";
  * change is worth (`rates.ts`).
  */
 
-export interface ExpenseInput {
+export interface ExpenseInput extends Receipt {
   /** Which way the entry runs. Omitted or "expense" for the ordinary case. */
   kind?: ExpenseKind | null;
   description: string;
@@ -34,17 +34,6 @@ export interface ExpenseInput {
   split: SplitSpec;
   categoryId?: string | null;
   attachmentIds?: Id[];
-  /** The parsed bill behind `split`, kept so the who-had-what grid can reopen. */
-  receiptItems?: ReceiptItem[] | null;
-  receiptTip?: string | null;
-  receiptTax?: string | null;
-  receiptDiscounts?: ReceiptDiscount[] | null;
-  receiptInvolved?: Id[] | null;
-  receiptAssignments?: Id[][] | null;
-  /** The bill as typed, when it was typed rather than photographed. */
-  receiptText?: string | null;
-  /** Read in English rather than as printed. True or absent, like `dateOnly`. */
-  receiptEnglish?: boolean | null;
 }
 
 /**
@@ -101,14 +90,7 @@ export function expenseCreatePatch(
       categoryId: input.categoryId,
       payers: payer.payers,
       attachmentIds: input.attachmentIds,
-      receiptItems: input.receiptItems,
-      receiptTip: input.receiptTip,
-      receiptTax: input.receiptTax,
-      receiptDiscounts: input.receiptDiscounts,
-      receiptInvolved: input.receiptInvolved,
-      receiptAssignments: input.receiptAssignments,
-      receiptText: input.receiptText,
-      receiptEnglish: input.receiptEnglish ? true : null,
+      ...receiptOf(input),
     }),
   };
 }
@@ -179,14 +161,7 @@ export async function editExpense(
     split,
     categoryId: merged.categoryId,
     attachmentIds: merged.attachmentIds,
-    receiptItems: merged.receiptItems,
-    receiptTip: merged.receiptTip,
-    receiptTax: merged.receiptTax,
-    receiptDiscounts: merged.receiptDiscounts,
-    receiptInvolved: merged.receiptInvolved,
-    receiptAssignments: merged.receiptAssignments,
-    receiptText: merged.receiptText,
-    receiptEnglish: merged.receiptEnglish ? true : null,
+    ...receiptOf(merged),
   });
 
   // A save that moved nothing is a revision saying nothing happened.
