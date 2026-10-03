@@ -500,7 +500,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                   <span style={{ fontSize: 14, fontWeight: 600 }}>
                     {plural(coPayers.length, copy.noun.person)}
                   </span>
-                  <Icon name="chev" size={14} className="spacer" style={{ color: "var(--muted)" }} />
+                  <Icon name="chev" size={14} className="spacer muted" />
                 </Link>
                 <div className="hairline" />
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

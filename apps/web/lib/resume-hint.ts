@@ -48,7 +48,7 @@ export type LedgerBanner = "demo" | "notify" | "manual" | undefined;
  * test evaluates this against `offerFrom` and `pushStateFrom` in every
  * combination, so the two cannot drift apart.
  */
-export const ledgerBannerSource = `function(id,standalone,ios,push,permission){if(id===${JSON.stringify(DEMO_GROUP_ID)})return"demo";if(standalone)return push&&permission==="default"?"notify":undefined;return ios?"manual":undefined}`;
+const ledgerBannerSource = `function(id,standalone,ios,push,permission){if(id===${JSON.stringify(DEMO_GROUP_ID)})return"demo";if(standalone)return push&&permission==="default"?"notify":undefined;return ios?"manual":undefined}`;
 
 /**
  * Marks `<html data-resuming="<banner>">` on a load that `isLaunch`

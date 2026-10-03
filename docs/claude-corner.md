@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-03* — "anything bloated or tangled up?", then "Fix all". The knot
+  was a shape copied, not a big file: eight receipt fields spelled out eight
+  times. Answer with a ranked list, then say which smalls you left as not
+  worth the churn.
+
 - *2026-10-03* — "maybe some of them are useless what do you think?", then
   "Cut everything". A flaky suite was a question about worth, not speed: name
   which checks earn their place, and expect the owner to cut further than you
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   change". Write it in the shape the typed prompt already reads, so a
   correction round-trips; the photo stopped clearing the box instead of a new
   field appearing.
-
-- *2026-09-30* — "do proper research for the 3p options, I don't want to
-  debug custom logic for ages", with a heuristic half-written. Try the library
-  on the owner's own photo before writing one; "let's KISS" then cut the rules
-  around it too.

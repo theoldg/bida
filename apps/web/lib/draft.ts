@@ -140,24 +140,12 @@ export function withSplit(splits: SplitInputs, spec: ArithmeticSplit): SplitInpu
 }
 
 /**
- * What the bill owes each person as weights, in the receipt's currency: each
- * line divided among whoever had it, tip scaled to what they ordered.
+ * What the bill owes each person as weights, in the receipt's currency — each
+ * line divided among whoever had it, tip scaled to what they ordered — with
+ * each person's lines beside their figure.
  *
- * The grid and the form both ask this and must agree to the cent, so the seed
- * is fixed here and not left to either caller.
- */
-export function receiptWeights(
-  draft: EntryDraft,
-  items: readonly ReceiptItem[],
-  assignments: readonly Set<string>[],
-  involved: ReadonlySet<string>,
-): Record<string, number> {
-  return receiptBill(draft, items, assignments, involved).weights;
-}
-
-/**
- * `receiptWeights` with each person's lines beside their figure. A draft can't
- * call `receiptBreakdown` directly because the seed is `splitSeed`'s to name.
+ * The grid, the form and a quick split all ask this and must agree to the
+ * cent, so the seed is fixed here (`splitSeed`) and not left to any caller.
  */
 export function receiptBill(
   draft: EntryDraft,
@@ -184,7 +172,7 @@ export function draftReceiptSplit(draft: EntryDraft): SplitSpec | null {
   const showing = draft.kind === "expense"
     && activeSplitTab(draft) === "receipt" && (draft.receiptItems?.length ?? 0) > 0;
   if (!showing) return null;
-  const weights = receiptWeights(
+  const { weights } = receiptBill(
     draft,
     draft.receiptItems ?? [],
     (draft.receiptAssignments ?? []).map((row) => new Set(row)),

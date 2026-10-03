@@ -5,7 +5,7 @@ import {
 } from "@bida/core";
 import {
   activeSplit, activeSplitTab, blankDraft, draftReceiptSplit, expenseDraft, legacyPercent, newEntryKey,
-  openSplitTab, receiptWeights, retimed, splitSeed, tabAfterScan, transferDraft, withSplit,
+  openSplitTab, receiptBill, retimed, splitSeed, tabAfterScan, transferDraft, withSplit,
   type EntryDraft, type SplitTab,
 } from "./draft";
 
@@ -307,7 +307,7 @@ describe("what rounding ties break by", () => {
  * A bill on the grid, and the same bill once Done has written it down. Every
  * line divides three ways with a cent left over, the one thing that could
  * differ if the grid and the save seeded differently (€22.25 shown, €22.24
- * saved). `receiptWeights` is the one place that names a seed.
+ * saved). `receiptBill` is the one place that names a seed.
  */
 describe("a scanned bill prices the same on both screens", () => {
   const BILL = [
@@ -330,7 +330,7 @@ describe("a scanned bill prices the same on both screens", () => {
     const d = scanned();
     // The grid holds its rows in component state until Done; the form reads
     // them off the draft. Same bill, so the same figures, to the minor unit.
-    const onTheGrid = receiptWeights(d, BILL, HAD.map((row) => new Set(row)), new Set(MEMBERS));
+    const onTheGrid = receiptBill(d, BILL, HAD.map((row) => new Set(row)), new Set(MEMBERS)).weights;
     expect(draftReceiptSplit(d)).toEqual({ mode: "receipt", weights: onTheGrid });
   });
 
@@ -339,14 +339,14 @@ describe("a scanned bill prices the same on both screens", () => {
     // spare cent to different people, or every bill in the app rounds in one
     // person's favour — and a screen that hardcodes a seed passes silently.
     const readings = new Set(["a", "b", "c", "d", "e", "f"].map((id) =>
-      JSON.stringify(receiptWeights(
+      JSON.stringify(receiptBill(
         scanned({ newEntryId: id }), BILL, HAD.map((row) => new Set(row)), new Set(MEMBERS),
-      ))));
+      ).weights)));
     expect(readings.size).toBeGreaterThan(1);
   });
 
   it("still hands out every minor unit of the bill", () => {
-    const weights = receiptWeights(scanned(), BILL, HAD.map((row) => new Set(row)), new Set(MEMBERS));
+    const weights = receiptBill(scanned(), BILL, HAD.map((row) => new Set(row)), new Set(MEMBERS)).weights;
     // 14.50 + 16.00 + 6.50 + 5.00 tip.
     expect(Object.values(weights).reduce((a, b) => a + b, 0)).toBe(4200);
   });

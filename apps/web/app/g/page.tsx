@@ -314,7 +314,7 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
           <FitLine className="rmeta" options={transferMeta(settlement.note)} />
         </div>
         <div className="ramt">
-          <div className="big" style={{ color: "var(--muted)" }}>
+          <div className="big muted">
             {money(settlement.baseAmountMinor, base)}
           </div>
           <div className={`sm share ${signClass(myNet)}`}>

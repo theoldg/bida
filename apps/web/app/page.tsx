@@ -201,7 +201,7 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
           <div className="amtface">
             {netMinor === undefined ? (
               <>
-                <div className="big" style={{ color: "var(--muted)" }}>{copy.none}</div>
+                <div className="big muted">{copy.none}</div>
                 <div className="sm">{copy.groups.whoAreYou}</div>
               </>
             ) : (

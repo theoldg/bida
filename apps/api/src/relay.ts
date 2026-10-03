@@ -76,7 +76,7 @@ export function parseNotify(raw: unknown): Notification[] | NotifyRefusal {
 const TTL_SECONDS = 24 * 60 * 60;
 
 /** Per push service; they run in parallel, so a slow one costs the sync this at most. */
-export const RELAY_TIMEOUT_MS = 1000;
+const RELAY_TIMEOUT_MS = 1000;
 
 type Send = (url: string, init: RequestInit) => Promise<Response>;
 

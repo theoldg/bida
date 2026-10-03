@@ -13,7 +13,7 @@ import { groupCrypto } from "../seal";
  * pull after it fetches the same ops again and cannot skip any. The names are
  * `sw.js`'s too: change them together.
  */
-export const STASH_CACHE = "bida-pull";
+const STASH_CACHE = "bida-pull";
 const cursorKey = (groupId: string) => `/pull/${encodeURIComponent(groupId)}/cursor`;
 export const stashKey = (groupId: string) => `/pull/${encodeURIComponent(groupId)}/ops`;
 

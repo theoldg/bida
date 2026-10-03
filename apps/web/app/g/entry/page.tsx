@@ -452,7 +452,7 @@ function ExpenseDetail({ expense, kind, group, data }: {
                   k={yours(id, m?.name ?? copy.someone)}
                   v={<>
                     {money(putIn[id] ?? 0, group.baseCurrency)}
-                    {foreign ? <span style={{ color: "var(--muted)" }}>
+                    {foreign ? <span className="muted">
                       {" "}({money(own, expense.currency)})
                     </span> : null}
                   </>} />
@@ -482,7 +482,7 @@ function ExpenseDetail({ expense, kind, group, data }: {
           const k = yours(m.id, m.name, detail);
           const v = foreign ? <>
             {money(shares[m.id] ?? 0, group.baseCurrency)}
-            <span style={{ color: "var(--muted)" }}> ({money(ownShares[m.id] ?? 0, expense.currency)})</span>
+            <span className="muted"> ({money(ownShares[m.id] ?? 0, expense.currency)})</span>
           </> : money(shares[m.id] ?? 0, group.baseCurrency);
           const lines = bill?.[m.id];
           if (!lines?.length) return <KV key={m.id} k={k} v={v} />;

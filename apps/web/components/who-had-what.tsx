@@ -11,7 +11,7 @@ import { useRefusal } from "../lib/refusal";
 import { revealWhole, scrollTarget, seekTarget } from "../lib/reveal";
 import { glide } from "../lib/seek";
 import { bare, distinctInitials, priced } from "../lib/format";
-import { receiptWeights, type EntryDraft } from "../lib/draft";
+import { receiptBill, type EntryDraft } from "../lib/draft";
 import {
   billLabel, foldedLine, hasTranslation, portions, receiptTotalMinor, runAssignment,
   unfoldAll,
@@ -37,7 +37,7 @@ const inColumn = (
  * Worn by `/g/entry/items` and by `/quick/items`
  * ([ADR-0035](../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
  * **Neither owns it** — two copies of this arithmetic would disagree, and the
- * cent it hands out is the cent the next screen quotes (`receiptWeights`). The
+ * cent it hands out is the cent the next screen quotes (`receiptBill`). The
  * props are exactly what the two differ in: the columns, how a figure prints,
  * where Done goes. Assumes a bill with lines on it.
  */
@@ -267,7 +267,7 @@ export function WhoHadWhat({
   // Asked of lib/draft, not of weightsFromItems directly: what these rows are
   // worth has to be the same answer the form gives once Done has written them
   // down, and the seed that decides it is not this screen's to pick.
-  const weights = receiptWeights(draft, items, assignments, involved);
+  const { weights } = receiptBill(draft, items, assignments, involved);
   const missing = items.map((_, i) => (assignments[i]?.size ?? 0) === 0);
   // What the grid actually draws: one entry per row, which is one item —
   // or one closed run of portions read as the line it came from.

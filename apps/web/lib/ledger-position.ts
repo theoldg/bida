@@ -66,12 +66,6 @@ let spent: number | null = null;
 /** Keep going while what is above the rows is still arriving (cards, banners). */
 const RESTORE_WINDOW_MS = 1200;
 
-/** Test seam. */
-export function forgetLedgerPositions(): void {
-  positions.clear();
-  spent = null;
-}
-
 function rowsOf(box: HTMLElement): RowBox[] {
   return [...box.querySelectorAll<HTMLElement>("[data-entry]")].map((el) => {
     const r = el.getBoundingClientRect();

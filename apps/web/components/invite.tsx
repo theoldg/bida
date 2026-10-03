@@ -63,7 +63,7 @@ export function InviteButton({ groupId }: { groupId: string | undefined }) {
  * the button above, the groups list's row menu — needs this, so it renders
  * nothing until the copy actually fails.
  */
-export function InviteFallback({ invite }: { invite: ReturnType<typeof useInviteLink> }) {
+function InviteFallback({ invite }: { invite: ReturnType<typeof useInviteLink> }) {
   if (!invite.failed || !invite.link) return null;
   return (
     <NoticeDialog title={copy.group.linkTitle} onClose={invite.clearFailure}>

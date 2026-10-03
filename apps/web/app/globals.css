@@ -395,6 +395,7 @@ html[data-resuming="manual"] .ghost-manual { display: block }
    page's left edge, with the whole 37px square still the target. */
 .iconbtn.back { background: transparent; border-color: transparent; margin-inline: -9px -6px }
 .spacer { margin-left: auto }
+.muted { color: var(--muted) }
 /* The build's number in the bar's far corner, `/about` only (app/about/page.tsx).
    Set like the bar's own subtitle — mono, muted, a step down — so it reads as a
    stamp on the screen rather than a control beside the title. */

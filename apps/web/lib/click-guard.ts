@@ -6,7 +6,7 @@ import { guarding, note } from "./press-trace";
  * How long after the finger is gone a click it caused may still arrive.
  * Generous: the guard also ends at the next press, so it cannot eat a real tap.
  */
-export const CLICK_WAIT_MS = 1000;
+const CLICK_WAIT_MS = 1000;
 
 /**
  * Swallow the leftover click a touch gesture has already been answered for.

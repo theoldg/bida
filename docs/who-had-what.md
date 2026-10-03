@@ -122,7 +122,7 @@ under it cannot disagree.
   answer with the best argument anyway (see above, and ADR-0016). If per-item
   scope is ever wanted, the seam is `readBill`: stop pooling, and give a
   deduction the lines it came off.
-- **What a bill is worth is asked of `receiptWeights` (lib/draft.ts), never of
+- **What a bill is worth is asked of `receiptBill` (lib/draft.ts), never of
   `weightsFromItems` under it.** Dividing a line leaves a remainder cent, and
   only `tiebreakSeed` says whose it is, and a screen choosing its own seed
   quotes a cent the form then saves on someone else. The wrapper takes the rows
