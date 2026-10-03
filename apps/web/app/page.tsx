@@ -27,48 +27,33 @@ import { useArrivingGroups, useGroupSummaries, type GroupSummary } from "@/lib/h
 export default function GroupsPage() {
   const router = useRouter();
   const summaries = useGroupSummaries();
-  // Keys held whose groups haven't landed yet — the freshly installed icon,
-  // which saved its carried invites a moment ago (lib/hooks.ts).
+  // Keys held whose groups haven't landed yet: a freshly installed icon's.
   const arriving = useArrivingGroups();
-  // A launch may reopen the last group (lib/launch.ts), so until that settles
-  // the list stays "not answered yet" rather than flashing and being replaced.
+  // Until a launch decides whether to reopen the last group, the list stays unanswered.
   const { deciding: resuming, joining } = useResumeLastGroup();
   const hydrating = useSyncExternalStore(never, () => false, () => true);
   const marked = useSyncExternalStore(never, resumingMarked, () => true);
   const diagHold = useHold(() => router.push(route.diag()));
-  // Nothing in the app archives a group any more, but a production log may
-  // already carry an `archivedAt`, and the fold still applies one. This is the
-  // only place that decides what it means to a list of "your groups".
-  // Memoised: the list below takes a new array as a change.
+  // Nothing archives a group any more, but a production log may carry an
+  // `archivedAt`. Memoised: the list below takes a new array as a change.
   const groups = useMemo(() => resuming ? undefined : summaries?.filter((g) => !g.group.archivedAt),
     [resuming, summaries]);
-  // Which group the install offer draws for, and whether it draws at all: the
-  // first that an icon would actually carry, so the demo is passed over.
+  // The first an icon would actually carry: the demo has no key.
   const lead = groups?.find((g) => !isDemo(g.group.id));
   const rows = useMemo(() => (groups ?? []).map((summary) =>
     ({ key: summary.group.id, kind: "row" as const, row: summary })), [groups]);
 
-  // Handed a group by `/join`, which this list is only passing through: its
-  // frame, not four skeletons, until the push lands (components/joining.tsx).
+  // `/join` is only passing through this list.
   if (joining) return <JoiningFrame />;
 
   return (
     <>
-    {/* A launch reopening a group shows the ledger's frame from the first
-        paint, not this list's (lib/resume-hint.ts). Both are drawn and
-        globals.css picks, because the mark is set before React runs and the
-        prerender can't know it. Once React reads the mark itself, it keeps the
-        frame only on a launch that is showing it, and only until it decides. */}
+    {/* Both frames are drawn and globals.css picks, because the mark is set
+        before React runs and the prerender can't know it (lib/resume-hint.ts). */}
     {hydrating || (resuming && marked) ? <LedgerSkeleton className="resumeframe" head={<SkeletonBanner />} /> : null}
     <Screen className="homeframe">
       <Body>
-        {/* The app says its own name once, on the screen you land on. The
-            name is the whole bar: a sub-line under it described the screen you
-            could already see. */}
-        {/* The name is also the door to /diag, on a long press — for a phone with
-            no devtools, kept out of any menu a person reads. */}
-        {/* One kebab holds the theme switch and the door to app/about — the one
-            control that belongs to the phone, not a group (ADR-0007). */}
+        {/* A long press on the name opens /diag, for a phone with no devtools. */}
         <TopBar
           title={
             <span className="brand" {...diagHold}>
@@ -81,19 +66,9 @@ export default function GroupsPage() {
           {/* undefined is "Dexie hasn't answered yet", not "no groups". */}
           {groups === undefined ? <SkeletonRows count={4} /> : null}
 
-          {/* An install offer goes first, once there is a group to lose: an iOS
-            tab's warning or Chrome's prompt (components/install.tsx), and in the
-            installed app the notifications offer in its place. The group it
-            names leads the iOS carry — the top row, which the app would reopen
-            (lib/launch.ts).
-
-            The demo doesn't count: it has no key, so no icon would carry it, and
-            `/demo` lays it down again anyway (docs/sync.md#the-demo-group-has-no-key). */}
+          {/* Only once there is a group to lose. */}
           {lead ? <InstallOfferCard groupId={lead.group.id} /> : null}
 
-          {/* An empty list is only empty once nothing is on its way: an icon
-            added to keep someone's groups must not greet them with "No
-            groups yet" while those groups are still coming down. */}
           {groups && groups.length === 0 && arriving !== undefined ? (
             arriving > 0 ? (
               <Empty title={copy.groups.arriving.title}>{copy.groups.arriving.body}</Empty>
@@ -102,20 +77,12 @@ export default function GroupsPage() {
             )
           ) : null}
 
-          {/* A forgotten group folds out the way a deleted entry does
-            (components/ledger-rows.tsx). */}
           <LedgerRows opens={false} items={rows} row={(summary: GroupSummary) => <GroupRow summary={summary} />} />
 
-          {/* The update offer, at the foot: it draws only in the installed
-            app, so it never appears alongside the install cards above,
-            which draw only outside it — the notifications card is the one
-            it can share the screen with. */}
           <UpdateNudge />
         </Scroll>
 
-        {/* The act this screen exists for, at the foot where a thumb rests —
-            beside the scroller, not in it, so a long list scrolls above it and
-            its rubber-band never carries the pair. */}
+        {/* Beside the scroller, so its rubber-band never carries the tiles. */}
         <StartTiles />
       </Body>
     </Screen>
@@ -123,15 +90,7 @@ export default function GroupsPage() {
   );
 }
 
-/**
- * Starting something: a group, or a bill split with people who are not one.
- * Two jobs, two figures. "New group" is inked and on the right, under the
- * thumb. "Quick split" writes nothing
- * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md))
- * so it is outlined. An iOS home-screen app gets a third, `PasteLinkTile`.
- *
- * **Docked (`.homepair`)**, under the scroller rather than in it.
- */
+/** "Quick split" writes nothing (ADR-0035), so it is outlined; "New group" is under the thumb. */
 function StartTiles() {
   return (
     <div className="homepair">
@@ -153,13 +112,8 @@ function StartTiles() {
 const never = () => () => {};
 const resumingMarked = () => document.documentElement.hasAttribute("data-resuming");
 
-/**
- * The way into a group on an iOS home-screen app, which a tapped invite never
- * reaches (`iosHomeScreenApp`); elsewhere it draws nothing. Outlined: not the
- * primary. Pasting is `usePasteLink`'s.
- */
+/** A tapped invite never reaches an iOS home-screen app; elsewhere this draws nothing. */
 function PasteLinkTile() {
-  // Standalone or not is fixed for the life of the page; nothing to subscribe to.
   const shown = useSyncExternalStore(never, iosHomeScreenApp, () => false);
   const { paste, dialog } = usePasteLink();
   if (!shown) return null;
@@ -177,7 +131,6 @@ function PasteLinkTile() {
 
 function GroupRow({ summary }: { summary: GroupSummary }) {
   const { group, memberCount, entryCount, netMinor, lastActivity, newCount } = summary;
-  // The group menu's two that make sense from outside a group (`useGroupActions`).
   const actions = useGroupActions(group.id);
   const { hold, menu } = useLongPressMenu([...actions.copyLink, actions.forget], actions.asking);
 
@@ -187,16 +140,12 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
         <Avatar name={group.name} />
         <div className="rmain">
           <div className="rtitle">{group.name}</div>
-          {/* The new count leads, where neither the ladder nor the ellipsis
-              reaches it. The ledger's line says the same count, and opening
-              the group is what clears both. */}
+          {/* The new count leads, where neither the ladder nor the ellipsis reaches it. */}
           <FitLine className="rmeta" leadClassName="rnew"
             lead={newCount > 0 ? plural(newCount, copy.noun.newChange) : undefined}
             options={groupMeta({ people: memberCount, entries: entryCount, when: ago(lastActivity) })} />
         </div>
-        {/* Copying the row's link answers here: the figure flips to a check while
-            `actions.copied` holds. The menu has closed and the clipboard says
-            nothing, so without this a long press ends in silence. */}
+        {/* The menu has closed and the clipboard says nothing, so the copy answers here. */}
         <div className={`ramt${actions.copied ? " copied" : ""}`}>
           <div className="amtface">
             {netMinor === undefined ? (
@@ -217,8 +166,7 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
               </>
             )}
           </div>
-          {/* Always drawn, because the flip back is a transition on a class
-              going away — and hidden from a reader until it means something. */}
+          {/* Always drawn: the flip back is a transition on a class going away. */}
           <div className="copiedface" aria-hidden={!actions.copied}>
             <Icon name="check" size={18} />
             <div className="sm">{copy.groups.copied}</div>
