@@ -12,17 +12,19 @@ import type { CarriedGroup } from "../../group-link";
 import { appendOps } from "./append";
 import { dropStash } from "../stash";
 
-/**
- * A group, who this phone is in it, and who else is: created together, with
- * the device saying which member it speaks for.
- */
+/** The name is the id (core/names.ts): two phones adding "Ana" offline write one member. */
+const memberCreate = (groupId: Id, name: string) => ({
+  entity: "member" as const,
+  entityId: memberIdFor(groupId, name),
+  kind: "create" as const,
+  patch: { name, colorSeed: colorSeedFor(groupId, name), deletedAt: null },
+});
 
 export interface NewGroupInput {
   name: string;
   baseCurrency: CurrencyCode;
-  /** The person holding this device. Becomes the first member and the actor. */
+  /** The person holding this device: the first member and the actor. */
   myName: string;
-  /** Everyone else, in the order they were typed. Optional — they can be added later. */
   otherNames?: readonly string[];
 }
 
@@ -53,29 +55,15 @@ export async function createGroup(
           archivedAt: null,
         },
       },
-      {
-        entity: "member",
-        entityId: memberId,
-        kind: "create",
-        patch: {
-          name: input.myName, colorSeed: colorSeedFor(groupId, input.myName), deletedAt: null,
-        },
-      },
+      memberCreate(groupId, input.myName),
       {
         entity: "identity",
         entityId: device.nodeId,
         kind: "create",
         patch: { memberId, claimedAt: now },
       },
-      // The rest of the group, in the same batch: one HLC run, so the log reads
-      // as the group being created with these people in it rather than as five
-      // separate arrivals a millisecond apart.
-      ...(input.otherNames ?? []).map((name) => ({
-        entity: "member" as const,
-        entityId: memberIdFor(groupId, name),
-        kind: "create" as const,
-        patch: { name, colorSeed: colorSeedFor(groupId, name), deletedAt: null },
-      })),
+      // One batch, so history reads as the group created with these people in it.
+      ...(input.otherNames ?? []).map((name) => memberCreate(groupId, name)),
     ],
     now,
   );
@@ -84,41 +72,25 @@ export async function createGroup(
   return { groupId, memberId, secret };
 }
 
-/**
- * Store the secret from an invite link. Called on the creating device (from
- * `createGroup`) and on a device that just opened a `/join` link — the secret
- * never travels through an op, only through the link fragment. ADR-0003.
- */
+/** The secret never travels through an op, only through the link fragment. ADR-0003. */
 export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
-  // **The demo group must never hold a key.** A key row is what the sync loop
-  // walks, so one here would push a demo into a D1 that gets no further resets
-  // (docs/sync.md#the-demo-group-has-no-key). `scripts/rules-check.mjs` keeps
-  // this the table's only writer, so this refusal covers all of them.
+  // Sync walks key rows, so one would push the demo into D1
+  // (docs/sync.md#the-demo-group-has-no-key). rules-check keeps this the only writer.
   if (isDemo(groupId)) throw new Error("the demo group is never given a key");
   const existing = await db().groupKeys.get(groupId);
-  // A fresh link is the only cure for a 403, so opening one clears the failure
-  // rather than leaving the old warning up over a key that now works.
+  // A fresh link is the only cure for a 403, so it clears the failure.
   await db().groupKeys.put({
     ...existing, groupId, secret, lastSeq: existing?.lastSeq ?? 0, failure: undefined,
   });
-  // Opening the link is what "rejoining" means here — surface the group
-  // again if this device had previously left it.
   await unhideGroup(groupId);
   // This phone now holds something that exists nowhere else until it syncs.
-  // Not awaited: whether the browser agrees to keep it doesn't gate the join.
   void requestPersistence();
 }
 
 /**
- * Every group this phone holds, and who it is in each, for a home-screen icon
- * to bring along (docs/ios.md).
- *
- * The secrets, not the groups: one just accepted has its key before its ops.
- * **Leave out forgotten groups** — one with ops still to push keeps its key
- * until the sync that sends them.
- *
- * `first` goes at the head. Reads only — no `getDevice`, which creates the
- * row — so a live query can run it.
+ * For a home-screen icon to bring along (docs/ios.md). From the keys, not the
+ * groups: one just accepted has its key before its ops. Reads only (no
+ * `getDevice`, which writes), so a live query can run it.
  */
 export async function heldInvites(first?: Id): Promise<CarriedGroup[]> {
   const [keys, device] = await Promise.all([db().groupKeys.toArray(), db().device.get("device")]);
@@ -136,18 +108,9 @@ export async function heldInvites(first?: Id): Promise<CarriedGroup[]> {
 }
 
 /**
- * Forget a group on this phone: take it off this device, ops, secret and all.
  * Local but for one op: a subscribed phone writes `push: null` first, or the
- * group goes on buzzing it (docs/notifications.md).
- *
- * **Erased only once nothing of it is left to push** — an offline edit, or
- * that `push: null`, would otherwise never reach the others. Until then it is
- * hidden (`leftGroups`) and the sync that sends its last ops erases it
- * (`dropForgotten`). Its bare id stays in `leftGroups`, the one thing that
- * keeps a home-screen icon's carried key from bringing it back
- * (app/install/page.tsx). Opening the invite link again brings it back as a
- * join does, and the claim gate asks who holds the phone, since that may have
- * changed.
+ * group goes on buzzing it. Hidden at once, erased by the sync that sends its
+ * last ops (`dropForgotten`), or an offline edit would never reach the others.
  */
 export async function forgetGroup(groupId: Id): Promise<void> {
   const device = await getDevice();
@@ -162,23 +125,16 @@ export async function forgetGroup(groupId: Id): Promise<void> {
 }
 
 /**
- * Erase a forgotten group if nothing of it is left to push. Checked inside the
- * erase's own transaction, so a write landing meanwhile keeps it for the next
- * sync, and a link opened meanwhile (`unhideGroup`) keeps it for good.
- * Whether it went.
+ * Checked inside the erase's transaction, so a write or a reopened link
+ * landing meanwhile keeps it. Returns whether it went.
  */
 export function dropForgotten(groupId: Id): Promise<boolean> {
   return erase(groupId, false);
 }
 
 /**
- * Take one group off this phone for good: its ops, every table folded from
- * them, the secret, and the device record's memory of it. The id goes into
- * `deletedGroups` so screens can say what happened.
- *
- * Runs only when the server deleted the group (`/delete-my-data`, or a 410 in
- * sync) — the one event that is not an op — or to clear the demo. Nothing is
- * appended.
+ * Only when the server deleted the group (the one event that is not an op) or
+ * to clear the demo. The id goes into `deletedGroups` so screens can say so.
  */
 export async function eraseGroupLocally(groupId: Id): Promise<void> {
   await erase(groupId, true);
@@ -216,14 +172,12 @@ async function erase(groupId: Id, deleted: boolean): Promise<boolean> {
   // The worker's cursor holds the group's bearer; nothing of the group stays.
   await dropStash(groupId).catch(() => {});
 
-  // The device record has one writer (../device.ts), so it is patched after
-  // the transaction rather than inside it — which only reads it.
+  // After the transaction: the device record has one writer (../device.ts).
   const device = await getDevice();
   const { [groupId]: _gone, ...meByGroup } = device.meByGroup;
   await updateDevice({
     meByGroup,
-    // A forgotten id stays in `leftGroups`: a home-screen icon still carries
-    // the key, and would bring the group back on its next launch otherwise.
+    // A forgotten id stays in `leftGroups`, or a home-screen icon's carried key brings it back.
     ...(deleted ? {
       leftGroups: (device.leftGroups ?? []).filter((id) => id !== groupId),
       deletedGroups: [...new Set([...(device.deletedGroups ?? []), groupId])],
@@ -236,12 +190,8 @@ async function erase(groupId: Id, deleted: boolean): Promise<boolean> {
 // -------------------------------------------------------------- identity
 
 /**
- * Say who is holding this phone in a group — the first claim, or a switch.
- *
  * An op, unlike everything else about "you": an `actor` is only readable if
- * the group sees when a device changed member. Keyed by the device's HLC node
- * id, already on every op it stamped, so it publishes nothing new. ADR-0003.
- * Re-claiming the same member writes nothing.
+ * the group sees when a device changed member. ADR-0003.
  */
 export async function claimIdentity(
   groupId: Id,
@@ -251,9 +201,7 @@ export async function claimIdentity(
   const device = await getDevice();
   const current = device.meByGroup[groupId];
   if (current === memberId) return;
-  // A phone that forgot the group has no `meByGroup` entry but still has its
-  // claim on the log, so that is what decides create-or-update and who the
-  // switch is filed under.
+  // A phone that forgot the group still has its claim on the log.
   const previous = current
     ?? (await db().identities.get([groupId, device.nodeId]))?.memberId;
 
@@ -261,8 +209,6 @@ export async function claimIdentity(
   if (previous !== memberId) {
     await appendOps(
       groupId,
-      // The member who was here a moment ago is who made this change. On a
-      // first claim there is nobody else it could be.
       previous ?? memberId,
       [{
         entity: "identity",
@@ -273,18 +219,12 @@ export async function claimIdentity(
       now,
     );
   }
-  // A first claim has no subscription on it, nor a rejoin (`forgetGroup`
-  // cleared it); a subscribed phone adds it, and writes nothing if it's there.
   void reconcilePush();
 }
 
 /**
- * Publish claims made before identity was on the log: a `meByGroup` entry
- * with no op behind it gets one `create`, once.
- *
- * `claimedAt` is when the claim was *published*: the real date is only
- * device-local, and an invented timestamp on the shared log is worse than a
- * late one.
+ * Claims made before identity was on the log. `claimedAt` is when published:
+ * an invented timestamp on the shared log is worse than a late one.
  */
 export async function publishExistingClaims(now = Date.now()): Promise<void> {
   const device = await getDevice();
@@ -313,24 +253,12 @@ export async function publishExistingClaims(now = Date.now()): Promise<void> {
 
 // --------------------------------------------------------------- members
 
-/**
- * `actor` is optional for a phone joining a group, which adds its holder
- * before it has claimed anybody.
- */
+/** No `actor` for a joining phone adding its holder before claiming anybody. */
 export async function addMember(groupId: Id, actor: Id | undefined, name: string): Promise<Id> {
-  // The name *is* the id (core/names.ts): two phones adding "Ana" offline write
-  // one entity, and re-adding a removed member returns the person, balance and
-  // history included.
-  const memberId = memberIdFor(groupId, name);
-  await appendOps(groupId, actor ?? memberId, [
-    {
-      entity: "member",
-      entityId: memberId,
-      kind: "create",
-      patch: { name, colorSeed: colorSeedFor(groupId, name), deletedAt: null },
-    },
-  ]);
-  return memberId;
+  // Re-adding a removed member returns the person, balance and history included.
+  const op = memberCreate(groupId, name);
+  await appendOps(groupId, actor ?? op.entityId, [op]);
+  return op.entityId;
 }
 
 /**
@@ -348,10 +276,7 @@ export async function renameMember(
   ]);
 }
 
-/**
- * Tombstone a member. Their past expenses stay exactly as they were — removing
- * someone must never silently redistribute money they already owed.
- */
+/** Their past expenses stay as they were: removing someone never redistributes what they owed. */
 export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promise<void> {
   await appendOps(groupId, actor, [
     { entity: "member", entityId: memberId, kind: "delete", patch: {} },
@@ -359,35 +284,21 @@ export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promis
 }
 
 /**
- * Repair every invariant the merged log has broken (`INVARIANTS`,
- * `core/invariants.ts`), and put this phone's own member back if the merge
- * removed them, to a fixed point.
- *
- * These states take two phones, each right on its own evidence. **A guard
- * constrains one replica's view, never the union of two**
- * ([docs/invariants.md](../../../../../docs/invariants.md)), so this is what
- * makes the state legal again.
- *
- * Repairs are ordinary ops (a `deletedAt: null` lift), so nothing new for the
- * fold, wire format or history. Idempotent: two devices healing at once write
- * the same repair. It terminates because each pass writes nothing or strictly
- * reduces what the detectors find (`invariants.test.ts`).
+ * Repairs what a merge broke, to a fixed point: a guard constrains one
+ * replica's view, never the union of two
+ * ([docs/invariants.md](../../../../../docs/invariants.md)). Repairs are
+ * ordinary ops, and idempotent: two devices healing at once write the same one.
  */
 export async function healGroup(groupId: Id): Promise<number> {
-  // This phone's member signs the repairs and is itself repaired below. A
-  // device that hasn't claimed anybody heals nothing; the others will.
+  // Unclaimed, it heals nothing; the others will.
   const me = await getMe(groupId);
   if (!me) return 0;
 
   let written = 0;
-  // **Bounded, never `while (true)`**: a healer pair that did fight would write
-  // ops forever, and an op loop that syncs is the worst failure this file could
-  // have. The test proves the fixed point; this keeps a future mistake cheap.
+  // Bounded: two healers that fought would write synced ops forever.
   for (let pass = 0; pass < 8; pass++) {
     const state = await groupState(groupId);
-    // The claim first, because it is the one repair the registry cannot make
-    // (`restoreClaimDrafts`) and because putting this person back can strand
-    // the entries they were paying for, which the registered healers then see.
+    // The claim first: putting this person back can strand entries the registry then heals.
     const registered = healDrafts(state);
     const claim = restoreClaimDrafts(state, me)
       .filter((d) => !registered.some((r) => r.entity === d.entity && r.entityId === d.entityId));
@@ -399,11 +310,7 @@ export async function healGroup(groupId: Id): Promise<number> {
   return written;
 }
 
-/**
- * The ledger's new-edits line has shown everything up to `seq`. Device-local,
- * like the sync cursor beside it, so it is no op. Only ever forward: a screen
- * leaving with a stale count must not bring old edits back.
- */
+/** Device-local, so no op. Only forward: a screen leaving with a stale count mustn't bring old edits back. */
 export async function markEditsSeen(groupId: Id, seq: number): Promise<void> {
   const d = db();
   await d.transaction("rw", d.groupKeys, async () => {
