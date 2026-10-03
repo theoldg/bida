@@ -14,20 +14,19 @@
  *
  * **A gap is a keyboard only while something is being typed into**, or it
  * becomes permanent padding.
+ *
+ * **Where the browser can say where the keys are, it is asked instead**
+ * (`navigator.virtualKeyboard`, Chromium): told the keys overlay the page,
+ * it leaves both viewports alone and reports their rectangle. The viewport
+ * arithmetic was right installed but not in a tab, where each browser's
+ * toolbars moved the visual viewport differently: Chrome paid the keys short,
+ * Save under the suggestion strip; Brave long, Save a thumb above them.
  */
 
 /** One look at the two viewports, and who has the caret. */
 interface ViewportReading {
-  /**
-   * Where the box paying for the keyboard ends, in the layout viewport's
-   * coordinates: the shell's `getBoundingClientRect().bottom`, or
-   * `innerHeight` for a box fixed to the viewport. **Not `innerHeight` for the
-   * shell** — only installed do the two agree. In a browser tab `100dvh` and
-   * the layout viewport part by the toolbars: Chrome's shell runs past it and
-   * the keys were paid short, Save under the suggestion strip; Brave's stops
-   * short of it and they were paid long, Save floating a thumb above them.
-   */
-  floor: number;
+  /** The layout viewport — the height `100dvh` is laid out against. */
+  inner: number;
   /** The visible viewport: what is on screen right now. */
   visible: number;
   /** How far the visible viewport has been panned down the layout one. */
@@ -36,6 +35,12 @@ interface ViewportReading {
   scale: number;
   /** Whether something that opens a keyboard has the caret. */
   typing: boolean;
+  /**
+   * The keyboard's own rectangle, in the layout viewport's coordinates, where
+   * the browser reports one (`navigator.virtualKeyboard.boundingRect`); all
+   * zeros while it is down. `null` where it can't, and the gap is the guess.
+   */
+  keys: { top: number; height: number } | null;
 }
 
 /** What the difference between the two viewports means. */
@@ -57,9 +62,10 @@ export function gapOf(v: ViewportReading): ViewportGap {
   // A magnified page has a smaller visible viewport by definition, and the
   // difference is the magnification, not something sitting on the screen.
   if (Math.abs(v.scale - 1) > 0.01) return none;
-  const covered = Math.round(v.floor - v.visible - v.offset);
-  if (covered <= NOISE) return none;
-  return v.typing ? { kb: covered, unexplained: 0 } : { kb: 0, unexplained: covered };
+  const gap = Math.round(v.inner - v.visible - v.offset);
+  if (!v.typing) return gap > NOISE ? { kb: 0, unexplained: gap } : none;
+  const covered = !v.keys ? gap : v.keys.height > 0 ? Math.round(v.inner - v.keys.top) : 0;
+  return covered > NOISE ? { kb: covered, unexplained: 0 } : none;
 }
 
 /**

@@ -12,9 +12,10 @@
  * the field below (`walkFields`, components/viewport.tsx).
  *
  * Headless browsers have no keyboard, so one is faked where the app reads it
- * — `visualViewport.height` — and the app answers as on a phone (`gapOf`,
- * `--kb`, its own scroll). The assertion is what a thumb cares about: field
- * *and* act above the keys.
+ * — the rectangle `navigator.virtualKeyboard` reports, and the shrunken
+ * `visualViewport` where there is no such API — and the app answers as on a
+ * phone (`gapOf`, `--kb`, its own scroll). The assertion is what a thumb cares
+ * about: field *and* act above the keys.
  */
 import { onePhone, newGroup, PATIENCE, settle }
   from "../lib/harness.mjs";
@@ -42,6 +43,15 @@ const CROWD = ["Ana", "Bo", "Cy", "Dee", "Eli", "Fay", "Gus", "Hal", "Ivy", "Jo"
 async function openKeyboard() {
   await field().focus();
   await page.evaluate((kb) => {
+    const keys = navigator.virtualKeyboard;
+    if (keys) {
+      // Overlaid, as the app asks: the viewports don't move, the rectangle does.
+      Object.defineProperty(keys, "boundingRect", {
+        configurable: true, get: () => new DOMRect(0, window.innerHeight - kb, window.innerWidth, kb),
+      });
+      keys.dispatchEvent(new Event("geometrychange"));
+      return;
+    }
     const view = window.visualViewport;
     Object.defineProperty(view, "height", {
       configurable: true, get: () => window.innerHeight - kb,
@@ -71,6 +81,12 @@ const scrollSettled = () => page.waitForFunction(() => new Promise((ok) => {
 async function closeKeyboard() {
   await page.evaluate(() => {
     document.activeElement?.blur?.();
+    const keys = navigator.virtualKeyboard;
+    if (keys) {
+      delete keys.boundingRect;
+      keys.dispatchEvent(new Event("geometrychange"));
+      return;
+    }
     delete window.visualViewport.height;
     window.visualViewport.dispatchEvent(new Event("resize"));
   });
@@ -92,10 +108,12 @@ async function clears(label, actSelector) {
     const act = document.querySelector(selector);
     if (!input || !act) return { missing: !input ? "add row" : selector };
     const kb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--kb"));
-    // The top of the keys is the foot of what is visible — not the shell's foot
-    // less `--kb`, which would only check the app against its own arithmetic.
+    // The top of the keys as faked — not the shell's foot less `--kb`, which
+    // would only check the app against its own arithmetic.
     const view = window.visualViewport;
-    const keys = view.offsetTop + view.height;
+    const keys = navigator.virtualKeyboard?.boundingRect.height
+      ? navigator.virtualKeyboard.boundingRect.top
+      : view.offsetTop + view.height;
     return {
       kb,
       act: Math.round(keys - act.getBoundingClientRect().bottom),

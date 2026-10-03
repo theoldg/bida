@@ -25,10 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
-- *2026-10-03* — three phone photos, "too large in brave, too small in
-  chrome". The photos were the data: a scrollbar and a Save sixteen pixels
-  higher than at rest said which box was being measured wrong. Read the
-  pixels before asking for numbers.
+- *2026-10-03* — "exactly the same problems as before". I read three
+  screenshots as proof and shipped a guess no headless browser could test.
+  Where the platform can answer, ask it; where only the phone can, say the fix
+  is unproven and leave a /diag line that will tell.
 
 - *2026-10-03* — "Delete and trim a bunch of comments". Half a comment was
   the name it sat over; a ref called `before` needed a paragraph that
