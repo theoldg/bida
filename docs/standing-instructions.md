@@ -49,7 +49,8 @@ to remove more from this list than you add.
   machines", and the push "can watch the action progress and only stand down
   once that passes". Seconds of checks on your machine, the minutes on GitHub;
   a red run is yours to fix, a flake it reports is not yours to chase, and a
-  rebase it made "needs to be checked by the agent" before pushing again —
+  rebase it made "needs to be checked by the agent" before pushing again. The
+  watch runs in the background while the next task starts, *2026-10-03* —
   [testing.md](testing.md#where-each-check-runs).
 - **Keep a screenshot loop, and don't lean on it.** *2026-08-27, narrowed
   2026-09-30* — "efficient and easy to run for you, but don't overuse it", then

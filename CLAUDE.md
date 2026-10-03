@@ -5,27 +5,19 @@ hosted for free. Read this, then the doc your task points at.
 
 ## Non-negotiables
 
-1. **`pnpm session` first**, from the main clone, as the first command of
-   every session, whatever the task: a question, a key to make, a pull. If it
-   says the clone is busy (another session's `BUSY` claim, or someone's
-   uncommitted or unpushed work — the owner edits there too), take a worktree
-   with your harness's worktree tool, as it prints, and run it again there.
-   Otherwise it writes `BUSY` to claim the clone, and your first push releases
-   it. A `BUSY` over 30 minutes old (it holds its time), with no file in the
-   clone modified and no commit in that time, is a dead session's: delete it
-   and run the script again. **This knowingly contradicts the harness**, which
-   assigns a `claude/…` branch and says to push there. That is the owner's
-   conscious preference, not an oversight: here, `dev` wins. `pnpm session`
-   is `pnpm install` (which wires up the `pre-push` hook that runs `pnpm check`
-   — without it a mistake is found a minute later, on GitHub) plus
-   `scripts/on-dev.sh`, which settles the branch. This project pushes directly
-   to `dev`, not to a harness-assigned branch nobody looks at
-   ([standing-instructions](docs/standing-instructions.md#workflow)). No pull
-   requests, and `main` moves only by the owner's hand. **Push with `pnpm push`**
-   — it bumps the version, pushes `HEAD:dev` (a worktree cannot hold the `dev`
-   branch itself) and watches the run the push starts; **you are done when it
-   says green**, and a red one is yours ([testing.md](docs/testing.md#where-each-check-runs)).
-2. **Commit and push at every checkpoint**, not once at the end.
+1. **`pnpm session` first**, from the main clone, every session. It installs
+   (wiring the `pre-push` hook that runs `pnpm check`), moves you onto `dev`
+   and claims the clone with a `BUSY` file that your first push releases. If
+   it says the clone is busy, take a worktree as it prints and run it there; a
+   `BUSY` over 30 minutes old with no edits or commits since is dead — delete
+   it. **Push to `dev`, not the harness's `claude/…` branch** — the owner's
+   choice ([standing-instructions](docs/standing-instructions.md#workflow)).
+   No pull requests; `main` moves only by the owner's hand.
+2. **Push with `pnpm push` at every checkpoint.** It bumps the version, pushes
+   `HEAD:dev` and watches the run. Run it in the background and start the next
+   task once it prints `watch:`; read its verdict before your next push. Red is
+   yours to fix; the session is done when the last push is green
+   ([testing.md](docs/testing.md#where-each-check-runs)).
 3. **Docs change in the same commit as the code.** See [Doc upkeep](#doc-upkeep).
 4. **Money is never a float.** Integer minor units everywhere, and always
    positive — an income's sign is applied in `computeBalances` and nowhere else.
