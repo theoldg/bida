@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import Dexie from "dexie";
 import {
   CATCH_UP_MS, atCurrentRates, computeBalances, currenciesInUse, settleUp, emptyGroupState,
-  stateFromRows, unseenRevisions, wouldViolate,
+  parseHlc, stateFromRows, unseenRevisions, wouldViolate,
   type BalanceReport, type CurrencyInUse, type ExchangeRate, type Expense, type Group,
   type GroupState, type Member, type OpDraft, type RegisteredInvariant,
   type Settlement, type Transfer,
@@ -291,6 +292,7 @@ export interface GroupSummary {
   entryCount: number;
   /** This device's net position, or undefined if they haven't said who they are. */
   netMinor: number | undefined;
+  /** When the group last changed: its newest op's wall time, whoever made it. */
   lastActivity: number;
   /** The member this device is, in this group — same undefined-until-claimed as `GroupData.me`. */
   me: string | undefined;
@@ -353,6 +355,13 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
       }
       return map;
     };
+    // Last *changed*, not the newest entry's date: an edit, a delete or a
+    // back-dated expense is activity too. One indexed read per group.
+    const lastChanged = async (group: Group): Promise<number> => {
+      const newest = await d.ops.where("[groupId+hlc]")
+        .between([group.id, Dexie.minKey], [group.id, Dexie.maxKey]).last();
+      return newest ? parseHlc(newest.hlc).physical : group.createdAt;
+    };
     const m = byGroup(members), e = byGroup(expenses), s = byGroup(settlements);
     const r = byGroup(rates);
 
@@ -376,11 +385,7 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
         netMinor: me ? balances.byMember[me] ?? 0 : undefined,
         me,
         newCount: await newCount(group.id),
-        lastActivity: Math.max(
-          group.createdAt,
-          ...live.e.map((x) => x.occurredAt),
-          ...live.s.map((x) => x.occurredAt),
-        ),
+        lastActivity: await lastChanged(group),
       });
     }
     return out.sort((a, b) => b.lastActivity - a.lastActivity);

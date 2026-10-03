@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-03* — "ordered by last modification time, not most recently dated
+  entry". One line, and the word chosen was exact: an edit is a modification,
+  so read the op log, not the entries. Take the owner's noun literally.
+
 - *2026-10-02* — "Let's workshop the text title first", mid-build. Copy is
   the owner's to pick: offer a short table and a pick, keep the plumbing
   parked, and don't push a placeholder past the interruption. Their answer
@@ -79,7 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   is confusing". The row was the symptom; "neat and logical" asked for the
   rule underneath. Two meanings of zero in one mode became one, in core, where
   every reader of a split already looks.
-
-- *2026-09-30* — "remove the "rest" buttons … does that make sense?" A
-  question that is really a spec: build it. The edge it skipped — clearing the
-  only payer collapsed straight back — was the agent's to find and settle.

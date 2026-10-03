@@ -289,7 +289,9 @@ API is reached with `fetch`.
   Folding it back after unfolding is done with it: it fades and folds away
   like a deleted row (`foldAway`), and only a later change brings it back.
   What waits on a group nobody opens ages out after a week (`CATCH_UP_MS`)
-  rather than sitting on the groups list forever. The groups list leads
+  rather than sitting on the groups list forever. The groups list is ordered
+  by when each group last changed — its newest op, an edit or a delete as much
+  as a new entry — never by its latest entry's date. It leads
   a row's meta with the same count, reading the log only for a group whose
   cursor is past its mark. The first pull sets the mark at the cursor, so a
   joined group opens with nothing new, and the mark is device-local, never an
