@@ -10,10 +10,8 @@
 
 <p align="center">
   <a href="https://bida.bid"><b>bida.bid</b></a>
-  &nbsp;·&nbsp;
-  <a href="SELFHOSTING.md">Self-hosting</a>
-  &nbsp;·&nbsp;
-  <a href="docs/README.md">Docs</a>
+  <br>
+  <sub>or try the <a href="https://bida.bid/demo">demo group</a> first</sub>
 </p>
 
 
@@ -40,8 +38,6 @@
 </p>
 </details>
 
-*This is a personal project, almost entirely written with Claude Code.*
-
 ## Features
 
 The usual stuff, plus:
@@ -58,6 +54,8 @@ The usual stuff, plus:
 
 - **Quick split.** Run a scan and assign items without creating a group. Screenshot the summary or copy a text version.
 
+- **Notifications.** When your balance changes.
+
 - **Auditable edit history.** If you don't trust your friends.
 
 - **Splitwise/Tricount import and export.** Bring groups in and out via CSV or Tricount link.
@@ -66,11 +64,10 @@ The usual stuff, plus:
 
 ## Vibe-coded... carefully
 
-I put some love into this.
-Core logic is well tested, and the UI/UX have been polished and debugged with care.
-Have a look at [CLAUDE.md](CLAUDE.md) to see the development setup, or at
-[docs/claude-corner.md](docs/claude-corner.md) to see what the AI thinks about
-its own work.
+This is a personal project, almost entirely written with Claude Code, but I put love into it.
+Core logic is well tested, and the UI/UX have been polished and debugged over hundreds of iterations.
+It was a fun meta problem to keep the repo coherent and the iteration speed fast
+as the app grew. Check [CLAUDE.md](CLAUDE.md) if you're curious about the setup.
 
 ## Stack
 
