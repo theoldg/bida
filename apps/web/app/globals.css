@@ -1,31 +1,26 @@
 /* ============================================================
-   RESET — preflight's rules for the elements the app renders, and nothing
-   for the ones it doesn't: rendering a <small>, a <summary> or an
-   <optgroup> means reading its defaults first.
+   RESET — only for the elements the app renders: rendering a <small> or a
+   <summary> means reading its defaults first.
    ============================================================ */
 *, ::before, ::after, ::backdrop {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  /* A width and no colour, so `border: 1px solid` below is complete on its own
-     and an element nobody gave a border never draws one. */
+  /* So `border: 1px solid` is complete on its own. */
   border: 0 solid;
 }
 
 html {
   /* iOS grows text in landscape otherwise, which moves the fixed bottom bar. */
   -webkit-text-size-adjust: 100%;
-  /* A tap is answered by `--press` on the control itself, never by the
-     platform's grey wash over whatever box it took for the link. */
+  /* A tap is answered by `--press` on the control itself. */
   -webkit-tap-highlight-color: transparent;
-  /* For the two <pre>s, /diag and /g/export, which are read on a phone. */
+  /* /diag and /g/export. */
   tab-size: 4;
 }
 
-/* A heading is structure. Its size is its class's business, like everything. */
 h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit }
 
-/* Every ledger row is an <a>. Not one of them is blue and underlined. */
 a { color: inherit; -webkit-text-decoration: inherit; text-decoration: inherit }
 
 b, strong { font-weight: bolder }
@@ -38,13 +33,10 @@ hr { height: 0; color: inherit; border-top-width: 1px }
 
 table { text-indent: 0; border-color: inherit; border-collapse: collapse }
 
-/* Inline by default, which hangs an icon off a text baseline with the
-   line-height's slack under it. Every icon here is a box placed in a grid. */
+/* Inline hangs an icon off the baseline with slack under it. */
 img, svg { display: block; vertical-align: middle }
 img { max-width: 100%; height: auto }
 
-/* A control inherits the page's face, colour and ground instead of the
-   platform's. What each one then looks like is its own class. */
 button, input, select, textarea {
   font: inherit;
   font-feature-settings: inherit;
@@ -57,14 +49,12 @@ button, input, select, textarea {
 }
 button, input:where([type="button"], [type="submit"]) { appearance: button }
 
-/* Firefox dims a placeholder on its own account. The fields meant to be faint
-   say so themselves (`.amount`), and the rest take `--muted`. */
+/* Firefox dims a placeholder on its own account. */
 ::placeholder { opacity: 1; color: color-mix(in oklab, currentcolor 50%, transparent) }
 
 textarea { resize: vertical }
 
-/* The one <input type="date">: Safari pads the spun fields and aligns them to
-   its own taste, which is a row that will not sit level with the form. */
+/* Safari pads and aligns the date fields so the row won't sit level. */
 ::-webkit-datetime-edit { display: inline-flex }
 ::-webkit-datetime-edit-fields-wrapper { padding: 0 }
 ::-webkit-datetime-edit,
@@ -76,9 +66,8 @@ textarea { resize: vertical }
 
 
 /* ============================================================
-   TOKENS — terminal neutrals, one monospace face, and exactly two
-   colours: a green and a red (blue and orange on dev), spent only on balances. Mirrored in
-   design/mockups/index.html — change a value in both.
+   TOKENS — terminal neutrals, one monospace face, and two colours spent
+   only on balances. Mirrored in design/mockups/index.html: change both.
    ============================================================ */
 :root {
   --paper:#F1F1EF; --paper-2:#E8E8E5;
@@ -89,42 +78,26 @@ textarea { resize: vertical }
   --debit:#A94B3D;  --debit-bg:#F4E9E6;
   --brand:#16171A; --brand-ink:#FBFBFA;
   --hl:rgba(22,23,26,.055); --hl-edge:#7B7F86; --hl-ink:#16171A;
-  /* The band across a run of portions. Derived once here rather than written out
-     at each use: `var()` inside a custom property resolves against the `--hl`
-     that won on `:root`, so this follows the theme without a dark copy. */
+  /* Derived here, so it follows the theme without a dark copy. */
   --hl-row:color-mix(in srgb, var(--hl) 30%, transparent);
-  /* The ground a refusal fills where a solid `--debit` would swallow what sits
-     on it: the plate under the amount, which carries 42px of figure, and an
-     empty grid cell's press tile, which carries its red square. Derived here
-     like `--hl-row`, and opaque rather than a tint. */
+  /* A refusal's ground where solid `--debit` would swallow what sits on it. */
   --debit-wash:color-mix(in srgb, var(--debit) 22%, var(--card));
-  /* Laid over whatever a control already sits on, so one value covers a row on
-     paper and a highlighted row alike. */
+  /* Laid over whatever a control sits on, so one value covers every ground. */
   --press:rgba(22,23,26,.09);
-  /* The same press, for the two controls that are already ink: the primary
-     button and the FAB. `--press` is ink on ink there — a tint nobody can see
-     is a button that reads as dead under the thumb — so an inverted control
-     takes its press in paper. */
+  /* For controls already ink, where `--press` would be invisible. */
   --press-i:rgba(251,251,250,.17);
-  /* The scan screen's drawing. Its own three tokens because it is the one
-     place in the app that is a picture, and a picture has to sit further off
-     its ground than text does — at palette values it went to mush in dark. */
+  /* The scan screen's picture: at palette values it went to mush in dark. */
   --draw-bg:var(--card-2); --draw-rule:var(--rule); --draw-ink:var(--muted);
-  /* The bill half only: with no outline, the torn strip has only its fill to hold
-     its shape. It goes *down* in light — white paper on this ground vanishes. */
+  /* The torn bill has only its fill. Darker in light: white paper vanishes. */
   --draw-paper:var(--card-3);
-  /* Not a drop shadow — a hairline ring. Nothing in this design floats. */
+  /* A hairline ring: nothing in this design floats. */
   --shadow-s:0 0 0 1px rgba(22,23,26,.09);
   --r-s:2px; --r-m:3px; --r-l:4px;
-  /* What the on-screen keyboard covers, measured by components/viewport.tsx.
-     Zero until one opens, and on every browser that can't say. The air above
-     it is only owed while it is there — a list with no keyboard under it ends
-     where it ends. */
+  /* What the keyboard covers (components/viewport.tsx). */
   --kb: 0px;
   --kb-gap: 0px;
 
-  /* One face for everything. next/font sets --font-mono on <html>; the fallback
-     stack only bites if the font fails to load. */
+  /* next/font sets --font-mono on <html>. */
   --f-mono: var(--font-mono, "JetBrains Mono"), ui-monospace, "SF Mono", Menlo, monospace;
   --f-display: var(--f-mono);
   --f-body: var(--f-mono);
@@ -162,10 +135,8 @@ textarea { resize: vertical }
   --shadow-s:0 0 0 1px rgba(255,255,255,.08);
 }
 
-/* The dev Worker's money is blue and orange instead of green and red, so a test
-   phone never passes for production. Only under [data-env="dev"], which the dev
-   Worker alone stamps (apps/api/src/dev-env.ts); after the theme blocks because
-   it ties them on specificity. */
+/* Blue and orange money on dev, so a test phone never passes for production
+   (apps/api/src/dev-env.ts). After the theme blocks: it ties them on specificity. */
 :root[data-env="dev"] {
   --credit:#2B62B8; --credit-bg:#E6ECF6;
   --debit:#B4560F;  --debit-bg:#F7ECE2;
@@ -181,17 +152,11 @@ textarea { resize: vertical }
   --debit:#EE9B58;  --debit-bg:#291D13;
 }
 
-/* The document itself never scrolls: `.app` is exactly one viewport tall and
-   `.scroll` inside it does the scrolling. Without this the page could still
-   scroll by the difference between 100% and 100dvh as the mobile toolbar
-   collapses, dragging the fixed bottom bar out of view. */
+/* Only `.scroll` scrolls, or the collapsing toolbar drags the bottom bar away. */
 html, body {
   height: 100%;
   overflow: hidden;
-  /* Pans, no zoom. `pan-x pan-y` leaves every scroller working and takes
-     pinch-zoom and double-tap-to-zoom off the whole document — an ancestor's
-     touch-action narrows its descendants', so the `manipulation` on controls
-     below stays a subset of this rather than a way back in. */
+  /* Pans, no zoom; a descendant's touch-action can only narrow this. */
   touch-action: pan-x pan-y;
 }
 
@@ -207,9 +172,7 @@ body {
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: none;
 
-  /* Nothing in a pocket ledger wants a text-selection handle: a long press on
-     a row is a mis-tap, not an intent to copy. Selection is opt-in via
-     .selectable, and inputs are exempted below so typing still behaves. */
+  /* A long press on a row is a mis-tap, not a copy. Opt in with .selectable. */
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -220,8 +183,7 @@ input, textarea, .selectable {
   user-select: text;
 }
 
-/* Numbers are monospaced everywhere, always, with tabular figures so a
-   column of amounts can be eyeballed without being read. */
+/* Tabular, so a column of amounts can be eyeballed without being read. */
 .num {
   font-family: var(--f-mono);
   font-variant-numeric: tabular-nums;
@@ -237,12 +199,8 @@ input, textarea, .selectable {
   font-weight: 500;
 }
 
-/* The highlighter: a wash laid *over* the rows that are yours, plus a left edge
-   bar so it survives colour-blindness. Never the only signal, and never on the
-   ledger — there almost every row is yours (see `.notmine` below).
-   The two amount-and-people editors (the split, /g/payers) pull the pair
-   apart: the wash marks who is *in* (`.inrow`), the bar alone marks you
-   (`.mebar`) — there, who is in is the question on the screen. */
+/* Yours: a wash plus an edge bar, so it survives colour-blindness. In the
+   split and payer editors the wash marks who is in, the bar alone marks you. */
 .mine, .inrow {
   background: var(--hl);
 }
@@ -262,13 +220,8 @@ input, textarea, .selectable {
 }
 
 /* ============================================================
-   TAP FEEDBACK
-   Every control darkens under the thumb the moment it's touched and
-   releases over ~.2s: a screen that hasn't repainted and one that didn't
-   hear you otherwise look identical. A wash over whatever the control sits
-   on, so one value covers all of them. Nothing moves or scales.
-   The browser's tap highlight is off (it lags and boxes rows in blue on
-   iOS), and `touch-action: manipulation` drops the 300ms double-tap wait.
+   TAP FEEDBACK — darken on touch, release over .2s: a screen that hasn't
+   repainted and one that didn't hear you otherwise look identical.
    ============================================================ */
 a, button, label, select, .seg button, .itemcell {
   -webkit-tap-highlight-color: transparent;
@@ -283,15 +236,13 @@ a.row:active, button.row:active, .fab:active, .iconbtn:active,
 .tlink:active, .seg button:active, a.card:active, button.card:active, .itemfold:active,
 a.chip:active, button.chip:active, .btn:active:not(:disabled), .starttile:active,
 .field:not(.field-row):has(> .pick:active), .action:active:not(:disabled) {
-  /* A gradient, not a background-color: it composites over the element's own
-     background instead of replacing it. */
+  /* A gradient composites over the background instead of replacing it. */
   background-image: linear-gradient(var(--press), var(--press));
-  /* Down is instant; only the release is worth easing. */
   transition-duration: 0s;
 }
 
 /* ============================================================
-   The app's own components, mirroring design/mockups/index.html.
+   COMPONENTS, mirroring design/mockups/index.html.
    ============================================================ */
 
 h1, h2, h3, h4 {
@@ -306,44 +257,29 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 a { color: inherit; text-decoration: none }
 
 /* ---- the shell: header, scrolling middle, fixed footer ---- */
-/* The shell owns the viewport exactly: `height`, not `min-height`, or the
-   document scrolls instead of .scroll and the bottom bar sinks to the foot of
-   the page. `dvh` because iOS Safari's collapsing toolbar eats `vh`.
-   `max-height: 100%` because `body` clips: a browser reporting `dvh` taller
-   than that would put the shell's last strip below the fold, unreachable. */
-/* The strip iOS paints behind the status bar in a home-screen app is body's
-   background (not `theme-color`, which is Android's). Paper under a
-   card-coloured bar draws a seam where iOS 26 lays its status-bar scrim, so at
-   phone width body matches the bar. Above 560px the gutters stay paper. */
+/* iOS paints body's background behind a home-screen app's status bar; paper
+   under the card-coloured bar draws a seam. */
 @media (max-width: 560px) {
   body { background: var(--card) }
 }
 
+/* `height`, not `min-height`, or the document scrolls instead of .scroll.
+   `dvh` because iOS's collapsing toolbar eats `vh`. */
 .app { background: var(--card); height: 100dvh; max-height: 100%; overflow: hidden;
   display: flex; flex-direction: column;
   position: relative; max-width: 560px; margin: 0 auto; box-shadow: var(--shadow-s) }
-/* `/` draws the list and a ledger skeleton; `<html data-resuming>`, set before
-   paint on a launch that will reopen a group, picks the second
-   (lib/resume-hint.ts). */
+/* `data-resuming` is set before paint on a launch reopening a group (lib/resume-hint.ts). */
 .resumeframe, html[data-resuming] .homeframe { display: none }
 html[data-resuming] .resumeframe { display: flex }
-/* Which card heads that skeleton, picked by the same mark (`SkeletonBanner`). */
 .ghost { display: none }
 html[data-resuming="demo"] .ghost-demo, html[data-resuming="notify"] .ghost-notify,
 html[data-resuming="manual"] .ghost-manual { display: block }
 .appbody { flex: 1; display: flex; flex-direction: column; min-height: 0 }
-/* The keyboard overlays the shell rather than shortening it, so the scroller
-   ends behind one (components/viewport.tsx). It pays that back twice:
-   as room to scroll past the last row, and as the region a scroll is allowed
-   to stop in — which is what keeps a field off the accessory bar, whether it
-   was our scroll or the browser's own on focus. */
+/* The keyboard overlays the shell, so the scroller pays it back: as room past
+   the last row, and as where a scroll may stop, clear of the accessory bar. */
 .scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative;
   padding-bottom: var(--kb-total); scroll-padding-bottom: var(--kb-total) }
-/* A field flush against the accessory bar is one its buttons sit on, so the
-   strip is bought with room to spare. As padding it is somewhere to scroll to
-   — the last row of a list has nothing under it to give — and as
-   scroll-padding it is where a scroll stops, which is what a field halfway up
-   a form needs instead. */
+/* Room to spare: a field flush against the accessory bar is under its buttons. */
 :root { --kb-total: calc(var(--kb) + var(--kb-gap)) }
 :root[data-kb] { --kb-gap: 26px }
 
@@ -351,54 +287,36 @@ html[data-resuming="manual"] .ghost-manual { display: block }
   flex: none; position: relative }
 .topbar h3 { font-size: 17px; letter-spacing: -.03em; line-height: 1.15 }
 .topbar-title { min-width: 0 }
-/* The bar is furniture: at most two lines of title (a 40-character group
-   name), one of sub-line. Past that it would strand its own buttons; anything
-   longer belongs in the screen — `.entrytitle`. */
+/* At most two lines of title, one of sub-line; longer belongs in the screen. */
 .topbar h3, .topbar .sub { display: -webkit-box; -webkit-box-orient: vertical;
   overflow: hidden; overflow-wrap: anywhere }
 .topbar h3 { -webkit-line-clamp: 2 }
 .topbar .sub { -webkit-line-clamp: 1 }
-/* A `mid` control is centred on the bar, so the title has to end before it
-   whatever it says — capped at the gap in front of the widest chip, and
-   elided rather than wrapped into a second line the bar has no room for. */
+/* Ends before a centred `mid` control, elided rather than wrapped. */
 .topbar-title.capped { max-width: calc(50% - 52px) }
 .topbar-title.capped h3, .topbar-title.capped .sub {
   display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-/* Inset to the bar's own padding rather than centred on its box: the top
-   padding grows with the safe area and the bottom doesn't, so a `top: 50%`
-   would ride high on a notched phone. */
+/* Inset to the padding: `top: 50%` would ride high on a notched phone. */
 .topbar-mid { position: absolute; inset: max(10px, env(safe-area-inset-top)) 0 12px;
   display: flex; align-items: center; justify-content: center; pointer-events: none }
 .topbar-mid > * { pointer-events: auto }
-/* The app's name, and the whole of the bar it heads. It carries no sub-line,
-   so the height a sub-line would have taken goes to the name itself and to the
-   air around it. */
+/* No sub-line, so its height goes to the name and the air around it. */
 .brand { display: flex; align-items: center; font-size: 21px; padding: 4px 0 }
 .topbar .sub { font-size: 10.5px; color: var(--muted); font-family: var(--f-mono); letter-spacing: .02em;
   text-transform: uppercase }
 .iconbtn { width: 32px; height: 32px; border-radius: var(--r-s); display: grid; place-items: center;
   background: var(--card-2); border: 1px solid var(--rule-soft); color: var(--ink-2); flex: none }
-/* A control with nothing to do says so before it is pressed rather than by
-   ignoring the press — the add row's plus, empty and on a name already taken
-   alike (components/name-adder.tsx). */
+/* Says so before it is pressed rather than by ignoring the press. */
 .iconbtn:disabled { background: transparent; border-color: transparent; color: var(--muted) }
-/* A top-bar icon that is a switch rather than a destination, lit while it is
-   on — the who-had-what bar's translation toggle. The same highlight the
-   keyless bar uses, so "on" looks the same wherever it appears. */
+/* A switch, lit while on, in the same highlight as everywhere "on" appears. */
 .iconbtn.lit { background: var(--hl); border-color: var(--hl-edge); color: var(--hl-ink) }
-/* The top bar's icons are destinations, not row affordances: they are the only
-   way to reach People, History and the invite link, and they are pressed with a
-   thumb reaching across the phone. Bigger circle, bigger glyph. */
+/* Destinations pressed by a thumb reaching across the phone: bigger. */
 .topbar .iconbtn { width: 37px; height: 37px }
-/* The back arrow is on every screen and always means the same thing, so it
-   needs no box to say it can be pressed: a bare glyph, pulled out onto the
-   page's left edge, with the whole 37px square still the target. */
+/* On every screen, so it needs no box: a bare glyph, the square still the target. */
 .iconbtn.back { background: transparent; border-color: transparent; margin-inline: -9px -6px }
 .spacer { margin-left: auto }
 .muted { color: var(--muted) }
-/* The build's number in the bar's far corner, `/about` only (app/about/page.tsx).
-   Set like the bar's own subtitle — mono, muted, a step down — so it reads as a
-   stamp on the screen rather than a control beside the title. */
+/* The build number on `/about`: a stamp, not a control. */
 .topbarver { font-family: var(--f-mono); font-size: 11px; letter-spacing: .02em;
   color: var(--muted) }
 
@@ -415,115 +333,73 @@ html[data-resuming="manual"] .ghost-manual { display: block }
   font-size: 12px; font-weight: 600; letter-spacing: -.02em; flex: none;
   background: var(--card-2); color: var(--ink-2); border: 1px solid var(--rule) }
 
-/* An empty slot, not a person: the dashed square on a row that adds something. */
-/* Air above where the list stops and the things you can do to it start — on the
-   first of them only, so a second needs no rule of its own. */
-
-/* The two ways to start: a group, or a bill with people who are not one. Two
-   separate jobs, so two squares echoing the ledger's two FABs rather than one
-   box cut in two. A sibling of `.scroll`, under it at the foot of the screen —
-   in the scroller, iOS's rubber-band would carry it. The bottom padding holds
-   the tiles clear of the edge. */
+/* Two jobs, so two squares echoing the ledger's FABs. Outside `.scroll`, or
+   iOS's rubber-band would carry them. */
 .homepair { flex: none; padding: 16px 16px max(28px, calc(env(safe-area-inset-bottom) + 12px)) }
-/* Centred rather than full-bleed: a half-screen square would outweigh the list.
-   The gap keeps the two reading as one pair. */
+/* Centred: a half-screen square would outweigh the list. */
 .starttiles { display: flex; justify-content: center; gap: 20px }
-/* Square, like the FABs, and stacked icon-over-word because that is the only
-   way a word fits inside a square without turning it into a row. */
 .starttile { flex: 1; max-width: 100px; aspect-ratio: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 9px; border-radius: var(--r-s);
   font-weight: 600; font-size: 12px; letter-spacing: -.01em; text-align: center }
-/* The primary of the two, and the ledger's "+" at this size: the one
-   figure-ground inversion on the screen, so it presses in paper (`--press-i`)
-   and takes the right, where the thumb is. */
+/* The "+" at this size: the one inversion, on the right where the thumb is. */
 .start-p { background: var(--brand); color: var(--brand-ink) }
 .start-p:active { background-image: linear-gradient(var(--press-i), var(--press-i)) }
-/* The scan FAB's voice (`.fab-2`): outlined in ink on paper rather than
-   inverted — the same weight of destination, half the voice. */
+/* Outlined like `.fab-2`: the same destination, half the voice. */
 .start-s { background: var(--card); color: var(--ink); border: 1.5px solid var(--ink) }
 
-/* The install card's title doubles as its disclosure (components/install.tsx).
-   A row, not a `.kv`: that one is the bill's, and carries the two-column
-   grid this has no second column for. The chevron is the bill's own, rotation
-   and all — one idiom for "this folds" across the app. */
+/* The install card's title is its disclosure, with the bill's chevron: one
+   idiom for "this folds". */
 .nudgehead { display: flex; align-items: center; justify-content: space-between;
   gap: 10px; width: 100%; text-align: left; font-size: 14px; font-weight: 600;
   color: var(--ink) }
-/* Its 11px chevron centred on the 20px one of the you-owe card under it
-   (`.mysumchev`): same card padding, so in by half the difference. */
+/* Centred on the you-owe card's larger chevron below. */
 .nudgehead .kvchev { margin-right: 4.5px }
 
-/* The screen behind that line (app/about/page.tsx), and `/advanced` with it:
-   prose, set as prose — a measured column with air between claims, no cards. */
-/* Centred: the measure is narrower than the 560px shell. */
+/* `/about` and `/advanced`: prose in a measured column, no cards. */
 .about { display: flex; flex-direction: column; gap: 22px;
   max-width: 34em; margin-inline: auto; padding-top: 6px; padding-bottom: 34px }
 .aboutsect h4 { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--ink-2); margin-bottom: 7px }
-/* Plain wrapping, not `text-wrap: pretty`: Safari breaks early to even the
-   lines, which in a monospace column on a small iPhone leaves a ragged fifth
-   of the width empty. */
+/* Not `text-wrap: pretty`: Safari's early breaks leave a fifth of a mono column empty. */
 .aboutsect p { font-size: 13px; line-height: 1.55; color: var(--ink-2) }
 .aboutsect p + p { margin-top: 9px }
-/* A refusal inside an `.aboutsect` is still a refusal: the section's paragraph
-   rule outweighs `.failure` and would grey it (app/import/page.tsx). */
+/* The section's paragraph rule outweighs `.failure`. */
 .aboutsect p.failure { font-size: 12px; color: var(--debit) }
 .aboutsect p strong { color: var(--ink); font-weight: 600 }
-/* A link set mid-sentence rather than in its own `.aboutlink` row: the
-   underline is the only thing telling it apart from the prose around it. */
+/* Mid-sentence, only the underline tells a link apart. */
 .aboutsect p a, .warnlist li a { text-decoration: underline; text-underline-offset: 2px;
   text-decoration-color: var(--rule) }
-/* Its folded after-note: an aside for the few who already added bida, so a
-   bare line of quiet text with its chevron, not a card or a heading. */
 .installfold > button { display: flex; align-items: center; gap: 6px;
   font-size: 12px; color: var(--muted); text-align: left }
 .aboutsect .installfold p { font-size: 12px; margin-top: 6px; padding-left: 16px }
-/* `/delete-my-data`'s warnings: the three things people get wrong about what
-   that screen does. A list and not paragraphs, because they are read in the
-   half second before a decision, and in the debit colour because every other
-   red in this app means money leaving. */
+/* `/delete-my-data`'s warnings: a list, read in the half second before a decision. */
 .warnlist { display: flex; flex-direction: column; gap: 9px; margin: 10px 0 0;
   padding: 0; list-style: none }
-/* Two columns, icon then sentence — so a row whose text contains a link has to
-   hand the whole sentence over as one element, or the link becomes a third
-   grid item and drops to a row of its own (app/about/page.tsx). */
+/* A sentence with a link must be one element, or the link drops to its own row. */
 .warnlist li { display: grid; grid-template-columns: auto 1fr; gap: 9px;
   font-size: 13px; line-height: 1.5; color: var(--ink-2) }
 .warnlist li svg { color: var(--debit); margin-top: 3px }
 .warnlist + p { margin-top: 10px }
-/* The two buttons to find, above the recording. Numbered by the list itself — a counter
-   rather than a marker, so the number sits in the same mono column as the icon
-   beside it and a wrapped line indents under the text, not under the digit. */
+/* A counter, not a marker, so a wrapped line indents under the text. */
 .installsteps { display: flex; flex-direction: column; gap: 10px; counter-reset: step;
   margin: 0 0 14px; padding: 0; list-style: none }
 .installsteps li { display: grid; grid-template-columns: auto auto 1fr; align-items: center;
   gap: 8px; font-size: 13px; line-height: 1.5; color: var(--ink-2) }
 .installsteps li::before { counter-increment: step; content: counter(step) ".";
   font-family: var(--f-mono); font-size: 12px; color: var(--muted) }
-/* The glyph iOS draws on the button the step names, so the words and the phone
-   agree about which one is meant. */
+/* The glyph iOS draws on the button the step names. */
 .installsteps .stepicon { color: var(--ink-2) }
-/* The recorded walkthrough on /install: phone-shaped, so it is held to a width
-   that leaves the prose beside it readable rather than filling the column. */
 .installclip { display: block; width: 220px; height: auto; margin: 4px auto 12px;
   border: 1px solid var(--rule); border-radius: var(--r-l) }
-/* The act under a list of people (who-picker, /new, /quick, People, payers,
-   the entry form). A sibling of `.scroll`, not its last row: anything inside
-   the scroller rides iOS's rubber-band, sticky or not. The scroller before it
-   is only as tall as its content, so the dock sits right under the last name
-   while the list fits and at the foot of the screen once it doesn't.
-   It pays `--kb` like `.foot`: the keyboard overlays the shell, so the
-   padding is what lifts the button above it — and shrinks the scroller by as
-   much. That scroller needs no keyboard room of its own: the dock is it. */
+/* The act under a list of people. Outside `.scroll`, or it rides iOS's
+   rubber-band; the scroller is only as tall as its content, so the dock sits
+   under the last name until the list fills the screen. Pays `--kb` for both. */
 .appbody > .whodock { flex: none; background: var(--card);
   padding-bottom: calc(var(--kb) + max(12px, env(safe-area-inset-bottom))) }
 /* On `/g/claim` the "Have the app?" card is under it and owns the edge. */
 .appbody > .whodock:has(+ .inappdock) { padding-bottom: calc(var(--kb) + 14px) }
 .scroll:has(+ .whodock) { flex: 0 1 auto; padding-bottom: 0; scroll-padding-bottom: 0 }
-/* "Have the app?" pinned under the claim list, iOS tab only (components/use-in-app.tsx):
-   a lower-contrast card holding the link in a box that is its own copy button.
-   Out of the way while a name is typed: the keyboard leaves room for the field
-   or the card, and the field is what is being used. */
+/* Hidden while a name is typed: the keyboard leaves room for the field or the card. */
 .inappdock { flex: none; padding: 10px 16px max(12px, env(safe-area-inset-bottom)) }
 :root[data-kb] .inappdock { display: none }
 .inapptitle { font-size: 13px; font-weight: 600; color: var(--ink); text-wrap: pretty }
@@ -538,10 +414,7 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .linkbox.on { border-color: var(--ink-2) }
 .linkbox.on .linkboxstate { color: var(--ink) }
 .linkbox:active { transform: scale(.99) }
-/* One stored row, shown because the claim above it can be shown: an actual
-   table, fields across the top, on a card ground a size step down. The values
-   are cut to match real truncations. Centred: it is an exhibit, not a line of
-   the paragraph. */
+/* One stored row, as evidence for the claim above it: an exhibit, so centred. */
 .aboutrow { margin: 13px auto 0; border-collapse: separate; border-spacing: 0;
   background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-m);
   font-size: 11.5px; line-height: 1.5; overflow: hidden }
@@ -549,39 +422,24 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .aboutrow th { color: var(--muted); border-bottom: 1px solid var(--rule-soft) }
 .aboutrow td { color: var(--ink); overflow-wrap: anywhere }
 .aboutrow + p { margin-top: 13px }
-/* Bringing your own Gemini key (app/advanced/page.tsx). The screen borrows
-   /about's prose column and the ledger's add-a-name row, so what is here is
-   only what neither of those already says. */
-/* A settings section is titled, not labelled like `/about`'s eyebrow. */
+/* `/advanced` borrows /about's column and the add-a-name row; a section is titled, not eyebrowed. */
 .advanced .aboutsect h4 { font-family: inherit; font-size: 16px; font-weight: 650;
   letter-spacing: -.02em; text-transform: none; color: var(--ink); margin-bottom: 9px }
-/* The key's own row. `.addrow.editing` draws the box; this puts the key in the
-   typeface a key belongs in and gives the row air under the link above it. */
-/* `.addrow.editing` sets its own margins further down, so this outweighs it by
-   a class rather than by `!important`: the row is the width of the column here,
-   not an inset row in a list. */
+/* Outweighs `.addrow.editing`'s margins by a class: here the row is the column's width. */
 .advanced .addrow.keyrow { margin: 16px 0 0; width: 100% }
 /* Set down from the lede, or the fold reads as that paragraph's last line. */
 .advanced .installfold { margin-top: 16px }
-/* The same fold under the suggested reimbursements (app/g/balances). */
 .notwho { margin-top: 14px }
 .notwho p { font-size: 12px; line-height: 1.55; color: var(--ink-2); margin-top: 6px; padding-left: 16px }
 .notwho p strong { color: var(--ink); font-weight: 600 }
 .keyinput { font-family: var(--f-mono); font-size: 12.5px; font-weight: 500 }
-/* Locked: the field stays exactly where it was and stops being a field. Muted
-   ground rather than the box's paper, so the row reads as filled in rather
-   than waiting. */
+/* Locked: muted ground, so the row reads as filled in rather than waiting. */
 .keyrow.locked { background: var(--card-2); border-color: var(--rule-soft) }
 .keyrow.locked .keyinput { color: var(--ink-2); -webkit-text-fill-color: var(--ink-2); opacity: 1 }
-/* The one line under the row: accepted, checking, or refused. `.failure`
-   colours the last of the three; this is only the placement they share. */
 .keynote { font-size: 12px; line-height: 1.5; color: var(--muted); margin: 9px 2px 0 }
 
-/* Email and source, side by side above the claims. */
 .aboutcontact { display: flex; align-items: center; gap: 22px }
-/* Elsewhere a list of one: stacked rather than side by side, since an address
-   or a sentence-length link is long and a phone is narrow. Underlined because
-   they leave — `.action` is the app's mark for that. */
+/* Underlined because they leave the app. */
 .aboutlinks { display: flex; flex-direction: column; align-items: flex-start; gap: 9px;
   margin-top: 13px }
 .aboutlink { display: inline-flex; align-items: center; gap: 8px; min-height: 32px;
@@ -590,42 +448,26 @@ html[data-resuming="manual"] .ghost-manual { display: block }
   text-decoration-color: var(--rule) }
 .aboutlink:active { opacity: .6 }
 .aboutlink svg { color: var(--muted); flex: none }
-/* The last row of a list of people *is* the field that adds the next one, and
-   it is built like the rows above it — name on the left, one control on the
-   right — because that is what it becomes once its plus is pressed
-   (components/name-adder.tsx). */
+/* The field that adds a person is built like the row it becomes. */
 .addrow { padding-top: 16px }
 .addname { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font-size: 13.5px; font-weight: 600; color: var(--ink); padding: 0 }
 .addname::placeholder { color: var(--muted); font-weight: 500 }
-/* The plus is 32px, under the ~44px a thumb lands on, so a pseudo-element
-   borrows the row's spare padding rather than growing the button.
-   `position: relative` here, not on `.iconbtn` generally, anchors that box to
-   the button (`.row` is already positioned). Disabled still swallows the press. */
+/* The 32px plus borrows the row's padding to make a thumb-sized target. */
 .addrow .iconbtn { position: relative }
 .addrow .iconbtn::before { content: ""; position: absolute; inset: -8px }
-/* A name in the field is *not* on the list: nothing files it but the plus. So
-   while there is one, the row becomes a box on its own ground, ringed in the
-   hard rule — on the 16px column every box below it stands on (the screen's
-   act), so the name moves in with it rather than the box sticking out. */
+/* A typed name is not on the list until the plus files it, so it is boxed. */
 .addrow.editing { margin: 6px 16px 10px; padding: 10px 11px; width: auto;
   background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-s) }
-/* In a list the box comes and goes — with the first keystroke, and with a
-   refusal's wash (below) — so it is always there, drawn *around* the row in a
-   transparent border: margin + border + padding add up to the resting row's own
-   padding (16 top and sides, 11 below), and neither the plus, the name nor
-   anything under the row moves by a pixel when it shows. The price is a box
-   that reaches 11px into the gutter, off the 16px column. */
+/* In a list the box is always there, transparent, and margin + border +
+   padding add up to the resting row's, so nothing moves when it shows. */
 .rows > .addrow { margin: 5px 5px 0; padding: 10px; width: auto;
   border: 1px solid transparent; border-radius: var(--r-s) }
 .rows > .addrow.editing { border-color: var(--rule) }
-/* The name that field would repeat, said under it and aligned with the names
-   above — so it reads as a note on the list, not a new row in it. */
 .addrow.editing:has(+ .addwarn) { margin-bottom: 0 }
 .addwarn { margin: 0; padding: 0 16px 13px 16px }
 
-/* A mark where a row's button would be, so a list whose rows carry a check on
-   one and a button on the rest has one right-hand column rather than two. */
+/* Where a row's button would be, so the list keeps one right-hand column. */
 .rmark { width: 32px; height: 32px; display: grid; place-items: center; flex: none }
 
 .rmain { min-width: 0; flex: 1 }
@@ -633,28 +475,22 @@ html[data-resuming="manual"] .ghost-manual { display: block }
   text-overflow: ellipsis }
 .rmeta { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; margin-top: 1px }
-/* A name with no line under it that stands exactly as tall as one with, name
-   centred: the amount columns, which must match Evenly and As parts beside
-   them. The height comes from a real title-and-line pair drawn invisibly in
-   the same grid cell (`SoloName`), never from arithmetic on the font — a
-   phone that rounds line boxes its own way would put the two apart. */
+/* As tall as a name with a line under it: an invisible real pair sets the
+   height (`SoloName`), since phones round line boxes their own way. */
 .rmain.solo { display: grid }
 .rmain.solo > * { grid-area: 1 / 1; min-width: 0 }
 .rmain.solo > .rtitle { align-self: center }
 .sologhost { visibility: hidden }
 .sologhost > * { display: block }
-/* A group row's new-changes count: ink, not colour — green and red are money's. */
+/* Ink: green and red are money's. */
 .rmeta .rnew { color: var(--ink); font-weight: 600 }
 .ramt { text-align: right; flex: none }
 .ramt .big { font-family: var(--f-mono); font-size: 14px; font-weight: 600;
   font-variant-numeric: tabular-nums; letter-spacing: -.02em }
 .ramt .sm { font-family: var(--f-mono); font-size: 10.5px; color: var(--muted);
   font-variant-numeric: tabular-nums; margin-top: 1px }
-/* Copying a group's link off its row flips its figure on the X axis to a check
-   laid over it, so the column keeps its width. A transition, not keyframes: it
-   reverses 1.6s later (`useInviteLink`) and removing a class replays no
-   animation — the delays keep the leaving face half gone before the next one
-   starts, in either direction. */
+/* Copying the link flips the figure to a check. A transition, not keyframes:
+   removing a class replays no animation, and this one reverses. */
 .grouprow .ramt { position: relative; perspective: 260px }
 .grouprow .ramt .amtface, .grouprow .ramt .copiedface {
   transition: transform .2s ease, opacity .2s ease; backface-visibility: hidden }
@@ -666,8 +502,6 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .grouprow .ramt.copied .copiedface { transform: rotateX(0); opacity: 1; transition-delay: .16s }
 @media (prefers-reduced-motion: reduce) {
   .grouprow .ramt .amtface, .grouprow .ramt .copiedface { transition: none } }
-/* The same flip at glyph size, for the two icon buttons that copy the link
-   (`FlipCheck`). Same timings; shallower perspective for an 18px box. */
 .flipcheck { position: relative; display: block; perspective: 120px }
 .flipcheck .flipface, .flipcheck .checkface {
   display: block; transition: transform .2s ease, opacity .2s ease; backface-visibility: hidden }
@@ -678,47 +512,33 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .flipcheck.on .checkface { transform: rotateX(0); opacity: 1; transition-delay: .16s }
 @media (prefers-reduced-motion: reduce) {
   .flipcheck .flipface, .flipcheck .checkface { transition: none } }
-/* And across a whole button label, for the quick split's copy (ADR-0035).
-   Wider perspective for a line; the check drops the brand colour, which on a
-   filled primary button would vanish into its ground. */
+/* On a primary button the brand colour would vanish into its ground. */
 .flipcheck.line { flex: 1; perspective: 400px }
 .flipcheck.line .flipface, .flipcheck.line .checkface {
   display: flex; align-items: center; justify-content: center; gap: 8px; color: inherit }
-/* A ledger row's height must not depend on what is in it: rows are held to the
-   three-figure case and the column is centred, so a second figure (the sum as
-   spent) doesn't break the list's rhythm. The groups list and the skeleton
-   share the height, so loading doesn't resize the list. */
+/* A row's height must not depend on its content, nor change when loading ends. */
 .entryrow, .grouprow, .skelrow { min-height: 68px }
 .entryrow .ramt { line-height: 1.25 }
 .credit { color: var(--credit) } .debit { color: var(--debit) }
 
 /* ---- your own money, pulled out of the group's ---- */
-/* A ledger row says which way it moved you on its own figure — a sign and a
-   colour. Green is money coming back to you, red is money you owe. Nearly
-   every entry is yours, so no row wash here; what is *not* yours is dimmed,
-   lightly, since the figure says it too. */
+/* Nearly every entry is yours, so no wash: what is not yours is dimmed. */
 .share { display: block; font-weight: 700; color: var(--muted) }
 .share.credit { color: var(--credit) }
 .share.debit { color: var(--debit) }
-/* Two highlighted rows in a row would otherwise merge into one grey block:
-   the ordinary hairline is invisible against the wash. */
+/* The ordinary hairline is invisible against the wash. */
 .mine, .inrow { border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent) }
 .notmine { opacity: .58 }
 .notmine .rtitle { font-weight: 500 }
-/* The ledger's "you owe" card, and the way to the balances. JetBrains Mono
-   advances 0.6em a glyph, so a string's width is its length times a constant:
-   the figure takes the room the chevron leaves, up to `--mysum-max`, with no measuring.
-   --chars is its length (app/g/page.tsx); 60px is the padding, border, gap and
-   chevron. */
+/* The mono face advances .6em a glyph, so `--chars` sizes the figure to the
+   room left with no measuring; 60px is the padding, border, gap and chevron. */
 .mysummary { container-type: inline-size; --mysum-max: 26px }
-/* Straight under the bar, whose own 12px foot plus `.pad` would be a gap wider
-   than the gutter; 4px makes it the gutter's 16. */
+/* With the bar's 12px foot, the gutter's 16. */
 .mysummary:first-child { padding-top: 4px }
 .mysum { display: flex; align-items: center; justify-content: space-between; gap: 12px;
   color: inherit; white-space: nowrap }
 .mysum.credit { color: var(--credit) } .mysum.debit { color: var(--debit) }
-/* Its sign changes as the figure sets off rolling, so the colour takes the
-   roll's time to follow; `a.card`'s press wash keeps its own. */
+/* The colour follows over the figure's roll. */
 a.mysum { transition: background-image .2s ease, color .8s ease }
 .mysumtext { display: flex; flex-direction: column; gap: 2px; min-width: 0 }
 .mysum .eyebrow { font-size: 13px; color: inherit; transition: color .8s ease }
@@ -727,15 +547,11 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   font-size: min(var(--mysum-max), (100cqi - 60px) / (var(--chars) * .6)) }
 .mysumchev { color: var(--ink); flex: none }
 
-/* The figure rolling to a new value (components/rolling-figure.tsx). Every
-   glyph a cell one advance wide — .6em, less the figure's -.03em tracking — so
-   the rolling figure is exactly as wide as the text it replaces. A changed
-   cell holds a strip of old over new and slides it one line, up for a bigger
-   figure (the new digit rises from below), down for a smaller; `--delay`
-   cascades them from the left. The strip is masked only while it moves. */
+/* Each cell one advance wide, so the rolling figure is as wide as its text.
+   A changed cell slides a strip of old over new, up for a bigger figure. */
 .rolling { display: inline-flex; vertical-align: bottom }
 .rolling.held :is(.rollstrip, .rollcell) { animation-play-state: paused }
-/* The settled figure, for a screen reader, while the cells read as noise. */
+/* The settled figure for a screen reader. */
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
 .rollcell { display: inline-block; width: .57em; height: 1.1em; overflow: hidden;
   letter-spacing: 0; text-align: center; white-space: pre }
@@ -751,30 +567,21 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 @keyframes roll-open { from { width: 0 } }
 @keyframes roll-close { to { width: 0 } }
 
-/* The ledger's new-edits line (components/new-edits.tsx): drawn as a date
-   line, since it is furniture of the list until pressed; its text in full
-   ink, not a date's muted, says it can be pressed. */
+/* Drawn as a date line, in full ink to say it can be pressed. */
 .neweditsbar { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
   border-top: 1px solid var(--rule-soft); color: var(--ink) }
-/* A down-chevron whose two strokes swing into a cross once open: folding it
-   back clears the line, and a chevron alone promised it could be reopened.
-   Its strokes stop 5px inside the 20px box, so -5px puts them on the row's
-   16px gutter, mirroring the text. Centring it under the you-owe card's
-   chevron was tried, and sat too far in. The negative block margin keeps the
-   line a date line's height. */
+/* A chevron that becomes a cross once open: folding it back clears the line,
+   which a chevron alone would promise to reopen. */
 .neweditsglyph { width: 20px; height: 20px; flex: none; margin: -4px -5px -4px auto;
   fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; color: var(--muted) }
 .neweditsglyph line { transform-box: view-box; transform-origin: 12px 12px;
   transition: transform .26s cubic-bezier(.2, .8, .2, 1) }
-/* Folded, each stroke is shortened and set at half of the chevron's V. */
 .neweditsglyph line:first-child { transform: translate(-3px, .5px) rotate(45deg) scaleX(.57) }
 .neweditsglyph line:last-child { transform: translate(3px, .5px) rotate(-45deg) scaleX(.57) }
 .newedits.on .neweditsglyph { color: var(--ink) }
 .newedits.on .neweditsglyph line:first-child { transform: rotate(45deg) }
 .newedits.on .neweditsglyph line:last-child { transform: rotate(-45deg) }
 .tl.neweditslist { margin: 0; padding: 14px 16px 0 42px; border-bottom: 1px solid var(--rule-soft) }
-/* Under an entry's own timeline, lined up with its text (`.tl`'s 26px, less
-   the link's own 6px of press room). */
 .tlink.entrygroup { margin: 2px 0 0 20px }
 
 /* ---- chips ---- */
@@ -782,8 +589,7 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   border-radius: var(--r-s); border: 1px solid var(--rule); color: var(--ink-2); background: var(--card-2);
   font-weight: 500; white-space: nowrap }
 .chip.hl { border-color: var(--hl-edge); color: var(--hl-ink); background: var(--hl) }
-/* The entry form's kind: a chip a size up, being the only control on its bar
-   besides the arrow. Its chevron is the currency chip's, so both read as choices. */
+/* A size up: the only control on its bar besides the arrow. */
 .chip.kindchip { font-size: 12px; line-height: 1.3; padding: 4px 9px }
 .chip.pend { border-color: var(--hl-edge); color: var(--hl-ink); background: transparent }
 .dot { width: 6px; height: 6px; border-radius: 1px; background: var(--ink-2); flex: none;
@@ -792,24 +598,15 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 /* ---- receipt item assignment ---- */
 .itemchip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
   padding: 4px 10px 4px 4px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card-2) }
-/* One scroller: who was there, the grid and the totals scroll as one, so the
-   frozen parts are only what you work against — the initials row and the name
-   column. Both axes on purpose: `position: sticky` resolves against the
-   nearest scroll container, so nested scrollers would leave the header nothing
-   to stick to. `.itemwide` below is the price of that. */
+/* One scroller on both axes: nested ones would leave the sticky header nothing
+   to stick to. */
 .itemscroll { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--rule-soft) }
-/* The prose blocks in the scroller — the chips, the note, the totals — must not
-   travel sideways with the table. `width: 100%` inside a scroll container is the
-   *visible* width, so this is one screenful however wide the table, and
-   `left: 0` holds it there. */
+/* Prose that must not travel sideways with the table: `width: 100%` in a
+   scroller is the visible width. */
 .itemwide { position: sticky; left: 0; width: 100%; box-sizing: border-box }
 .itemhead { padding: 10px 16px 12px }
-/* Wrapped, not a sideways strip: a second sideways scroller on top of the grid's
-   is one too many. */
 .whostrip { display: flex; flex-wrap: wrap; gap: 6px }
-/* Pays `--kb` like `.foot` does: the tip is typed a row above this band, and
-   the keyboard overlays the shell rather than shortening it, so without it the
-   button this screen ends on sits under the keyboard. */
+/* Pays `--kb`: the tip is typed just above it. */
 .itemfoot { flex: none; border-top: 1px solid var(--rule); background: var(--card-2);
   padding: 9px 16px;
   padding-bottom: calc(var(--kb) + max(9px, env(safe-area-inset-bottom))) }
@@ -817,8 +614,6 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .footnote { font-size: 11.5px; color: var(--muted); margin-bottom: 7px }
 .footnote.bad { color: var(--debit); font-weight: 600 }
 .footnote b { font-family: var(--f-mono); font-weight: 500; color: var(--ink-2) }
-/* A column, not a sideways strip, so every figure is on one right edge.
-   Uncapped: it scrolls with the grid, never inside itself. */
 .itemtotals { padding: 10px 16px 14px }
 .totalstrip { display: flex; flex-direction: column }
 .tot { display: flex; align-items: center; gap: 8px; padding: 5px 0;
@@ -829,77 +624,52 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .tot .amt { font-family: var(--f-mono); font-size: 12.5px; font-variant-numeric: tabular-nums;
   font-weight: 600 }
 
-/* `separate`, not `collapse`: a collapsed border belongs to the table and
-   scrolls away from under a sticky header cell.
-   `fixed`: under `auto` opening a run (which adds "· 1/2" and indents the row)
-   re-measures the table and shifts every column. The widths are declared once
-   in the `<colgroup>`.
-   `--cols` is set on the element so the table overflows the scroller rather
-   than squashing its columns narrower than the 40px cells inside them. */
+/* `separate`: a collapsed border scrolls away from under a sticky cell.
+   `fixed`: under `auto`, opening a run re-measures and shifts every column.
+   `--cols` lets the table overflow rather than squash its cells. */
 .itemtable { border-collapse: separate; border-spacing: 0; font-size: 12.5px;
   table-layout: fixed; width: 100%;
   --label-w: 152px; --who-w: 44px;
   min-width: calc(var(--label-w) + var(--cols, 0) * var(--who-w)) }
-/* Both columns declare a width, so spare room widens them in proportion rather
-   than all going to the names (which put the dots half a screen from their
-   line). The widths depend only on how many people there are. */
+/* Both declared, or spare room all goes to the names, far from their dots. */
 .itemtable .collabel { width: var(--label-w) }
 .itemtable .colwho { width: var(--who-w) }
 .itemtable th, .itemtable td { border-bottom: 1px solid var(--rule-soft); padding: 6px 3px; text-align: center }
 .itemtable tr:last-child td { border-bottom: 0 }
 .itemtable th { background: var(--card-2) }
-/* Freezes the initials row: on a twenty-line bill the columns are otherwise
-   anonymous by the time you've scrolled to the last item. */
 .itemtable thead th { position: sticky; top: 0; z-index: 2; border-bottom-color: var(--rule) }
-/* And freezes the names: the table is read sideways, and a row whose name has
-   scrolled off is anonymous. The corner cell is in both sticky rows and must
-   outrank each, or the column scrolls over its own initials. */
+/* The corner is in both sticky rows and must outrank each. */
 .itemtable thead th:first-child { left: 0; z-index: 3 }
-/* An avatar is a grid, so the cell's `text-align` doesn't centre it; centred
-   like `.itemcell` so initials and dots share one axis. */
 .itemtable th .avatar { margin-inline: auto }
-/* Beats `.itemtable td { text-align: center }`. Sticky and opaque: the dots
-   pass underneath. `--card` because the table has no background to inherit. */
+/* Opaque, so the dots pass underneath. */
 .itemtable .itemlabel { text-align: left; position: sticky; left: 0; z-index: 1;
   background: var(--card); padding-left: 12px; padding-right: 8px }
 .itemrow { display: flex; align-items: center; justify-content: space-between; gap: 8px }
-/* The name and amount are one button: a tap on the line is "everybody had
-   this" / "nobody did" (components/who-had-what.tsx). It takes the row's whole
-   left column so the target is the line, not the glyphs on it. */
+/* A tap on the line is "everybody had this" / "nobody did". */
 .itemtext { min-width: 0; flex: 1; overflow-wrap: anywhere; border-radius: var(--r-s);
   margin: -3px -4px; padding: 3px 4px }
 .itemtext:active { background-image: linear-gradient(var(--press), var(--press)) }
 .itemname { display: block; font-weight: 500 }
 .itemqty { font-weight: 400; color: var(--muted) }
 .itemamount { display: block; font-family: var(--f-mono); font-size: 11px; color: var(--muted); margin-top: 1px }
-/* Unfold / merge: the one control here that changes the shape of the bill, so
-   it sits in its own right-hand column rather than inline after a label of
-   unpredictable length. */
+/* Unfold / merge: it changes the bill's shape, so it gets its own column. */
 .itemfold { display: inline-flex; align-items: center; gap: 2px; flex: none; min-height: 25px;
   padding: 3px 5px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card);
   font-family: var(--f-mono); font-size: 11px; font-weight: 500; color: var(--ink-2) }
 .itemfold svg { color: var(--muted) }
 .itemfold.on { border-color: var(--ink-2); background: var(--card-3); color: var(--ink) }
 .itemfold.on svg { color: var(--ink) }
-/* A highlighter band across the portions of one printed line, capped by a rule
-   down its left edge: they read as one dish shared out, not as two lines the
-   receipt happened to print. */
-/* The caption under the rows nobody ordered. Outside the table because a
-   sentence in a `colSpan` cell wraps at the table's width, not the screen's. */
+/* Outside the table: a `colSpan` cell wraps at the table's width, not the screen's. */
 .itemnote { font-size: 11px; line-height: 1.35; color: var(--muted);
   padding: 9px 16px 0 12px }
+/* Portions of one printed line read as one dish shared out. */
 .itemtable tr.part td { background: var(--hl-row) }
-/* The same band, over something opaque. The image, because the sticky column
-   needs a solid background and `--hl` is translucent, so the band is laid over
-   the card. The colour, because `tr.part td` above is more specific and would
-   otherwise paint the band twice down the name column. */
+/* The sticky column needs an opaque ground, so the band is laid over the card. */
 .itemtable tr.part .itemlabel { padding-left: 15px; box-shadow: inset 3px 0 0 var(--hl-edge);
   background-color: var(--card);
   background-image: linear-gradient(var(--hl-row), var(--hl-row)) }
 .itemtable tr.part .itemname { font-weight: 400 }
-/* The tip is the one figure here you type rather than read, so it wears a
-   field's outline, a pencil, and a word underneath while empty — in the
-   printed amounts' mono nobody tried tapping it. */
+/* Typed, not read: in the printed amounts' mono nobody tried tapping it. */
 .tipfield { display: flex; align-items: center; gap: 5px; margin-top: 3px }
 .itemamountin { width: 72px; font-family: var(--f-mono); font-size: 11px; color: var(--ink);
   background: var(--card-2); border: 1px solid var(--rule); border-radius: var(--r-s);
@@ -907,14 +677,9 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .itemamountin:focus { border-color: var(--brand) }
 .itemamountin::placeholder { color: var(--muted) }
 .tipedit { color: var(--muted); flex: none }
-/* `place-items` centres the dot on the header's initials. */
 .itemcell { width: 100%; height: 34px; display: grid; place-items: center }
-/* The tappable one fills its `<td>` to the rules, padding and all: `height` on
-   the cell is its floor, the row's tallest label its ceiling, and the button
-   is laid over whatever that comes to — so a tap anywhere between the rules
-   lands. The press, though, is a 32px tile round the dot: washed rule to rule,
-   a column of cells read as one grey slab meeting the next column's edge. On
-   `::before` so it sits under the dot, which is lifted above it. */
+/* The button fills its cell rule to rule, so any tap lands; the press is a
+   32px tile, or a column of presses reads as one grey slab. */
 .itemtable td.itemwho { position: relative; height: 46px }
 .itemwho > .itemcell { position: absolute; inset: 0; width: auto; height: auto }
 .itemwho > .itemcell::before { content: ""; position: absolute; left: 50%; top: 50%;
@@ -922,81 +687,50 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   background: var(--press); opacity: 0; transition: opacity .2s ease; pointer-events: none }
 .itemwho > .itemcell:active::before { opacity: 1; transition-duration: 0s }
 .itemwho > .itemcell .dot { position: relative }
-/* Square, as every corner is: the global `.dot`'s 1px radius reads as a pill
-   at 10px. */
 .itemcell .dot { width: 10px; height: 10px; border-radius: 0 }
-/* The rows nobody ordered wear the same cell minus the button, so both columns
-   of dots stay in line down a long bill. Their mark is a pip: ink, because
-   each person does carry a share of the line, but too small to be a target,
-   and in `--rule` so it stays quieter than any answer above it. */
+/* Rows nobody ordered: everyone carries a share, but a pip is no target. */
 .itemcell.ghost .dot { width: 4px; height: 4px; background: var(--rule) }
-/* The split mark: two smaller squares overlapping on the diagonal, for a run
-   handed out unevenly — a dot would say "all of it". The card-coloured edge on
-   the lower square keeps the pair from blurring into one blob at 10px. */
+/* A run handed out unevenly; a dot would say "all of it". */
 .itemcell .dot.some { background: none; position: relative }
 .itemcell .dot.some::before, .itemcell .dot.some::after {
   content: ""; position: absolute; width: 6.5px; height: 6.5px;
   background: var(--ink-2) }
 .itemcell .dot.some::before { top: 0; left: 0 }
 .itemcell .dot.some::after { bottom: 0; right: 0; box-shadow: -1px -1px 0 var(--card) }
-/* An empty cell draws nothing: a grid of pale squares read as a grid of
-   disabled ones. The square is still there, clear, for pointing to ink in. */
+/* Pale squares read as disabled ones. */
 .itemcell .dot.off { background: transparent }
 
-/* Pointing at a column: the run a tap just opened, in the tapper's column. Not
-   a refusal, so no `--debit`: every cell in it holds at one faint ink, showing
-   where an answer could go, then the hold is released and each dot eases back.
-   A plain state and not an animation, because it starts on rows painted for
-   the first time: dimming them a beat later flickers. The empty ones take the
-   assigned ink to get there, or at `.35` they would show nothing. */
+/* Pointing at where an answer could go in a run just opened. A state, not an
+   animation: dimming freshly painted rows a beat later flickers. */
 .itemcell.point-hold .dot { opacity: .35 }
 .itemcell.point-hold .dot.off { background: var(--ink-2) }
-/* The release. With only a `from`, each dot eases to its own resting value —
-   the assigned back to full, the empty back to clear. The empty ones
-   ease their colour too; the split mark's must not, or a filled square would
-   flash behind its two halves. Two identical animations of each for the same
-   reason the refusal has two: a second point at the same cells must replay
-   (lib/refusal.ts). */
+/* Only a `from`, so each dot eases to its own resting value. Pairs, so a
+   second point replays (lib/refusal.ts). */
 @keyframes point-a { from { opacity: .35 } }
 @keyframes point-b { from { opacity: .35 } }
 @keyframes point-off-a { from { opacity: .35; background-color: var(--ink-2) } }
 @keyframes point-off-b { from { opacity: .35; background-color: var(--ink-2) } }
-/* On the span, so the split mark's two squares travel with it as one. */
 .itemcell.point-a .dot { animation: point-a .5s ease-out }
 .itemcell.point-b .dot { animation: point-b .5s ease-out }
 .itemcell.point-a .dot.off { animation-name: point-off-a }
 .itemcell.point-b .dot.off { animation-name: point-off-b }
-/* Exempt from the reduced-motion clamp on the same grounds as the refusal
-   flash below: there is no vector here, only ink settling, and clamped to
-   .01ms the tap would answer with nothing at all. */
+/* No motion, only ink settling; clamped, the tap would answer with nothing. */
 @media (prefers-reduced-motion: reduce) {
   .itemcell.point-a .dot, .itemcell.point-b .dot { animation-duration: .5s !important }
 }
 
 /* ---- cards ---- */
 .pad { padding: 14px 16px }
-/* A thin card atop a screen (install offer, demo mark). 4px on top makes the
-   gutter's 16 under the bar's own 12px foot, as `.mysummary:first-child` does;
-   4px below, since the next block brings its own 14. */
 .padtop { padding: 4px 16px }
-/* A screen's question when the bar is spent naming where you are (`/g/claim`).
-   It is the screen's title, so set above the bar's 17px, centred and balanced. */
 .question { font-size: 20px; font-weight: 700; letter-spacing: -.03em; line-height: 1.2;
   text-align: center; text-wrap: balance; padding: 18px 16px 16px }
 .card { background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   padding: 13px 14px }
 .hairline { height: 1px; background: var(--rule-soft); margin: 12px 0 }
-/* The head of an entry's own screen (app/g/entry/page.tsx): its title, and
-   under it what it cost. Not in the top bar, which a typed sentence would
-   wrap to six lines.
-   Its size is not in this rule: `FitTitle` takes the largest step of
-   `ENTRY_TITLE_SIZES` that fits one line. `anywhere`, because a pasted URL is
-   one word. */
+/* Not in the top bar, which a sentence would wrap to six lines. `FitTitle`
+   sizes it; `anywhere`, because a pasted URL is one word. */
 .entrytitle { letter-spacing: -.03em; line-height: 1.3; padding-top: 4px;
   overflow-wrap: anywhere; text-wrap: pretty }
-/* The sum as spent sits under the one that moves the balance, a caption to it,
-   flush left: its own run of text, the code on whichever side the locale puts
-   it. An expense's figure is ruled off from the line saying who and how many. */
 .entryhead { container-type: inline-size }
 .entryfig { display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
   margin-top: 10px }
@@ -1004,12 +738,8 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .entryamt { display: flex; align-items: baseline; gap: 8px }
 .entryspent { display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
 .entryspent .num { font-size: 13px; color: var(--muted) }
-/* Two sizes in one figure: the whole part the heading, the code and the
-   fraction at 55% — so it is the digits that matter that carry the weight.
-   44px, until the whole part is too long for the column: `--chars` is its
-   length, and at .555em a character (the face's .6 less the tracking), plus
-   an em each for the fraction and a three-letter code and 8px for the gap,
-   this is the size that fits. */
+/* The digits that matter carry the weight. 44px until `--chars` at .555em a
+   glyph, plus an em each for fraction and code, no longer fits. */
 .entryamt { line-height: 1; font-weight: 600; letter-spacing: -.045em;
   font-size: clamp(28px, calc((100cqi - 8px) / (var(--chars) * .555 + 2)), 44px) }
 .entryamt .ccy { font-size: .55em; font-weight: 500; letter-spacing: 0; color: var(--muted) }
