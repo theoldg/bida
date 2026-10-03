@@ -25,10 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
-- *2026-10-03* — "exactly the same problems as before". I read three
-  screenshots as proof and shipped a guess no headless browser could test.
-  Where the platform can answer, ask it; where only the phone can, say the fix
-  is unproven and leave a /diag line that will tell.
+- *2026-10-03* — "Research this online pls", after two keyboard guesses
+  failed on the phone. The owner's /diag paste settled it in one read. Ship
+  the line that measures before the fix that guesses, and prefer the platform
+  doing the job to arithmetic about it.
 
 - *2026-10-03* — "Delete and trim a bunch of comments". Half a comment was
   the name it sat over; a ref called `before` needed a paragraph that

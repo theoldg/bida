@@ -2,66 +2,59 @@ import { describe, expect, it } from "vitest";
 import { caretOnPress, confirmAct, gapOf, landsOn } from "./viewport";
 
 /** A phone with nothing covering it: the two viewports agree. */
-const PHONE = { inner: 844, visible: 844, offset: 0, scale: 1, typing: false, keys: null };
+const PHONE = { inner: 844, visible: 844, offset: 0, scale: 1, typing: false, tallest: 844 };
 
 describe("what a gap between the two viewports means", () => {
   it("is nothing when they agree", () => {
-    expect(gapOf(PHONE)).toEqual({ kb: 0, unexplained: 0 });
+    expect(gapOf(PHONE)).toEqual({ kb: 0, unexplained: 0, up: false });
   });
 
   it("is the keyboard while something is being typed into", () => {
-    expect(gapOf({ ...PHONE, visible: 528, typing: true })).toEqual({ kb: 316, unexplained: 0 });
+    expect(gapOf({ ...PHONE, visible: 528, typing: true })).toEqual({ kb: 316, unexplained: 0, up: true });
   });
 
   it("counts the pan as covered too — iOS scrolls the visual viewport up", () => {
     expect(gapOf({ ...PHONE, visible: 528, offset: 40, typing: true }))
-      .toEqual({ kb: 276, unexplained: 0 });
+      .toEqual({ kb: 276, unexplained: 0, up: true });
   });
 
   it("never pays a keyboard for a gap with nobody typing", () => {
     // The bug this exists for: a layout viewport taller than the screen, which
     // paid itself out as permanent padding at the foot of every list.
-    expect(gapOf({ ...PHONE, visible: 797 })).toEqual({ kb: 0, unexplained: 47 });
+    expect(gapOf({ ...PHONE, visible: 797 })).toEqual({ kb: 0, unexplained: 47, up: false });
   });
 
-  // Chromium's VirtualKeyboard: the keys overlay the page and say where they
-  // are, so the viewports stop moving and the rectangle is the answer.
-  describe("where the browser reports the keys", () => {
-    const UP = { ...PHONE, typing: true, keys: { top: 508, height: 336 } };
+  // Android under `interactive-widget=resizes-content`: the keys come off the
+  // layout viewport, so the two viewports agree and there is nothing to pay.
+  describe("where the browser shrinks the page for the keys", () => {
+    const UP = { ...PHONE, inner: 508, visible: 508, typing: true };
 
-    it("pays the strip below the keys' top, whatever the viewports say", () => {
-      expect(gapOf(UP)).toEqual({ kb: 336, unexplained: 0 });
-      // A tab's toolbar moved the visual viewport; the keys didn't move.
-      expect(gapOf({ ...UP, visible: 790 })).toEqual({ kb: 336, unexplained: 0 });
+    it("pays nothing, and still knows the keys are up", () => {
+      expect(gapOf(UP)).toEqual({ kb: 0, unexplained: 0, up: true });
     });
 
-    it("pays only what covers the layout viewport", () => {
-      // Brave's bottom bar: the layout viewport ends above the keys' foot.
-      expect(gapOf({ ...UP, inner: 800 })).toEqual({ kb: 292, unexplained: 0 });
+    it("doesn't take a toolbar for keys", () => {
+      // Chrome's URL bar coming back: 56px off the page.
+      expect(gapOf({ ...UP, inner: 788, visible: 788 }).up).toBe(false);
     });
 
-    it("pays nothing while the keys are down, though a field has the caret", () => {
-      // Android's back closes the keyboard and leaves the caret.
-      expect(gapOf({ ...UP, keys: { top: 0, height: 0 } })).toEqual({ kb: 0, unexplained: 0 });
-    });
-
-    it("never pays keys nobody is typing into", () => {
-      expect(gapOf({ ...UP, typing: false })).toEqual({ kb: 0, unexplained: 0 });
+    it("doesn't call a shrink keys with nobody typing", () => {
+      expect(gapOf({ ...UP, typing: false }).up).toBe(false);
     });
   });
 
   it("ignores a pixel or two of toolbar settling, typing or not", () => {
-    expect(gapOf({ ...PHONE, visible: 841 })).toEqual({ kb: 0, unexplained: 0 });
-    expect(gapOf({ ...PHONE, visible: 841, typing: true })).toEqual({ kb: 0, unexplained: 0 });
+    expect(gapOf({ ...PHONE, visible: 841 })).toEqual({ kb: 0, unexplained: 0, up: false });
+    expect(gapOf({ ...PHONE, visible: 841, typing: true })).toEqual({ kb: 0, unexplained: 0, up: false });
   });
 
   it("blames a pinch for the gap it is, and pays nothing", () => {
     expect(gapOf({ ...PHONE, visible: 500, scale: 1.7, typing: true }))
-      .toEqual({ kb: 0, unexplained: 0 });
+      .toEqual({ kb: 0, unexplained: 0, up: false });
   });
 
   it("reads a visible viewport taller than the layout one as no gap", () => {
-    expect(gapOf({ ...PHONE, visible: 900 })).toEqual({ kb: 0, unexplained: 0 });
+    expect(gapOf({ ...PHONE, visible: 900 })).toEqual({ kb: 0, unexplained: 0, up: false });
   });
 });
 

@@ -96,13 +96,15 @@ fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
   full height and `.scroll` ends behind them — a field scrolled to that edge,
   by us or by the browser on focus, sits under the strip's buttons. The visual
   viewport is what's left: `components/viewport.tsx` writes the covered
-  strip to `--kb`. **On Chromium it asks the keyboard instead**: with
-  `navigator.virtualKeyboard.overlaysContent` set, the keys overlay the page
-  there too and report their own rectangle. The viewport arithmetic was right
-  installed but not in a tab, where each browser's toolbars move the visual
-  viewport their own way — Chrome paid the keys short, Brave long. The
-  `viewport.kb` line in the `/diag` timeline carries every reading behind a
-  payment. `.scroll` spends `--kb` plus air as both padding and
+  strip to `--kb`. **Android is never measured: it shrinks the page.**
+  `interactive-widget=resizes-content` (app/layout.tsx) has Chromium and
+  Firefox take the keys off the layout viewport, so the shell ends at their
+  top and `--kb` stays 0. Measuring them was wrong a different way in Chrome's
+  tab, Brave and the installed app, and `navigator.virtualKeyboard` reported
+  keys mid-screen while they slid — tried and dropped. `data-kb` still says
+  keys are up (`HoldCaret` needs it): there, a layout viewport shorter than its
+  tallest by more than a toolbar. Each flip is a `viewport.kb` line in the
+  `/diag` timeline, with its readings. `.scroll` spends `--kb` plus air as both padding and
   `scroll-padding-bottom`. Padding is what a last row can scroll into;
   scroll-padding is where a field mid-form stops. A dialog sits outside the
   shell and pays the same toll: the scrim spends `--kb` as bottom padding, so a

@@ -15,12 +15,15 @@
  * **A gap is a keyboard only while something is being typed into**, or it
  * becomes permanent padding.
  *
- * **Where the browser can say where the keys are, it is asked instead**
- * (`navigator.virtualKeyboard`, Chromium): told the keys overlay the page,
- * it leaves both viewports alone and reports their rectangle. The viewport
- * arithmetic was right installed but not in a tab, where each browser's
- * toolbars moved the visual viewport differently: Chrome paid the keys short,
- * Save under the suggestion strip; Brave long, Save a thumb above them.
+ * **Android pays nothing: it shrinks the page instead.** `interactive-widget=
+ * resizes-content` (app/layout.tsx) has Chromium and Firefox take the keys
+ * off the layout viewport, so `100dvh` ends at their top and there is no gap
+ * to measure. Measuring was wrong a different way in every Android browser —
+ * Chrome's tab, Brave and the installed app each moved the visual viewport
+ * their own way, and `navigator.virtualKeyboard` reported keys mid-screen
+ * while they slid. What the shrink can't say by itself is that the keys are
+ * up, which `HoldCaret` needs: that is the layout viewport shorter than it has
+ * been at this width by more than a toolbar.
  */
 
 /** One look at the two viewports, and who has the caret. */
@@ -35,12 +38,8 @@ interface ViewportReading {
   scale: number;
   /** Whether something that opens a keyboard has the caret. */
   typing: boolean;
-  /**
-   * The keyboard's own rectangle, in the layout viewport's coordinates, where
-   * the browser reports one (`navigator.virtualKeyboard.boundingRect`); all
-   * zeros while it is down. `null` where it can't, and the gap is the guess.
-   */
-  keys: { top: number; height: number } | null;
+  /** The tallest the layout viewport has been at this width, keys down. */
+  tallest: number;
 }
 
 /** What the difference between the two viewports means. */
@@ -49,6 +48,8 @@ interface ViewportGap {
   kb: number;
   /** The same gap with nothing focused, which no keyboard explains. */
   unexplained: number;
+  /** Whether keys are up — paid as `kb`, or taken off the page by Android. */
+  up: boolean;
 }
 
 /**
@@ -57,15 +58,22 @@ interface ViewportGap {
  */
 const NOISE = 4;
 
+/**
+ * A layout viewport shorter than its tallest by more than this has a keyboard
+ * taken off it. Chrome's URL bar showing again is ~56px; no keyboard is short
+ * of 150.
+ */
+const SHRUNK_BY_KEYS = 120;
+
 export function gapOf(v: ViewportReading): ViewportGap {
-  const none = { kb: 0, unexplained: 0 };
+  const none = { kb: 0, unexplained: 0, up: false };
   // A magnified page has a smaller visible viewport by definition, and the
   // difference is the magnification, not something sitting on the screen.
   if (Math.abs(v.scale - 1) > 0.01) return none;
   const gap = Math.round(v.inner - v.visible - v.offset);
-  if (!v.typing) return gap > NOISE ? { kb: 0, unexplained: gap } : none;
-  const covered = !v.keys ? gap : v.keys.height > 0 ? Math.round(v.inner - v.keys.top) : 0;
-  return covered > NOISE ? { kb: covered, unexplained: 0 } : none;
+  if (!v.typing) return gap > NOISE ? { ...none, unexplained: gap } : none;
+  const kb = gap > NOISE ? gap : 0;
+  return { kb, unexplained: 0, up: kb > 0 || v.tallest - v.inner > SHRUNK_BY_KEYS };
 }
 
 /**

@@ -48,6 +48,10 @@ export const viewport: Viewport = {
   // `NoPinchZoom` finish the job.
   maximumScale: 1,
   userScalable: false,
+  // Android takes the keyboard off the page, as a native app does, so the
+  // `100dvh` shell ends at the keys' top. Measuring them instead was wrong a
+  // different way in every Android browser (lib/viewport.ts).
+  interactiveWidget: "resizes-content",
   // **One colour, never per-theme**, matching the manifest's theme_color: the
   // installed Android status bar is painted from the manifest and this tag only
   // picks icon contrast. Per-theme tags give white on white. docs/pwa.md#gotchas.

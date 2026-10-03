@@ -12,9 +12,9 @@
  * the field below (`walkFields`, components/viewport.tsx).
  *
  * Headless browsers have no keyboard, so one is faked where the app reads it
- * — the rectangle `navigator.virtualKeyboard` reports, and the shrunken
- * `visualViewport` where there is no such API — and the app answers as on a
- * phone (`gapOf`, `--kb`, its own scroll). The assertion is what a thumb cares
+ * — iOS's shrunken `visualViewport`, or Android's page shrunk whole
+ * (`interactive-widget=resizes-content`) — and the app answers as on a phone
+ * (`gapOf`, `--kb`, its own scroll). The assertion is what a thumb cares
  * about: field *and* act above the keys.
  */
 import { onePhone, newGroup, PATIENCE, settle }
@@ -43,15 +43,6 @@ const CROWD = ["Ana", "Bo", "Cy", "Dee", "Eli", "Fay", "Gus", "Hal", "Ivy", "Jo"
 async function openKeyboard() {
   await field().focus();
   await page.evaluate((kb) => {
-    const keys = navigator.virtualKeyboard;
-    if (keys) {
-      // Overlaid, as the app asks: the viewports don't move, the rectangle does.
-      Object.defineProperty(keys, "boundingRect", {
-        configurable: true, get: () => new DOMRect(0, window.innerHeight - kb, window.innerWidth, kb),
-      });
-      keys.dispatchEvent(new Event("geometrychange"));
-      return;
-    }
     const view = window.visualViewport;
     Object.defineProperty(view, "height", {
       configurable: true, get: () => window.innerHeight - kb,
@@ -77,16 +68,27 @@ const scrollSettled = () => page.waitForFunction(() => new Promise((ok) => {
   requestAnimationFrame(() => requestAnimationFrame(() => ok(scroll.scrollTop === at)));
 }), null, { timeout: PATIENCE });
 
+/**
+ * Android's keyboard: `interactive-widget=resizes-content` takes the keys off
+ * the page, so the window itself is shorter and nothing is left to pay.
+ */
+async function shrinkForKeyboard() {
+  await field().focus();
+  const { width, height } = page.viewportSize();
+  await page.setViewportSize({ width, height: height - KB });
+  await page.waitForFunction(() => document.documentElement.hasAttribute("data-kb"), null, { timeout: PATIENCE });
+  await scrollSettled();
+  return async () => {
+    await page.evaluate(() => document.activeElement?.blur?.());
+    await page.setViewportSize({ width, height });
+    await page.waitForFunction(() => !document.documentElement.hasAttribute("data-kb"), null, { timeout: PATIENCE });
+  };
+}
+
 /** Put it away again, for a screen reached without a reload. */
 async function closeKeyboard() {
   await page.evaluate(() => {
     document.activeElement?.blur?.();
-    const keys = navigator.virtualKeyboard;
-    if (keys) {
-      delete keys.boundingRect;
-      keys.dispatchEvent(new Event("geometrychange"));
-      return;
-    }
     delete window.visualViewport.height;
     window.visualViewport.dispatchEvent(new Event("resize"));
   });
@@ -108,22 +110,21 @@ async function clears(label, actSelector) {
     const act = document.querySelector(selector);
     if (!input || !act) return { missing: !input ? "add row" : selector };
     const kb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--kb"));
-    // The top of the keys as faked — not the shell's foot less `--kb`, which
-    // would only check the app against its own arithmetic.
+    // The top of the keys is the foot of what is visible — not the shell's foot
+    // less `--kb`, which would only check the app against its own arithmetic.
     const view = window.visualViewport;
-    const keys = navigator.virtualKeyboard?.boundingRect.height
-      ? navigator.virtualKeyboard.boundingRect.top
-      : view.offsetTop + view.height;
+    const keys = view.offsetTop + view.height;
     return {
-      kb,
+      kb, up: document.documentElement.hasAttribute("data-kb"),
       act: Math.round(keys - act.getBoundingClientRect().bottom),
       field: Math.round(keys - input.getBoundingClientRect().bottom),
     };
   }, actSelector);
-  const ok = !seen.missing && seen.kb > 0 && seen.act >= 0 && seen.field >= 0;
+  // `data-kb`, not `--kb`, says the app saw the keys: Android pays none.
+  const ok = !seen.missing && seen.up && seen.act >= 0 && seen.field >= 0;
   report(ok, label, seen.missing
     ? `no ${seen.missing} on this screen`
-    : `keyboard ${seen.kb}px, act ${seen.act}px above the keys, field ${seen.field}px`);
+    : `keys ${seen.up ? "up" : "NOT SEEN"}, ${seen.kb}px paid, act ${seen.act}px above them, field ${seen.field}px`);
 }
 
 // ---- creating a group ---------------------------------------------------
@@ -142,6 +143,10 @@ await field().fill("Di");
 await settle(page, 150);
 await openKeyboard();
 await clears("/new — and with a name still in the row", "button.btn-lg");
+await closeKeyboard();
+const unshrink = await shrinkForKeyboard();
+await clears("/new — on Android, where the page shrinks for the keys", "button.btn-lg");
+await unshrink();
 
 // ---- which one are you ---------------------------------------------------
 await field().fill("");
