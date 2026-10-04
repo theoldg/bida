@@ -30,6 +30,11 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   effect of their own ask. Read the last clause as the hint for the case you
   would have missed, and test that case.
 
+- *2026-10-04* — A screenshot caught mid-flash, then "with the red pips
+  in the cells". The owner cut the tiles and kept the dots: a second round
+  of variants on one pick beats a wider first round. Keep the pick on the
+  page for scale.
+
 - *2026-10-04* — "Propose a few mocks before implementing", then "a bit
   ugly", then "smaller". Three rounds, each quieter. Make the mocks work, in
   the app's own tokens, keep last round's pick on the page for scale, and
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   padding to the column; the code already had a cheaper shape (`.foot` pays
   `--kb` itself), so the dock copied that, and the dead `--act-below` went too.
   Say where the build left the plan.
-
-- *2026-10-01* — "Block publishing to main until the latest checks are green
-  (wait if still going, refuse if failed)". Every way to release needs the
-  gate, the button and the laptop both; and gate one pinned commit, so what
-  passed is what ships. Prove the refusal on a real red run.

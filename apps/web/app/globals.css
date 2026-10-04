@@ -1390,21 +1390,21 @@ button.amtnote:active { background: var(--hl-edge) }
 .addrow.flash-a .addname::placeholder, .addrow.flash-b .addname::placeholder {
   color: color-mix(in srgb, currentColor 47%, transparent) }
 
-/* A refused Done blooms every line nobody has been given. All three text parts
-   are named: two carry their own `--muted`. */
+/* A refused Done blooms every line nobody has been given: the row washes, its
+   words go red and each empty cell flashes the dot a tap there would draw. All
+   three text parts are named: two carry their own `--muted`. */
 .itemtable tr.flash-a .itemname, .itemtable tr.flash-a .itemamount,
 .itemtable tr.flash-a .itemqty { animation: refuse-text-a .6s ease-in-out }
 .itemtable tr.flash-b .itemname, .itemtable tr.flash-b .itemamount,
 .itemtable tr.flash-b .itemqty { animation: refuse-text-b .6s ease-in-out }
-/* Each empty cell plays its own press in red, saying where to tap. */
+@keyframes refuse-row-a { 15%, 45% { background-color: var(--debit-wash) } }
+@keyframes refuse-row-b { 15%, 45% { background-color: var(--debit-wash) } }
 @keyframes refuse-square-a { 15%, 45% { background-color: var(--debit) } }
 @keyframes refuse-square-b { 15%, 45% { background-color: var(--debit) } }
-@keyframes refuse-tile-a { 15%, 45% { opacity: 1; background-color: var(--debit-wash) } }
-@keyframes refuse-tile-b { 15%, 45% { opacity: 1; background-color: var(--debit-wash) } }
+.itemtable tr.flash-a td { animation: refuse-row-a .6s ease-in-out }
+.itemtable tr.flash-b td { animation: refuse-row-b .6s ease-in-out }
 .itemtable tr.flash-a .itemcell .dot.off { animation: refuse-square-a .6s ease-in-out }
 .itemtable tr.flash-b .itemcell .dot.off { animation: refuse-square-b .6s ease-in-out }
-.itemtable tr.flash-a .itemwho > .itemcell:has(.dot.off)::before { animation: refuse-tile-a .6s ease-in-out }
-.itemtable tr.flash-b .itemwho > .itemcell:has(.dot.off)::before { animation: refuse-tile-b .6s ease-in-out }
 
 /* Exempt from the motion clamp: a colour settling, and clamped it is no signal. */
 @media (prefers-reduced-motion: reduce) {
@@ -1422,9 +1422,8 @@ button.amtnote:active { background: var(--hl-edge) }
   .itemtable tr.flash-a .itemname, .itemtable tr.flash-b .itemname,
   .itemtable tr.flash-a .itemamount, .itemtable tr.flash-b .itemamount,
   .itemtable tr.flash-a .itemqty, .itemtable tr.flash-b .itemqty,
-  .itemtable tr.flash-a .itemcell .dot.off, .itemtable tr.flash-b .itemcell .dot.off,
-  .itemtable tr.flash-a .itemwho > .itemcell:has(.dot.off)::before,
-  .itemtable tr.flash-b .itemwho > .itemcell:has(.dot.off)::before {
+  .itemtable tr.flash-a td, .itemtable tr.flash-b td,
+  .itemtable tr.flash-a .itemcell .dot.off, .itemtable tr.flash-b .itemcell .dot.off {
     animation-duration: .6s !important }
 }
 
