@@ -95,7 +95,7 @@ textarea { resize: vertical }
 
 /* ============================================================
    TOKENS — terminal neutrals, one monospace face, and two colours spent
-   only on balances. Mirrored in design/mockups/index.html: change both.
+   only on balances.
    ============================================================ */
 :root {
   --paper:#F1F1EF; --paper-2:#E8E8E5;
@@ -269,7 +269,7 @@ a.chip:active, button.chip:active, .btn:active:not(:disabled), .starttile:active
 }
 
 /* ============================================================
-   COMPONENTS, mirroring design/mockups/index.html.
+   COMPONENTS
    ============================================================ */
 
 h1, h2, h3, h4 {

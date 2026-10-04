@@ -175,10 +175,10 @@ API is reached with `fetch`.
   candidate being picked, never a field being finished. **A field inside a
   `<form>` is left alone**, because its Enter is already spoken for and is a
   better answer than either of these: the add row files the name and hands the
-  caret back, a dialog submits its card. Five fields ask for `"next"`: the entry
-  form's amount, `/new`'s group name, and each row but the last of the three
-  columns — the split editor's "as amounts" and "as parts", and `/g/payers`. `pnpm verify keyboard`
-  walks all three ([browser-checks.md](browser-checks.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)).
+  caret back, a dialog submits its card. What asks for `"next"`: the entry
+  form's amount, `/new`'s group name, and each row but the last of a column of
+  figures — the split editor's "as amounts" and "as parts", and `/g/payers`;
+  `pnpm verify keyboard` walks each column ([browser-checks.md](browser-checks.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)).
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**
   — `ConfirmDialog`, `PromptDialog`, `NoticeDialog` (read, then Close) and
   `ChoiceDialog`, which is every picker in

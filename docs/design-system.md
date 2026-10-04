@@ -7,6 +7,12 @@
 from there; never re-pick one by eye. This file explains the reasoning so you
 extend the design rather than diverge from it.
 
+**A mock for the owner to choose from is a page that inlines this whole file**
+and uses the app's real classes (`.splitbox`, `.splitrow`, `.amountfield`…),
+so its tokens and both themes are the app's to the pixel rather than copied by
+hand. Make it work, not just look right, and photograph the shipped screen
+beside it with `pnpm drive` ([drive.md](drive.md)).
+
 ## Direction
 
 A terminal: one monospace face, near-monochrome grounds, hairline rules, square
