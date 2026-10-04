@@ -192,17 +192,13 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
    * during that must still find the button spent.
    */
   const [saving, setSaving] = useState(false);
-  // Save is always tappable; a tap while invalid flips this, which puts the
-  // blocker sentence on screen — an untouched form shows no errors. What is
-  // *missing* rather than wrong blooms its own control instead, with no flag.
-  const [attemptedSave, setAttemptedSave] = useState(false);
-
   // What the entry is worth and whether Save may light — one function, so the
   // arithmetic behind that button has a test suite rather than a screen to
   // mount (lib/entry-check.ts). The form reads its answers; it writes nothing.
   const {
     activeTab, canScan, activeSplit, receiptSplit, effectiveSplit, receiptTotal, receiptLocksAmount,
-    onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, splitProblem, receiptMissing, ready,
+    onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, splitProblem, splitTick,
+    receiptMissing, ready,
     amountMissing, titleMissing,
   } = checkEntry({
     draft, base, rates: data.rates,
@@ -214,12 +210,14 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
    * What a refused Save can bloom: two fields, the Items tab's step (a photo or
    * the who-had-what grid), the rate badge when the group has no rate for
    * the currency — that badge is the whole fix, with no field here to point at
-   * — and the split's sentence in the Save dock.
+   * — and the sentences in the Save dock: the payers', and the split's.
    */
   const missing = {
     amount: amountMissing, title: titleMissing, receipt: receiptMissing,
-    rate: foreign && groupRate === undefined, split: splitProblem !== null,
+    rate: foreign && groupRate === undefined, blocker: blocker !== null, split: splitProblem !== null,
   };
+  /** The dock's lines over Save: what is wrong, then the tick that nothing is. */
+  const docked = blocker !== null || splitProblem !== null || splitTick !== null;
   const refusals = useRefusals(missing);
 
   /**
@@ -326,7 +324,6 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     // — so this is the compiler being shown that, not a fallback.
     const actor = data.me;
     if (!ready) {
-      setAttemptedSave(true);
       refusals.refuse(missing);
       return;
     }
@@ -472,7 +469,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
             </div>
           </div>
 
-          <div className="pad" style={{ paddingTop: 4, paddingBottom: splitProblem ? 9 : undefined,
+          <div className="pad" style={{ paddingTop: 4, paddingBottom: docked ? 0 : undefined,
             display: "flex", flexDirection: "column", gap: 9 }}>
             {transfer ? (
               <TransferSides
@@ -539,8 +536,6 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
               </div>
             )}
 
-            {attemptedSave && blocker ? <div className="failure">{blocker}</div> : null}
-
             <div className="field">
               <label htmlFor="when">{copy.form.when}</label>
               <input id="when" type="date" value={dateInputValue(draft.occurredAt)}
@@ -575,17 +570,31 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
         {/* The form's last row, docked (`.whodock`): under the split while the
             form fits, at the foot of the screen once a long split scrolls above
             it, and above the keyboard while one is up. Always pressable: `save`
-            answers with the refusal flash on whatever is missing. A split that
-            doesn't add up is said here, over Save, where scrolling can't hide
-            it; it follows the tab now showing. */}
-        {/* The split's line sits 9px from the form (its `.pad` above, trimmed
-            to match) and 9px from Save. */}
-        <div className="pad whodock" style={{ paddingTop: splitProblem ? 0 : 18 }}>
+            answers with the refusal flash on whatever is missing. What is wrong
+            with the payers or the split is said here, over Save, where scrolling
+            can't hide it, and so is the tick that typed amounts add up. */}
+        {/* 9px between the lines, Save and whatever the scroll has cut off
+            above them: the dock's own padding, never the form's, which is only
+            there once the form is scrolled to its end. */}
+        <div className="pad whodock" style={{ paddingTop: docked ? 9 : 18 }}>
+          {blocker ? (
+            <div role="status" data-refuse="blocker" style={{ marginBottom: 9 }}
+              className={`splitfoot bad alone${refusals.flash("blocker")}`}
+              onAnimationEnd={refusals.onFlashEnd("blocker")}>
+              <span>{blocker}</span>
+            </div>
+          ) : null}
           {splitProblem ? (
             <div role="status" data-refuse="split" style={{ marginBottom: 9 }}
               className={`splitfoot bad alone${refusals.flash("split")}`}
               onAnimationEnd={refusals.onFlashEnd("split")}>
               <span>{splitProblem}</span>
+            </div>
+          ) : null}
+          {splitTick ? (
+            <div role="status" className="splitfoot ok alone" style={{ marginBottom: 9 }}>
+              <Icon name="check" size={14} style={{ flex: "none" }} />
+              <span>{splitTick}</span>
             </div>
           ) : null}
           {failed ? (

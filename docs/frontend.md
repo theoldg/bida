@@ -110,23 +110,21 @@ API is reached with `fetch`.
   full-width `.btn-lg` ([design-system.md](design-system.md)), because the
   screen has exactly one act; a save failure is said above it. The kind chip sits
   at the top bar's right, a word and a chevron in a box, as the currency chip below it is.
-- **Save is never disabled, and nothing reads as wrong before a tap says so.**
-  A grey button gives no reason, and a red line before any tap is unearned.
-  Tapping
-  Save while `!checkEntry(...).ready` sets the form's own `attemptedSave`
-  instead of saving; every red state is gated on it, so a fresh screen shows
-  none of them. `amountMissing`/`titleMissing` *flash* their field red rather
+- **Save is never disabled, and nothing is red for being empty before a tap.**
+  A grey button gives no reason, and an untouched field is not a mistake.
+  Tapping Save while `!checkEntry(...).ready` refuses instead of saving: what is
+  *missing* blooms, so a fresh screen shows no red. `amountMissing`/`titleMissing` *flash* their field red rather
   than adding a caption — a word doesn't fit next to the hero figure and reads
   oddly in a number field — counted per field so a repeat refusal replays
   ([design-system.md](design-system.md#a-dialog-is-ours-and-its-button-says-the-act)).
   That flash is the only thing that reports a missing amount — `splitFooter`
-  returns `null` for a zero total. `blocker` (a missing rate, a removed member,
-  an unbalanced payer split) is a sentence about a relationship the form can't fix by
-  typing into the field it's next to, so it keeps its spot above the split
-  editor, behind the same flag. A split that doesn't add up
-  (`checkEntry`'s `splitProblem`) is said live in the Save dock, over the
-  button, where no scroll hides it, and follows the tab now showing; a refused
-  Save flashes it and spends the button like any bloom. An Items tab short of
+  returns `null` for a zero total. What is *wrong* is said in words, live, in
+  the Save dock over the button, where no scroll hides it: `blocker` (a removed
+  member, payers that no longer add up to the amount) and `splitProblem` (the
+  split now showing, following its tab). A refused Save flashes them and spends
+  the button like any bloom. Typed amounts that do add up are ticked there too
+  (`splitTick`). The dock keeps 9px of its own above its first line, so a
+  half-scrolled form never runs into it. An Items tab short of
   its split says nothing in words — its step blooms.
 - **A press already spending the draft is the form's own `saving` flag.**
   `checkEntry` answers whether the entry *may* be saved, which is a question

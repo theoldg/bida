@@ -245,6 +245,12 @@ describe("checkEntry", () => {
       expect(check(exact({ [THEO]: 2500 }, "equal")).splitProblem).toBeNull();
     });
 
+    it("ticks typed amounts that add up, and only those", () => {
+      expect(check(exact({ [THEO]: 2500, [MARIE]: 1500 })).splitTick).toContain("40.00");
+      expect(check(exact({ [THEO]: 2500 })).splitTick).toBeNull();
+      expect(check(expense()).splitTick).toBeNull();
+    });
+
     it("leaves a Receipt tab with no split yet to its own bloom", () => {
       const c = check(expense({ splitTab: "receipt" }));
       expect(c.receiptMissing).toBe(true);

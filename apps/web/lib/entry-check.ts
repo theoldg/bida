@@ -59,6 +59,11 @@ interface EntryCheck {
    * it; the Save dock says it, and a refused Save flashes it.
    */
   splitProblem: string | null;
+  /**
+   * "N of total allocated" while amounts are typed and they add up — the tick
+   * that says the column is done, said beside `splitProblem` in the Save dock.
+   */
+  splitTick: string | null;
   /** No amount typed yet — held back from `blocker` since it names no sentence, only a field. */
   amountMissing: boolean;
   /** No title typed yet (expenses/incomes only — a transfer's note is optional). */
@@ -178,6 +183,9 @@ export function checkEntry(input: {
   const foot = transfer || receiptMissing ? null
     : splitFooter(validateSplit(amountMinor, effectiveSplit, { tiebreakSeed: splitSeed(draft) }), draft.currency);
   const splitProblem = foot && !foot.ok ? foot.text : null;
+  // Only amounts are a column someone types toward a total; a bill's split
+  // adds up by construction.
+  const splitTick = foot?.ok && activeTab !== "receipt" && tabSplit.mode === "exact" ? foot.text : null;
 
   // The one place the form says why Save is refused, reachable from every
   // state that refuses it. A missing rate says nothing here — there is no field;
@@ -199,6 +207,6 @@ export function checkEntry(input: {
     amountMinor, baseMinor, foreign, groupRate, rateOk,
     activeTab, canScan, receiptTotal, receiptLocksAmount: receiptTotal !== null,
     onReceiptTab, activeSplit: tabSplit, receiptSplit, effectiveSplit,
-    blocker, splitProblem, amountMissing, titleMissing, receiptMissing, ready,
+    blocker, splitProblem, splitTick, amountMissing, titleMissing, receiptMissing, ready,
   };
 }

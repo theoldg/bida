@@ -726,10 +726,25 @@ report(!/flash-/.test(await titleField.getAttribute("class")),
 await page.locator("input.amount").fill("40");
 await page.locator("#what").fill("Split check");
 await page.getByRole("button", { name: "As amounts" }).click();
-await page.locator("input[aria-label$=\"’s amount\"]").first().fill("999");
+const firstShare = page.locator("input[aria-label$=\"’s amount\"]").first();
+const seeded = await firstShare.inputValue();
+await settle(page, 120);
+const splitTick = page.locator(".whodock .splitfoot.ok");
+report(await splitTick.count() === 1 && /allocated/.test(await splitTick.innerText()),
+  "typed amounts that add up are ticked in the Save dock, not the split box");
+await firstShare.fill("999");
 await settle(page, 120);
 const splitLine = page.locator(".whodock .splitfoot.bad");
-report(await splitLine.count() === 1, "a split that doesn't add up is said in the Save dock");
+report(await splitLine.count() === 1 && await splitTick.count() === 0,
+  "a split that doesn't add up is said in the Save dock");
+// Mid-scroll the form is cut off at the dock's top edge: the line keeps its own
+// air above it, not the form's bottom padding, which only shows at the end.
+await page.locator(".scroll").evaluate((el) => { el.scrollTop = el.scrollHeight / 3; });
+await settle(page, 80);
+const air = await page.evaluate(() => Math.round(
+  document.querySelector(".whodock .splitfoot").getBoundingClientRect().top
+  - document.querySelector(".scroll").getBoundingClientRect().bottom));
+report(air >= 8, "the docked line keeps its margin from a half-scrolled form", `${air}px`);
 await page.getByRole("button", { name: "Save" }).click();
 await settle(page, 120);
 report(/flash-/.test(await splitLine.getAttribute("class"))
@@ -739,6 +754,29 @@ await settle(page, 900);
 await page.getByRole("button", { name: "Evenly" }).click();
 await settle(page, 120);
 report(await splitLine.count() === 0, "and a tab that adds up takes it away");
+await page.getByRole("button", { name: "As amounts" }).click();
+await firstShare.fill(seeded);
+await page.getByRole("button", { name: "Evenly" }).click();
+
+// Payers that no longer add up are said in the same place, live: two of them
+// splitting the 40, then the amount moved under them.
+await page.getByRole("button", { name: "Multi-payer" }).click();
+await page.waitForURL(/\/g\/payers/);
+await page.waitForSelector(".rows .row input");
+const payerFields = page.locator(".rows .row input");
+for (let i = 0; i < await payerFields.count(); i++) await payerFields.nth(i).fill(["25", "15"][i] ?? "");
+await page.getByRole("button", { name: "Done" }).click();
+await page.waitForURL(/entry\/edit/);
+await page.waitForSelector("input.amount");
+await page.locator("input.amount").fill("50");
+await settle(page, 120);
+const payerLine = page.locator(".whodock .splitfoot.bad");
+report(await payerLine.count() === 1 && /unaccounted/.test(await payerLine.innerText()),
+  "payers that no longer add up are said in the Save dock", await payerLine.allInnerTexts().then((t) => t.join(" · ")));
+await page.getByRole("button", { name: "Save" }).click();
+await settle(page, 120);
+report(/flash-/.test(await payerLine.getAttribute("class")), "and a refused Save flashes them");
+await settle(page, 900);
 await page.locator("input.amount").fill("");
 await page.locator("#what").fill("");
 

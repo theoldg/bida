@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-04* — "move the X of X accounted for to the same location". The
+  words were the payers screen's; the line meant was the split's "allocated"
+  tick. Match an ask to the screenshot, not the copy, and say which you read.
+
 - *2026-10-04* — "Since you're moving the warning text outside of the split
   tabs, make it respond to tab changes". The owner names the second-order
   effect of their own ask. Read the last clause as the hint for the case you
@@ -78,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the owner's to pick: offer a short table and a pick, keep the plumbing
   parked, and don't push a placeholder past the interruption. Their answer
   beat every option in the table.
-
-- *2026-10-02* — "yes please build a". The plan promised to move the keyboard
-  padding to the column; the code already had a cheaper shape (`.foot` pays
-  `--kb` itself), so the dock copied that, and the dead `--act-below` went too.
-  Say where the build left the plan.

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  resolveSplit, splitParticipants, validateSplit,
+  resolveSplit, splitParticipants,
   type ArithmeticSplit, type Member, type SplitSpec,
 } from "@bida/core";
 import { MAX_PARTS, MinorAmountInput, PartsInput } from "./amount-input";
@@ -12,7 +12,7 @@ import { Icon, TapMark } from "./icons";
 import { SoloName } from "./bits";
 import { copy } from "../lib/copy";
 import { printedCount } from "../lib/scan/items";
-import { bare, money, plural, splitFooter } from "../lib/format";
+import { bare, money, plural } from "../lib/format";
 import type { SplitTab } from "../lib/draft";
 import { tapAmount, tapLabel } from "../lib/tap-amount";
 
@@ -56,22 +56,17 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   // Shows its numbers but has no tab: touching any tab converts it away.
   const legacy = spec.mode === "percent";
   const showReceipt = tab === "receipt" && receipt !== null;
-  const typingAmounts = !showReceipt && spec.mode === "exact";
   // Receipt draws none until its grid is filled: the spec underneath isn't what a save would write.
   const shown: SplitSpec | null = showReceipt ? receiptSplit : spec;
   const included = new Set(shown ? splitParticipants(shown) : []);
-  const check = shown ? validateSplit(amountMinor, shown, opts) : null;
 
   let shares: Record<string, number> = {};
   if (shown) {
     try { shares = resolveSplit(amountMinor, shown, opts).shares; } catch { /* incomplete */ }
   }
 
-  // Only the tick lives here: "N of total allocated", which only means
-  // something when typing amounts. What is wrong with a split is said in the
-  // Save dock (`checkEntry`'s `splitProblem`), where no scroll can hide it.
-  // `splitFooter`, not `check`, decides: a zero total is satisfied but never gets a tick.
-  const foot = typingAmounts && check !== null ? splitFooter(check, amountCurrency) : null;
+  // What the split adds up to, right or wrong, is said in the Save dock
+  // (`checkEntry`'s `splitProblem` and `splitTick`), where no scroll hides it.
 
   function toggle(memberId: string) {
     const next = new Set(included);
@@ -231,13 +226,6 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
               </div>
             );
           })}
-
-          {foot?.ok ? (
-            <div className="splitfoot ok">
-              <Icon name="check" size={14} style={{ flex: "none" }} />
-              <span>{foot.text}</span>
-            </div>
-          ) : null}
         </div>
       </div>
     </section>
