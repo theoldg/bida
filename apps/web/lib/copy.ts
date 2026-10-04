@@ -241,6 +241,15 @@ export const copy = {
     hoursAgo: (n: number) => `${n}h ago`,
     daysAgo: (n: number) => `${n}d ago`,
     agoYesterday: "yesterday",
+    /** Ours, not the phone's locale: a phone in French would print "sam. 5 avril" under "Yesterday". */
+    weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    months: ["January", "February", "March", "April", "May", "June", "July",
+      "August", "September", "October", "November", "December"],
+    monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    /** "Sat 5 April"; the year only when it isn't this one. */
+    day: (weekday: string, day: number, month: string) => `${weekday} ${day} ${month}`,
+    dayInYear: (day: number, month: string, year: number) => `${day} ${month} ${year}`,
+    monthInYear: (month: string, year: number) => `${month} ${year}`,
   },
 
   // ------------------------------------------------------------- groups list

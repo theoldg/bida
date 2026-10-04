@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import {
-  bare, byWhen, moneyParts, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
+  ago, bare, byWhen, moneyParts, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
   initials, priced, rateText, splitFooter, stamp, usd, whenLabel,
 } from "./format";
 
@@ -254,7 +254,27 @@ describe("stamp", () => {
     const earlier = new Date(2026, 3, 1, 9, 0).getTime();
     expect(stamp(today, now)).toBe(`TODAY · ${clockTime(today)}`);
     expect(stamp(yesterday, now)).toBe(`YESTERDAY · ${clockTime(yesterday)}`);
-    expect(stamp(earlier, now)).not.toMatch(/TODAY|YESTERDAY/);
+    expect(stamp(earlier, now)).toBe("WED 1 APR · 09:00");
+  });
+});
+
+// Ours, whatever the phone's locale: one language beside "Yesterday".
+describe("dates in English", () => {
+  const now = new Date(2026, 3, 4, 12, 0).getTime();
+
+  it("names a day this year by weekday, another year by year", () => {
+    expect(dayLabel(new Date(2026, 3, 1, 9).getTime(), now)).toBe("Wed 1 April");
+    expect(dayLabel(new Date(2025, 11, 31, 9).getTime(), now)).toBe("31 December 2025");
+  });
+
+  it("prints a 24-hour clock with two-digit hours", () => {
+    expect(clockTime(new Date(2026, 3, 4, 7, 5).getTime())).toBe("07:05");
+    expect(clockTime(new Date(2026, 3, 4, 0, 0).getTime())).toBe("00:00");
+  });
+
+  it("goes vague past a week: the month, and the year once it isn't this one", () => {
+    expect(ago(new Date(2026, 1, 10).getTime(), now)).toBe("Feb");
+    expect(ago(new Date(2025, 10, 10).getTime(), now)).toBe("Nov 2025");
   });
 });
 

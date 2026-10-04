@@ -307,6 +307,10 @@ so the sentence beside them carries only what they can't. No em dashes in copy,
 ever (the owner: they read as machine-written); `copy.none`'s lone dash, a
 blank figure, is the one exception, and `rules` enforces both halves.
 
+Dates are words too: `lib/format.ts` spells them from `copy.time` (English
+names, a 24-hour clock), never `Intl.DateTimeFormat`, or a French phone reads
+"sam. 5 avril" under "Yesterday". Money still follows the phone's locale.
+
 A string whose wording depends on which way the entry runs is `Voiced<T>` —
 `{ expense, income }`, keyed by the entry's kind. Money going out is *paid* and
 money coming in is *received*, and a screen that switches only its title

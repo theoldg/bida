@@ -188,11 +188,10 @@ export function dayLabel(ts: number, now = Date.now()): string {
   const near = nearDay(ts, now);
   if (near) return near;
   const d = new Date(ts);
-  const opts: Intl.DateTimeFormatOptions =
-    d.getFullYear() === new Date(now).getFullYear()
-      ? { weekday: "short", day: "numeric", month: "long" }
-      : { day: "numeric", month: "long", year: "numeric" };
-  return new Intl.DateTimeFormat(undefined, opts).format(d);
+  const month = copy.time.months[d.getMonth()]!;
+  return d.getFullYear() === new Date(now).getFullYear()
+    ? copy.time.day(copy.time.weekdays[d.getDay()]!, d.getDate(), month)
+    : copy.time.dayInYear(d.getDate(), month, d.getFullYear());
 }
 
 /** "2h ago", "yesterday", "Feb" — deliberately vague past a week. */
@@ -204,11 +203,14 @@ export function ago(ts: number, now = Date.now()): string {
   if (ms < 2 * DAY) return copy.time.agoYesterday;
   if (ms < 7 * DAY) return copy.time.daysAgo(Math.floor(ms / DAY));
   const d = new Date(ts);
-  return new Intl.DateTimeFormat(undefined, { month: "short", ...(d.getFullYear() === new Date(now).getFullYear() ? {} : { year: "numeric" }) }).format(d);
+  const month = copy.time.monthsShort[d.getMonth()]!;
+  return d.getFullYear() === new Date(now).getFullYear() ? month : copy.time.monthInYear(month, d.getFullYear());
 }
 
+/** "18:22" — 24-hour whatever the phone prefers, like every other date here. */
 export function clockTime(ts: number): string {
-  return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(new Date(ts));
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 /** "Today · 18:22", or the day alone for a `dateOnly` entry. */
@@ -238,8 +240,9 @@ export function byWhen(a: Whenever, b: Whenever): number {
 
 /** "FRI 4 APRIL · 18:22", or "TODAY · …" as the ledger says it. */
 export function stamp(ts: number, now = Date.now()): string {
+  const d = new Date(ts);
   const date = nearDay(ts, now)
-    ?? new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short" }).format(new Date(ts));
+    ?? copy.time.day(copy.time.weekdays[d.getDay()]!, d.getDate(), copy.time.monthsShort[d.getMonth()]!);
   return `${date.toUpperCase()} · ${clockTime(ts)}`;
 }
 
