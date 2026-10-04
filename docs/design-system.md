@@ -396,7 +396,8 @@ screen still wins where the decision needs the ledger on it — the payers edito
 who-had-what ([ADR-0008](decisions/0008-hand-rolled-interface.md)). Nor is a `<select>` ours, and
 there are none left: `ChoiceDialog` picks from a short list in the app's own
 rows — a name, a check on the current one, and a `note` saying what an
-unobvious pick does. A date is the exception, being a calendar and not a list
+unobvious pick does. A `lead` row may head it, ruled off, with a chevron: not
+a choice but a door elsewhere, as "Multiple people ›" heads the payer picker. A date is the exception, being a calendar and not a list
 ([ADR-0008](decisions/0008-hand-rolled-interface.md)). A *failure* is not
 a dialog at all — there is nothing to decide — so it is said under whatever was
 attempted, in `--debit`: `Failure` / `.failure`. **A held action always says

@@ -251,7 +251,8 @@ report(new Set(parted).size === CROWD.length
 // The other column, on a screen of its own and with its own idea of which row
 // is the last one: who actually paid.
 await page.locator("input.amount").fill("60");
-await page.locator(".pick-sub").click();
+await page.locator("#paidby").click();
+await page.getByRole("option", { name: "Multiple people" }).click();
 await page.waitForURL(/\/g\/payers/);
 await page.locator("input.splitin").first().focus();
 const payers = [await caret()];

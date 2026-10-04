@@ -511,27 +511,12 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                 </div>
               </Card>
             ) : (
-              <div className="field field-row">
-                {/* The heading is inside the button, not beside it: the button
-                    is the row up to the quieter door beside it, so that much
-                    lights on a press. */}
+              <div className="field">
+                <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                 <button type="button" id="paidby" className="pick"
                   aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
-                  <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                   <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
-                  <Icon name="chev" size={13} className="pchev" />
-                </button>
-                {/* A second, quieter door onto the same field, on the same row:
-                    one payer is the common case and costs one row. */}
-                <button type="button" className="pick-sub"
-                  onClick={() => {
-                    // The payers screen divides the amount, so with none it would split a
-                    // zero. The tap doesn't travel — it flashes the amount field.
-                    if (amountMissing) { refusals.refuse({ amount: true }); return; }
-                    router.push(route.payers(groupId));
-                  }}>
-                  <span>{copy.form.multiPayer[kind === "income" ? "income" : "expense"]}</span>
-                  <Icon name="chev" size={11} />
+                  <Icon name="chev" size={13} className="spacer pchev" />
                 </button>
               </div>
             )}
@@ -636,6 +621,15 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
           }))}
           onPick={(paidBy) => patch({ paidBy, payers: null })}
           onClose={() => setAsk(null)}
+          lead={{
+            label: copy.form.multiPayer,
+            onPick: () => {
+              // The payers screen divides the amount, so with none it would split a
+              // zero. The tap doesn't travel — it flashes the amount field.
+              if (amountMissing) { refusals.refuse({ amount: true }); return; }
+              router.push(route.payers(groupId));
+            },
+          }}
         />
       ) : null}
 

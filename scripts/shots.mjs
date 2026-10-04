@@ -95,7 +95,8 @@ async function addEntry(
   // tap here.
   if (exclude) await page.getByRole("button", { name: `Leave ${exclude} out` }).click();
   if (coSponsor) {
-    await page.getByRole("button", { name: "Multi-payer" }).click();
+    await page.locator("#paidby").click();
+    await page.getByRole("option", { name: "Multiple people" }).click();
     await page.waitForURL(/\/g\/payers/);
     // Marie chips in 20,00; whoever was already paying takes the rest.
     await page.locator(".rows .row").filter({ hasText: "Marie" })
@@ -240,7 +241,8 @@ async function main() {
       // Who paid, mid-allocation: the payer side's verdict line, in the two
       // colours the split editor's own footer uses. It hangs off the draft the
       // block above just typed, which is why it can't be reached by URL.
-      await page.getByRole("button", { name: "Multi-payer" }).click();
+      await page.locator("#paidby").click();
+    await page.getByRole("option", { name: "Multiple people" }).click();
       await page.waitForURL(/\/g\/payers/);
       // Marie's field, typed into without touching Theo's — the same shortfall
       // the split screen shot above catches, on the payer side this time.

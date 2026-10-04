@@ -128,13 +128,14 @@ await page.goto(`${base}/g/entry/edit?id=${g}`);
 await pick(page, '[aria-label="What kind of entry"]', "Income");
 await page.locator("input.amount").fill("300");
 await page.locator("#what").fill("Deposit back");
-report(await page.getByText("Received by").count() > 0, "an income relabels the payer picker");
+report(await page.getByText("Paid to").count() > 0, "an income relabels the payer picker");
 report(await page.getByRole("button", { name: "Receipt" }).count() === 0, "an income offers no Receipt tab");
 
 // On an income the payer question is "who received it", and every line of
 // the screen must stay in that voice. The rows carry names alone, so the
 // voice is the title's and the verdict's: read the whole screen.
-await page.getByRole("button", { name: "Multi-recipient" }).click();
+await page.locator("#paidby").click();
+await page.getByRole("option", { name: "Multiple people" }).click();
 await page.waitForURL(/\/g\/payers/);
 // The URL moves before the screen is drawn: wait for its rows, not the address.
 await page.waitForFunction(() => document.querySelectorAll(".rows .row, .rows .splitrow").length > 0,
@@ -786,7 +787,8 @@ await page.getByRole("button", { name: "Evenly" }).click();
 
 // Payers that no longer add up are said in the same place, live: two of them
 // splitting the 40, then the amount moved under them.
-await page.getByRole("button", { name: "Multi-payer" }).click();
+await page.locator("#paidby").click();
+await page.getByRole("option", { name: "Multiple people" }).click();
 await page.waitForURL(/\/g\/payers/);
 await page.waitForSelector(".rows .row input");
 const payerFields = page.locator(".rows .row input");

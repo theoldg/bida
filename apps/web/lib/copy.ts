@@ -920,8 +920,8 @@ export const copy = {
     label: { expense: "Expense", income: "Income", transfer: "Transfer" } as Record<EntryKind, string>,
     /** Only expense and income: a transfer's row is `group.paidTo` ("Alice paid Bob"). */
     verb: { expense: "paid", income: "received" } as Voiced<string>,
-    /** Over the payer picker: who put it in, or who took it in. */
-    payer: { expense: "Paid by", income: "Received by", transfer: "From" } as Record<EntryKind, string>,
+    /** Over the payer picker: who put it in, or who took it in. Short enough for the form's label column. */
+    payer: { expense: "Paid by", income: "Paid to", transfer: "From" } as Record<EntryKind, string>,
     /** One word for expense and income: both answer "split how", and readers switch often. */
     split: { expense: "Split", income: "Split", transfer: "To" } as Record<EntryKind, string>,
     /** "Transfer" versus "expense" is the pair picked wrong, so each says where the money goes. */
@@ -954,10 +954,8 @@ export const copy = {
      */
     reimbursement: "Reimbursement",
     when: "When",
-    multiPayer: {
-      expense: "Multi-payer",
-      income: "Multi-recipient",
-    } as Voiced<string>,
+    /** The payer picker's first row, out to the payers screen. */
+    multiPayer: "Multiple people",
     discardTitle: (kind: string) => `Discard this ${kind}?`,
     discardTitleEdits: "Discard edits?",
     discardBody: "Changes will be lost.",

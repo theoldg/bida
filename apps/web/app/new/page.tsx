@@ -170,7 +170,7 @@ export default function NewGroupPage() {
                 onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="field">
-              <span className="fieldlabel" style={{ width: 62 }}>{copy.newGroup.currency}</span>
+              <span className="fieldlabel">{copy.newGroup.currency}</span>
               <button type="button" id="g-cur" className="pick" aria-label={copy.newGroup.currency}
                 onClick={() => setAsk("currency")}>
                 <span className="ptext">{currencyLabel(currency)}</span>

@@ -125,6 +125,8 @@ textarea { resize: vertical }
   --shadow-s:0 0 0 1px rgba(22,23,26,.09);
   --r-s:2px; --r-m:3px; --r-l:4px;
   /* What the keyboard covers (components/viewport.tsx). */
+  /* The field label column (`.fieldlabel`). */
+  --label-w: 64px;
   --kb: 0px;
   --kb-gap: 0px;
 
@@ -261,13 +263,13 @@ a, button, label, select, .seg button, .itemcell {
 }
 
 a.row, button.row, .fab, .btn, .iconbtn, .tlink, .seg button, a.card, button.card,
-.itemfold, a.chip, button.chip, .action, .starttile, .field:not(.field-row):has(> .pick) {
+.itemfold, a.chip, button.chip, .action, .starttile, .field:has(> .pick) {
   transition: background-image .2s ease;
 }
 a.row:active, button.row:active, .fab:active, .iconbtn:active,
 .tlink:active, .seg button:active, a.card:active, button.card:active, .itemfold:active,
 a.chip:active, button.chip:active, .btn:active:not(:disabled), .starttile:active,
-.field:not(.field-row):has(> .pick:active), .action:active:not(:disabled) {
+.field:has(> .pick:active), .action:active:not(:disabled) {
   /* A gradient composites over the background instead of replacing it. */
   background-image: linear-gradient(var(--press), var(--press));
   transition-duration: 0s;
@@ -1050,6 +1052,8 @@ dialog.scrim::backdrop { background: transparent }
 .drow-pick .rtitle, .drow-pick .rmeta { display: block }
 .drow-pick .rmeta { white-space: normal; overflow: visible; line-height: 1.35 }
 .drow-pick[aria-selected="true"] .rtitle { font-weight: 700 }
+/* A door out of the list (`ChoiceDialog`'s `lead`): set off from the choices under it. */
+.drow-pick.lead + .drow-pick { border-top-color: var(--rule) }
 
 /* ---- row menu ----
    A menu, not a decision, so nothing dims. The invisible veil catches the closing tap. */
@@ -1321,10 +1325,10 @@ button.amtnote:active { background: var(--hl-edge) }
 /* ---- inputs ---- */
 .field { display: flex; align-items: center; gap: 10px; background: var(--card-2);
   border: 1px solid var(--rule-soft); border-radius: var(--r-s); padding: 10px 12px }
-.field label { font-size: 13px; color: var(--muted); width: 62px; flex: none }
-/* Fits "Received by", so the row doesn't jump as the kind changes. */
-.field label.fieldlabel, .fieldlabel {
-  font-size: 13px; color: var(--muted); width: 92px; flex: none; white-space: nowrap }
+/* One label column, so every field's value starts on the same line. Fits
+   "Paid by" and "Currency"; a label is a word or two, never a sentence. */
+.field label, .fieldlabel {
+  font-size: 13px; color: var(--muted); width: var(--label-w); flex: none; white-space: nowrap }
 .field input, .field .pick { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font: inherit; font-size: 14px; font-weight: 600; color: var(--ink) }
 .field input::placeholder { color: var(--muted); font-weight: 500 }
@@ -1332,16 +1336,6 @@ button.amtnote:active { background: var(--hl-edge) }
 .field .pick { display: flex; align-items: center; gap: 8px; text-align: left }
 .field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .field .pick .pchev { color: var(--muted); flex: none }
-/* Two controls in one field, each carrying its padding so a press lights only it. */
-.field.field-row { padding: 0; gap: 0 }
-.field-row .pick, .field-row .pick-sub {
-  display: flex; align-items: center; padding: 10px 12px;
-  transition: background-image .2s ease }
-.field-row .pick:active, .field-row .pick-sub:active {
-  background-image: linear-gradient(var(--press), var(--press)); transition-duration: 0s }
-.field-row .pick { gap: 10px }
-.field-row .pick-sub { flex: none; gap: 4px; padding-left: 6px;
-  font-size: 12px; font-weight: 500; color: var(--muted) }
 
 /* ---- save refusal (lib/refusal.ts) ----
    The whole field blooms red: a red edge around grey writing gets missed. No

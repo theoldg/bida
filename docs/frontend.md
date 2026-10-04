@@ -110,6 +110,10 @@ API is reached with `fetch`.
   full-width `.btn-lg` ([design-system.md](design-system.md)), because the
   screen has exactly one act; a save failure is said above it. The kind chip sits
   at the top bar's right, a word and a chevron in a box, as the currency chip below it is.
+- **Every field's value starts on one column** (`--label-w`), so a label is a
+  word or two: an income's payer is "Paid to", since "Received by" won't fit.
+  Several payers are the payer picker's first row, "Multiple people ›"; with
+  no amount it flashes the amount instead of opening a screen that divides zero.
 - **Save is never disabled, and nothing is red for being empty before a tap.**
   A grey button gives no reason, and an untouched field is not a mistake.
   Tapping Save while `!checkEntry(...).ready` refuses instead of saving: what is

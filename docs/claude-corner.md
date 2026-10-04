@@ -25,6 +25,8 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-04* — "Show me a few options first", then "Ship A and 1". A mock with the guide line drawn and a star on the pick got a two-letter answer. Mid-mock they added the 2-payer card: every variant of a row covers its other states too.
+
 - *2026-10-04* — "move the X of X accounted for to the same location". The
   words were the payers screen's; the line meant was the split's "allocated"
   tick. Match an ask to the screenshot, not the copy, and say which you read.
@@ -77,8 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-03* — "ordered by last modification time, not most recently dated
   entry". One line, and the word chosen was exact: an edit is a modification,
   so read the op log, not the entries. Take the owner's noun literally.
-
-- *2026-10-02* — "Let's workshop the text title first", mid-build. Copy is
-  the owner's to pick: offer a short table and a pick, keep the plumbing
-  parked, and don't push a placeholder past the interruption. Their answer
-  beat every option in the table.
