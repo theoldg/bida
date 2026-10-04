@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-04* — "off, then on, then off, there's a separator line missing
+  on the top", over a screenshot with two arrows. A divider belongs to the
+  row above it; the wash below swallowed it. Read the sequence as the bug's
+  recipe, and fix both screens that share the pattern.
+
 - *2026-10-04* — "Have it scroll to fit in a single line — or advise me
   differently". A phone photo of an overflow; the box was already built to do
   that and a same-named rule elsewhere undid it. Find why the design failed
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   some between unselected)". The rule for it already existed; a shorthand
   further down the file had quietly undone it. Look for the rule before
   writing a new one.
-
-- *2026-09-30* — "as Luke, pretending to be a newcomer". Check every
-  balance by hand as you go; they all held. What a stranger trips on is what
-  isn't drawn: empty grid cells, a disabled Done that looks live, history that
-  forgets a split's mode.
