@@ -472,7 +472,8 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
             </div>
           </div>
 
-          <div className="pad" style={{ paddingTop: 4, display: "flex", flexDirection: "column", gap: 9 }}>
+          <div className="pad" style={{ paddingTop: 4, paddingBottom: splitProblem ? 9 : undefined,
+            display: "flex", flexDirection: "column", gap: 9 }}>
             {transfer ? (
               <TransferSides
                 members={data.members}
@@ -577,7 +578,9 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
             answers with the refusal flash on whatever is missing. A split that
             doesn't add up is said here, over Save, where scrolling can't hide
             it; it follows the tab now showing. */}
-        <div className="pad whodock" style={{ paddingTop: 18 }}>
+        {/* The split's line sits 9px from the form (its `.pad` above, trimmed
+            to match) and 9px from Save. */}
+        <div className="pad whodock" style={{ paddingTop: splitProblem ? 0 : 18 }}>
           {splitProblem ? (
             <div role="status" data-refuse="split" style={{ marginBottom: 9 }}
               className={`splitfoot bad alone${refusals.flash("split")}`}
