@@ -138,7 +138,10 @@ await tap("new entry form", () => page.goto(`${base}/g/entry/edit?id=${g}`), "in
 // Reached only from the form with a draft in hand, and the door stays shut
 // until there is an amount to divide.
 await page.locator("input.amount").fill("999");
-await tap("who paid", () => page.getByRole("button", { name: /multi-payer/i }).click(), ".rows .row");
+await tap("who paid", async () => {
+  await page.locator("#paidby").click();
+  await page.getByRole("option", { name: "Multiple people" }).click();
+}, ".rows .row");
 await tap("back to the form",
   () => page.locator(".iconbtn[aria-label='Back']").first().click(), "input.amount");
 try {
