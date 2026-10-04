@@ -15,6 +15,7 @@ import { route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 import { draftAmountMinor, saveDraft, useDraft } from "@/lib/draft";
 import { tapAmount, tapLabel } from "@/lib/tap-amount";
+import { useRefusal } from "@/lib/refusal";
 
 /**
  * Who put the money in. The mirror of the split editor's "as amounts" tab,
@@ -38,6 +39,12 @@ function PayersScreen() {
   const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
   const [asking, setAsking] = useState(false);
+  // Done is never disabled: a press that can't go through flashes the verdict
+  // line, as Save flashes the form's. A fix mid-flash takes the red class off
+  // before `animationend` can fire, so the flash is ended by hand.
+  const refusal = useRefusal();
+  const addsUp = useRef(true);
+  useEffect(() => { if (refusal.live && addsUp.current) refusal.onFlashEnd(); });
   // What the payer side looked like when this screen opened, so leaving can
   // put it back. Only the payer side: the rest of the draft isn't this
   // screen's to throw away.
@@ -73,6 +80,7 @@ function PayersScreen() {
   // as that person holding the whole amount rather than as an empty table.
   const spec: Record<string, number> = draft.payers ?? { [draft.paidBy]: amountMinor };
   const check = validatePayers(amountMinor, spec);
+  addsUp.current = check.ok;
 
   /**
    * The figure *is* the statement: a positive amount puts someone in, clearing
@@ -111,7 +119,7 @@ function PayersScreen() {
    * A tap on the name: clear it, fill it with the rest, or type (`tapAmount`).
    * Clearing the last payer leaves **nobody**, not the collapse typing gets:
    * collapsing would hand `paidBy` the whole amount straight back, and the tap
-   * would look like it did nothing. Done stays shut until someone is tapped in.
+   * would look like it did nothing. Done refuses until someone is tapped in.
    */
   function tapRow(memberId: string, fieldId: string) {
     const tap = tapAmount(spec, memberId, amountMinor);
@@ -175,7 +183,8 @@ function PayersScreen() {
         <div className="pad whodock">
           {/* Tick when it adds up, words alone when it doesn't — same as the
               split footer, and for the same reason. */}
-          <div className={`splitfoot alone ${check.ok ? "ok" : "bad"}`}>
+          <div className={`splitfoot alone ${check.ok ? "ok" : `bad${refusal.flash}`}`}
+            onAnimationEnd={refusal.onFlashEnd}>
             {check.ok ? <Icon name="check" size={14} style={{ flex: "none" }} /> : null}
             <span>
               {check.ok
@@ -184,9 +193,12 @@ function PayersScreen() {
                 : payerProblemText(check, currency, voice)}
             </span>
           </div>
-          <button type="button" className="btn btn-p btn-lg" disabled={!check.ok}
+          <button type="button" className="btn btn-p btn-lg" disabled={refusal.live}
             style={{ marginTop: 10 }}
-            onClick={() => goBack(() => router.back(), (to) => router.replace(to))}>
+            onClick={() => {
+              if (!check.ok) { refusal.refuse(); return; }
+              goBack(() => router.back(), (to) => router.replace(to));
+            }}>
             {copy.act.done}
           </button>
         </div>

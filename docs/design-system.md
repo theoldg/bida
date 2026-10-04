@@ -70,7 +70,8 @@ you?", `/g/payers`, the entry form, `/new`, `/quick`, People — it is docked
 its rows, so the button sits right under them while they fit and at the foot
 of the screen once they don't. Outside the scroller, iOS's rubber-band never
 carries it; it pays `--kb` itself, so it rides above the keyboard while one is
-up. On `/g/payers` the verdict line rides in it with the button. The
+up. On `/g/payers` the verdict line rides in it with the button, and a Done
+that doesn't add up flashes that line. The
 who-had-what grid, which owns its scroll sideways as well as down, ends on the
 fixed foot instead. The entry form, the
 new-group form, the who-had-what grid and those two all end this way. `/g/scan` is the

@@ -780,6 +780,16 @@ await page.getByRole("button", { name: "Multi-payer" }).click();
 await page.waitForURL(/\/g\/payers/);
 await page.waitForSelector(".rows .row input");
 const payerFields = page.locator(".rows .row input");
+// Done is never disabled here either: short of the amount, it flashes the
+// verdict over it and stays put.
+await payerFields.nth(0).fill("25");
+for (let i = 1; i < await payerFields.count(); i++) await payerFields.nth(i).fill("");
+await page.getByRole("button", { name: "Done" }).click();
+await settle(page, 120);
+report(/flash-/.test(await page.locator(".whodock .splitfoot.bad").getAttribute("class"))
+  && /\/g\/payers/.test(page.url()),
+  "a Done on payers that don't add up flashes the verdict and stays");
+await settle(page, 900);
 for (let i = 0; i < await payerFields.count(); i++) await payerFields.nth(i).fill(["25", "15"][i] ?? "");
 await page.getByRole("button", { name: "Done" }).click();
 await page.waitForURL(/entry\/edit/);
