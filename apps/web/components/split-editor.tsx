@@ -171,8 +171,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
                 </button>
               </span>
             ) : spec.mode === "exact" ? (
-              <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                <TapMark tap={tap} />
+              <span style={{ display: "flex", alignItems: "center" }}>
                 {/* Never disabled: typing is how somebody joins. Enter walks down (`walkFields`). */}
                 <MinorAmountInput id={fieldId} className="bignum splitin"
                   enterKeyHint={i === members.length - 1 ? "done" : "next"}
@@ -213,6 +212,9 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
                   <button type="button" onClick={() => tapRow(m.id, fieldId)} style={lead}
                     aria-label={tapLabel(tap, m.name, copy.split)}>
                     {name}
+                    {/* Inside the button: the mark is what the tap does, so it
+                        answers one, and the row is a target up to the field. */}
+                    <TapMark tap={tap} />
                   </button>
                 ) : (
                   <button type="button" onClick={() => toggle(m.id)}

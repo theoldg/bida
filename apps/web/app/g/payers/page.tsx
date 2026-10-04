@@ -144,16 +144,18 @@ function PayersScreen() {
                       clear: copy.payers.clear, giveRest: copy.payers.giveRest,
                       edit: copy.payers.edit,
                     })}
-                    style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 0,
-                      opacity: on ? 1 : .45 }}>
+                    style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 0 }}>
                     {/* No line under the name: the field beside it already is
                         the figure, and an empty one already says "didn't pay" —
                         same as the split editor's "as amounts". */}
-                    <SoloName name={m.name} />
+                    {/* The dimming rides on the name, so the mark stays legible. */}
+                    <SoloName name={m.name} style={{ opacity: on ? 1 : .45 }} />
+                    {/* Inside the button: the mark is what the tap does, so it
+                        answers one, and the row is a target up to the field. */}
+                    <TapMark tap={tap} />
                   </button>
 
-                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <TapMark tap={tap} />
+                  <span style={{ display: "flex", alignItems: "center" }}>
                     <MinorAmountInput id={fieldId} className="bignum splitin"
                       enterKeyHint={last ? "done" : "next"}
                       aria-label={copy.payers.contribution[voice](m.name)}

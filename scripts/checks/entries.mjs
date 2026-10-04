@@ -755,6 +755,22 @@ await page.getByRole("button", { name: "Evenly" }).click();
 await settle(page, 120);
 report(await splitLine.count() === 0, "and a tab that adds up takes it away");
 await page.getByRole("button", { name: "As amounts" }).click();
+// The plus and cross beside a field sit inside the name's button, so a tap on
+// the mark itself (the button's right end) is the row's tap: a cross clears
+// that figure, and the plus it leaves hands the row what is left.
+const firstName = page.locator(".splitrow > button").first();
+const tapMark = async () => {
+  const box = await firstName.boundingBox();
+  await page.mouse.click(box.x + box.width - 8, box.y + box.height / 2);
+};
+await tapMark();
+await settle(page, 80);
+const cleared = await firstShare.inputValue();
+await tapMark();
+await settle(page, 80);
+const refilled = await firstShare.inputValue();
+report(cleared === "" && refilled !== "" && refilled !== "999.00",
+  "the cross beside a figure clears it, and the plus then gives it the rest", `${cleared} → ${refilled}`);
 await firstShare.fill(seeded);
 await page.getByRole("button", { name: "Evenly" }).click();
 
