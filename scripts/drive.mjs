@@ -73,6 +73,7 @@ const READ = `(() => {
   for (const el of document.querySelectorAll("[data-drive]")) {
     el.removeAttribute("data-drive");
     el.removeAttribute("data-drive-at");
+    el.removeAttribute("data-drive-name");
   }
 
   // A native modal makes the rest of the document inert, which is exactly the
@@ -325,6 +326,11 @@ const READ = `(() => {
     if (at) el.setAttribute("data-drive-at", \`\${at.x},\${at.y}\`);
     const isField = ["INPUT", "SELECT", "TEXTAREA"].includes(el.tagName);
     const name = isField ? null : labelOf(el);
+    // The name as printed, so a command can say "Add someone" instead of a
+    // number that moves every time a row is added above it.
+    el.setAttribute("data-drive-name", isField
+      ? el.getAttribute("aria-label") || el.placeholder || el.name || ""
+      : name.text);
     const what = isField
       ? field(el)
       : \`\${el.tagName === "A" ? "link" : el.tagName.toLowerCase()} \${name.text ? \`"\${name.text}"\` : "(NO ACCESSIBLE NAME)"}\`;
@@ -502,12 +508,32 @@ async function start() {
   const stop = async () => { await browser.close(); close(); rmSync(READY, { force: true }); process.exit(0); };
 
   const run = async (line) => {
-    const [head, ...rest] = line.trim().split(/\s+/);
+    // A quoted run is one word: `fill "Add someone" Bruno`.
+    const [head, ...rest] = line.trim().match(/"[^"]*"|\S+/g) ?? [];
     let verb = head, args = rest;
     if (verb === "as") { current = args[0]; [verb, ...args] = args.slice(1); }
     const who = current;
     const { page, ctx, noise } = await phone(who);
     const arg = args.join(" ");
+
+    /**
+     * The number of the one control the last read printed under this name,
+     * ignoring case. A row printed "Ana | €30.00" also answers to "Ana". Two
+     * matches is refused rather than guessed at: the number says which.
+     */
+    const named = async (label) => {
+      const hits = await page.evaluate((want) => {
+        const norm = (s) => (s ?? "").trim().toLowerCase();
+        const all = [...document.querySelectorAll("[data-drive]")];
+        const exact = all.filter((el) => norm(el.dataset.driveName) === norm(want));
+        const lead = exact.length ? exact
+          : all.filter((el) => norm(el.dataset.driveName?.split(" | ")[0]) === norm(want));
+        return lead.map((el) => el.dataset.drive);
+      }, label);
+      if (hits.length === 0) throw new Error(`nothing on this screen is called "${label}" — read it again`);
+      if (hits.length > 1) throw new Error(`"${label}" names ${hits.length} controls (${hits.join(", ")}) — use the number`);
+      return hits[0];
+    };
 
     /**
      * The control a number names, or why it names none. The two failures want
@@ -516,7 +542,8 @@ async function start() {
      * Playwright is told `strict` too — the page can re-render between counting
      * and pressing, and a wrong press is worse than a failed one.
      */
-    const target = async (n) => {
+    const target = async (ref) => {
+      const n = ref?.startsWith('"') ? await named(ref.slice(1, -1)) : ref;
       const sel = `[data-drive="${Number(n)}"]`;
       const found = await page.locator(sel).count();
       if (found === 0) throw new Error(`nothing is numbered ${n} on this screen — read it again`);

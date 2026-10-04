@@ -17,15 +17,20 @@ anything short of the full photo set or a checked-in test
 
 ```bash
 pnpm drive start &                                   # holds the session open
-pnpm drive do "as ana goto /" "click 3" "fill 2 Lisbon"
+pnpm drive do "as ana goto /demo" "click \"Add an entry\""
 pnpm drive stop
 ```
+
+**Start from `/demo`, not from a group built by hand**: it is a real group
+with four people and every kind of entry, one command away. Building one
+through `/new` costs a command per person ([below](#looking-at-one-screen)).
 
 | | |
 |---|---|
 | `as <who>` | switch phone, creating it on first mention |
 | `goto <path>` · `back` · `forward` · `reload` | move around |
 | `click <n>` · `fill <n> <text>` · `select <n> <label>` · `press <Key> [times]` | act on the numbered control the last screen handed you |
+| `"<name>"` for `<n>` | the control printed under that name, ignoring case — `fill "Add someone" Bruno`; a row printed `Ana \| €30.00` answers to `"Ana"`. A name matching two controls is refused, not guessed |
 | `type <n> <text>` | key it in one character at a time — `fill` sets a value in one go, which never runs the amount field's regrouping or its caret |
 | `\n` in a `fill` or `type` | the newline a one-line command cannot hold, written the way the dump writes one back — the box that most wants one is the typed bill's, whose lines are the items |
 | `hold <n>` | long-press — the only way to the row menus |
@@ -148,7 +153,8 @@ nothing in ARIA is read as `nothing marked as chosen` rather than guessed at.
 ## Gotchas
 
 - **Numbers are only good until the next screen**, like a person looking away.
-  Every answer renumbers; never reuse a number across two commands blind. A
+  Every answer renumbers; never reuse a number across two commands blind —
+  a quoted name survives the renumbering, so chain with names. A
   failed command stops the rest of its `do` for the same reason — the commands
   behind it were written against a screen that never arrived, and the answer
   says `not run` rather than pressing whatever is wearing the number now.
