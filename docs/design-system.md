@@ -65,16 +65,15 @@ a fill — losing that warning to consistency would be a worse trade. With hue
 spent, **size is the emphasis left**: a screen whose one act ends it gives that
 act the full width of the screen at `.btn-lg` — taller and heavier, still square
 and still flat. Where a list of people can outgrow the screen — "Which one are
-you?", `/g/payers`, the entry form, `/new`, `/quick`, People — it is docked
+you?", `/g/payers`, the entry form, `/new`, `/quick`, People, the who-had-what
+grid — it is docked
 (`.whodock`): beside the scroller rather than in it, which is only as tall as
 its rows, so the button sits right under them while they fit and at the foot
 of the screen once they don't. Outside the scroller, iOS's rubber-band never
 carries it; it pays `--kb` itself, so it rides above the keyboard while one is
 up. On `/g/payers` the verdict line rides in it with the button, and a Done
-that doesn't add up flashes that line. The
-who-had-what grid, which owns its scroll sideways as well as down, ends on the
-fixed foot instead. The entry form, the
-new-group form, the who-had-what grid and those two all end this way. `/g/scan` is the
+that doesn't add up flashes that line; the entry form and the grid say what is
+wrong the same way, a red band over the button. `/g/scan` is the
 one exception: it holds a picture and the button that picture explains, and at
 the foot the button is a long way from the only thing explaining it, so the two
 sit centred as one block instead.

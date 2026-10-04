@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-04* — "In who-had-what, use the sticky dock and new error text
+  style". One sentence naming two patterns by their look: the owner saw them
+  land elsewhere and wants every screen alike. Port both whole, and retire
+  the old foot's CSS rather than leave it beside them.
+
 - *2026-10-04* — "Show me a few options first", then "Ship A and 1". A mock with the guide line drawn and a star on the pick got a two-letter answer. Mid-mock they added the 2-payer card: every variant of a row covers its other states too.
 
 - *2026-10-04* — "move the X of X accounted for to the same location". The
@@ -75,7 +80,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "Cut everything". A flaky suite was a question about worth, not speed: name
   which checks earn their place, and expect the owner to cut further than you
   dared to suggest.
-
-- *2026-10-03* — "ordered by last modification time, not most recently dated
-  entry". One line, and the word chosen was exact: an edit is a modification,
-  so read the op log, not the entries. Take the owner's noun literally.

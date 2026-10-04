@@ -433,6 +433,7 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 /* On `/g/claim` the "Have the app?" card is under it and owns the edge. */
 .appbody > .whodock:has(+ .inappdock) { padding-bottom: calc(var(--kb) + 14px) }
 .scroll:has(+ .whodock) { flex: 0 1 auto; padding-bottom: 0; scroll-padding-bottom: 0 }
+.itemscroll:has(+ .whodock) { flex: 0 1 auto }
 /* Hidden while a name is typed: the keyboard leaves room for the field or the card. */
 .inappdock { flex: none; padding: 10px 16px max(12px, env(safe-area-inset-bottom)) }
 :root[data-kb] .inappdock { display: none }
@@ -645,14 +646,6 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .itemwide { position: sticky; left: 0; width: 100%; box-sizing: border-box }
 .itemhead { padding: 10px 16px 12px }
 .whostrip { display: flex; flex-wrap: wrap; gap: 6px }
-/* Pays `--kb`: the tip is typed just above it. */
-.itemfoot { flex: none; border-top: 1px solid var(--rule); background: var(--card-2);
-  padding: 9px 16px;
-  padding-bottom: calc(var(--kb) + max(9px, env(safe-area-inset-bottom))) }
-.itemsave { margin-top: 9px }
-.footnote { font-size: 11.5px; color: var(--muted); margin-bottom: 7px }
-.footnote.bad { color: var(--debit); font-weight: 600 }
-.footnote b { font-family: var(--f-mono); font-weight: 500; color: var(--ink-2) }
 .itemtotals { padding: 10px 16px 14px }
 .totalstrip { display: flex; flex-direction: column }
 .tot { display: flex; align-items: center; gap: 8px; padding: 5px 0;

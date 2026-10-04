@@ -20,7 +20,8 @@ row can go anonymous on a bill that outruns the screen in both directions. The
 chips are set once before anything is assigned and the totals are read at the
 end, so freezing either costs the grid height it needs more (at eight people
 on a 360×640 phone, over half the screen). Only Done stays put, being the way
-out. Column widths are declared in a `<colgroup>` under `table-layout: fixed`,
+out: docked (`.whodock`), under the totals while the bill fits and at the foot
+once it scrolls. Column widths are declared in a `<colgroup>` under `table-layout: fixed`,
 never measured from the cells, or every dot moves each time a run is opened.
 The last chip still lit is disabled: somebody is always there.
 Everyone starts at the table and **nothing starts assigned**: ticking what you
@@ -36,8 +37,9 @@ whole, portions and all — including one somebody is split across, which a
 line has none. Done is never held grey: pressed on a bill
 with a line nobody has been given, it refuses — every unassigned line's name and
 amount bloom, the grid scrolling to the nearest of them first unless one is
-already wholly in view, the button is spent for that travel and the flash, and only then
-does the sentence under the grid appear, until the last line has somebody
+already wholly in view, the button is spent for that travel and the flash — and
+the sentence saying why appears in the dock over Done, a red band like the entry
+form's, flashing with the lines, until the last line has somebody
 ([design-system.md](design-system.md)). It waits for that press because on
 arrival nothing is assigned yet, and a red line printed then scolds a grid for
 being untouched.

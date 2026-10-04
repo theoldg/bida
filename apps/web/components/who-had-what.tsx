@@ -427,8 +427,13 @@ export function WhoHadWhat({
     </button>
   ) : null;
 
+  // Said over Done, as the entry form and /g/payers say theirs, and flashed
+  // with the lines it is about.
   const note = told && !everyItemAssigned ? (
-    <div className="footnote bad">{copy.items.needsSomeone}</div>
+    <div role="status" style={{ marginBottom: 9 }}
+      className={`splitfoot bad alone${refusal.flash}`} onAnimationEnd={refusal.onFlashEnd}>
+      <span>{copy.items.needsSomeone}</span>
+    </div>
   ) : null;
 
   return (
@@ -680,11 +685,12 @@ export function WhoHadWhat({
           ) : null}
         </div>
 
-        <div className="itemfoot">
+        {/* The way out, docked (`.whodock`): under the totals while the bill
+            fits, at the foot of the screen once it scrolls, and above the
+            keyboard while the tip is typed. */}
+        <div className="pad whodock" style={{ paddingTop: note ? 9 : 18 }}>
           {note}
-          {/* The one thing that doesn't scroll: the way out. Its band pays `--kb`
-              for the tip being typed above it. */}
-          <button type="button" className="btn btn-p btn-lg itemsave"
+          <button type="button" className="btn btn-p btn-lg"
             onClick={finish} disabled={refusal.live || seeking}>
             {copy.act.done}
           </button>
