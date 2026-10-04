@@ -158,9 +158,12 @@ API is reached with `fetch`.
   and **every other field is the end of its chain and puts the keyboard away**
   (`confirmAct`, `lib/viewport.ts`). That is what makes each column of figures
   a chain of its own rather than a stretch of one long one: the entry form runs
-  amount → note → fold, and the split editor's "as amounts" runs first person →
-  … → last person → fold, started by a tap on a field. **A tap on a name in
-  either column is not a focus**: it clears a figure, hands an empty row what is
+  amount → note → fold, and the split editor's "as amounts" and "as parts" each run first person →
+  … → last person → fold, started by a tap on a field. A count of parts is
+  typed with the money field's caret and Backspace (`PartsInput`), between − and
+  + that stay quiet so the figure reads first; having parts puts you in, none
+  takes you out, and a tap on the name toggles. **A tap on a name in a column
+  of amounts is not a focus**: it clears a figure, hands an empty row what is
   left, and types only when the column is already full or over (`tapAmount`).
   A grey plus or cross beside the field says which (`TapMark`); typing gets none. `walkFields`
   (`components/viewport.tsx`) is the whole of it, hung on `.scroll` because the
@@ -172,10 +175,10 @@ API is reached with `fetch`.
   candidate being picked, never a field being finished. **A field inside a
   `<form>` is left alone**, because its Enter is already spoken for and is a
   better answer than either of these: the add row files the name and hands the
-  caret back, a dialog submits its card. Four fields ask for `"next"`: the entry
-  form's amount, `/new`'s group name, and each row but the last of the two
-  columns — the split editor's "as amounts" and `/g/payers`. `pnpm verify keyboard`
-  walks both columns ([browser-checks.md](browser-checks.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)).
+  caret back, a dialog submits its card. Five fields ask for `"next"`: the entry
+  form's amount, `/new`'s group name, and each row but the last of the three
+  columns — the split editor's "as amounts" and "as parts", and `/g/payers`. `pnpm verify keyboard`
+  walks all three ([browser-checks.md](browser-checks.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)).
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**
   — `ConfirmDialog`, `PromptDialog`, `NoticeDialog` (read, then Close) and
   `ChoiceDialog`, which is every picker in

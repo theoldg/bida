@@ -232,6 +232,22 @@ await page.keyboard.press("Enter");
 report(await caret() === "nothing", "the last row folds the keyboard",
   `caret on ${await caret()}, was ${walked[walked.length - 1]}`);
 
+// As parts is a column of the same kind, its counts typed as the amounts are.
+await page.getByRole("button", { name: "As parts" }).click();
+await settle(page, 120);
+await page.locator("input.partsin").first().focus();
+const parted = [await caret()];
+for (let i = 1; i < CROWD.length; i++) {
+  await page.keyboard.press("Enter");
+  parted.push(await caret());
+}
+await page.keyboard.press("Enter");
+report(new Set(parted).size === CROWD.length
+  && parted.every((id) => id.startsWith("sp-"))
+  && await caret() === "nothing",
+  "as parts — one press per person, and the last of them folds the keyboard",
+  `${new Set(parted).size} distinct rows, ended on ${await caret()}`);
+
 // The other column, on a screen of its own and with its own idea of which row
 // is the last one: who actually paid.
 await page.locator("input.amount").fill("60");

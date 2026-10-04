@@ -102,8 +102,8 @@ does, and a check that passes with the fix deleted is worse than none — with
 the dock's `--kb` padding gone, all five assertions fail.
 
 The confirm key is the other half, and it needs no faking — a headless browser
-presses Enter like any other. It walks the two screens the fix is really for,
-the split editor's "as amounts" and `/g/payers`, one press per person down a
+presses Enter like any other. It walks the columns the fix is really for,
+the split editor's "as amounts" and "as parts" and `/g/payers`, one press per person down a
 column of ten, and asserts what a thumb would notice: every row reached, each
 one once, and the last of them folding the keyboard rather than wrapping round
 to the top. The two assertions that keep the chains apart are the other ones

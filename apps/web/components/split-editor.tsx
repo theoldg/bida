@@ -5,7 +5,7 @@ import {
   resolveSplit, splitParticipants, validateSplit,
   type ArithmeticSplit, type Member, type SplitSpec,
 } from "@bida/core";
-import { MinorAmountInput } from "./amount-input";
+import { MAX_PARTS, MinorAmountInput, PartsInput } from "./amount-input";
 import { Failure } from "./chrome";
 import { ScanPair, type ReceiptScan } from "./receipt-scan";
 import { Icon, TapMark } from "./icons";
@@ -99,10 +99,11 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     }
   }
 
-  function setWeight(memberId: string, delta: number) {
+  /** As with amounts: having parts puts you in, none takes you out. */
+  function setParts(memberId: string, parts: number) {
     if (spec.mode !== "shares") return;
     const weights = { ...spec.weights };
-    const next = Math.max(0, (weights[memberId] ?? 0) + delta);
+    const next = Math.min(MAX_PARTS, Math.max(0, parts));
     if (next === 0) delete weights[memberId]; else weights[memberId] = next;
     onChange({ mode: "shares", weights });
   }
@@ -162,16 +163,23 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
             const typing = spec.mode === "exact";
             const fieldId = `sp-${m.id}`;
             const tap = typing ? tapAmount(spec.amounts, m.id, amountMinor) : "edit";
+            const parts = spec.mode === "shares" ? spec.weights[m.id] ?? 0 : 0;
             const end = spec.mode === "shares" ? (
-              <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <button type="button" onClick={() => setWeight(m.id, -1)} aria-label={copy.split.fewerParts(m.name)}
-                  style={{ fontSize: 18, color: on ? "var(--ink)" : "var(--muted)" }}>−</button>
-                <span className="bignum" style={{ fontSize: 15, width: 14, textAlign: "center",
-                  color: on ? "var(--ink)" : "var(--muted)" }}>
-                  {spec.weights[m.id] ?? 0}
-                </span>
-                <button type="button" onClick={() => setWeight(m.id, 1)} aria-label={copy.split.moreParts(m.name)}
-                  style={{ fontSize: 18 }}>+</button>
+              <span className="partsend">
+                <button type="button" className="partsstep" onClick={() => setParts(m.id, parts - 1)}
+                  disabled={parts === 0} aria-label={copy.split.fewerParts(m.name)}>
+                  <Icon name="minus" size={9} />
+                </button>
+                {/* Typed like the amounts beside it: same caret, same walk down on Enter. */}
+                <PartsInput id={fieldId} className="bignum partsin"
+                  enterKeyHint={i === members.length - 1 ? "done" : "next"}
+                  aria-label={copy.split.partsFor(m.name)}
+                  value={parts} placeholder="0"
+                  onChangeValue={(n) => setParts(m.id, n)} />
+                <button type="button" className="partsstep" onClick={() => setParts(m.id, parts + 1)}
+                  disabled={parts >= MAX_PARTS} aria-label={copy.split.moreParts(m.name)}>
+                  <Icon name="plus" size={9} />
+                </button>
               </span>
             ) : spec.mode === "exact" ? (
               <span style={{ display: "flex", alignItems: "center", gap: 7 }}>

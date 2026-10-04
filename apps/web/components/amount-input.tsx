@@ -88,6 +88,8 @@ interface GroupedInputProps extends BaseProps {
   autoSize?: boolean;
   /** Class for the wrapper, not the input. */
   fieldClassName?: string;
+  /** "numeric" for a count, whose keypad has no separator to offer. */
+  inputMode?: "decimal" | "numeric";
 }
 
 /**
@@ -97,7 +99,7 @@ interface GroupedInputProps extends BaseProps {
  */
 export function GroupedInput({
   value, onChange, sanitize, frame = "underline", autoSize = false,
-  fieldClassName, className, ...rest
+  fieldClassName, className, inputMode = "decimal", ...rest
 }: GroupedInputProps) {
   const ref = useRef<HTMLInputElement>(null);
   const caret = useRef<number | null>(null);
@@ -143,7 +145,7 @@ export function GroupedInput({
       {...rest}
       ref={ref}
       className={className}
-      inputMode="decimal"
+      inputMode={inputMode}
       value={shown}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
@@ -244,6 +246,55 @@ export function MinorAmountInput({
         const minor = minorOf(next, currency);
         emitted.current = minor;
         onChangeMinor(minor);
+      }}
+    />
+  );
+}
+
+/** The most parts one person can hold: three digits is a dinner, not a ledger. */
+export const MAX_PARTS = 999;
+
+/** Whatever a keyboard can produce -> a whole count: digits only, no leading zeros. */
+export function sanitizeParts(raw: string): string {
+  return raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, String(MAX_PARTS).length);
+}
+
+interface PartsInputProps extends Omit<GroupedInputProps, "value" | "onChange" | "sanitize" | "inputMode"> {
+  value: number;
+  onChangeValue: (parts: number) => void;
+}
+
+/**
+ * The money field's caret and Backspace, for a count of parts. As in
+ * `MinorAmountInput`, the text is local and re-reads the model only when
+ * something *else* moves it (a − or +, a tap on the name). A typed "0" settles
+ * to empty on leaving, so the row shows the placeholder its neighbours do.
+ */
+export function PartsInput({ value, onChangeValue, onBlur, ...rest }: PartsInputProps) {
+  const [text, setText] = useState(() => (value ? String(value) : ""));
+  const emitted = useRef(value);
+
+  useEffect(() => {
+    if (value === emitted.current) return;
+    emitted.current = value;
+    setText(value ? String(value) : "");
+  }, [value]);
+
+  return (
+    <GroupedInput
+      {...rest}
+      inputMode="numeric"
+      value={text}
+      sanitize={sanitizeParts}
+      onChange={(next) => {
+        setText(next);
+        const parts = Number(next || 0);
+        emitted.current = parts;
+        onChangeValue(parts);
+      }}
+      onBlur={(e) => {
+        if (text === "0") setText("");
+        onBlur?.(e);
       }}
     />
   );

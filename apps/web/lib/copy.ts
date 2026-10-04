@@ -1022,6 +1022,7 @@ export const copy = {
     leaveOut: (name: string) => `Leave ${name} out`,
     fewerParts: (name: string) => `Fewer parts for ${name}`,
     moreParts: (name: string) => `More parts for ${name}`,
+    partsFor: (name: string) => `${name}’s parts`,
     amountFor: (name: string) => `${name}’s amount`,
     /** A row's tap, named by what it would do (`tapLabel`). */
     clear: (name: string) => `Clear ${name}’s amount`,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clipAmountToCurrency, sanitizeAmount, settleAmount } from "./amount-input";
+import { clipAmountToCurrency, MAX_PARTS, sanitizeAmount, sanitizeParts, settleAmount } from "./amount-input";
 
 /**
  * What may be typed is pure string arithmetic, so it gets real tests rather
@@ -92,5 +92,26 @@ describe("settleAmount", () => {
     // figure or to nothing, never to something a parse would drop.
     expect(settleAmount(".", "EUR")).toBe("0.00");
     expect(settleAmount("0", "EUR")).toBe("0.00");
+  });
+});
+
+describe("sanitizeParts", () => {
+  it("keeps whole digits only: a part has no fraction and no grouping", () => {
+    expect(sanitizeParts("3")).toBe("3");
+    expect(sanitizeParts("1.5")).toBe("15");
+    expect(sanitizeParts("2,")).toBe("2");
+    expect(sanitizeParts("1 000")).toBe("100");
+    expect(sanitizeParts("-2")).toBe("2");
+  });
+
+  it("strips leading zeros but keeps a lone one, which takes the row out", () => {
+    expect(sanitizeParts("007")).toBe("7");
+    expect(sanitizeParts("0")).toBe("0");
+    expect(sanitizeParts("")).toBe("");
+  });
+
+  it("stops at three digits", () => {
+    expect(sanitizeParts("12345")).toBe("123");
+    expect(Number(sanitizeParts("99999"))).toBe(MAX_PARTS);
   });
 });

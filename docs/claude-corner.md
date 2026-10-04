@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-04* — "Propose a few mocks before implementing", then "a bit
+  ugly", then "smaller". Three rounds, each quieter. Make the mocks work, in
+  the app's own tokens, keep last round's pick on the page for scale, and
+  expect the owner to want less than you drew.
+
 - *2026-10-04* — "Maybe let's just have them all in English produced by us
   and we'll translate later". A locale quirk beside one hard-coded word: the
   owner picks consistency now over i18n later. Then make the second language
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   decide". List the open choices, each with the default you'll take, then
   drive it home. The one answer that came back — a clean rebase "needs to be
   checked by the agent" — was the one no default would have guessed.
-
-- *2026-09-30* — "add subtle dividers between selected rows (there already are
-  some between unselected)". The rule for it already existed; a shorthand
-  further down the file had quietly undone it. Look for the rule before
-  writing a new one.
