@@ -537,6 +537,8 @@ share, but too small to be a target.
 - **One class, one component.** `.linkbox` once named the import field too,
   and that later rule's `display: block` undid the copy box's flex row: the link
   ran off the screen and Copy fell below it. Grep a class before reusing it.
+- **Native controls follow `color-scheme`, not the tokens.** Without it on
+  the theme blocks the date field's calendar glyph stayed black on dark cards.
 - iOS Safari in a tab ignores `user-scalable=no` and lets `touch-action` stop
   only double-tap; `preventDefault` on `gesturestart` is what holds the scale.
 - No shadcn/ui dependency exists, and no component library's variable names sit

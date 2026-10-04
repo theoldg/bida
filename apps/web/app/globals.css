@@ -98,6 +98,9 @@ textarea { resize: vertical }
    only on balances.
    ============================================================ */
 :root {
+  /* Native controls (the date field's calendar glyph, its picker, scrollbars)
+     draw in this scheme, not ours: without it they stay light-mode black. */
+  color-scheme: light;
   --paper:#F1F1EF; --paper-2:#E8E8E5;
   --card:#FBFBFA; --card-2:#F3F3F1; --card-3:#E8E8E5;
   --ink:#16171A; --ink-2:#4B4E54; --muted:#8C9096;
@@ -132,6 +135,7 @@ textarea { resize: vertical }
 
 @media (prefers-color-scheme:dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --paper:#0E0F11; --paper-2:#0A0B0C;
     --card:#141517; --card-2:#1A1C1F; --card-3:#222427;
     --ink:#E6E7E9; --ink-2:#B4B7BC; --muted:#83878D;
@@ -148,6 +152,7 @@ textarea { resize: vertical }
 }
 
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --paper:#0E0F11; --paper-2:#0A0B0C;
   --card:#141517; --card-2:#1A1C1F; --card-3:#222427;
   --ink:#E6E7E9; --ink-2:#B4B7BC; --muted:#83878D;
