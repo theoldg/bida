@@ -277,8 +277,8 @@ sets wide, so titles truncate a word earlier: accepted.
 ## A money field has an underline
 
 Every field you type an amount into is the same component wearing
-`.amountfield`: an inline-flex wrapper with a bottom rule that is `--rule` at
-rest, `--brand` on `:focus-within`, and `--debit` (rule *and* text) when the
+`.amountfield`: an inline-flex wrapper with a bottom rule that is ink at 40% at
+rest (translucent, so it reads on a row's wash as on the card), `--brand` on `:focus-within`, and `--debit` (rule *and* text) when the
 figure doesn't add up. The big one on the entry form adds a thicker rule, a
 small radius and a `--card-2` well while focused. Disabled fields drop the rule
 to transparent rather than showing a dead one. Digits group with **U+202F**

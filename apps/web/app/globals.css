@@ -1268,9 +1268,10 @@ dialog.scrim::backdrop { background: transparent }
 .splitfoot.alone { border-top: 0; border-radius: var(--r-m) }
 
 /* ---- money fields ----
-   The underline is the only thing saying "you can type here". */
+   The underline is the only thing saying "you can type here". Translucent ink,
+   not `--rule`: a split row's wash swallowed the rule in both themes. */
 .amountfield { display: inline-flex; align-items: baseline; position: relative;
-  border-bottom: 1.5px solid var(--rule); transition: border-color .12s ease, background .12s ease }
+  border-bottom: 1.5px solid color-mix(in srgb, var(--ink) 40%, transparent); transition: border-color .12s ease, background .12s ease }
 .amountfield:focus-within { border-bottom-color: var(--brand) }
 .amountfield.plain { border-bottom: 0 }
 .amountfield.bad, .amountfield.bad input { border-bottom-color: var(--debit); color: var(--debit) }
