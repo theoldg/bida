@@ -126,7 +126,7 @@ export default function ImportPage() {
                   The link is full authority over that tricount, so it goes through our
                   Worker in a POST body, never a URL (apps/api/src/tricount.ts). */}
               <p className="hint" style={{ marginTop: 14 }}>{words.orTricount}</p>
-              <input className="linkbox selectable" type="url" value={link}
+              <input className="pastebox selectable" type="url" value={link}
                 aria-label={words.orTricount} placeholder={words.tricountPlaceholder}
                 inputMode="url" enterKeyHint="go"
                 autoCapitalize="none" autoCorrect="off" spellCheck={false}

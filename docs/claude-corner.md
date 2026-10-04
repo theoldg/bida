@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-04* — "Have it scroll to fit in a single line — or advise me
+  differently". A phone photo of an overflow; the box was already built to do
+  that and a same-named rule elsewhere undid it. Find why the design failed
+  before designing anew, and give the asked-for shape if it's sound.
+
 - *2026-10-03* — "Research this online pls", after two keyboard guesses
   failed on the phone. The owner's /diag paste settled it in one read. Ship
   the line that measures before the fix that guesses, and prefer the platform
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   balance by hand as you go; they all held. What a stranger trips on is what
   isn't drawn: empty grid cells, a disabled Done that looks live, history that
   forgets a split's mode.
-
-- *2026-09-30* — "Imagine you're a confused Ben". Play the stranger for real:
-  tap the wrong "Edit" first. The empty box it opened was the finding, and
-  the owner answered it mid-run by seeding the demo, then asked how the drive
-  went before letting the fix go on.

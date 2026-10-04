@@ -527,6 +527,9 @@ share, but too small to be a target.
 - **A later `border-bottom` shorthand undoes a state's colour.** `.splitrow`
   sits below `.inrow` in `globals.css`, so its shorthand reset the stronger
   divider and rows in the split merged into one wash; `.splitrow.inrow` restates it.
+- **One class, one component.** `.linkbox` once named the import field too,
+  and that later rule's `display: block` undid the copy box's flex row: the link
+  ran off the screen and Copy fell below it. Grep a class before reusing it.
 - iOS Safari in a tab ignores `user-scalable=no` and lets `touch-action` stop
   only double-tap; `preventDefault` on `gesturestart` is what holds the scale.
 - No shadcn/ui dependency exists, and no component library's variable names sit

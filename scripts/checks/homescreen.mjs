@@ -452,6 +452,13 @@ report(await webviewPage.getByText("Open in Safari").count() > 0
 report(await webviewPage.locator(".escapelink .linkbox .selectable").textContent()
   .catch(() => null) === `${base}/join${fragment}`,
   "and handed the link it arrived with, to paste into a real browser");
+// A link is longer than any phone is wide: it scrolls inside its box, beside
+// the copy state, rather than pushing the box off the screen.
+report(await webviewPage.locator(".escapelink .linkbox").evaluate((box) => {
+  const state = box.querySelector(".linkboxstate").getBoundingClientRect();
+  const link = box.querySelector(".selectable").getBoundingClientRect();
+  return box.scrollWidth <= box.clientWidth && Math.abs(state.top - link.top) < link.height;
+}).catch(() => false), "on one line that fits the screen, the copy state beside it");
 // Blocked means blocked: the key must not be saved behind the screen, or the
 // webview holds a group it can never give back.
 report((await secretsHeld(webviewPage).catch(() => [])).length === 0,
