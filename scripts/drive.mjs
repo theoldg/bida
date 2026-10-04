@@ -735,7 +735,15 @@ function send(commands) {
   });
 }
 
-async function collect(wanted) {
+/**
+ * Prints the answers. A chain's screens on the way are steps nobody reads
+ * twice, and a long chain printed every one of them in full — so only the last
+ * screen that arrived is printed whole, and every step before it as where it
+ * landed plus whatever the page complained about. Short answers (a shot's path,
+ * the clipboard, a failure) are always whole. `--all` prints every screen.
+ */
+async function collect(wanted, all = false) {
+  const bodies = [];
   for (const { seq, cmd } of wanted) {
     const file = join(RESP, `${seq}.txt`);
     const deadline = Date.now() + 60_000;
@@ -743,13 +751,22 @@ async function collect(wanted) {
       if (Date.now() > deadline) { console.error(`timed out waiting for: ${cmd}`); process.exit(1); }
       await new Promise((ok) => setTimeout(ok, 80));
     }
-    console.log(`\n$ ${cmd}`);
-    process.stdout.write(readFileSync(file, "utf8"));
+    bodies.push(readFileSync(file, "utf8"));
   }
+  const isScreen = (body) => body.startsWith("=") && body.split("\n").length > 8;
+  const last = bodies.findLastIndex(isScreen);
+  bodies.forEach((body, i) => {
+    console.log(`\n$ ${wanted[i].cmd}`);
+    if (all || i === last || !isScreen(body)) { process.stdout.write(body); return; }
+    const lines = body.split("\n");
+    console.log(`  → ${lines[1]}`);
+    for (const warning of lines.filter((l) => l.startsWith("  !! "))) console.log(warning);
+  });
 }
 
 const [mode, ...rest] = process.argv.slice(2);
 if (mode === "start") await start();
+else if (mode === "do" && rest[0] === "--all") await collect(send(rest.slice(1)), true);
 else if (mode === "do") await collect(send(rest));
 else if (mode === "stop") await collect(send(["stop"]));
 else { console.error("usage: drive.mjs start | do <command>… | stop"); process.exit(1); }

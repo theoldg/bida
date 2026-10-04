@@ -21,6 +21,10 @@ pnpm drive do "as ana goto /demo" "click \"Add an entry\""
 pnpm drive stop
 ```
 
+A chain prints its last screen whole and each step before it as one line —
+where it landed and anything the page complained about; `do --all` prints
+every screen.
+
 **Start from `/demo`, not from a group built by hand**: it is a real group
 with four people and every kind of entry, one command away. Building one
 through `/new` costs a command per person ([below](#looking-at-one-screen)).
