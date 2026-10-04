@@ -114,13 +114,9 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   }
 
   return (
-    <section>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
-        <span style={{ fontSize: 13, color: "var(--muted)" }}>{title}</span>
-        <span className="spacer" style={{ fontSize: 12, color: "var(--muted)" }}>
-          {plural(included.size, copy.noun.person)}
-        </span>
-      </div>
+    // No heading drawn: the tabs say what the box is, and it sits under the
+    // fields at their own spacing. The title is still its name to a reader.
+    <section aria-label={title}>
 
       <div className="splitbox">
         <div className="seg">
