@@ -1241,9 +1241,8 @@ dialog.scrim::backdrop { background: transparent }
 /* As parts: the figure keeps the weight it had before it could be typed; the
    signs are small grey marks with a full-size tap each, quiet but easy to hit. */
 .partsend { display: flex; align-items: center; margin-right: -10px }
-.partsstep { width: 36px; height: 36px; display: grid; place-items: center; color: var(--ink-2);
-  border-radius: var(--r-s); transition: background-image .2s ease }
-.partsstep:active:not(:disabled) { background-image: linear-gradient(var(--press), var(--press)); transition-duration: 0s }
+/* No press wash: the figure changing between them is the feedback. */
+.partsstep { width: 36px; height: 36px; display: grid; place-items: center; color: var(--ink-2) }
 .partsstep:disabled { color: var(--muted); opacity: .5 }
 .partsend .amountfield { width: 4ch; justify-content: center; margin: 0 2px }
 .partsin { width: 100%; text-align: center; background: transparent; border: 0; padding: 0;
