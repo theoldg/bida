@@ -161,7 +161,7 @@ API is reached with `fetch`.
   amount → note → fold, and the split editor's "as amounts" and "as parts" each run first person →
   … → last person → fold, started by a tap on a field. A count of parts is
   typed with the money field's caret and Backspace (`PartsInput`), between − and
-  + that stay quiet so the figure reads first; having parts puts you in, none
+  + drawn small and grey; having parts puts you in, none
   takes you out, and a tap on the name toggles. **A tap on a name in a column
   of amounts is not a focus**: it clears a figure, hands an empty row what is
   left, and types only when the column is already full or over (`tapAmount`).

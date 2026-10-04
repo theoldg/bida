@@ -1238,8 +1238,8 @@ dialog.scrim::backdrop { background: transparent }
 .splitin { width: 82px; text-align: right; background: transparent; border: 0;
   font: inherit; font-size: 14px; color: var(--ink);
   outline: none; font-variant-numeric: tabular-nums }
-/* As parts: the figure is what the eye lands on; the signs are small grey marks
-   with a full-size tap each, so they read as quiet without being hard to hit. */
+/* As parts: the figure keeps the weight it had before it could be typed; the
+   signs are small grey marks with a full-size tap each, quiet but easy to hit. */
 .partsend { display: flex; align-items: center; margin-right: -10px }
 .partsstep { width: 36px; height: 36px; display: grid; place-items: center; color: var(--ink-2);
   border-radius: var(--r-s); transition: background-image .2s ease }
@@ -1247,7 +1247,7 @@ dialog.scrim::backdrop { background: transparent }
 .partsstep:disabled { color: var(--muted); opacity: .5 }
 .partsend .amountfield { width: 4ch; justify-content: center; margin: 0 2px }
 .partsin { width: 100%; text-align: center; background: transparent; border: 0; padding: 0;
-  font: inherit; font-size: 16px; font-weight: 700; color: var(--ink);
+  font: inherit; font-size: 15px; font-weight: 500; color: var(--ink);
   outline: none; font-variant-numeric: tabular-nums }
 .splitrow:not(.inrow) .partsin { color: var(--muted) }
 .splitfoot { display: flex; align-items: center; gap: 7px; padding: 8px 12px; font-size: 12px;
