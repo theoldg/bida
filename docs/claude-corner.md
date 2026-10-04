@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-04* — "Since you're moving the warning text outside of the split
+  tabs, make it respond to tab changes". The owner names the second-order
+  effect of their own ask. Read the last clause as the hint for the case you
+  would have missed, and test that case.
+
 - *2026-10-04* — "Propose a few mocks before implementing", then "a bit
   ugly", then "smaller". Three rounds, each quieter. Make the mocks work, in
   the app's own tokens, keep last round's pick on the page for scale, and
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   (wait if still going, refuse if failed)". Every way to release needs the
   gate, the button and the laptop both; and gate one pinned commit, so what
   passed is what ships. Prove the refusal on a real red run.
-
-- *2026-09-30* — "I'm going to sleep, anything you need me to clarify or
-  decide". List the open choices, each with the default you'll take, then
-  drive it home. The one answer that came back — a clean rebase "needs to be
-  checked by the agent" — was the one no default would have guessed.

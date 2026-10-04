@@ -202,7 +202,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   // mount (lib/entry-check.ts). The form reads its answers; it writes nothing.
   const {
     activeTab, canScan, activeSplit, receiptSplit, effectiveSplit, receiptTotal, receiptLocksAmount,
-    onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, receiptMissing, ready,
+    onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, splitProblem, receiptMissing, ready,
     amountMissing, titleMissing,
   } = checkEntry({
     draft, base, rates: data.rates,
@@ -212,12 +212,13 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
 
   /**
    * What a refused Save can bloom: two fields, the Items tab's step (a photo or
-   * the who-had-what grid), and the rate badge when the group has no rate for
-   * the currency — that badge is the whole fix, with no field here to point at.
+   * the who-had-what grid), the rate badge when the group has no rate for
+   * the currency — that badge is the whole fix, with no field here to point at
+   * — and the split's sentence in the Save dock.
    */
   const missing = {
     amount: amountMissing, title: titleMissing, receipt: receiptMissing,
-    rate: foreign && groupRate === undefined,
+    rate: foreign && groupRate === undefined, split: splitProblem !== null,
   };
   const refusals = useRefusals(missing);
 
@@ -561,7 +562,6 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                 receipt={canScan ? {
                   items: draft.receiptItems ?? null,
                   scan,
-                  missing: receiptMissing,
                   flash: refusals.flash("receipt"),
                   onFlashEnd: refusals.onFlashEnd("receipt"),
                   editItemsHref: route.items(groupId, via),
@@ -574,8 +574,17 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
         {/* The form's last row, docked (`.whodock`): under the split while the
             form fits, at the foot of the screen once a long split scrolls above
             it, and above the keyboard while one is up. Always pressable: `save`
-            answers with the refusal flash on whatever is missing. */}
+            answers with the refusal flash on whatever is missing. A split that
+            doesn't add up is said here, over Save, where scrolling can't hide
+            it; it follows the tab now showing. */}
         <div className="pad whodock" style={{ paddingTop: 18 }}>
+          {splitProblem ? (
+            <div role="status" data-refuse="split" style={{ marginBottom: 9 }}
+              className={`splitfoot bad alone${refusals.flash("split")}`}
+              onAnimationEnd={refusals.onFlashEnd("split")}>
+              <span>{splitProblem}</span>
+            </div>
+          ) : null}
           {failed ? (
             <p className="failure" role="alert" style={{ margin: "0 2px 9px" }}>
               {copy.form.saveFailed(failed)}

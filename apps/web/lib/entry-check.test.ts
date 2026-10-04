@@ -221,6 +221,36 @@ describe("checkEntry", () => {
     // The same money converted to euros is not what was typed.
     expect(check(amounts({ [THEO]: 2763, [MARIE]: 1842 }), rates).ready).toBe(false);
   });
+
+  describe("a split that doesn't add up", () => {
+    const exact = (a: Record<string, number>, splitTab: EntryDraft["splitTab"] = "exact") => {
+      const d = expense({ splitTab });
+      return { ...d, splits: { ...d.splits, exact: { mode: "exact" as const, amounts: a } } };
+    };
+
+    it("says what is wrong, in the entry's own currency", () => {
+      const c = check(exact({ [THEO]: 2500 }));
+      expect(c.ready).toBe(false);
+      expect(c.splitProblem).toContain("15.00");
+      expect(check(exact({ [THEO]: 2500, [MARIE]: 1500 })).splitProblem).toBeNull();
+    });
+
+    it("says nobody is in it", () => {
+      const c = check(expense({ splits: { equal: { mode: "equal", members: [] } } }));
+      expect(c.ready).toBe(false);
+      expect(c.splitProblem).toBe(copy.split.nobody);
+    });
+
+    it("follows the tab now showing, not one left behind", () => {
+      expect(check(exact({ [THEO]: 2500 }, "equal")).splitProblem).toBeNull();
+    });
+
+    it("leaves a Receipt tab with no split yet to its own bloom", () => {
+      const c = check(expense({ splitTab: "receipt" }));
+      expect(c.receiptMissing).toBe(true);
+      expect(c.splitProblem).toBeNull();
+    });
+  });
 });
 
 describe("needsRate", () => {

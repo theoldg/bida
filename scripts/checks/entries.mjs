@@ -721,6 +721,27 @@ await settle(page, 80);
 report(!/flash-/.test(await titleField.getAttribute("class")),
   "emptying a field again is not a refusal");
 
+// A split that doesn't add up has no field to bloom: its sentence is said over
+// Save, out of the scroll, and a refusal flashes that. It follows the tab.
+await page.locator("input.amount").fill("40");
+await page.locator("#what").fill("Split check");
+await page.getByRole("button", { name: "As amounts" }).click();
+await page.locator("input[aria-label$=\"’s amount\"]").first().fill("999");
+await settle(page, 120);
+const splitLine = page.locator(".whodock .splitfoot.bad");
+report(await splitLine.count() === 1, "a split that doesn't add up is said in the Save dock");
+await page.getByRole("button", { name: "Save" }).click();
+await settle(page, 120);
+report(/flash-/.test(await splitLine.getAttribute("class"))
+  && await page.getByRole("button", { name: "Save" }).isDisabled(),
+  "a refused Save flashes it and spends the button");
+await settle(page, 900);
+await page.getByRole("button", { name: "Evenly" }).click();
+await settle(page, 120);
+report(await splitLine.count() === 0, "and a tab that adds up takes it away");
+await page.locator("input.amount").fill("");
+await page.locator("#what").fill("");
+
 // ---- a refused Done blooms the rows, not the words on them --------------
 // The grid points at every line nobody has been given, and it points with the
 // whole row — the class is on the `<tr>`, because most of a row is the columns

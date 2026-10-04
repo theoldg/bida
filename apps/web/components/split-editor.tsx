@@ -28,8 +28,6 @@ const MODES = ["equal", "shares", "exact"] as const;
 interface ReceiptTabProps {
   items: { label: string; amount: string }[] | null;
   scan: ReceiptScan;
-  /** `checkEntry`'s `receiptMissing`: suppresses the arithmetic verdict underneath. */
-  missing: boolean;
   /** For whichever control takes the outstanding step. Empty while no flash runs. */
   flash: string;
   onFlashEnd: (e: React.AnimationEvent) => void;
@@ -69,15 +67,11 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     try { shares = resolveSplit(amountMinor, shown, opts).shares; } catch { /* incomplete */ }
   }
 
+  // Only the tick lives here: "N of total allocated", which only means
+  // something when typing amounts. What is wrong with a split is said in the
+  // Save dock (`checkEntry`'s `splitProblem`), where no scroll can hide it.
   // `splitFooter`, not `check`, decides: a zero total is satisfied but never gets a tick.
-  // A receipt short of its split says nothing here; a refused Save blooms its control.
-  const receiptMissing = showReceipt && (receipt?.missing ?? false);
-  const foot = receiptMissing ? null
-    : check !== null ? splitFooter(check, amountCurrency) : null;
-  // "N of total allocated" only means something when typing amounts; every
-  // mode still surfaces a real problem.
-  const showFooter = foot !== null
-    && (showReceipt ? !foot.ok : (typingAmounts || !foot.ok));
+  const foot = typingAmounts && check !== null ? splitFooter(check, amountCurrency) : null;
 
   function toggle(memberId: string) {
     const next = new Set(included);
@@ -238,9 +232,9 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
             );
           })}
 
-          {showFooter && foot ? (
-            <div className={`splitfoot ${foot.ok ? "ok" : "bad"}`}>
-              {foot.ok ? <Icon name="check" size={14} style={{ flex: "none" }} /> : null}
+          {foot?.ok ? (
+            <div className="splitfoot ok">
+              <Icon name="check" size={14} style={{ flex: "none" }} />
               <span>{foot.text}</span>
             </div>
           ) : null}

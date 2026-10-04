@@ -123,11 +123,11 @@ API is reached with `fetch`.
   returns `null` for a zero total. `blocker` (a missing rate, a removed member,
   an unbalanced payer split) is a sentence about a relationship the form can't fix by
   typing into the field it's next to, so it keeps its spot above the split
-  editor, behind the same flag; `receiptBlocker` stays in the split's footer,
-  its "Scan a receipt" half behind the flag for the same reason — an untouched
-  Items tab has no bill yet — while the bill-nobody-has-assigned half, and
-  the split's other complaints, follow an edit and stay live. Nothing
-  is focused or scrolled to: the form is one screen.
+  editor, behind the same flag. A split that doesn't add up
+  (`checkEntry`'s `splitProblem`) is said live in the Save dock, over the
+  button, where no scroll hides it, and follows the tab now showing; a refused
+  Save flashes it and spends the button like any bloom. An Items tab short of
+  its split says nothing in words — its step blooms.
 - **A press already spending the draft is the form's own `saving` flag.**
   `checkEntry` answers whether the entry *may* be saved, which is a question
   about the form, not whether a save is in flight; without the flag a double

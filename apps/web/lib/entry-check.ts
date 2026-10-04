@@ -7,7 +7,7 @@ import {
   splitSeed, type EntryDraft, type SplitTab,
 } from "./draft";
 import { copy } from "./copy";
-import { payerProblemText } from "./format";
+import { payerProblemText, splitFooter } from "./format";
 
 /**
  * What the entry being typed is worth, and whether it may be saved. It
@@ -53,6 +53,12 @@ interface EntryCheck {
   effectiveSplit: SplitSpec;
   /** The one sentence saying why Save is grey, or null when nothing is wrong. */
   blocker: string | null;
+  /**
+   * What is wrong with the split now showing — the tab's, or the bill's once
+   * its grid is filled — or null. Read live, so switching tabs swaps or clears
+   * it; the Save dock says it, and a refused Save flashes it.
+   */
+  splitProblem: string | null;
   /** No amount typed yet — held back from `blocker` since it names no sentence, only a field. */
   amountMissing: boolean;
   /** No title typed yet (expenses/incomes only — a transfer's note is optional). */
@@ -167,6 +173,12 @@ export function checkEntry(input: {
   // read off a receipt.
   const receiptMissing = canScan && activeTab === "receipt" && receiptSplit === null;
 
+  // Worded as the split editor counts it: in the entry's own currency, the
+  // figures on the bill. A Receipt tab with no split yet blooms its step instead.
+  const foot = transfer || receiptMissing ? null
+    : splitFooter(validateSplit(amountMinor, effectiveSplit, { tiebreakSeed: splitSeed(draft) }), draft.currency);
+  const splitProblem = foot && !foot.ok ? foot.text : null;
+
   // The one place the form says why Save is refused, reachable from every
   // state that refuses it. A missing rate says nothing here — there is no field;
   // its badge blooms instead (design-system.md).
@@ -187,6 +199,6 @@ export function checkEntry(input: {
     amountMinor, baseMinor, foreign, groupRate, rateOk,
     activeTab, canScan, receiptTotal, receiptLocksAmount: receiptTotal !== null,
     onReceiptTab, activeSplit: tabSplit, receiptSplit, effectiveSplit,
-    blocker, amountMissing, titleMissing, receiptMissing, ready,
+    blocker, splitProblem, amountMissing, titleMissing, receiptMissing, ready,
   };
 }

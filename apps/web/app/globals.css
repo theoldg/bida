@@ -1369,6 +1369,9 @@ button.amtnote:active { background: var(--hl-edge) }
 /* Controls fill: 15px of glyph is too little ink for a colour change to carry it. */
 .btn-pair.flash-a, .btn.flash-a, .amtnote.flash-a, .iconbtn.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .btn-pair.flash-b, .btn.flash-b, .amtnote.flash-b, .iconbtn.flash-b { animation: refuse-fill-b .6s ease-in-out }
+/* The split's sentence over Save: already a wash, so only a fill is a change. */
+.splitfoot.flash-a { animation: refuse-fill-a .6s ease-in-out }
+.splitfoot.flash-b { animation: refuse-fill-b .6s ease-in-out }
 
 /* A name field that is empty or taken: the row washes and the plus fills,
    pointing at the press that answers it. */
@@ -1409,6 +1412,7 @@ button.amtnote:active { background: var(--hl-edge) }
   .field.flash-a, .field.flash-b,
   .btn-pair.flash-a, .btn-pair.flash-b, .btn.flash-a, .btn.flash-b,
   .amtnote.flash-a, .amtnote.flash-b, .iconbtn.flash-a, .iconbtn.flash-b,
+  .splitfoot.flash-a, .splitfoot.flash-b,
   .amountfield.flash-a input, .amountfield.flash-b input,
   .field.flash-a input, .field.flash-b input,
   .field.flash-a label, .field.flash-b label,
