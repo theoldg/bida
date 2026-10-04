@@ -725,8 +725,18 @@ report(!/flash-/.test(await titleField.getAttribute("class")),
 // Save, out of the scroll, and a refusal flashes that. It follows the tab.
 await page.locator("input.amount").fill("40");
 await page.locator("#what").fill("Split check");
-await page.getByRole("button", { name: "As amounts" }).click();
-const firstShare = page.locator("input[aria-label$=\"’s amount\"]").first();
+// Switching tabs must not move the rows: every mode's row is one height, so
+// the list under the tabs stays where the thumb left it.
+const rowHeights = {};
+for (const tab of ["Evenly", "As parts", "As amounts"]) {
+  await page.getByRole("button", { name: tab }).click();
+  await settle(page, 80);
+  rowHeights[tab] = await page.locator(".splitrow").evaluateAll((rows) =>
+    [...new Set(rows.map((r) => r.getBoundingClientRect().height.toFixed(2)))].join("/"));
+}
+report(new Set(Object.values(rowHeights)).size === 1 && !Object.values(rowHeights)[0].includes("/"),
+  "every split tab draws its rows at one height", JSON.stringify(rowHeights));
+const firstShare =page.locator("input[aria-label$=\"’s amount\"]").first();
 const seeded = await firstShare.inputValue();
 await settle(page, 120);
 const splitTick = page.locator(".whodock .splitfoot.ok");
