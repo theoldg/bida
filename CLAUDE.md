@@ -5,7 +5,9 @@ hosted for free. Read this, then the doc your task points at.
 
 ## Non-negotiables
 
-1. **`pnpm session` first**, from the main clone, every session. It installs
+1. **`pnpm session` first**, from the main clone, every session — in a cloud
+   session the startup hook has already run it, and its report (with dev's
+   CLAUDE.md, if the one you were given is older) is in your context. It installs
    (wiring the `pre-push` hook that runs `pnpm check`), moves you onto `dev`
    and claims the clone with a `BUSY` file that your first push releases. If
    it says the clone is busy, take a worktree as it prints and run it there; a
@@ -15,7 +17,8 @@ hosted for free. Read this, then the doc your task points at.
    No pull requests; `main` moves only by the owner's hand.
 2. **Push with `pnpm push` at every checkpoint.** It bumps the version, pushes
    `HEAD:dev` and watches the run. Run it in the background and start the next
-   task once it prints `watch:`. A newer push cancels a `verify` still running,
+   task once it prints `watch:` — and don't end a turn before then: a cloud
+   session's stop check refuses a turn whose commits haven't reached GitHub. A newer push cancels a `verify` still running,
    since its own run covers both. Red is yours to fix; the session is done when
    the last push is green ([testing.md](docs/testing.md#where-each-check-runs)).
 3. **Docs change in the same commit as the code.** See [Doc upkeep](#doc-upkeep).
