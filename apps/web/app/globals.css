@@ -1230,12 +1230,9 @@ dialog.scrim::backdrop { background: transparent }
 /* ---- the split editor, inline on the expense form ---- */
 /* In a card: between two fields a full-width list reads as another screen.
    The tabs are the lid of the list they govern. */
-/* What parts the split from the fields: a hairline with a large, light ÷ on it. */
-.splitrule { display: flex; align-items: center; gap: 10px; margin: 11px 0 20px; color: var(--muted) }
-.splitrule::before, .splitrule::after { content: ""; flex: 1; height: 1px; background: var(--rule) }
-/* The ÷ is drawn, not typed: a glyph's bar sits wherever its font puts it.
-   Square dots, as in the logo. Odd heights (19 here, 3 its bar, 1 the rule)
-   centre to the same pixel row. */
+/* What parts the split from the fields: a lone ÷, drawn rather than typed so
+   it is the logo's, square dots and all. */
+.splitrule { display: flex; justify-content: center; margin: 11px 0 20px; color: var(--muted) }
 .splitrule > span { position: relative; flex: none; width: 16px; height: 19px;
   background: linear-gradient(currentColor, currentColor) center / 100% 3px no-repeat }
 .splitrule > span::before, .splitrule > span::after { content: ""; position: absolute;

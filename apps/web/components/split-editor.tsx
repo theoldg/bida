@@ -114,7 +114,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   }
 
   return (
-    // No heading drawn: the tabs say what the box is. A ÷ on a hairline parts
+    // No heading drawn: the tabs say what the box is. A lone ÷ parts
     // it from the fields above, which it otherwise reads as one more of. The
     // title is still its name to a reader; the mark is only for the eye.
     <section aria-label={title}>
