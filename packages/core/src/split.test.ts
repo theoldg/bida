@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addsUp, canonicalSplit, convertSplitMode, ownCurrencySplit, resolveEntrySplit, resolveSplit, shareOf, splitParticipants,
-  upgradeReceiptSplit, validateSplit,
+  toggleEveryone, upgradeReceiptSplit, validateSplit,
 } from "./split.js";
 import type { SplitSpec } from "./types.js";
 
@@ -224,6 +224,87 @@ describe("convertSplitMode", () => {
         expect(spec.mode).toBe(mode);
         expect(splitParticipants(spec)).toEqual([]);
       }
+    }
+  });
+});
+
+describe("toggleEveryone", () => {
+  const all = ["a", "b", "c", "d"];
+
+  it("evenly: some in brings everyone in, everyone in takes everyone out", () => {
+    const some = toggleEveryone(400, { mode: "equal", members: ["a", "c"] }, all);
+    expect(splitParticipants(some)).toEqual(all);
+    expect(toggleEveryone(400, some as SplitSpec & { mode: "equal" }, all)).toEqual({ mode: "equal", members: [] });
+    expect(splitParticipants(toggleEveryone(400, { mode: "equal", members: [] }, all))).toEqual(all);
+  });
+
+  it("parts: whoever is out gets one, and nobody else's parts move", () => {
+    const spec = toggleEveryone(400, { mode: "shares", weights: { a: 2, c: 3 } }, all);
+    expect(spec).toEqual({ mode: "shares", weights: { a: 2, b: 1, c: 3, d: 1 } });
+    expect(toggleEveryone(400, { mode: "shares", weights: { a: 2, b: 1, c: 3, d: 1 } }, all))
+      .toEqual({ mode: "shares", weights: {} });
+  });
+
+  it("amounts: from empty, everyone gets an even share that adds up", () => {
+    const spec = toggleEveryone(1001, { mode: "exact", amounts: {} }, all, { tiebreakSeed: "e1" });
+    expect(splitParticipants(spec)).toEqual(all);
+    expect(validateSplit(1001, spec).ok).toBe(true);
+    if (spec.mode !== "exact") throw new Error("unreachable");
+    for (const v of Object.values(spec.amounts)) expect([250, 251]).toContain(v);
+  });
+
+  it("amounts: typed figures stay, and the empty rows share what is left", () => {
+    const spec = toggleEveryone(32000, { mode: "exact", amounts: { a: 12000, d: 8000 } }, all);
+    expect(spec).toEqual({ mode: "exact", amounts: { a: 12000, b: 6000, c: 6000, d: 8000 } });
+    expect(validateSplit(32000, spec).ok).toBe(true);
+  });
+
+  it("amounts: with nothing left, or everyone in, it clears", () => {
+    const full = { mode: "exact" as const, amounts: { a: 500, b: 500 } };
+    expect(toggleEveryone(1000, full, all)).toEqual({ mode: "exact", amounts: {} });
+    const over = { mode: "exact" as const, amounts: { a: 900, b: 900 } };
+    expect(toggleEveryone(1000, over, all)).toEqual({ mode: "exact", amounts: {} });
+    const everyone = { mode: "exact" as const, amounts: { a: 1, b: 1, c: 1, d: 1 } };
+    expect(toggleEveryone(1000, everyone, all)).toEqual({ mode: "exact", amounts: {} });
+  });
+
+  // Fewer minor units left than empty rows: whoever the rest can't reach stays
+  // out, as `convertSplitMode` leaves them, and the split still adds up.
+  it("amounts: a rest smaller than the empty rows hands out what there is", () => {
+    const spec = toggleEveryone(1002, { mode: "exact", amounts: { a: 1000 } }, all, { tiebreakSeed: "x" });
+    if (spec.mode !== "exact") throw new Error("unreachable");
+    expect(spec.amounts.a).toBe(1000);
+    expect(splitParticipants(spec)).toHaveLength(3);
+    expect(Object.values(spec.amounts)).not.toContain(0);
+    expect(validateSplit(1002, spec).ok).toBe(true);
+  });
+
+  it("amounts: a zero-decimal total splits in whole units", () => {
+    const spec = toggleEveryone(1000, { mode: "exact", amounts: {} }, ["a", "b", "c"]);
+    if (spec.mode !== "exact") throw new Error("unreachable");
+    expect(sum(spec.amounts)).toBe(1000);
+    expect(Object.values(spec.amounts).sort()).toEqual([333, 333, 334]);
+  });
+
+  it("property: filling the gaps of an under-allocated split makes it add up", () => {
+    let seed = 7;
+    const rand = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+    for (let i = 0; i < 300; i++) {
+      const n = 2 + Math.floor(rand() * 7);
+      const members = Array.from({ length: n }, (_, k) => `m${k}`);
+      const total = n + Math.floor(rand() * 1_000_000);
+      const amounts: Record<string, number> = {};
+      let given = 0;
+      for (const m of members.slice(1)) {
+        if (rand() < 0.5) continue;
+        const v = Math.floor(rand() * (total - n - given) / n);
+        if (v > 0) { amounts[m] = v; given += v; }
+      }
+      const spec = toggleEveryone(total, { mode: "exact", amounts }, members, { tiebreakSeed: `s${i}` });
+      if (spec.mode !== "exact") throw new Error("unreachable");
+      expect(sum(spec.amounts)).toBe(total);
+      expect(splitParticipants(spec)).toEqual([...members].sort());
+      for (const [id, v] of Object.entries(amounts)) expect(spec.amounts[id]).toBe(v);
     }
   });
 });

@@ -415,6 +415,40 @@ export function convertSplitMode(
 }
 
 /**
+ * The split editor's head box: everyone in takes everyone out; otherwise it
+ * brings in whoever is out and leaves what the others hold alone — a 2 in
+ * parts stays a 2, a typed amount stays typed. In `exact` the newcomers share
+ * what is left of the total, as one name's tap takes all of it; with nothing
+ * left there is nothing to bring them in with, so it clears instead.
+ */
+export function toggleEveryone(
+  totalMinor: number,
+  spec: Exclude<ArithmeticSplit, { mode: "percent" }>,
+  memberIds: readonly Id[],
+  options: SplitOptions = {},
+): ArithmeticSplit {
+  const inNow = new Set(splitParticipants(spec));
+  const out = memberIds.filter((id) => !inNow.has(id));
+  switch (spec.mode) {
+    case "equal":
+      return { mode: "equal", members: out.length === 0 ? [] : [...inNow, ...out] };
+    case "shares": {
+      if (out.length === 0) return { mode: "shares", weights: {} };
+      const weights = { ...spec.weights };
+      for (const id of out) weights[id] = 1;
+      return { mode: "shares", weights };
+    }
+    case "exact": {
+      const amounts = exactAmounts(spec.amounts);
+      const rest = totalMinor - Object.values(amounts).reduce((a, v) => a + v, 0);
+      if (out.length === 0 || rest <= 0) return { mode: "exact", amounts: {} };
+      const { shares } = resolveSplit(rest, { mode: "equal", members: out }, options);
+      return { mode: "exact", amounts: exactAmounts({ ...amounts, ...shares }) };
+    }
+  }
+}
+
+/**
  * Rewrite a legacy receipt expense (`shares` plus `splitTab: "receipt"`, or
  * `shares` beside a scanned bill) into `receipt` mode. Runs in `applyPatch`,
  * so every reader sees one shape. Mutates in place. ADR-0016.
