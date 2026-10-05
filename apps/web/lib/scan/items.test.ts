@@ -6,7 +6,7 @@ import {
   billCharges, billExtrasIn, billLabel, billLabels, foldedLine, hasTranslation, handOffReceiptTotal, portions, receiptBreakdown, receiptTotalMinor,
   runAssignment,
   printedBill, printedCount, unfoldAll, unfoldItem,
-  unfoldableInto, weightsFromItems,
+  MAX_PORTIONS, unfoldableInto, weightsFromItems,
 } from "./items";
 
 /** The three bill-level lines, named one at a time. */
@@ -191,6 +191,13 @@ describe("unfoldItem", () => {
     expect(unfoldableInto({ label: "Salad", amount: "4.50", quantity: 2, portionOf: 2 }, "EUR")).toBeNull();
     expect(unfoldItem([{ label: "Soup", amount: "3.00" }], 0, "EUR")).toBeNull();
     expect(unfoldItem([salad], 4, "EUR")).toBeNull();
+  });
+
+  it("keeps a line of more than MAX_PORTIONS whole", () => {
+    const tomatoes = { label: "Tomatoes", amount: "50.00", quantity: 1_000_000 };
+    expect(unfoldableInto(tomatoes, "EUR")).toBeNull();
+    expect(unfoldAll([tomatoes], "EUR").items).toEqual([tomatoes]);
+    expect(unfoldableInto({ ...tomatoes, quantity: MAX_PORTIONS }, "EUR")).toBe(MAX_PORTIONS);
   });
 });
 

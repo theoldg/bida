@@ -61,7 +61,8 @@ view whole and the tapped column is pointed at
 ([design-system.md](design-system.md)). A run nobody is split across is the
 single line it is drawn as, and edits like one: the tap lands on every portion.
 A restored draft opens with every run folded, which is the compact reading of
-it.
+it. A line of more than `MAX_PORTIONS` (100) is never split: it stays one row
+wearing its ×N, shared like any other line.
 
 ## Tip, tax and discounts
 

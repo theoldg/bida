@@ -211,9 +211,15 @@ export function printedCount(items: readonly ReceiptItem[]): number {
   return portions(items).filter((p) => !p || p.index === 1).length;
 }
 
+/**
+ * More portions than anyone taps one by one. Above it a line stays whole and is
+ * shared like any other: a typed "1 million tomatoes" is a million rows otherwise.
+ */
+export const MAX_PORTIONS = 100;
+
 export function unfoldableInto(item: ReceiptItem, currency: string): number | null {
   const count = item.quantity ?? 0;
-  if (!Number.isInteger(count) || count < 2 || item.portionOf) return null;
+  if (!Number.isInteger(count) || count < 2 || count > MAX_PORTIONS || item.portionOf) return null;
   try { if (parseMinor(item.amount, currency) <= 0) return null; } catch { return null; }
   return count;
 }

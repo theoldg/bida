@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-05* — "I crashed the app by typing \"1 million tomatoes\"… should
+  we cap rows?" The owner breaks things on purpose and offers two fixes. Pick
+  the narrower one, say why, and ship it: the question was the go-ahead.
+
 - *2026-10-05* — "*perfectly* aligned", over two phone shots, light and
   dark side by side. A typed glyph centres on its font's box, not its bar:
   when the owner says perfectly, draw it. Then square dots, no
@@ -75,8 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   failed on the phone. The owner's /diag paste settled it in one read. Ship
   the line that measures before the fix that guesses, and prefer the platform
   doing the job to arithmetic about it.
-
-- *2026-10-03* — "Delete and trim a bunch of comments". Half a comment was
-  the name it sat over; a ref called `before` needed a paragraph that
-  `latestScanAs` doesn't. Keep the why, the platform quirk and the trap.
-  Rename before you rewrite.
