@@ -1231,14 +1231,15 @@ dialog.scrim::backdrop { background: transparent }
 /* In a card: between two fields a full-width list reads as another screen.
    The tabs are the lid of the list they govern. */
 /* What parts the split from the fields: a hairline with a large, light ÷ on it. */
-.splitrule { display: flex; align-items: center; gap: 10px; margin: 12px 0 21px; color: var(--muted) }
+.splitrule { display: flex; align-items: center; gap: 10px; margin: 11px 0 20px; color: var(--muted) }
 .splitrule::before, .splitrule::after { content: ""; flex: 1; height: 1px; background: var(--rule) }
-/* The ÷ is drawn, not typed: a glyph's bar sits wherever its font puts it. Odd
-   heights (17 here, 3 its bar, 1 the rule) centre to the same pixel row. */
-.splitrule > span { position: relative; flex: none; width: 16px; height: 17px;
+/* The ÷ is drawn, not typed: a glyph's bar sits wherever its font puts it.
+   Square dots, as in the logo. Odd heights (19 here, 3 its bar, 1 the rule)
+   centre to the same pixel row. */
+.splitrule > span { position: relative; flex: none; width: 16px; height: 19px;
   background: linear-gradient(currentColor, currentColor) center / 100% 3px no-repeat }
 .splitrule > span::before, .splitrule > span::after { content: ""; position: absolute;
-  left: 6px; width: 4px; height: 4px; border-radius: 50%; background: currentColor }
+  left: 6px; width: 4px; height: 4px; background: currentColor }
 .splitrule > span::before { top: 0 }
 .splitrule > span::after { bottom: 0 }
 .splitbox { background: var(--card-2); border: 1px solid var(--rule-soft);
