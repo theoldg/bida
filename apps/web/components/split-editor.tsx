@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  resolveSplit, splitParticipants,
+  resolveSplit, splitParticipants, toggleEveryone,
   type ArithmeticSplit, type Member, type SplitSpec,
 } from "@bida/core";
 import { MAX_PARTS, MinorAmountInput, PartsInput } from "./amount-input";
@@ -88,6 +88,25 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     }
   }
 
+  // The head box: one tap for the whole list, the same verb in every tab.
+  // Three people at least: with two, the other row is the same one tap.
+  const head = !showReceipt && (spec.mode === "equal" || spec.mode === "shares" || spec.mode === "exact")
+    && members.length >= 3 ? spec : null;
+  const inCount = members.filter((m) => included.has(m.id)).length;
+  const headState = inCount === 0 ? "none" : inCount === members.length ? "all" : "some";
+
+  function toggleAll() {
+    if (head) onChange(toggleEveryone(amountMinor, head, members.map((m) => m.id), opts));
+  }
+
+  /** What the head box's tap would do, said the way the rows say theirs. */
+  function headLabel(): string {
+    if (headState === "all") return copy.split.everyone.out;
+    if (head?.mode !== "exact") return copy.split.everyone.in;
+    const left = amountMinor - Object.values(head.amounts).reduce((a, v) => a + v, 0);
+    return left > 0 ? copy.split.everyone.shareRest : copy.split.everyone.clear;
+  }
+
   /** As with amounts: having parts puts you in, none takes you out. */
   function setParts(memberId: string, parts: number) {
     if (spec.mode !== "shares") return;
@@ -139,6 +158,20 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
         </div>
 
         <div className="splitlist">
+          {head ? (
+            // Right-aligned, so the box heads the column of ticks, plus
+            // signs and figures under it, and the row never reads as a person.
+            <button type="button" className="splithead" onClick={toggleAll}
+              role="checkbox" aria-checked={headState === "all" ? true : headState === "some" ? "mixed" : false}
+              aria-label={`${copy.split.everyone.count(inCount, members.length)}. ${headLabel()}`}>
+              <span className="splitcount"><b>{inCount}</b> {copy.split.everyone.of(members.length)}</span>
+              <span className="allmark">
+                <span className={`allbox ${headState}`}>
+                  {headState === "none" ? null : <Icon name={headState === "all" ? "check" : "minus"} size={11} />}
+                </span>
+              </span>
+            </button>
+          ) : null}
           {showReceipt && receipt ? (
             <ReceiptPanel {...receipt} members={members} me={me} currency={amountCurrency}
               shares={shares} included={included} />

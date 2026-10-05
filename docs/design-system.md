@@ -158,6 +158,12 @@ replaced by "You".
 screen is who is in, so the wash marks every row that is in the split or put
 money in (`.inrow`), and you keep only the bar (`.mebar`).
 
+**The split's head row is a count and a box, right-aligned** (`.splithead`):
+"**3** of 4" beside a drawn checkbox — ink with a tick for everyone, ink with
+a dash for some, an empty outline for nobody — sitting in the rows' 16px mark
+column, so it heads the ticks, the parts' plus and the figures below it. No
+wash and an empty left half, so it is never read as one more person.
+
 **The wash eats soft hairlines.** A `--rule-soft` line is invisible against it,
 so wherever a washed row abuts something — the row below it, or the split
 editor's mode tabs above it — that boundary is redrawn at 14% ink or it reads as

@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-05* — "Propose a toggle all… not too text-heavy", then four
+  working mocks, then "make some stuff aligned right, the checkbox is a good
+  direction", then "Ship 3". The owner steers a round by naming a direction,
+  not a variant: give them five takes on it, not the old four again.
+
 - *2026-10-05* — "I crashed the app by typing \"1 million tomatoes\"… should
   we cap rows?" The owner breaks things on purpose and offers two fixes. Pick
   the narrower one, say why, and ship it: the question was the go-ahead.
@@ -74,8 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   differently". A phone photo of an overflow; the box was already built to do
   that and a same-named rule elsewhere undid it. Find why the design failed
   before designing anew, and give the asked-for shape if it's sound.
-
-- *2026-10-03* — "Research this online pls", after two keyboard guesses
-  failed on the phone. The owner's /diag paste settled it in one read. Ship
-  the line that measures before the fix that guesses, and prefer the platform
-  doing the job to arithmetic about it.

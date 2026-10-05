@@ -167,7 +167,11 @@ API is reached with `fetch`.
   takes you out, and a tap on the name toggles. **A tap on a name in a column
   of amounts is not a focus**: it clears a figure, hands an empty row what is
   left, and types only when the column is already full or over (`tapAmount`).
-  A grey plus or cross beside the field says which (`TapMark`), inside the name's button so the whole row up to the field takes the tap; typing gets none. `walkFields`
+  A grey plus or cross beside the field says which (`TapMark`), inside the name's button so the whole row up to the field takes the tap; typing gets none. **The head box toggles the
+  whole list** (`toggleEveryone`), in every tab but Items and only from three
+  people up: everyone in takes everyone out, else it brings in whoever is out
+  and leaves the rest — a 2 in parts stays 2, a typed amount stays, and in
+  amounts the empty rows share what is left, or it clears with nothing left. `walkFields`
   (`components/viewport.tsx`) is the whole of it, hung on `.scroll` because the
   next field is rarely a sibling; it walks that screen's fields in the order
   they are laid out and puts the caret at the *end* of what is already in one

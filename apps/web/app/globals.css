@@ -267,12 +267,12 @@ a, button, label, select, .seg button, .itemcell {
   touch-action: manipulation;
 }
 
-a.row, button.row, .fab, .btn, .iconbtn, .tlink, .seg button, a.card, button.card,
+a.row, button.row, .fab, .btn, .iconbtn, .tlink, .seg button, .splithead, a.card, button.card,
 .itemfold, a.chip, button.chip, .action, .starttile, .field:has(> .pick) {
   transition: background-image .2s ease;
 }
 a.row:active, button.row:active, .fab:active, .iconbtn:active,
-.tlink:active, .seg button:active, a.card:active, button.card:active, .itemfold:active,
+.tlink:active, .seg button:active, .splithead:active, a.card:active, button.card:active, .itemfold:active,
 a.chip:active, button.chip:active, .btn:active:not(:disabled), .starttile:active,
 .field:has(> .pick:active), .action:active:not(:disabled) {
   /* A gradient composites over the background instead of replacing it. */
@@ -1252,6 +1252,17 @@ dialog.scrim::backdrop { background: transparent }
   border-bottom: 1px solid var(--rule-soft); position: relative }
 /* The shorthand above would undo `.inrow`'s stronger divider. */
 .splitrow.inrow, .splitrow:has(+ .inrow) { border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent) }
+/* The head box: toggles everyone. No wash, so it is never read as a person;
+   right-aligned, so the box heads the column under it (`.allmark` is the
+   rows' 16px mark column). */
+.splithead { display: flex; align-items: center; justify-content: flex-end; gap: 10px; width: 100%;
+  min-height: 36px; padding: 0 12px; border-bottom: 1px solid color-mix(in srgb, var(--ink) 14%, transparent) }
+.splitcount { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums }
+.splitcount b { color: var(--ink); font-weight: 600 }
+.allmark { width: 16px; flex: none; display: flex; justify-content: center }
+.allbox { width: 15px; height: 15px; display: grid; place-items: center; color: var(--card);
+  border: 1.5px solid var(--muted); border-radius: var(--r-s) }
+.allbox.all, .allbox.some { background: var(--ink); border-color: var(--ink) }
 .splitin { width: 82px; text-align: right; background: transparent; border: 0;
   font: inherit; font-size: 14px; color: var(--ink);
   outline: none; font-variant-numeric: tabular-nums }

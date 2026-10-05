@@ -1027,6 +1027,15 @@ export const copy = {
     giveRest: (name: string) => `Give ${name} the rest`,
     edit: (name: string) => `Type ${name}’s amount`,
     notInvolved: "not involved",
+    /** The head box over the list (`toggleEveryone`): its count, and what its tap would do. */
+    everyone: {
+      of: (total: number) => `of ${total}`,
+      count: (n: number, total: number) => `${n} of ${total} in the split`,
+      in: "Include everyone",
+      out: "Leave everyone out",
+      shareRest: "Share what’s left among the empty rows",
+      clear: "Clear everyone’s amounts",
+    },
     /** The footer's verdicts. Wording checked by lib/format.test.ts. */
     nobody: "Nobody is included yet",
     allocated: (allocated: string, total: string) => `${allocated} of ${total} allocated`,
