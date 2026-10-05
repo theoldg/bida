@@ -26,8 +26,8 @@ restating what the code enforces. What gets praised is deleting.
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
 - *2026-10-05* — "more space… uninspired… or a division symbol?", fifteen
-  ÷ dividers later: "Ship 2", the quietest. The owner wants the idea, said
-  softly. Read design-system.md's mock rule before drawing: hand-copied
+  ÷ dividers later: "Ship 2", then mid-push "change it to 3", the same
+  hairline with a bigger, lighter mark. Picks move after they land. Read design-system.md's mock rule before drawing: hand-copied
   tokens drift.
 
 - *2026-10-04* — "In who-had-what, use the sticky dock and new error text
