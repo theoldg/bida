@@ -27,8 +27,8 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 
 - *2026-10-05* — "*perfectly* aligned", over two phone shots, light and
   dark side by side. A typed glyph centres on its font's box, not its bar:
-  when the owner says perfectly, draw it. Then square dots, then no
-  line at all: a mark gets pared down one ask at a time.
+  when the owner says perfectly, draw it. Then square dots, no
+  line, "Ship D… actually E" off six variants: marks pare down.
 
 - *2026-10-05* — "more space… uninspired… or a division symbol?", fifteen
   ÷ dividers later: "Ship 2", then mid-push "change it to 3", the same
