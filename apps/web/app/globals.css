@@ -121,6 +121,9 @@ textarea { resize: vertical }
   --draw-bg:var(--card-2); --draw-rule:var(--rule); --draw-ink:var(--muted);
   /* The torn bill has only its fill. Darker in light: white paper vanishes. */
   --draw-paper:var(--card-3);
+  /* A segmented control's chosen tab: raised means lighter than its track,
+     which in dark is no longer `--card`. */
+  --seg-on:var(--card);
   /* A hairline ring: nothing in this design floats. */
   --shadow-s:0 0 0 1px rgba(22,23,26,.09);
   --r-s:2px; --r-m:3px; --r-l:4px;
@@ -149,6 +152,7 @@ textarea { resize: vertical }
     --press:rgba(230,231,233,.11);
     --press-i:rgba(14,15,17,.15);
     --draw-bg:#22252A; --draw-rule:#4A4E55; --draw-ink:#C3C7CD; --draw-paper:#2E3238;
+    --seg-on:#303237;
     --shadow-s:0 0 0 1px rgba(255,255,255,.08);
   }
 }
@@ -166,6 +170,7 @@ textarea { resize: vertical }
   --press:rgba(230,231,233,.11);
   --press-i:rgba(14,15,17,.15);
   --draw-bg:#22252A; --draw-rule:#4A4E55; --draw-ink:#C3C7CD; --draw-paper:#2E3238;
+  --seg-on:#303237;
   --shadow-s:0 0 0 1px rgba(255,255,255,.08);
 }
 
@@ -1220,15 +1225,22 @@ dialog.scrim::backdrop { background: transparent }
 .seg { display: flex; background: var(--card-3); border-radius: var(--r-s); padding: 2.5px; gap: 2px }
 .seg button { flex: 1; text-align: center; font-size: 11.5px; padding: 5.5px 0; border-radius: 1px;
   color: var(--muted); font-weight: 500 }
-.seg button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-s); font-weight: 600 }
+.seg button.on { background: var(--seg-on); color: var(--ink); box-shadow: var(--shadow-s); font-weight: 600 }
 
 /* ---- the split editor, inline on the expense form ---- */
 /* In a card: between two fields a full-width list reads as another screen.
    The tabs are the lid of the list they govern. */
 /* What parts the split from the fields: a hairline with a large, light ÷ on it. */
-.splitrule { display: flex; align-items: center; gap: 10px; margin: 6px 0 15px;
-  color: var(--muted); font-size: 28px; font-weight: 300; line-height: 1 }
+.splitrule { display: flex; align-items: center; gap: 10px; margin: 12px 0 21px; color: var(--muted) }
 .splitrule::before, .splitrule::after { content: ""; flex: 1; height: 1px; background: var(--rule) }
+/* The ÷ is drawn, not typed: a glyph's bar sits wherever its font puts it. Odd
+   heights (17 here, 3 its bar, 1 the rule) centre to the same pixel row. */
+.splitrule > span { position: relative; flex: none; width: 16px; height: 17px;
+  background: linear-gradient(currentColor, currentColor) center / 100% 3px no-repeat }
+.splitrule > span::before, .splitrule > span::after { content: ""; position: absolute;
+  left: 6px; width: 4px; height: 4px; border-radius: 50%; background: currentColor }
+.splitrule > span::before { top: 0 }
+.splitrule > span::after { bottom: 0 }
 .splitbox { background: var(--card-2); border: 1px solid var(--rule-soft);
   border-radius: var(--r-s); overflow: hidden }
 .splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft) }

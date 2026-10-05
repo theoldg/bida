@@ -118,7 +118,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     // it from the fields above, which it otherwise reads as one more of. The
     // title is still its name to a reader; the mark is only for the eye.
     <section aria-label={title}>
-      <div className="splitrule" aria-hidden="true"><span>÷</span></div>
+      <div className="splitrule" aria-hidden="true"><span /></div>
 
       <div className="splitbox">
         <div className="seg">

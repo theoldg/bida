@@ -108,8 +108,8 @@ camera, where a box to write in is not what the picture above it promised: `.btn
 the doors, the box owning the border as in `.splitbox`. Buttons side by side is
 the shape for *different* jobs, and `.seg` is the app's mode switch — under the split
 editor's tabs it would read "which of these am I in". (The split editor itself
-hangs under `.splitrule`, a hairline with a large, light, muted ÷ on it: without it the
-box read as one more field.) Mid-scan the divider goes
+hangs under `.splitrule`, a hairline with a muted ÷ drawn on it — drawn, so its bar
+sits on the rule's own pixel row: without it the box read as one more field.) Mid-scan the divider goes
 and the box holds one strip, "Reading…", with the press wash sweeping across it
 over the three seconds a scan usually takes — the one wait in the app whose
 length we can guess, so it is drawn rather than shrugged at. The bar *is* the
@@ -527,6 +527,9 @@ share, but too small to be a target.
 
 ## Gotchas
 
+- **In dark, `--card` is darker than `--card-3`.** A tab filled `--card` on a
+  `--card-3` track looked raised in light and sunk in dark; a raised thing
+  takes `--seg-on`, which is lighter than its track in both.
 - **`.row:last-child` sees wrappers, not lists.** The ledger once wrapped each
   row in a div of its own, which made every row a last child: two rows on one
   day had no line between them for months, and nothing noticed.

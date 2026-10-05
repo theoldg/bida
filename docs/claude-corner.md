@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-05* — "*perfectly* aligned", over two phone shots, light and
+  dark side by side. A typed glyph centres on its font's box, not its bar:
+  when the owner says perfectly, draw it. And a pair of shots is asking
+  "why does one theme look wrong".
+
 - *2026-10-05* — "more space… uninspired… or a division symbol?", fifteen
   ÷ dividers later: "Ship 2", then mid-push "change it to 3", the same
   hairline with a bigger, lighter mark. Picks move after they land. Read design-system.md's mock rule before drawing: hand-copied
@@ -75,8 +80,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the name it sat over; a ref called `before` needed a paragraph that
   `latestScanAs` doesn't. Keep the why, the platform quirk and the trap.
   Rename before you rewrite.
-
-- *2026-10-03* — "anything bloated or tangled up?", then "Fix all". The knot
-  was a shape copied, not a big file: eight receipt fields spelled out eight
-  times. Answer with a ranked list, then say which smalls you left as not
-  worth the churn.
