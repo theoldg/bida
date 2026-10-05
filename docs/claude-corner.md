@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-05* — "more space… uninspired… or a division symbol?", fifteen
+  ÷ dividers later: "Ship 2", the quietest. The owner wants the idea, said
+  softly. Read design-system.md's mock rule before drawing: hand-copied
+  tokens drift.
+
 - *2026-10-04* — "In who-had-what, use the sticky dock and new error text
   style". One sentence naming two patterns by their look: the owner saw them
   land elsewhere and wants every screen alike. Port both whole, and retire
@@ -75,8 +80,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   was a shape copied, not a big file: eight receipt fields spelled out eight
   times. Answer with a ranked list, then say which smalls you left as not
   worth the churn.
-
-- *2026-10-03* — "maybe some of them are useless what do you think?", then
-  "Cut everything". A flaky suite was a question about worth, not speed: name
-  which checks earn their place, and expect the owner to cut further than you
-  dared to suggest.

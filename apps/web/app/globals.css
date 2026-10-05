@@ -1225,6 +1225,10 @@ dialog.scrim::backdrop { background: transparent }
 /* ---- the split editor, inline on the expense form ---- */
 /* In a card: between two fields a full-width list reads as another screen.
    The tabs are the lid of the list they govern. */
+/* What parts the split from the fields: a hairline with a small ÷ on it. */
+.splitrule { display: flex; align-items: center; gap: 12px; margin: 6px 0 15px;
+  color: var(--muted); font-size: 14px; line-height: 1 }
+.splitrule::before, .splitrule::after { content: ""; flex: 1; height: 1px; background: var(--rule) }
 .splitbox { background: var(--card-2); border: 1px solid var(--rule-soft);
   border-radius: var(--r-s); overflow: hidden }
 .splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft) }

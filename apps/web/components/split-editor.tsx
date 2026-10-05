@@ -114,9 +114,11 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   }
 
   return (
-    // No heading drawn: the tabs say what the box is, and it sits under the
-    // fields at their own spacing. The title is still its name to a reader.
+    // No heading drawn: the tabs say what the box is. A ÷ on a hairline parts
+    // it from the fields above, which it otherwise reads as one more of. The
+    // title is still its name to a reader; the mark is only for the eye.
     <section aria-label={title}>
+      <div className="splitrule" aria-hidden="true"><span>÷</span></div>
 
       <div className="splitbox">
         <div className="seg">
