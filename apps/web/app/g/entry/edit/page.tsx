@@ -625,12 +625,11 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
           onClose={() => setAsk(null)}
           lead={{
             label: copy.form.multiPayer,
-            onPick: () => {
-              // The payers screen divides the amount, so with none it would split a
-              // zero. The tap doesn't travel — it flashes the amount field.
-              if (amountMissing) { refusals.refuse({ amount: true }); return; }
-              router.push(route.payers(groupId));
-            },
+            // The payers screen divides the amount, so with none it would split a
+            // zero: the row stays, greyed, and says what comes first.
+            disabled: amountMissing,
+            note: amountMissing ? copy.form.multiPayerNeedsAmount : undefined,
+            onPick: () => router.push(route.payers(groupId)),
           }}
         />
       ) : null}

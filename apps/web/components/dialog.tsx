@@ -205,7 +205,8 @@ export function PromptDialog({
  * picker is the same intrusion as `prompt()` (ADR-0008). Ours is the app's
  * rows, so each can carry a `note`: what picking it does. The current choice
  * has a check and closes without calling back. A `lead` row heads the list:
- * not a choice but a door elsewhere, so it carries a chevron and no check.
+ * not a choice but a door elsewhere, so it carries a chevron and no check. A
+ * door that can't open yet stays drawn, disabled, its `note` saying why.
  */
 export function ChoiceDialog<T extends string>({ title, options, value, onPick, onClose, lead }: {
   title: string;
@@ -214,15 +215,19 @@ export function ChoiceDialog<T extends string>({ title, options, value, onPick, 
   value: T;
   onPick: (value: T) => void;
   onClose: () => void;
-  lead?: { label: string; onPick: () => void };
+  lead?: { label: string; onPick: () => void; disabled?: boolean; note?: string };
 }) {
   return (
     <Dialog title={title} onClose={onClose}>
       <div className="dlist" role="listbox" aria-label={title}>
         {lead ? (
           <button type="button" className="drow-pick lead" role="option" aria-selected={false}
+            disabled={lead.disabled} aria-disabled={lead.disabled}
             onClick={() => { onClose(); lead.onPick(); }}>
-            <span className="rmain"><span className="rtitle">{lead.label}</span></span>
+            <span className="rmain">
+              <span className="rtitle">{lead.label}</span>
+              {lead.note ? <span className="rmeta">{lead.note}</span> : null}
+            </span>
             <Icon name="chev" size={13} className="spacer muted" />
           </button>
         ) : null}

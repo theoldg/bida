@@ -1049,7 +1049,8 @@ dialog.scrim::backdrop { background: transparent }
 .dlist { margin: 11px -15px -13px; max-height: 52dvh; overflow-y: auto }
 .drow-pick { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
   padding: 11px 15px; border-top: 1px solid var(--rule-soft) }
-.drow-pick:active { background: var(--press) }
+.drow-pick:active:not(:disabled) { background: var(--press) }
+.drow-pick:disabled :is(.rtitle, svg) { color: var(--muted) }
 .drow-pick .rtitle, .drow-pick .rmeta { display: block }
 .drow-pick .rmeta { white-space: normal; overflow: visible; line-height: 1.35 }
 .drow-pick[aria-selected="true"] .rtitle { font-weight: 700 }

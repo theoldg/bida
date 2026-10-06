@@ -955,6 +955,8 @@ export const copy = {
     when: "When",
     /** The payer picker's first row, out to the payers screen. */
     multiPayer: "Multiple people",
+    /** Under "Multiple people" while there is no amount to divide. */
+    multiPayerNeedsAmount: "set the amount first",
     discardTitle: (kind: string) => `Discard this ${kind}?`,
     discardTitleEdits: "Discard edits?",
     discardBody: "Changes will be lost.",

@@ -125,6 +125,14 @@ report(await page.getByText("Dinner").count() > 0, "an expense saves and lists")
 
 // ---- an income ---------------------------------------------------------
 await page.goto(`${base}/g/entry/edit?id=${g}`);
+// With no amount there is nothing to divide among payers: the door is drawn
+// shut, saying what comes first.
+await page.locator("#paidby").click();
+const multi = page.getByRole("option", { name: "Multiple people" });
+report(await multi.isDisabled() && (await multi.innerText()).includes("set the amount first"),
+  "several payers wait for an amount, and say so");
+await page.keyboard.press("Escape");
+await settle(page, 150);
 await pick(page, '[aria-label="What kind of entry"]', "Income");
 await page.locator("input.amount").fill("300");
 await page.locator("#what").fill("Deposit back");
