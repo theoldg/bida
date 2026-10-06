@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-06* — "Make the names louder to match the amounts on expense
+  summary screens". Plural screens, one shared row: the quick split's answer
+  too. Lift the people, not every `.kv` — a label beside a count stays quiet.
+
 - *2026-10-06* — "What's up with the variable sodas price??" with the receipt
   beside it. A cent the owner can see is a bug, not rounding: find which
   tap turned one printed line into three, and fix the arithmetic there.
@@ -72,8 +76,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-04* — "move the X of X accounted for to the same location". The
   words were the payers screen's; the line meant was the split's "allocated"
   tick. Match an ask to the screenshot, not the copy, and say which you read.
-
-- *2026-10-04* — "Since you're moving the warning text outside of the split
-  tabs, make it respond to tab changes". The owner names the second-order
-  effect of their own ask. Read the last clause as the hint for the case you
-  would have missed, and test that case.

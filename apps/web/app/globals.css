@@ -822,6 +822,9 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px;
   padding: 5px 0 }
 .kv .k { color: var(--muted) }
+/* A row that names a person: the name is what the row is about, so it is as
+   loud as its amount. A label ("Entries") stays quiet. */
+.kv.who .k { color: var(--ink) }
 .kv .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 13px }
 .youtag { color: var(--muted); opacity: .7; font-weight: 400; font-size: .85em }
 .kv.yourbal .v { white-space: nowrap }

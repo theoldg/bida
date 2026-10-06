@@ -32,7 +32,7 @@ export function MemberBill({ name, total, lines, format, startOpen = false }: {
     // Nothing between people and nothing under the open one: it is marked by
     // its turned chevron alone (`globals.css`).
     <div className={`billgroup${open ? " on" : ""}`}>
-      <button type="button" className="kv" aria-expanded={open}
+      <button type="button" className="kv who" aria-expanded={open}
         onClick={() => setOpen(!open)}>
         <span className="k">
           {name}<Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />

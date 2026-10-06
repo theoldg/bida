@@ -50,9 +50,10 @@ export function Card({ children, style, className }: {
   return <div className={`card${className ? ` ${className}` : ""}`} style={style}>{children}</div>;
 }
 
+/** A person and their figure, the name as loud as the money (`.kv.who`). */
 export function KV({ k, v }: { k: ReactNode; v: ReactNode }) {
   return (
-    <div className="kv">
+    <div className="kv who">
       <span className="k">{k}</span><span className="v">{v}</span>
     </div>
   );
