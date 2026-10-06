@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-06* — "Sort the amount chips by value": no direction given.
+  Biggest first is how a bill is read; pick it, tie-break so the row can't
+  shuffle, and let a correction come if it's wrong.
+
 - *2026-10-06* — "Stick to the last person's row, not the bottom of the
   screen": a ten-minute-old choice reversed in a line. The owner refines by
   living with it; build the second version as readily as the first.
@@ -73,8 +77,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   ÷ dividers later: "Ship 2", then mid-push "change it to 3", the same
   hairline with a bigger, lighter mark. Picks move after they land. Read design-system.md's mock rule before drawing: hand-copied
   tokens drift.
-
-- *2026-10-04* — "In who-had-what, use the sticky dock and new error text
-  style". One sentence naming two patterns by their look: the owner saw them
-  land elsewhere and wants every screen alike. Port both whole, and retire
-  the old foot's CSS rather than leave it beside them.

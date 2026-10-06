@@ -116,7 +116,8 @@ API is reached with `fetch`.
   word or two: an income's payer is "Paid to", since "Received by" won't fit.
   Several payers are the payer picker's first row, "Multiple people ›"; with
   no amount it is greyed, "set the amount first" under it, rather than open a
-  screen that divides zero.
+  screen that divides zero. Once set, the form shows them as chips, largest
+  amount first.
 - **Save is never disabled, and nothing is red for being empty before a tap.**
   A grey button gives no reason, and an untouched field is not a mistake.
   Tapping Save while `!checkEntry(...).ready` refuses instead of saving: what is

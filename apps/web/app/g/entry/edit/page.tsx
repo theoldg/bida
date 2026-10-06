@@ -299,7 +299,11 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     });
   }
 
-  const coPayers = Object.entries(draft.payers ?? {}).filter(([, v]) => v > 0);
+  // Largest share first, so the card reads as who carried the bill; ties by id
+  // so the order doesn't shuffle as amounts are retyped.
+  const coPayers = Object.entries(draft.payers ?? {})
+    .filter(([, v]) => v > 0)
+    .sort(([a, x], [b, y]) => y - x || (a < b ? -1 : a > b ? 1 : 0));
 
   /**
    * May we leave? Leaving throws the draft away — there is nowhere for it to be
