@@ -314,9 +314,8 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
           <FitLine className="rmeta" options={transferMeta(settlement.note)} />
         </div>
         <div className="ramt">
-          <div className="big muted">
-            {money(settlement.baseAmountMinor, base)}
-          </div>
+          {/* Inked like an expense's: one that isn't yours fades as a row. */}
+          <div className="big">{money(settlement.baseAmountMinor, base)}</div>
           <div className={`sm share ${signClass(myNet)}`}>
             {myNet !== 0 ? money(myNet, base, true) : copy.group.notYours}
           </div>
