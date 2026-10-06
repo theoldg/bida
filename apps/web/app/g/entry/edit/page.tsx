@@ -218,7 +218,9 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   };
   /** The dock's lines over Save: what is wrong, then the tick that nothing is. */
   const docked = blocker !== null || splitProblem !== null || splitTick !== null;
-  const refusals = useRefusals(missing);
+  // Both of the form's first fields empty: the top shows both, where the
+  // nearest would leave the amount above the fold.
+  const refusals = useRefusals(missing, (aimed) => !!aimed.amount && !!aimed.title);
 
   /**
    * **The rate dialog opens for whatever currency the draft is *in*, never for

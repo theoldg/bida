@@ -447,6 +447,8 @@ one already wholly in view moves nothing, because a list that jumps under
 somebody looking at the answer is worse than one that sits still. The entry
 form does the same on its own scroll — with the keyboard up, Save and an empty
 amount are a screen apart — and blooms only what is still missing when it lands.
+With both the amount and the title empty it goes to the very top instead, so the
+two are seen together.
 The button itself never goes red — it is the
 control that was pressed, not what is missing — it only greys for the length of
 the flash and any travel before it, like Save. A number that

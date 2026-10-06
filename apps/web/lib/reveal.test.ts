@@ -1,8 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { nearestOutOfView, revealWhole, scrollTarget } from "./reveal";
+import { nearestOutOfView, revealWhole, scrollTarget, wholly } from "./reveal";
 
 const band = { top: 100, bottom: 400 };
 const row = (top: number, height = 40) => ({ top, bottom: top + height });
+
+describe("wholly", () => {
+  it("is all of a row or none of it", () => {
+    expect(wholly(row(100), band)).toBe(true);
+    expect(wholly(row(90), band)).toBe(false);
+    expect(wholly(row(370), band)).toBe(false);
+    expect(wholly(row(99.5), band)).toBe(true);
+  });
+  it("takes a row taller than the band once it fills it", () => {
+    expect(wholly(row(50, 500), band)).toBe(true);
+    expect(wholly(row(150, 500), band)).toBe(false);
+  });
+});
 
 describe("nearestOutOfView", () => {
   it("does not move when a row is in view", () => {

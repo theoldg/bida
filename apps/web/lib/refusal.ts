@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { seekTarget } from "./reveal";
+import { seekTarget, wholly } from "./reveal";
 import { glide } from "./seek";
 
 /**
@@ -70,9 +70,14 @@ export function useRefusal(): {
 /**
  * Each control carries `data-refuse="<key>"` inside the page's `.scroll`. A
  * flash out of view is a press that did nothing, so unless a refused control
- * is wholly in view the nearest is scrolled to first.
+ * is wholly in view the nearest is scrolled to first. Where `toTop` says so of
+ * what is refused, the scroll goes to the top instead, unless all of it is
+ * already in view — fields that head the form are read together.
  */
-export function useRefusals<K extends string>(missing: Record<K, boolean>): {
+export function useRefusals<K extends string>(
+  missing: Record<K, boolean>,
+  toTop?: (aimed: Partial<Record<K, boolean>>) => boolean,
+): {
   flash: (key: K) => string;
   onFlashEnd: (key: K) => (e: React.AnimationEvent) => void;
   spent: boolean;
@@ -122,10 +127,13 @@ export function useRefusals<K extends string>(missing: Record<K, boolean>): {
       // Less the scroll padding, which at the bottom is the keyboard.
       const view = box.getBoundingClientRect();
       const pad = getComputedStyle(box);
-      const target = seekTarget(box, targets, {
+      const band = {
         top: view.top + (parseFloat(pad.scrollPaddingTop) || 0),
         bottom: view.bottom - (parseFloat(pad.scrollPaddingBottom) || 0),
-      });
+      };
+      const top = toTop?.(aimed) && box.scrollTop > 0
+        && !targets.every((el) => wholly(el.getBoundingClientRect(), band));
+      const target = top ? 0 : seekTarget(box, targets, band);
       if (target === null) { bloom(aimed); return; }
       setSeeking(true);
       glide(box, target, () => {

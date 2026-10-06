@@ -27,17 +27,23 @@ interface ViewBand { top: number; bottom: number }
 const SLACK = 1;
 
 /**
+ * In view means *all* of it — a name with its amount cut off by the fold is a
+ * line you go looking for anyway. A row taller than the band counts once it
+ * fills it.
+ */
+export function wholly(row: RowBox, band: ViewBand): boolean {
+  const showing = Math.min(row.bottom, band.bottom) - Math.max(row.top, band.top);
+  return showing >= Math.min(row.bottom - row.top, band.bottom - band.top) - SLACK;
+}
+
+/**
  * What to add to `scrollTop` to reach the nearest out-of-view row (least
  * scrolling), or `null` when one is in view already. Negative scrolls up.
  */
 export function nearestOutOfView(rows: readonly RowBox[], band: ViewBand): number | null {
   let best: number | null = null;
   for (const row of rows) {
-    const showing = Math.min(row.bottom, band.bottom) - Math.max(row.top, band.top);
-    // In view means *all* of it — a name with its amount cut off by the fold
-    // is a line you go looking for anyway. A row taller than the band counts
-    // once it fills it.
-    if (showing >= Math.min(row.bottom - row.top, band.bottom - band.top) - SLACK) return null;
+    if (wholly(row, band)) return null;
     // Which way it lies is read off its top edge rather than off a gap: a row
     // half under the sticky header is above the fold, not below it.
     const delta = Math.round(row.top < band.top ? row.top - band.top : row.bottom - band.bottom);
