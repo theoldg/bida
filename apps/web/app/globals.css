@@ -1400,7 +1400,8 @@ dialog.scrim::backdrop { background: transparent }
 /* Picked, not typed: the whole line is the button. */
 .field .pick { display: flex; align-items: center; gap: 8px; text-align: left }
 .field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.field .pick .pchev { color: var(--muted); flex: none }
+/* Weighed against the date field's calendar, the browser's own and drawn in ink. */
+.field .pick .pchev { color: var(--ink); flex: none }
 
 /* ---- save refusal (lib/refusal.ts) ----
    The whole field blooms red: a red edge around grey writing gets missed. No

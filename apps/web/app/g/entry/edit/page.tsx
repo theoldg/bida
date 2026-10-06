@@ -526,7 +526,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                 <button type="button" id="paidby" className="pick"
                   aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
                   <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
-                  <Icon name="updown" size={13} className="spacer pchev" />
+                  <Icon name="updown" size={18} className="spacer pchev" />
                 </button>
               </div>
             )}

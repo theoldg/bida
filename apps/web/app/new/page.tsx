@@ -174,7 +174,7 @@ export default function NewGroupPage() {
               <button type="button" id="g-cur" className="pick" aria-label={copy.newGroup.currency}
                 onClick={() => setAsk("currency")}>
                 <span className="ptext">{currencyLabel(currency)}</span>
-                <Icon name="updown" size={13} className="spacer pchev" />
+                <Icon name="updown" size={18} className="spacer pchev" />
               </button>
             </div>
           </div>
