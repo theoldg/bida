@@ -209,7 +209,8 @@ export function PromptDialog({
  */
 export function ChoiceDialog<T extends string>({ title, options, value, onPick, onClose, lead }: {
   title: string;
-  options: { value: T; label: string; note?: string }[];
+  /** `you` marks the viewer's own row on the name's line, as the summary does. */
+  options: { value: T; label: string; note?: string; you?: boolean }[];
   value: T;
   onPick: (value: T) => void;
   onClose: () => void;
@@ -230,7 +231,9 @@ export function ChoiceDialog<T extends string>({ title, options, value, onPick, 
             aria-selected={o.value === value}
             onClick={() => { if (o.value !== value) onPick(o.value); onClose(); }}>
             <span className="rmain">
-              <span className="rtitle">{o.label}</span>
+              <span className="rtitle">
+                {o.label}{o.you ? <span className="youtag"> ({copy.entry.you})</span> : null}
+              </span>
               {o.note ? <span className="rmeta">{o.note}</span> : null}
             </span>
             {o.value === value ? <Icon name="check" size={15} /> : null}

@@ -967,7 +967,6 @@ export const copy = {
     swapSides: "Swap the two sides",
     sameSide: "Pick two different people.",
     otherSide: "the other side: picking swaps them",
-    you: "you",
   },
 
   /**

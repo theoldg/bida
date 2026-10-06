@@ -1053,8 +1053,6 @@ dialog.scrim::backdrop { background: transparent }
 .drow-pick .rtitle, .drow-pick .rmeta { display: block }
 .drow-pick .rmeta { white-space: normal; overflow: visible; line-height: 1.35 }
 .drow-pick[aria-selected="true"] .rtitle { font-weight: 700 }
-/* A door out of the list (`ChoiceDialog`'s `lead`): set off from the choices under it. */
-.drow-pick.lead + .drow-pick { border-top-color: var(--rule) }
 
 /* ---- row menu ----
    A menu, not a decision, so nothing dims. The invisible veil catches the closing tap. */

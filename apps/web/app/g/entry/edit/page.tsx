@@ -619,7 +619,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
           options={data.members.map((m) => ({
             value: m.id,
             label: m.name,
-            note: m.id === data.me ? copy.form.you : undefined,
+            you: m.id === data.me,
           }))}
           onPick={(paidBy) => patch({ paidBy, payers: null })}
           onClose={() => setAsk(null)}
