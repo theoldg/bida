@@ -252,20 +252,21 @@ function EntryScreen() {
             ? <ExpenseDetail expense={expense} kind={kind} group={group} data={data} />
             : <TransferDetail settlement={settlement!} data={data} />}
 
-          {/* The one way into this entry's history: who made it, or how often
-              it changed and who last. Quiet, since it is read more than it is
-              pressed. A deleted entry keeps it where Edit would be. */}
-          <div className="pad" style={{ paddingTop: 0 }}>
-            <Link href={route.history(groupId, entry.id, via)} className="entryhist">
-              <FitLine className="entryhistline" bodyClassName="entryhistbody" options={historyLine}
-                icon={<Icon name="clock" size={14} />} trail={<Icon name="chev" size={13} />} />
-            </Link>
-            {deleted ? null : (
-              <Link href={route.editEntry(groupId, entry.id, via)} className="btn btn-s">{copy.act.edit}</Link>
-            )}
-          </div>
-          <div style={{ height: 24 }} />
         </Scroll>
+        {/* Docked as the form's Save is (`.whodock`): under the card while the
+            entry fits, at the foot once a long split scrolls above it. The one
+            way into this entry's history — who made it, or how often it changed
+            and who last — quiet, since it is read more than it is pressed. A
+            deleted entry keeps it where Edit would be. */}
+        <div className="pad whodock" style={{ paddingTop: 2 }}>
+          <Link href={route.history(groupId, entry.id, via)} className="entryhist">
+            <FitLine className="entryhistline" bodyClassName="entryhistbody" options={historyLine}
+              icon={<Icon name="clock" size={14} />} trail={<Icon name="chev" size={13} />} />
+          </Link>
+          {deleted ? null : (
+            <Link href={route.editEntry(groupId, entry.id, via)} className="btn btn-s">{copy.act.edit}</Link>
+          )}
+        </div>
       </Body>
 
       {del.dialog}

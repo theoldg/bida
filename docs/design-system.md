@@ -65,8 +65,8 @@ a fill — losing that warning to consistency would be a worse trade. With hue
 spent, **size is the emphasis left**: a screen whose one act ends it gives that
 act the full width of the screen at `.btn-lg` — taller and heavier, still square
 and still flat. Where a list of people can outgrow the screen — "Which one are
-you?", `/g/payers`, the entry form, `/new`, `/quick`, People, the who-had-what
-grid — it is docked
+you?", `/g/payers`, the entry form and the entry it saves (History and Edit),
+`/new`, `/quick`, People, the who-had-what grid — it is docked
 (`.whodock`): beside the scroller rather than in it, which is only as tall as
 its rows, so the button sits right under them while they fit and at the foot
 of the screen once they don't. Outside the scroller, iOS's rubber-band never
@@ -374,7 +374,8 @@ there — "Created by Luke", or "Edited 3 times · last by Han" — then a chevr
 right after the words, in grey, not underlined; a press washes those
 words, as `.tlink`'s does, not the row. The name is the first
 thing to go when the line is short (`historyMeta`); "Created by" with no room
-for the name says "History". A deleted entry keeps it where Edit was.
+for the name says "History". Both ride the dock under the card; a deleted
+entry keeps the line where Edit was.
 
 ## An arrow points one way, and an income says so twice
 
