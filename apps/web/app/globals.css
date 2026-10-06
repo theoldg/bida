@@ -634,8 +634,11 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   border-radius: var(--r-s); border: 1px solid var(--rule); color: var(--ink-2); background: var(--card-2);
   font-weight: 500; white-space: nowrap }
 .chip.hl { border-color: var(--hl-edge); color: var(--hl-ink); background: var(--hl) }
-/* A size up: the only control on its bar besides the arrow. */
-.chip.kindchip { font-size: 12px; line-height: 1.3; padding: 4px 9px }
+/* A size up and inked: the only control on its bar besides the arrow, and the
+   one choice the rest of the form is shaped by. */
+.chip.kindchip { font-size: 12px; line-height: 1.3; padding: 4px 9px;
+  background: var(--brand); color: var(--brand-ink); border-color: var(--brand) }
+button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), var(--press-i)) }
 .chip.pend { border-color: var(--hl-edge); color: var(--hl-ink); background: transparent }
 .dot { width: 6px; height: 6px; border-radius: 1px; background: var(--ink-2); flex: none;
   display: inline-block }
@@ -1353,7 +1356,11 @@ dialog.scrim::backdrop { background: transparent }
   gap: 6px; margin-top: 3px; padding-right: 11px }
 .amtnote { font-size: 11px; color: var(--hl-ink); background: var(--hl);
   padding: 2px 7px; border-radius: 2px }
-button.amtnote:active { background: var(--hl-edge) }
+/* "@ 4.3731", the currency chip's twin. The figure leads; no rate is a red "?". */
+.ratechip { font-variant-numeric: tabular-nums }
+.ratechip .at { color: var(--muted) }
+.ratechip .bad { color: var(--debit); font-weight: 600 }
+.ratechip:is(.flash-a, .flash-b) :is(.at, .bad) { color: inherit }
 .row .ratecell + .rmeta:empty { display: none }
 
 /* ---- inputs ---- */
@@ -1402,8 +1409,8 @@ button.amtnote:active { background: var(--hl-edge) }
 .field.flash-a label, .field.flash-a input { animation: refuse-ink-a .6s ease-in-out }
 .field.flash-b label, .field.flash-b input { animation: refuse-ink-b .6s ease-in-out }
 /* Controls fill: 15px of glyph is too little ink for a colour change to carry it. */
-.btn-pair.flash-a, .btn.flash-a, .amtnote.flash-a, .iconbtn.flash-a { animation: refuse-fill-a .6s ease-in-out }
-.btn-pair.flash-b, .btn.flash-b, .amtnote.flash-b, .iconbtn.flash-b { animation: refuse-fill-b .6s ease-in-out }
+.btn-pair.flash-a, .btn.flash-a, .chip.flash-a, .iconbtn.flash-a { animation: refuse-fill-a .6s ease-in-out }
+.btn-pair.flash-b, .btn.flash-b, .chip.flash-b, .iconbtn.flash-b { animation: refuse-fill-b .6s ease-in-out }
 /* The split's sentence over Save: already a wash, so only a fill is a change. */
 .splitfoot.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .splitfoot.flash-b { animation: refuse-fill-b .6s ease-in-out }
@@ -1446,7 +1453,7 @@ button.amtnote:active { background: var(--hl-edge) }
   .amountfield.flash-a, .amountfield.flash-b,
   .field.flash-a, .field.flash-b,
   .btn-pair.flash-a, .btn-pair.flash-b, .btn.flash-a, .btn.flash-b,
-  .amtnote.flash-a, .amtnote.flash-b, .iconbtn.flash-a, .iconbtn.flash-b,
+  .chip.flash-a, .chip.flash-b, .iconbtn.flash-a, .iconbtn.flash-b,
   .splitfoot.flash-a, .splitfoot.flash-b,
   .amountfield.flash-a input, .amountfield.flash-b input,
   .field.flash-a input, .field.flash-b input,

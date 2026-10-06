@@ -16,7 +16,7 @@ import { SplitEditor } from "@/components/split-editor";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ChoiceDialog, ConfirmDialog } from "@/components/dialog";
 import { CurrencyPicker } from "@/components/currency-picker";
-import { RateDialog } from "@/components/rate-dialog";
+import { RateChip, RateDialog } from "@/components/rate-dialog";
 import { Icon } from "@/components/icons";
 import { TransferSides } from "@/components/transfer-sides";
 import {
@@ -408,7 +408,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
           right={reachable.length > 1 ? (
             <button type="button" className="chip kindchip" aria-label={copy.form.kindTitle}
               onClick={() => setAsk("kind")}>
-              {copy.entryKind.label[kind]} <Icon name="chev" size={11} />
+              {copy.entryKind.label[kind]}
             </button>
           ) : undefined}
         />
@@ -437,7 +437,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
               />
               <button type="button" className="chip" aria-label={copy.form.currency}
                 onClick={() => setAsk("currency")}>
-                {draft.currency} <Icon name="chev" size={10} />
+                {draft.currency}
               </button>
 
               {/* What the entry is worth in the group's currency. The rate belongs to
@@ -453,11 +453,11 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                       {rateOk ? money(baseMinor, base) : copy.none}
                     </span>
                   </button>
-                  <button type="button" data-refuse="rate" className={`amtnote${refusals.flash("rate")}`}
+                  <RateChip data-refuse="rate" className={refusals.flash("rate")}
                     onAnimationEnd={refusals.onFlashEnd("rate")}
-                    onClick={() => setAskRate(draft.currency)}>
-                    {copy.rates.setRate()}
-                  </button>
+                    rate={groupRate}
+                    aria-label={copy.rates.editTitle(draft.currency)}
+                    onClick={() => setAskRate(draft.currency)} />
                 </>
               ) : null}
 

@@ -887,7 +887,6 @@ export const copy = {
     edited: (n: number) => (n === 1 ? "Edited once" : `Edited ${n} times`),
     /** After the count: one edit was by somebody, several were last by one. */
     editedBy: (n: number, who: string) => (n === 1 ? `by ${who}` : `last by ${who}`),
-    rate: (rate: string) => `@ ${rate}`,
     /** The head's line under the figure: "paid by **Adaś**". */
     byLead: { expense: "paid by", income: "received by" } as Voiced<string>,
     /** Beside your own name, wherever the entry names you. */
@@ -943,7 +942,7 @@ export const copy = {
     kindTitle: "What kind of entry",
     amount: (currency: string) => `Amount in ${currency}`,
     currency: "Currency",
-    fromReceipt: "read from receipt",
+    fromReceipt: "from receipt",
     rateLabel: (from: string, to: string) => `Rate, ${from} to ${to}`,
     what: "What",
     whatPlaceholder: "Title",
@@ -1396,8 +1395,8 @@ export const copy = {
     /** Save is held until there is a number to save. */
     invalid: "That isn’t a rate.",
     failed: (why: string) => `Couldn’t save the rate: ${why}`,
-    /** The badge by the form's converted figure: the way to the rate, not the rate. */
-    setRate: () => `set rate`,
+    /** Before a rate on its chip, the way to the rate dialog: "@ 4.3731". */
+    at: "@",
     /** The row is a button that opens something other than its fields. */
     openFor: (code: string) => `Set the ${code} rate`,
   },

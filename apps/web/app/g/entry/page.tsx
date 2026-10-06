@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   groupCreateOf, isCoSponsored, isImported, ownCurrencySplit, payerList, receiptExtras, resolvePayers,
   resolveEntrySplit, resolveSplit, restoreEntryDrafts, sortOps, splitParticipants,
-  type CurrencyCode, type Expense, type Group, type Op, type Settlement,
+  type CurrencyCode, type Expense, type Group, type Op, type RateSource, type Settlement,
 } from "@bida/core";
 import { Card, Eyebrow, KV, signClass } from "@/components/bits";
 import { FitLine, FitTitle, useRefit } from "@/components/fit-line";
@@ -14,14 +14,15 @@ import { MemberBill } from "@/components/member-bill";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { Icon } from "@/components/icons";
 import { useDeleteEntry } from "@/components/delete-entry";
-import { restoreEntry } from "@/lib/db/commands";
+import { RateChip, RateDialog } from "@/components/rate-dialog";
+import { restoreEntry, setRate } from "@/lib/db/commands";
 import { db } from "@/lib/db/dexie";
 import { syncGroup } from "@/lib/db/sync";
 import { useLive } from "@/lib/db/live";
 import { effectSum, kindOf, type EntryKind } from "@/lib/entry-kind";
 import { fitIndex, styleOf, textWidth } from "@/lib/fit";
 import { copy } from "@/lib/copy";
-import { money, moneyParts, plural, rateText, whenLabel } from "@/lib/format";
+import { money, moneyParts, plural, whenLabel } from "@/lib/format";
 import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
 import { markReturn } from "@/lib/nav";
@@ -108,6 +109,7 @@ function EntryScreen() {
     then: () => { if (groupId) { markReturn(route.group(groupId)); router.replace(route.group(groupId)); } },
   });
   const [restoring, setRestoring] = useState(false);
+  const [askRate, setAskRate] = useState<CurrencyCode | null>(null);
   const arriving = useArriving(groupId, entryId, !!row);
 
   // "Edited 3 times" comes from the log itself: revisions are ops, not a
@@ -231,8 +233,14 @@ function EntryScreen() {
             <div className={`entryfig${expense ? " ruled" : ""}`}>
               <EntryFigure minor={entry.baseAmountMinor} currency={group.baseCurrency} />
               {foreign ? (
-                <EntrySpent minor={entry.amountMinor} currency={entry.currency}
-                  rate={copy.entry.rate(rateText(entry.rateToBase))} />
+                <EntrySpent minor={entry.amountMinor} currency={entry.currency}>
+                  {/* The group's rate, so the editor's door to it: a deleted
+                      entry is drawn at the rate it was saved at, which no
+                      dialog edits. */}
+                  <RateChip rate={entry.rateToBase} disabled={deleted}
+                    aria-label={copy.rates.editTitle(entry.currency)}
+                    onClick={() => setAskRate(entry.currency)} />
+                </EntrySpent>
               ) : null}
             </div>
             {/* Who, under the rule. A transfer's card is nothing but who, so it
@@ -261,6 +269,18 @@ function EntryScreen() {
       </Body>
 
       {del.dialog}
+      {askRate !== null ? (
+        <RateDialog
+          currency={askRate}
+          base={group.baseCurrency}
+          current={data.rates[askRate]}
+          entryCount={data.currencies.find((c) => c.currency === askRate)?.entryCount ?? 0}
+          onSave={async (rate: string, source: RateSource, asOf: number) => {
+            if (data.me) await setRate(groupId, data.me, askRate, rate, source, asOf);
+          }}
+          onClose={() => setAskRate(null)}
+        />
+      ) : null}
     </Screen>
   );
 }
@@ -290,7 +310,9 @@ const isSymbol = (currency: string) => [...currency].length === 1;
  * The sum as spent, and the rate that made it the figure above: one run of
  * text from the left margin, the code on whichever side the locale puts it.
  */
-function EntrySpent({ minor, currency, rate }: { minor: number; currency: CurrencyCode; rate: string }) {
+function EntrySpent({ minor, currency, children }: {
+  minor: number; currency: CurrencyCode; children: ReactNode;
+}) {
   const p = moneyParts(minor, currency);
   const code = <span className={isSymbol(p.currency) ? "num sym" : "num"}>{p.currency}</span>;
   return (
@@ -298,7 +320,7 @@ function EntrySpent({ minor, currency, rate }: { minor: number; currency: Curren
       {p.currencyFirst ? code : null}
       <span className="num">{p.whole}{p.fraction}</span>
       {p.currencyFirst ? null : code}
-      <span className="chip">{rate}</span>
+      {children}
     </span>
   );
 }

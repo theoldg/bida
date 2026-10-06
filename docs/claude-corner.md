@@ -29,6 +29,10 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   beside it. A cent the owner can see is a bug, not rounding: find which
   tap turned one printed line into three, and fix the arithmetic there.
 
+- *2026-10-06* — I argued against inking a chip; they picked it anyway, with
+  three other letters, and in the same breath asked for the next round. An
+  argument is a footnote on the mock, not a veto: build the pick, then go on.
+
 - *2026-10-06* — "Maybe a checkmark next to unspecified rows", typed into
   the middle of my survey of the code. The owner designs while you read: stop
   and fold the hint in, and the mocks they then see are already theirs. Then
@@ -73,8 +77,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   tabs, make it respond to tab changes". The owner names the second-order
   effect of their own ask. Read the last clause as the hint for the case you
   would have missed, and test that case.
-
-- *2026-10-04* — A screenshot caught mid-flash, then "with the red pips
-  in the cells". The owner cut the tiles and kept the dots: a second round
-  of variants on one pick beats a wider first round. Keep the pick on the
-  page for scale.

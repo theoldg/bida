@@ -352,7 +352,9 @@ puts it. A sum too long for the column shrinks to fit it (a container-query
 size off the whole part's length, never under 28px) rather than wrapping
 mid-number. The sum as spent, when it was spent in another currency, is a
 13px muted line under it, not beside it — beside, it read as a third part of
-the same figure — with the rate chip that made it the figure above at its end.
+the same figure — with the rate chip that made it the figure above at its end — a button, opening
+the group's rate dialog as the entry form's twin chip does (`RateChip`: a quiet
+"@", the figure at one digit fewer than the dialog edits, a red "?" for no rate).
 It starts flush at the left margin, one run of text: sharing the figure's
 columns so the two sets of digits lined up broke on the edge cases (a symbol
 over a code, a code on the trailing side), and the margin is an edge every
@@ -444,9 +446,8 @@ control that was pressed, not what is missing — it only greys for the length o
 the flash and any travel before it, like Save. A number that
 is not on the form at all blooms the way *to* it and loses its sentence for the
 same reason: a foreign entry whose currency the group has no rate for points at
-its "set rate" badge. **A control fills whole**,
-ground and border together, rather than colouring its label: that badge, 11px
-on a wash, the two ink blocks — the who-had-what door and the scan pair — and
+its rate chip. **A control fills whole**,
+ground and border together, rather than colouring its label: that chip, the two ink blocks — the who-had-what door and the scan pair — and
 a field: a red line around unchanged grey writing is the smallest signal in the
 app for the biggest thing it has to say. A label alone is smaller still, and a `--brand` or `--rule-soft`
 frame left around a red block reads as half a refusal. The

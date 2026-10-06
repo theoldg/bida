@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ButtonHTMLAttributes } from "react";
 import {
   formatRate, invertRate, isValidRate, sanitizeRate,
   RATE_DIGITS, RATE_SHOWN_DIGITS, type Rate, type RateSource,
@@ -9,7 +9,7 @@ import { Dialog } from "./dialog";
 import { GroupedInput } from "./amount-input";
 import { copy } from "../lib/copy";
 import { fetchRate, RateOfflineError } from "../lib/rates";
-import { errorText, plural } from "../lib/format";
+import { errorText, plural, rateText } from "../lib/format";
 
 /**
  * What one currency is worth to this group, edited from either end — "1 EUR =
@@ -204,5 +204,25 @@ function RateSide({ code, unit, value, onChange }: {
         onChange={onChange} />
       <span className="rateunit">{unit}</span>
     </label>
+  );
+}
+
+/** A chip is read at a glance, so one figure fewer than the dialog edits. */
+export const RATE_CHIP_DIGITS = RATE_SHOWN_DIGITS - 1;
+
+/**
+ * "@ 4.3731", the way to `RateDialog` wherever a converted figure is shown: the
+ * entry form under its amount, the entry's summary under its figure. The "@"
+ * is quiet so the figure leads; no rate yet is a red "?", which the form's
+ * refusal blooms.
+ */
+export function RateChip({ rate, className, ...rest }: {
+  rate: Rate | undefined;
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type" | "children">) {
+  return (
+    <button type="button" className={`chip ratechip${className ?? ""}`} {...rest}>
+      <span className="at">{copy.rates.at}</span>{" "}
+      {rate !== undefined ? rateText(rate, RATE_CHIP_DIGITS) : <span className="bad">?</span>}
+    </button>
   );
 }

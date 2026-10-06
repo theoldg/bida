@@ -40,7 +40,7 @@ to bank 500 MAD as €500.
 
 **A rate is edited in whichever direction you think in** — 1 EUR = 4.5 PLN or
 1 PLN = 0.22 EUR — two fields for one number, each derived from the other.
-Rates are exact decimal strings, stored to 12 significant digits and shown to 6,
+Rates are exact decimal strings, stored to 12 significant digits and shown to 6 (5 on a chip),
 which is what makes the round trip through the inverse land back on what you
 typed.
 
