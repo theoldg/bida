@@ -20,11 +20,6 @@ export interface Row {
   now?: string;
   /** A bill line, not a person: drawn quieter, so the two lists read apart. */
   item?: boolean;
-  /**
-   * `was` went and `now` came, side by side — people on a bill line — rather
-   * than one value replacing another, so no arrow between them.
-   */
-  set?: boolean;
 }
 
 /** How to name people, as of the revision. */
@@ -45,16 +40,17 @@ export function byName(ids: Iterable<Id>, people: People): Id[] {
  * month's "Everyone" into "Everyone but Zoe". Below three people the names are
  * as short as either.
  */
-export function peopleText(ids: readonly Id[], people: People): string {
+export function peopleText(ids: readonly Id[], people: People, inPhrase = false): string {
   const said = copy.history;
   const set = new Set(ids);
   const roster = new Set(people.roster);
   const within = roster.size >= 3 && ids.every((id) => roster.has(id));
-  if (within && set.size === roster.size) return said.everyone;
+  if (within && set.size === roster.size) return inPhrase ? said.everyoneIn : said.everyone;
   const missing = people.roster.filter((id) => !set.has(id));
   // "Everyone but" only where it is the shorter way round.
   if (within && set.size >= 3 && missing.length <= 2 && missing.length < set.size) {
-    return said.everyoneBut(byName(missing, people).map(people.nameOf).join(", "));
+    const left = byName(missing, people).map(people.nameOf).join(", ");
+    return inPhrase ? said.everyoneButIn(left) : said.everyoneBut(left);
   }
   return byName(set, people).map(people.nameOf).join(", ");
 }
@@ -88,28 +84,6 @@ export function moves(
   return [...groups.values()]
     .sort((a, b) => rank(a.mark) - rank(b.mark))
     .map(({ ids, ...row }) => ({ name: peopleText(ids, people), ...row }));
-}
-
-/**
- * Everybody's figure on one line, the people on the same figure together and
- * the biggest first: "Chewie 24.00 · Han, Luke 20.00 · Ben 17.00". A figure
- * everybody shares is said once: "Everyone · 20.25 each".
- */
-export function tally(figures: ReadonlyMap<Id, number>, show: (minor: number) => string, people: People): string {
-  const groups = new Map<number, Id[]>();
-  for (const [id, minor] of figures) {
-    const group = groups.get(minor);
-    if (group) group.push(id);
-    else groups.set(minor, [id]);
-  }
-  const [only, more] = [...groups];
-  if (only && !more && only[1].length > 1) {
-    return copy.history.each(peopleText(only[1], people), show(only[0]));
-  }
-  return [...groups]
-    .sort(([a], [b]) => b - a)
-    .map(([minor, ids]) => copy.history.shareOf(peopleText(ids, people), show(minor)))
-    .join(" · ");
 }
 
 /** The most common figure: an even split's cents land on a few people, which isn't news. */
@@ -177,29 +151,56 @@ export function chargeRow(name: string, was: string | null, now: string | null):
 }
 
 /**
- * Who had a line, either side, as a row — "Jawa juice ~~Luke~~ + Ben" — or
- * null where nobody moved. A line whose portions went to different people
- * reads portion by portion, since a set can't say who had which.
+ * Who had a line, either side, as a sentence of its own — "Blue milk: Ben →
+ * Chewie", "Jawa juice: Chewie joined Han, Luke" — or null where nobody moved.
+ * A struck name beside a "+ name" left the reader to work out what happened;
+ * this says it. A line whose portions went to different people reads portion
+ * by portion, since a set can't say who had which.
  */
 export function eatersRow(
   name: string, was: readonly (readonly Id[])[], now: readonly (readonly Id[])[], people: People,
 ): Row | null {
+  const said = copy.history;
   const key = (rows: readonly (readonly Id[])[]) => JSON.stringify(rows.map((r) => [...r].sort()));
   if (key(was) === key(now)) return null;
-  const names = (ids: readonly Id[]) => byName(ids, people).map(people.nameOf).join(", ") || copy.history.nobody;
+  const names = (ids: readonly Id[]) => byName(ids, people).map(people.nameOf).join(", ") || said.nobody;
+  const line = (what: string): Row => ({ name: said.onLine(name, what), item: true });
   if (was.length > 1 || now.length > 1) {
     const each = (rows: readonly (readonly Id[])[]) => rows.map(names).join(" / ");
-    return { name, was: each(was), now: each(now), item: true };
+    return line(said.handedOver(each(was), each(now)));
   }
   const before = new Set(was[0] ?? []);
   const after = new Set(now[0] ?? []);
   const gone = [...before].filter((id) => !after.has(id));
   const came = [...after].filter((id) => !before.has(id));
-  return {
-    name,
-    was: gone.length ? names(gone) : undefined,
-    now: came.length ? copy.history.joinedIn(names(came)) : after.size ? undefined : copy.history.nobody,
-    item: true,
-    set: true,
-  };
+  const stayed = [...after].filter((id) => before.has(id));
+  // Somebody joining people who kept it, or leaving it to them, is said so;
+  // anything else is who had it, then who has it.
+  if (stayed.length && !gone.length) return line(said.joinedLine(names(came), names(stayed)));
+  if (stayed.length && !came.length) return line(said.leftLine(names(gone)));
+  return line(said.handedOver(names([...before]), names([...after])));
+}
+
+/**
+ * What a change of who had what did to each person's share, on one line, as
+ * signed amounts: "Chewie +17.00 · Ben −9.00 · Han, Luke −4.00". The lines
+ * above say why; this says to whom. Gains, then losses, each biggest first;
+ * nobody unmoved.
+ */
+export function netLine(
+  was: ReadonlyMap<Id, number>, now: ReadonlyMap<Id, number>, show: (minor: number) => string, people: People,
+): string {
+  const groups = new Map<number, Id[]>();
+  for (const id of new Set([...was.keys(), ...now.keys()])) {
+    const delta = (now.get(id) ?? 0) - (was.get(id) ?? 0);
+    if (delta === 0) continue;
+    const group = groups.get(delta);
+    if (group) group.push(id);
+    else groups.set(delta, [id]);
+  }
+  return [...groups]
+    .sort(([a], [b]) => Number(b > 0) - Number(a > 0) || Math.abs(b) - Math.abs(a))
+    .map(([delta, ids]) => copy.history.shareOf(peopleText(ids, people),
+      `${delta > 0 ? "+" : "−"}${show(Math.abs(delta))}`))
+    .join(" · ");
 }

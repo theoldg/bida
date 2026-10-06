@@ -52,7 +52,7 @@ const ROWS_SHOWN = 5;
 
 /**
  * What moved, a row each: "+ Chewie 20.00", "Everyone but Cy 25.00 → 33.33",
- * "Salad ~~Theo~~ + Marie". The mark carries in-or-out, so the figures need no
+ * "Blue milk: Ben → Chewie". The mark carries in-or-out, so the figures need no
  * words; a bill line is set quieter than a person.
  */
 function Rows({ rows }: { rows: Row[] }) {
@@ -61,7 +61,7 @@ function Rows({ rows }: { rows: Row[] }) {
       {r.mark ? <span className={r.mark === "+" ? "mk in" : "mk out"}>{r.mark}</span> : null}
       <span className="nm">{r.name}</span>
       {r.was !== undefined ? <span className="was">{r.was}</span> : null}
-      {r.was !== undefined && r.now !== undefined && !r.mark && !r.set ? <span className="to" aria-hidden>→</span> : null}
+      {r.was !== undefined && r.now !== undefined && !r.mark ? <span className="to" aria-hidden>→</span> : null}
       {r.now !== undefined ? <span className="now2">{r.now}</span> : null}
     </div>
   );

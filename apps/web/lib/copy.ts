@@ -1286,19 +1286,25 @@ export const copy = {
     splitAs: (who: string, mode: string) => `${who} split it ${mode}`,
     /** People and what they are down for, on a line: "Han, Luke 20.00". */
     shareOf: (name: string, value: string) => `${name} ${value}`,
-    /** Everybody down for the same: "Everyone · 20.25 each". */
-    each: (names: string, value: string) => `${names} · ${value} each`,
     /** The whole group as it was, said once rather than name by name. */
     everyone: "Everyone",
     everyoneBut: (names: string) => `Everyone but ${names}`,
+    /** The same, inside a phrase: "€30.00 · for everyone but Cy". */
+    everyoneIn: "everyone",
+    everyoneButIn: (names: string) => `everyone but ${names}`,
     /** A printed bill's line with a count: "2× 24.00". */
     quantity: (n: number, amount: string) => `${n}× ${amount}`,
-    /** People who took a share of a bill line, on its row. */
-    joinedIn: (names: string) => `+ ${names}`,
+    /** A bill line, and what happened to it: "Blue milk: Ben → Chewie". */
+    onLine: (line: string, what: string) => `${line}: ${what}`,
+    handedOver: (was: string, now: string) => `${was} → ${now}`,
+    joinedLine: (came: string, stayed: string) => `${came} joined ${stayed}`,
+    leftLine: (gone: string) => `${gone} dropped out`,
     /** A bill line left with nobody on it. */
     nobody: "nobody",
     /** The grid's people marked present, on a row of their own. */
     atTheTable: "At the table",
+    /** A new entry: its amount, and who it was spent on. */
+    forPeople: (amount: string, names: string) => `${amount} · for ${names}`,
     /** Only worth a line because the entry screen prints the mode. */
     rewroteSplit: (who: string) => `${who} changed how the split is written`,
     addedReceipt: (who: string) => `${who} added a receipt`,

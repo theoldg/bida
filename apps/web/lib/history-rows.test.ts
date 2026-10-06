@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { billRows, eatersRow, moves, peopleText, tally, typical, type People } from "./history-rows";
+import { billRows, eatersRow, moves, netLine, peopleText, typical, type People } from "./history-rows";
 
 const names: Record<string, string> = { a: "Ana", b: "Bo", c: "Cy", d: "Dee", e: "Eve", z: "Zoe" };
 const people = (roster: string[]): People => ({ nameOf: (id) => names[id] ?? "someone", roster });
@@ -46,18 +46,6 @@ describe("moves", () => {
   });
 });
 
-describe("tally", () => {
-  const show = (minor: number) => (minor / 100).toFixed(2);
-  it("says a shared figure once, and otherwise the biggest first, alike together", () => {
-    const four = people(["a", "b", "c", "d"]);
-    expect(tally(new Map([["a", 500], ["b", 500], ["c", 500], ["d", 500]]), show, four))
-      .toBe("Everyone · 5.00 each");
-    expect(tally(new Map([["a", 2000], ["b", 1700], ["c", 2400], ["d", 2000]]), show, four))
-      .toBe("Cy 24.00 · Ana, Dee 20.00 · Bo 17.00");
-    expect(tally(new Map([["a", 900]]), show, four)).toBe("Ana 9.00");
-  });
-});
-
 describe("typical", () => {
   it("is the figure most people have, so an even split's stray cent is no news", () => {
     expect(typical([3334, 3333, 3333])).toBe(3333);
@@ -93,18 +81,27 @@ describe("billRows", () => {
 
 describe("eatersRow", () => {
   const p = people(["a", "b", "c"]);
-  it("says who left a line and who joined it, with no arrow between", () => {
-    expect(eatersRow("Salad", [["a"]], [["b", "c"]], p))
-      .toEqual({ name: "Salad", was: "Ana", now: "+ Bo, Cy", item: true, set: true });
-    expect(eatersRow("Salad", [["a", "b"]], [["a"]], p))
-      .toEqual({ name: "Salad", was: "Bo", now: undefined, item: true, set: true });
-    expect(eatersRow("Salad", [["a"]], [[]], p))
-      .toEqual({ name: "Salad", was: "Ana", now: "nobody", item: true, set: true });
+  const said = (was: string[][], now: string[][]) => eatersRow("Salad", was, now, p)?.name;
+  it("says what happened to a line in words", () => {
+    expect(said([["a"]], [["b"]])).toBe("Salad: Ana → Bo");
+    expect(said([["a"]], [["a", "b"]])).toBe("Salad: Bo joined Ana");
+    expect(said([["a", "b", "c"]], [["a", "b"]])).toBe("Salad: Cy dropped out");
+    expect(said([["a"]], [[]])).toBe("Salad: Ana → nobody");
     expect(eatersRow("Salad", [["b", "a"]], [["a", "b"]], p)).toBeNull();
   });
 
   it("reads a line split into portions portion by portion", () => {
-    expect(eatersRow("Pizza", [["a"]], [["a"], ["b"]], p))
-      .toEqual({ name: "Pizza", was: "Ana", now: "Ana / Bo", item: true });
+    expect(eatersRow("Pizza", [["a"]], [["a"], ["b"]], p)?.name).toBe("Pizza: Ana → Ana / Bo");
+  });
+});
+
+describe("netLine", () => {
+  const show = (minor: number) => (minor / 100).toFixed(2);
+  // The money a who-had-what change moved: who owes more, who less, alike together.
+  it("signs each person's change, biggest gain first, nobody unmoved", () => {
+    const was = new Map([["a", 1700], ["b", 2400], ["c", 2000], ["d", 2000], ["e", 500]]);
+    const now = new Map([["a", 800], ["b", 4100], ["c", 1600], ["d", 1600], ["e", 500]]);
+    expect(netLine(was, now, show, people(["a", "b", "c", "d", "e"])))
+      .toBe("Bo +17.00 · Ana −9.00 · Cy, Dee −4.00");
   });
 });

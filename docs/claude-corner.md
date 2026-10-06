@@ -25,10 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
-- *2026-10-06* — "Go wild" on history's "by items" and long lists. Wild
-  here meant reading more, not drawing more: what each person owes, who left,
-  one row for everyone who moved alike. Drive a real edit and look; the unit
-  tests can't see a row read wrong.
+- *2026-10-06* — "Go wild" on history, then "this doesn't make any sense"
+  over my rows of struck names, and "too much detail". Wild meant clearer,
+  not denser. Three text mocks per question got two picks in one reply: when
+  a first pass misses, mock before rebuilding.
 
 - *2026-10-06* — "The group history link should have its icon aligned with
   the timeline points". One element named, one alignment asked: measure the

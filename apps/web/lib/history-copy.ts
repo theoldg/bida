@@ -6,7 +6,7 @@ import { copy } from "./copy";
 import { printedBill } from "./scan/items";
 import { bare, dayLabel, money, plural, rateText } from "./format";
 import {
-  billRows, chargeRow, eatersRow, moves, tally, typical, type BillLine, type People, type Row,
+  billRows, chargeRow, eatersRow, moves, netLine, peopleText, typical, type BillLine, type People, type Row,
 } from "./history-rows";
 
 /**
@@ -213,28 +213,16 @@ export function describe(
     const noun = copy.entryKind.label[kind].toLowerCase();
 
     if (rev.isCreate) {
-      // The amount, then who paid and what each owes — the questions the
-      // entry's own screen answers, so the log needn't send anyone there.
+      // The amount and who it was for — "for everyone", "for Ben, Luke". Who
+      // paid and each share are a tap away, on the entry itself.
       const amt = cash(field("baseAmountMinor")?.after);
-      const also: Detail[] = [];
-      const own = ownCurrency(rev.after);
-      const payers = coPayers(rev.after);
-      also.push({
-        label: copy.entryKind.payer[kind],
-        now: payers ? tally(new Map(payers), (v) => fig(v, own), people) : nameOf(rev.after["paidBy"]),
-      });
-      const mode = modeOf(rev.after);
-      const shares = sharesOf(rev.after);
-      if (mode && shares?.size) {
-        also.push({
-          label: said.field.splitAs(copy.split.mode[mode].toLowerCase()),
-          now: tally(shares, (v) => fig(v, currency), people),
-        });
-      }
+      const spec = rev.after["split"] as SplitSpec | null | undefined;
+      let ids: Id[] = [];
+      try { ids = spec && typeof spec === "object" ? splitParticipants(spec) : []; } catch { /* just the amount */ }
       return {
         what: rev.imported ? said.importedEntry(who, noun, from) : said.createdEntry(who, noun),
-        diff: amt !== undefined ? { now: amt } : undefined,
-        also,
+        diff: amt === undefined ? undefined
+          : { now: ids.length ? said.forPeople(amt, peopleText(ids, people, true)) : amt },
       };
     }
     if (rev.isDelete) return { what: said.deletedEntry(who, noun) };
@@ -357,11 +345,13 @@ export function describe(
         return row ? [row] : [];
       });
       const table = eatersRow(said.atTheTable, [list(rev.before)], [list(rev.after)], people);
-      if (table) rows.push({ ...table, item: false });
+      if (table) rows.push(table);
       // What the grid moved is what the split moved: one sentence, the lines
-      // that changed hands and then the money that followed them.
+      // that changed hands, then one line of who now owes more and who less.
       if (sharesPart) {
-        rows.push(...sharesPart.rows ?? []);
+        const [was, now] = [sharesOf(rev.before), sharesOf(rev.after)];
+        const net = was && now ? netLine(was, now, (v) => fig(v, currency), people) : "";
+        if (net) rows.push({ name: net });
         parts.splice(parts.indexOf(sharesPart), 1);
       }
       parts.push({ what: said.changedWhoHadWhat(who), label: named.whoHadWhat, rows });

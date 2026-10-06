@@ -371,9 +371,11 @@ mode ("Evenly" → "By items") as a last resort. The **payer** side is the same
 rows over what each put in, in the entry's own currency; one payer for another
 is just the two names. A **bill** reads line by line, paired by what a line
 says, so a reorder is no news and a reprice is a move; a **who-had-what** change
-names the lines that changed hands and then the shares that followed them. A
-**new entry** says the amount, who paid and what each owes ("Chewie 24.00 ·
-Han, Luke 20.00 · Ben 17.00", "Everyone · 20.25 each").
+says in words what happened to each line ("Blue milk: Ben → Chewie", "Jawa
+juice: Chewie joined Han, Luke"), then one line of who now owes more and who
+less ("Chewie +17.00 · Ben −9.00 · Han, Luke −4.00"). A **new entry** is one
+line, the amount and who it was for ("CRD 81.00 · for everyone"): who paid and
+each share are a tap away, and three lines per entry drowned the feed.
 
 **"Everyone" is about the group as it was.** Each revision carries its
 `roster` — who was in the group as its op landed (`rosterOf`) — so a later

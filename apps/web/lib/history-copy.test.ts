@@ -154,7 +154,7 @@ suite("describe", () => {
     expect(latest!.said).toBe("Theo changed who’s involved");
   });
 
-  it("says what each owes on a new entry, not just how it was split", async () => {
+  it("says who a new entry was for, and no more", async () => {
     const { groupId, memberId: theo } = await createGroup({
       name: "Siurek", baseCurrency: "EUR", myName: "Theo",
     });
@@ -170,11 +170,8 @@ suite("describe", () => {
     });
 
     const [latest] = await described(groupId);
-    expect(latest!.diff!.now).toBe("€30.00");
-    expect(latest!.also).toEqual([
-      { label: "Paid by", now: "Theo" },
-      { label: "Split as parts", now: "Theo 20.00 · Marie 10.00" },
-    ]);
+    expect(latest!.diff!.now).toBe("€30.00 · for Marie, Theo");
+    expect(latest!.also).toBeUndefined();
   });
 
   it("reads both lines of a split in one order, so the pair can be compared", async () => {
@@ -244,11 +241,8 @@ suite("describe", () => {
     });
 
     const [taxi, , dinner] = await described(groupId);
-    expect(dinner!.also).toEqual([
-      { label: "Paid by", now: "Ana 60.00 · Bruno 40.00" },
-      { label: "Split evenly", now: "Everyone · 25.00 each" },
-    ]);
-    expect(taxi!.also).toContainEqual({ label: "Split evenly", now: "Everyone but Zoe · 22.50 each" });
+    expect(dinner!.diff!.now).toBe("€100.00 · for everyone");
+    expect(taxi!.diff!.now).toBe("€90.00 · for everyone but Zoe");
   });
 
   it("reads the payers in that same order", async () => {
@@ -597,9 +591,8 @@ suite("describe", () => {
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo changed who had what");
     expect(latest!.rows).toEqual([
-      { name: "Salad", was: "Theo", now: "+ Marie", item: true, set: true },
-      { name: "Marie", was: "30.00", now: "70.00" },
-      { name: "Theo", was: "70.00", now: "30.00" },
+      { name: "Salad: Theo → Marie", item: true },
+      { name: "Marie +40.00 · Theo −40.00" },
     ]);
   });
 
