@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-06* — "The group history link should have its icon aligned with
+  the timeline points". One element named, one alignment asked: measure the
+  rail, put the icon on it, and let the words fall into the column too.
+
 - *2026-10-06* — "Sort the amount chips by value": no direction given.
   Biggest first is how a bill is read; pick it, tie-break so the row can't
   shuffle, and let a correction come if it's wrong.
@@ -72,8 +76,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   dark side by side. A typed glyph centres on its font's box, not its bar:
   when the owner says perfectly, draw it. Then square dots, no
   line, "Ship D… actually E" off six variants: marks pare down.
-
-- *2026-10-05* — "more space… uninspired… or a division symbol?", fifteen
-  ÷ dividers later: "Ship 2", then mid-push "change it to 3", the same
-  hairline with a bigger, lighter mark. Picks move after they land. Read design-system.md's mock rule before drawing: hand-copied
-  tokens drift.

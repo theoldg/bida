@@ -627,7 +627,10 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .newedits.on .neweditsglyph line:first-child { transform: rotate(45deg) }
 .newedits.on .neweditsglyph line:last-child { transform: rotate(-45deg) }
 .tl.neweditslist { margin: 0; padding: 14px 16px 0 42px; border-bottom: 1px solid var(--rule-soft) }
-.tlink.entrygroup { margin: 2px 0 0 20px }
+/* Read as one more point: the clock centred on the dots' rail (9px in, less
+   the 6px press padding), the words in the revisions' column at 26px. */
+.tlink.entrygroup { margin: 2px 0 0 -3.5px; gap: 10.5px }
+.tlink.entrygroup svg:last-child { margin-left: -7.5px }
 
 /* ---- chips ---- */
 .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; padding: 2.5px 7px;
