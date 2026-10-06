@@ -178,6 +178,8 @@ API is reached with `fetch`.
   `/g/payers` a tap on a name is not a focus either: it clears a figure, hands an
   empty row what is left, and types only when the column is already full or
   over (`tapAmount`, marked by `TapMark`), since a payer has no rest to share.
+  The tabs and the head box stick to the top of `.scroll` as one block
+  (`.splittop`), so a long list keeps both in reach.
   **The head box toggles the whole list** (`toggleEveryone`), in every tab but
   Items and only from three people up: everyone in takes everyone out, else it
   brings in whoever is out and leaves the rest — a 2 in parts stays 2, a typed

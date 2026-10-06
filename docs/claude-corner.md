@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-06* — A phone screenshot and one line: make the tabs stick. The
+  picture is the spec; check it in a viewport short enough to scroll, not in
+  the demo's four rows at full height, where nothing ever sticks.
+
 - *2026-10-06* — "Make the names louder to match the amounts on expense
   summary screens". Plural screens, one shared row: the quick split's answer
   too. Lift the people, not every `.kv` — a label beside a count stays quiet.
@@ -72,7 +76,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the old foot's CSS rather than leave it beside them.
 
 - *2026-10-04* — "Show me a few options first", then "Ship A and 1". A mock with the guide line drawn and a star on the pick got a two-letter answer. Mid-mock they added the 2-payer card: every variant of a row covers its other states too.
-
-- *2026-10-04* — "move the X of X accounted for to the same location". The
-  words were the payers screen's; the line meant was the split's "allocated"
-  tick. Match an ask to the screenshot, not the copy, and say which you read.

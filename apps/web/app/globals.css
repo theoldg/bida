@@ -1247,12 +1247,16 @@ dialog.scrim::backdrop { background: transparent }
   left: 5px; width: 3px; height: 3px; background: currentColor }
 .splitrule > span::before { top: 0 }
 .splitrule > span::after { bottom: 0 }
+/* `clip`, not `hidden`: a `hidden` box is a scroller, and `.splittop` would
+   stick to it instead of to `.scroll`. */
 .splitbox { background: var(--card-2); border: 1px solid var(--rule-soft);
-  border-radius: var(--r-s); overflow: hidden }
+  border-radius: var(--r-s); overflow: hidden; overflow: clip }
+/* Over the rows, whose `.mebar` and washes are positioned. */
+.splittop { position: sticky; top: 0; z-index: 2; background: var(--card-2) }
 .splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft) }
 .splitlist { padding: 0; overflow: hidden }
 /* The soft rule is invisible against a first row's wash. */
-.splitbox:has(.splitlist > .splitrow.inrow:first-child) .seg {
+.splitbox:not(:has(.splithead)):has(.splitlist > .splitrow.inrow:first-child) .seg {
   border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent);
 }
 .splitrow { display: flex; align-items: center; gap: 10px; padding: 7px 12px;
