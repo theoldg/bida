@@ -408,7 +408,12 @@ there are none left: `ChoiceDialog` picks from a short list in the app's own
 rows — a name, a check on the current one, and a `note` saying what an
 unobvious pick does; your own row says "(you)" on the name's line, so it is no
 taller than the others. A `lead` row may head it, with a chevron: not
-a choice but a door elsewhere, as "Multiple people ›" heads the payer picker. A date is the exception, being a calendar and not a list
+a choice but a door elsewhere, as "Multiple people ›" heads the payer picker.
+**Two marks say where a tap goes:** › goes to another screen, which Back
+returns from; ⇕ (`i-updown`) opens a picker over this one — a `.pick` field
+(Paid by, a new group's currency) and the entry form's kind chip. Not ⌄: a
+fold's chevron already turns down when it opens in place. The other chips
+carry no mark, since a chip that is a button always opens a dialog. A date is the exception, being a calendar and not a list
 ([ADR-0008](decisions/0008-hand-rolled-interface.md)). A *failure* is not
 a dialog at all — there is nothing to decide — so it is said under whatever was
 attempted, in `--debit`: `Failure` / `.failure`. **A held action always says

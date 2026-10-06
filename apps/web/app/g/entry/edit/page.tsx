@@ -408,7 +408,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
           right={reachable.length > 1 ? (
             <button type="button" className="chip kindchip" aria-label={copy.form.kindTitle}
               onClick={() => setAsk("kind")}>
-              {copy.entryKind.label[kind]}
+              {copy.entryKind.label[kind]}<Icon name="updown" size={11} className="kindmark" />
             </button>
           ) : undefined}
         />
@@ -518,7 +518,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                 <button type="button" id="paidby" className="pick"
                   aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
                   <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
-                  <Icon name="chev" size={13} className="spacer pchev" />
+                  <Icon name="updown" size={13} className="spacer pchev" />
                 </button>
               </div>
             )}

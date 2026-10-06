@@ -6,7 +6,7 @@
 import type { AmountTap } from "../lib/tap-amount";
 
 export type IconName =
-  | "chev" | "back" | "plus" | "minus" | "cross" | "cam" | "off" | "check" | "clock"
+  | "chev" | "updown" | "back" | "plus" | "minus" | "cross" | "cam" | "off" | "check" | "clock"
   | "users" | "arrow" | "sync" | "trash" | "edit" | "link"
   | "image" | "split" | "merge" | "share" | "import" | "sun" | "moon" | "fx" | "more" | "info"
   | "mail" | "dollar" | "sliders" | "translate";
@@ -18,6 +18,8 @@ export function IconSprite() {
     <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
       <defs>
         <symbol id="i-chev" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><path d="M9 6l6 6-6 6" /></symbol>
+        {/* "Opens a picker here", where the chevron says "goes to another screen". */}
+        <symbol id="i-updown" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><path d="M8 9.5l4-4 4 4M8 14.5l4 4 4-4" /></symbol>
         <symbol id="i-back" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><path d="M15 6l-6 6 6 6" /></symbol>
         <symbol id="i-plus" viewBox="0 0 24 24" {...S} strokeWidth="2.4"><path d="M12 5v14M5 12h14" /></symbol>
         <symbol id="i-minus" viewBox="0 0 24 24" {...S} strokeWidth="2.4"><path d="M5 12h14" /></symbol>
