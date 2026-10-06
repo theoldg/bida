@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-06* — "Stick to the last person's row, not the bottom of the
+  screen": a ten-minute-old choice reversed in a line. The owner refines by
+  living with it; build the second version as readily as the first.
+
 - *2026-10-06* — A phone screenshot and one line: make the tabs stick. The
   picture is the spec; check it in a viewport short enough to scroll, not in
   the demo's four rows at full height, where nothing ever sticks.
@@ -74,5 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   style". One sentence naming two patterns by their look: the owner saw them
   land elsewhere and wants every screen alike. Port both whole, and retire
   the old foot's CSS rather than leave it beside them.
-
-- *2026-10-04* — "Show me a few options first", then "Ship A and 1". A mock with the guide line drawn and a star on the pick got a two-letter answer. Mid-mock they added the 2-payer card: every variant of a row covers its other states too.

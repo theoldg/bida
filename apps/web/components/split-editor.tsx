@@ -165,41 +165,21 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
       <div className="splitrule" aria-hidden="true"><span /></div>
 
       <div className="splitbox">
-        {/* One sticky block, so the tabs and the everyone box stay in reach
-            down a long list of people. */}
-        <div className="splittop">
-          <div className="seg">
-            {/* `aria-pressed`: painting it says so only to an eye. */}
-            {MODES.map((mode) => {
-              const on = !showReceipt && !legacy && spec.mode === mode;
-              return (
-                <button key={mode} type="button" className={on ? "on" : ""} aria-pressed={on}
-                  onClick={() => onTabChange(mode)}>{copy.split.mode[mode]}</button>
-              );
-            })}
-            {receipt ? (
-              <button type="button" className={showReceipt ? "on" : ""} aria-pressed={showReceipt}
-                onClick={() => onTabChange("receipt")}>
-                {copy.split.receipt}
-              </button>
-            ) : null}
-          </div>
-
-            {head ? (
-              // Right-aligned, so the box heads the column of ticks, plus
-              // signs and figures under it, and the row never reads as a person.
-              // Only the box is the control: a whole-row toggle read as one more row.
-              <div className="splithead">
-                <span className="splitcount" aria-hidden="true"><b>{inCount}</b> {copy.split.everyone.of(members.length)}</span>
-                <button type="button" className="allmark" onClick={toggleAll}
-                  role="checkbox" aria-checked={headState === "all" ? true : headState === "some" ? "mixed" : false}
-                  aria-label={`${copy.split.everyone.count(inCount, members.length)}. ${headLabel()}`}>
-                  <span className={`allbox ${headState}`}>
-                    {headState === "none" ? null : <Icon name={headState === "all" ? "check" : "minus"} size={11} />}
-                  </span>
-                </button>
-              </div>
-            ) : null}
+        <div className="seg">
+          {/* `aria-pressed`: painting it says so only to an eye. */}
+          {MODES.map((mode) => {
+            const on = !showReceipt && !legacy && spec.mode === mode;
+            return (
+              <button key={mode} type="button" className={on ? "on" : ""} aria-pressed={on}
+                onClick={() => onTabChange(mode)}>{copy.split.mode[mode]}</button>
+            );
+          })}
+          {receipt ? (
+            <button type="button" className={showReceipt ? "on" : ""} aria-pressed={showReceipt}
+              onClick={() => onTabChange("receipt")}>
+              {copy.split.receipt}
+            </button>
+          ) : null}
         </div>
 
         <div className="splitlist">
@@ -294,6 +274,23 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
             );
           })}
         </div>
+        {head ? (
+          // Right-aligned, so the box foots the column of ticks, plus signs
+          // and figures above it, and the row never reads as a person. Only the
+          // box is the control: a whole-row toggle read as one more row.
+          // Sticky to the foot of `.scroll`, so a long list keeps it in reach,
+          // and under the last row whenever that row is on screen.
+          <div className="splithead">
+            <span className="splitcount" aria-hidden="true"><b>{inCount}</b> {copy.split.everyone.of(members.length)}</span>
+            <button type="button" className="allmark" onClick={toggleAll}
+              role="checkbox" aria-checked={headState === "all" ? true : headState === "some" ? "mixed" : false}
+              aria-label={`${copy.split.everyone.count(inCount, members.length)}. ${headLabel()}`}>
+              <span className={`allbox ${headState}`}>
+                {headState === "none" ? null : <Icon name={headState === "all" ? "check" : "minus"} size={11} />}
+              </span>
+            </button>
+          </div>
+        ) : null}
       </div>
     </section>
   );
