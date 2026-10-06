@@ -96,20 +96,38 @@ export function receiptBreakdown(
     same.minor += line.minor;
   };
 
-  items.forEach((item, i) => {
+  const share = (i: number, rows: number, of: number) => {
+    const item = items[i]!;
     const who = [...(assignments[i] ?? new Set<string>())];
     if (who.length === 0) return;
     let minor = 0;
-    try { minor = parseMinor(item.amount, currency); } catch { return; }
+    try {
+      for (let k = i; k < i + rows; k++) minor += parseMinor(items[k]!.amount, currency);
+    } catch { return; }
     if (minor <= 0) return;
     const { shares } = resolveSplit(minor, { mode: "equal", members: who }, { tiebreakSeed: `${seed}:item${i}` });
-    // "Fries ×2" shared by two is one order each. A portion's count went into its rows.
-    const of = !item.portionOf && item.quantity && item.quantity > 1 ? Math.floor(item.quantity) : 1;
     for (const [id, v] of Object.entries(shares)) {
       add(id, v);
       note(id, { label: item.label ?? "", count: count(of, who.length), minor: v });
     }
-  });
+  };
+
+  const runs = portions(items);
+  for (let i = 0; i < items.length; ) {
+    const item = items[i]!;
+    const run = runs[i];
+    // A run every portion of which went to the same people is one line shared
+    // by them: three 3.50 sodas between three are 3.50 each, where splitting
+    // each portion three ways hands the odd cents out as 3.49/3.50/3.51.
+    if (run?.index === 1 && sameEaters(assignments, i, run.of)) {
+      share(i, run.of, run.of);
+      i += run.of;
+      continue;
+    }
+    // "Fries ×2" shared by two is one order each. A portion's count went into its rows.
+    share(i, 1, !item.portionOf && item.quantity && item.quantity > 1 ? Math.floor(item.quantity) : 1);
+    i++;
+  }
 
   // Fixed before any extra is spread, so the extras' order can't matter.
   const ordered = { ...weights };
@@ -139,6 +157,15 @@ export function receiptBreakdown(
   // Dropped, not kept at 0: "shares" mode reads the keys as the participants.
   for (const id of Object.keys(weights)) if (weights[id] === 0) delete weights[id];
   return { weights, lines };
+}
+
+function sameEaters(assignments: readonly ReadonlySet<string>[], start: number, rows: number): boolean {
+  const head = assignments[start] ?? new Set<string>();
+  for (let k = start + 1; k < start + rows; k++) {
+    const row = assignments[k] ?? new Set<string>();
+    if (row.size !== head.size || [...row].some((id) => !head.has(id))) return false;
+  }
+  return true;
 }
 
 export function weightsFromItems(
@@ -192,7 +219,7 @@ export function handOffReceiptTotal(
 interface Portion { start: number; index: number; of: number }
 
 /** Null for an ordinary line. A half-deleted group degrades to ordinary lines. */
-export function portions(items: readonly ReceiptItem[]): (Portion | null)[] {
+export function portions<T extends Pick<BillLine, "label" | "portionOf">>(items: readonly T[]): (Portion | null)[] {
   const out: (Portion | null)[] = items.map(() => null);
   for (let i = 0; i < items.length; ) {
     const head = items[i];

@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-06* — "What's up with the variable sodas price??" with the receipt
+  beside it. A cent the owner can see is a bug, not rounding: find which
+  tap turned one printed line into three, and fix the arithmetic there.
+
 - *2026-10-06* — "Maybe a checkmark next to unspecified rows", typed into
   the middle of my survey of the code. The owner designs while you read: stop
   and fold the hint in, and the mocks they then see are already theirs. Then
@@ -74,8 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   in the cells". The owner cut the tiles and kept the dots: a second round
   of variants on one pick beats a wider first round. Keep the pick on the
   page for scale.
-
-- *2026-10-04* — "Propose a few mocks before implementing", then "a bit
-  ugly", then "smaller". Three rounds, each quieter. Make the mocks work, in
-  the app's own tokens, keep last round's pick on the page for scale, and
-  expect the owner to want less than you drew.

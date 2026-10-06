@@ -95,7 +95,10 @@ them as a view, so it is never an edit, and `weightsFromItems` learns nothing
 new. Portions are marked (`portionOf`), never
 inferred from equal labels, and sum to the printed line exactly, because a
 display control must not move the bill's total. Only a count the receipt
-printed is unfolded: deciding a line was really three is data entry.
+printed is unfolded: deciding a line was really three is data entry. A run
+whose portions all went to the same people is shared as the one line it was
+printed as (`receiptBreakdown`), so three 3.50 sodas between three come out
+3.50 each, not 3.49/3.50/3.51 from rounding each portion three ways.
 
 **A discount is shared in proportion to what each person ordered**, and so are
 the tip and any tax charged on top: they are one family (`BillExtras`), the

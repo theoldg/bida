@@ -409,6 +409,28 @@ describe("receiptBreakdown", () => {
     expect(lines["a"]).toEqual([{ label: "Salade", count: { n: 3, d: 2 }, minor: 1350 }]);
   });
 
+  it("rounds a run shared alike as the one line it was printed as", () => {
+    // "3 Sodas 10.50" between three is 3.50 each, whoever the seed favours.
+    const sodas = Array.from({ length: 3 }, () => ({ label: "Sodas", amount: "3.50", quantity: null, portionOf: 3 }));
+    const all = () => new Set(["a", "b", "c"]);
+    for (const seed of ["s1", "s2", "s3", "s4", "s5", "s6"]) {
+      const { lines } = receiptBreakdown(sodas, [all(), all(), all()], null, table(), "EUR", seed);
+      for (const id of ["a", "b", "c"]) {
+        expect(lines[id]).toEqual([{ label: "Sodas", count: { n: 1, d: 1 }, minor: 350 }]);
+      }
+    }
+  });
+
+  it("still rounds each portion of a run whose portions went to different people", () => {
+    const salads = [{ label: "Salade", amount: "1.00", quantity: null, portionOf: 2 },
+      { label: "Salade", amount: "1.00", quantity: null, portionOf: 2 }];
+    const { weights } = receiptBreakdown(
+      salads, [new Set(["a", "b", "c"]), new Set(["a"])], null, table(), "EUR", "seed",
+    );
+    expect(weights["a"]! - 100).toBeGreaterThanOrEqual(33);
+    expect(Object.values(weights).reduce((x, y) => x + y, 0)).toBe(200);
+  });
+
   it("keeps the tip as its own line, charged but not ordered", () => {
     const { lines } = receiptBreakdown(
       [{ label: "Beer", amount: "10.00" }],
