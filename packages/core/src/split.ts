@@ -17,7 +17,7 @@ interface SplitResult {
  * Why a split doesn't add up. Core names the problem and never formats it:
  * it doesn't know the currency, so the sentence is the caller's.
  */
-export type SplitProblem = "empty" | "under" | "over" | "percent";
+export type SplitProblem = "empty" | "under" | "over" | "percent" | "nothingLeft";
 
 export interface SplitValidation {
   ok: boolean;
@@ -29,6 +29,8 @@ export interface SplitValidation {
   diffMinor?: number;
   /** A fallback sentence for callers with no currency to hand. */
   message?: string;
+  /** An `exact` split's rows sharing what is left, and how much that is. */
+  rest?: { ids: Id[]; leftMinor: number };
 }
 
 export class SplitError extends Error {}
@@ -53,13 +55,13 @@ function hash32(input: string): number {
 
 /**
  * Members named by a spec, always sorted, always deduplicated. **In an `exact`
- * split a zero is nobody**: the figure is the whole statement of being in, and
- * typing 0 clears it — so a zero reads as out here too, whatever wrote it.
+ * split a typed zero is nobody**: typing 0 clears a figure, so a zero reads as
+ * out here too, whatever wrote it. Being in with no figure is `rest`.
  */
 export function splitParticipants(spec: SplitSpec): Id[] {
   const ids =
     spec.mode === "equal" ? spec.members
-    : spec.mode === "exact" ? Object.keys(exactAmounts(spec.amounts))
+    : spec.mode === "exact" ? [...Object.keys(exactAmounts(spec.amounts)), ...restOf(spec)]
     : spec.mode === "shares" || spec.mode === "receipt" ? Object.keys(spec.weights)
     : Object.keys(spec.bps);
   return [...new Set(ids)].sort();
@@ -74,6 +76,51 @@ function exactAmounts(amounts: Record<Id, number>): Record<Id, number> {
   const out: Record<Id, number> = {};
   for (const [id, v] of Object.entries(amounts)) if (v !== 0) out[id] = v;
   return out;
+}
+
+/** An exact split's rows sharing what is left: sorted, deduplicated, and empty for every other mode. */
+export function restOf(spec: SplitSpec): Id[] {
+  return spec.mode === "exact" && spec.rest ? [...new Set(spec.rest)].sort() : [];
+}
+
+/** The figures somebody typed — `amounts` less the rest's, which are only ever a filled-in copy. */
+function typedAmounts(spec: SplitSpec & { mode: "exact" }): Record<Id, number> {
+  const rest = new Set(spec.rest ?? []);
+  const out: Record<Id, number> = {};
+  for (const [id, v] of Object.entries(exactAmounts(spec.amounts))) if (!rest.has(id)) out[id] = v;
+  return out;
+}
+
+/**
+ * Every row's figure in an exact split: the typed ones as typed, and what they
+ * leave of `totalMinor` divided evenly among the rest, seeded as Evenly is.
+ * With nothing left (or less than one minor unit each) the rest get zeros;
+ * `validateSplit` refuses that, and over the total nobody is handed a negative.
+ */
+export function exactFigures(
+  totalMinor: number,
+  spec: SplitSpec & { mode: "exact" },
+  options: SplitOptions = {},
+): Record<Id, number> {
+  const typed = typedAmounts(spec);
+  const rest = restOf(spec);
+  if (rest.length === 0) return typed;
+  const left = totalMinor - Object.values(typed).reduce((a, v) => a + v, 0);
+  const out = { ...typed };
+  for (const id of rest) out[id] = 0;
+  if (left > 0) Object.assign(out, resolveSplit(left, { mode: "equal", members: rest }, options).shares);
+  return out;
+}
+
+/**
+ * The exact split as it is written: the rest's figures filled in against this
+ * total, so the stored `amounts` sum to it for any reader. Zeros stay out of
+ * `amounts` (a zero is nobody) but in `rest`. Anything else is handed back.
+ */
+export function settleRest<S extends SplitSpec>(totalMinor: number, spec: S, options: SplitOptions = {}): S {
+  if (spec.mode !== "exact" || restOf(spec).length === 0) return spec;
+  const amounts = exactAmounts(exactFigures(totalMinor, spec, options));
+  return { mode: "exact", amounts, rest: restOf(spec) } as S;
 }
 
 /** The same map, keyed in sorted order. */
@@ -92,7 +139,14 @@ export function canonicalSplit(spec: SplitSpec): SplitSpec {
   switch (spec.mode) {
     case "equal": return { mode: "equal", members: splitParticipants(spec) };
     case "shares": return { mode: "shares", weights: sortedKeys(spec.weights) };
-    case "exact": return { mode: "exact", amounts: sortedKeys(spec.amounts) };
+    case "exact": {
+      // No `rest` key when nobody floats, so every split written before it
+      // serialises as it always did.
+      const rest = restOf(spec);
+      return rest.length > 0
+        ? { mode: "exact", amounts: sortedKeys(spec.amounts), rest }
+        : { mode: "exact", amounts: sortedKeys(spec.amounts) };
+    }
     case "percent": return { mode: "percent", bps: sortedKeys(spec.bps) };
     case "receipt": return { mode: "receipt", weights: sortedKeys(spec.weights) };
   }
@@ -189,10 +243,11 @@ export function resolveSplit(
   }
 
   if (spec.mode === "exact") {
+    const figures = exactFigures(totalMinor, spec, options);
     const shares: Record<Id, number> = {};
     let sum = 0;
     for (const id of participants) {
-      const v = spec.amounts[id] ?? 0;
+      const v = figures[id] ?? 0;
       if (!Number.isSafeInteger(v)) {
         throw new SplitError(`exact amount for ${id} must be an integer, got ${v}`);
       }
@@ -236,9 +291,13 @@ interface SplitBearing {
  * the base currency reads the same either way.
  */
 export function resolveEntrySplit(entry: SplitBearing): SplitResult {
-  const { split } = entry;
   const seed = { tiebreakSeed: entry.id };
-  if (split.mode !== "exact") return resolveSplit(entry.baseAmountMinor, split, seed);
+  if (entry.split.mode !== "exact") return resolveSplit(entry.baseAmountMinor, entry.split, seed);
+  // The rest's figures are worked out again rather than trusted: the same
+  // total and seed give the same cents as were written.
+  const split: SplitSpec = restOf(entry.split).length > 0
+    ? { mode: "exact", amounts: exactFigures(entry.amountMinor, entry.split, seed) }
+    : entry.split;
   const sum = exactSum(split.amounts);
   if (sum === entry.baseAmountMinor) return resolveSplit(entry.baseAmountMinor, split, seed);
   if (sum !== entry.amountMinor) {
@@ -254,7 +313,8 @@ export function resolveEntrySplit(entry: SplitBearing): SplitResult {
  */
 export function ownCurrencySplit<S extends SplitSpec>(entry: SplitBearing & { split: S }): S {
   const split: SplitSpec = entry.split;
-  if (split.mode !== "exact") return entry.split;
+  // A split with a rest was only ever written in the entry's own currency.
+  if (split.mode !== "exact" || restOf(split).length > 0) return entry.split;
   try {
     const sum = exactSum(split.amounts);
     if (sum === entry.amountMinor || sum !== entry.baseAmountMinor) return entry.split;
@@ -294,9 +354,20 @@ export function validateSplit(
   }
 
   if (spec.mode === "exact") {
-    let sum = 0;
-    for (const id of participants) sum += spec.amounts[id] ?? 0;
-    return addsUp(sum, totalMinor);
+    const typed = Object.values(typedAmounts(spec)).reduce((a, v) => a + v, 0);
+    const ids = restOf(spec);
+    if (ids.length === 0) return addsUp(typed, totalMinor);
+    const leftMinor = totalMinor - typed;
+    if (leftMinor < 0) return { ...addsUp(typed, totalMinor), rest: { ids, leftMinor } };
+    // Somebody in the split with nothing to share is a row saying "in" over a
+    // zero: refused, rather than quietly dropping them.
+    if (leftMinor < ids.length) {
+      return {
+        ok: false, allocatedMinor: typed, totalMinor, problem: "nothingLeft", diffMinor: leftMinor,
+        message: "Nothing is left for whoever shares the rest", rest: { ids, leftMinor },
+      };
+    }
+    return { ok: true, allocatedMinor: totalMinor, totalMinor, rest: { ids, leftMinor } };
   }
 
   if (spec.mode === "percent") {
@@ -381,6 +452,9 @@ export function convertSplitMode(
     case "equal":
       return { mode: "equal", members: participants };
     case "exact": {
+      // Evenly is everybody sharing the rest of nothing typed: kept that way,
+      // so typing one figure re-divides the others instead of over-filling.
+      if (spec.mode === "equal") return { mode: "exact", amounts: {}, rest: participants };
       const { shares } = resolveSplit(totalMinor, spec, options);
       return { mode: "exact", amounts: exactAmounts(shares) };
     }
@@ -417,15 +491,12 @@ export function convertSplitMode(
 /**
  * The split editor's head box: everyone in takes everyone out; otherwise it
  * brings in whoever is out and leaves what the others hold alone — a 2 in
- * parts stays a 2, a typed amount stays typed. In `exact` the newcomers share
- * what is left of the total, as one name's tap takes all of it; with nothing
- * left there is nothing to bring them in with, so it clears instead.
+ * parts stays a 2, a typed amount stays typed. In `exact` the newcomers join
+ * the rest, even with nothing left, where `validateSplit` says so.
  */
 export function toggleEveryone(
-  totalMinor: number,
   spec: Exclude<ArithmeticSplit, { mode: "percent" }>,
   memberIds: readonly Id[],
-  options: SplitOptions = {},
 ): ArithmeticSplit {
   const inNow = new Set(splitParticipants(spec));
   const out = memberIds.filter((id) => !inNow.has(id));
@@ -438,13 +509,9 @@ export function toggleEveryone(
       for (const id of out) weights[id] = 1;
       return { mode: "shares", weights };
     }
-    case "exact": {
-      const amounts = exactAmounts(spec.amounts);
-      const rest = totalMinor - Object.values(amounts).reduce((a, v) => a + v, 0);
-      if (out.length === 0 || rest <= 0) return { mode: "exact", amounts: {} };
-      const { shares } = resolveSplit(rest, { mode: "equal", members: out }, options);
-      return { mode: "exact", amounts: exactAmounts({ ...amounts, ...shares }) };
-    }
+    case "exact":
+      if (out.length === 0) return { mode: "exact", amounts: {} };
+      return { mode: "exact", amounts: typedAmounts(spec), rest: [...restOf(spec), ...out].sort() };
   }
 }
 

@@ -85,10 +85,15 @@ Expense {
 }
 ```
 
-Split payloads: `equal { members[] }`, `exact { amounts }`, `shares { weights }`,
+Split payloads: `equal { members[] }`, `exact { amounts, rest? }`, `shares { weights }`,
 `percent { bps }` (basis points), `receipt { weights }`. **An `exact` zero is
-nobody**: none is ever written, and `splitParticipants` reads one as out — so
-converting a zero total into "as amounts" starts with no one in. **`percent` is legacy
+nobody**: none is ever written, and `splitParticipants` reads one as out.
+**`rest` is who is in with no figure typed**: they share what the typed figures
+leave, evenly and seeded as Evenly is (`exactFigures`), worked out again at
+every read. Their figures are still written into `amounts` (`settleRest`, on
+save), so a phone that predates `rest` reads a whole split that adds up; the
+key is absent when nobody floats, so older splits serialise unchanged. Evenly
+converts into "as amounts" as everyone in `rest`. **`percent` is legacy
 and read-only** ([ADR-0010](decisions/0010-what-an-entry-is.md)); **`receipt` is
 the only mode nobody types** — a scanned bill writes it and `convertSplitMode`
 never converts into it ([ADR-0016](decisions/0016-receipts.md)).

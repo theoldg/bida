@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addsUp, canonicalSplit, convertSplitMode, ownCurrencySplit, resolveEntrySplit, resolveSplit, shareOf, splitParticipants,
-  toggleEveryone, upgradeReceiptSplit, validateSplit,
+  restOf, settleRest, toggleEveryone, upgradeReceiptSplit, validateSplit,
 } from "./split.js";
 import type { SplitSpec } from "./types.js";
 
@@ -163,9 +163,16 @@ describe("shareOf", () => {
 
 describe("convertSplitMode", () => {
   it("keeps everyone's amounts when moving to exact", () => {
-    const before = resolveSplit(1000, { mode: "equal", members: ["a", "b", "c"] }).shares;
+    const from: SplitSpec = { mode: "shares", weights: { a: 2, b: 1, c: 1 } };
+    const spec = convertSplitMode(1000, from, "exact");
+    expect(spec).toEqual({ mode: "exact", amounts: resolveSplit(1000, from).shares });
+  });
+
+  // Evenly is everyone sharing the rest of nothing typed, and stays it.
+  it("moves evenly to exact as everyone sharing the rest", () => {
     const spec = convertSplitMode(1000, { mode: "equal", members: ["a", "b", "c"] }, "exact");
-    expect(spec).toEqual({ mode: "exact", amounts: before });
+    expect(spec).toEqual({ mode: "exact", amounts: {}, rest: ["a", "b", "c"] });
+    expect(resolveSplit(1000, spec).shares).toEqual(resolveSplit(1000, { mode: "equal", members: ["a", "b", "c"] }).shares);
   });
 
   it("produces percentages that still total 100%", () => {
@@ -186,13 +193,13 @@ describe("convertSplitMode", () => {
   // A zero share is nobody: kept, it would light every row of an empty
   // "as amounts" tab as in.
   it("moves to exact with nobody in when there is nothing to hand out", () => {
-    const spec = convertSplitMode(0, { mode: "equal", members: ["a", "b", "c"] }, "exact");
+    const spec = convertSplitMode(0, { mode: "shares", weights: { a: 1, b: 1, c: 1 } }, "exact");
     expect(spec).toEqual({ mode: "exact", amounts: {} });
     expect(splitParticipants(spec)).toEqual([]);
   });
 
   it("leaves out whoever a tiny total hands nothing", () => {
-    const spec = convertSplitMode(2, { mode: "equal", members: ["a", "b", "c"] }, "exact");
+    const spec = convertSplitMode(2, { mode: "shares", weights: { a: 1, b: 1, c: 1 } }, "exact");
     expect(spec.mode === "exact" && Object.values(spec.amounts)).toEqual([1, 1]);
     expect(splitParticipants(spec)).toHaveLength(2);
     expect(validateSplit(2, spec).ok).toBe(true);
@@ -232,61 +239,108 @@ describe("toggleEveryone", () => {
   const all = ["a", "b", "c", "d"];
 
   it("evenly: some in brings everyone in, everyone in takes everyone out", () => {
-    const some = toggleEveryone(400, { mode: "equal", members: ["a", "c"] }, all);
+    const some = toggleEveryone({ mode: "equal", members: ["a", "c"] }, all);
     expect(splitParticipants(some)).toEqual(all);
-    expect(toggleEveryone(400, some as SplitSpec & { mode: "equal" }, all)).toEqual({ mode: "equal", members: [] });
-    expect(splitParticipants(toggleEveryone(400, { mode: "equal", members: [] }, all))).toEqual(all);
+    expect(toggleEveryone(some as SplitSpec & { mode: "equal" }, all)).toEqual({ mode: "equal", members: [] });
+    expect(splitParticipants(toggleEveryone({ mode: "equal", members: [] }, all))).toEqual(all);
   });
 
   it("parts: whoever is out gets one, and nobody else's parts move", () => {
-    const spec = toggleEveryone(400, { mode: "shares", weights: { a: 2, c: 3 } }, all);
+    const spec = toggleEveryone({ mode: "shares", weights: { a: 2, c: 3 } }, all);
     expect(spec).toEqual({ mode: "shares", weights: { a: 2, b: 1, c: 3, d: 1 } });
-    expect(toggleEveryone(400, { mode: "shares", weights: { a: 2, b: 1, c: 3, d: 1 } }, all))
+    expect(toggleEveryone({ mode: "shares", weights: { a: 2, b: 1, c: 3, d: 1 } }, all))
       .toEqual({ mode: "shares", weights: {} });
   });
 
-  it("amounts: from empty, everyone gets an even share that adds up", () => {
-    const spec = toggleEveryone(1001, { mode: "exact", amounts: {} }, all, { tiebreakSeed: "e1" });
-    expect(splitParticipants(spec)).toEqual(all);
+  it("amounts: whoever is out joins the rest, and typed figures stay typed", () => {
+    const spec = toggleEveryone({ mode: "exact", amounts: { a: 12000, d: 8000 }, rest: ["b"] }, all);
+    expect(spec).toEqual({ mode: "exact", amounts: { a: 12000, d: 8000 }, rest: ["b", "c"] });
+    expect(resolveSplit(32000, spec).shares).toEqual({ a: 12000, b: 6000, c: 6000, d: 8000 });
+  });
+
+  it("amounts: from empty, everyone shares the whole", () => {
+    const spec = toggleEveryone({ mode: "exact", amounts: {} }, all);
+    expect(spec).toEqual({ mode: "exact", amounts: {}, rest: all });
     expect(validateSplit(1001, spec).ok).toBe(true);
-    if (spec.mode !== "exact") throw new Error("unreachable");
-    for (const v of Object.values(spec.amounts)) expect([250, 251]).toContain(v);
   });
 
-  it("amounts: typed figures stay, and the empty rows share what is left", () => {
-    const spec = toggleEveryone(32000, { mode: "exact", amounts: { a: 12000, d: 8000 } }, all);
-    expect(spec).toEqual({ mode: "exact", amounts: { a: 12000, b: 6000, c: 6000, d: 8000 } });
-    expect(validateSplit(32000, spec).ok).toBe(true);
+  // Nothing left is said, not hidden: they join, and the split refuses to save.
+  it("amounts: with nothing left they still join", () => {
+    const spec = toggleEveryone({ mode: "exact", amounts: { a: 500, b: 500 } }, all);
+    expect(restOf(spec)).toEqual(["c", "d"]);
+    expect(validateSplit(1000, spec).problem).toBe("nothingLeft");
   });
 
-  it("amounts: with nothing left, or everyone in, it clears", () => {
-    const full = { mode: "exact" as const, amounts: { a: 500, b: 500 } };
-    expect(toggleEveryone(1000, full, all)).toEqual({ mode: "exact", amounts: {} });
-    const over = { mode: "exact" as const, amounts: { a: 900, b: 900 } };
-    expect(toggleEveryone(1000, over, all)).toEqual({ mode: "exact", amounts: {} });
-    const everyone = { mode: "exact" as const, amounts: { a: 1, b: 1, c: 1, d: 1 } };
-    expect(toggleEveryone(1000, everyone, all)).toEqual({ mode: "exact", amounts: {} });
+  it("amounts: everyone in, typed or not, takes everyone out", () => {
+    const everyone = { mode: "exact" as const, amounts: { a: 1, b: 1 }, rest: ["c", "d"] };
+    expect(toggleEveryone(everyone, all)).toEqual({ mode: "exact", amounts: {} });
+  });
+});
+
+describe("an exact split's rest", () => {
+  it("shares what the typed figures leave, evenly and to the cent", () => {
+    const spec: SplitSpec = { mode: "exact", amounts: { a: 2400 }, rest: ["b", "c", "d"] };
+    const { shares } = resolveSplit(3401, spec, { tiebreakSeed: "e" });
+    expect(shares.a).toBe(2400);
+    expect(sum(shares)).toBe(3401);
+    for (const id of ["b", "c", "d"]) expect([333, 334]).toContain(shares[id]);
   });
 
-  // Fewer minor units left than empty rows: whoever the rest can't reach stays
-  // out, as `convertSplitMode` leaves them, and the split still adds up.
-  it("amounts: a rest smaller than the empty rows hands out what there is", () => {
-    const spec = toggleEveryone(1002, { mode: "exact", amounts: { a: 1000 } }, all, { tiebreakSeed: "x" });
-    if (spec.mode !== "exact") throw new Error("unreachable");
-    expect(spec.amounts.a).toBe(1000);
-    expect(splitParticipants(spec)).toHaveLength(3);
-    expect(Object.values(spec.amounts)).not.toContain(0);
-    expect(validateSplit(1002, spec).ok).toBe(true);
+  it("is in the split with no figure of its own", () => {
+    const spec: SplitSpec = { mode: "exact", amounts: { a: 2400 }, rest: ["c", "b", "c"] };
+    expect(splitParticipants(spec)).toEqual(["a", "b", "c"]);
+    expect(restOf(spec)).toEqual(["b", "c"]);
   });
 
-  it("amounts: a zero-decimal total splits in whole units", () => {
-    const spec = toggleEveryone(1000, { mode: "exact", amounts: {} }, ["a", "b", "c"]);
-    if (spec.mode !== "exact") throw new Error("unreachable");
-    expect(sum(spec.amounts)).toBe(1000);
-    expect(Object.values(spec.amounts).sort()).toEqual([333, 333, 334]);
+  it("ignores the filled-in figure written beside it", () => {
+    const spec: SplitSpec = { mode: "exact", amounts: { a: 2400, b: 9999 }, rest: ["b"] };
+    expect(resolveSplit(6000, spec).shares).toEqual({ a: 2400, b: 3600 });
   });
 
-  it("property: filling the gaps of an under-allocated split makes it add up", () => {
+  it("validates: shared, over, and nothing left", () => {
+    const shared = validateSplit(6000, { mode: "exact", amounts: { a: 2400 }, rest: ["b", "c"] });
+    expect(shared).toMatchObject({ ok: true, allocatedMinor: 6000, rest: { ids: ["b", "c"], leftMinor: 3600 } });
+    const over = validateSplit(6000, { mode: "exact", amounts: { a: 5000, b: 2000 }, rest: ["c"] });
+    expect(over).toMatchObject({ ok: false, problem: "over", diffMinor: -1000 });
+    const full = validateSplit(6000, { mode: "exact", amounts: { a: 4000, b: 2000 }, rest: ["c"] });
+    expect(full).toMatchObject({ ok: false, problem: "nothingLeft", rest: { ids: ["c"], leftMinor: 0 } });
+    // One minor unit among two hands somebody nothing.
+    expect(validateSplit(1, { mode: "exact", amounts: {}, rest: ["a", "b"] }).problem).toBe("nothingLeft");
+  });
+
+  it("is written filled in, so a reader that predates it sees a whole split", () => {
+    const spec: SplitSpec = { mode: "exact", amounts: { a: 2400 }, rest: ["b", "c"] };
+    const written = settleRest(6000, spec, { tiebreakSeed: "e" });
+    expect(written).toEqual({ mode: "exact", amounts: { a: 2400, b: 1800, c: 1800 }, rest: ["b", "c"] });
+    // What an older phone does with it: `rest` unread, the amounts add up.
+    expect(resolveSplit(6000, { mode: "exact", amounts: (written as typeof spec).amounts }).shares)
+      .toEqual(resolveSplit(6000, spec, { tiebreakSeed: "e" }).shares);
+  });
+
+  it("keeps a zero out of the written amounts but in the rest", () => {
+    const written = settleRest(6000, { mode: "exact", amounts: { a: 6000 }, rest: ["b"] });
+    expect(written).toEqual({ mode: "exact", amounts: { a: 6000 }, rest: ["b"] });
+  });
+
+  it("canonicalises with no rest key when nobody floats", () => {
+    expect(canonicalSplit({ mode: "exact", amounts: { b: 1, a: 2 }, rest: [] }))
+      .toEqual({ mode: "exact", amounts: { a: 2, b: 1 } });
+    expect(JSON.stringify(canonicalSplit({ mode: "exact", amounts: { a: 2 }, rest: ["c", "b"] })))
+      .toBe(JSON.stringify({ mode: "exact", amounts: { a: 2 }, rest: ["b", "c"] }));
+  });
+
+  it("resolves on an entry in a foreign currency by its own figures", () => {
+    const entry = {
+      id: "e", amountMinor: 6000, baseAmountMinor: 1500,
+      split: { mode: "exact" as const, amounts: { a: 3000 }, rest: ["b", "c"] },
+    };
+    const { shares } = resolveEntrySplit(entry);
+    expect(sum(shares)).toBe(1500);
+    expect(shares.a).toBe(750);
+    expect(ownCurrencySplit(entry)).toBe(entry.split);
+  });
+
+  it("property: typed figures stay put and the rest makes up the total", () => {
     let seed = 7;
     const rand = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
     for (let i = 0; i < 300; i++) {
@@ -294,17 +348,23 @@ describe("toggleEveryone", () => {
       const members = Array.from({ length: n }, (_, k) => `m${k}`);
       const total = n + Math.floor(rand() * 1_000_000);
       const amounts: Record<string, number> = {};
+      const rest: string[] = [];
       let given = 0;
-      for (const m of members.slice(1)) {
-        if (rand() < 0.5) continue;
+      for (const m of members) {
+        if (rand() < 0.5 && rest.length < n - 1) { rest.push(m); continue; }
         const v = Math.floor(rand() * (total - n - given) / n);
-        if (v > 0) { amounts[m] = v; given += v; }
+        if (v > 0) { amounts[m] = v; given += v; } else rest.push(m);
       }
-      const spec = toggleEveryone(total, { mode: "exact", amounts }, members, { tiebreakSeed: `s${i}` });
-      if (spec.mode !== "exact") throw new Error("unreachable");
-      expect(sum(spec.amounts)).toBe(total);
-      expect(splitParticipants(spec)).toEqual([...members].sort());
-      for (const [id, v] of Object.entries(amounts)) expect(spec.amounts[id]).toBe(v);
+      if (rest.length === 0) continue;
+      const spec: SplitSpec = { mode: "exact", amounts, rest };
+      const opts = { tiebreakSeed: `s${i}` };
+      expect(validateSplit(total, spec, opts).ok).toBe(true);
+      const { shares } = resolveSplit(total, spec, opts);
+      expect(sum(shares)).toBe(total);
+      for (const [id, v] of Object.entries(amounts)) expect(shares[id]).toBe(v);
+      const spread = rest.map((id) => shares[id] ?? 0);
+      expect(Math.max(...spread) - Math.min(...spread)).toBeLessThanOrEqual(1);
+      expect(resolveSplit(total, settleRest(total, spec, opts), opts).shares).toEqual(shares);
     }
   });
 });

@@ -16,8 +16,13 @@ export type ExpenseKind = "expense" | "income";
 
 export type SplitSpec =
   | { mode: "equal"; members: Id[] }
-  /** In the entry's own currency, summing to `amountMinor`; the base total is apportioned by them. */
-  | { mode: "exact"; amounts: Record<Id, number> }
+  /**
+   * In the entry's own currency, summing to `amountMinor`; the base total is
+   * apportioned by them. `rest` are the rows nobody typed a figure for: they
+   * share what the typed ones leave, evenly, and their `amounts` are written
+   * filled in so a reader that predates `rest` still sees a whole split.
+   */
+  | { mode: "exact"; amounts: Record<Id, number>; rest?: Id[] }
   | { mode: "shares"; weights: Record<Id, number> }
   /** Basis points (10000 = 100%) so percentages stay integers. */
   | { mode: "percent"; bps: Record<Id, number> }
