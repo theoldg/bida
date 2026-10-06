@@ -135,11 +135,11 @@ async function main() {
     await page.goto(`${base}/g/entry/edit?id=${GROUP}&e=${CANTINA}`);
     await page.getByRole("link", { name: /(Assign|Edit) who.had.what/ }).click();
     await page.waitForURL(/entry\/items/);
-    // Pressed into English. The demo's tab is printed in the cantina's own
-    // tongue, which is what puts the toggle on the bar at all (ADR-0016) — but
-    // a reader who cannot read the lines cannot see that the grid is a bill,
-    // so the shot is of the press rather than of what it acts on.
-    await page.getByRole("button", { name: "Show the bill in English" }).click();
+    // In English. The demo's tab is printed in the cantina's own tongue, which
+    // is what puts the toggle on the bar at all (ADR-0016), and saved shown in
+    // English — a reader who cannot read the lines cannot see that the grid is
+    // a bill. Waited on, not pressed: pressing would turn it back.
+    await page.getByRole("button", { name: "Show the bill as printed" }).waitFor();
     await settle(page, 250);
     await shot("items");
 
@@ -147,9 +147,8 @@ async function main() {
     // open onto the lines behind their figure as it opens by itself (ADR-0016).
     // This is the shot that says the grid is not a one-way trip. Reached from
     // the ledger rather than by saving the draft above, which would append an
-    // op for a screenshot. In English as well, without a second press: the
-    // choice made on the grid is the phone's and not that screen's, so it
-    // carries to the read-back.
+    // op for a screenshot. In English as well: the language is the
+    // expense's, saved with it, so every screen of it reads alike.
     await page.goto(`${base}/g/entry?id=${GROUP}&e=${CANTINA}`);
     await page.getByRole("button", { name: /^Luke/ }).waitFor();
     await settle(page, 250);
