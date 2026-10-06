@@ -105,7 +105,7 @@ function Balances({ data }: { data: GroupData }) {
                   <span className="axis" />
                 </div>
               </div>
-              <div className={`bignum ${signClass(net)}`} style={{ fontSize: 14 }}>
+              <div className={`bignum balfig ${signClass(net)}`} style={{ fontSize: 14 }}>
                 {money(net, group.baseCurrency, net !== 0)}
               </div>
             </div>

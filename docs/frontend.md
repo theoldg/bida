@@ -366,7 +366,8 @@ exponent. The grouping itself is `groupDigits` in `lib/format.ts`, with
 `rateText` for the rates we *print*; both are pure and tested.
 
 The other place with real logic is the **balance bar** (around a centre axis,
-debit left, credit right), drawn inline on `/g/balances`. Everything else
+debit left, credit right), drawn inline on `/g/balances` beside its figure, set
+right so the digits stand in columns. Everything else
 is ordinary markup; what more than one screen draws lives in
 `components/chrome.tsx` (the frame, plus `Blank` for a screen still waiting on
 Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and

@@ -1488,6 +1488,9 @@ dialog.scrim::backdrop { background: transparent }
   grid-template-columns: 1fr auto; grid-template-columns: subgrid; gap: 11px;
   align-items: center; padding: 9px 16px }
 .balrow > * { min-width: 0 }
+/* Right-aligned: in a mono face the digits then stand in columns, so a balance's
+   size reads as its length and the shared code is what goes ragged. */
+.balfig { text-align: right }
 .balname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .balgone { margin-left: 6px; font-size: 11px; font-weight: 500; color: var(--ink-2) }
 .bar { height: 7px; border-radius: 0; background: var(--card-3); position: relative; overflow: hidden }
