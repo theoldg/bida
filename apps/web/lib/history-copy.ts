@@ -1,11 +1,13 @@
 import {
-  isValidRate, resolveSplit, splitParticipants,
+  isValidRate, resolveEntrySplit, resolveSplit, splitParticipants,
   type CurrencyCode, type Id, type ImportSource, type Member, type ReceiptItem, type Revision, type SplitSpec,
 } from "@bida/core";
 import { copy } from "./copy";
 import { printedBill } from "./scan/items";
-import { dayLabel, money, plural, rateText } from "./format";
-import { splitPhrase } from "./row-meta";
+import { bare, dayLabel, money, plural, rateText } from "./format";
+import {
+  billRows, chargeRow, eatersRow, moves, tally, typical, type BillLine, type People, type Row,
+} from "./history-rows";
 
 /**
  * Which sentence the log gets for a revision (`copy.history` holds the words),
@@ -18,11 +20,19 @@ import { splitPhrase } from "./row-meta";
  * **Read the entity, not only the change.** `Revision.before` / `after` say
  * whether this is an income, which currency the figures are in, who the other
  * payer was.
+ *
+ * **Say what moved, not both whole states.** A list of eight names struck out
+ * over the same list less one is a puzzle; "− Cy" is the answer to it. Where a
+ * revision moved people or lines, it gets rows (`history-rows.ts`): one per
+ * kind of move, the people who moved alike together, and money where money is
+ * what moved — "By items" says how a split is written, never what anybody owes.
  */
 
-interface Described {
+export interface Described {
   what: string;
   diff?: { was?: string; now: string };
+  /** Under the sentence, where what moved is a list: people, or lines of a bill. */
+  rows?: Row[];
   /**
    * Every field the revision changed, a labelled line each, in place of a
    * sentence. An entry is saved whole (`editExpense`), so several at once is
@@ -33,10 +43,11 @@ interface Described {
 }
 
 /** One field on its own line: what it is called, and what it moved between. */
-interface Detail {
+export interface Detail {
   label: string;
   was?: string;
   now?: string;
+  rows?: Row[];
 }
 
 type Values = { was?: string; now: string };
@@ -54,6 +65,7 @@ interface Part {
    * needs just the two words, and a photo count is in the sentence already.
    */
   line?: Values;
+  rows?: Row[];
 }
 
 /**
@@ -63,46 +75,48 @@ interface Part {
 function assemble(parts: Part[], edited: string): Described {
   const [first] = parts;
   if (!first) return { what: edited };
-  if (parts.length === 1) return { what: first.what, diff: first.diff };
-  return { what: edited, also: parts.map((p) => ({ label: p.label, ...(p.line ?? p.diff) })) };
+  if (parts.length === 1) return { what: first.what, diff: first.diff, rows: first.rows };
+  return {
+    what: edited,
+    also: parts.map((p) => ({ label: p.label, ...(p.line ?? p.diff), ...(p.rows ? { rows: p.rows } : {}) })),
+  };
 }
 
 /**
- * Everybody's share of the whole, in basis points — the one reading of a split
- * that survives a change of mode ("evenly between two" is "one part each").
- * Null where nothing is allocated.
+ * Everybody's share of the whole, in basis points: whether a split *means*
+ * something else, whatever the amount did. A new amount moves every share's
+ * money, and the amount's own line says so.
  */
-function proportions(spec: SplitSpec | null | undefined): Record<Id, number> | null {
-  if (!spec) return null;
+function proportions(spec: SplitSpec | null | undefined): string {
+  if (!spec) return "";
   const weights: Record<Id, number> = {};
-  for (const id of splitParticipants(spec)) {
-    const w = spec.mode === "equal" ? 1
-      : spec.mode === "shares" || spec.mode === "receipt" ? spec.weights[id] ?? 0
-        : spec.mode === "exact" ? spec.amounts[id] ?? 0
-          : spec.bps[id] ?? 0;
-    // Exact amounts are money and the rest are counts, but as a *ratio* they
-    // are the same question, so one distribution answers it for all four.
-    if (Number.isSafeInteger(w) && w > 0) weights[id] = w;
-  }
   try {
-    return resolveSplit(10_000, { mode: "shares", weights }).shares;
+    for (const id of splitParticipants(spec)) {
+      const w = spec.mode === "equal" ? 1
+        : spec.mode === "shares" || spec.mode === "receipt" ? spec.weights[id] ?? 0
+          : spec.mode === "exact" ? spec.amounts[id] ?? 0
+            : spec.bps[id] ?? 0;
+      // Exact amounts are money and the rest are counts, but as a ratio they
+      // are the same question.
+      if (Number.isSafeInteger(w) && w > 0) weights[id] = w;
+    }
+    return JSON.stringify(resolveSplit(10_000, { mode: "shares", weights }).shares);
   } catch {
-    return null;
+    return "";
   }
 }
 
 /** The entity as the fold held it — loose fields, not a typed `Expense`. */
 type State = Readonly<Record<string, unknown>>;
 
-/** Live contributions, keyed in a fixed order, or null for a single payer. */
+/** Live contributions, or null for a single payer. Rows put them in name order. */
 function coPayers(state: State): [Id, number][] | null {
   const spec = state["payers"];
   if (!spec || typeof spec !== "object") return null;
   const live = Object.entries(spec as Record<string, unknown>)
     .filter(([, v]) => typeof v === "number" && Number.isFinite(v) && v !== 0) as [Id, number][];
   // One contributor is a single payer written the long way (`normalisePayers`
-  // stores null), so nothing visible changed. Ordered by the caller, by name
-  // (`inNameOrder`).
+  // stores null), so nothing visible changed.
   return live.length > 1 ? live : null;
 }
 
@@ -138,43 +152,57 @@ export function describe(
     const day = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? dayLabel(v) : undefined);
     return { was: day(c.before), now: day(c.after) ?? "" };
   };
+  const people: People = { nameOf, roster: rev.roster ?? [] };
   /**
-   * A split's people in printed order, by name. Ids are hashes of names
-   * (ADR-0034), so id order puts a was/now pair in two unrelated orders.
+   * A figure under a sentence about the entry. The group's own currency goes
+   * bare — the amount above carries its symbol, and "CRD 20.00" six times over
+   * is noise — and anything else keeps its code, so it can't pass for base.
    */
-  const inNameOrder = (spec: SplitSpec) =>
-    splitParticipants(spec)
-      .map((id) => [id, memberById.get(id)?.name ?? copy.unknown] as const)
-      .sort(([, a], [, b]) => a.localeCompare(b));
-  const namesOf = (spec: SplitSpec | null | undefined) =>
-    spec ? inNameOrder(spec).map(([, name]) => name).join(", ") : "";
-  /** The payer side of a fold, ordered the same way and for the same reason. */
-  const payersByName = (state: State) =>
-    coPayers(state)
-      ?.map(([id, amount]) => [id, nameOf(id), amount] as const)
-      .sort(([, a], [, b]) => a.localeCompare(b)) ?? null;
+  const fig = (minor: number, code: CurrencyCode) => (code === currency ? bare(minor, code) : money(minor, code));
   /**
-   * What each person is down for, in the mode's words — "Evenly", "Ana ×2 ·
-   * Bo ×1", "Ana €12.00 · Bo €8.00". For when only the shares changed.
+   * What each person owes of the entry, in the group's currency — the one
+   * reading of a split that survives a change of mode, and the only one that
+   * says anything about a split by items. An even split's spare cents are
+   * laid flat, so "33.34, 33.33, 33.33" doesn't read as three different shares.
+   * Null where the fold doesn't resolve.
    */
-  const shareLine = (spec: SplitSpec | null | undefined, state: State): string => {
-    if (!spec) return "";
-    // As amounts is in the entry's own currency — unless written before it
-    // was, when it sums to the base amount instead (`resolveEntrySplit`).
-    const exactCurrency = spec.mode === "exact"
-      && Object.values(spec.amounts).reduce((a, b) => a + b, 0) === state["baseAmountMinor"]
-      && state["baseAmountMinor"] !== state["amountMinor"]
-      ? currency : ownCurrency(state);
-    if (spec.mode === "equal") return copy.split.mode.equal;
-    // A receipt's weights are minor units, not chosen numbers ("Teo ×3943
-    // parts"); the sentence above says who had what changed.
-    if (spec.mode === "receipt") return copy.split.mode.receipt;
-    return inNameOrder(spec).map(([id, name]) => {
-      const value = spec.mode === "shares" ? copy.history.parts(spec.weights[id] ?? 0)
-        : spec.mode === "exact" ? money(spec.amounts[id] ?? 0, exactCurrency)
-          : copy.history.percent((spec.bps[id] ?? 0) / 100);
-      return copy.history.shareOf(name, value);
-    }).join(" · ");
+  const sharesOf = (state: State): Map<Id, number> | null => {
+    const split = state["split"] as SplitSpec | null | undefined;
+    const amountMinor = state["amountMinor"];
+    const baseAmountMinor = state["baseAmountMinor"];
+    if (!split || typeof split !== "object" || typeof amountMinor !== "number"
+      || typeof baseAmountMinor !== "number") return null;
+    try {
+      const { shares } = resolveEntrySplit({ id: rev.entityId, amountMinor, baseAmountMinor, split });
+      const out = new Map(Object.entries(shares));
+      const flat = split.mode === "equal" ? typical(out.values()) : undefined;
+      if (flat !== undefined) for (const id of out.keys()) out.set(id, flat);
+      return out;
+    } catch {
+      return null;
+    }
+  };
+  /** Shares as rows' figures — or, where they don't resolve, just who is in it. */
+  const shareFigures = (state: State): Map<Id, string> => {
+    const shares = sharesOf(state);
+    if (shares) return new Map([...shares].map(([id, v]) => [id, fig(v, currency)]));
+    const split = state["split"] as SplitSpec | null | undefined;
+    let ids: Id[] = [];
+    try { ids = split ? splitParticipants(split) : []; } catch { /* nobody, then */ }
+    return new Map(ids.map((id) => [id, ""]));
+  };
+  /** What each payer put in, in the entry's own currency. A lone payer put in all of it. */
+  const contributions = (state: State): Map<Id, number> => {
+    const spec = coPayers(state);
+    if (spec) return new Map(spec);
+    const paidBy = state["paidBy"];
+    const amountMinor = state["amountMinor"];
+    return typeof paidBy === "string"
+      ? new Map([[paidBy, typeof amountMinor === "number" ? amountMinor : 0]]) : new Map();
+  };
+  const modeOf = (state: State): SplitSpec["mode"] | undefined => {
+    const spec = state["split"] as SplitSpec | null | undefined;
+    return spec && typeof spec === "object" && spec.mode in copy.split.mode ? spec.mode : undefined;
   };
 
   if (rev.entity === "expense") {
@@ -185,14 +213,28 @@ export function describe(
     const noun = copy.entryKind.label[kind].toLowerCase();
 
     if (rev.isCreate) {
+      // The amount, then who paid and what each owes — the questions the
+      // entry's own screen answers, so the log needn't send anyone there.
       const amt = cash(field("baseAmountMinor")?.after);
-      const split = field("split")?.after as SplitSpec | undefined;
-      const n = split ? splitParticipants(split).length : 0;
-      // The ledger row's words (`splitPhrase`), so "as parts" isn't lost here.
-      const how = split?.mode && n ? splitPhrase(kind, n, split.mode) : undefined;
+      const also: Detail[] = [];
+      const own = ownCurrency(rev.after);
+      const payers = coPayers(rev.after);
+      also.push({
+        label: copy.entryKind.payer[kind],
+        now: payers ? tally(new Map(payers), (v) => fig(v, own), people) : nameOf(rev.after["paidBy"]),
+      });
+      const mode = modeOf(rev.after);
+      const shares = sharesOf(rev.after);
+      if (mode && shares?.size) {
+        also.push({
+          label: said.field.splitAs(copy.split.mode[mode].toLowerCase()),
+          now: tally(shares, (v) => fig(v, currency), people),
+        });
+      }
       return {
         what: rev.imported ? said.importedEntry(who, noun, from) : said.createdEntry(who, noun),
-        diff: amt !== undefined ? { now: how ? `${amt} · ${how}` : amt } : undefined,
+        diff: amt !== undefined ? { now: amt } : undefined,
+        also,
       };
     }
     if (rev.isDelete) return { what: said.deletedEntry(who, noun) };
@@ -217,31 +259,32 @@ export function describe(
       });
     }
     const split = field("split");
+    /** The split's part, should a change of who had what turn out to be its cause. */
+    let sharesPart: Part | undefined;
     if (split) {
       const was = split.before as SplitSpec | null;
       const now = split.after as SplitSpec;
-      // Who it is spent on, then how much each owes — both, when both moved:
-      // adding Chewie while going from parts to evenly halved Han's share, and
-      // naming only the people never said so. An even split joined by one more
-      // reads "Evenly" either side, so it stays one line.
-      const wasWho = namesOf(was);
-      const nowWho = namesOf(now);
-      const wasHow = shareLine(was, rev.before);
-      const nowHow = shareLine(now, rev.after);
-      if (wasWho !== nowWho) {
-        parts.push({
-          what: said.changedInvolved(who), label: named.involved,
-          diff: { was: wasWho || undefined, now: nowWho },
-        });
+      // What each person owes, either side, as rows — one answer to both "who
+      // is in it" and "how much each", since adding Chewie halves Han's share
+      // and the log owes the reader both.
+      const wasFigures = was ? shareFigures(rev.before) : null;
+      const nowFigures = shareFigures(rev.after);
+      const rows = moves(wasFigures, nowFigures, people);
+      const sameWho = !!wasFigures && wasFigures.size === nowFigures.size
+        && [...nowFigures.keys()].every((id) => wasFigures.has(id));
+      if (!sameWho) {
+        parts.push({ what: said.changedInvolved(who), label: named.involved, rows });
+      } else if (rows.length && proportions(was) !== proportions(now)) {
+        // A new mode is said, in the words the entry screen heads its split
+        // with: "split it by items" is why the money moved.
+        const mode = modeOf(rev.after);
+        sharesPart = mode && mode !== modeOf(rev.before)
+          ? { what: said.splitAs(who, copy.split.mode[mode].toLowerCase()),
+            label: named.splitAs(copy.split.mode[mode].toLowerCase()), rows }
+          : { what: said.changedShares(who), label: named.split, rows };
+        parts.push(sharesPart);
       }
-      if (wasHow !== nowHow && (wasWho !== nowWho
-        || JSON.stringify(proportions(was)) !== JSON.stringify(proportions(now)))) {
-        parts.push({
-          what: said.changedShares(who), label: named.split,
-          diff: { was: wasHow || undefined, now: nowHow },
-        });
-      }
-      // Same people, same shares: the spec was rewritten and nobody's money moved.
+      // Same people, same money: the spec was rewritten and nobody's share moved.
       // The mode line below says whether it now *reads* differently.
     }
     // The scan behind the split, and the grid that assigned it. Both move
@@ -260,6 +303,8 @@ export function describe(
     );
     const bill = { was: printed(rev.before), now: printed(rev.after) };
     const reshaped = JSON.stringify(bill.was.lines) === JSON.stringify(bill.now.lines);
+    // In whichever language the bill is shown in after the save.
+    const english = rev.after["receiptEnglish"] === true;
     // `receiptDiscounts` and `receiptText`, both plural-and-spelled-out. There
     // is no singular `receiptDiscount` field — ask for one and a save that only
     // moved a bill's deductions says nothing.
@@ -267,18 +312,59 @@ export function describe(
       || field("receiptDiscounts") || field("receiptText")) {
       const wasLines = bill.was.lines.length;
       const nowLines = bill.now.lines.length;
-      parts.push({
-        what: nowLines === 0 ? said.removedReceipt(who)
-          : wasLines === 0 ? said.addedReceipt(who) : said.changedReceipt(who),
-        label: named.receipt,
-        diff: {
-          was: wasLines ? plural(wasLines, copy.noun.item) : undefined,
-          now: nowLines ? plural(nowLines, copy.noun.item) : copy.none,
-        },
-      });
+      if (nowLines === 0 || wasLines === 0) {
+        // A whole bill arriving is a count, not a list — the shares the split
+        // part prints are what it meant.
+        parts.push({
+          what: nowLines === 0 ? said.removedReceipt(who) : said.addedReceipt(who),
+          label: named.receipt,
+          diff: {
+            was: wasLines ? plural(wasLines, copy.noun.item) : undefined,
+            now: nowLines ? plural(nowLines, copy.noun.item) : copy.none,
+          },
+        });
+      } else {
+        const extra = copy.items.extra;
+        const charge = (state: State, key: string) => text(state[key]) ?? null;
+        /** A deduction is taken off, so it is printed as one. */
+        const deductions = (state: State): BillLine[] =>
+          (Array.isArray(state["receiptDiscounts"]) ? state["receiptDiscounts"] as unknown[] : [])
+            .filter((d): d is { label: string; amount: string; labelEn?: string | null } =>
+              !!d && typeof d === "object" && typeof (d as { label: unknown }).label === "string"
+              && typeof (d as { amount: unknown }).amount === "string")
+            .map((d) => ({ label: d.label, labelEn: d.labelEn ?? null, amount: `−${d.amount}`, quantity: 1 }));
+        const rows: Row[] = [
+          ...billRows(bill.was.lines, bill.now.lines, english),
+          ...billRows(deductions(rev.before), deductions(rev.after), english),
+          ...[
+            chargeRow(extra.tax, charge(rev.before, "receiptTax"), charge(rev.after, "receiptTax")),
+            chargeRow(extra.tip, charge(rev.before, "receiptTip"), charge(rev.after, "receiptTip")),
+          ].filter((r): r is Row => !!r),
+        ];
+        // Retyped and read to the same bill: the words moved, nothing they priced.
+        parts.push(rows.length
+          ? { what: said.changedReceipt(who), label: named.receipt, rows }
+          : { what: said.retypedBill(who), label: named.billText });
+      }
     } else if (field("receiptInvolved")
       || (field("receiptAssignments") && JSON.stringify(bill.was.eaters) !== JSON.stringify(bill.now.eaters))) {
-      parts.push({ what: said.changedWhoHadWhat(who), label: named.whoHadWhat });
+      // The lines are the same either side (`reshaped`), so they pair by place.
+      const list = (state: State) => (Array.isArray(state["receiptInvolved"])
+        ? (state["receiptInvolved"] as unknown[]).filter((id): id is Id => typeof id === "string") : []);
+      const rows = bill.now.lines.flatMap((line, i) => {
+        const row = eatersRow(english ? line.labelEn || line.label : line.label,
+          bill.was.eaters[i] ?? [], bill.now.eaters[i] ?? [], people);
+        return row ? [row] : [];
+      });
+      const table = eatersRow(said.atTheTable, [list(rev.before)], [list(rev.after)], people);
+      if (table) rows.push({ ...table, item: false });
+      // What the grid moved is what the split moved: one sentence, the lines
+      // that changed hands and then the money that followed them.
+      if (sharesPart) {
+        rows.push(...sharesPart.rows ?? []);
+        parts.splice(parts.indexOf(sharesPart), 1);
+      }
+      parts.push({ what: said.changedWhoHadWhat(who), label: named.whoHadWhat, rows });
     }
     // Stored only when true (`only`), so any change here is a flip.
     if (field("receiptEnglish")) {
@@ -320,34 +406,23 @@ export function describe(
     // fold: adding a co-payer moves only `payers`, and the name they join is on
     // the entity.
     if (field("payers") ?? field("paidBy")) {
-      /** Who put money in, by name: `payerList`, over a state not an `Expense`. */
-      const payerNames = (state: State) => {
-        const spec = payersByName(state);
-        return spec ? spec.map(([, name]) => name).join(", ") : nameOf(state["paidBy"]);
-      };
-      /**
-       * Each payer and what they put in, in the entry's currency — "Ana €40.00 ·
-       * Bo €10.00" — one line answering both questions.
-       */
-      const payerLine = (state: State) => {
-        const spec = payersByName(state);
-        if (!spec) return nameOf(state["paidBy"]);
-        const code = ownCurrency(state);
-        return spec.map(([, name, amount]) => said.shareOf(name, money(amount, code))).join(" · ");
-      };
-      const wasWho = payerNames(rev.before);
-      const nowWho = payerNames(rev.after);
-      const wasHow = payerLine(rev.before);
-      const nowHow = payerLine(rev.after);
-      const diff = { was: wasHow || undefined, now: nowHow };
-      if (wasWho !== nowWho) {
-        parts.push({
-          what: said.payerWho[kind](who),
-          label: copy.payers.title[kind],
-          diff,
-        });
-      } else if (wasHow !== nowHow) {
-        parts.push({ what: said.payerHow[kind](who), label: named.putIn, diff });
+      const before = contributions(rev.before);
+      const after = contributions(rev.after);
+      const sameWho = before.size === after.size && [...after.keys()].every((id) => before.has(id));
+      // One payer for another is a swap of names; anything with a co-payer in
+      // it is what each put in, as rows, so a third joining reads "+ Bo 10.00"
+      // and not the whole list twice.
+      const lone = (m: Map<Id, number>) => (m.size === 1 ? [...m.keys()][0]! : undefined);
+      const [wasLone, nowLone] = [lone(before), lone(after)];
+      const shown = (m: Map<Id, number>, state: State) =>
+        new Map([...m].map(([id, v]) => [id, fig(v, ownCurrency(state))]));
+      const change = wasLone && nowLone
+        ? { diff: { was: nameOf(wasLone), now: nameOf(nowLone) } }
+        : { rows: moves(shown(before, rev.before), shown(after, rev.after), people) };
+      if (!sameWho) {
+        parts.push({ what: said.payerWho[kind](who), label: copy.payers.title[kind], ...change });
+      } else if (change.rows?.length) {
+        parts.push({ what: said.payerHow[kind](who), label: named.putIn, ...change });
       }
       // Same people, same contributions: a map normalised to the single payer
       // it already meant. Nothing moved, so nothing is said.

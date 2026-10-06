@@ -1251,7 +1251,10 @@ export const copy = {
       involved: "Who’s involved",
       split: "Split",
       splitMode: "Split mode",
+      /** A new entry's split, its mode in the label: "Split by items". */
+      splitAs: (mode: string) => `Split ${mode}`,
       receipt: "Receipt",
+      billText: "Bill text",
       whoHadWhat: "Who had what",
       billLanguage: "Bill shown",
       amount: "Amount",
@@ -1279,15 +1282,30 @@ export const copy = {
     changedInvolved: (who: string) => `${who} changed who’s involved`,
     /** The same people, a different share each. */
     changedShares: (who: string) => `${who} changed how it’s split`,
-    /** One name and what it is down for, on a diff line: "Ana ×2", "Bo €8.00". */
+    /** The same people, in a mode it wasn't in: "Theo split it by items". */
+    splitAs: (who: string, mode: string) => `${who} split it ${mode}`,
+    /** People and what they are down for, on a line: "Han, Luke 20.00". */
     shareOf: (name: string, value: string) => `${name} ${value}`,
-    parts: (n: number) => `×${n}`,
-    percent: (n: number) => `${n}%`,
+    /** Everybody down for the same: "Everyone · 20.25 each". */
+    each: (names: string, value: string) => `${names} · ${value} each`,
+    /** The whole group as it was, said once rather than name by name. */
+    everyone: "Everyone",
+    everyoneBut: (names: string) => `Everyone but ${names}`,
+    /** A printed bill's line with a count: "2× 24.00". */
+    quantity: (n: number, amount: string) => `${n}× ${amount}`,
+    /** People who took a share of a bill line, on its row. */
+    joinedIn: (names: string) => `+ ${names}`,
+    /** A bill line left with nobody on it. */
+    nobody: "nobody",
+    /** The grid's people marked present, on a row of their own. */
+    atTheTable: "At the table",
     /** Only worth a line because the entry screen prints the mode. */
     rewroteSplit: (who: string) => `${who} changed how the split is written`,
     addedReceipt: (who: string) => `${who} added a receipt`,
     changedReceipt: (who: string) => `${who} changed the receipt`,
     removedReceipt: (who: string) => `${who} removed the receipt`,
+    /** The typed bill reworded, and read back to the same lines. */
+    retypedBill: (who: string) => `${who} retyped the bill`,
     changedWhoHadWhat: (who: string) => `${who} changed who had what`,
     /** The translate toggle, saved with the bill (`receiptEnglish`). */
     readBill: (who: string, english: boolean) =>

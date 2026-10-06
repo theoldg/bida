@@ -41,6 +41,12 @@ export interface Revision {
    * moment is the import's, not the entry's.
    */
   imported: boolean;
+  /**
+   * Who was in the group as this op landed — created and not removed — so a
+   * sentence can say "everyone" or "everyone but Cy" about *then*, not about
+   * whoever has joined since.
+   */
+  roster: readonly Id[];
 }
 
 /** The op that made the group, where `ops` holds it: the earliest create. */
@@ -87,7 +93,9 @@ function equalish(a: unknown, b: unknown): boolean {
 }
 
 /** Revisions for one entity, oldest first. */
-function revisionsForEntity(ops: readonly Op[], entityId: Id, groupCreate: Op | undefined): Revision[] {
+function revisionsForEntity(
+  ops: readonly Op[], entityId: Id, groupCreate: Op | undefined, rosterAt: (hlc: string) => readonly Id[],
+): Revision[] {
   const sorted = sortOps(ops);
   const running: Record<string, unknown> = {};
   const revisions: Revision[] = [];
@@ -138,6 +146,7 @@ function revisionsForEntity(ops: readonly Op[], entityId: Id, groupCreate: Op | 
       isCreate: op.kind === "create",
       isDelete,
       imported: isImported(op, groupCreate),
+      roster: rosterAt(op.hlc),
     });
   }
 
@@ -147,17 +156,49 @@ function revisionsForEntity(ops: readonly Op[], entityId: Id, groupCreate: Op | 
 /** History for one expense (or any entity), newest first. */
 export function entityHistory(ops: readonly Op[], entityId: Id): Revision[] {
   const mine = ops.filter((o) => o.entityId === entityId);
-  return revisionsForEntity(mine, entityId, groupCreateOf(ops)).reverse();
+  return revisionsForEntity(mine, entityId, groupCreateOf(ops), rosterOf(ops)).reverse();
 }
 
 /** The whole group's activity, newest first. */
 export function activityFeed(ops: readonly Op[], limit?: number): Revision[] {
-  const all = feedOf(ops, groupCreateOf(ops));
+  const all = feedOf(ops, groupCreateOf(ops), rosterOf(ops));
   return limit === undefined ? all : all.slice(0, limit);
 }
 
+/**
+ * Who was in the group at a moment, read off the member ops up to it. Folded
+ * once into a timeline of who-is-in after each member op, then looked up by
+ * stamp, since a feed asks once per revision.
+ */
+export function rosterOf(ops: readonly Op[]): (hlc: string) => readonly Id[] {
+  const timeline: { hlc: string; roster: readonly Id[] }[] = [];
+  const alive = new Map<Id, boolean>();
+  for (const op of sortOps(ops.filter((o) => o.entity === "member"))) {
+    const lift = op.patch["deletedAt"];
+    if (op.kind === "delete") alive.set(op.entityId, false);
+    else if (op.kind === "restore" || (op.kind === "update" && "deletedAt" in op.patch)) {
+      alive.set(op.entityId, lift === null || lift === undefined);
+    } else if (op.kind === "create" && !alive.has(op.entityId)) alive.set(op.entityId, true);
+    else continue;
+    timeline.push({ hlc: op.hlc, roster: [...alive].filter(([, on]) => on).map(([id]) => id) });
+  }
+  return (hlc) => {
+    // The last member op at or before `hlc`; a feed is short, members few.
+    let lo = 0;
+    let hi = timeline.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (compareHlc(timeline[mid]!.hlc, hlc) <= 0) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo === 0 ? [] : timeline[lo - 1]!.roster;
+  };
+}
+
 /** `activityFeed`, told the group's create — which `ops` may have been cut down past. */
-function feedOf(ops: readonly Op[], groupCreate: Op | undefined): Revision[] {
+function feedOf(
+  ops: readonly Op[], groupCreate: Op | undefined, rosterAt: (hlc: string) => readonly Id[],
+): Revision[] {
   const byEntity = new Map<Id, Op[]>();
   for (const op of ops) {
     const list = byEntity.get(op.entityId);
@@ -166,7 +207,7 @@ function feedOf(ops: readonly Op[], groupCreate: Op | undefined): Revision[] {
   }
   const all: Revision[] = [];
   for (const [entityId, entityOps] of byEntity) {
-    all.push(...revisionsForEntity(entityOps, entityId, groupCreate));
+    all.push(...revisionsForEntity(entityOps, entityId, groupCreate, rosterAt));
   }
   return all.sort((a, b) => compareHlc(b.op.hlc, a.op.hlc));
 }
@@ -206,7 +247,7 @@ export function unseenRevisions(
   // A revision's diff needs its entity's earlier ops, so the feed is folded
   // over every op of the touched entities, then cut down to the new ones.
   const touched = new Set(ops.filter((o) => news.has(o.id)).map((o) => o.entityId));
-  const revisions = feedOf(ops.filter((o) => touched.has(o.entityId)), groupCreateOf(ops))
+  const revisions = feedOf(ops.filter((o) => touched.has(o.entityId)), groupCreateOf(ops), rosterOf(ops))
     .filter((r) => news.has(r.op.id));
   return { revisions, through };
 }

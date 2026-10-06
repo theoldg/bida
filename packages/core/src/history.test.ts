@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityFeed, entityHistory, groupCreateOf, isImported, unseenRevisions } from "./history.js";
+import { activityFeed, entityHistory, groupCreateOf, isImported, rosterOf, unseenRevisions } from "./history.js";
 import { DEMO_GROUP_ID } from "./demo.js";
 import { foldOps } from "./fold.js";
 import { GROUP, MARIE, OpBuilder, SAM, THEO } from "./fixtures.test-helper.js";
@@ -310,5 +310,32 @@ describe("a whole-entity write", () => {
 
     const [latest] = entityHistory(b.ops, "e-taxi");
     expect(latest?.changes.map((c) => c.field)).toEqual(["description"]);
+  });
+});
+
+describe("rosterOf", () => {
+  // "Everyone" on last month's dinner means everyone *then*: a later joiner
+  // reading it as "everyone but me" is the log saying something false.
+  it("answers who was in the group at each moment, joins and removals included", () => {
+    const b = new OpBuilder();
+    b.push("member", THEO, "create", { name: "Theo", deletedAt: null }, THEO);
+    b.push("member", MARIE, "create", { name: "Marie", deletedAt: null }, THEO);
+    const dinner = b.push("expense", "e-dinner", "create", {
+      description: "Dinner", amountMinor: 100, currency: "EUR", rateToBase: "1",
+      baseAmountMinor: 100, paidBy: THEO, split: { mode: "equal", members: [THEO, MARIE] },
+    }, THEO);
+    b.push("member", SAM, "create", { name: "Sam", deletedAt: null }, THEO);
+    const removal = b.push("member", MARIE, "delete", {}, THEO);
+    b.push("member", MARIE, "update", { deletedAt: null }, THEO);
+    const after = b.push("expense", "e-dinner", "update", { description: "Late dinner" }, THEO);
+
+    const at = rosterOf(b.ops);
+    expect([...at(dinner.hlc)].sort()).toEqual([MARIE, THEO].sort());
+    expect([...at(removal.hlc)].sort()).toEqual([SAM, THEO].sort());
+    expect([...at(after.hlc)].sort()).toEqual([MARIE, SAM, THEO].sort());
+    // Every revision carries the roster of its own moment.
+    const [late, made] = entityHistory(b.ops, "e-dinner");
+    expect([...made!.roster].sort()).toEqual([MARIE, THEO].sort());
+    expect(late!.roster).toHaveLength(3);
   });
 });

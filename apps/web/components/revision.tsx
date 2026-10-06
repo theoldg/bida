@@ -4,6 +4,7 @@ import { Icon } from "@/components/icons";
 import { copy } from "@/lib/copy";
 import { stamp } from "@/lib/format";
 import { describe } from "@/lib/history-copy";
+import type { Row } from "@/lib/history-rows";
 import { route } from "@/lib/group-link";
 
 /**
@@ -46,6 +47,39 @@ function subjectOf(rev: Revision, c: RevisionContext): { href: string; label: st
   return undefined;
 }
 
+/** Past this many, the rest wait behind a tap: a re-read bill can move thirty lines. */
+const ROWS_SHOWN = 5;
+
+/**
+ * What moved, a row each: "+ Chewie 20.00", "Everyone but Cy 25.00 → 33.33",
+ * "Salad ~~Theo~~ + Marie". The mark carries in-or-out, so the figures need no
+ * words; a bill line is set quieter than a person.
+ */
+function Rows({ rows }: { rows: Row[] }) {
+  const one = (r: Row, i: number) => (
+    <div key={i} className={`hrow${r.item ? " item" : ""}`}>
+      {r.mark ? <span className={r.mark === "+" ? "mk in" : "mk out"}>{r.mark}</span> : null}
+      <span className="nm">{r.name}</span>
+      {r.was !== undefined ? <span className="was">{r.was}</span> : null}
+      {r.was !== undefined && r.now !== undefined && !r.mark && !r.set ? <span className="to" aria-hidden>→</span> : null}
+      {r.now !== undefined ? <span className="now2">{r.now}</span> : null}
+    </div>
+  );
+  // One past the cap is shown rather than folded: "1 more" saves no room.
+  const cut = rows.length > ROWS_SHOWN + 1 ? ROWS_SHOWN : rows.length;
+  return (
+    <div className="hrows">
+      {rows.slice(0, cut).map(one)}
+      {cut < rows.length ? (
+        <details className="hmore">
+          <summary>{copy.history.more(String(rows.length - cut))}</summary>
+          <div className="hrows">{rows.slice(cut).map((r, i) => one(r, cut + i))}</div>
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
 /** One point on a `.tl` timeline: who, when, what moved, and what it was about. */
 export function RevisionEntry({ rev, first, context, linked = true }: {
   rev: Revision; first: boolean; context: RevisionContext;
@@ -65,6 +99,7 @@ export function RevisionEntry({ rev, first, context, linked = true }: {
           <span className="now2">{d.diff.now}</span>
         </div>
       ) : null}
+      {d.rows?.length ? <Rows rows={d.rows} /> : null}
       {d.also?.length ? (
         <div className="also">
           {d.also.map((a) => (
@@ -72,6 +107,7 @@ export function RevisionEntry({ rev, first, context, linked = true }: {
               <span className="lbl">{a.label}</span>
               {a.was !== undefined ? <span className="was">{a.was}</span> : null}
               {a.now !== undefined ? <span className="now2">{a.now}</span> : null}
+              {a.rows?.length ? <Rows rows={a.rows} /> : null}
             </div>
           ))}
         </div>

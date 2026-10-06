@@ -6,7 +6,8 @@ import {
   addExpense, addMember, clearRate, createGroup, deleteExpense, deleteSettlement, editExpense,
   editSettlement, healGroup, recordSettlement, removeMember, restoreEntry, setRate,
 } from "./db/commands";
-import { describe } from "./history-copy";
+import { describe, type Detail } from "./history-copy";
+import type { Row } from "./history-rows";
 
 /**
  * The history screen renders every revision the log holds, so `describe` has to
@@ -31,14 +32,15 @@ async function described(
   rev: Revision;
   said: string;
   diff?: { was?: string; now: string };
-  also?: { label: string; was?: string; now?: string }[];
+  rows?: Row[];
+  also?: Detail[];
 }[]> {
   const members = await db().members.where("groupId").equals(groupId).toArray();
   const byId = new Map<string, Member>(members.map((m) => [m.id, m]));
   const group = await db().groups.get(groupId);
   return activityFeed(await opsForGroup(groupId)).map((rev) => {
     const d = describe(rev, byId.get(rev.op.actor)?.name ?? "Someone", byId, group!.baseCurrency);
-    return { rev, said: d.what, diff: d.diff, also: d.also };
+    return { rev, said: d.what, diff: d.diff, rows: d.rows, also: d.also };
   });
 }
 
@@ -98,12 +100,13 @@ suite("describe", () => {
     });
 
     const [latest] = await described(groupId);
-    expect(latest!.said).toBe("Theo changed how it’s split");
-    // Both lines carry a figure, so the diff says something the names alone
-    // don't.
-    expect(latest!.diff!.was).toBe("Evenly");
-    expect(latest!.diff!.now).toContain("Theo ×2");
-    expect(latest!.diff!.now).toContain("Marie ×1");
+    // The new mode is said: it's why the money moved.
+    expect(latest!.said).toBe("Theo split it as parts");
+    // Money, not the mode's own numbers: what each now owes is the news.
+    expect(latest!.rows).toEqual([
+      { name: "Marie", was: "50.00", now: "33.33" },
+      { name: "Theo", was: "50.00", now: "66.67" },
+    ]);
   });
 
   it("keeps naming the people when they are the thing that changed", async () => {
@@ -112,13 +115,15 @@ suite("describe", () => {
 
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo changed who’s involved");
-    expect(latest!.diff!.was).toContain("Marie");
-    expect(latest!.diff!.now).not.toContain("Marie");
+    expect(latest!.rows).toEqual([
+      { name: "Marie", mark: "−", was: "50.00" },
+      { name: "Theo", was: "50.00", now: "100.00" },
+    ]);
   });
 
   it("names the shares too when the people and the shares both moved", async () => {
     // Parts to evenly while somebody joins: Theo's share halved, and a line
-    // naming only the people never said so.
+    // naming only the people never said so. Money answers both at once.
     const { groupId, theo, marie, expenseId } = await sharedExpense();
     await editExpense(groupId, theo, expenseId, {
       split: { mode: "shares", weights: { [theo]: 2, [marie]: 1 } },
@@ -129,10 +134,12 @@ suite("describe", () => {
     });
 
     const [latest] = await described(groupId);
-    expect(latest!.said).toBe("Theo edited this expense");
-    expect(latest!.also).toEqual([
-      { label: "Who’s involved", was: "Marie, Theo", now: "Cy, Marie, Theo" },
-      { label: "Split", was: "Marie ×1 · Theo ×2", now: "Evenly" },
+    expect(latest!.said).toBe("Theo changed who’s involved");
+    // Marie's third is a third either side, so she has no row; Evenly's spare
+    // cent is nobody's news.
+    expect(latest!.rows).toEqual([
+      { name: "Cy", mark: "+", now: "33.33" },
+      { name: "Theo", was: "66.67", now: "33.33" },
     ]);
   });
 
@@ -147,7 +154,7 @@ suite("describe", () => {
     expect(latest!.said).toBe("Theo changed who’s involved");
   });
 
-  it("says how a new entry was split in the ledger's words", async () => {
+  it("says what each owes on a new entry, not just how it was split", async () => {
     const { groupId, memberId: theo } = await createGroup({
       name: "Siurek", baseCurrency: "EUR", myName: "Theo",
     });
@@ -163,7 +170,11 @@ suite("describe", () => {
     });
 
     const [latest] = await described(groupId);
-    expect(latest!.diff!.now).toBe("€30.00 · 2 people, as parts");
+    expect(latest!.diff!.now).toBe("€30.00");
+    expect(latest!.also).toEqual([
+      { label: "Paid by", now: "Theo" },
+      { label: "Split as parts", now: "Theo 20.00 · Marie 10.00" },
+    ]);
   });
 
   it("reads both lines of a split in one order, so the pair can be compared", async () => {
@@ -193,8 +204,51 @@ suite("describe", () => {
 
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo changed who’s involved");
-    expect(latest!.diff!.was).toBe("Ana, Bruno, Cy, Theo");
-    expect(latest!.diff!.now).toBe("Ana, Bruno, Theo");
+    // The one who left, then everybody else's new share in one row — named
+    // against the group as it was, which Cy was still in.
+    expect(latest!.rows).toEqual([
+      { name: "Cy", mark: "−", was: "25.00" },
+      { name: "Everyone but Cy", was: "25.00", now: "33.33" },
+    ]);
+  });
+
+  // A group of eight splitting evenly is "Everyone", not eight names, and
+  // that is about the group as it stood: Zoe joining later doesn't make last
+  // week's dinner "Everyone but Zoe".
+  it("says everyone, about the group as it was", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Siurek", baseCurrency: "EUR", myName: "Theo",
+    });
+    const ana = await addMember(groupId, theo, "Ana");
+    const bruno = await addMember(groupId, theo, "Bruno");
+    const cy = await addMember(groupId, theo, "Cy");
+    await addExpense(groupId, theo, {
+      description: "Dinner",
+      occurredAt: Date.now(),
+      amountMinor: 10_000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: ana,
+      payers: { [ana]: 6_000, [bruno]: 4_000 },
+      split: { mode: "equal", members: [theo, ana, bruno, cy] },
+    });
+    await addMember(groupId, theo, "Zoe");
+    await addExpense(groupId, theo, {
+      description: "Taxi",
+      occurredAt: Date.now(),
+      amountMinor: 9_000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, ana, bruno, cy] },
+    });
+
+    const [taxi, , dinner] = await described(groupId);
+    expect(dinner!.also).toEqual([
+      { label: "Paid by", now: "Ana 60.00 · Bruno 40.00" },
+      { label: "Split evenly", now: "Everyone · 25.00 each" },
+    ]);
+    expect(taxi!.also).toContainEqual({ label: "Split evenly", now: "Everyone but Zoe · 22.50 each" });
   });
 
   it("reads the payers in that same order", async () => {
@@ -214,7 +268,10 @@ suite("describe", () => {
     await editExpense(groupId, theo, expenseId, { payers: { [theo]: 6_000, [ana]: 4_000 } });
 
     const [latest] = await described(groupId);
-    expect(latest!.diff!.now).toBe("Ana €40.00 · Theo €60.00");
+    expect(latest!.rows).toEqual([
+      { name: "Ana", mark: "+", now: "40.00" },
+      { name: "Theo", was: "100.00", now: "60.00" },
+    ]);
   });
 
   it("stays quiet about a mode swapped for one that means the same", async () => {
@@ -247,12 +304,16 @@ suite("describe", () => {
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo edited this expense");
     expect(latest!.diff).toBeUndefined();
-    // The names are in the split's own order, which is the members' ids — so
-    // the line is read for who is on it, and the rest for their exact values.
+    // Every share moved with the amount, so the rows are Sam joining and one
+    // row for the two whose share went from half of €100 to a third of €120.
     const [involved, ...rest] = latest!.also!;
-    expect(involved!.label).toBe("Who’s involved");
-    expect(involved!.was).not.toContain("Sam");
-    expect(involved!.now).toContain("Sam");
+    expect(involved).toEqual({
+      label: "Who’s involved",
+      rows: [
+        { name: "Sam", mark: "+", now: "40.00" },
+        { name: "Marie, Theo", was: "50.00", now: "40.00" },
+      ],
+    });
     expect(rest).toEqual([
       { label: "Amount", was: "€100.00", now: "€120.00" },
       { label: "Description", was: "Beers", now: "Beers and chips" },
@@ -305,8 +366,11 @@ suite("describe", () => {
     });
 
     const [latest] = await described(groupId);
-    expect(latest!.said).toBe("Theo changed how it’s split");
-    expect(latest!.diff!.now).toContain("Marie €30.00");
+    expect(latest!.said).toBe("Theo split it as amounts");
+    expect(latest!.rows).toEqual([
+      { name: "Marie", was: "50.00", now: "30.00" },
+      { name: "Theo", was: "50.00", now: "70.00" },
+    ]);
   });
 
   it("names a currency change that left the figure alone", async () => {
@@ -368,10 +432,11 @@ suite("describe", () => {
     const [latest] = await described(groupId);
     expect(latest!.rev.changes.map((c) => c.field)).toEqual(["payers"]);
     expect(latest!.said).toBe("Theo changed who paid");
-    expect(latest!.diff!.was).toBe("Theo");
     // What each of them put in, not just that there are two.
-    expect(latest!.diff!.now).toContain("Theo €60.00");
-    expect(latest!.diff!.now).toContain("Marie €40.00");
+    expect(latest!.rows).toEqual([
+      { name: "Marie", mark: "+", now: "40.00" },
+      { name: "Theo", was: "100.00", now: "60.00" },
+    ]);
   });
 
   it("keeps the payers on a line of their own when the save moved more", async () => {
@@ -384,8 +449,7 @@ suite("describe", () => {
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo edited this expense");
     const payers = latest!.also!.find((a) => a.label === "Who paid");
-    expect(payers!.was).toBe("Theo");
-    expect(payers!.now).toContain("Marie €40.00");
+    expect(payers!.rows).toContainEqual({ name: "Marie", mark: "+", now: "40.00" });
     expect(latest!.also).toContainEqual(
       { label: "Description", was: "Beers", now: "Beers and chips" });
   });
@@ -397,8 +461,10 @@ suite("describe", () => {
 
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo changed how much each put in");
-    expect(latest!.diff!.was).toContain("Theo €60.00");
-    expect(latest!.diff!.now).toContain("Theo €70.00");
+    expect(latest!.rows).toEqual([
+      { name: "Marie", was: "40.00", now: "30.00" },
+      { name: "Theo", was: "60.00", now: "70.00" },
+    ]);
   });
 
   it("says nothing about a payer map collapsed back to the one payer it meant", async () => {
@@ -412,7 +478,10 @@ suite("describe", () => {
     const [latest] = await described(groupId);
     expect((await described(groupId)).length).toBe(before + 1);
     expect(latest!.said).toBe("Theo changed who paid");
-    expect(latest!.diff!.now).toBe("Theo");
+    expect(latest!.rows).toEqual([
+      { name: "Marie", mark: "−", was: "40.00" },
+      { name: "Theo", was: "60.00", now: "100.00" },
+    ]);
   });
 
   // An income is received, not paid — and the log only knows it is one by
@@ -465,6 +534,73 @@ suite("describe", () => {
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo added a receipt");
     expect(latest!.diff).toEqual({ now: "2 items" });
+  });
+
+  // "6 items → 7 items" over a re-read bill says nothing about which.
+  it("lists what a changed bill changed, line by line", async () => {
+    const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
+    await editExpense(groupId, theo, expenseId, {
+      receiptItems: [
+        { label: "Salad", amount: "4.00" },
+        { label: "Beer", amount: "6.00", quantity: 2 },
+        { label: "Soup", amount: "3.00" },
+      ],
+    });
+    await editExpense(groupId, theo, expenseId, {
+      receiptItems: [
+        { label: "Beer", amount: "9.00", quantity: 3 },
+        { label: "Salad", amount: "4.00" },
+        { label: "Bread", amount: "1.50" },
+      ],
+      receiptTip: "2.00",
+      receiptDiscounts: [{ label: "Happy hour", amount: "1.00" }],
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed the receipt");
+    // The salad moved down the bill and nowhere else: no row.
+    expect(latest!.rows).toEqual([
+      { name: "Beer", was: "2× 6.00", now: "3× 9.00", item: true },
+      { name: "Bread", mark: "+", now: "1.50", item: true },
+      { name: "Soup", mark: "−", was: "3.00", item: true },
+      { name: "Happy hour", mark: "+", now: "−1.00", item: true },
+      { name: "Tip + service", mark: "+", now: "2.00", item: true },
+    ]);
+  });
+
+  it("calls a retyped bill that read back the same a retyped bill", async () => {
+    const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
+    const receiptItems = [{ label: "Salad", amount: "4.00" }];
+    await editExpense(groupId, theo, expenseId, { receiptItems, receiptText: "salad 4" });
+    await editExpense(groupId, theo, expenseId, { receiptItems, receiptText: "1 salad 4.00" });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo retyped the bill");
+    expect(latest!.rows).toBeUndefined();
+  });
+
+  // "Changed who had what" alone sends everybody to the entry to find out
+  // whether it was their beer.
+  it("says which lines changed hands, and what that did to the shares", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, {
+      receiptItems: [{ label: "Salad", amount: "40.00" }, { label: "Beer", amount: "60.00" }],
+      receiptInvolved: [theo, marie],
+      receiptAssignments: [[theo], [theo, marie]],
+      split: { mode: "receipt", weights: { [theo]: 7000, [marie]: 3000 } },
+    });
+    await editExpense(groupId, theo, expenseId, {
+      receiptAssignments: [[marie], [theo, marie]],
+      split: { mode: "receipt", weights: { [theo]: 3000, [marie]: 7000 } },
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed who had what");
+    expect(latest!.rows).toEqual([
+      { name: "Salad", was: "Theo", now: "+ Marie", item: true, set: true },
+      { name: "Marie", was: "30.00", now: "70.00" },
+      { name: "Theo", was: "70.00", now: "30.00" },
+    ]);
   });
 
   // Reassigning a line to somebody else can leave the shares exactly where
@@ -540,7 +676,7 @@ suite("describe", () => {
     // The split moved, and this is what moved it — the grid, not a number
     // somebody typed into As parts. The mode is how the money divides ("By
     // items"); the bill it was read off is its own line ("Receipt").
-    expect(printed).toContain("By items");
+    expect(printed).toContain("Split by items");
     expect(printed).toContain("Receipt");
   });
 

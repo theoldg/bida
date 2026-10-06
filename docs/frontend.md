@@ -276,8 +276,10 @@ API is reached with `fetch`.
   from `copy.history`. One revision usually moved several fields — an entry is
   saved whole — and then it returns no sentence about any one of them, but a
   labelled was/now line for each; it reads the fold either side of the revision,
-  not just the fields that moved ([sync.md](sync.md#history-ui)). It must be
-  **total** — it runs inside a render over every patch the log holds, so one
+  not just the fields that moved, and where a list moved it says so as rows
+  (`lib/history-rows.ts`, drawn by `components/revision.tsx`, the sixth and
+  later folded behind "Show N more") — [sync.md](sync.md#history-ui). It must
+  be **total** — it runs inside a render over every patch the log holds, so one
   throw is a white screen, not a missing line. People are listed **by name**,
   not in the order they are stored: an id is a hash of the name (ADR-0034), so
   sorting by it puts a was/now pair in two unrelated orders.

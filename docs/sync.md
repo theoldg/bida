@@ -353,15 +353,34 @@ null }` ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).
 The sentence for a revision lives in `apps/web/lib/history-copy.ts` — it is the
 app's vocabulary for the log, and it names the member a membership revision is
 *about* rather than the actor, or adding three people reads as one person
-joining three times. A **split** revision asks two questions in that order — who
-is involved, then what each of them owes — and answers whichever changed: the
-names, or a share line ("Evenly" → "Ana ×2 · Bo ×1"). Where neither moved it
-says nothing at all and the next field speaks, because a spec can be rewritten
-without meaning anything different — except where that rewrite is the whole of
-the save, which gets the mode ("Evenly" → "By items") as a last resort
-rather than nothing. The **payer** side asks the same two questions over again — who
-put money in, then how much each of them did, priced in the entry's own
-currency — and an income asks both of them the other way round.
+joining three times.
+
+**Under the sentence goes what moved, never both whole states.** Where a
+revision moved a list — people in a split, payers, lines of a bill, who had
+which line — it gets **rows** (`lib/history-rows.ts`), one per *kind* of move:
+"+ Chewie 20.00", "− Cy ~~25.00~~", and the people who moved alike on one row,
+"Everyone but Cy 25.00 → 33.33". Taking one of ten out of a split is two rows,
+not two lists of ten for the reader to compare. A **split** is read as what each
+person owes, in money — the one reading that survives a change of mode and the
+only one that says anything about a split by items — so "changed who's
+involved" and "changed how it's split" both answer with figures, and a new mode
+is said ("Theo split it by items"). Where nobody's proportion moved it says
+nothing and the next field speaks (a new amount moves every share, and its own
+line says so) — except where a rewrite is the whole of the save, which gets the
+mode ("Evenly" → "By items") as a last resort. The **payer** side is the same
+rows over what each put in, in the entry's own currency; one payer for another
+is just the two names. A **bill** reads line by line, paired by what a line
+says, so a reorder is no news and a reprice is a move; a **who-had-what** change
+names the lines that changed hands and then the shares that followed them. A
+**new entry** says the amount, who paid and what each owes ("Chewie 24.00 ·
+Han, Luke 20.00 · Ben 17.00", "Everyone · 20.25 each").
+
+**"Everyone" is about the group as it was.** Each revision carries its
+`roster` — who was in the group as its op landed (`rosterOf`) — so a later
+joiner never turns last month's "Everyone" into "Everyone but Zoe". An even
+split's spare cent is laid flat, so "33.34, 33.33, 33.33" doesn't read as three
+shares. Figures in the group's currency go bare, the amount above them carrying
+the symbol; anything else keeps its code.
 
 A revision therefore carries the **whole entity either side of it**
 (`Revision.before` / `after`), not only the fields that moved: a co-payer added
@@ -377,9 +396,7 @@ more than one moved, **no field outranks another**: the line says only that the
 entry was edited, and each field that moved gets a labelled was/now line under
 it. Ranking them would caption a revision "changed who's involved" and hide
 that the amount had gone back — the one thing an audit trail exists to answer.
-A split is two questions, who and how much each, and a save that moved both
-gets both lines; a new entry's line uses the ledger row's words
-(`splitPhrase`), so a parts split never reads as "split 3 ways".
+A labelled line carries its rows like a sentence does.
 
 ## Gotchas
 

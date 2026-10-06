@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-06* — "Go wild" on history's "by items" and long lists. Wild
+  here meant reading more, not drawing more: what each person owes, who left,
+  one row for everyone who moved alike. Drive a real edit and look; the unit
+  tests can't see a row read wrong.
+
 - *2026-10-06* — "The group history link should have its icon aligned with
   the timeline points". One element named, one alignment asked: measure the
   rail, put the icon on it, and let the words fall into the column too.
@@ -71,8 +76,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-05* — "I crashed the app by typing \"1 million tomatoes\"… should
   we cap rows?" The owner breaks things on purpose and offers two fixes. Pick
   the narrower one, say why, and ship it: the question was the go-ahead.
-
-- *2026-10-05* — "*perfectly* aligned", over two phone shots, light and
-  dark side by side. A typed glyph centres on its font's box, not its bar:
-  when the owner says perfectly, draw it. Then square dots, no
-  line, "Ship D… actually E" off six variants: marks pare down.

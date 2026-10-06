@@ -1525,6 +1525,23 @@ dialog.scrim::backdrop { background: transparent }
   align-items: baseline; gap: 6px }
 .alsoi .lbl { font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase;
   color: var(--muted) }
+/* What moved, a row each. The mark and the arrow carry the meaning, so the
+   figures stay bare; a bill's lines are quieter than its people. */
+.hrows { margin-top: 5px; display: flex; flex-direction: column; gap: 2px; flex-basis: 100% }
+.alsoi .hrows { margin-top: 0 }
+.hrow { font-family: var(--f-mono); font-size: 11.5px; display: flex; flex-wrap: wrap;
+  align-items: baseline; column-gap: 6px }
+.hrow .nm { color: var(--ink) }
+.hrow.item .nm { color: var(--ink-2) }
+.hrow .mk { width: 1ch; text-align: center; font-weight: 600 }
+.hrow .mk.in { color: var(--credit) }
+.hrow .mk.out { color: var(--debit) }
+.hrow .to { color: var(--muted) }
+.hrow.item + .hrow:not(.item) { margin-top: 3px }
+.hmore summary { font-family: var(--f-mono); font-size: 11px; color: var(--muted); cursor: pointer;
+  list-style: none; padding: 2px 0; width: fit-content }
+.hmore summary::-webkit-details-marker { display: none }
+.hmore[open] summary { display: none }
 .note { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px }
 /* Padded for the press wash and pulled back so the words stay in line. */
 .tlink { display: flex; width: fit-content; align-items: center; gap: 3px;
