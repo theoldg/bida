@@ -473,12 +473,10 @@ function ExpenseDetail({ expense, kind, group, data }: {
               return (
                 <KV key={id}
                   k={yours(id, m?.name ?? copy.someone)}
-                  v={<>
-                    {money(putIn[id] ?? 0, group.baseCurrency)}
-                    {foreign ? <span className="muted">
-                      {" "}({money(own, expense.currency)})
-                    </span> : null}
-                  </>} />
+                  v={foreign
+                    ? <TwoCurrencies base={money(putIn[id] ?? 0, group.baseCurrency)}
+                      own={money(own, expense.currency)} />
+                    : money(putIn[id] ?? 0, group.baseCurrency)} />
               );
             })}
             <div className="hairline" />
@@ -503,10 +501,10 @@ function ExpenseDetail({ expense, kind, group, data }: {
               ? ` · ${(expense.split.bps[m.id] ?? 0) / 100}%`
               : "";
           const k = yours(m.id, m.name, detail);
-          const v = foreign ? <>
-            {money(shares[m.id] ?? 0, group.baseCurrency)}
-            <span className="muted"> ({money(ownShares[m.id] ?? 0, expense.currency)})</span>
-          </> : money(shares[m.id] ?? 0, group.baseCurrency);
+          const v = foreign
+            ? <TwoCurrencies base={money(shares[m.id] ?? 0, group.baseCurrency)}
+              own={money(ownShares[m.id] ?? 0, expense.currency)} />
+            : money(shares[m.id] ?? 0, group.baseCurrency);
           const lines = bill?.[m.id];
           if (!lines?.length) return <KV key={m.id} k={k} v={v} />;
           return <MemberBill key={m.id} name={k} total={v} lines={lines}
@@ -521,6 +519,14 @@ function ExpenseDetail({ expense, kind, group, data }: {
       </Card>
     </div>
   );
+}
+
+/**
+ * A base figure over the same figure in the entry's own currency. Stacked, not
+ * bracketed beside it: a column of brackets read as one long line of digits.
+ */
+function TwoCurrencies({ base, own }: { base: string; own: string }) {
+  return <span className="twoccy">{base}<span className="ownccy">{own}</span></span>;
 }
 
 /** Two people and an arrow. There is nothing else to a transfer. */

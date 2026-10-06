@@ -840,6 +840,12 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .sumcol { display: grid; grid-template-columns: auto auto; row-gap: 2px; margin: 4px 0 0 auto;
   font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right }
 .sumcol .eq { border-top: 1px solid var(--ink-2); padding-top: 4px; margin-top: 3px }
+/* A foreign entry's row (`TwoCurrencies`): the base figure a touch under the
+   name's size, the entry's own one under it, and the name centred on both. */
+.kv:has(> .v > .twoccy) { align-items: center; padding-block: 6px }
+.kv:has(> .v > .twoccy) > .k { line-height: 1.3 }
+.twoccy { display: flex; flex-direction: column; align-items: flex-end; font-size: 12px; line-height: 1.35 }
+.twoccy .ownccy { font-size: 10.5px; line-height: 1.25; margin-top: 2px; color: var(--muted) }
 /* Still a `.kv`, so the card doesn't restack when it opens. */
 button.kv { width: 100%; background: none; border: 0; font: inherit; text-align: left }
 button.kv:active { background: var(--press) }

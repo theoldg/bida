@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-06* — Brackets to a second line took four mock rounds: "roomier",
+  "centred", then "ship that" — and mid-ship, "actually, smaller sizes". A
+  live size toggle on the mock let them pick 12px alone. A ship order can be
+  recalled: commit only once they stop tuning.
+
 - *2026-10-06* — "Show me some designs before shipping", then "Ship slim
   band", not my pick. Five tabs on the real stylesheet made the choice a tap.
   A shared class reaches past the screen asked about: check what else wears it.
@@ -71,8 +76,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   in the tap feedback". A day after shipping the whole-row toggle: the owner
   tunes by hand after use. The hit area may grow; what the eye sees answer
   the tap must stay the box.
-
-- *2026-10-05* — "Propose a toggle all… not too text-heavy", then four
-  working mocks, then "make some stuff aligned right, the checkbox is a good
-  direction", then "Ship 3". The owner steers a round by naming a direction,
-  not a variant: give them five takes on it, not the old four again.
