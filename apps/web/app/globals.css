@@ -365,9 +365,10 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .row { display: flex; gap: 12px; align-items: center; padding: 11px 16px;
   border-bottom: 1px solid var(--rule-soft); position: relative; width: 100% }
 .row:last-child { border-bottom: 0 }
-/* Slim: a date heads a run of entries, and at a row's height it read as one. */
-.daylabel { font-family: var(--f-mono); font-size: 9.5px; line-height: 1.4; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--muted); padding: 4px 16px; background: var(--card-2);
+/* Slim: a date heads a run of entries, and at a row's height it read as one.
+   Caps only, so the padding is uneven: 7/6 puts the ink 9px from each edge. */
+.daylabel { font-family: var(--f-mono); font-size: 10px; line-height: 13px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted); padding: 7px 16px 6px; background: var(--card-2);
   border-bottom: 1px solid var(--rule-soft); font-weight: 500 }
 .avatar { width: 34px; height: 34px; border-radius: var(--r-s); display: grid; place-items: center;
   font-size: 12px; font-weight: 600; letter-spacing: -.02em; flex: none;
@@ -616,7 +617,7 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 /* Drawn as a date line, in full ink to say it can be pressed — at the old,
    taller height, since a slim date line is too thin a thing to tap. */
 .neweditsbar { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
-  padding-top: 9px; padding-bottom: 9px; border-top: 1px solid var(--rule-soft); color: var(--ink) }
+  padding-top: 10px; padding-bottom: 9px; border-top: 1px solid var(--rule-soft); color: var(--ink) }
 /* A chevron that becomes a cross once open: folding it back clears the line,
    which a chevron alone would promise to reopen. */
 .neweditsglyph { width: 20px; height: 20px; flex: none; margin: -4px -5px -4px auto;
