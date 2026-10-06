@@ -158,7 +158,7 @@ await save(2);
 // No avatar marks it any more (ADR-0023): the verb and the sign are the two
 // signals that an entry runs the other way.
 report((await page.locator(".rmeta").first().innerText()).includes("received"), "the income row says received");
-report((await page.locator(".ramt .big").first().innerText()).includes("+"), "the income row signs its figure");
+report(/^[-−]/.test(await page.locator(".ramt .big").first().innerText()), "the income row signs its figure with a minus");
 report(await page.locator(".avatar").count() === 0, "no screen of the ledger draws a person's initials");
 
 // ---- settling up, which is a card and not a form -----------------------
@@ -246,7 +246,7 @@ report(kinds.join(",") === "Expense,Income",
 await page.locator(".drow-pick").filter({ hasText: "Income" }).first().click();
 await settle(page, 120);
 await saveAndList(3);
-report((await page.locator(".ramt .big").allInnerTexts()).filter((t) => t.includes("+")).length === 2,
+report((await page.locator(".ramt .big").allInnerTexts()).filter((t) => /^[-−]/.test(t)).length === 2,
   "an expense can become an income");
 
 // ---- a touch hold, the way phones send one ------------------------------

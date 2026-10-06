@@ -388,7 +388,8 @@ the detail screen a bare glyph on the card. Each side is labelled above the name
 read before the person it qualifies.
 
 Which way an entry runs is the one distinction with no colour left to spend on
-it, so an income says **"received"** in its row and prints a `+` on its figure
+it, so an income says **"received"** in its row and prints a `−` on its ledger
+figure
 ([ADR-0010](decisions/0010-what-an-entry-is.md)). Two signals, never one.
 
 ## A dialog is ours, and its button says the act

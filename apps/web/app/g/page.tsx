@@ -260,9 +260,10 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
           })} />
         </div>
         <div className="ramt">
-          {/* An income's figure carries a "+": it is the group's number, not
-              yours, and without a sign it reads as one more thing spent. */}
-          <div className="big">{money(expense.baseAmountMinor, base, income)}</div>
+          {/* An income's figure carries a "−": it is the group's number, not
+              yours, and without a sign it reads as one more thing spent.
+              Display only — the stored amount stays positive. */}
+          <div className="big">{money(income ? -expense.baseAmountMinor : expense.baseAmountMinor, base)}</div>
           {foreign ? (
             <div className="sm">{money(expense.amountMinor, expense.currency)}</div>
           ) : null}
