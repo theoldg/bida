@@ -161,16 +161,17 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
           {head ? (
             // Right-aligned, so the box heads the column of ticks, plus
             // signs and figures under it, and the row never reads as a person.
-            <button type="button" className="splithead" onClick={toggleAll}
-              role="checkbox" aria-checked={headState === "all" ? true : headState === "some" ? "mixed" : false}
-              aria-label={`${copy.split.everyone.count(inCount, members.length)}. ${headLabel()}`}>
-              <span className="splitcount"><b>{inCount}</b> {copy.split.everyone.of(members.length)}</span>
-              <span className="allmark">
+            // Only the box is the control: a whole-row toggle read as one more row.
+            <div className="splithead">
+              <span className="splitcount" aria-hidden="true"><b>{inCount}</b> {copy.split.everyone.of(members.length)}</span>
+              <button type="button" className="allmark" onClick={toggleAll}
+                role="checkbox" aria-checked={headState === "all" ? true : headState === "some" ? "mixed" : false}
+                aria-label={`${copy.split.everyone.count(inCount, members.length)}. ${headLabel()}`}>
                 <span className={`allbox ${headState}`}>
                   {headState === "none" ? null : <Icon name={headState === "all" ? "check" : "minus"} size={11} />}
                 </span>
-              </span>
-            </button>
+              </button>
+            </div>
           ) : null}
           {showReceipt && receipt ? (
             <ReceiptPanel {...receipt} members={members} me={me} currency={amountCurrency}

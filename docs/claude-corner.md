@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-06* — "make only its check box clickable… it shouldn't be visible
+  in the tap feedback". A day after shipping the whole-row toggle: the owner
+  tunes by hand after use. The hit area may grow; what the eye sees answer
+  the tap must stay the box.
+
 - *2026-10-05* — "Propose a toggle all… not too text-heavy", then four
   working mocks, then "make some stuff aligned right, the checkbox is a good
   direction", then "Ship 3". The owner steers a round by naming a direction,
@@ -74,8 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   and we'll translate later". A locale quirk beside one hard-coded word: the
   owner picks consistency now over i18n later. Then make the second language
   one more copy object, not a rewrite.
-
-- *2026-10-04* — "Have it scroll to fit in a single line — or advise me
-  differently". A phone photo of an overflow; the box was already built to do
-  that and a same-named rule elsewhere undid it. Find why the design failed
-  before designing anew, and give the asked-for shape if it's sound.

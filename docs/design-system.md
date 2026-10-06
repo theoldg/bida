@@ -162,7 +162,8 @@ money in (`.inrow`), and you keep only the bar (`.mebar`).
 "**3** of 4" beside a drawn checkbox — ink with a tick for everyone, ink with
 a dash for some, an empty outline for nobody — sitting in the rows' 16px mark
 column, so it heads the ticks, the parts' plus and the figures below it. No
-wash and an empty left half, so it is never read as one more person.
+wash and an empty left half, so it is never read as one more person — and only
+the box is tappable: a 36px target around it, with the press darkening the box alone.
 
 **The wash eats soft hairlines.** A `--rule-soft` line is invisible against it,
 so wherever a washed row abuts something — the row below it, or the split
