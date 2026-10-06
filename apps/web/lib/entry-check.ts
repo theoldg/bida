@@ -181,7 +181,8 @@ export function checkEntry(input: {
   // Worded as the split editor counts it: in the entry's own currency, the
   // figures on the bill. A Receipt tab with no split yet blooms its step instead.
   const foot = transfer || receiptMissing ? null
-    : splitFooter(validateSplit(amountMinor, effectiveSplit, { tiebreakSeed: splitSeed(draft) }), draft.currency);
+    : splitFooter(validateSplit(amountMinor, effectiveSplit, { tiebreakSeed: splitSeed(draft) }), draft.currency,
+      nameOf);
   const splitProblem = foot && !foot.ok ? foot.text : null;
   // Only amounts are a column someone types toward a total; a bill's split
   // adds up by construction.

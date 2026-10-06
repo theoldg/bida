@@ -1022,10 +1022,9 @@ export const copy = {
     moreParts: (name: string) => `More parts for ${name}`,
     partsFor: (name: string) => `${name}’s parts`,
     amountFor: (name: string) => `${name}’s amount`,
-    /** A row's tap, named by what it would do (`tapLabel`). */
-    clear: (name: string) => `Clear ${name}’s amount`,
-    giveRest: (name: string) => `Give ${name} the rest`,
-    edit: (name: string) => `Type ${name}’s amount`,
+    /** An "as amounts" row's tap, named by what it would do. */
+    clearOut: (name: string) => `Clear ${name}’s amount and leave them out`,
+    joinRest: (name: string) => `Have ${name} share what’s left`,
     notInvolved: "not involved",
     /** The head box over the list (`toggleEveryone`): its count, and what its tap would do. */
     everyone: {
@@ -1033,14 +1032,16 @@ export const copy = {
       count: (n: number, total: number) => `${n} of ${total} in the split`,
       in: "Include everyone",
       out: "Leave everyone out",
-      shareRest: "Share what’s left among the empty rows",
-      clear: "Clear everyone’s amounts",
     },
     /** The footer's verdicts. Wording checked by lib/format.test.ts. */
     nobody: "Nobody is included yet",
     allocated: (allocated: string, total: string) => `${allocated} of ${total} allocated`,
     under: "left to split",
     over: "too much",
+    /** As amounts, the rows with no figure: what they share, or that there's none. */
+    restShared: (left: string, n: number) => `${left} left, shared by ${n}`,
+    nothingLeft: (who: string) => `Nothing left for ${who}`,
+    people: (n: number) => `${n} people`,
   },
 
   // ------------------------------------------------------------- receipts

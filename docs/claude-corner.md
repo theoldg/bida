@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-06* — "Maybe a checkmark next to unspecified rows", typed into
+  the middle of my survey of the code. The owner designs while you read: stop
+  and fold the hint in, and the mocks they then see are already theirs. Then
+  "Build it" settled three open questions by accepting every proposal.
+
 - *2026-10-06* — "make only its check box clickable… it shouldn't be visible
   in the tap feedback". A day after shipping the whole-row toggle: the owner
   tunes by hand after use. The hit area may grow; what the eye sees answer
@@ -74,8 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   ugly", then "smaller". Three rounds, each quieter. Make the mocks work, in
   the app's own tokens, keep last round's pick on the page for scale, and
   expect the owner to want less than you drew.
-
-- *2026-10-04* — "Maybe let's just have them all in English produced by us
-  and we'll translate later". A locale quirk beside one hard-coded word: the
-  owner picks consistency now over i18n later. Then make the second language
-  one more copy object, not a rewrite.

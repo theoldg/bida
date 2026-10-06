@@ -2,19 +2,18 @@
 
 import Link from "next/link";
 import {
-  resolveSplit, splitParticipants, toggleEveryone,
-  type ArithmeticSplit, type Member, type SplitSpec,
+  exactFigures, resolveSplit, restOf, splitParticipants, toggleEveryone,
+  type ArithmeticSplit, type Id, type Member, type SplitSpec,
 } from "@bida/core";
 import { MAX_PARTS, MinorAmountInput, PartsInput } from "./amount-input";
 import { Failure } from "./chrome";
 import { ScanPair, type ReceiptScan } from "./receipt-scan";
-import { Icon, TapMark } from "./icons";
+import { Icon } from "./icons";
 import { SoloName } from "./bits";
 import { copy } from "../lib/copy";
 import { printedCount } from "../lib/scan/items";
 import { bare, money, plural } from "../lib/format";
 import type { SplitTab } from "../lib/draft";
-import { tapAmount, tapLabel } from "../lib/tap-amount";
 
 /**
  * Inline on the form, never a route: an expense is one thought. Nothing new is
@@ -24,6 +23,20 @@ import { tapAmount, tapLabel } from "../lib/tap-amount";
  */
 
 const MODES = ["equal", "shares", "exact"] as const;
+
+/**
+ * An "as amounts" row: a figure somebody typed, in with none (sharing what the
+ * typed ones leave), or out. A tap goes typed → out → rest → out → rest…;
+ * typing makes any row typed, and clearing a typed one leaves it sharing.
+ */
+type AmountRow = "typed" | "rest" | "out";
+
+/** The exact spec, with no `rest` key when nobody floats (as `canonicalSplit` writes it). */
+function exactSpec(amounts: Record<Id, number>, rest: Id[]): ArithmeticSplit {
+  return rest.length > 0
+    ? { mode: "exact", amounts, rest: [...new Set(rest)].sort() }
+    : { mode: "exact", amounts };
+}
 
 interface ReceiptTabProps {
   items: { label: string; amount: string }[] | null;
@@ -65,6 +78,17 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     try { shares = resolveSplit(amountMinor, shown, opts).shares; } catch { /* incomplete */ }
   }
 
+  // As amounts: who shares the rest, what each gets, and whether there is any
+  // to get. Over the total, or with less than a cent each, a share would be a
+  // lie, so the rows say "?" — but never before there is an amount at all.
+  const rest = new Set(restOf(spec));
+  const figures = spec.mode === "exact" ? exactFigures(amountMinor, spec, opts) : {};
+  const typedSum = spec.mode === "exact"
+    ? Object.entries(spec.amounts).reduce((a, [id, v]) => a + (rest.has(id) ? 0 : v), 0) : 0;
+  const restShort = amountMinor > 0 && rest.size > 0 && typedSum + rest.size > amountMinor;
+  const rowOf = (id: Id): AmountRow =>
+    rest.has(id) ? "rest" : spec.mode === "exact" && (spec.amounts[id] ?? 0) > 0 ? "typed" : "out";
+
   // What the split adds up to, right or wrong, is said in the Save dock
   // (`checkEntry`'s `splitProblem` and `splitTick`), where no scroll hides it.
 
@@ -96,15 +120,12 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   const headState = inCount === 0 ? "none" : inCount === members.length ? "all" : "some";
 
   function toggleAll() {
-    if (head) onChange(toggleEveryone(amountMinor, head, members.map((m) => m.id), opts));
+    if (head) onChange(toggleEveryone(head, members.map((m) => m.id)));
   }
 
   /** What the head box's tap would do, said the way the rows say theirs. */
   function headLabel(): string {
-    if (headState === "all") return copy.split.everyone.out;
-    if (head?.mode !== "exact") return copy.split.everyone.in;
-    const left = amountMinor - Object.values(head.amounts).reduce((a, v) => a + v, 0);
-    return left > 0 ? copy.split.everyone.shareRest : copy.split.everyone.clear;
+    return headState === "all" ? copy.split.everyone.out : copy.split.everyone.in;
   }
 
   /** As with amounts: having parts puts you in, none takes you out. */
@@ -116,20 +137,24 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     onChange({ mode: "shares", weights });
   }
 
-  /** Having a figure puts you in the split, clearing it takes you out. No tick to set first. */
+  /** A figure makes the row typed; clearing one leaves it in, sharing the rest. */
   function setExact(memberId: string, minor: number) {
     if (spec.mode !== "exact") return;
     const amounts = { ...spec.amounts };
-    if (minor > 0) amounts[memberId] = minor; else delete amounts[memberId];
-    onChange({ mode: "exact", amounts });
+    const others = restOf(spec).filter((id) => id !== memberId);
+    if (minor > 0) amounts[memberId] = minor;
+    else delete amounts[memberId];
+    onChange(exactSpec(amounts, minor > 0 ? others : [...others, memberId]));
   }
 
-  /** A tap on the name: clear it, fill it with the rest, or type (`tapAmount`). */
-  function tapRow(memberId: string, fieldId: string) {
+  /** A tap on the name: typed and rest go out, out joins the rest. It never types. */
+  function tapRow(memberId: string) {
     if (spec.mode !== "exact") return;
-    const tap = tapAmount(spec.amounts, memberId, amountMinor);
-    if (tap === "edit") document.getElementById(fieldId)?.focus();
-    else setExact(memberId, tap.set);
+    const amounts = { ...spec.amounts };
+    // A rest row's figure is only a filled-in copy; out holds none.
+    delete amounts[memberId];
+    const others = restOf(spec).filter((id) => id !== memberId);
+    onChange(exactSpec(amounts, rowOf(memberId) === "out" ? [...others, memberId] : others));
   }
 
   return (
@@ -183,7 +208,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
             const wholeRow = spec.mode === "equal" || spec.mode === "percent";
             const typing = spec.mode === "exact";
             const fieldId = `sp-${m.id}`;
-            const tap = typing ? tapAmount(spec.amounts, m.id, amountMinor) : "edit";
+            const row = rowOf(m.id);
             const parts = spec.mode === "shares" ? spec.weights[m.id] ?? 0 : 0;
             const end = spec.mode === "shares" ? (
               <span className="partsend">
@@ -204,13 +229,15 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
               </span>
             ) : spec.mode === "exact" ? (
               <span style={{ display: "flex", alignItems: "center" }}>
-                {/* Never disabled: typing is how somebody joins. Enter walks down (`walkFields`). */}
+                {/* Never disabled: typing is how somebody joins. Enter walks down (`walkFields`).
+                    A rest row's share is the placeholder, so the first digit replaces it. */}
                 <MinorAmountInput id={fieldId} className="bignum splitin"
                   enterKeyHint={i === members.length - 1 ? "done" : "next"}
                   aria-label={copy.split.amountFor(m.name)}
                   currency={amountCurrency}
-                  valueMinor={spec.amounts[m.id] ?? 0}
-                  placeholder={bare(0, amountCurrency)}
+                  valueMinor={row === "typed" ? spec.amounts[m.id] ?? 0 : 0}
+                  placeholder={row !== "rest" ? bare(0, amountCurrency)
+                    : restShort ? "?" : bare(figures[m.id] ?? 0, amountCurrency)}
                   onChangeMinor={(minor) => setExact(m.id, minor)} />
               </span>
             ) : spec.mode === "percent" ? (
@@ -239,14 +266,15 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
             );
             const lead = { display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 } as const;
             return (
-              <div key={m.id} className={`splitrow${on ? " inrow" : ""}${m.id === me ? " mebar" : ""}`}>
+              <div key={m.id} className={`splitrow${on ? " inrow" : ""}${m.id === me ? " mebar" : ""}${
+                typing && row === "rest" ? ` rest${restShort ? " short" : ""}` : ""}`}>
                 {typing ? (
-                  <button type="button" onClick={() => tapRow(m.id, fieldId)} style={lead}
-                    aria-label={tapLabel(tap, m.name, copy.split)}>
+                  <button type="button" onClick={() => tapRow(m.id)} style={lead}
+                    aria-label={row === "typed" ? copy.split.clearOut(m.name)
+                      : row === "rest" ? copy.split.leaveOut(m.name) : copy.split.joinRest(m.name)}>
                     {name}
-                    {/* Inside the button: the mark is what the tap does, so it
-                        answers one, and the row is a target up to the field. */}
-                    <TapMark tap={tap} />
+                    {/* Inside the button, so the row is a target up to the field. */}
+                    <RowMark row={row} />
                   </button>
                 ) : (
                   <button type="button" onClick={() => toggle(m.id)}
@@ -263,6 +291,21 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * An "as amounts" row's mark, in the column the payers' `TapMark` uses: × and +
+ * say what a tap does, grey; the rest's tick says what the row is, in ink, as
+ * Evenly's does — it is an even part of what is left.
+ */
+function RowMark({ row }: { row: AmountRow }) {
+  return (
+    <span style={{ width: 16, flex: "none", display: "flex", justifyContent: "center",
+      color: row === "rest" ? "var(--ink)" : "var(--muted)" }}>
+      {row === "rest" ? <Icon name="check" size={14} />
+        : row === "out" ? <Icon name="plus" size={14} /> : <Icon name="cross" size={12} />}
+    </span>
   );
 }
 

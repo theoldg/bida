@@ -16,7 +16,8 @@ phones are offline at once, because that will happen on a trip.
 not an account). Three kinds of entry — **expenses**, **incomes** and
 **transfers** (amount, currency, description, date, category, who paid, who
 for) ([ADR-0010](decisions/0010-what-an-entry-is.md)). Split modes: evenly,
-as parts, as amounts — remainders distributed deterministically and quietly.
+as parts, as amounts (whoever is in with no figure shares what is left) —
+remainders distributed deterministically and quietly.
 Balances, derived, never stored. Settle-up, which records a transfer. Invite by
 link. **A way out**: one CSV in Splitwise's export shape, which is what Tricount
 imports too ([data-model.md](data-model.md#the-group-as-a-spreadsheet)) — a

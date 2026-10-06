@@ -224,15 +224,14 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-entry-income.png`) });
       process.stdout.write(`${theme}/entry-income `);
 
-      // A half-finished "as amounts" split: the one state where the editor has
-      // something to say about money that doesn't add up, and the field you
-      // type that money into is in it.
+      // An "as amounts" split with one figure typed and everyone else sharing
+      // what it leaves: the three row states, and the rest's quiet field.
       await page.goto(`${base}/g/entry/edit?id=${groupId}`);
       await page.locator("input.amount").fill("120");
       await page.locator("#what").fill("Hammam");
       await page.getByRole("button", { name: "As amounts" }).click();
-      // 25 of the 120, deliberately: the shot is there to catch the shortfall
-      // line reading in money, not "9500 minor units".
+      // 25 of the 120, deliberately: the docked line reads the €95 the rest
+      // shares in money, not "9500 minor units".
       await page.getByRole("textbox", { name: /Marie.s amount/ }).fill("25");
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-expense-split-amounts.png`) });

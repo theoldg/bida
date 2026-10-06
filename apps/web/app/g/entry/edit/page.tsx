@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import {
-  minorToDecimalString, receiptExtras, receiptOf,
+  minorToDecimalString, receiptExtras, receiptOf, settleRest,
   type Group, type RateSource,
 } from "@bida/core";
 import { handOffReceiptTotal } from "@/lib/scan/items";
@@ -359,7 +359,9 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
           rateToBase: rate,
           paidBy: draft.paidBy,
           payers: draft.payers,
-          split: effectiveSplit,
+          // The rest's figures written in, so a phone that predates `rest`
+          // reads a split that adds up (core/split.ts).
+          split: settleRest(amountMinor, effectiveSplit, { tiebreakSeed: splitSeed(draft) }),
           categoryId: draft.categoryId,
           // An income has no bill. Turning an expense into one clears the scan
           // rather than leaving a receipt hanging off an entry that can never

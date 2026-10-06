@@ -1285,6 +1285,14 @@ dialog.scrim::backdrop { background: transparent }
   font: inherit; font-size: 15px; font-weight: 500; color: var(--ink);
   outline: none; font-variant-numeric: tabular-nums }
 .splitrow:not(.inrow) .partsin { color: var(--muted) }
+/* As amounts' rest: in, with no figure typed. Its share is the placeholder,
+   in grey on a dotted rule — worked out, not typed — and a "?" in red when
+   there is none to give. Focused, the rule goes solid as any field's does. */
+.splitrow.rest .amountfield { border-bottom-style: dotted }
+.splitrow.rest .amountfield:focus-within { border-bottom-style: solid }
+.splitrow.rest .splitin::placeholder { color: var(--ink-2); font-weight: 400 }
+.splitrow.rest .splitin:focus::placeholder { color: var(--muted) }
+.splitrow.rest.short .splitin::placeholder { color: var(--debit); font-weight: 600 }
 .splitfoot { display: flex; align-items: center; gap: 7px; padding: 8px 12px; font-size: 12px;
   font-weight: 600; border-top: 1px solid var(--rule-soft) }
 .splitfoot.ok { background: var(--credit-bg); color: var(--credit) }

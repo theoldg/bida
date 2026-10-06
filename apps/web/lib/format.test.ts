@@ -61,6 +61,20 @@ describe("splitFooter", () => {
     expect(over).toMatchObject({ ok: false });
     expect(over?.text).toContain("too much");
   });
+
+  it("says what the rest shares, or who it has nothing left for", () => {
+    const names = (id: string) => ({ b: "Bo", c: "Cy" })[id] ?? id;
+    const shared = splitFooter(validateSplit(6000, { mode: "exact", amounts: { a: 2400 }, rest: ["b", "c"] }), "EUR", names);
+    expect(shared).toEqual({ ok: true, text: "€36.00 left, shared by 2" });
+
+    const one = splitFooter(validateSplit(6000, { mode: "exact", amounts: { a: 6000 }, rest: ["c"] }), "EUR", names);
+    expect(one).toEqual({ ok: false, text: "Nothing left for Cy" });
+    const two = splitFooter(validateSplit(6000, { mode: "exact", amounts: { a: 6000 }, rest: ["b", "c"] }), "EUR", names);
+    expect(two).toEqual({ ok: false, text: "Nothing left for 2 people" });
+
+    const over = splitFooter(validateSplit(6000, { mode: "exact", amounts: { a: 7000 }, rest: ["c"] }), "EUR", names);
+    expect(over?.text).toContain("too much");
+  });
 });
 
 describe("bare", () => {

@@ -164,14 +164,21 @@ API is reached with `fetch`.
   … → last person → fold, started by a tap on a field. A count of parts is
   typed with the money field's caret and Backspace (`PartsInput`), between − and
   + drawn small and grey; having parts puts you in, none
-  takes you out, and a tap on the name toggles. **A tap on a name in a column
-  of amounts is not a focus**: it clears a figure, hands an empty row what is
-  left, and types only when the column is already full or over (`tapAmount`).
-  A grey plus or cross beside the field says which (`TapMark`), inside the name's button so the whole row up to the field takes the tap; typing gets none. **The head box toggles the
-  whole list** (`toggleEveryone`), in every tab but Items and only from three
-  people up: everyone in takes everyone out, else it brings in whoever is out
-  and leaves the rest — a 2 in parts stays 2, a typed amount stays, and in
-  amounts the empty rows share what is left, or it clears with nothing left. `walkFields`
+  takes you out, and a tap on the name toggles. **An "as amounts" row is typed, sharing or
+  out**: a figure typed, in with none (the rest — what the typed figures leave,
+  divided evenly, its share the field's grey placeholder on a dotted rule), or
+  not in the split. A tap on the name never types: typed and sharing go out, out
+  comes back sharing, under the mark that says so — a grey × or + for what the
+  tap does, Evenly's ink tick for a row that shares. Typing makes any row
+  typed; clearing a typed figure leaves it sharing. Over the total, or with
+  nothing left, the sharing rows read a red "?" and the dock names them. On
+  `/g/payers` a tap on a name is not a focus either: it clears a figure, hands an
+  empty row what is left, and types only when the column is already full or
+  over (`tapAmount`, marked by `TapMark`), since a payer has no rest to share.
+  **The head box toggles the whole list** (`toggleEveryone`), in every tab but
+  Items and only from three people up: everyone in takes everyone out, else it
+  brings in whoever is out and leaves the rest — a 2 in parts stays 2, a typed
+  amount stays, and in amounts whoever was out joins the rest. `walkFields`
   (`components/viewport.tsx`) is the whole of it, hung on `.scroll` because the
   next field is rarely a sibling; it walks that screen's fields in the order
   they are laid out and puts the caret at the *end* of what is already in one

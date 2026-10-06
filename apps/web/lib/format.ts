@@ -74,18 +74,28 @@ function shortfallText(
   return check.message ?? "";
 }
 
+/** `nameOf` names who an "as amounts" split has nothing left for; one name, else a count. */
 export function splitFooter(
   check: SplitValidation,
   currency: CurrencyCode,
+  nameOf: (id: string) => string = (id) => id,
 ): { ok: boolean; text: string } | null {
   if (check.problem === "empty") return { ok: false, text: copy.split.nobody };
   // 0 of 0 is satisfied but meaningless; the amount field says what's missing.
   if (check.totalMinor <= 0) return null;
+  if (check.ok && check.rest) {
+    return { ok: true, text: copy.split.restShared(money(check.rest.leftMinor, currency), check.rest.ids.length) };
+  }
   if (check.ok) {
     return {
       ok: true,
       text: copy.split.allocated(money(check.allocatedMinor, currency), money(check.totalMinor, currency)),
     };
+  }
+  if (check.problem === "nothingLeft" && check.rest) {
+    const [only] = check.rest.ids;
+    const who = check.rest.ids.length === 1 && only ? nameOf(only) : copy.split.people(check.rest.ids.length);
+    return { ok: false, text: copy.split.nothingLeft(who) };
   }
   return {
     ok: false,

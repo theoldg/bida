@@ -29,17 +29,20 @@ function open(draft: EntryDraft, tab: SplitTab, totalMinor = 9000): EntryDraft {
 }
 
 describe("the arithmetic tabs are independent", () => {
+  // Evenly is everyone sharing the rest of nothing typed, so typing one
+  // figure re-divides the others rather than over-filling the column.
   it("hands a first-time tab what is on screen, so even-then-nudge still works", () => {
     const d = open(expense(), "exact");
-    expect(d.splits.exact).toEqual({ mode: "exact", amounts: { [A]: 3000, [B]: 3000, [C]: 3000 } });
+    expect(d.splits.exact).toEqual({ mode: "exact", amounts: {}, rest: [A, B, C] });
+    expect(resolveSplit(9000, activeSplit(d)).shares).toEqual({ [A]: 3000, [B]: 3000, [C]: 3000 });
   });
 
-  // Everybody is in Evenly by default, but a zero each is nobody: opened
-  // before the amount is typed, As amounts starts empty, with no row lit.
-  it("hands a first-time As amounts nobody while the total is still zero", () => {
+  // Nobody is handed a zero figure: opened before the amount is typed, everyone
+  // shares the rest, and the shares arrive with the amount.
+  it("hands a first-time As amounts everyone sharing while the total is still zero", () => {
     const d = open(expense({ amountText: "" }), "exact", 0);
-    expect(d.splits.exact).toEqual({ mode: "exact", amounts: {} });
-    expect(splitParticipants(activeSplit(d))).toEqual([]);
+    expect(d.splits.exact).toEqual({ mode: "exact", amounts: {}, rest: [A, B, C] });
+    expect(splitParticipants(activeSplit(d))).toEqual([A, B, C]);
   });
 
   it("keeps somebody in As parts after Evenly leaves them out", () => {
@@ -57,7 +60,7 @@ describe("the arithmetic tabs are independent", () => {
   it("starts As amounts in the entry's own currency, not the base", () => {
     // 90.00 MAD, whatever the euro total handed in: the fields are dirham.
     const d = open(expense({ currency: "MAD" }), "exact", 828);
-    expect(d.splits.exact).toEqual({ mode: "exact", amounts: { [A]: 3000, [B]: 3000, [C]: 3000 } });
+    expect(resolveSplit(9000, activeSplit(d)).shares).toEqual({ [A]: 3000, [B]: 3000, [C]: 3000 });
   });
 
   it("keeps the amounts typed into As amounts when Evenly changes", () => {
@@ -85,7 +88,7 @@ describe("the arithmetic tabs are independent", () => {
         const d = open(expense({ amountText: (total / 100).toFixed(2) }), first, total);
         const spec = activeSplit(d);
         const allocated = spec.mode === "exact"
-          ? Object.values(spec.amounts).reduce((a, b) => a + b, 0) : total;
+          ? Object.values(resolveSplit(total, spec).shares).reduce((a, b) => a + b, 0) : total;
         expect(allocated).toBe(total);
       }
     }
@@ -117,8 +120,7 @@ describe("Receipt is a fourth answer, not a fourth way of writing one", () => {
       receiptAssignments: [[A], [B]],
     });
     expect(activeSplit(d)).toEqual({ mode: "receipt", weights: { [A]: 6000, [B]: 3000 } });
-    expect(open(d, "exact").splits.exact)
-      .toEqual({ mode: "exact", amounts: { [A]: 3000, [B]: 3000, [C]: 3000 } });
+    expect(open(d, "exact").splits.exact).toEqual({ mode: "exact", amounts: {}, rest: [A, B, C] });
     expect(open(d, "shares").splits.shares)
       .toEqual({ mode: "shares", weights: { [A]: 1, [B]: 1, [C]: 1 } });
   });

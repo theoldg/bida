@@ -729,7 +729,8 @@ await page.locator("#what").fill("Split check");
 // Switching tabs must not move the rows: every mode's row is one height, so
 // the list under the tabs stays where the thumb left it.
 const rowHeights = {};
-for (const tab of ["Evenly", "As parts", "As amounts"]) {
+// As amounts opens second, from Evenly — what it is handed is checked below.
+for (const tab of ["Evenly", "As amounts", "As parts", "As amounts"]) {
   await page.getByRole("button", { name: tab }).click();
   await settle(page, 80);
   rowHeights[tab] = await page.locator(".splitrow").evaluateAll((rows) =>
@@ -737,17 +738,29 @@ for (const tab of ["Evenly", "As parts", "As amounts"]) {
 }
 report(new Set(Object.values(rowHeights)).size === 1 && !Object.values(rowHeights)[0].includes("/"),
   "every split tab draws its rows at one height", JSON.stringify(rowHeights));
-const firstShare =page.locator("input[aria-label$=\"’s amount\"]").first();
+const firstShare = page.locator("input[aria-label$=\"’s amount\"]").first();
+const firstRow = page.locator(".splitrow").first();
+// From Evenly, As amounts opens with nobody typed and everyone sharing: the
+// share is the field's placeholder, not its text.
 const seeded = await firstShare.inputValue();
+report(seeded === "" && /\d/.test(await firstShare.getAttribute("placeholder"))
+  && await page.locator(".splitrow.rest").count() === await page.locator(".splitrow").count(),
+  "Evenly opens As amounts as everyone sharing the rest, each share a placeholder",
+  `"${seeded}" / ${await firstShare.getAttribute("placeholder")}`);
 await settle(page, 120);
 const splitTick = page.locator(".whodock .splitfoot.ok");
-report(await splitTick.count() === 1 && /allocated/.test(await splitTick.innerText()),
-  "typed amounts that add up are ticked in the Save dock, not the split box");
+report(await splitTick.count() === 1 && /shared by/.test(await splitTick.innerText()),
+  "a rest that adds up is ticked in the Save dock, not the split box");
 await firstShare.fill("999");
 await settle(page, 120);
 const splitLine = page.locator(".whodock .splitfoot.bad");
 report(await splitLine.count() === 1 && await splitTick.count() === 0,
   "a split that doesn't add up is said in the Save dock");
+// Over the total, the rows still sharing have no honest share to show.
+const shortRows = page.locator(".splitrow.rest.short input");
+report(await shortRows.count() > 0
+  && (await shortRows.evaluateAll((els) => els.map((el) => el.placeholder))).every((p) => p === "?"),
+  "over the total, the rows sharing the rest show a ?");
 // Mid-scroll the form is cut off at the dock's top edge: the line keeps its own
 // air above it, not the form's bottom padding, which only shows at the end.
 await page.locator(".scroll").evaluate((el) => { el.scrollTop = el.scrollHeight / 3; });
@@ -766,9 +779,9 @@ await page.getByRole("button", { name: "Evenly" }).click();
 await settle(page, 120);
 report(await splitLine.count() === 0, "and a tab that adds up takes it away");
 await page.getByRole("button", { name: "As amounts" }).click();
-// The plus and cross beside a field sit inside the name's button, so a tap on
-// the mark itself (the button's right end) is the row's tap: a cross clears
-// that figure, and the plus it leaves hands the row what is left.
+// The mark beside a field sits inside the name's button, so a tap on the mark
+// itself (the button's right end) is the row's tap: a cross clears the figure
+// and leaves the row out, and the plus it leaves brings the row back sharing.
 const firstName = page.locator(".splitrow > button").first();
 const tapMark = async () => {
   const box = await firstName.boundingBox();
@@ -777,12 +790,14 @@ const tapMark = async () => {
 await tapMark();
 await settle(page, 80);
 const cleared = await firstShare.inputValue();
+const outRow = !/\binrow\b/.test(await firstRow.getAttribute("class"));
 await tapMark();
 await settle(page, 80);
-const refilled = await firstShare.inputValue();
-report(cleared === "" && refilled !== "" && refilled !== "999.00",
-  "the cross beside a figure clears it, and the plus then gives it the rest", `${cleared} → ${refilled}`);
-await firstShare.fill(seeded);
+const sharing = /\brest\b/.test(await firstRow.getAttribute("class"));
+const share = await firstShare.getAttribute("placeholder");
+report(cleared === "" && outRow && sharing && await firstShare.inputValue() === "" && /\d/.test(share),
+  "the cross beside a figure clears it and leaves the row out, and the plus brings it back sharing",
+  `out: ${outRow}, then sharing ${share}`);
 await page.getByRole("button", { name: "Evenly" }).click();
 
 // Payers that no longer add up are said in the same place, live: two of them

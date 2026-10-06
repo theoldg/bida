@@ -1,7 +1,8 @@
 /**
- * What tapping a person's row does in a column of amounts — the split editor's
- * "as amounts" and `/g/payers`. The two gestures a column wants most, with no
- * button for either:
+ * What tapping a person's row does on `/g/payers`. The split editor's "as
+ * amounts" began here and parted ways: a split row can be in with no figure,
+ * sharing the rest, which a payer cannot (components/split-editor.tsx). The two
+ * gestures a column wants most, with no button for either:
  *
  * - a row holding a figure goes to **zero**;
  * - a row at zero takes **what is left** of the total;
