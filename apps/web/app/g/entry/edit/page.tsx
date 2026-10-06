@@ -26,7 +26,7 @@ import { ENTRY_KINDS, type EntryKind } from "@/lib/entry-kind";
 import { copy } from "@/lib/copy";
 import { checkEntry, needsRate } from "@/lib/entry-check";
 import { useRefusals } from "@/lib/refusal";
-import { dateInputValue, errorText, money, plural, withDate } from "@/lib/format";
+import { bare, dateInputValue, errorText, money, plural, withDate } from "@/lib/format";
 import { formParent, parseEntrySource, route, type EntrySource } from "@/lib/group-link";
 import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 import { markSaved } from "@/lib/ledger-motion";
@@ -427,7 +427,9 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                 fieldClassName={`big${refusals.flash("amount")}`}
                 aria-label={copy.form.amount(draft.currency)}
                 enterKeyHint="next"
-                placeholder="0"
+                // "0.00", "0" for yen: the shape of what goes here, as every
+                // other money field in the app shows it.
+                placeholder={bare(0, draft.currency)}
                 currency={draft.currency}
                 value={receiptTotal !== null
                   ? minorToDecimalString(receiptTotal, draft.currency) : draft.amountText}
