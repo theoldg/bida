@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { Icon, type IconName } from "./icons";
 import { initials } from "../lib/format";
+import { copy } from "../lib/copy";
 
 /**
  * Initials in a square — for a *group*, in the list of them. **People don't
@@ -32,16 +33,21 @@ export function Chip({ children, variant, style }: {
  * The height is an invisible title-and-line pair, so it is whatever the
  * device makes of those two lines (`.rmain.solo`).
  */
-export function SoloName({ name, style }: { name: string; style?: CSSProperties }) {
+export function SoloName({ name, you, style }: { name: string; you?: boolean; style?: CSSProperties }) {
   return (
     <span className="rmain solo" style={style}>
       <span className="sologhost" aria-hidden="true">
         <span className="rtitle">&nbsp;</span>
         <span className="rmeta">&nbsp;</span>
       </span>
-      <span className="rtitle">{name}</span>
+      <span className="rtitle">{name}{you ? <You /> : null}</span>
     </span>
   );
+}
+
+/** Beside your own name, wherever a list of people prints it. */
+export function You() {
+  return <span className="youtag"> ({copy.entry.you})</span>;
 }
 
 export function Card({ children, style, className }: {

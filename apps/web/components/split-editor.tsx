@@ -9,7 +9,7 @@ import { MAX_PARTS, MinorAmountInput, PartsInput } from "./amount-input";
 import { Failure } from "./chrome";
 import { ScanPair, type ReceiptScan } from "./receipt-scan";
 import { Icon } from "./icons";
-import { SoloName } from "./bits";
+import { SoloName, You } from "./bits";
 import { copy } from "../lib/copy";
 import { printedCount } from "../lib/scan/items";
 import { bare, money, plural } from "../lib/format";
@@ -238,11 +238,11 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
             // The dimming rides on the name, so the plus stays legible. When typing,
             // the field is the figure, so no line under the name (`SoloName`).
             const name = typing ? (
-              <SoloName name={m.name} style={{ opacity: on ? 1 : .45 }} />
+              <SoloName name={m.name} you={m.id === me} style={{ opacity: on ? 1 : .45 }} />
             ) : (
               <span className="rmain" style={{ opacity: on ? 1 : .45 }}>
                 <span className="rtitle" style={{ display: "block", fontSize: 13.5 }}>
-                  {m.name}
+                  {m.name}{m.id === me ? <You /> : null}
                 </span>
                 <span className="rmeta" style={{ display: "block" }}>
                   {!on ? copy.split.notInvolved : money(shares[m.id] ?? 0, amountCurrency)}
@@ -251,7 +251,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
             );
             const lead = { display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 } as const;
             return (
-              <div key={m.id} className={`splitrow${on ? " inrow" : ""}${m.id === me ? " mebar" : ""}${
+              <div key={m.id} className={`splitrow${on ? " inrow" : ""}${
                 typing && row === "rest" ? ` rest${restShort ? " short" : ""}` : ""}`}>
                 {typing ? (
                   <button type="button" onClick={() => tapRow(m.id)} style={lead}

@@ -239,11 +239,11 @@ input, textarea, .selectable {
 }
 
 /* Yours: a wash plus an edge bar, so it survives colour-blindness. In the
-   split and payer editors the wash marks who is in, the bar alone marks you. */
+   split and payer editors the wash marks who is in, and "(you)" marks you. */
 .mine, .inrow {
   background: var(--hl);
 }
-.mine::before, .mebar::before {
+.mine::before {
   content: "";
   position: absolute;
   left: 0; top: 0; bottom: 0;
@@ -1276,7 +1276,7 @@ dialog.scrim::backdrop { background: transparent }
    everyone row would stick to it instead of to `.scroll`. */
 .splitbox { background: var(--card-2); border: 1px solid var(--rule-soft);
   border-radius: var(--r-s); overflow: hidden; overflow: clip }
-/* Sticky, over the rows, whose `.mebar` and washes are positioned. The head
+/* Sticky, over the rows, whose washes are positioned. The head
    card's grey, not the track's own `--card-3`: one shade fewer on the form. */
 .splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft);
   position: sticky; top: 0; z-index: 2; background: var(--card-2) }

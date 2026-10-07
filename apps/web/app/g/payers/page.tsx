@@ -146,7 +146,7 @@ function PayersScreen() {
               // one. The last row has nowhere to go, and says so.
               const last = i === data.members.length - 1;
               return (
-                <div key={m.id} className={`row${on ? " inrow" : ""}${m.id === data.me ? " mebar" : ""}`}>
+                <div key={m.id} className={`row${on ? " inrow" : ""}`}>
                   <button type="button" onClick={() => tapRow(m.id, fieldId)}
                     aria-label={tapLabel(tap, m.name, {
                       clear: copy.payers.clear, giveRest: copy.payers.giveRest,
@@ -157,7 +157,7 @@ function PayersScreen() {
                         the figure, and an empty one already says "didn't pay" —
                         same as the split editor's "as amounts". */}
                     {/* The dimming rides on the name, so the mark stays legible. */}
-                    <SoloName name={m.name} style={{ opacity: on ? 1 : .45 }} />
+                    <SoloName name={m.name} you={m.id === data.me} style={{ opacity: on ? 1 : .45 }} />
                     {/* Inside the button: the mark is what the tap does, so it
                         answers one, and the row is a target up to the field. */}
                     <TapMark tap={tap} />

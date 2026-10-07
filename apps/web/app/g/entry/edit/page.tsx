@@ -8,7 +8,7 @@ import {
   type Group, type RateSource,
 } from "@bida/core";
 import { handOffReceiptTotal } from "@/lib/scan/items";
-import { Card, Chip } from "@/components/bits";
+import { Card, Chip, You } from "@/components/bits";
 import { AmountInput, clipAmountToCurrency } from "@/components/amount-input";
 import { useReceiptScan } from "@/components/receipt-scan";
 import { useScanAs } from "@/lib/scan/credential";
@@ -552,7 +552,8 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                 <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                 <button type="button" id="paidby" className="pick"
                   aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
-                  <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
+                  <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}
+                    {draft.paidBy === data.me ? <You /> : null}</span>
                   <Icon name="updown" size={18} className="spacer pchev" />
                 </button>
               </div>

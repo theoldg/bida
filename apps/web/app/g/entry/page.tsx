@@ -8,7 +8,7 @@ import {
   resolveEntrySplit, resolveSplit, restoreEntryDrafts, sortOps, splitParticipants,
   type CurrencyCode, type Expense, type Group, type Op, type RateSource, type Settlement,
 } from "@bida/core";
-import { Card, Eyebrow, KV, signClass } from "@/components/bits";
+import { Card, Eyebrow, KV, You, signClass } from "@/components/bits";
 import { FitLine, FitTitle } from "@/components/fit-line";
 import { MemberBill } from "@/components/member-bill";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
@@ -378,11 +378,6 @@ function EntryBy({ expense, kind, group, data }: {
       );
     })}
   </>;
-}
-
-/** Beside your own name, wherever the entry prints it. */
-function You() {
-  return <span className="youtag"> ({copy.entry.you})</span>;
 }
 
 /** A figure with no currency code, for the middle of a sum that ends with one. */

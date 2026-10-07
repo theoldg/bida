@@ -156,7 +156,8 @@ replaced by "You".
 
 **The split and the payers take the pair apart.** There the question on the
 screen is who is in, so the wash marks every row that is in the split or put
-money in (`.inrow`), and you keep only the bar (`.mebar`).
+money in (`.inrow`), and you are marked by "(you)" after your name (`You`, as on
+the entry), with no bar — as is the form's Paid by, though not its payer chips.
 
 **The split's foot row is a count and a box, right-aligned** (`.splithead`):
 "**3** of 4" beside a drawn checkbox — ink with a tick for everyone, ink with
