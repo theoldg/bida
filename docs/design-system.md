@@ -188,7 +188,9 @@ unfolds to the sum written out as at school: "you paid 50.00", "your share
 − 20.00", the result under a rule (`effectSum` — an income's share comes first,
 since it is what moved you up). Always one figure under the other, digits
 aligned whichever side the locale puts the code; the result moves down into
-the sum rather than being printed twice.
+the sum rather than being printed twice. Opened under the fold line, it glides up until
+all of it shows, as Balances' "How are these worked out?" does
+(`revealOpened`).
 
 ## Nothing waits in silence
 

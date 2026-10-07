@@ -25,6 +25,7 @@ import { money, moneyParts, plural, whenLabel } from "@/lib/format";
 import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
 import { markReturn } from "@/lib/nav";
+import { revealOpened } from "@/lib/seek";
 import { historyMeta } from "@/lib/row-meta";
 import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 
@@ -402,6 +403,8 @@ function YourBalance({ kind, up, down, net, currency }: {
   kind: "expense" | "income"; up: number; down: number; net: number; currency: CurrencyCode;
 }) {
   const [open, setOpen] = useState(false);
+  const fold = useRef<HTMLDivElement>(null);
+  useEffect(() => (open && fold.current ? revealOpened(fold.current) : undefined), [open]);
   const result = money(net, currency, net !== 0);
   // Set as the cards' section heads are ("SPLIT BY ITEMS"), since it is one.
   const label = copy.entry.yourBalance;
@@ -418,7 +421,7 @@ function YourBalance({ kind, up, down, net, currency }: {
   // is a column of its own, so the result's digits stand under the operands'.
   const cut = result.search(/\d\D*$/) + 1;
   return (
-    <div className="yourbal">
+    <div ref={fold} className="yourbal">
       <button type="button" className="kv" aria-expanded={open} onClick={() => setOpen(!open)}>
         <span className="k eyebrow">
           {label}<Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />

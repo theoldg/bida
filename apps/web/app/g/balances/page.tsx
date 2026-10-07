@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Transfer } from "@bida/core";
 import { Card, Eyebrow, signClass } from "@/components/bits";
 import {
@@ -14,6 +14,7 @@ import { copy } from "@/lib/copy";
 import { recordSettlement } from "@/lib/db/commands";
 import { money, plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
+import { revealOpened } from "@/lib/seek";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 import type { GroupData } from "@/lib/hooks";
 
@@ -173,10 +174,12 @@ function Balances({ data }: { data: GroupData }) {
  */
 function NotWho({ net }: { net: number }) {
   const [open, setOpen] = useState(false);
+  const fold = useRef<HTMLDivElement>(null);
+  useEffect(() => (open && fold.current ? revealOpened(fold.current) : undefined), [open]);
   if (net === 0) return null;
   const { ask, lead, term, owe, owed } = copy.group.notWho;
   return (
-    <div className="installfold notwho">
+    <div ref={fold} className="installfold notwho">
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
         <Icon name="chev" size={10} className={`kvchev${open ? " on" : ""}`} />
         {ask}
