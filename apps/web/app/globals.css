@@ -1349,9 +1349,12 @@ dialog.scrim::backdrop { background: transparent }
   outline: none; font-variant-numeric: tabular-nums }
 .splitrow:not(.inrow) .partsin { color: var(--muted) }
 /* As amounts' rest: in, with no figure typed. Its share is the placeholder,
-   in grey on the field's own rule — worked out, not typed — and a "?" in red
-   when there is none to give. */
-.splitrow.rest .splitin::placeholder { color: var(--ink-2); font-weight: 400 }
+   in grey on a faint rule — worked out, not typed — and a "?" in red when
+   there is none to give. An out row's zero is as faint: only a typed figure
+   gets the full rule, until a tap gives any field its focus. */
+.splitrow:is(.rest, :not(.inrow)) .amountfield:has(.splitin):not(:focus-within) {
+  border-bottom-color: color-mix(in srgb, var(--ink) 15%, transparent) }
+.splitrow.rest .splitin::placeholder { color: var(--muted); font-weight: 400 }
 .splitrow.rest .splitin:focus::placeholder { color: var(--muted) }
 .splitrow.rest.short .splitin::placeholder { color: var(--debit); font-weight: 600 }
 .splitfoot { display: flex; align-items: center; gap: 7px; padding: 8px 12px; font-size: 12px;
