@@ -88,12 +88,12 @@ function viewportKey(): string {
 }
 
 /**
- * The dock (`.whodock`) never jumps: whatever changes under it — a fold
- * opening, a refusal or the split's tick said over Save — it slides.
- * Whenever the form or the dock changes size, the dock and its last child (the
- * button) are drawn where they were and glide to where they now are: the dock
- * by how far its top moved, the button by whatever more it moved inside it, so
- * a line opening over Save is uncovered by the button sliding off it.
+ * The entry screen's dock (`.whodock`) never jumps: a fold opening or closing
+ * above it slides it. Whenever the list or the dock changes size, the dock and
+ * its last child (the button) are drawn where they were and glide to where
+ * they now are: the dock by how far its top moved, the button by whatever more
+ * it moved inside it. The entry form doesn't use it: nothing folds there, and
+ * Save sliding after a tab or a refusal read as lag.
  *
  * Only size changes move it, so scrolling never does; and a change of the
  * viewport (the keyboard, a rotation) is re-measured, not slid — iOS moves the
@@ -102,60 +102,40 @@ function viewportKey(): string {
  * A ref callback, not a hook: `<div className="whodock" ref={slidingDock}>`.
  * It starts with the dock, which a screen may draw only once its data lands.
  */
-export const slidingDock = dockSlide(false);
+export function slidingDock(dock: HTMLElement | null): (() => void) | undefined {
+  const box = dock?.previousElementSibling;
+  if (!dock || !(box instanceof HTMLElement)) return;
+  // Where layout last put each, with any running slide taken out.
+  let was: { key: string; dock: number; button: number } | null = null;
 
-/**
- * `slidingDock` for the entry form, where the owner wants only the dock's own
- * lines — a refusal, the split's tick — to slide Save as they come, go or
- * rewrap. The form changing above it (a kind or split tab) moves it in one
- * frame, as the tab's own content does.
- */
-export const slidingDockOnLines = dockSlide(true);
-
-function dockSlide(onlyLines: boolean) {
-  return (dock: HTMLElement | null): (() => void) | undefined => {
-    const box = dock?.previousElementSibling;
-    if (!dock || !(box instanceof HTMLElement)) return;
-    // Where layout last put each, with any running slide taken out.
-    let was: { key: string; dock: number; button: number } | null = null;
-
-    const measure = (slides: boolean) => {
-      const button = dock.lastElementChild instanceof HTMLElement ? dock.lastElementChild : null;
-      const dockOff = drawnOff(dock);
-      const buttonOff = button ? drawnOff(button) : 0;
-      const top = dock.getBoundingClientRect().top;
-      const now = {
-        key: viewportKey(),
-        dock: top - dockOff,
-        // Inside the dock, so the dock's own slide is in both and cancels.
-        button: button ? button.getBoundingClientRect().top - top - buttonOff : 0,
-      };
-      if (slides && was && was.key === now.key && !calmly()) {
-        // From where each is drawn now, which mid-slide is not where it was laid out.
-        slide(dock, was.dock + dockOff - now.dock);
-        if (button) slide(button, was.button + buttonOff - now.button);
-      }
-      was = now;
+  const measure = () => {
+    const button = dock.lastElementChild instanceof HTMLElement ? dock.lastElementChild : null;
+    const dockOff = drawnOff(dock);
+    const buttonOff = button ? drawnOff(button) : 0;
+    const top = dock.getBoundingClientRect().top;
+    const now = {
+      key: viewportKey(),
+      dock: top - dockOff,
+      // Inside the dock, so the dock's own slide is in both and cancels.
+      button: button ? button.getBoundingClientRect().top - top - buttonOff : 0,
     };
-    const isLine = (el: Element) => el.parentElement === dock && el !== dock.lastElementChild;
-
-    const watch = new ResizeObserver((seen) =>
-      measure(!onlyLines || seen.some((s) => isLine(s.target))));
-    watch.observe(dock);
-    watch.observe(box);
-    for (const child of box.children) watch.observe(child);
-    for (const child of dock.children) watch.observe(child);
-    // The form's sections come and go with its kind, and the dock's lines with
-    // what is said over the button; watch whichever are there. A line coming
-    // or going is measured here, before the resize that follows, which then
-    // finds nothing left to slide.
-    const children = new MutationObserver((changes) => {
-      for (const child of box.children) watch.observe(child);
-      for (const child of dock.children) watch.observe(child);
-      measure(!onlyLines || changes.some((c) => c.target === dock));
-    });
-    children.observe(box, { childList: true });
-    children.observe(dock, { childList: true });
-    return () => { watch.disconnect(); children.disconnect(); };
+    if (was && was.key === now.key && !calmly()) {
+      // From where each is drawn now, which mid-slide is not where it was laid out.
+      slide(dock, was.dock + dockOff - now.dock);
+      if (button) slide(button, was.button + buttonOff - now.button);
+    }
+    was = now;
   };
+
+  const watch = new ResizeObserver(measure);
+  watch.observe(dock);
+  watch.observe(box);
+  for (const child of box.children) watch.observe(child);
+  // Whatever the list draws once its data lands; watch whichever are there.
+  const children = new MutationObserver(() => {
+    for (const child of box.children) watch.observe(child);
+    measure();
+  });
+  children.observe(box, { childList: true });
+  return () => { watch.disconnect(); children.disconnect(); };
 }

@@ -27,7 +27,6 @@ import { copy } from "@/lib/copy";
 import { checkEntry, dockLine } from "@/lib/entry-check";
 import { rateDayOf, useEntryRate } from "@/lib/entry-rate";
 import { useRefusals } from "@/lib/refusal";
-import { slidingDockOnLines } from "@/lib/fold";
 import { bare, dateInputValue, errorText, money, plural, withDate } from "@/lib/format";
 import { formParent, parseEntrySource, route, type EntrySource } from "@/lib/group-link";
 import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
@@ -595,7 +594,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
         {/* 9px between the lines, Save and whatever the scroll has cut off
             above them: the dock's own padding, never the form's, which is only
             there once the form is scrolled to its end. */}
-        <div className="pad whodock" ref={slidingDockOnLines} style={{ paddingTop: docked ? 9 : 18 }}>
+        <div className="pad whodock" style={{ paddingTop: docked ? 9 : 18 }}>
           {said ? (
             <div role="status" data-refuse={said} style={{ marginBottom: 9 }}
               className={`splitfoot bad alone${refusals.flash(said)}`}

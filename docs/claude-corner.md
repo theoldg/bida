@@ -25,9 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
-- *2026-10-07* — "On second thought, don't slide Save when switching tabs,
-  only when the error or split text appears". A motion asked for "whatever
-  moves it" is still felt per trigger: name each thing that moves it.
+- *2026-10-07* — Save's slide, narrowed to "only the error text", then "it's
+  buggy … remove the sliding completely". Motion borrowed from a screen where
+  things fold felt wrong where nothing does; when a tuning turn finds a bug,
+  offer removal before a second patch.
 
 - *2026-10-07* — "Rate per expense … any other design decisions you need
   from me?" — it undid ADR-0005's last revision. Four asked questions got
