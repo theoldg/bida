@@ -33,6 +33,7 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-07* — "Too much text in the subtitles", then mid-build "show me
   designs first", with the rules for what may drop. Four mocks, "Ship A" (my
   pick). The constraints they give alongside a mock request are the spec.
+  Then "animate the dock like the summary": reuse its clock, not its trigger.
 
 - *2026-10-07* — "Make the group avatars little receipts, don't push", then
   bigger, torn both ends, no dots, "show me several", "ship it". The stop

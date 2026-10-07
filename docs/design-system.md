@@ -73,7 +73,9 @@ of the screen once they don't. Outside the scroller, iOS's rubber-band never
 carries it; it pays `--kb` itself, so it rides above the keyboard while one is
 up. On `/g/payers` the verdict line rides in it with the button, and a Done
 that doesn't add up flashes that line; the entry form and the grid say what is
-wrong the same way, a red band over the button. `/g/scan` is the
+wrong the same way, a red band over the button. Whatever moves the button — a
+line opening over it, the form above it growing — it slides there on the
+fold's clock rather than jumping (`useDockSlide`, beside `useFold`). `/g/scan` is the
 one exception: it holds a picture and the button that picture explains, and at
 the foot the button is a long way from the only thing explaining it, so the two
 sit centred as one block instead.

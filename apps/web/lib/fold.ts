@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { revealWhole, scrollTarget } from "./reveal";
 import { calmly, glide, glideMs } from "./seek";
 
@@ -86,8 +86,78 @@ function dockTop(box: HTMLElement): number | null {
 function slideDock(box: HTMLElement, from: number | null) {
   const dock = dockOf(box);
   if (!dock || from === null || calmly()) return;
-  const by = from - dock.getBoundingClientRect().top;
+  slide(dock, from - dock.getBoundingClientRect().top);
+}
+
+/** Drawn `by` px from where layout put it, gliding home on the fold's clock. */
+function slide(el: HTMLElement, by: number) {
   if (Math.abs(by) < 1) return;
-  dock.animate([{ transform: `translateY(${by}px)` }, { transform: "none" }],
+  el.getAnimations().forEach((a) => a.cancel());
+  el.animate([{ transform: `translateY(${by}px)` }, { transform: "none" }],
     { duration: glideMs(by), easing: "cubic-bezier(.2, 0, 0, 1)" });
+}
+
+/** How far a running `slide` has the element from its place right now. */
+function drawnOff(el: HTMLElement): number {
+  const t = getComputedStyle(el).transform;
+  return t && t !== "none" ? new DOMMatrixReadOnly(t).m42 : 0;
+}
+
+/** What moves the dock without the form changing: the keyboard, the window. */
+function viewportKey(): string {
+  const kb = document.documentElement.style.getPropertyValue("--kb");
+  return `${innerHeight}|${visualViewport?.height ?? ""}|${kb}`;
+}
+
+/**
+ * The fold's slide for a dock whose form changes under it with no press to
+ * measure from — a refusal said over Save, a helper line opening in the split.
+ * Whenever the form or the dock changes size, the dock and its last child (the
+ * button) are drawn where they were and glide to where they now are: the dock
+ * by how far its top moved, the button by whatever more it moved inside it, so
+ * a line opening over Save is uncovered by the button sliding off it.
+ *
+ * Only size changes move it, so scrolling never does; and a change of the
+ * viewport (the keyboard, a rotation) is re-measured, not slid — iOS moves the
+ * page for the keyboard already. `ref` goes on the `.whodock`.
+ */
+export function useDockSlide(ref: RefObject<HTMLElement | null>) {
+  useLayoutEffect(() => {
+    const dock = ref.current;
+    const box = dock?.previousElementSibling;
+    if (!dock || !(box instanceof HTMLElement)) return;
+    // Where layout last put each, with any running slide taken out.
+    let was: { key: string; dock: number; button: number } | null = null;
+
+    const measure = () => {
+      const button = dock.lastElementChild instanceof HTMLElement ? dock.lastElementChild : null;
+      const dockOff = drawnOff(dock);
+      const buttonOff = button ? drawnOff(button) : 0;
+      const top = dock.getBoundingClientRect().top;
+      const now = {
+        key: viewportKey(),
+        dock: top - dockOff,
+        // Inside the dock, so the dock's own slide is in both and cancels.
+        button: button ? button.getBoundingClientRect().top - top - buttonOff : 0,
+      };
+      if (was && was.key === now.key && !calmly()) {
+        // From where each is drawn now, which mid-slide is not where it was laid out.
+        slide(dock, was.dock + dockOff - now.dock);
+        if (button) slide(button, was.button + buttonOff - now.button);
+      }
+      was = now;
+    };
+
+    const watch = new ResizeObserver(measure);
+    watch.observe(dock);
+    watch.observe(box);
+    for (const child of box.children) watch.observe(child);
+    // The form's sections come and go with its kind; watch whichever are there.
+    const children = new MutationObserver(() => {
+      for (const child of box.children) watch.observe(child);
+      measure();
+    });
+    children.observe(box, { childList: true });
+    return () => { watch.disconnect(); children.disconnect(); };
+  }, [ref]);
 }
