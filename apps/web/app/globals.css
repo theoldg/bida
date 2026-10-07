@@ -1276,9 +1276,10 @@ dialog.scrim::backdrop { background: transparent }
    everyone row would stick to it instead of to `.scroll`. */
 .splitbox { background: var(--card-2); border: 1px solid var(--rule-soft);
   border-radius: var(--r-s); overflow: hidden; overflow: clip }
-/* Sticky, over the rows, whose `.mebar` and washes are positioned. */
+/* Sticky, over the rows, whose `.mebar` and washes are positioned. The head
+   card's grey, not the track's own `--card-3`: one shade fewer on the form. */
 .splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft);
-  position: sticky; top: 0; z-index: 2 }
+  position: sticky; top: 0; z-index: 2; background: var(--card-2) }
 .splitlist { padding: 0; overflow: hidden }
 /* The soft rule is invisible against a first row's wash. */
 .splitbox:has(.splitlist > .splitrow.inrow:first-child) .seg {
