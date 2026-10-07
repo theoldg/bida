@@ -140,7 +140,11 @@ deploy: untouched, in use, and on a group.
   Next reads `res.url` off every payload whose build id isn't its own and
   navigates there, so a payload served from the precache — keyed by path —
   sends a phone to a `/g` screen with no group on it. Whatever must
-  survive such a hand-off has to ride on the request, not the response.
+  survive such a hand-off has to ride on the request, not the response — so
+  every payload goes out as a constructed response (`asAsked`), which has no
+  URL and so reads as the request's. That is the backstop for `activate`
+  guessing a page's build wrong: a window still loading as it runs, or a
+  half-installed build's cache standing newest.
 - **A waiting service worker waits on the whole origin, not on your app.** One
   forgotten tab on the same domain pins the old build for as long as it lives,
   and on iOS Safari even killing the browser rarely clears it — while an

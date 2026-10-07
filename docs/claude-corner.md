@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-07* — "I still get a bad link screen when the app updates
+  mid-navigation." "Still" means an earlier fix guessed right in the test and
+  wrong on a phone: make the failure impossible, not the guess better.
+
 - *2026-10-07* — "Isn't the worst case a ton of ids?", then "cap it, ship
   it", then four words for a whole feature: "do multi-currency csv". Answer
   doubt with numbers, not defence; they were steering, not stopping.
@@ -73,9 +77,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-07* — "Pause and tell me when I'm contradicting an ADR". The
   owner moves fast and forgets old decisions; a quick "this undoes ADR-N, sure?"
   is welcome friction, not second-guessing. Ask once, then build.
-
-- *2026-10-07* — "Should be only the link+icon (wash area)", in the same note
-  as "clickable across the whole row". Not two rules: what the eye reads as
-  one thing is one target, no more, no less. The wash names it. "Audit" meant
-  look everywhere, then change only what breaks it.
-

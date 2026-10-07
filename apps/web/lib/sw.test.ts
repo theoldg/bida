@@ -19,7 +19,7 @@ interface Sandbox {
   routeWithQuery: (url: URL) => string;
   previousFor: (clientId: string) => Promise<string | null | undefined>;
   payloadFor: (url: URL, request: unknown, clientId: string) =>
-    Promise<{ redirectedTo?: string; body?: string; failed?: boolean }>;
+    Promise<{ redirectedTo?: string; body?: string; failed?: boolean; url?: string }>;
   reuseFromEarlierBuilds: (cache: unknown, urls: string[]) => Promise<string[]>;
   pullAhead: (groupId: string) => Promise<void>;
   caches: { open: (name: string) => Promise<unknown> };
@@ -131,6 +131,18 @@ describe("a payload asked for by a page that is not on this build", () => {
    * on a bare `/g/entry` ("missing its password"). Failing sends the router to
    * its `catch`, which falls back to the URL it asked for, `?id=` and all.
    */
+  /**
+   * Which build a page runs is `activate`'s guess, and a page loading as it
+   * runs, or a half-installed build's cache, makes it wrong. Then Next
+   * hard-navigates to the response's URL, so that must be the one asked for.
+   */
+  it("is answered under the URL it asked for, not the cache key", async () => {
+    const { payloadFor } = load({ ...caches, ...legacy({ tab: "bida-shell-old" }) });
+    const res = await payloadFor(payload("/g/entry.txt?id=abc&_rsc=1"), {}, "tab");
+    expect(res.body).toBe("old build");
+    expect(res.url).toBeUndefined();
+  });
+
   it("fails, rather than answer from this build, once that cache has gone", async () => {
     const { payloadFor } = load({ ...caches, ...legacy({ tab: null }) });
     const res = await payloadFor(payload("/g/entry.txt?id=abc&e=xyz&_rsc=1"), {}, "tab");
@@ -156,6 +168,7 @@ describe("a payload asked for by a page on this build", () => {
     const res = await payloadFor(payload("/g/entry.txt?id=abc&_rsc=1"), {}, "tab");
     expect(res.body).toBe("new build");
     expect(res.failed).toBeUndefined();
+    expect(res.url).toBeUndefined();
   });
 
   it("is the answer for a page with no client id either", async () => {

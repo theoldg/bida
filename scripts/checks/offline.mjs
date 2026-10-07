@@ -355,6 +355,11 @@ const probe = await page.evaluate(async () => {
   return `${stale}/${legacy}`;
 });
 report(probe === "404/404", "a page on the new build never reads another cache", `answered ${probe}`);
+// Next hard-navigates to a foreign-build payload's `res.url`; out of a cache
+// that is the key, with no `?id=`, unless the worker answers under the request.
+const answeredAt = await page.evaluate((id) =>
+  fetch(`/g.txt?id=${id}&_rsc=probe`).then((r) => new URL(r.url).search).catch(() => "failed"), g);
+report(answeredAt.includes(`id=${g}`), "a payload is answered under the URL it was asked for", answeredAt);
 
 // ---- and a second deploy over the page that never reloaded ---------------
 // `fresh` sat on a group through one deploy and is still on its boot build.
@@ -394,6 +399,9 @@ report(after.length === 3, "one cache per build a window is on, and no more", af
 const stillOld = await fresh.evaluate(() =>
   fetch("/legacy-probe.txt").then((r) => r.text()).catch(() => "failed"));
 report(stillOld === "OLD", "that page is still served its own build", stillOld);
+const oldAnsweredAt = await fresh.evaluate((id) =>
+  fetch(`/g.txt?id=${id}&_rsc=probe`).then((r) => new URL(r.url).search).catch(() => "failed"), g);
+report(oldAnsweredAt.includes(`id=${g}`), "under the URL it asked for, not the cache key", oldAnsweredAt);
 await fresh.locator("a[href^='/g/balances']").first().click().catch(() => {});
 try {
   await fresh.waitForURL((url) => url.pathname === "/g/balances", { timeout: PATIENCE });

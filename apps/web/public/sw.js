@@ -82,17 +82,26 @@ async function previousFor(clientId) {
 
 /**
  * A page on an earlier build gets its own payload, or an error — never this
- * build's. Next hard-navigates to a foreign payload's `res.url`, which from a
- * cache is the query-less key, losing the group. The router's `catch` falls
- * back to the URL it asked for, query intact.
+ * build's. The router's `catch` falls back to the URL it asked for.
  */
 async function payloadFor(url, request, clientId) {
   const previous = await previousFor(clientId);
   if (previous !== undefined) {
     const own = previous && (await lookup(url.pathname, previous));
-    return own || Response.error();
+    return own ? asAsked(own) : Response.error();
   }
-  return cacheFirst(url.pathname, request, clientId);
+  return asAsked(await cacheFirst(url.pathname, request, clientId));
+}
+
+/**
+ * A payload answered under the URL it was asked for. Next hard-navigates to a
+ * foreign-build payload's `res.url`, and out of a cache that is the key — a
+ * bare path, the group gone. Which build a page runs is a guess (`activate`),
+ * so this is what keeps a wrong one from landing on "missing its password": a
+ * constructed response has no URL, and the page reads the request's.
+ */
+function asAsked(res) {
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers: res.headers });
 }
 
 async function cacheFirst(cacheKey, request, clientId) {
