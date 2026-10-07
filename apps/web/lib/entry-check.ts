@@ -1,6 +1,6 @@
 import {
-  convertMinor, rateFor, splitParticipants, validatePayers, validateSplit,
-  type CurrencyCode, type ExchangeRate, type Rate, type SplitSpec,
+  convertMinor, isValidRate, splitParticipants, validatePayers, validateSplit,
+  type CurrencyCode, type Rate, type SplitSpec,
 } from "@bida/core";
 import {
   activeSplit, activeSplitTab, draftAmountMinor, draftReceiptSplit, draftReceiptTotal,
@@ -24,8 +24,8 @@ interface EntryCheck {
   baseMinor: number;
   /** True when the entry is not written in the group's base currency. */
   foreign: boolean;
-  /** The group's rate for this currency, or undefined if it has never said. */
-  groupRate: Rate | undefined;
+  /** The entry's own rate, or undefined while there is none yet (`useEntryRate`). */
+  rate: Rate | undefined;
   /** False when amount × rate leaves the safe integer range — see `tryConvertMinor`. */
   rateOk: boolean;
   /** Which split-editor tab the draft is on. */
@@ -89,31 +89,16 @@ function tryConvertMinor(
   }
 }
 
-/**
- * True when the group has no rate for this currency — the entry can't be
- * converted, and the rate dialog opens. Separate from `checkEntry` because
- * the scan asks before there is a draft to check.
- */
-export function needsRate(
-  rates: Record<string, ExchangeRate>,
-  base: CurrencyCode | undefined,
-  currency: string,
-): boolean {
-  return !!base && currency !== base && rateFor(rates, base, currency) === undefined;
-}
-
 export function checkEntry(input: {
   draft: EntryDraft;
   /** The group's base currency. */
   base: CurrencyCode;
-  /** The group's rate registry, keyed by currency code. */
-  rates: Record<string, ExchangeRate>;
   /** Ids of the members still in the group — a removed one is not a valid side. */
   liveMembers: readonly string[];
   /** Their name, for the sentence that names whoever has left. */
   nameOf: (id: string) => string;
 }): EntryCheck {
-  const { draft, base, rates, nameOf } = input;
+  const { draft, base, nameOf } = input;
   const kind = draft.kind;
   const transfer = kind === "transfer";
   const activeTab = activeSplitTab(draft);
@@ -134,15 +119,17 @@ export function checkEntry(input: {
   const amountMinor = draftAmountMinor(draft);
 
   const foreign = draft.currency !== base;
-  // The rate is the group's, from the registry — never a form field, never
-  // frozen onto the entry (ADR-0005). Undefined means unknown; defaulting to
-  // `"1"` banks a 500 MAD dinner as €500.
-  const groupRate = rateFor(rates, base, draft.currency);
+  // The entry's own, fetched for its day or borrowed (ADR-0005). Undefined
+  // means unknown; defaulting to `"1"` banks a 500 MAD dinner as €500.
+  // A rate held for another currency is no rate at all.
+  const rate = !foreign ? "1"
+    : draft.rateCurrency === draft.currency && draft.rate !== undefined && isValidRate(draft.rate)
+      ? draft.rate : undefined;
   // An amount and a rate can each be in range and still multiply out of it.
   // An out-of-range conversion is "no base amount yet", the state a missing
   // rate already produces: the figure reads "—" and Save stays held.
-  const converted = foreign && groupRate !== undefined
-    ? tryConvertMinor(amountMinor, draft.currency, base, groupRate)
+  const converted = foreign && rate !== undefined
+    ? tryConvertMinor(amountMinor, draft.currency, base, rate)
     : null;
   const rateOk = !foreign || converted !== null;
   const baseMinor = foreign ? converted ?? 0 : amountMinor;
@@ -205,7 +192,7 @@ export function checkEntry(input: {
     && !blocker && !receiptMissing && sidesOk;
 
   return {
-    amountMinor, baseMinor, foreign, groupRate, rateOk,
+    amountMinor, baseMinor, foreign, rate, rateOk,
     activeTab, canScan, receiptTotal, receiptLocksAmount: receiptTotal !== null,
     onReceiptTab, activeSplit: tabSplit, receiptSplit, effectiveSplit,
     blocker, splitProblem, splitTick, amountMissing, titleMissing, receiptMissing, ready,

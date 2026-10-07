@@ -1,15 +1,14 @@
 import { isCurrencyCode, isValidRate, type Rate } from "@bida/core";
 
 /**
- * Asking the Worker what a currency is worth today.
+ * Asking the Worker what a currency was worth on an entry's day.
  *
- * One fetch, no retry, no poller and no prefetch of the whole currency list: a
- * trip is spent in one or two currencies, and the only thing that ever wants a
- * rate is a dialog somebody just opened. See `apps/api/src/index.ts` for the
- * feed behind the endpoint and why it sits behind one.
+ * One fetch, no retry, no poller and no prefetch of the whole currency list:
+ * the only thing that wants a rate is an entry form whose currency or day just
+ * changed, or the rate dialog. See `apps/api/src/index.ts` for the feed behind
+ * the endpoint and why it sits behind one.
  *
- * What comes back is a *suggestion*. Nothing here writes to the log — the rate
- * moves every balance in the group, so it takes a tap on Save
+ * Nothing here writes to the log: the rate rides on the entry, saved with it
  * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)).
  */
 
@@ -25,7 +24,11 @@ export class RateOfflineError extends Error {}
 /** The endpoint answered, but with no rate for this pair. */
 class RateUnavailableError extends Error {}
 
-export async function fetchRate(from: string, to: string): Promise<FetchedRate> {
+/** Past this, the form stops waiting and borrows the group's last rate instead. */
+const PATIENCE_MS = 6000;
+
+/** `day` is the entry's local "YYYY-MM-DD"; the Worker answers today's for today or later. */
+export async function fetchRate(from: string, to: string, day?: string): Promise<FetchedRate> {
   if (!isCurrencyCode(from) || !isCurrencyCode(to)) {
     throw new RateUnavailableError(`${from} to ${to} is not a pair`);
   }
@@ -34,10 +37,13 @@ export async function fetchRate(from: string, to: string): Promise<FetchedRate> 
   }
   let res: Response;
   try {
-    res = await fetch(`/api/rates/${encodeURIComponent(from)}/${encodeURIComponent(to)}`);
+    const query = day ? `?date=${encodeURIComponent(day)}` : "";
+    res = await fetch(`/api/rates/${encodeURIComponent(from)}/${encodeURIComponent(to)}${query}`,
+      { signal: AbortSignal.timeout(PATIENCE_MS) });
   } catch {
     // fetch only rejects when the request never reached a server — a captive
-    // portal, a dropped connection — which is offline by another name.
+    // portal, a dropped connection, a signal too weak to finish in time —
+    // which is offline by another name.
     throw new RateOfflineError("unreachable");
   }
   if (!res.ok) throw new RateUnavailableError(`rates endpoint answered ${res.status}`);

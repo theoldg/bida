@@ -57,14 +57,13 @@ describe("restoring an entry", () => {
     expect(foldOps(all()).members[ADA]!.deletedAt).toBeNull();
   });
 
-  it("brings back a cleared rate the entry is written in", () => {
+  it("brings no rate along: a deleted entry is healed onto its own like a live one", () => {
     const { b, all } = trip();
     b.push("rate", "MAD", "create", { rate: "0.09", source: "typed", asOf: 1, deletedAt: null });
     for (const e of EXPENSES.filter((e) => e.mad !== undefined)) b.push("expense", e.id, "delete", {});
-    b.push("rate", "MAD", "delete", {});
 
     const drafts = restoreEntryDrafts(foldOps(all()), "expense", "e-taxi");
-    expect(drafts.map((d) => `${d.entity}/${d.entityId}`)).toEqual(["expense/e-taxi", "rate/MAD"]);
+    expect(drafts.map((d) => `${d.entity}/${d.entityId}`)).toEqual(["expense/e-taxi"]);
   });
 
   it("leaves repairs the group already owed to the sync's heal", () => {

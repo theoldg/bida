@@ -56,7 +56,6 @@ export function KeylessLink() {
   const rows: { label: string; icon: IconName; lit?: boolean }[] = [
     { label: copy.group.copyLink, icon: "link", lit: true },
     { label: copy.group.people, icon: "users" },
-    { label: copy.rates.title, icon: "fx" },
     { label: copy.group.history, icon: "clock" },
   ];
   return (

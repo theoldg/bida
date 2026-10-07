@@ -60,12 +60,12 @@ to the doc for your task — [docs/README.md](README.md) is the index.
 
 Three things surprise people who assume otherwise:
 
-- **What a foreign amount is worth belongs to the group, not the entry.** One
-  rate per currency, synced as an op; `atCurrentRates` values the whole ledger
-  in one pass where state is read, so correcting a rate moves every entry
-  already written in that currency
+- **What a foreign amount is worth belongs to the entry, fetched for its day.**
+  The group-wide registry it replaced still folds, unwritten; a group's first
+  sync of the session writes its rate onto entries that predate the move
+  (`entriesCarryTheirOwnRate`), and only a new currency with no feed asks
   ([ADR-0005](decisions/0005-money-and-currency.md)).
-- **An entry is merged whole, a member or rate per field.** An expense op
+- **An entry is merged whole, a member per field.** An expense op
   carries the entity as its saver saw it, so an amount can never sit beside
   another phone's split; `deletedAt` and `createdAt` are the exceptions that
   keep the healers working ([sync.md](sync.md#the-operation)).

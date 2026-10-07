@@ -35,10 +35,10 @@ function living<T extends { deletedAt?: number | null }>(rows: T[] | undefined):
 }
 
 /**
- * The keyed shape core's readers want, from Dexie's arrays — **valued at the
- * group's current rates**. One builder (core's `stateFromRows`), because one
- * screen reading the stored `baseAmountMinor` while the rest read the registry
- * is the disagreement ADR-0005 removes.
+ * The keyed shape core's readers want, from Dexie's arrays — **each entry
+ * valued at the rate it is read at** (`atCurrentRates`). One builder (core's
+ * `stateFromRows`), because one screen reading the stored `baseAmountMinor`
+ * while the rest re-derive it is how screens disagree (ADR-0005).
  */
 function stateOf(
   group: Group | undefined,
@@ -144,16 +144,13 @@ export interface GroupData {
   nameOf: (id: string) => string;
   /** True for a member who has been removed but is still named on an entry. */
   hasLeft: (id: string) => boolean;
-  /** Live expenses, newest first, valued at the group's current rates. */
+  /** Live expenses, newest first, each valued at the rate it is read at (`atCurrentRates`). */
   expenses: Expense[];
-  /** Live transfers, newest first, valued at the group's current rates. */
+  /** Live transfers, newest first, valued as `expenses` are. */
   settlements: Settlement[];
-  /** The group's rate registry, keyed by currency code. See `ExchangeRate`. */
+  /** The old rate registry, keyed by currency code: a fallback for `latestRate`. See `ExchangeRate`. */
   rates: Record<string, ExchangeRate>;
-  /**
-   * Every currency the registry has to answer for — what entries are written
-   * in, plus what was added ahead of time — busiest first. What /g/rates lists.
-   */
+  /** Every currency entries are written in, busiest first — the picker's first rows. */
   currencies: CurrencyInUse[];
   balances: BalanceReport;
   transfers: Transfer[];

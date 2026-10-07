@@ -46,7 +46,7 @@ passage off Tatooine, six entries, one split off the bill it was
 itemised from, one edited and one deleted, each written by one of the four
 at its own moment of the trip, so history reads as theirs — created
 through `appendOps` and folded by
-`foldOps` like any other, so the ledger, balances, settle-up, history, rates
+`foldOps` like any other, so the ledger, balances, settle-up, history
 and export all work because none of them knows it is a demo. It is the mirror
 of quick split: that is *do a real thing with no group*, this is *look around a
 group somebody already used*. The one thing it cannot do is be shared, and it

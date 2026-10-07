@@ -141,11 +141,12 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
   const { ids } = cast;
   const all = DEMO_NAMES.map((name) => ids[name]);
   const equal = (members: readonly Id[]): SplitSpec => ({ mode: "equal", members: [...members] });
-  /** An amount in spaceport coin, as the registry prices it today. */
+  /** An amount in spaceport coin, at the rate typed for it: no feed knows WUP. */
   const inWup = (minor: number) => ({
     amountMinor: minor,
     currency: DEMO_FOREIGN,
     rateToBase: DEMO_RATE,
+    rateSource: "typed",
     baseAmountMinor: convertMinor(minor, DEMO_FOREIGN, DEMO_CURRENCY, DEMO_RATE),
   });
   const inCredits = (minor: number) => ({
@@ -196,15 +197,6 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
         patch: { memberId: ids[DEMO_ME], claimedAt: dayBefore(now, 9) },
       },
     ),
-    // One rate row, so /g/rates has something and editing it moves every WUP entry.
-    step("Chewie", at(8, 9, 40), {
-      entity: "rate",
-      entityId: DEMO_FOREIGN,
-      kind: "create",
-      patch: {
-        rate: DEMO_RATE, source: "typed", asOf: dayBefore(now, 8), deletedAt: null,
-      },
-    }),
     // So history is not all creates: deleted, further down.
     step("Han", at(8, 18, 5), {
       entity: "expense",

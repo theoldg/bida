@@ -84,10 +84,12 @@ export interface Expense extends Receipt {
   createdAt?: number;
   amountMinor: number;
   currency: CurrencyCode;
-  /** "1" when `currency` is the base. */
+  /** "1" when `currency` is the base. The entry's own, frozen at save. ADR-0005. */
   rateToBase: Rate;
-  /** Stored, not recomputed. ADR-0005. */
+  /** `amountMinor` × `rateToBase`, rounded once. Re-derived on read (`atCurrentRates`). */
   baseAmountMinor: number;
+  /** Where `rateToBase` came from. Absent on a base-currency entry, and on one written before rates were the entry's. */
+  rateSource?: EntryRateSource | null;
   /** The largest payer when `payers` is set. Always present: a row needs one name. */
   paidBy: Id;
   /** In `currency`, summing to `amountMinor`. Absent means `paidBy` paid it all. */
@@ -130,6 +132,8 @@ export interface Settlement {
   currency: CurrencyCode;
   rateToBase: Rate;
   baseAmountMinor: number;
+  /** As `Expense.rateSource`. */
+  rateSource?: EntryRateSource | null;
   occurredAt: number;
   /** As `Expense.dateOnly`. */
   dateOnly?: boolean | null;
@@ -169,8 +173,17 @@ export interface DevicePush {
 export type RateSource = "fetched" | "typed";
 
 /**
- * Entries are valued at the registry on read, so fixing a rate follows through
- * every entry (ADR-0005). Never the base currency.
+ * Where an entry's own rate came from: the feed for its day, a person, the
+ * group's latest entry in that currency when the feed failed, or the registry
+ * an entry written before rates were the entry's was valued at. ADR-0005.
+ */
+export type EntryRateSource = RateSource | "copied" | "group";
+
+/**
+ * The registry rates used to live in, before each entry carried its own. No
+ * screen writes one now; the rows production holds still fold, and
+ * `entriesCarryTheirOwnRate` writes each onto the entries it valued (ADR-0005).
+ * Never the base currency.
  */
 export interface ExchangeRate {
   /** The currency, as the id, so two phones editing one currency merge. */

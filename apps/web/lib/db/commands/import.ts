@@ -124,7 +124,7 @@ function expenseDraft(
       payers,
       split: { mode: "exact", amounts },
       categoryId: e.categoryId,
-    }, currency, {}, now),
+    }, currency, now),
   };
 }
 
@@ -147,6 +147,6 @@ function transferDraft(
       occurredAt: t.occurredAt,
       dateOnly: true,
       note: t.note,
-    }, currency, {}, now),
+    }, currency, now),
   };
 }

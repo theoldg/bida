@@ -373,10 +373,13 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   // A pulled op can slot in before ops already folded — refold the whole group
   // rather than apply out of HLC order (docs/sync.md#gotchas). Once per run, not
   // per round: it folds the whole log.
-  if (pulledCount > 0) {
-    await rebuild(groupId);
-    // A merge is the only thing that can produce an illegal state (local writes
-    // are refused first), so healing belongs here. It writes ops the next run
+  if (pulledCount > 0) await rebuild(groupId);
+  // Healing also runs on a group's first sync of the session, pulled or not: a
+  // repair can be owed by what an older build wrote (`entriesCarryTheirOwnRate`).
+  if (pulledCount > 0 || !healedThisSession.has(groupId)) {
+    healedThisSession.add(groupId);
+    // A merge, or an older build, is the only thing that can produce an illegal
+    // state (local writes are refused first), so healing belongs here. It writes ops the next run
     // pushes. Imported lazily: the command layer imports this file, and a static
     // import would close the cycle.
     const { healGroup } = await import("./commands/groups");
@@ -388,6 +391,9 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   return { pushed, pulled: pulledCount };
 }
 
+
+/** Groups healed since this page loaded. In memory: a reload heals again, which costs one fold. */
+const healedThisSession = new Set<string>();
 
 /** One apply per group at a time: every screen of the group asks on mounting. */
 const applying = new Map<string, Promise<void>>();

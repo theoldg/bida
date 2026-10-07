@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-07* — "Rate per expense … any other design decisions you need
+  from me?" — it undid ADR-0005's last revision. Four asked questions got
+  four answers, one with a rider ("also fetch on receipt scan"). Ask the
+  calls that change data, decide the rest and list them.
+
 - *2026-10-07* — "Too much text in the subtitles", then mid-build "show me
   designs first", with the rules for what may drop. Four mocks, "Ship A" (my
   pick). The constraints they give alongside a mock request are the spec.
@@ -72,8 +77,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-06* — "Show me some designs before shipping", then "Ship slim
   band", not my pick. Five tabs on the real stylesheet made the choice a tap.
   A shared class reaches past the screen asked about: check what else wears it.
-
-- *2026-10-06* — "Go wild" on history, then "this doesn't make any sense"
-  over my rows of struck names, and "too much detail". Wild meant clearer,
-  not denser. Three text mocks per question got two picks in one reply: when
-  a first pass misses, mock before rebuilding.

@@ -14,7 +14,6 @@ describe("where an entry goes back to", () => {
     expect(route.entry("g1", "x1", "history")).toBe("/g/entry?id=g1&e=x1&via=history");
     expect(entryParent("g1", "history")).toBe(route.history("g1"));
     expect(entryParent("g1", "members")).toBe(route.members("g1"));
-    expect(entryParent("g1", "rates")).toBe(route.rates("g1"));
     expect(entryParent("g1", "balances")).toBe(route.balances("g1"));
   });
 

@@ -114,6 +114,9 @@ export function useReceiptScan(
           : {}),
         ...(patch.amountText !== undefined ? { amountText: patch.amountText } : {}),
         ...(patch.currency !== undefined ? { currency: patch.currency } : {}),
+        // A scan always looks the rate up again, for whatever currency and day
+        // it settled on — even over a typed one (`rateLookupWanted`).
+        rateDay: undefined,
         ...(patch.occurredAt !== undefined
           ? {
             occurredAt: patch.occurredAt,

@@ -3,16 +3,16 @@
 import { useEffect, useRef, useState, type ButtonHTMLAttributes } from "react";
 import {
   formatRate, invertRate, isValidRate, sanitizeRate,
-  RATE_DIGITS, RATE_SHOWN_DIGITS, type Rate, type RateSource,
+  RATE_DIGITS, RATE_SHOWN_DIGITS, type EntryRateSource, type Rate, type RateSource,
 } from "@bida/core";
 import { Dialog } from "./dialog";
 import { GroupedInput } from "./amount-input";
 import { copy } from "../lib/copy";
 import { fetchRate, RateOfflineError } from "../lib/rates";
-import { errorText, plural, rateText } from "../lib/format";
+import { errorText, rateText } from "../lib/format";
 
 /**
- * What one currency is worth to this group, edited from either end — "1 EUR =
+ * What one currency is worth on this entry, edited from either end — "1 EUR =
  * 4.5 PLN" or "1 PLN = 0.22 EUR", since which way is natural depends on the
  * pair. Typing in either updates the other; only the typed field keeps its
  * text verbatim, so "4." isn't reformatted under the caret.
@@ -21,17 +21,17 @@ import { errorText, plural, rateText } from "../lib/format";
  * reciprocal is computed at `RATE_DIGITS` and shown at `RATE_SHOWN_DIGITS`, so
  * "4.5" reads back as "4.5" (see `invertRate`).
  *
- * Opens on a fetched rate when it can, saying which it shows. Focuses neither
- * field: the caret would have to guess a direction, and the keyboard would
- * cover what saving moves. Nothing is written until Save
- * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)).
+ * The rate is the entry's own, so Save here only hands it back; it reaches the
+ * log with the entry ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)).
+ * Opens on a fetched rate when it has none, saying which it shows. Focuses
+ * neither field: the caret would have to guess a direction.
  */
 
 /** Where the number currently in the fields came from. */
 type Provenance =
   | { kind: "loading" }
   | { kind: "fetched"; asOf: string | null }
-  | { kind: "typed"; asOf: number | null }
+  | { kind: "typed" | "copied" | "group" }
   | { kind: "offline" }
   | { kind: "unavailable" };
 
@@ -42,10 +42,9 @@ function provenanceText(from: Provenance): string {
     case "unavailable": return copy.rates.from.unavailable;
     case "fetched":
       return from.asOf ? copy.rates.from.fetched(from.asOf) : copy.rates.from.fetchedUndated;
-    case "typed":
-      return from.asOf
-        ? copy.rates.from.typedOn(new Date(from.asOf).toISOString().slice(0, 10))
-        : copy.rates.from.typed;
+    case "typed": return copy.rates.from.typed;
+    case "copied": return copy.rates.from.copied;
+    case "group": return copy.rates.from.group;
   }
 }
 
@@ -77,20 +76,20 @@ function pairFrom(typed: string, side: "forward" | "inverse"): Pair {
 }
 
 export function RateDialog({
-  currency, base, current, entryCount, onSave, onClose,
+  currency, base, day, current, onSave, onClose,
 }: {
   currency: string;
   base: string;
-  /** The registry's row, or undefined when the group hasn't got one yet. */
-  current: { rate: Rate; source: RateSource; asOf: number } | undefined;
-  /** Live entries written in this currency — what saving will re-value. */
-  entryCount: number;
-  onSave: (rate: Rate, source: RateSource, asOf: number) => Promise<void>;
+  /** The entry's local day, "YYYY-MM-DD": what "Look it up" asks the feed for. */
+  day: string;
+  /** The entry's rate, or undefined when it hasn't got one yet. */
+  current: { rate: Rate; source: EntryRateSource } | undefined;
+  onSave: (rate: Rate, source: RateSource) => Promise<void> | void;
   onClose: () => void;
 }) {
   const [pair, setPair] = useState<Pair>(() => (current ? pairOf(current.rate) : { forward: "", inverse: "" }));
   const [from, setFrom] = useState<Provenance>(() =>
-    current ? { kind: current.source, asOf: current.source === "typed" ? current.asOf : null } as Provenance
+    current ? (current.source === "fetched" ? { kind: "fetched", asOf: null } : { kind: current.source })
       : { kind: "loading" });
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string>();
@@ -102,7 +101,7 @@ export function RateDialog({
   async function look() {
     setFrom({ kind: "loading" });
     try {
-      const got = await fetchRate(currency, base);
+      const got = await fetchRate(currency, base, day);
       if (!live.current || touched.current) return;
       setPair(pairOf(got.rate));
       setFrom({ kind: "fetched", asOf: got.asOf });
@@ -112,9 +111,8 @@ export function RateDialog({
     }
   }
 
-  // Only when the group hasn't got a number yet. A rate somebody set is the
-  // group's decision, and opening the dialog is not a request to overrule it —
-  // "Look it up" is, and it is one tap away.
+  // Only when the entry hasn't got a number yet. Opening the dialog over one is
+  // not a request to overrule it — "Look it up" is, and it is one tap away.
   useEffect(() => {
     if (current) return;
     void look();
@@ -124,19 +122,18 @@ export function RateDialog({
   function type(typed: string, side: "forward" | "inverse") {
     touched.current = true;
     setPair(pairFrom(typed, side));
-    setFrom({ kind: "typed", asOf: null });
+    setFrom({ kind: "typed" });
   }
 
   const rate = pair.forward.trim();
   const ok = isValidRate(rate);
-  const changed = !current || current.rate !== rate;
 
   async function save() {
     if (!ok || busy) return;
     setBusy(true);
     setFailed(undefined);
     try {
-      await onSave(rate, from.kind === "fetched" ? "fetched" : "typed", Date.now());
+      await onSave(rate, from.kind === "fetched" ? "fetched" : "typed");
       onClose();
     } catch (err) {
       if (live.current) setFailed(errorText(err));
@@ -163,17 +160,9 @@ export function RateDialog({
           </button>
         </div>
 
-        {/* The one consequence worth saying out loud: this is not a number on
-            one entry, it is the number every entry in this currency is read at. */}
-        {entryCount > 0 && changed ? (
-          <div className="dbody"><p>{copy.rates.movesEntries(plural(entryCount, copy.noun.entry), currency)}</p></div>
-        ) : null}
-
         {failed ? <p className="failure" role="alert">{copy.rates.failed(failed)}</p> : null}
 
-        {/* Two ways out, both about this dialog: leave it, or save it.
-            Removing the rate is the row's business, not the editor's — it
-            lives on the row's long-press menu, where deleting an entry does. */}
+        {/* Two ways out, both about this dialog: leave it, or save it. */}
         <div className="drow">
           <button type="button" className="btn btn-s" onClick={onClose} disabled={busy}>
             {copy.act.cancel}
@@ -213,16 +202,19 @@ export const RATE_CHIP_DIGITS = RATE_SHOWN_DIGITS - 1;
 /**
  * "@ 4.3731", the way to `RateDialog` wherever a converted figure is shown: the
  * entry form under its amount, the entry's summary under its figure. The "@"
- * is quiet so the figure leads; no rate yet is a red "?", which the form's
- * refusal blooms.
+ * is quiet so the figure leads; while the feed is asked it is a spinner, and
+ * no rate after that is a red "?", which the form's refusal blooms.
  */
-export function RateChip({ rate, className, ...rest }: {
+export function RateChip({ rate, looking, className, ...rest }: {
   rate: Rate | undefined;
+  looking?: boolean;
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type" | "children">) {
   return (
     <button type="button" className={`chip ratechip${className ?? ""}`} {...rest}>
       <span className="at">{copy.rates.at}</span>{" "}
-      {rate !== undefined ? rateText(rate, RATE_CHIP_DIGITS) : <span className="bad">?</span>}
+      {rate !== undefined ? rateText(rate, RATE_CHIP_DIGITS)
+        : looking ? <span className="spinner" aria-label={copy.rates.from.loading} />
+          : <span className="bad">?</span>}
     </button>
   );
 }

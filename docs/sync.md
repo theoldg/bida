@@ -40,14 +40,14 @@ Two fields never ride along on a content save, and the repairs in
   than hoped for, because every whole write carries one.
 
 **The command layer is what makes that true.** `editExpense` and
-`editSettlement` build the entity from the stored row plus the form, re-derive
-`rateToBase` and `baseAmountMinor` from the registry rather than carrying them,
-and append the lot. A save that moved nothing still writes nothing
+`editSettlement` build the entity from the stored row plus the form, derive
+`baseAmountMinor` from the entry's own rate, and append the lot. A save that moved nothing still writes nothing
 (`movesAnything` in `commands/patch.ts`), or every Save would be a revision
 saying nothing happened.
 
 **A merge is the only thing that can make the state illegal**, so `syncGroup`
-heals right after it rebuilds: `healGroup` runs the registry to a fixed point
+heals right after it rebuilds — and on a group's first sync of the session, for
+what an older build wrote: `healGroup` runs the registry to a fixed point
 and puts this phone's own member back if the merge removed them
 ([invariants.md](invariants.md)). It writes ordinary ops, which the next run
 pushes. A phone that hasn't claimed a member heals nothing — it has no honest
@@ -57,17 +57,13 @@ what keeps a restored member from being an argument that runs forever.
 **A `create` writes no field it would only be defaulting.** The fold treats
 absent as the default, so `receiptItems: null` on an expense nobody scanned is
 bytes in the log and a row in its own history saying nothing changed. `only()` in
-`apps/web/lib/db/commands/patch.ts` drops them. The exception is a `rate` create:
-its entity id is the currency code, so setting a rate the group had cleared
-lands on the tombstoned row and must write `deletedAt: null` to lift it. In an
-`update` an absent field means "leave it alone", so clearing one there still
-writes the null.
+`apps/web/lib/db/commands/patch.ts` drops them. In an `update` an absent field
+means "leave it alone", so clearing one there still writes the null.
 
 A `rate` op is the odd one: its `entityId` is the currency code rather than a
-generated id, because the group holds one rate per currency and everyone has to
-land on the same row ([ADR-0005](decisions/0005-money-and-currency.md)). Two
-people typing a EUR→MAD rate offline therefore *conflict*, per-field LWW, which
-is the point — one number, last word wins, both ops in the history.
+generated id. Only builds from when rates were the group's wrote them; they
+still fold, and nothing writes one now
+([ADR-0005](decisions/0005-money-and-currency.md)).
 
 ## Ordering: hybrid logical clocks
 

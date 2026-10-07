@@ -140,7 +140,7 @@ describe("notices: shares agree with the ledger to the last minor unit", () => {
     });
   }
 
-  it("a foreign entry is valued at the registry's rate today, as the ledger is", () => {
+  it("a foreign entry from before rates were the entry's is valued as the ledger values it", () => {
     const b = group();
     b.push("rate", "USD", "create", { rate: "0.5", source: "typed", asOf: 1 });
     const list = run(b, (b) => b.push("expense", "e1", "create", expensePatch({

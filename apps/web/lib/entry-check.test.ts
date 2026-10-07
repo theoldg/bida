@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ExchangeRate } from "@bida/core";
-import { checkEntry, dockLine, needsRate, REFUSAL_ORDER, type Refusable } from "./entry-check";
+import { checkEntry, dockLine, REFUSAL_ORDER, type Refusable } from "./entry-check";
 import { blankDraft, type EntryDraft } from "./draft";
 import { copy } from "./copy";
 
@@ -15,16 +14,10 @@ const THEO = "m-theo", MARIE = "m-marie", GONE = "m-gone";
 const MEMBERS = [THEO, MARIE];
 const NAMES: Record<string, string> = { [THEO]: "Theo", [MARIE]: "Marie", [GONE]: "Bruno" };
 
-/** One row of the group's registry: 1 `code` is worth `r` of the base. */
-function rate(code: string, r: string): ExchangeRate {
-  return { id: code, groupId: "g", rate: r, source: "typed", asOf: 0 };
-}
-
-function check(draft: EntryDraft, rates: ExchangeRate[] = [], liveMembers = MEMBERS) {
+function check(draft: EntryDraft, liveMembers = MEMBERS) {
   return checkEntry({
     draft,
     base: "EUR",
-    rates: Object.fromEntries(rates.map((r) => [r.id, r])),
     liveMembers,
     nameOf: (id) => NAMES[id] ?? copy.unknown,
   });
@@ -70,7 +63,7 @@ describe("checkEntry", () => {
     expect(check(expense()).amountMissing).toBe(false);
   });
 
-  describe("a currency the group has no rate for", () => {
+  describe("a foreign entry with no rate of its own yet", () => {
     it("holds Save, and says so by pointing until a Save is refused", () => {
       const c = check(expense({ currency: "MAD" }));
       expect(c.ready).toBe(false);
@@ -78,22 +71,28 @@ describe("checkEntry", () => {
       // under the fields, because the number is not set on this screen.
       expect(c.blocker).toBeNull();
       // Not silently 1:1 — that is how a 500 MAD dinner was banked as €500.
-      expect(c.groupRate).toBeUndefined();
+      expect(c.rate).toBeUndefined();
       expect(c.baseMinor).toBe(0);
     });
 
-    it("converts at the group's rate once it has one", () => {
-      const c = check(expense({ currency: "MAD", amountText: "500.00" }), [rate("MAD", "0.0921")]);
+    it("converts at the entry's own rate once it has one", () => {
+      const c = check(expense({ currency: "MAD", amountText: "500.00", rate: "0.0921", rateCurrency: "MAD" }));
       expect(c.ready).toBe(true);
       expect(c.foreign).toBe(true);
       expect(c.baseMinor).toBe(4605); // 50000 × 0.0921
     });
 
+    it("ignores a rate that isn't one, one held for another currency, and one left in the base", () => {
+      expect(check(expense({ currency: "MAD", rate: "abc", rateCurrency: "MAD" })).rate).toBeUndefined();
+      // Switched from PLN to MAD: until the feed answers, PLN's rate is no rate.
+      expect(check(expense({ currency: "MAD", rate: "0.23", rateCurrency: "PLN" })).rate).toBeUndefined();
+      expect(check(expense({ rate: "0.5" })).baseMinor).toBe(4000);
+    });
+
     it("treats a conversion out of safe-integer range as no base amount", () => {
       // Each of these is in range on its own; the product is not. This runs in
       // a render body, so the alternative to `rateOk` is a white screen.
-      const c = check(expense({ currency: "MAD", amountText: "999999999999" }),
-        [rate("MAD", "999999999")]);
+      const c = check(expense({ currency: "MAD", amountText: "999999999999", rate: "999999999", rateCurrency: "MAD" }));
       expect(c.rateOk).toBe(false);
       expect(c.ready).toBe(false);
       expect(c.baseMinor).toBe(0);
@@ -213,13 +212,12 @@ describe("checkEntry", () => {
 
   it("checks an as-amounts split against the amount in the entry's own currency", () => {
     const amounts = (a: Record<string, number>) => expense({
-      currency: "MAD", amountText: "500.00", splitTab: "exact",
+      currency: "MAD", rate: "0.0921", rateCurrency: "MAD", amountText: "500.00", splitTab: "exact",
       splits: { exact: { mode: "exact", amounts: a } },
     });
-    const rates = [rate("MAD", "0.0921")];
-    expect(check(amounts({ [THEO]: 30000, [MARIE]: 20000 }), rates).ready).toBe(true);
+    expect(check(amounts({ [THEO]: 30000, [MARIE]: 20000 })).ready).toBe(true);
     // The same money converted to euros is not what was typed.
-    expect(check(amounts({ [THEO]: 2763, [MARIE]: 1842 }), rates).ready).toBe(false);
+    expect(check(amounts({ [THEO]: 2763, [MARIE]: 1842 })).ready).toBe(false);
   });
 
   describe("a split that doesn't add up", () => {
@@ -256,18 +254,6 @@ describe("checkEntry", () => {
       expect(c.receiptMissing).toBe(true);
       expect(c.splitProblem).toBeNull();
     });
-  });
-});
-
-describe("needsRate", () => {
-  it("is false for the group's own currency, and true for one it has never priced", () => {
-    expect(needsRate({}, "EUR", "EUR")).toBe(false);
-    expect(needsRate({}, "EUR", "MAD")).toBe(true);
-    expect(needsRate({ MAD: rate("MAD", "0.0921") }, "EUR", "MAD")).toBe(false);
-  });
-
-  it("asks nothing of a group that hasn't loaded", () => {
-    expect(needsRate({}, undefined, "MAD")).toBe(false);
   });
 });
 

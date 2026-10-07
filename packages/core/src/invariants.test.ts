@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  INVARIANTS, healDrafts, liveEntriesHaveLiveRates,
+  INVARIANTS, entriesCarryTheirOwnRate, healDrafts,
   liveEntriesNameLiveMembers, restoreClaimDrafts, wouldViolate, type OpDraft,
 } from "./invariants.js";
 import { foldOps } from "./fold.js";
@@ -8,6 +8,8 @@ import { createHlcState, formatHlc, maxHlc } from "./hlc.js";
 import type { Op } from "./ops.js";
 import { ADA, GROUP, MAD_RATE, MARIE, THEO, marrakechOps } from "./fixtures.test-helper.js";
 import type { GroupState } from "./types.js";
+import { atCurrentRates } from "./rates.js";
+import { computeBalances } from "./balance.js";
 
 /**
  * Every registered invariant, held to the five rules in invariants.ts.
@@ -55,19 +57,14 @@ const SCENARIOS: Record<string, () => Op[]> = {
       actor: MARIE, note: null, createdAt: 1_743_700_000_000, seq: null,
     },
   ],
-  // The group clears its MAD rate while five live entries use MAD.
-  liveEntriesHaveLiveRates: () => [
+  // Written while rates were the group's: MAD entries valued at a registry row.
+  entriesCarryTheirOwnRate: () => [
     ...marrakechOps(),
     {
       id: "op-set-mad", groupId: GROUP, entity: "rate", entityId: "MAD", kind: "create",
-      patch: { rate: MAD_RATE, source: "typed", asOf: 1_743_600_000_000, deletedAt: null },
+      patch: { rate: "0.093", source: "typed", asOf: 1_743_600_000_000, deletedAt: null },
       hlc: formatHlc(createHlcState("phonea", 1_743_700_000_000)),
       actor: THEO, note: null, createdAt: 1_743_700_000_000, seq: null,
-    },
-    {
-      id: "op-clear-mad", groupId: GROUP, entity: "rate", entityId: "MAD", kind: "delete",
-      patch: {}, hlc: formatHlc(createHlcState("phoneb", 1_743_800_000_000)),
-      actor: MARIE, note: null, createdAt: 1_743_800_000_000, seq: null,
     },
   ],
 };
@@ -152,13 +149,6 @@ describe("the courtesy refusals", () => {
     expect(wouldViolate(state, draft)?.name).toBe("liveEntriesNameLiveMembers");
   });
 
-  it("refuses to clear a rate the group is still spending in", () => {
-    const state = foldOps(SCENARIOS["liveEntriesHaveLiveRates"]!().slice(0, -1));
-    const draft: OpDraft = { entity: "rate", entityId: "MAD", kind: "delete", patch: {} };
-
-    expect(wouldViolate(state, draft)?.name).toBe("liveEntriesHaveLiveRates");
-  });
-
   it("allows what breaks nothing", () => {
     const state = foldOps(marrakechOps());
 
@@ -182,17 +172,42 @@ describe("the courtesy refusals", () => {
   });
 });
 
-describe("liveEntriesHaveLiveRates", () => {
-  it("leaves alone a currency the group has never priced", () => {
-    // No rate row at all: the rate dialog's job, not a healer's.
-    expect(liveEntriesHaveLiveRates.detect(foldOps(marrakechOps()))).toEqual([]);
+describe("entriesCarryTheirOwnRate", () => {
+  const ops = () => SCENARIOS["entriesCarryTheirOwnRate"]!();
+
+  it("leaves alone a currency the registry never priced", () => {
+    // Each entry is read at the rate it was saved with already.
+    expect(entriesCarryTheirOwnRate.detect(foldOps(marrakechOps()))).toEqual([]);
   });
 
-  it("leaves alone a cleared rate nothing live spends in", () => {
-    const ops = SCENARIOS["liveEntriesHaveLiveRates"]!()
-      .filter((o) => o.entity !== "expense");
+  it("writes the registry's rate, so no balance moves", () => {
+    const before = computeBalances(atCurrentRates(foldOps(ops())));
+    const healed = foldOps(applyDrafts(ops(), healDrafts(foldOps(ops()))));
+    expect(computeBalances(atCurrentRates(healed))).toEqual(before);
+    expect(healed.expenses["e-nomad"]).toMatchObject({ rateToBase: "0.093", rateSource: "group" });
+    // The base-currency riad needs nothing.
+    expect(healed.expenses["e-riad"]!.rateSource).toBeUndefined();
+  });
 
-    expect(liveEntriesHaveLiveRates.detect(foldOps(ops))).toEqual([]);
+  it("and once each entry carries its own, the registry moves nothing", () => {
+    const healed = applyDrafts(ops(), healDrafts(foldOps(ops())));
+    const later: Op = {
+      id: "op-move-mad", groupId: GROUP, entity: "rate", entityId: "MAD", kind: "update",
+      patch: { rate: "0.5" }, hlc: formatHlc(createHlcState("phonea", 1_743_900_000_000)),
+      actor: THEO, note: null, createdAt: 1_743_900_000_000, seq: null,
+    };
+    const state = atCurrentRates(foldOps([...healed, later]));
+    expect(state.expenses["e-nomad"]!.rateToBase).toBe("0.093");
+  });
+
+  it("includes a deleted entry, so restoring it brings nothing along", () => {
+    const deleted: Op = {
+      id: "op-del-nomad", groupId: GROUP, entity: "expense", entityId: "e-nomad", kind: "delete",
+      patch: {}, hlc: formatHlc(createHlcState("phonea", 1_743_650_000_000)),
+      actor: THEO, note: null, createdAt: 1_743_650_000_000, seq: null,
+    };
+    const found = entriesCarryTheirOwnRate.detect(foldOps([...ops(), deleted]));
+    expect(found.map((v) => v.entry.id)).toContain("e-nomad");
   });
 });
 

@@ -52,9 +52,10 @@ those commands — a Save stuck disabled, a segmented control writing the wrong
 field, a detail screen that can't find a settlement by id
 ([ADR-0010](decisions/0010-what-an-entry-is.md)). This adds each of the
 three kinds through the real UI, edits them, and reads the history back. It
-also drives the rate registry end to end — a new currency opening the dialog by
-itself, the two directions of the field moving together, and correcting a saved
-rate re-valuing an entry already in the ledger
+also drives an entry's own rate end to end with no feed behind it — a new
+currency opening the dialog by itself, the two directions of the field moving
+together, the next entry borrowing the group's last rate without asking, and
+correcting one entry's rate from its screen moving that entry and no other
 ([ADR-0005](decisions/0005-money-and-currency.md)). And it presses Save twice
 from the keyboard, since a `click()` waits for a settled screen in between and
 so cannot reproduce a double write. It holds rows with real touch, too, since a right
@@ -291,6 +292,10 @@ other section stands on it.
 - **The router draws the next screen before it commits the URL.** A selector
   the new screen carries can match while the stack still says the old one, so
   a step that reads the stack or presses Back next waits for the URL too.
+
+- **The rate dialog opens a moment after the currency pick**, once the
+  look-up behind it fails (the static export has no feed). Wait for the
+  dialog; counting it straight after the pick finds none.
 
 - **A browser check that asks for a sentence will be rearranged under.** Copy
   is settled by ear here, one word at a time, so a selector naming the words is

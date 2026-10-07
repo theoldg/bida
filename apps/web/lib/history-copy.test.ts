@@ -3,9 +3,18 @@ import { activityFeed, type Member, type Revision } from "@bida/core";
 import { db } from "./db/dexie";
 import { opsForGroup } from "./db/fold";
 import {
-  addExpense, addMember, clearRate, createGroup, deleteExpense, deleteSettlement, editExpense,
-  editSettlement, healGroup, recordSettlement, removeMember, restoreEntry, setRate,
+  addExpense, addMember, createGroup, deleteExpense, deleteSettlement, editExpense,
+  editSettlement, healGroup, recordSettlement, removeMember, restoreEntry,
 } from "./db/commands";
+import { appendOps } from "./db/commands/append";
+
+/** A registry row's op, as builds from before rates were the entry's wrote them. */
+async function oldRateOp(groupId: string, actor: string, kind: "create" | "update" | "delete", rate?: string) {
+  await appendOps(groupId, actor, [{
+    entity: "rate", entityId: "MAD", kind,
+    patch: kind === "delete" ? {} : { rate, source: "typed", asOf: 0, ...(kind === "create" ? { deletedAt: null } : {}) },
+  }]);
+}
 import { describe, type Detail } from "./history-copy";
 import type { Row } from "./history-rows";
 
@@ -370,11 +379,11 @@ suite("describe", () => {
   it("names a currency change that left the figure alone", async () => {
     const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
     // The same number of minor units at a rate of 1: the amount fields are all
-    // unchanged, so the revision carries `currency` and nothing else.
-    await editExpense(groupId, theo, expenseId, { currency: "PLN", rateToBase: "1" });
+    // unchanged, so the revision carries `currency` and where its rate came from.
+    await editExpense(groupId, theo, expenseId, { currency: "PLN", rateToBase: "1", rateSource: "typed" });
 
     const [latest] = await described(groupId);
-    expect(latest!.rev.changes.map((c) => c.field)).toEqual(["currency"]);
+    expect(latest!.rev.changes.map((c) => c.field)).toEqual(["currency", "rateSource"]);
     expect(latest!.said).toBe("Theo changed the currency");
   });
 
@@ -784,7 +793,7 @@ suite("describe", () => {
   // A rate's revisions land in the feed like any other, and its entity id is
   // the currency, so the sentence names it without a lookup (and never reads
   // as "renamed the group").
-  it("names the currency a rate revision is about", async () => {
+  it("names the currency an old registry revision is about", async () => {
     const { groupId, memberId: theo } = await createGroup({
       name: "Siurek", baseCurrency: "EUR", myName: "Theo",
     });
@@ -794,18 +803,46 @@ suite("describe", () => {
       .filter((rev) => rev.entity === "rate")
       .map((rev) => describe(rev, "Theo", members, "EUR"));
 
-    await setRate(groupId, theo, "MAD", "0.0921", "fetched", 0);
+    await oldRateOp(groupId, theo, "create", "0.0921");
     const [set] = await feed();
     expect(set!.what).toBe("Theo set the MAD rate");
     expect(set!.diff).toEqual({ now: "1 MAD = 0.0921 EUR" });
 
-    await setRate(groupId, theo, "MAD", "0.095", "typed", 0);
+    await oldRateOp(groupId, theo, "update", "0.095");
     const [changed] = await feed();
     expect(changed!.what).toBe("Theo changed the MAD rate");
     expect(changed!.diff).toEqual({ was: "1 MAD = 0.0921 EUR", now: "1 MAD = 0.095 EUR" });
 
-    await clearRate(groupId, theo, "MAD");
+    await oldRateOp(groupId, theo, "delete");
     expect((await feed())[0]!.what).toBe("Theo removed the MAD rate");
+  });
+
+  it("says the healer wrote the old rate onto an entry, and nothing else", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Siurek", baseCurrency: "EUR", myName: "Theo",
+    });
+    await oldRateOp(groupId, theo, "create", "0.1");
+    await appendOps(groupId, theo, [{
+      entity: "expense", entityId: "e-old", kind: "create",
+      patch: {
+        createdAt: 1, description: "Nomad", occurredAt: 1, amountMinor: 62_000, currency: "MAD",
+        rateToBase: "0.0921", baseAmountMinor: 5710, paidBy: theo, split: { mode: "equal", members: [theo] },
+      },
+    }]);
+    expect(await healGroup(groupId)).toBe(1);
+    const members = new Map<string, Member>(
+      (await db().members.where("groupId").equals(groupId).toArray()).map((m) => [m.id, m]));
+    const [healed] = activityFeed(await opsForGroup(groupId))
+      .filter((rev) => rev.entity === "expense")
+      .map((rev) => describe(rev, "Theo", members, "EUR"));
+    expect(healed!.what).toBe("The group’s MAD rate was written onto this entry, as each now keeps its own");
+
+    // A person's save after it is an ordinary edit, though it carries the same source.
+    await editExpense(groupId, theo, "e-old", { description: "Nomad, dinner" });
+    const [edited] = activityFeed(await opsForGroup(groupId))
+      .filter((rev) => rev.entity === "expense")
+      .map((rev) => describe(rev, "Theo", members, "EUR"));
+    expect(edited!.what).not.toContain("written onto");
   });
 
   it("describes every revision a whole group's life can produce", async () => {
@@ -813,8 +850,8 @@ suite("describe", () => {
     await editExpense(groupId, theo, expenseId, { currency: "PLN", rateToBase: "1" });
     await editExpense(groupId, theo, expenseId, { rateToBase: "4.30" });
     await editExpense(groupId, theo, expenseId, { description: "Beers and chips" });
-    await setRate(groupId, theo, "MAD", "0.0921", "fetched", 0);
-    await clearRate(groupId, theo, "MAD");
+    await oldRateOp(groupId, theo, "create", "0.0921");
+    await oldRateOp(groupId, theo, "delete");
 
     const all = await described(groupId);
     expect(all.length).toBeGreaterThan(4);

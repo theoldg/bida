@@ -38,7 +38,7 @@ async function seed(page, base) {
   // that you owe a share of (red), and one with nothing to do with you (faded).
   await addExpense(page, base, groupId, { amount: "900", what: "Taxi", paidBy: "Marie" });
   // One in the currency the trip is actually spent in, so the ledger shows a
-  // converted figure and the registry has a row worth photographing.
+  // converted figure and the entry a rate worth photographing.
   await addExpense(page, base, groupId, {
     amount: "62000", what: "Café Clock", currency: "MAD", rate: "0.0921",
   });
@@ -76,12 +76,13 @@ async function addEntry(
 ) {
   await page.goto(`${base}/g/entry/edit?id=${groupId}`);
   if (kind) await pick(page, '[aria-label="What kind of entry"]', kind);
-  // Currency first: picking one the group has no rate for opens the rate
-  // dialog on the spot, and there is no feed behind the static export, so the
+  // Currency first: there is no feed behind the static export, so a currency
+  // new to the group opens the rate dialog once the look-up fails, and the
   // number is typed the way a phone with no signal would have to type it.
   if (currency) {
     await pick(page, '[aria-label="Currency"]', currency);
     const dialog = page.locator("dialog.scrim");
+    await dialog.waitFor({ timeout: 8000 }).catch(() => {});
     if (await dialog.count() > 0) {
       await page.getByRole("textbox", { name: `Rate, ${currency} to EUR` }).fill(rate);
       await page.getByRole("button", { name: "Save" }).last().click();
@@ -159,7 +160,6 @@ const routes = (g) => [
   ["members", `/g/members?id=${g}`],
   ["claim", `/g/claim?id=${g}`],
   ["history", `/g/history?id=${g}`],
-  ["rates", `/g/rates?id=${g}`],
   ["tip", `/g/tip?id=${g}`],
   ["export", `/g/export?id=${g}`],
   ["entry-expense", `/g/entry/edit?id=${g}`],
@@ -384,11 +384,12 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-forget.png`) });
       process.stdout.write(`${theme}/forget `);
 
-      // The rate dialog: one number, both ways round, and the sentence saying
-      // how much of the ledger moves if it changes.
-      await page.goto(`${base}/g/rates?id=${groupId}`);
-      await page.waitForSelector(".rows button.row");
-      await page.locator("button.row").filter({ hasText: "MAD" }).click();
+      // The rate dialog, opened from the entry it belongs to: one number,
+      // both ways round, and where it came from.
+      await page.goto(`${base}/g?id=${groupId}`);
+      await page.locator("a.row").filter({ hasText: "Café Clock" }).click();
+      await page.waitForURL(/\/g\/entry\?/);
+      await page.getByRole("button", { name: "MAD rate", exact: true }).click();
       await page.waitForSelector("dialog.scrim");
       await page.getByRole("textbox", { name: "Rate, MAD to EUR" }).fill("0.093");
       await page.waitForTimeout(200);

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import {
-  minorToDecimalString, receiptExtras, receiptOf, settleRest,
+  latestRate, minorToDecimalString, receiptExtras, receiptOf, settleRest,
   type Group, type RateSource,
 } from "@bida/core";
 import { handOffReceiptTotal } from "@/lib/scan/items";
@@ -20,11 +20,12 @@ import { RateChip, RateDialog } from "@/components/rate-dialog";
 import { Icon } from "@/components/icons";
 import { TransferSides } from "@/components/transfer-sides";
 import {
-  addExpense, editExpense, editSettlement, recordSettlement, setRate,
+  addExpense, editExpense, editSettlement, recordSettlement,
 } from "@/lib/db/commands";
 import { ENTRY_KINDS, type EntryKind } from "@/lib/entry-kind";
 import { copy } from "@/lib/copy";
-import { checkEntry, dockLine, needsRate } from "@/lib/entry-check";
+import { checkEntry, dockLine } from "@/lib/entry-check";
+import { rateDayOf, useEntryRate } from "@/lib/entry-rate";
 import { useRefusals } from "@/lib/refusal";
 import { bare, dateInputValue, errorText, money, plural, withDate } from "@/lib/format";
 import { formParent, parseEntrySource, route, type EntrySource } from "@/lib/group-link";
@@ -179,8 +180,13 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   const transfer = kind === "transfer";
 
   const [ask, setAsk] = useState<null | "discard" | "currency" | "payer" | "kind">(null);
-  /** Which currency's rate is being set, if any. See `pickCurrency`. */
-  const [askRate, setAskRate] = useState<string | null>(null);
+  /**
+   * The entry's own rate, looked up whenever its currency or day changes, or
+   * a scan lands (lib/entry-rate.ts). `askRate` is the dialog: opened by the
+   * chip, or by itself when the feed failed for a currency new to the group.
+   */
+  const { looking: rateLooking, ask: askRate, setAsk: setAskRate } = useEntryRate(groupId, draft, base,
+    (currency) => latestRate([...data.expenses, ...data.settlements], data.rates, base, currency, draft.entryId));
   const [failed, setFailed] = useState<string>();
   /**
    * A save in flight. **Every button that writes needs one** (`ConfirmDialog`,
@@ -197,24 +203,24 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   // mount (lib/entry-check.ts). The form reads its answers; it writes nothing.
   const {
     activeTab, canScan, activeSplit, receiptSplit, effectiveSplit, receiptTotal, receiptLocksAmount,
-    onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, splitProblem, splitTick,
+    onReceiptTab, amountMinor, baseMinor, foreign, rate, rateOk, blocker, splitProblem, splitTick,
     receiptMissing, ready,
     amountMissing, titleMissing,
   } = checkEntry({
-    draft, base, rates: data.rates,
+    draft, base,
     liveMembers: data.members.map((m) => m.id),
     nameOf: data.nameOf,
   });
 
   /**
    * What a refused Save can bloom: two fields, the Items tab's step (a photo or
-   * the who-had-what grid), the rate badge when the group has no rate for
-   * the currency — that badge is the whole fix, with no field here to point at
-   * — and the sentences in the Save dock: the payers', and the split's.
+   * the who-had-what grid), the rate badge when the entry has no rate yet —
+   * that badge is the whole fix, with no field here to point at — and the
+   * sentences in the Save dock: the payers', and the split's.
    */
   const missing = {
     amount: amountMissing, title: titleMissing, receipt: receiptMissing,
-    rate: foreign && groupRate === undefined, blocker: blocker !== null, split: splitProblem !== null,
+    rate: foreign && rate === undefined, blocker: blocker !== null, split: splitProblem !== null,
   };
   /**
    * A Save has been refused over a field or step still missing. Off again once
@@ -227,7 +233,8 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   }, [told, fieldMissing]);
   /** The dock's one red line, chosen by `REFUSAL_ORDER`. */
   const said = dockLine(missing, told);
-  const saidText = said === "rate" ? copy.form.noRate(draft.currency)
+  const saidText = said === "rate"
+    ? (rateLooking ? copy.form.rateLooking(draft.currency) : copy.form.noRate(draft.currency))
     : said === "blocker" ? blocker
     : said === "split" ? splitProblem
     : said === "receipt" ? ((draft.receiptItems?.length ?? 0) > 0 ? copy.form.noItemsGiven : copy.form.noScan)
@@ -242,24 +249,6 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   // refused goes to the top, where they are read together.
   const refusals = useRefusals(missing, (aimed) => !!aimed.rate || !!aimed.amount || !!aimed.title);
 
-  /**
-   * **The rate dialog opens for whatever currency the draft is *in*, never for
-   * the act of picking one** — a scan picks one too (`/g/scan` fills the draft
-   * before navigating here), and a photographed MAD receipt would otherwise
-   * arrive at the draft's old rate.
-   *
-   * The ref keeps it to one ask: dismissing leaves the currency as it was, and
-   * the effect would reopen it. `pickCurrency` clears it, so picking the same
-   * currency again does ask again.
-   */
-  const rateAsked = useRef<string | null>(null);
-  useEffect(() => {
-    if (rateAsked.current === draft.currency) return;
-    if (!needsRate(data.rates, base, draft.currency)) return;
-    rateAsked.current = draft.currency;
-    setAskRate(draft.currency);
-  }, [draft.currency, base, data.rates]);
-
   // Merges against the latest saved draft, not this render's `draft`: some
   // handlers (switching split tabs) call patch() twice, and a stale closure
   // would let the second clobber the first.
@@ -267,15 +256,12 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     saveDraft(groupId, clipAmountToCurrency({ ...(getDraft(groupId) ?? draft), ...change }));
 
   /**
-   * Change the entry's currency, and ask for its rate when the group has none.
-   * Otherwise a MAD pick in a EUR group keeps rate "1", passes validation, and
-   * banks a 500 MAD dinner as €500 — so the dialog opens on the spot, and Save
-   * is held until the group has a number.
+   * Change the entry's currency. Its rate is looked up by itself
+   * (`useEntryRate`), and until one arrives the old currency's is no rate at
+   * all (`checkEntry`), so Save is held rather than banking 500 MAD as €500.
    */
   function pickCurrency(currency: string) {
     patch({ currency });
-    rateAsked.current = currency;
-    if (needsRate(data.rates, base, currency)) setAskRate(currency);
   }
 
   /**
@@ -357,7 +343,9 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     if (saving || !actor) return;
     setSaving(true);
     setFailed(undefined);
-    const rate = foreign ? groupRate ?? "1" : "1";
+    // `ready` holds a foreign entry with no rate, so the "1" is the base's.
+    const rateToBase = foreign ? rate ?? "1" : "1";
+    const rateSource = foreign ? draft.rateSource ?? null : null;
     try {
       let wrote = draft.entryId;
       if (transfer) {
@@ -366,7 +354,8 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
           toMember: draft.toMember,
           amountMinor,
           currency: draft.currency,
-          rateToBase: rate,
+          rateToBase,
+          rateSource,
           occurredAt: draft.occurredAt,
           dateOnly: draft.dateOnly ? true : null,
           note: draft.description.trim() || null,
@@ -383,7 +372,8 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
           dateOnly: draft.dateOnly ? true : null,
           amountMinor,
           currency: draft.currency,
-          rateToBase: rate,
+          rateToBase,
+          rateSource,
           paidBy: draft.paidBy,
           payers: draft.payers,
           // The rest's figures written in, so a phone that predates `rest`
@@ -477,9 +467,8 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                 {draft.currency}
               </button>
 
-              {/* What the entry is worth in the group's currency. The rate belongs to
-                  the group: both controls open the registry's dialog, which also says
-                  how much of the ledger moves. */}
+              {/* What the entry is worth in the group's currency, at its own rate:
+                  both controls open the dialog that sets it. */}
               {foreign ? (
                 <>
                   <button type="button" className="ratelink"
@@ -492,7 +481,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                   </button>
                   <RateChip data-refuse="rate" className={refusals.flash("rate")}
                     onAnimationEnd={refusals.onFlashEnd("rate")}
-                    rate={groupRate}
+                    rate={rate} looking={rateLooking}
                     aria-label={copy.rates.editTitle(draft.currency)}
                     onClick={() => setAskRate(draft.currency)} />
                 </>
@@ -681,16 +670,18 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
         />
       ) : null}
 
-      {/* The same dialog the registry screen opens, so a rate set from here
-          is the group's rate and not a number private to this entry. */}
+      {/* This entry's rate, handed back to the draft: it reaches the log with
+          the entry, on Save. */}
       {askRate !== null ? (
         <RateDialog
           currency={askRate}
           base={base}
-          current={data.rates[askRate]}
-          entryCount={data.currencies.find((c) => c.currency === askRate)?.entryCount ?? 0}
-          onSave={async (rate: string, source: RateSource, asOf: number) => {
-            if (data.me) await setRate(groupId, data.me, askRate, rate, source, asOf);
+          day={rateDayOf(draft.occurredAt)}
+          current={askRate === draft.currency && rate !== undefined
+            ? { rate, source: draft.rateSource ?? "group" } : undefined}
+          onSave={(typed: string, source: RateSource) => {
+            const latest = getDraft(groupId) ?? draft;
+            patch({ rate: typed, rateSource: source, rateCurrency: askRate, rateDay: rateDayOf(latest.occurredAt) });
           }}
           onClose={() => setAskRate(null)}
         />

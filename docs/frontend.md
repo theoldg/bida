@@ -103,7 +103,7 @@ API is reached with `fetch`.
   mode, and that is what reopens it.
 - **Whether the entry may be saved is `checkEntry` (`lib/entry-check.ts`)**,
   not the form. It answers the amount, the base figure, the split in force and
-  why the entry isn't ready — from a draft and the group's rates, with no React
+  why the entry isn't ready — from a draft and its own rate, with no React
   in it, so the arithmetic behind that button is a test suite rather than a
   screen to mount. The form reads its answers and writes none of them.
 - **Save is the last row of the form, and the kind is the top of it.** One
@@ -207,7 +207,7 @@ API is reached with `fetch`.
 - **The currency picker offers the group's own currencies first** — the base
   one, then whatever the ledger is written in, most spent-in first, then the
   short common list (`lib/currencies.ts`, `currencyChoices`), then "Other…" for
-  any code — one `CurrencyPicker` in /new, the entry form and Rates. A trip spends in
+  any code — one `CurrencyPicker` in /new and the entry form. A trip spends in
   two or three, and scrolling past seventeen to reach one of them is the whole
   of the annoyance. Names come from `Intl.DisplayNames`, with a small fallback
   map for the codes a trimmed locale build answers bare (ISK, UZS).

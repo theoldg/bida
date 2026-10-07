@@ -4,10 +4,11 @@ import { useSyncExternalStore } from "react";
 import {
   convertSplitMode, minorToDecimalString, newId, ownCurrencySplit, parseMinor, receiptExtras, receiptOf,
   sameLocalDay,
-  type ArithmeticMode, type ArithmeticSplit, type Expense, type Receipt, type ReceiptItem, type Settlement,
-  type SplitMode, type SplitSpec,
+  type ArithmeticMode, type ArithmeticSplit, type EntryRateSource, type Expense, type Receipt, type ReceiptItem,
+  type Settlement, type SplitMode, type SplitSpec,
 } from "@bida/core";
 import { kindOf, type EntryKind } from "./entry-kind";
+import { dateInputValue } from "./format";
 import { receiptBreakdown, receiptTotalMinor, type MemberLine } from "./scan/items";
 import { clearScan } from "./scan/live";
 import { signal } from "./signal";
@@ -35,8 +36,17 @@ export interface EntryDraft extends Receipt {
   newEntryId: string;
   /** Exactly what is typed, e.g. "620.". */
   amountText: string;
-  /** No rate beside it: rates are the group's (ADR-0005). */
   currency: string;
+  /**
+   * The entry's own rate, and what it is the rate for: `rateCurrency` on
+   * `rateDay` (local "YYYY-MM-DD"). Read only while `rateCurrency` is the
+   * draft's currency; a change of either sends `useEntryRate` to the feed
+   * (ADR-0005). Absent in the base currency.
+   */
+  rate?: string;
+  rateSource?: EntryRateSource;
+  rateCurrency?: string;
+  rateDay?: string;
   /** A transfer's note. */
   description: string;
   /** On an income, who received. */
@@ -285,12 +295,27 @@ export function blankDraft(
   };
 }
 
+/**
+ * An entry's rate as its draft holds it: the one it is read at, for its own
+ * currency and day, so opening it to edit looks nothing up. One from before
+ * rates were the entry's says it was the group's (ADR-0005).
+ */
+function ownRate(e: Expense | Settlement): Pick<EntryDraft, "rate" | "rateSource" | "rateCurrency" | "rateDay"> {
+  return {
+    rate: e.rateToBase,
+    rateSource: e.rateSource ?? "group",
+    rateCurrency: e.currency,
+    rateDay: dateInputValue(e.occurredAt),
+  };
+}
+
 export function expenseDraft(e: Expense, me: string, members: string[]): EntryDraft {
   return {
     ...blankDraft(kindOf(e), me, e.currency, members),
     entryId: e.id,
     // Never `bare`, which groups thousands: "25,000" JPY parses back as 25.
     amountText: minorToDecimalString(e.amountMinor, e.currency),
+    ...ownRate(e),
     description: e.description,
     paidBy: e.paidBy,
     payers: e.payers ?? null,
@@ -311,6 +336,7 @@ export function transferDraft(s: Settlement, me: string, members: string[]): Ent
     ...blankDraft("transfer", me, s.currency, members),
     entryId: s.id,
     amountText: minorToDecimalString(s.amountMinor, s.currency),
+    ...ownRate(s),
     description: s.note ?? "",
     fromMember: s.fromMember,
     toMember: s.toMember,

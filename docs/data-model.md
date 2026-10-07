@@ -10,10 +10,9 @@ happens in the view layer and nowhere else. Currency codes are ISO 4217;
 exponents vary (JPY 0, TND 3) and `core/money.ts` owns that table — never assume
 2.
 
-**A rate belongs to the group, not to the entry.** A group has a base currency
-and an `ExchangeRate` row per other currency it spends in; what a foreign entry
-is *worth* is read from that registry every time, so correcting a rate moves
-every entry already written in that currency
+**A rate belongs to the entry.** A group has a base currency; a foreign entry
+carries its own `rateToBase`, fetched for its day when it was written, and is
+worth its amount at that rate — nothing written later moves it
 ([ADR-0005](decisions/0005-money-and-currency.md)). A `Rate` is an exact
 decimal string (`isValidRate`), never a float, stored to 12 significant digits
 and shown to 6 — enough that typing it as its inverse round-trips.
@@ -46,7 +45,7 @@ server.
 Group      { id, name, baseCurrency, createdAt, archivedAt?, importedFrom? }
 Member     { id, groupId, name, colorSeed, deletedAt? }
 Settlement { id, groupId, fromMember, toMember, amountMinor, currency,
-             rateToBase, baseAmountMinor, occurredAt, createdAt?, note?, deletedAt? }
+             rateToBase, baseAmountMinor, rateSource?, occurredAt, createdAt?, note?, deletedAt? }
 Attachment { id, groupId, expenseId, r2Key, mime, bytes, width, height,
              uploadState: 'local'|'uploading'|'uploaded', createdAt }
 Identity   { id /* the device's HLC node id */, groupId, memberId, claimedAt,
@@ -54,6 +53,7 @@ Identity   { id /* the device's HLC node id */, groupId, memberId, claimedAt,
 ExchangeRate { id /* the ISO 4217 code — the currency IS the entity */, groupId,
              rate /* 1 unit of `id` = `rate` units of the group's base */,
              source: 'fetched'|'typed', asOf, deletedAt? }
+             // the retired registry: folded, never written (ADR-0005)
 
 Expense {
   id, groupId, description, categoryId, occurredAt,
@@ -64,9 +64,12 @@ Expense {
                       // (see "A day without a time" below)
   amountMinor,        // in `currency`
   currency,           // ISO 4217, may differ from group base
-  rateToBase,         // decimal string, "1" when same currency — what was
-                      // believed at save; the registry overrides it on read
-  baseAmountMinor,    // amountMinor × rateToBase, rounded once, STORED
+  rateToBase,         // decimal string, "1" when same currency — the entry's
+                      // own, frozen at save (ADR-0005)
+  baseAmountMinor,    // amountMinor × rateToBase, rounded once; stored, and
+                      // re-derived on read (`atCurrentRates`)
+  rateSource?,        // 'fetched'|'typed'|'copied'|'group'; absent in the base
+                      // currency, and on an entry from before the move
   paidBy,             // memberId — the payer, or the largest co-sponsor
   payers?,            // memberId -> minor units in THIS expense's currency,
                       // summing to amountMinor. Absent = one payer (ADR-0010)
@@ -133,20 +136,12 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   `healGroup` (`commands/groups.ts`) folds it away: an entry is
   money somebody typed and a removal only the claim that nobody named them, so
   the tombstone is the half that gives way. It is lifted with an ordinary
-  `deletedAt: null` — as re-setting a cleared rate lifts that row's — and
-  history says the entry is why rather than naming the phone that noticed. The
+  `deletedAt: null`, and history says the entry is why rather than naming the phone that noticed. The
   sync engine runs it, right after the merge that could have caused it — a
   local write is refused before it lands, so nothing else can. Being named on a
   receipt's "who was there" counts as being involved, even where it costs
   nothing. Without this a departed member's balance has no way out: the
   transfer form refuses the name the settle-up row opens with.
-- **A rate comes out on the same terms**, and comes back on them too. A cleared
-  rate would silently drop every entry in that currency back to the rate it was
-  saved at. `/g/rates` blocks removal while any entry is written
-  in that currency, listing them, exactly as People does; and when two phones
-  beat that refusal, `liveEntriesHaveLiveRates` lifts the tombstone the way the
-  member healer does. A currency the group has *never* priced is a different
-  state and is left alone — there is no number to put back.
 - **A member's id is their name** — `memberIdFor(groupId, name)`, so two phones
   adding "Ana" offline write one member rather than two people nothing on
   screen tells apart, and re-adding somebody returns the person with their
@@ -162,20 +157,19 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   to zero on screen. The row is a moment rather than a resting state, since
   the removal is undone — but only a phone holding both halves of the race can
   undo it, and every other one still has to draw a balance that adds up.
-- `baseAmountMinor` and `rateToBase` are **stored**, but they are not what an
-  entry is worth: `atCurrentRates` (`core/rates.ts`) reprices every entry at the
-  registry in `stateOf()`, so one pass values the whole app and no call site can
-  forget. It cannot live in the fold — `materialise()` folds one entity's ops,
-  so a rate op and an expense never meet there. Stored values are the honest record of what was believed at save, and
-  the fallback for a currency the registry has no row for — every foreign entry
-  written before the registry existed, and any rate a group removes
-  ([ADR-0005](decisions/0005-money-and-currency.md)).
+- **`baseAmountMinor` is re-derived on read**: `atCurrentRates`
+  (`core/rates.ts`) values every entry at its own rate in `stateOf()`, so a merge
+  pairing one phone's amount with another's figure still reads consistently. An
+  entry with no `rateSource` — written while rates were the group's — is read at
+  the old registry's rate until `entriesCarryTheirOwnRate` writes it on. That
+  can't live in the fold: `materialise()` folds one entity's ops, so a rate op
+  and an expense never meet there ([ADR-0005](decisions/0005-money-and-currency.md)).
 - **A group's id is 12 base36 characters**, not a UUID: it rides in every
   invite link, where its length is something people paste
   ([ADR-0003](decisions/0003-link-only-access.md)). Groups made before that
   keep their UUID, so an id's shape is never what code reads.
 - **An exchange rate is identified by its currency code**, the one entity whose
-  id a person chooses rather than `newId()`. So its Dexie key is compound
+  id is a word rather than `newId()`. So its Dexie key is compound
   (`[groupId+id]`) — two trips both spending in MAD are two rows — and anything
   re-folding one entity has to scope by group as well as by id.
 - A settlement (a **transfer**) is structurally separate from an expense so it
@@ -324,7 +318,7 @@ way — by saying what is true rather than inventing a column:
 
 - **Currency.** One `Currency` per row and one set of member columns, so
   there is no way to say a row is in MAD while the balance below it is in
-  euros. The caller hands over a state already repriced at the registry and
+  euros. The caller hands over a state already valued in the base and
   the column is constant — which is also the only way the foot agrees with
   the Balances screen ([ADR-0005](decisions/0005-money-and-currency.md)).
 - **Income.** No such concept there, so `Cost` is negative and the member
@@ -462,7 +456,7 @@ would want its own columns.
 |---|---|---|
 | `ops` | `id` | indexes on `groupId`, `entityId`, `hlc`, `pending`, `[groupId+hlc]` |
 | `groups`, `members`, `expenses`, `settlements`, `attachments` | `id` | materialised, rebuildable from `ops` |
-| `rates` | `[groupId+id]` | the group's exchange registry, `id` being the currency code |
+| `rates` | `[groupId+id]` | the retired exchange registry, `id` being the currency code |
 | `identities` | `[groupId+id]` | one row per device per group, `id` being the device's node id |
 | `device` | key | who "you" are, theme, HLC state, whether the install nudge is folded, and the ids of groups known to be deleted |
 | `groupKeys` | `groupId` | the invite secret and sync cursor. Never an op, and never derived-from on disk — [ADR-0003](decisions/0003-link-only-access.md) |

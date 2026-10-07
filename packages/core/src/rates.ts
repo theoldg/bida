@@ -1,14 +1,18 @@
 import { convertMinor, isValidRate, type CurrencyCode, type Rate } from "./money.js";
-import { alive, type ExchangeRate, type GroupState, type Id } from "./types.js";
+import {
+  alive, type EntryRateSource, type ExchangeRate, type GroupState, type Id,
+} from "./types.js";
 
 /**
- * The group's rate registry, applied. A rate is the group's, so entries are
- * **valued on read** at today's rate — fix a typo and every entry follows
- * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)). The entry's
- * own `rateToBase` is the fallback for a currency with no row.
+ * What an entry is worth in the group's currency. **The rate is the entry's
+ * own**, frozen at save from the feed for its day
+ * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)). The
+ * registry only values an entry written before that — one with no
+ * `rateSource` — until `entriesCarryTheirOwnRate` writes the registry's rate
+ * onto it.
  *
- * **Nothing here throws**: a bad rate from another phone costs that currency
- * its repricing, not the ledger its balances.
+ * **Nothing here throws**: a bad rate from another phone costs that entry its
+ * repricing, not the ledger its balances.
  */
 
 /** The registry's rate for a currency, or undefined when it hasn't got one. */
@@ -29,34 +33,46 @@ interface RateBearing {
   currency: CurrencyCode;
   rateToBase: Rate;
   baseAmountMinor: number;
+  rateSource?: EntryRateSource | null;
 }
 
 /**
- * One entry at the current rate, or untouched without one. Returns the same
- * object when nothing changes, so React isn't woken.
+ * The rate an entry is read at: its own, or for an entry from before rates
+ * were the entry's, the registry's while it has one.
+ */
+function rateOf(entry: RateBearing, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>): Rate {
+  if (entry.currency === base) return "1";
+  if (entry.rateSource) return entry.rateToBase;
+  return rateFor(rates, base, entry.currency) ?? entry.rateToBase;
+}
+
+/**
+ * One entry at the rate it is read at, its base figure re-derived from it —
+ * so a merge that pairs one phone's amount with another's rate still reads
+ * consistently. Returns the same object when nothing changes, so React isn't
+ * woken.
  */
 export function repriceEntry<T extends RateBearing>(
   entry: T,
   base: CurrencyCode,
   rates: Record<CurrencyCode, ExchangeRate>,
 ): T {
-  const rate = rateFor(rates, base, entry.currency);
-  if (rate === undefined) return entry;
+  const rate = rateOf(entry, base, rates);
   let baseAmountMinor: number;
   try {
     baseAmountMinor = entry.currency === base
       ? entry.amountMinor
       : convertMinor(entry.amountMinor, entry.currency, base, rate);
   } catch {
-    return entry; // out of range: keep what was stored rather than lose the row
+    return entry; // out of range or unreadable: keep what was stored rather than lose the row
   }
   if (baseAmountMinor === entry.baseAmountMinor && rate === entry.rateToBase) return entry;
   return { ...entry, rateToBase: rate, baseAmountMinor };
 }
 
 /**
- * A whole group at current rates. Run once where state is assembled — a
- * screen that misses it reports different numbers from the rest.
+ * A whole group at the rates its entries are read at. Run once where state is
+ * assembled — a screen that misses it reports different numbers from the rest.
  */
 export function atCurrentRates(state: GroupState): GroupState {
   const base = state.group?.baseCurrency;
@@ -77,18 +93,49 @@ export function atCurrentRates(state: GroupState): GroupState {
   return { ...state, expenses, settlements };
 }
 
-/** One currency the group spends in, and how much of the ledger is in it. */
-export interface CurrencyInUse {
+/** What `latestRate` reads off an entry. */
+interface Dated {
+  id: Id;
   currency: CurrencyCode;
-  /** Live expenses and transfers carrying it. Zero for a rate added by hand. */
-  entryCount: number;
-  /** The registry's row, absent until somebody sets one. */
-  rate: ExchangeRate | undefined;
+  rateToBase: Rate;
+  occurredAt: number;
+  createdAt?: number;
+  deletedAt?: number | null;
 }
 
 /**
- * Every currency needing a rate: those in use plus those added in advance,
- * never the base. Sorted by how much of the ledger rides on each.
+ * The rate a new entry borrows when the feed can't be reached: the group's
+ * most recent live entry in that currency (by `occurredAt`, then `createdAt`),
+ * else the registry's old row. Undefined for a currency new to the group —
+ * the one case the rate dialog opens for. Pass entries already repriced.
+ */
+export function latestRate(
+  entries: readonly Dated[],
+  rates: Record<CurrencyCode, ExchangeRate>,
+  base: CurrencyCode,
+  currency: CurrencyCode,
+  except?: Id,
+): Rate | undefined {
+  if (currency === base) return "1";
+  let best: Dated | undefined;
+  for (const e of entries) {
+    if (e.deletedAt || e.id === except || e.currency !== currency || !isValidRate(e.rateToBase)) continue;
+    if (!best || e.occurredAt > best.occurredAt
+      || (e.occurredAt === best.occurredAt && (e.createdAt ?? 0) > (best.createdAt ?? 0))) best = e;
+  }
+  return best?.rateToBase ?? rateFor(rates, base, currency);
+}
+
+/** One currency the group spends in, and how much of the ledger is in it. */
+export interface CurrencyInUse {
+  currency: CurrencyCode;
+  /** Live expenses and transfers carrying it. */
+  entryCount: number;
+}
+
+/**
+ * Every currency the group has spent in, never the base, busiest first: what
+ * the currency picker lists ahead of the rest.
  */
 export function currenciesInUse(state: GroupState): CurrencyInUse[] {
   const base = state.group?.baseCurrency;
@@ -99,12 +146,8 @@ export function currenciesInUse(state: GroupState): CurrencyInUse[] {
   };
   for (const e of alive(state.expenses)) bump(e.currency);
   for (const s of alive(state.settlements)) bump(s.currency);
-  for (const r of alive(state.rates)) if (r.id !== base) counts.set(r.id, counts.get(r.id) ?? 0);
 
   return [...counts.entries()]
-    .map(([currency, entryCount]): CurrencyInUse => {
-      const row = state.rates[currency];
-      return { currency, entryCount, rate: row && !row.deletedAt ? row : undefined };
-    })
+    .map(([currency, entryCount]): CurrencyInUse => ({ currency, entryCount }))
     .sort((a, b) => b.entryCount - a.entryCount || a.currency.localeCompare(b.currency));
 }

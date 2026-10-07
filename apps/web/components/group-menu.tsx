@@ -39,7 +39,6 @@ export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData 
   const actions: SheetAction[] = [
     ...group.copyLink,
     { label: copy.group.people, icon: "users", onSelect: () => router.push(route.members(groupId)) },
-    { label: copy.rates.title, icon: "fx", onSelect: () => router.push(route.rates(groupId)) },
     { label: copy.group.history, icon: "clock", onSelect: () => router.push(route.history(groupId)) },
     { label: copy.group.export, icon: "share", onSelect: () => void exportData() },
     group.forget,

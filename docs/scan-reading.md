@@ -103,11 +103,11 @@ the ledger), and only if it is still on screen, since a scan outlives the
 screen that started it. It seeds the draft under the key the form uses for a
 blank expense, which is what makes the form adopt it rather than seed over it.
 
-With nothing racing it, a receipt in a currency the group has no rate for
-simply opens the rate dialog — asked for by the currency the *draft* holds
-rather than by the act of picking one, so a scan from either screen reaches
-it. One ref keeps it to a single ask: dismissing the dialog leaves the
-currency exactly as it was.
+A scan always looks the entry's rate up again, for whatever currency and day
+it settled on (`useEntryRate` watches the *draft*, not the act of picking, so a
+scan from either screen reaches it); only a currency new to the group with the
+feed out of reach opens the rate dialog
+([ADR-0005](decisions/0005-money-and-currency.md)).
 
 **Whether the photo is readable is the model's call too.** It sets `error` to a
 short sentence — a light joke at its own expense, never the photographer's, that

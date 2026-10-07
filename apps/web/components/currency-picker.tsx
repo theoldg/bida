@@ -7,12 +7,12 @@ import { copy } from "../lib/copy";
 import { currencyChoices, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../lib/currencies";
 
 /**
- * Picking a currency, wherever one is picked — a new group's base, an entry's,
- * a rate to add: the list `currencyChoices` orders, then "Other…", which swaps
+ * Picking a currency, wherever one is picked — a new group's base, an entry's:
+ * the list `currencyChoices` orders, then "Other…", which swaps
  * the list for a field taking any three-letter code. `onClose` is heard once,
  * when the whole picker is done, never on the swap.
  */
-export function CurrencyPicker({ value, first, used = [], note, refuse, onPick, onClose }: {
+export function CurrencyPicker({ value, first, used = [], note, onPick, onClose }: {
   /** The ticked row; picking it again is no change. */
   value: string;
   /** Listed first, in order (`currencyChoices`). */
@@ -20,8 +20,6 @@ export function CurrencyPicker({ value, first, used = [], note, refuse, onPick, 
   /** The group's own currencies, most spent-in first. */
   used?: readonly string[];
   note?: (code: string) => string | undefined;
-  /** A code "Other…" won't take besides a malformed one — Rates' base. */
-  refuse?: string;
   onPick: (code: string) => void;
   onClose: () => void;
 }) {
@@ -35,7 +33,7 @@ export function CurrencyPicker({ value, first, used = [], note, refuse, onPick, 
       <PromptDialog title={copy.currency.title} placeholder={copy.currency.otherPlaceholder}
         confirm={copy.act.useIt} maxLength={3}
         autoCapitalize="characters"
-        clean={normalizeCurrencyCode} valid={(v) => isCurrencyCode(v) && v !== refuse}
+        clean={normalizeCurrencyCode} valid={isCurrencyCode}
         onSubmit={(code) => { onPick(code); onClose(); }}
         onClose={onClose} />
     );

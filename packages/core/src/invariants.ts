@@ -1,9 +1,9 @@
-import type { CurrencyCode } from "./money.js";
+import { convertMinor, type CurrencyCode, type Rate } from "./money.js";
 import type { EntityKind, OpKind } from "./ops.js";
 import { memberInvolved } from "./payers.js";
-import { currenciesInUse } from "./rates.js";
+import { rateFor } from "./rates.js";
 import {
-  alive, type ExchangeRate, type GroupState, type Id, type Member,
+  alive, type Expense, type GroupState, type Id, type Member, type Settlement,
 } from "./types.js";
 
 /**
@@ -91,34 +91,58 @@ export const liveEntriesNameLiveMembers = defineInvariant<Member>({
   },
 });
 
+/** An entry the registry still values, and which table it is in. */
+interface RegistryValued {
+  entity: "expense" | "settlement";
+  entry: Expense | Settlement;
+  /** The registry's rate, which the entry is read at today. */
+  rate: Rate;
+  base: CurrencyCode;
+}
+
 /**
- * A currency a live entry uses has a live rate. The repair is `setRate`'s lift;
- * rate ops are keyed by currency, so it lands on the tombstoned row. A currency
- * with no row at all is left to `needsRate` and the rate dialog.
+ * A foreign entry carries its own rate. One written while rates were the
+ * group's has none, and is read at the registry's; the repair writes that rate
+ * onto it, so moving rates onto the entry moves no balance (ADR-0005). Every
+ * entry, tombstones included, so a restore brings nothing with it. An old
+ * phone's save drops `rateSource` again, and this picks it back up.
  */
-export const liveEntriesHaveLiveRates = defineInvariant<ExchangeRate>({
-  name: "liveEntriesHaveLiveRates",
-  holds: "A currency with live entries has a live rate",
+export const entriesCarryTheirOwnRate = defineInvariant<RegistryValued>({
+  name: "entriesCarryTheirOwnRate",
+  holds: "A foreign entry the registry has a rate for carries its own",
   detect(state) {
-    return currenciesInUse(state)
-      .filter((c) => c.entryCount > 0 && c.rate === undefined)
-      .map((c) => state.rates[c.currency])
-      // Only a tombstone is something a lift repairs.
-      .filter((row): row is ExchangeRate => !!row && !!row.deletedAt)
-      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    const base = state.group?.baseCurrency;
+    if (!base) return [];
+    const found: RegistryValued[] = [];
+    const scan = (entity: RegistryValued["entity"], rows: Record<Id, Expense | Settlement>) => {
+      for (const entry of Object.values(rows)) {
+        if (entry.currency === base || entry.rateSource) continue;
+        const rate = rateFor(state.rates, base, entry.currency);
+        if (rate !== undefined) found.push({ entity, entry, rate, base });
+      }
+    };
+    scan("expense", state.expenses);
+    scan("settlement", state.settlements);
+    return found.sort((a, b) =>
+      a.entity !== b.entity ? (a.entity < b.entity ? -1 : 1)
+      : a.entry.id < b.entry.id ? -1 : a.entry.id > b.entry.id ? 1 : 0);
   },
-  repair(rates) {
-    return rates.map((r) => ({
-      entity: "rate" as const,
-      entityId: r.id,
-      kind: "update" as const,
-      patch: { deletedAt: null },
-    }));
-  },
-  wouldViolate(state, draft) {
-    if (draft.entity !== "rate" || draft.kind !== "delete") return false;
-    const currency = draft.entityId as CurrencyCode;
-    return currenciesInUse(state).some((c) => c.currency === currency && c.entryCount > 0);
+  repair(found) {
+    return found.map(({ entity, entry, rate, base }) => {
+      let baseAmountMinor: number | undefined;
+      // Out of range leaves the stored figure; it is re-derived on read anyway.
+      try { baseAmountMinor = convertMinor(entry.amountMinor, entry.currency, base, rate); } catch { /* kept */ }
+      return {
+        entity,
+        entityId: entry.id,
+        kind: "update" as const,
+        patch: {
+          rateToBase: rate,
+          ...(baseAmountMinor !== undefined ? { baseAmountMinor } : {}),
+          rateSource: "group",
+        },
+      };
+    });
   },
 });
 
@@ -128,7 +152,7 @@ export const liveEntriesHaveLiveRates = defineInvariant<ExchangeRate>({
  */
 export const INVARIANTS: readonly RegisteredInvariant[] = [
   liveEntriesNameLiveMembers,
-  liveEntriesHaveLiveRates,
+  entriesCarryTheirOwnRate,
 ];
 
 /** The ops that would make this state legal; empty when it is, so it's free on every merge. */

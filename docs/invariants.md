@@ -48,14 +48,13 @@ missing a refusal yields a state with no trace to repair from.
 | Money is an integer, minor units, positive | types, `core/money.ts` | held |
 | A split resolves to exactly `baseAmountMinor` | `core/split.ts` (`resolveEntrySplit`) | held |
 | Balances sum to zero | derived on read, `touch()` | held |
-| One rate per currency per group | natural key (the currency code) | held |
 | One identity row per device per group | natural key (the node id) | held |
 | A live entry names only live members | healer — `liveEntriesNameLiveMembers` | held |
 | An entry's derived fields agree with its own (`paidBy` ∈ `payers`) | unreachable — whole-entity merge | held |
 | A device's claimed member is live | healer — `restoreClaimDrafts` | held |
 | A group has at least one live member | follows from the above | held |
 | Two live members never share a `nameKey` | natural key (the name) | held — legacy groups excepted |
-| A currency with live entries has a live rate | healer — `liveEntriesHaveLiveRates` | held |
+| A foreign entry the old registry prices carries its own rate | healer — `entriesCarryTheirOwnRate` | held |
 
 ## Why each is held the way it is
 
@@ -83,14 +82,16 @@ and catches every case one device can see both halves of, and says what to do
 rather than only saying no. The reasoning, what it costs and what was
 rejected: [ADR-0034](decisions/0034-a-member-is-their-name.md).
 
-**A cleared rate comes back the same way a member does.** A live entry — an
-expense *or* a transfer — written in a currency whose rate row is tombstoned
-lifts that row. The mirror of the member case in every respect: the same race
-(clearing is refused while entries spend in it, which needs both facts on one
-phone), the same repair (`deletedAt: null`, which is the op `setRate` already
-writes), and the same reading of which half gives way. A currency with **no row
-at all** is deliberately left alone — the group has never said what it is worth,
-there is no number to restore, and `needsRate` and the rate dialog own it.
+**An entry from the registry's days gets the registry's rate written on.**
+Rates moved from the group onto the entry
+([ADR-0005](decisions/0005-money-and-currency.md)); an entry written before
+has no `rateSource` and is read at the old registry row, so the repair writes
+that very rate onto it and no balance moves. Not a race but a migration, so
+the sync runs the healers on a group's first sync of the session as well as
+after a pull; and an old phone's save, which drops `rateSource`, is picked
+back up the same way. Tombstoned entries too, so a restore brings nothing
+with it. A currency with no registry row needs nothing: each entry is already
+read at its own rate.
 
 **Being on a receipt is being involved.** "Who was there" is a person saying
 they were at the meal; ending up assigned no line and owing zero is an outcome,

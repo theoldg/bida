@@ -7,7 +7,6 @@ import {
   addExpense,
   addMember,
   claimIdentity,
-  clearRate,
   createGroup,
   deleteExpense,
   editExpense,
@@ -19,8 +18,8 @@ import {
   removeMember,
   restoreEntry,
   saveGroupKey,
-  setRate,
 } from "./commands";
+import { appendOps } from "./commands/append";
 
 /**
  * The command layer is the only thing in the app that writes, so it gets real
@@ -28,6 +27,33 @@ import {
  * every write lands as an op, and that the materialised tables are always
  * exactly what re-folding the log would produce.
  */
+
+/** A registry row, as builds from before rates were the entry's wrote one. */
+async function oldRate(groupId: string, actor: string, currency: string, rate: string) {
+  await appendOps(groupId, actor, [{
+    entity: "rate", entityId: currency, kind: "create",
+    patch: { rate, source: "typed", asOf: 1, deletedAt: null },
+  }]);
+}
+
+/** A MAD dinner as those builds wrote it: no `rateSource`, read at the registry. */
+async function legacyMadExpense(groupId: string, theo: string, marie: string): Promise<string> {
+  const id = `e-legacy-${Math.random().toString(36).slice(2)}`;
+  await appendOps(groupId, theo, [{
+    entity: "expense", entityId: id, kind: "create",
+    patch: {
+      createdAt: 1, description: "Nomad", occurredAt: 1, amountMinor: 62_000, currency: "MAD",
+      rateToBase: "0.0921", baseAmountMinor: 5710, paidBy: theo,
+      split: { mode: "equal", members: [theo, marie] },
+    },
+  }]);
+  return id;
+}
+
+/** As the screens read a group: folded, each entry at the rate it is read at. */
+async function stateOf(groupId: string) {
+  return atCurrentRates(foldOps(await db().ops.where("groupId").equals(groupId).toArray()));
+}
 
 async function wipe() {
   const d = db();
@@ -233,22 +259,6 @@ describe("commands", () => {
     await assertMaterialisedMatchesLog(groupId);
   });
 
-  // The one create that must keep writing `deletedAt: null`: a rate is keyed by
-  // its currency, so setting one the group cleared lands on the tombstoned row.
-  it("revives a cleared rate, which is why that create still writes its null", async () => {
-    const { groupId, theo } = await trip();
-    await setRate(groupId, theo, "MAD", "0.0921", "typed", 1);
-    await clearRate(groupId, theo, "MAD");
-    expect((await db().rates.get([groupId, "MAD"]))?.deletedAt).toBeTruthy();
-
-    await setRate(groupId, theo, "MAD", "0.095", "typed", 2);
-
-    const row = await db().rates.get([groupId, "MAD"]);
-    expect(row?.deletedAt).toBeFalsy();
-    expect(row?.rate).toBe("0.095");
-    await assertMaterialisedMatchesLog(groupId);
-  });
-
   it("appends rather than mutating: an edit leaves both versions in the log", async () => {
     const { groupId, theo, marie, sam } = await trip();
     const expenseId = await addExpense(groupId, theo, {
@@ -289,7 +299,7 @@ describe("commands", () => {
     // Whole, so the stored entry is always a version somebody looked at.
     expect(Object.keys(update.patch).sort()).toEqual([
       "amountMinor", "attachmentIds", "baseAmountMinor", "categoryId", "currency",
-      "dateOnly", "description", "kind", "occurredAt", "paidBy", "payers", "rateToBase",
+      "dateOnly", "description", "kind", "occurredAt", "paidBy", "payers", "rateSource", "rateToBase",
       "receiptAssignments", "receiptDiscounts", "receiptEnglish", "receiptInvolved", "receiptItems",
       "receiptTax", "receiptText", "receiptTip",
       "split",
@@ -670,38 +680,36 @@ describe("commands", () => {
     expect(await db().ops.count()).toBe(ops);
   });
 
-  it("puts back a rate cleared while entries were still written in it", async () => {
-    // The member race, one entity over: one phone clears MAD, the other —
-    // offline — writes a dinner in MAD. `clearRate` itself doesn't refuse,
-    // which is what lets this stand in for the merge.
+  it("writes the old registry's rate onto an entry an older build wrote", async () => {
+    // Rates were the group's: a MAD row, and a dinner with no rate of its own.
     const { groupId, theo, marie } = await trip();
-    await setRate(groupId, theo, "MAD", "0.0921", "typed", 1);
-    await addExpense(groupId, theo, {
-      description: "Nomad", occurredAt: 1, amountMinor: 62_000, currency: "MAD",
-      rateToBase: "0.0921", paidBy: theo, split: { mode: "equal", members: [theo, marie] },
-    });
-    await clearRate(groupId, theo, "MAD");
-    expect((await db().rates.get([groupId, "MAD"]))?.deletedAt).toBeTruthy();
+    await oldRate(groupId, theo, "MAD", "0.1");
+    const id = await legacyMadExpense(groupId, theo, marie);
+    const before = computeBalances(await stateOf(groupId));
 
     expect(await healGroup(groupId)).toBe(1);
 
-    expect((await db().rates.get([groupId, "MAD"]))?.deletedAt).toBeNull();
+    expect(await db().expenses.get(id)).toMatchObject({
+      rateToBase: "0.1", baseAmountMinor: 6200, rateSource: "group",
+    });
+    // What it was read at is what it now carries: no balance moved.
+    expect(computeBalances(await stateOf(groupId))).toEqual(before);
     await assertMaterialisedMatchesLog(groupId);
 
-    // Idempotent, and the lift is not an edit to the number itself.
     const ops = await db().ops.count();
     expect(await healGroup(groupId)).toBe(0);
     expect(await db().ops.count()).toBe(ops);
-    expect((await db().rates.get([groupId, "MAD"]))?.rate).toBe("0.0921");
   });
 
-  it("leaves a cleared rate nothing is written in alone", async () => {
-    const { groupId, theo } = await trip();
-    await setRate(groupId, theo, "MAD", "0.0921", "typed", 1);
-    await clearRate(groupId, theo, "MAD");
+  it("leaves an entry carrying its own rate alone, whatever the registry says", async () => {
+    const { groupId, theo, marie } = await trip();
+    await oldRate(groupId, theo, "MAD", "0.1");
+    await addExpense(groupId, theo, {
+      description: "Nomad", occurredAt: 1, amountMinor: 62_000, currency: "MAD",
+      rateToBase: "0.0921", rateSource: "fetched", paidBy: theo, split: { mode: "equal", members: [theo, marie] },
+    });
 
     expect(await healGroup(groupId)).toBe(0);
-    expect((await db().rates.get([groupId, "MAD"]))?.deletedAt).toBeTruthy();
   });
 
   /**
@@ -921,7 +929,7 @@ describe("commands", () => {
     const [update] = await updates();
     expect(update?.patch).toEqual({
       fromMember: marie, toMember: sam, amountMinor: 2500, currency: "EUR",
-      rateToBase: "1", baseAmountMinor: 2500, occurredAt: 2, dateOnly: null, note: null,
+      rateToBase: "1", baseAmountMinor: 2500, rateSource: null, occurredAt: 2, dateOnly: null, note: null,
     });
 
     const stored = await db().settlements.get(id);
@@ -1014,11 +1022,10 @@ describe("commands", () => {
 
 
 /**
- * The rate registry. Its point is that it is *not* per-entry: setting a rate
- * moves every entry already written in that currency, which is the one thing
- * these tests have to hold onto.
+ * An entry's own rate (ADR-0005): frozen onto it at save, so nothing written
+ * later — another entry, an old phone's registry row — moves it.
  */
-describe("the rate registry", () => {
+describe("an entry's own rate", () => {
   beforeEach(wipe);
 
   async function madExpense(groupId: string, theo: string, marie: string, rate = "0.0921") {
@@ -1028,110 +1035,94 @@ describe("the rate registry", () => {
       amountMinor: 62000, // 620.00 MAD
       currency: "MAD",
       rateToBase: rate,
+      rateSource: "fetched",
       paidBy: theo,
       split: { mode: "equal", members: [theo, marie] },
     });
   }
 
-  async function stateOf(groupId: string) {
-    return atCurrentRates(foldOps(await db().ops.where("groupId").equals(groupId).toArray()));
-  }
-
-  it("writes a rate as an op, and keeps one row per currency", async () => {
-    const { groupId, theo } = await trip();
-    await setRate(groupId, theo, "MAD", "0.0921", "fetched", 1);
-    await setRate(groupId, theo, "MAD", "0.093", "typed", 2);
-
-    const rows = await db().rates.where("groupId").equals(groupId).toArray();
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ id: "MAD", rate: "0.093", source: "typed", asOf: 2 });
-    const kinds = (await db().ops.where("groupId").equals(groupId).toArray())
-      .filter((o) => o.entity === "rate")
-      .sort((x, y) => (x.hlc < y.hlc ? -1 : 1)).map((o) => o.kind);
-    expect(kinds).toEqual(["create", "update"]);
+  it("writes the rate onto the entry, where it came from, and what it makes of the amount", async () => {
+    const { groupId, theo, marie } = await trip();
+    const id = await madExpense(groupId, theo, marie);
+    expect(await db().expenses.get(id)).toMatchObject({
+      rateToBase: "0.0921", rateSource: "fetched", baseAmountMinor: 5710,
+    });
     await assertMaterialisedMatchesLog(groupId);
   });
 
-  it("re-values expenses already written in that currency", async () => {
+  it("refuses a foreign entry with no rate of its own", async () => {
     const { groupId, theo, marie } = await trip();
-    const expenseId = await madExpense(groupId, theo, marie);
-    expect((await db().expenses.get(expenseId))?.baseAmountMinor).toBe(5710);
-
-    await setRate(groupId, theo, "MAD", "0.1", "typed", 1);
-
-    const state = await stateOf(groupId);
-    expect(state.expenses[expenseId]!.baseAmountMinor).toBe(6200);
-    expect(computeBalances(state).totalSpendMinor).toBe(6200);
+    await expect(madExpense(groupId, theo, marie, "")).rejects.toThrow(RangeError);
+    await expect(madExpense(groupId, theo, marie, "0")).rejects.toThrow(RangeError);
+    await expect(recordSettlement(groupId, theo, {
+      fromMember: marie, toMember: theo, amountMinor: 50000, currency: "MAD", rateToBase: "nope", occurredAt: 1,
+    })).rejects.toThrow(RangeError);
   });
 
-  it("re-values transfers too", async () => {
+  it("writes 1 and no source in the base currency, whatever the form held", async () => {
+    const { groupId, theo, marie } = await trip();
+    const id = await addExpense(groupId, theo, {
+      description: "Riad", occurredAt: 1, amountMinor: 42000, currency: "EUR",
+      rateToBase: "0.5", rateSource: "typed", paidBy: theo, split: { mode: "equal", members: [theo, marie] },
+    });
+    const row = await db().expenses.get(id);
+    expect(row).toMatchObject({ rateToBase: "1", baseAmountMinor: 42000 });
+    expect(row?.rateSource ?? null).toBeNull();
+  });
+
+  it("is not moved by another entry, nor by a registry row an old phone writes", async () => {
+    const { groupId, theo, marie } = await trip();
+    const first = await madExpense(groupId, theo, marie);
+    await madExpense(groupId, theo, marie, "0.1");
+    await oldRate(groupId, theo, "MAD", "0.5");
+
+    const state = await stateOf(groupId);
+    expect(state.expenses[first]!.baseAmountMinor).toBe(5710);
+    expect(computeBalances(state).totalSpendMinor).toBe(5710 + 6200);
+  });
+
+  it("values an entry from before rates were the entry's at the registry, until it is healed", async () => {
+    const { groupId, theo, marie } = await trip();
+    const id = await legacyMadExpense(groupId, theo, marie);
+    await oldRate(groupId, theo, "MAD", "0.1");
+    expect((await stateOf(groupId)).expenses[id]!.baseAmountMinor).toBe(6200);
+  });
+
+  it("is corrected by an edit of that entry alone, as the entry screen writes it", async () => {
+    const { groupId, theo, marie } = await trip();
+    const id = await madExpense(groupId, theo, marie);
+    const other = await madExpense(groupId, theo, marie);
+    await editExpense(groupId, theo, id, { rateToBase: "0.1", rateSource: "typed" });
+
+    expect(await db().expenses.get(id)).toMatchObject({
+      rateToBase: "0.1", rateSource: "typed", baseAmountMinor: 6200, description: "Dinner · Nomad",
+    });
+    expect((await db().expenses.get(other))?.baseAmountMinor).toBe(5710);
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
+  it("travels with a transfer too", async () => {
     const { groupId, theo, marie } = await trip();
     const id = await recordSettlement(groupId, theo, {
       fromMember: marie, toMember: theo, amountMinor: 50000,
-      currency: "MAD", rateToBase: "0.0921", occurredAt: 1,
+      currency: "MAD", rateToBase: "0.0921", rateSource: "copied", occurredAt: 1,
     });
-    await setRate(groupId, theo, "MAD", "0.1", "typed", 1);
+    expect(await db().settlements.get(id)).toMatchObject({ baseAmountMinor: 4605, rateSource: "copied" });
+    await editSettlement(groupId, theo, id, { rateToBase: "0.1", rateSource: "typed" });
     expect((await stateOf(groupId)).settlements[id]!.baseAmountMinor).toBe(5000);
   });
 
-  it("gives a new entry the group's rate rather than whatever the form held", async () => {
-    const { groupId, theo, marie } = await trip();
-    await setRate(groupId, theo, "MAD", "0.1", "typed", 1);
-    // A stale draft, or a scan that set the currency and kept an old rate.
-    const expenseId = await madExpense(groupId, theo, marie, "0.0921");
-
-    const row = await db().expenses.get(expenseId);
-    expect(row?.rateToBase).toBe("0.1");
-    expect(row?.baseAmountMinor).toBe(6200);
-  });
-
-  it("leaves an entry in a currency the registry has no row for alone", async () => {
-    const { groupId, theo, marie } = await trip();
-    const expenseId = await madExpense(groupId, theo, marie);
-    await setRate(groupId, theo, "PLN", "0.23", "typed", 1);
-
-    expect((await stateOf(groupId)).expenses[expenseId]!.baseAmountMinor).toBe(5710);
-  });
-
-  it("falls back to what each entry was saved with once the rate is cleared", async () => {
-    const { groupId, theo, marie } = await trip();
-    const expenseId = await madExpense(groupId, theo, marie);
-    await setRate(groupId, theo, "MAD", "0.1", "typed", 1);
-    expect((await stateOf(groupId)).expenses[expenseId]!.baseAmountMinor).toBe(6200);
-
-    await clearRate(groupId, theo, "MAD");
-    expect((await stateOf(groupId)).expenses[expenseId]!.baseAmountMinor).toBe(5710);
-    await assertMaterialisedMatchesLog(groupId);
-  });
-
-  it("setting the same rate again writes no op", async () => {
-    const { groupId, theo } = await trip();
-    await setRate(groupId, theo, "MAD", "0.0921", "typed", 1);
-    const before = await db().ops.count();
-    await setRate(groupId, theo, "MAD", "0.0921", "typed", 99);
-    expect(await db().ops.count()).toBe(before);
-  });
-
-  it("refuses a rate that isn't one, and the group's own currency", async () => {
-    const { groupId, theo } = await trip();
-    await expect(setRate(groupId, theo, "MAD", "0", "typed", 1)).rejects.toThrow(RangeError);
-    await expect(setRate(groupId, theo, "MAD", "nope", "typed", 1)).rejects.toThrow(RangeError);
-    await expect(setRate(groupId, theo, "EUR", "1", "typed", 1)).rejects.toThrow(RangeError);
-  });
-
   // A rate's entity id is its currency code, not a random id — so two trips
-  // both spending in MAD must not end up sharing one row.
-  it("keeps two groups' rates for the same currency apart", async () => {
+  // whose logs both hold a MAD row must not end up sharing one.
+  it("keeps two groups' old rows for the same currency apart", async () => {
     const a = await trip();
     const b = await trip();
-    await setRate(a.groupId, a.theo, "MAD", "0.0921", "typed", 1);
-    await setRate(b.groupId, b.theo, "MAD", "0.5", "typed", 1);
+    await oldRate(a.groupId, a.theo, "MAD", "0.0921");
+    await oldRate(b.groupId, b.theo, "MAD", "0.5");
 
     expect((await db().rates.get([a.groupId, "MAD"]))?.rate).toBe("0.0921");
     expect((await db().rates.get([b.groupId, "MAD"]))?.rate).toBe("0.5");
-    // And a re-fold of one group doesn't take the other's row with it.
     await rebuild(a.groupId);
     expect((await db().rates.get([b.groupId, "MAD"]))?.rate).toBe("0.5");
-    expect((await stateOf(a.groupId)).rates["MAD"]?.rate).toBe("0.0921");
   });
 });

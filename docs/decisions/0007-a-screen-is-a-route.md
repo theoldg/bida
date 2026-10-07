@@ -25,7 +25,7 @@ expenses you'd looked at rather than climbing out.
   `/g/payers` stays a screen.
 - **No tab bar: the ledger is the group's screen, and everything else is
   pressed into from it** — the balances (`/g/balances`) from the "you owe" card
-  at its head, and the invite link, People, Rates, History and "Forget group"
+  at its head, and the invite link, People, History and "Forget group"
   from one top-bar menu (`components/group-menu.tsx`). Three icons is the ceiling for a top bar and
   the group outgrew it. There is no settings or options screen: the two
   device-wide preferences were a taste you set once (light/dark, one button on
@@ -39,12 +39,12 @@ expenses you'd looked at rather than climbing out.
   (`history.go`) rather than naming the one it wants (see Rejected). Without
   the Navigation API (iOS before 18.4) an up-link replaces the current entry. `router.back()` stays where "back" is the truth — payers,
   who-had-what and the entry form are only reached from below.
-- **An entry's parent is whoever linked to it.** Four screens link in from
-  *beside* an entry rather than above it — the history feed, the two "can't
-  remove this yet" lists on People and Rates, and the balances screen, whose tip
+- **An entry's parent is whoever linked to it.** Three screens link in from
+  *beside* an entry rather than above it — the history feed, the "can't
+  remove this yet" list on People, and the balances screen, whose tip
   jar records what you gave as an expense — and climbing to the group from
   there threw away the list you were working through. So those links name
-  themselves (`via=history|members|rates|balances`, `lib/group-link.ts`) and the
+  themselves (`via=history|members|balances`, `lib/group-link.ts`) and the
   entry unwinds to the list; from the ledger, with no `via`, the parent is the
   group as before. In the URL, not in memory, because a screen is a route: a
   reload must not move where back goes.

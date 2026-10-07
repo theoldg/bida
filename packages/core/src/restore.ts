@@ -13,9 +13,9 @@ export type EntryEntity = "expense" | "settlement";
  * The ops a restore writes: the entry's lift, then whatever the entry being
  * live again newly demands. The entry wins over a removal made since, just as
  * it does when a merge races one (`liveEntriesNameLiveMembers`), so the
- * people and the rate it names come back in the same append rather than on
- * the next sync. Repairs the group already owed are left to the sync's heal:
- * this command writes only what it causes.
+ * people it names come back in the same append rather than on the next sync.
+ * Repairs the group already owed are left to the sync's heal: this command
+ * writes only what it causes.
  *
  * Empty for an entry that is live or unknown — pressing twice writes once.
  */

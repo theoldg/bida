@@ -100,7 +100,7 @@ export function readPastedLink(text: string, origin: string): PastedLink {
  * (ADR-0007). In the URL rather than memory, so a reload can't change it.
  * `ledger` marks the form opened straight off a ledger row's long press.
  */
-const ENTRY_SOURCES = ["history", "members", "rates", "balances", "ledger"] as const;
+const ENTRY_SOURCES = ["history", "members", "balances", "ledger"] as const;
 export type EntrySource = typeof ENTRY_SOURCES[number];
 
 const withGroup = (path: string, groupId: string) => `${path}?id=${encodeURIComponent(groupId)}`;
@@ -153,7 +153,6 @@ export const route = {
   members: (groupId: string) => withGroup("/g/members", groupId),
   /** The export as text, when neither share sheet nor download works (`lib/export.ts`). */
   exportCsv: (groupId: string) => withGroup("/g/export", groupId),
-  rates: (groupId: string) => withGroup("/g/rates", groupId),
   claim: (groupId: string) => withGroup("/g/claim", groupId),
   /** No id: a quick split lives in memory (ADR-0035). */
   quick: () => "/quick",
@@ -169,9 +168,8 @@ export function parseEntrySource(value: string | null | undefined): EntrySource 
 export function entryParent(groupId: string, via: EntrySource | undefined): string {
   return via === "history" ? route.history(groupId)
     : via === "members" ? route.members(groupId)
-      : via === "rates" ? route.rates(groupId)
-        : via === "balances" ? route.balances(groupId)
-          : route.group(groupId);
+      : via === "balances" ? route.balances(groupId)
+        : route.group(groupId);
 }
 
 /** Saving an edit returns to that entry, keeping its `via` so its back arrow still climbs. */

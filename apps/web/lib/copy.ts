@@ -905,7 +905,6 @@ export const copy = {
         : `${things.slice(0, -1).join(", ")} and ${things[things.length - 1]}`;
       return `${list[0]?.toUpperCase() ?? ""}${list.slice(1)} ${things.length === 1 ? "comes" : "come"} back too.`;
     },
-    theRate: (code: string) => `the ${code} rate`,
     from: "From",
     to: "To",
   },
@@ -960,6 +959,8 @@ export const copy = {
      * refused Save (`dockLine`, lib/entry-check.ts).
      */
     noRate: (code: string) => `Set the ${code} rate`,
+    /** The same refusal while the feed is still being asked for it. */
+    rateLooking: (code: string) => `Looking up the ${code} rate…`,
     noAmount: "Set the amount",
     noTitle: "Set the title",
     noScan: "Scan the bill, or split it another way",
@@ -1352,9 +1353,11 @@ export const copy = {
     removed: (who: string, them: string) => `${who} removed ${them}`,
     /** A healer's repair: names the cause, not an actor. */
     readded: (them: string) => `${them} was removed, but an entry still names them: added back`,
-    /** The rate half of the same repair. Names the cause, not the actor. */
+    /** A repair older builds wrote, when rates were the group's. Names the cause, not the actor. */
     restoredRate: (code: string) =>
       `The ${code} rate was cleared, but entries still use it: put back`,
+    /** Rates moving onto each entry: the group's old one written on, so nothing moved. */
+    rateMovedOnto: (code: string) => `The group’s ${code} rate was written onto this entry, as each now keeps its own`,
     renamedSelf: (who: string) => `${who} changed their name`,
     renamed: (who: string, was: string) => `${who} renamed ${was}`,
     updatedMember: (who: string, them: string) => `${who} updated ${them}`,
@@ -1380,48 +1383,29 @@ export const copy = {
     otherNote: "any three-letter code",
     otherPlaceholder: "UZS",
     isBase: "the group settles in this",
-    hasRate: (rate: string) => `1 = ${rate}`,
-    noRate: "no rate yet",
   },
 
   // ------------------------------------------------------ exchange rates
 
   rates: {
-    /** The icon in the top row, between History and People. */
-    title: "Rates",
-    empty: "Everything is in one currency",
-    emptyBody: "Add one here, or write an entry in another currency.",
-    add: "Add a currency",
-    /** Under a row: how much of the ledger moves when this rate does. */
-    usedBy: (entries: string) => `${entries} at this rate`,
-    usedByNone: "nothing written in it yet",
-    /** A currency entries exist in that the registry has no opinion about. */
-    unset: "each entry at its own rate",
-
-    /** The dialog. Both directions of the same number, and they move together. */
+    /** The dialog: one entry's rate. Both directions of the same number, and they move together. */
     editTitle: (code: string) => `${code} rate`,
     /** "1 PLN =" — the label before each of the two fields. */
     oneOf: (code: string) => `1 ${code} =`,
     /** Where the number on screen came from, said under the fields. */
     from: {
-      fetched: (date: string) => `today’s rate, ${date}`,
-      fetchedUndated: "today’s rate",
+      fetched: (date: string) => `looked up: the rate on ${date}`,
+      fetchedUndated: "looked up",
       typed: "yours",
-      typedOn: (date: string) => `yours, ${date}`,
+      /** The feed failed, so the entry took the group's most recent one in this currency. */
+      copied: "couldn’t look it up: the group’s last rate",
+      /** Written while rates were the group's: what the group said then. */
+      group: "the group’s rate when this was written",
       loading: "looking it up…",
       offline: "offline: type it",
       unavailable: "couldn’t look it up: type it",
     },
     refetch: "Look it up",
-    /** The one thing this dialog does that a person should know before doing it. */
-    movesEntries: (entries: string, code: string) => `Re-values ${entries} in ${code}.`,
-    removeTitle: (code: string) => `Remove the ${code} rate?`,
-    removeBodyEmpty: "Nothing is written in it, so nothing changes.",
-    /** Removing a rate is refused on the same terms as removing a person. */
-    blockedTitle: (code: string) => `Can’t remove the ${code} rate`,
-    blockedBody: (entries: string) => `Used by ${entries}.`,
-    /** Save is held until there is a number to save. */
-    invalid: "That isn’t a rate.",
     failed: (why: string) => `Couldn’t save the rate: ${why}`,
     /** Before a rate on its chip, the way to the rate dialog: "@ 4.3731". */
     at: "@",

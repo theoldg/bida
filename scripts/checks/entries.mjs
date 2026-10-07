@@ -63,18 +63,18 @@ await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("9000");
 await page.locator("#what").fill("Dinner");
 
-// Currency and payer use the transfer's side dialog. A currency with no rate
-// asks for one on the spot — or `rateToBase` silently sticks at "1"
-// (ADR-0005).
+// Currency and payer use the transfer's side dialog. The entry's rate is looked
+// up; there is no feed behind the static export, so this is the path a phone
+// with no signal takes, and with no entry in USD to borrow from, it asks — or
+// `rateToBase` would silently stick at "1" (ADR-0005).
 await pick(page, '[aria-label="Currency"]', "USD");
 report((await page.locator('[aria-label="Currency"]').innerText()).includes("USD"),
   "the currency picker sets the currency");
-await page.waitForSelector('dialog[aria-label="USD rate"]');
-report(true, "a currency the group has no rate for opens the rate dialog by itself");
+await page.waitForSelector('dialog[aria-label="USD rate"]', { timeout: PATIENCE });
+report(true, "a currency new to the group, with the feed out of reach, opens the rate dialog by itself");
 
-// Both directions of one number, and they move together. There is no feed
-// behind the static export, so this is also the path a phone with no signal
-// takes: the fields are typeable and the dialog says so.
+// Both directions of one number, and they move together. The fields are
+// typeable and the dialog says it couldn't look the rate up.
 const forward = page.getByRole("textbox", { name: "Rate, USD to EUR" });
 const inverse = page.getByRole("textbox", { name: "Rate, EUR to USD" });
 report(await forward.count() === 1 && await inverse.count() === 1,
@@ -100,20 +100,21 @@ report(await page.locator("dialog.scrim").count() === 0, "saving the rate closes
 // rate itself is on the chip beside it, which opens where it is set. 9000 USD
 // at 0.8 is €7,200.00.
 report((await page.getByLabel("Set the USD rate").innerText()).includes("7,200.00"),
-  "the form's rate line values the entry at what the group now says");
+  "the form's rate line values the entry at the rate just given");
 report(!(await page.getByLabel("Set the USD rate").innerText()).includes("0.8"),
   "and does not print the rate itself");
 report((await page.getByRole("button", { name: "USD rate", exact: true }).innerText()).includes("0.8"),
   "and the chip beside it does, as the way to where it is set");
 
-// Picked a second time, the rate is already the group's, so nothing is asked.
+// Away to the base and back, the draft still holds the rate it was given.
 await pick(page, '[aria-label="Currency"]', "EUR");
 report(await page.getByLabel("Set the USD rate").count() === 0,
   "picking the base currency puts the rate away");
 await pick(page, '[aria-label="Currency"]', "USD");
 await settle(page, 150);
-report(await page.locator("dialog.scrim").count() === 0,
-  "a currency the group already has a rate for asks nothing");
+report(await page.locator("dialog.scrim").count() === 0
+  && (await page.getByRole("button", { name: "USD rate", exact: true }).innerText()).includes("0.8"),
+  "and picking USD again keeps the rate it was given, asking nothing");
 await pick(page, '[aria-label="Currency"]', "EUR");
 
 await pick(page, "#paidby", "Marie");
@@ -493,49 +494,63 @@ for (const line of ["created this expense", "created this income", "recorded a t
   report(feed.includes(line), `history says "${line}"`);
 }
 
-// ---- the registry, and the thing it exists to do -----------------------
-// A rate is the group's, not the entry's: correcting it moves every entry
-// already written in that currency, which is what a per-entry frozen rate
-// could never do (ADR-0005).
+// ---- an entry's own rate -----------------------------------------------
+// The rate is frozen onto the entry (ADR-0005): the feed's for its day, else
+// the group's most recent entry in the currency, else asked for. Correcting one
+// entry's rate moves that entry and no other.
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("100");
 await page.locator("#what").fill("Cab");
 await pick(page, '[aria-label="Currency"]', "USD");
-await settle(page, 150);
-// The group already has a USD rate by now, so nothing is asked and the line
-// under the amount reads it back: 100 USD at 0.8 is €80.00.
+// The dinner went down in euros, so nothing in USD is written yet: it asks.
+await page.waitForSelector('dialog[aria-label="USD rate"]', { timeout: PATIENCE });
+await page.getByRole("textbox", { name: "Rate, USD to EUR" }).fill("0.8");
+await page.getByRole("button", { name: "Save" }).last().click();
+await settle(page, 200);
 report((await page.getByLabel("Set the USD rate").innerText()).includes("80"),
-  "the form converts at the group's rate");
+  "the form converts at the rate it was given");
 await page.getByRole("button", { name: "Save" }).click();
 await page.waitForURL(/\/g\?id=/);
 await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length >= 3,
   null, { timeout: PATIENCE });
-const cabBefore = await page.locator("a.row").filter({ hasText: "Cab" })
-  .locator(".ramt .big").innerText();
-report(cabBefore.includes("80"), "and banks it in the group's currency");
+const amountOf = (title) => page.locator("a.row").filter({ hasText: title }).locator(".ramt .big").innerText();
+report((await amountOf("Cab")).includes("80"), "and banks it in the group's currency");
 
-// Rates is in the group's top-bar menu.
-await page.locator(".topbar .iconbtn[aria-label='Group menu']").click();
-await page.getByRole("menuitem", { name: "Rates" }).click();
-await page.waitForURL(/\/g\/rates/);
-await page.waitForSelector(".rows button.row");
-report((await page.locator(".rows").first().innerText()).includes("USD"),
-  "the registry lists the currency the group spent in");
-await page.locator("button.row").filter({ hasText: "USD" }).click();
+// A second USD entry, the feed still out of reach: it borrows the Cab's rate.
+await page.goto(`${base}/g/entry/edit?id=${g}`);
+await page.locator("input.amount").fill("10");
+await page.locator("#what").fill("Tram");
+await pick(page, '[aria-label="Currency"]', "USD");
+await page.getByRole("button", { name: "USD rate", exact: true }).filter({ hasText: "0.8" })
+  .waitFor({ timeout: PATIENCE }).catch(() => {});
+await settle(page, 150);
+report(await page.locator("dialog.scrim").count() === 0
+  && (await page.getByLabel("Set the USD rate").innerText()).includes("8.00"),
+  "the next entry in the currency borrows the group's last rate, asking nothing");
+await page.getByRole("button", { name: "Save" }).click();
+await page.waitForURL(/\/g\?id=/);
+await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length >= 4,
+  null, { timeout: PATIENCE });
+
+// Corrected from the Cab's own screen, the Cab moves and the Tram does not.
+await page.locator("a.row").filter({ hasText: "Cab" }).click();
+await page.waitForURL(/\/g\/entry\?/);
+await page.getByRole("button", { name: "USD rate", exact: true }).click();
 await page.waitForSelector('dialog[aria-label="USD rate"]');
 await page.getByRole("textbox", { name: "Rate, USD to EUR" }).fill("0.4");
-await settle(page, 100);
-report(/re-values/i.test(await page.locator(".dbody").innerText()),
-  "the dialog says how much of the ledger the change moves");
 await page.getByRole("button", { name: "Save" }).last().click();
 await settle(page, 300);
-
 await page.goto(`${base}/g?id=${g}`);
 await page.waitForSelector(".rows a.row");
-const cabAfter = await page.locator("a.row").filter({ hasText: "Cab" })
-  .locator(".ramt .big").innerText();
-report(cabAfter.includes("40"),
-  "correcting the rate re-values an entry that was already written");
+report((await amountOf("Cab")).includes("40") && (await amountOf("Tram")).includes("8.00"),
+  "correcting one entry's rate moves that entry and no other");
+
+// There is no group-wide rate left to edit, so no screen for it.
+await page.locator(".topbar .iconbtn[aria-label='Group menu']").click();
+report(await page.getByRole("menuitem", { name: "Rates" }).count() === 0,
+  "the group menu has no Rates screen");
+await page.keyboard.press("Escape");
+await settle(page, 200);
 
 // ---- the cent the form quotes is the cent the ledger keeps -------------
 // A leftover minor unit goes by `tiebreakSeed`, the entry's id. The draft
@@ -716,9 +731,10 @@ await settle(page, 900);
 report(!/flash-/.test(await titleField.getAttribute("class")),
   "and the flash ends, taking its class with it");
 // A number that isn't on this form has nowhere to bloom but the way to it:
-// an entry in a currency the group has no rate for flashes that badge.
+// an entry in a currency nothing can price, its dialog dismissed, flashes that badge.
 await pick(page, '[aria-label="Currency"]', "MAD");
-await settle(page, 200);
+// The dialog opens once the look-up fails, which is a moment after the pick.
+await page.locator("dialog.scrim").waitFor({ timeout: PATIENCE }).catch(() => {});
 if (await page.locator("dialog.scrim").count() > 0) {
   await page.keyboard.press("Escape");
   await settle(page, 200);

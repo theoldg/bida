@@ -360,7 +360,7 @@ size off the whole part's length, never under 28px) rather than wrapping
 mid-number. The sum as spent, when it was spent in another currency, is a
 13px muted line under it, not beside it — beside, it read as a third part of
 the same figure — with the rate chip that made it the figure above at its end — a button, opening
-the group's rate dialog as the entry form's twin chip does (`RateChip`: a quiet
+the entry's rate dialog as the entry form's twin chip does (`RateChip`: a quiet
 "@", the figure at one digit fewer than the dialog edits, a red "?" for no rate).
 It starts flush at the left margin, one run of text: sharing the figure's
 columns so the two sets of digits lined up broke on the edge cases (a symbol

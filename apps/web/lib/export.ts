@@ -9,13 +9,13 @@ import type { GroupData } from "./hooks";
  */
 
 /**
- * The group as one CSV, in the base currency at current rates.
+ * The group as one CSV, in the base currency, each entry at its own rate.
  *
  * From `memberById`, which keeps tombstones: a removed member named on a live
  * entry still carries a balance and needs a column for the file to add up.
  *
- * No rate registry: `useGroupData` has already repriced every entry
- * (`atCurrentRates`), and repricing twice is how screens disagree (ADR-0005).
+ * No repricing: `useGroupData` has already valued every entry
+ * (`atCurrentRates`), and doing it twice is how screens disagree (ADR-0005).
  */
 export function groupCsv(data: GroupData): string {
   const state = stateFromRows({

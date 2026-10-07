@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { foldOps } from "./fold.js";
 import { computeBalances, assertBalanced } from "./balance.js";
-import { atCurrentRates, currenciesInUse, rateFor, repriceEntry } from "./rates.js";
+import { atCurrentRates, currenciesInUse, latestRate, rateFor, repriceEntry } from "./rates.js";
 import { emptyGroupState, type ExchangeRate, type GroupState } from "./types.js";
 import { MAD_RATE, marrakechOps, OpBuilder, GROUP, THEO } from "./fixtures.test-helper.js";
 
@@ -44,19 +44,30 @@ describe("rateFor", () => {
 describe("repriceEntry", () => {
   const entry = { amountMinor: 62000, currency: "MAD", rateToBase: "0.0921", baseAmountMinor: 5710 };
 
-  it("values the entry at the registry rather than at what it was saved with", () => {
+  it("values an entry from before rates were the entry's at the registry", () => {
     const out = repriceEntry(entry, "EUR", { MAD: row("MAD", "0.093") });
     expect(out.rateToBase).toBe("0.093");
     expect(out.baseAmountMinor).toBe(5766);
   });
 
-  it("leaves an entry whose currency the registry doesn't know", () => {
+  it("leaves an entry whose currency the registry doesn't know, its figures agreeing", () => {
     expect(repriceEntry(entry, "EUR", {})).toBe(entry);
     expect(repriceEntry(entry, "EUR", {}).baseAmountMinor).toBe(5710);
   });
 
   it("returns the very same object when the registry agrees with the entry", () => {
     expect(repriceEntry(entry, "EUR", { MAD: row("MAD", "0.0921") })).toBe(entry);
+  });
+
+  it("values an entry carrying its own rate at that rate, whatever the registry says", () => {
+    const own = { ...entry, rateSource: "fetched" as const };
+    expect(repriceEntry(own, "EUR", { MAD: row("MAD", "0.5") })).toBe(own);
+  });
+
+  // A merge can pair one phone's amount with another's figures.
+  it("re-derives the base figure from the entry's own rate", () => {
+    const stale = { ...entry, baseAmountMinor: 1, rateSource: "typed" as const };
+    expect(repriceEntry(stale, "EUR", {}).baseAmountMinor).toBe(5710);
   });
 
   it("passes a base-currency entry through at 1", () => {
@@ -122,24 +133,11 @@ describe("atCurrentRates", () => {
 describe("currenciesInUse", () => {
   it("names the currencies entries are written in, never the base one", () => {
     const used = currenciesInUse(foldOps(marrakechOps()));
-    expect(used.map((c) => c.currency)).toEqual(["MAD"]);
-    expect(used[0]!.entryCount).toBe(6);
-    expect(used[0]!.rate).toBeUndefined();
+    expect(used).toEqual([{ currency: "MAD", entryCount: 6 }]);
   });
 
-  it("carries the registry's row once there is one", () => {
-    const used = currenciesInUse(marrakechWith(["MAD", "0.093"]));
-    expect(used[0]!.rate?.rate).toBe("0.093");
-  });
-
-  it("includes a currency added ahead of being spent in", () => {
+  it("ignores a registry row nothing is written in", () => {
     const used = currenciesInUse(marrakechWith(["PLN", "0.23"]));
-    expect(used.map((c) => c.currency)).toEqual(["MAD", "PLN"]);
-    expect(used.find((c) => c.currency === "PLN")!.entryCount).toBe(0);
-  });
-
-  it("drops a removed rate that no entry is written in", () => {
-    const used = currenciesInUse(marrakechWith(["PLN", "0.23"], ["PLN", null]));
     expect(used.map((c) => c.currency)).toEqual(["MAD"]);
   });
 
@@ -174,5 +172,37 @@ describe("a rate is an op", () => {
     const state = foldOps([...marrakechOps(), ...b.ops]);
     expect(state.rates["PLN"]!.deletedAt).toBeTruthy();
     expect(rateFor(state.rates, "EUR", "PLN")).toBeUndefined();
+  });
+});
+
+describe("latestRate", () => {
+  const at = (id: string, currency: string, rateToBase: string, occurredAt: number, extra = {}) =>
+    ({ id, currency, rateToBase, occurredAt, ...extra });
+
+  it("borrows the rate of the group's most recent entry in the currency", () => {
+    const entries = [at("a", "MAD", "0.09", 1), at("b", "MAD", "0.095", 3), at("c", "MAD", "0.091", 2)];
+    expect(latestRate(entries, {}, "EUR", "MAD")).toBe("0.095");
+  });
+
+  it("breaks a tie on the day by which was written last", () => {
+    const entries = [at("a", "MAD", "0.09", 1, { createdAt: 9 }), at("b", "MAD", "0.095", 1, { createdAt: 2 })];
+    expect(latestRate(entries, {}, "EUR", "MAD")).toBe("0.09");
+  });
+
+  it("skips other currencies, deleted entries and the entry being edited", () => {
+    const entries = [
+      at("a", "MAD", "0.09", 1), at("b", "PLN", "0.23", 5),
+      at("c", "MAD", "0.5", 4, { deletedAt: 7 }), at("d", "MAD", "0.6", 6),
+    ];
+    expect(latestRate(entries, {}, "EUR", "MAD", "d")).toBe("0.09");
+  });
+
+  it("falls back to the registry's old row, then to nothing", () => {
+    expect(latestRate([], { MAD: row("MAD", "0.0921") }, "EUR", "MAD")).toBe("0.0921");
+    expect(latestRate([], {}, "EUR", "MAD")).toBeUndefined();
+  });
+
+  it("answers 1 for the base currency", () => {
+    expect(latestRate([], {}, "EUR", "EUR")).toBe("1");
   });
 });

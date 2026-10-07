@@ -15,11 +15,12 @@ import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } fr
 import { Icon } from "@/components/icons";
 import { useDeleteEntry } from "@/components/delete-entry";
 import { RateChip, RateDialog } from "@/components/rate-dialog";
-import { restoreEntry, setRate } from "@/lib/db/commands";
+import { editExpense, editSettlement, restoreEntry } from "@/lib/db/commands";
 import { db } from "@/lib/db/dexie";
 import { syncGroup } from "@/lib/db/sync";
 import { useLive } from "@/lib/db/live";
 import { effectSum, kindOf, type EntryKind } from "@/lib/entry-kind";
+import { rateDayOf } from "@/lib/entry-rate";
 import { copy } from "@/lib/copy";
 import { money, moneyParts, plural, whenLabel } from "@/lib/format";
 import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
@@ -109,7 +110,7 @@ function EntryScreen() {
     then: () => { if (groupId) { markReturn(route.group(groupId)); router.replace(route.group(groupId)); } },
   });
   const [restoring, setRestoring] = useState(false);
-  const [askRate, setAskRate] = useState<CurrencyCode | null>(null);
+  const [askRate, setAskRate] = useState(false);
   const arriving = useArriving(groupId, entryId, !!row);
 
   // "Edited 3 times" comes from the log itself: revisions are ops, not a
@@ -168,7 +169,7 @@ function EntryScreen() {
   // What pressing Restore also brings back, named before the press.
   const brings = deleted
     ? restoreEntryDrafts(data.withTombstones, entity, entry.id).slice(1)
-      .map((d) => (d.entity === "member" ? data.nameOf(d.entityId) : copy.entry.theRate(d.entityId)))
+      .filter((d) => d.entity === "member").map((d) => data.nameOf(d.entityId))
     : [];
   async function restore() {
     const actor = data.me;
@@ -238,12 +239,11 @@ function EntryScreen() {
               <EntryFigure minor={entry.baseAmountMinor} currency={group.baseCurrency} />
               {foreign ? (
                 <EntrySpent minor={entry.amountMinor} currency={entry.currency}>
-                  {/* The group's rate, so the editor's door to it: a deleted
-                      entry is drawn at the rate it was saved at, which no
-                      dialog edits. */}
+                  {/* The entry's own rate, and the door to correcting it: a
+                      deleted entry is drawn as it was, which no dialog edits. */}
                   <RateChip rate={entry.rateToBase} disabled={deleted}
                     aria-label={copy.rates.editTitle(entry.currency)}
-                    onClick={() => setAskRate(entry.currency)} />
+                    onClick={() => setAskRate(true)} />
                 </EntrySpent>
               ) : null}
             </div>
@@ -283,16 +283,19 @@ function EntryScreen() {
       </Body>
 
       {del.dialog}
-      {askRate !== null ? (
+      {/* Correcting the rate is an edit of this entry, and of nothing else. */}
+      {askRate && foreign ? (
         <RateDialog
-          currency={askRate}
+          currency={entry.currency}
           base={group.baseCurrency}
-          current={data.rates[askRate]}
-          entryCount={data.currencies.find((c) => c.currency === askRate)?.entryCount ?? 0}
-          onSave={async (rate: string, source: RateSource, asOf: number) => {
-            if (data.me) await setRate(groupId, data.me, askRate, rate, source, asOf);
+          day={rateDayOf(entry.occurredAt)}
+          current={{ rate: entry.rateToBase, source: entry.rateSource ?? "group" }}
+          onSave={async (rate: string, rateSource: RateSource) => {
+            if (!data.me) return;
+            if (expense) await editExpense(groupId, data.me, entry.id, { rateToBase: rate, rateSource });
+            else await editSettlement(groupId, data.me, entry.id, { rateToBase: rate, rateSource });
           }}
-          onClose={() => setAskRate(null)}
+          onClose={() => setAskRate(false)}
         />
       ) : null}
     </Screen>

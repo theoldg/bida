@@ -1,19 +1,19 @@
 import {
   canonicalSplit, newId, primaryPayer, receiptOf, restoreEntryDrafts,
-  type CurrencyCode, type EntryEntity, type ExchangeRate, type ExpenseKind, type Id, type OpDraft, type Rate,
+  type CurrencyCode, type EntryEntity, type EntryRateSource, type ExpenseKind, type Id, type OpDraft, type Rate,
   type Receipt, type SplitSpec,
 } from "@bida/core";
 import { db } from "../dexie";
 import { groupState } from "../fold";
 import { appendOps } from "./append";
 import { movesAnything, only, wholeEntity } from "./patch";
-import { rateToWrite, toBase, valuationOf } from "./rates";
+import { baseOf, rateFields } from "./rates";
 
 /**
  * The three kinds of entry (ADR-0010) — added, edited, tombstoned and put back.
  * Everything that moves money lands here. Both editors diff the form against
- * what is stored (`patch.ts`), then let the registry re-derive what the
- * change is worth (`rates.ts`).
+ * what is stored (`patch.ts`), and write the entry's own rate with it
+ * (`rates.ts`).
  */
 
 export interface ExpenseInput extends Receipt {
@@ -26,8 +26,9 @@ export interface ExpenseInput extends Receipt {
   /** In `currency`, minor units. */
   amountMinor: number;
   currency: CurrencyCode;
-  /** Frozen at entry. "1" when the expense is already in the base currency. */
+  /** The entry's own, frozen at save. Ignored when the expense is in the base currency. */
   rateToBase: Rate;
+  rateSource?: EntryRateSource | null;
   paidBy: Id;
   /** Co-sponsors, in `currency` minor units. Omit or null for a single payer. */
   payers?: Record<Id, number> | null;
@@ -64,13 +65,10 @@ function write(groupId: Id, actor: Id, drafts: readonly OpDraft[], now = Date.no
 
 /**
  * An expense's content as both writes put it: the payer side normalised, the
- * split canonical, the base figure re-derived from the registry. A create and
- * an edit differ only in what they do with an absence (`only`, `wholeEntity`).
+ * split canonical, the base figure derived from its own rate. A create and an
+ * edit differ only in what they do with an absence (`only`, `wholeEntity`).
  */
-function expenseContent(
-  input: ExpenseInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>,
-) {
-  const rateToBase = rateToWrite(input.currency, input.rateToBase, base, rates);
+function expenseContent(input: ExpenseInput, base: CurrencyCode) {
   // The payer fields are derived together — `paidBy` must never name somebody
   // who isn't in `payers`.
   const payer = normalisePayers(input);
@@ -83,8 +81,7 @@ function expenseContent(
     dateOnly: input.dateOnly ? true : null,
     amountMinor: input.amountMinor,
     currency: input.currency,
-    rateToBase,
-    baseAmountMinor: toBase({ ...input, rateToBase }, base),
+    ...rateFields(input, base),
     paidBy: payer.paidBy,
     payers: payer.payers,
     // Canonical from the very first op: `sameValue` sorts object keys but not
@@ -101,10 +98,8 @@ function expenseContent(
  * fields are left off (`only`); no `deletedAt` either, since a fresh id is
  * never a tombstone.
  */
-export function expenseCreatePatch(
-  input: ExpenseInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
-) {
-  return { createdAt: now, ...only(expenseContent(input, base, rates)) };
+export function expenseCreatePatch(input: ExpenseInput, base: CurrencyCode, now: number) {
+  return { createdAt: now, ...only(expenseContent(input, base)) };
 }
 
 /**
@@ -119,11 +114,11 @@ export async function addExpense(
   now = Date.now(),
   expenseId: Id = newId(),
 ): Promise<Id> {
-  const { base, rates } = await valuationOf(groupId);
+  const base = await baseOf(groupId);
   await write(
     groupId,
     actor,
-    [{ entity: "expense", entityId: expenseId, kind: "create", patch: expenseCreatePatch(input, base, rates, now) }],
+    [{ entity: "expense", entityId: expenseId, kind: "create", patch: expenseCreatePatch(input, base, now) }],
     now,
   );
   return expenseId;
@@ -144,8 +139,8 @@ export async function editExpense(
   const existing = await db().expenses.get(expenseId);
   if (!existing) throw new Error(`unknown expense: ${expenseId}`);
 
-  const { base, rates } = await valuationOf(groupId);
-  const patch = wholeEntity(expenseContent({ ...existing, ...changes }, base, rates));
+  const base = await baseOf(groupId);
+  const patch = wholeEntity(expenseContent({ ...existing, ...changes }, base));
 
   // A save that moved nothing is a revision saying nothing happened — measured
   // against the stored split made canonical too, as the patch's is.
@@ -173,7 +168,9 @@ export interface SettlementInput {
   toMember: Id;
   amountMinor: number;
   currency: CurrencyCode;
+  /** As `ExpenseInput.rateToBase`. */
   rateToBase: Rate;
+  rateSource?: EntryRateSource | null;
   occurredAt: number;
   /** True when `occurredAt` carries a day and no time — see `ExpenseInput`. */
   dateOnly?: boolean | null;
@@ -181,17 +178,13 @@ export interface SettlementInput {
 }
 
 /** A transfer's content as both writes put it — see `expenseContent`. */
-function settlementContent(
-  input: SettlementInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>,
-) {
-  const rateToBase = rateToWrite(input.currency, input.rateToBase, base, rates);
+function settlementContent(input: SettlementInput, base: CurrencyCode) {
   return {
     fromMember: input.fromMember,
     toMember: input.toMember,
     amountMinor: input.amountMinor,
     currency: input.currency,
-    rateToBase,
-    baseAmountMinor: toBase({ ...input, rateToBase }, base),
+    ...rateFields(input, base),
     occurredAt: input.occurredAt,
     dateOnly: input.dateOnly ? true : null,
     note: input.note,
@@ -199,10 +192,8 @@ function settlementContent(
 }
 
 /** The `create` patch for a transfer — the form's and the importer's. */
-export function settlementCreatePatch(
-  input: SettlementInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
-) {
-  return { createdAt: now, ...only(settlementContent(input, base, rates)) };
+export function settlementCreatePatch(input: SettlementInput, base: CurrencyCode, now: number) {
+  return { createdAt: now, ...only(settlementContent(input, base)) };
 }
 
 export async function recordSettlement(
@@ -211,14 +202,14 @@ export async function recordSettlement(
   input: SettlementInput,
   now = Date.now(),
 ): Promise<Id> {
-  const { base, rates } = await valuationOf(groupId);
+  const base = await baseOf(groupId);
   const settlementId = newId();
   await write(
     groupId,
     actor,
     [{
       entity: "settlement", entityId: settlementId, kind: "create",
-      patch: settlementCreatePatch(input, base, rates, now),
+      patch: settlementCreatePatch(input, base, now),
     }],
     now,
   );
@@ -227,7 +218,7 @@ export async function recordSettlement(
 
 /**
  * Edit a transfer, by `editExpense`'s rule: the whole entry reaches the log,
- * and the base figure is re-derived from the registry.
+ * its own rate with it.
  */
 export async function editSettlement(
   groupId: Id,
@@ -239,8 +230,8 @@ export async function editSettlement(
   const existing = await db().settlements.get(settlementId);
   if (!existing) throw new Error(`unknown settlement: ${settlementId}`);
 
-  const { base, rates } = await valuationOf(groupId);
-  const patch = wholeEntity(settlementContent({ ...existing, ...changes }, base, rates));
+  const base = await baseOf(groupId);
+  const patch = wholeEntity(settlementContent({ ...existing, ...changes }, base));
 
   if (!movesAnything(existing, patch)) return;
   await write(groupId, actor, [
@@ -261,8 +252,8 @@ export async function deleteSettlement(
 // ------------------------------------------------------------ restoring
 
 /**
- * A deleted entry, back whole (ADR-0031), with anybody or any rate it names
- * that was removed since — the entry wins, as it does after a merge
+ * A deleted entry, back whole (ADR-0031), with anybody it names who was
+ * removed since — the entry wins, as it does after a merge
  * (`restoreEntryDrafts`). One append, so the group is never left holding a
  * live entry that names nobody.
  */

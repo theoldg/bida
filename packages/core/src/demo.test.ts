@@ -70,10 +70,10 @@ describe("demoOps", () => {
     // One deleted and one edited, so history is not all creates.
     expect(entries.filter((e) => e.deletedAt)).toHaveLength(1);
     expect(state.expenses["demo-passage"]?.description).toBe("Passage to Alderaan, no questions");
-    // Two payers, a registry-priced foreign currency, an income, a transfer, a partial split.
+    // Two payers, a foreign currency at its own rate, an income, a transfer, a partial split.
     expect(Object.keys(state.expenses["demo-cantina"]?.payers ?? {})).toHaveLength(2);
     expect(state.expenses["demo-docking"]?.currency).toBe("WUP");
-    expect(state.rates["WUP"]?.rate).toBe("0.0625");
+    expect(state.expenses["demo-docking"]).toMatchObject({ rateToBase: "0.0625", rateSource: "typed" });
     expect(entries.some((e) => e.kind === "income")).toBe(true);
     expect(Object.values(state.settlements)).toHaveLength(1);
     const narrow = state.expenses["demo-dejarik"]?.split;

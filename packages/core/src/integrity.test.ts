@@ -4,6 +4,7 @@ import { healDrafts, type OpDraft } from "./invariants.js";
 import { assertBalanced, computeBalances } from "./balance.js";
 import { payerList } from "./payers.js";
 import { splitParticipants } from "./split.js";
+import { rateFor } from "./rates.js";
 import { createHlcState, formatHlc, maxHlc } from "./hlc.js";
 import type { Op } from "./ops.js";
 import { alive, type GroupState } from "./types.js";
@@ -17,18 +18,17 @@ import { ADA, ALL, GROUP, MAD_RATE, MARIE, THEO, marrakechOps } from "./fixtures
  * **Existence is not liveness.** Existence (the referenced row is in state) is
  * always required and always true, since a delete only tombstones. Liveness
  * (not tombstoned) is required only of references that move money: an entry's
- * members and currency. An `identity` pointing at a removed member is a true
+ * members. An `identity` pointing at a removed member is a true
  * historical fact that attributes its ops, so claims are checked for existence
  * only — a healer repointing them would erase attribution.
  */
 
 type Strength = "live" | "exists";
-interface Reference { from: string; to: string; kind: "member" | "rate"; strength: Strength }
+interface Reference { from: string; to: string; strength: Strength }
 
 /** Every id one entity holds of another, and how strong that reference has to be. */
 function references(state: GroupState): Reference[] {
   const out: Reference[] = [];
-  const base = state.group?.baseCurrency;
 
   for (const e of alive(state.expenses)) {
     const members = new Set([
@@ -38,24 +38,18 @@ function references(state: GroupState): Reference[] {
       ...(e.receiptAssignments ?? []).flat(),
     ]);
     // Money names them, so the tombstone is what gives way.
-    for (const id of members) out.push({ from: e.id, to: id, kind: "member", strength: "live" });
-    if (base && e.currency !== base) {
-      out.push({ from: e.id, to: e.currency, kind: "rate", strength: "live" });
-    }
+    for (const id of members) out.push({ from: e.id, to: id, strength: "live" });
   }
 
   for (const s of alive(state.settlements)) {
     for (const id of [s.fromMember, s.toMember]) {
-      out.push({ from: s.id, to: id, kind: "member", strength: "live" });
-    }
-    if (base && s.currency !== base) {
-      out.push({ from: s.id, to: s.currency, kind: "rate", strength: "live" });
+      out.push({ from: s.id, to: id, strength: "live" });
     }
   }
 
   // A claim is a historical fact, not a live pointer. See the note above.
   for (const i of Object.values(state.identities)) {
-    out.push({ from: i.id, to: i.memberId, kind: "member", strength: "exists" });
+    out.push({ from: i.id, to: i.memberId, strength: "exists" });
   }
 
   return out;
@@ -65,14 +59,20 @@ function references(state: GroupState): Reference[] {
 function broken(state: GroupState): string[] {
   const problems: string[] = [];
   for (const ref of references(state)) {
-    const row = ref.kind === "member" ? state.members[ref.to] : state.rates[ref.to];
-    // A rate never set is an unpriced currency, not a dangling reference.
+    const row = state.members[ref.to];
     if (!row) {
-      if (ref.kind === "member") problems.push(`${ref.from} names missing member ${ref.to}`);
+      problems.push(`${ref.from} names missing member ${ref.to}`);
       continue;
     }
     if (ref.strength === "live" && row.deletedAt) {
-      problems.push(`${ref.from} names removed ${ref.kind} ${ref.to}`);
+      problems.push(`${ref.from} names removed member ${ref.to}`);
+    }
+  }
+  // An entry's worth is its own: the registry may value none of them.
+  const base = state.group?.baseCurrency;
+  for (const e of [...Object.values(state.expenses), ...Object.values(state.settlements)]) {
+    if (base && e.currency !== base && !e.rateSource && rateFor(state.rates, base, e.currency) !== undefined) {
+      problems.push(`${e.id} is read at the registry's ${e.currency} rate`);
     }
   }
   return problems;
@@ -140,7 +140,7 @@ describe("integrity under hostile merges", () => {
     expect(broken(foldOps(marrakechOps()))).toEqual([]);
   });
 
-  it("healing leaves no live entry naming a removed member or currency", () => {
+  it("healing leaves no live entry naming a removed member, nor one read at the registry", () => {
     // Names no healer, so an undeclared reference fails here too.
     for (let seed = 1; seed <= 60; seed++) {
       const log = [...marrakechOps(), ...subsets(hostileOps(), seed)];

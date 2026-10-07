@@ -8,7 +8,7 @@ import type { AmountTap } from "../lib/tap-amount";
 export type IconName =
   | "chev" | "updown" | "back" | "plus" | "minus" | "cross" | "cam" | "off" | "check" | "clock"
   | "users" | "arrow" | "sync" | "trash" | "edit" | "link"
-  | "image" | "split" | "merge" | "share" | "import" | "sun" | "moon" | "fx" | "more" | "info"
+  | "image" | "split" | "merge" | "share" | "import" | "sun" | "moon" | "more" | "info"
   | "mail" | "dollar" | "sliders" | "translate";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
@@ -130,14 +130,6 @@ export function IconSprite() {
         </symbol>
         <symbol id="i-moon" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
           <path d="M20.5 14.6A8.8 8.8 0 019.4 3.5a8.8 8.8 0 1011.1 11.1z" />
-        </symbol>
-        {/* Exchange rates: two arrows passing, one each way, because that is
-            what a rate is — this much of yours for that much of theirs. Not a
-            currency glyph: £ $ € are each somebody's money, and the group's
-            base is whichever one it picked. */}
-        <symbol id="i-fx" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
-          <path d="M3.5 8.5h15M14.5 4.5l4 4-4 4" />
-          <path d="M20.5 15.5h-15M9.5 11.5l-4 4 4 4" />
         </symbol>
         {/* The group's own actions, which outgrew the top bar: four icons in a
             row read as four unrelated guesses, one dot column reads as "there

@@ -124,6 +124,9 @@ function coPayers(state: State): [Id, number][] | null {
  * Every entity kind gets a plain-English sentence and, where it helps, a diff —
  * or, where one revision moved several fields, a line for each of them.
  */
+/** All `entriesCarryTheirOwnRate` writes. */
+const HEALED_RATE_FIELDS = new Set(["rateToBase", "baseAmountMinor", "rateSource"]);
+
 export function describe(
   rev: Revision,
   who: string,
@@ -204,6 +207,16 @@ export function describe(
     const spec = state["split"] as SplitSpec | null | undefined;
     return spec && typeof spec === "object" && spec.mode in copy.split.mode ? spec.mode : undefined;
   };
+
+  // `entriesCarryTheirOwnRate`'s repair: the old registry's rate written onto
+  // an entry that was already read at it. Names the cause, not the phone that
+  // noticed, and no figure moved, so no diff. A person's save writes the whole
+  // entry, so it never looks like this.
+  if ((rev.entity === "expense" || rev.entity === "settlement") && !rev.isCreate
+    && rev.op.patch["rateSource"] === "group"
+    && Object.keys(rev.op.patch).every((k) => HEALED_RATE_FIELDS.has(k))) {
+    return { what: said.rateMovedOnto(ownCurrency(rev.after)) };
+  }
 
   if (rev.entity === "expense") {
     // Only the revision that crossed between income and expense carries `kind`,
@@ -561,8 +574,8 @@ export function describe(
     return { what: self ? said.updatedSelf(who) : said.updatedMember(who, them) };
   }
 
-  // A rate is the group's, and its entity id is the currency code itself, so
-  // the sentence can name the currency without looking anything up.
+  // A registry row, which only older builds wrote (ADR-0005). Its entity id is
+  // the currency code itself, so the sentence names it without a lookup.
   if (rev.entity === "rate") {
     const code = rev.entityId;
     const pair = (v: unknown) =>
