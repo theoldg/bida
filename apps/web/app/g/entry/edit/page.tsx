@@ -236,9 +236,9 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     : null;
   /** The dock's lines over Save: what is wrong, then the tick that nothing is. */
   const docked = said !== null || splitTick !== null;
-  // Both of the form's first fields empty: the top shows both, where the
-  // nearest would leave the amount above the fold.
-  const refusals = useRefusals(missing, (aimed) => !!aimed.amount && !!aimed.title);
+  // The amount, its rate chip and the title head the form: any of them
+  // refused goes to the top, where they are read together.
+  const refusals = useRefusals(missing, (aimed) => !!aimed.rate || !!aimed.amount || !!aimed.title);
 
   /**
    * **The rate dialog opens for whatever currency the draft is *in*, never for

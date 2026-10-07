@@ -711,7 +711,7 @@ report(/flash-/.test(await titleField.getAttribute("class")),
   "a refused Save flashes the field that stopped it");
 // And says one of them over Save: of an empty amount and title, the amount.
 const dockSays = () => page.locator(".whodock .splitfoot.bad").allInnerTexts();
-report((await dockSays()).join("|") === "Type an amount.",
+report((await dockSays()).join("|") === "Set the amount",
   "and says one thing missing in the Save dock", (await dockSays()).join("|"));
 await settle(page, 900);
 report(!/flash-/.test(await titleField.getAttribute("class")),
@@ -725,12 +725,31 @@ if (await page.locator("dialog.scrim").count() > 0) {
   await settle(page, 200);
 }
 const rateNote = page.getByRole("button", { name: "MAD rate", exact: true });
+// The rate chip heads the form with the amount and the title: from the
+// bottom, a refusal over any of them glides to the very top before it blooms.
+// The rate alone missing, so nothing but it sends the form up.
+await page.locator("input.amount").fill("5");
+await page.locator("#what").fill("Rate only");
+// A short screen, so the form has a bottom to start from.
+const fullSize = page.viewportSize();
+await page.setViewportSize({ width: fullSize.width, height: 420 });
+await settle(page, 120);
+const scrolledTo = await page.locator(".scroll").evaluate((el) => {
+  el.scrollTop = el.scrollHeight; return el.scrollTop;
+});
+await page.getByRole("button", { name: "Save" }).click();
+await settle(page, 1500);
+const landed = await page.locator(".scroll").evaluate((el) => el.scrollTop);
+await page.setViewportSize(fullSize);
+await settle(page, 120);
+report(scrolledTo > 0 && landed === 0,
+  "a refusal over a missing rate goes to the top of the form", `${scrolledTo}px → ${landed}px`);
 await page.getByRole("button", { name: "Save" }).click();
 await settle(page, 120);
 report(/flash-/.test(await rateNote.getAttribute("class")),
   "a missing rate flashes the chip that opens where it is set");
 // The rate goes first: an empty field going red explains itself, a `?` does not.
-report(/no MAD rate/.test((await dockSays()).join("|")),
+report((await dockSays()).join("|") === "Set the MAD rate",
   "and the dock says the rate over the empty fields", (await dockSays()).join("|"));
 await settle(page, 900);
 report(!/flash-/.test(await rateNote.getAttribute("class")),
