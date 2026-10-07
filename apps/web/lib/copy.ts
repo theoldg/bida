@@ -893,6 +893,9 @@ export const copy = {
     you: "you",
     /** The card's last line: what the entry did to you (`YourBalance`). */
     yourBalance: "Your balance",
+    /** Its unfolded sum's two lines, in `effectSum`'s order: up, then down. */
+    sumWords: { expense: ["you paid", "your share"], income: ["your share", "you received"] } as
+      Record<"expense" | "income", readonly [string, string]>,
     /** "Split evenly" · "Split by items". */
     splitMode: (label: string, mode: string) => `${label} ${mode}`,
     deleteTitle: (kind: string) => `Delete this ${kind}?`,

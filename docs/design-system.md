@@ -182,12 +182,13 @@ small, faint `(you)` follows your name wherever the entry prints it: the one
 payer on the paid-by line, a payer row, a split row. A transfer gets neither;
 its two names and an arrow already say it. The rows themselves stay uncoloured. Under the split, unless you neither paid nor had
 a share, is the ledger row's figure, signed and coloured as it is there:
-`Your balance +CRD 40.00`. When two of the card's numbers made it, it is
-written as their uncoloured difference first: `50.00 − 20.00 = +CRD 30.00`
-(`effectSum` — an income's share comes first, since it is what moved you up).
-The sum sits beside its label, and as soon as it stops fitting there with room
-to spare it is written out as at school — one figure under the other, the
-result under a rule, digits aligned whichever side the locale puts the code.
+`Your balance +CRD 40.00`. When two of the card's numbers made it, it opens
+folded to that figure, a chevron after the label as on your bill's row, and
+unfolds to the sum written out as at school: "you paid 50.00", "your share
+− 20.00", the result under a rule (`effectSum` — an income's share comes first,
+since it is what moved you up). Always one figure under the other, digits
+aligned whichever side the locale puts the code; the result moves down into
+the sum rather than being printed twice.
 
 ## Nothing waits in silence
 

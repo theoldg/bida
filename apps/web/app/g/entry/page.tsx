@@ -9,7 +9,7 @@ import {
   type CurrencyCode, type Expense, type Group, type Op, type RateSource, type Settlement,
 } from "@bida/core";
 import { Card, Eyebrow, KV, signClass } from "@/components/bits";
-import { FitLine, FitTitle, useRefit } from "@/components/fit-line";
+import { FitLine, FitTitle } from "@/components/fit-line";
 import { MemberBill } from "@/components/member-bill";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { Icon } from "@/components/icons";
@@ -20,7 +20,6 @@ import { db } from "@/lib/db/dexie";
 import { syncGroup } from "@/lib/db/sync";
 import { useLive } from "@/lib/db/live";
 import { effectSum, kindOf, type EntryKind } from "@/lib/entry-kind";
-import { fitIndex, styleOf, textWidth } from "@/lib/fit";
 import { copy } from "@/lib/copy";
 import { money, moneyParts, plural, whenLabel } from "@/lib/format";
 import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
@@ -392,57 +391,48 @@ function bare(minor: number, currency: CurrencyCode): string {
 }
 
 /**
- * Room the one-line sum must have to spare, beyond the `.kv` gap, before it
- * stays on the line: one that only just fits crowds its label.
- */
-const SUM_SLACK = 24;
-
-/**
  * What this entry did to your balance — the ledger row's second figure,
  * signed and coloured as it is there. When two of the card's numbers made it
- * (you paid and had a share), it is written as their difference, uncoloured:
- * "50.00 − 20.00 = +CRD 30.00" beside the label, and as soon as that stops
- * fitting comfortably, written out as at school: one number under the other
- * and the result under a rule.
+ * (you paid and had a share), it opens folded to that figure, a chevron after
+ * the label as on your bill's row, and unfolds to the sum written out as at
+ * school: each figure under the other beside the words for what it is, and
+ * the result under a rule, where it moves rather than being printed twice.
  */
-function YourBalance({ up, down, net, currency }: {
-  up: number; down: number; net: number; currency: CurrencyCode;
+function YourBalance({ kind, up, down, net, currency }: {
+  kind: "expense" | "income"; up: number; down: number; net: number; currency: CurrencyCode;
 }) {
-  const both = up > 0 && down > 0;
+  const [open, setOpen] = useState(false);
   const result = money(net, currency, net !== 0);
-  const line = both ? `${bare(up, currency)} − ${bare(down, currency)} = ` : "";
-  const row = useRef<HTMLDivElement>(null);
-  const label = useRef<HTMLSpanElement>(null);
-  const fig = useRef<HTMLElement>(null);
-  const [column, setColumn] = useState(false);
-
-  useRefit(row, (el) => {
-    if (!both) return setColumn(false);
-    if (!label.current || !fig.current) return;
-    // A mono face: the bold result advances like the regular sum.
-    const sum = textWidth(line + result, styleOf(fig.current));
-    // The `.kv` gap between label and figure, then the slack.
-    setColumn(fitIndex([label.current.offsetWidth + 12 + SUM_SLACK + sum, 0], el.clientWidth) === 1);
-  }, [line, result, both]);
-
+  // Set as the cards' section heads are ("SPLIT BY ITEMS"), since it is one.
+  const label = copy.entry.yourBalance;
+  if (!(up > 0 && down > 0)) {
+    return (
+      <div className="kv yourbal">
+        <span className="k eyebrow">{label}</span>
+        <span className="v"><b className={signClass(net)}>{result}</b></span>
+      </div>
+    );
+  }
+  const [upWord, downWord] = copy.entry.sumWords[kind];
   // Whatever follows the last digit ("zł", or a code the locale puts after)
   // is a column of its own, so the result's digits stand under the operands'.
   const cut = result.search(/\d\D*$/) + 1;
-  // One root whatever the form, so the observer above keeps watching it.
   return (
-    <div ref={row} className={column ? "yourbal col" : "kv yourbal"}>
-      {/* Set as the cards' section heads are ("SPLIT BY ITEMS"), since it is one. */}
-      <span ref={label} className="k eyebrow">{copy.entry.yourBalance}</span>
-      {column ? (
-        <div className="sumcol">
-          <span>{bare(up, currency)}</span><span />
-          <span>− {bare(down, currency)}</span><span />
-          <b ref={fig} className={`eq ${signClass(net)}`}>{result.slice(0, cut)}</b>
+    <div className="yourbal">
+      <button type="button" className="kv" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <span className="k eyebrow">
+          {label}<Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />
+        </span>
+        <span className="v">{open ? null : <b className={signClass(net)}>{result}</b>}</span>
+      </button>
+      {open ? (
+        <div className="sumrows">
+          <span className="w">{upWord}</span><span>{bare(up, currency)}</span><span />
+          <span className="w">{downWord}</span><span>− {bare(down, currency)}</span><span />
+          <span /><b className={`eq ${signClass(net)}`}>{result.slice(0, cut)}</b>
           <b className={`eq ${signClass(net)}`}>{result.slice(cut)}</b>
         </div>
-      ) : (
-        <span className="v">{line}<b ref={fig} className={signClass(net)}>{result}</b></span>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -528,7 +518,7 @@ function ExpenseDetail({ expense, kind, group, data }: {
       {/* Unless you neither paid nor had a share. */}
       {me && kind !== "transfer" && ((putIn[me] ?? 0) > 0 || participants.includes(me)) ? (
         <div className="balline">
-          <YourBalance {...effectSum(kind, putIn[me] ?? 0, participants.includes(me) ? shares[me] ?? 0 : 0)}
+          <YourBalance kind={kind} {...effectSum(kind, putIn[me] ?? 0, participants.includes(me) ? shares[me] ?? 0 : 0)}
             currency={group.baseCurrency} />
         </div>
       ) : null}
