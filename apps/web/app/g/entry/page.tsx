@@ -25,7 +25,7 @@ import { copy } from "@/lib/copy";
 import { money, moneyParts, plural, whenLabel } from "@/lib/format";
 import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
-import { useFold } from "@/lib/fold";
+import { slidingDock, useFold } from "@/lib/fold";
 import { markReturn } from "@/lib/nav";
 import { historyMeta } from "@/lib/row-meta";
 import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
@@ -266,7 +266,7 @@ function EntryScreen() {
             way into this entry's history — who made it, or how often it changed
             and who last — quiet, since it is read more than it is pressed. A
             deleted entry keeps it where Edit would be. */}
-        <div className="pad whodock" style={{ paddingTop: 2 }}>
+        <div className="pad whodock" ref={slidingDock} style={{ paddingTop: 2 }}>
           {/* The link is the words, not the line: the rest of the dock's width
               is nothing to press. */}
           <div className="entryhist">
