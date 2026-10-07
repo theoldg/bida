@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { plannedCount } from "@bida/core";
+import { otherCurrencies, plannedCount, ratesWanted } from "@bida/core";
 import { Blank, Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { CreateAs } from "@/components/create-as";
 import { copy } from "@/lib/copy";
@@ -11,6 +11,7 @@ import { importGroup } from "@/lib/db/commands";
 import { plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { setPendingImport, usePendingImport } from "@/lib/import/pending";
+import { lookUpRates, RatesUnavailableError } from "@/lib/import/rates";
 import { useRefusal } from "@/lib/refusal";
 
 /**
@@ -40,6 +41,21 @@ export default function ImportPlanPage() {
 
   if (!pending) return <Blank title={words.title} back={route.import()} />;
   const { plan, name } = pending;
+  const others = otherCurrencies(plan);
+
+  /** Rates first, when the file needs any: nothing is written unless every currency has one. */
+  async function create(me: string): Promise<string> {
+    let rateFor;
+    if (ratesWanted(plan).length > 0) {
+      try {
+        rateFor = await lookUpRates(plan);
+      } catch (err) {
+        if (!(err instanceof RatesUnavailableError)) throw err;
+        throw new Error(err.offline ? words.noRatesOffline : words.noRates(err.currencies.join(", ")));
+      }
+    }
+    return (await importGroup(plan, { name: name.trim(), myName: me, rateFor })).groupId;
+  }
 
   /** The group's name is the one thing the file cannot tell us, so it is asked. */
   function next() {
@@ -58,7 +74,7 @@ export default function ImportPlanPage() {
         // Onto the plan, so the group is written with them as a member.
         onAdd={(who) => setPendingImport({ name, plan: { ...plan, members: [...plan.members, who] } })}
         onBack={() => setAsking(false)}
-        create={async (me) => (await importGroup(plan, { name: name.trim(), myName: me })).groupId}
+        create={create}
         failedText={words.failed} />
     );
   }
@@ -80,9 +96,11 @@ export default function ImportPlanPage() {
                     into four lines of comma-separated text. */}
                 <Fact label={words.people} value={String(plan.members.length)} />
                 <Fact label={words.currency} value={currencyLabel(plan.currency)} />
+                {others.length > 0 ? <Fact label={words.alsoIn} value={others.join(", ")} /> : null}
                 {/* One count: a transfer is one of the kinds of entry (ADR-0010). */}
                 <Fact label={words.entries} value={String(plannedCount(plan))} />
               </div>
+              {others.length > 0 ? <p className="keynote">{words.priced}</p> : null}
               {plan.dropped.length > 0
                 ? <p className="keynote">{words.dropped(plural(plan.dropped.length, copy.noun.row))}</p>
                 : null}

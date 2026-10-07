@@ -34,7 +34,7 @@ call bunq itself. `/about` names both in its privacy section, this one in
 photo, in the same place a person can still change their mind
 (`apps/api/src/index.ts`).
 
-Six pieces, each in the layer that owns it:
+Seven pieces, each in the layer that owns it:
 
 | | |
 | --- | --- |
@@ -43,6 +43,7 @@ Six pieces, each in the layer that owns it:
 | `lib/import/csv.ts` | The bytes: an RFC 4180 state machine, the size guard, and the group name off the filename. A dialect is a parsing decision about somebody else's file, not domain arithmetic, so it is not in core — and it is not a dependency, since a library that auto-detects the delimiter is working against a reader whose whole rule is to refuse rather than guess. `parseCsv` is one swappable function if that changes |
 | `lib/import/tricount.ts` | The link: the key out of whatever was pasted, a throwaway RSA public key the handshake wants, and one POST to `/api/tricount`. The private half is dropped where it is made, since nothing in that protocol signs anything |
 | `core/import-shape.ts` | Each planned row as written: currency, rate, split mode and id, checked to read back as the plan ([data-model.md](data-model.md#writing-a-plan)) |
+| `lib/import/rates.ts` | A CSV's other currencies priced: one lookup per currency per day, six at a time, before anything is written. The plan screen says so under the readout, and a currency with no rate at all is the import's failure, named |
 | `lib/db/commands/import.ts` | The plan as **one `appendOps` batch** under one actor: a hundred rows are not a hundred things somebody did a millisecond apart, and one batch is also the only atomic shape |
 
 **History says an entry was imported**, since every row shares the import's

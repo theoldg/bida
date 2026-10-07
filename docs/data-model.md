@@ -369,9 +369,18 @@ Reading is **liberal where writing is strict**: CRLF, a lone CR, a BOM, a
 case-folded header, blank lines anywhere and short rows are all accepted, since
 a file arriving here has been through somebody else's export, a mail client and
 possibly Excel. What is refused rather than guessed: a date that is not
-`YYYY-MM-DD` (`01/02` is two days on two continents), more than one currency
-(no rate can be supplied and the foot sums across them), and a cell finer than
+`YYYY-MM-DD` (`01/02` is two days on two continents), and a cell finer than
 its currency.
+
+**A file may mix currencies.** Each row's figures are in its own `Currency`,
+and each currency needs its own `Total balance` row, checked in that currency —
+nothing is converted to read it. The currency most rows are in becomes the
+group's; a row in another keeps its currency and is priced when the group is
+written, at the rate on its own day (`ratesWanted`, `lib/import/rates.ts`). A
+day the feed misses borrows the nearest day it answered (`copied`); a currency
+it answers for on no day stops the import. A foot per currency is our reading
+of Splitwise, whose multi-currency export nobody documents: a file with one foot
+summed across currencies is refused, its checksum being meaningless.
 
 ### Reading a tricount back
 
@@ -431,8 +440,12 @@ fits, so the balances never depend on what was picked.
 so `seedFor` searches ids for one ranking the source's cent-takers first. The
 odds are 1/C(n, k) for k cents among n people; the id is a hashed prefix, so a
 try varies only the UUID's last twelve digits and costs a few dozen steps per
-member, and each search is capped at 5 ms before falling through. A CSV has no
-parts and no other currency, so only Evenly applies there.
+member, and each search is capped at 5 ms before falling through.
+
+**A CSV row in another currency skips the search**: its base figures don't
+exist until the rate does, so there is nothing to match. It is Evenly when its
+own shares are within a cent of each other, else Amounts in its own currency,
+and its foot vouched for it.
 
 *Gotcha:* FNV-1a orders ids alike but for their last character rigidly — over
 `m0`…`m9` some orders never occur. Test with ids `memberIdFor` makes.

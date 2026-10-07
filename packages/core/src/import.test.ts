@@ -3,7 +3,7 @@ import { computeBalances } from "./balance.js";
 import { groupToCsv } from "./export.js";
 import { ADA, ALL, GROUP, MARIE, MAD_RATE, OpBuilder, SAM, THEO, marrakechOps } from "./fixtures.test-helper.js";
 import { foldOps } from "./fold.js";
-import { ImportError, readCsvGroup, type ImportPlan } from "./import.js";
+import { ImportError, otherCurrencies, ratesWanted, readCsvGroup, type ImportPlan } from "./import.js";
 import { convertMinor } from "./money.js";
 import type { Op } from "./ops.js";
 import type { SplitSpec } from "./types.js";
@@ -421,6 +421,54 @@ describe("currencies that are not two decimals", () => {
   });
 });
 
+describe("a file in several currencies", () => {
+  const madFoot = (ada: string, theo: string) =>
+    ["2026-09-18", "Total balance", " ", " ", "MAD", ada, theo];
+  const plan = read(file(
+    ["2026-04-03", "Dinner", "General", "30.00", "EUR", "-15.00", "15.00"],
+    ["2026-04-04", "Tagine", "General", "300.00", "MAD", "-150.00", "150.00"],
+    ["2026-04-05", "Riad", "General", "90.00", "EUR", "45.00", "-45.00"],
+    ["2026-04-05", "Settling", "Payment", "100.00", "MAD", "100.00", "-100.00"],
+    foot("30.00", "-30.00"),
+    madFoot("-50.00", "50.00"),
+  ));
+
+  it("takes the currency most rows are in as the group's", () => {
+    expect(plan.currency).toBe("EUR");
+  });
+
+  it("keeps every other row in its own currency, figures untouched", () => {
+    expect(plan.entries.map((e) => [e.description, e.currency, e.amountMinor]))
+      .toEqual([["Dinner", undefined, 3000], ["Tagine", "MAD", 30000], ["Riad", undefined, 9000]]);
+    expect(plan.transfers[0]).toMatchObject({ from: "ada", to: "theo", amountMinor: 10000, currency: "MAD" });
+  });
+
+  it("checks each currency against its own foot", () => {
+    expect(plan.stated).toEqual({ ada: 3000, theo: -3000 });
+    expect(plan.statedOther).toEqual({ MAD: { ada: -5000, theo: 5000 } });
+    expect(refusal(file(
+      ["2026-04-03", "Dinner", "General", "30.00", "EUR", "-15.00", "15.00"],
+      ["2026-04-04", "Tagine", "General", "300.00", "MAD", "-150.00", "150.00"],
+      foot("-15.00", "15.00"),
+      madFoot("-149.00", "149.00"),
+    ))).toBe("checksum");
+  });
+
+  it("asks for one rate per foreign currency per day, and names the others busiest first", () => {
+    expect(ratesWanted(plan)).toEqual([{ currency: "MAD", day: "2026-04-04" }, { currency: "MAD", day: "2026-04-05" }]);
+    expect(otherCurrencies(plan)).toEqual(["MAD"]);
+  });
+
+  it("still reads a blank Currency cell as the one a single-currency file is in", () => {
+    const one = read(file(
+      ["2026-04-03", "Dinner", "General", "30.00", "", "-15.00", "15.00"],
+      foot("-15.00", "15.00"),
+    ));
+    expect(one.currency).toBe("EUR");
+    expect(ratesWanted(one)).toEqual([]);
+  });
+});
+
 describe("what it refuses, and why each one would have needed a guess", () => {
   it("a file that is not this shape", () => {
     expect(refusal([["Paid by", "Paid for", "Amount"], ["a", "b", "1"]])).toBe("header");
@@ -444,23 +492,41 @@ describe("what it refuses, and why each one would have needed a guess", () => {
     ])).toBe("blank-member");
   });
 
-  it("more than one currency, because v1 has no rate to price them against", () => {
-    let code = "";
-    let detail = "";
-    try {
-      read(file(
-        ["2026-04-03", "Dinner", "General", "30.00", "EUR", "-15.00", "15.00"],
-        ["2026-04-04", "Tagine", "General", "300.00", "MAD", "-150.00", "150.00"],
-        foot("-165.00", "165.00"),
-      ));
-    } catch (err) {
-      if (!(err instanceof ImportError)) throw err;
-      code = err.code;
-      detail = err.detail ?? "";
-    }
-    expect(code).toBe("mixed-currency");
-    // Named, so the person knows which file to go and fix.
-    expect(detail).toBe("EUR, MAD");
+  it("a currency with no foot of its own, since the feet are checked one currency each", () => {
+    const err = (() => {
+      try {
+        read(file(
+          ["2026-04-03", "Dinner", "General", "30.00", "EUR", "-15.00", "15.00"],
+          ["2026-04-04", "Tagine", "General", "300.00", "MAD", "-150.00", "150.00"],
+          foot("-15.00", "15.00"),
+        ));
+      } catch (e) {
+        if (e instanceof ImportError) return e;
+        throw e;
+      }
+      throw new Error("expected a refusal");
+    })();
+    expect(err.code).toBe("no-foot");
+    // Named, so the person knows which rows have nothing to check them.
+    expect(err.detail).toBe("MAD");
+  });
+
+  it("two feet for one currency", () => {
+    expect(refusal(file(
+      ["2026-04-03", "Dinner", "General", "30.00", "EUR", "-15.00", "15.00"],
+      foot("-15.00", "15.00"),
+      foot("-15.00", "15.00"),
+    ))).toBe("duplicate-foot");
+  });
+
+  it("a row with no currency in a file that has several", () => {
+    expect(refusal(file(
+      ["2026-04-03", "Dinner", "General", "30.00", "EUR", "-15.00", "15.00"],
+      ["2026-04-04", "Tagine", "General", "300.00", "", "-150.00", "150.00"],
+      ["2026-04-04", "Mint tea", "General", "30.00", "MAD", "-15.00", "15.00"],
+      foot("-15.00", "15.00"),
+      ["2026-09-18", "Total balance", " ", " ", "MAD", "-165.00", "165.00"],
+    ))).toBe("blank-currency");
   });
 
   it("a currency cell that is not three letters", () => {

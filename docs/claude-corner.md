@@ -25,10 +25,9 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
-- *2026-10-07* — "Did currencies unlock imports? Evenly and parts?" — a
-  question, then "isn't the worst case a ton of ids?", then "cap it, ship
-  it". Answer the doubt with the numbers before defending the design; they
-  were steering toward the better search, not away from the feature.
+- *2026-10-07* — "Isn't the worst case a ton of ids?", then "cap it, ship
+  it", then four words for a whole feature: "do multi-currency csv". Answer
+  doubt with numbers, not defence; they were steering, not stopping.
 
 - *2026-10-07* — "Retake the screenshots", nothing else. The committed six
   are the ones that go stale, so `readme-shots`; rebuild, look at each

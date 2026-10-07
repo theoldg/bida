@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { computeBalances } from "./balance.js";
 import { readCsvGroup, type ImportPlan, type PlannedEntry } from "./import.js";
-import { rateReproducing, seedFor, shapeEntry, shapeTransfer } from "./import-shape.js";
+import { rateReproducing, seedFor, shapeEntry, shapeTransfer, type DayRate, type RateFor } from "./import-shape.js";
 import { convertMinor, type CurrencyCode } from "./money.js";
 import { memberIdFor } from "./names.js";
 import { resolveEntrySplit, resolveSplit } from "./split.js";
@@ -59,12 +59,12 @@ function planned(over: Partial<PlannedEntry> & Pick<PlannedEntry, "amountMinor" 
 }
 
 /** Every entry and transfer shaped, written as rows, and balanced the way the app does. */
-function land(plan: ImportPlan, now: () => number = ticking()): {
+function land(plan: ImportPlan, now: () => number = ticking(), rateFor?: RateFor): {
   byName: Record<string, number>;
   expenses: Expense[];
   settlements: Settlement[];
 } {
-  const options = { newId: ids(), now };
+  const options = { newId: ids(), now, rateFor };
   const expenses = plan.entries.map((e): Expense => {
     const s = shapeEntry(e, plan.currency, idOf, options);
     return {
@@ -76,7 +76,7 @@ function land(plan: ImportPlan, now: () => number = ticking()): {
     };
   });
   const settlements = plan.transfers.map((t, i): Settlement => {
-    const s = shapeTransfer(t, plan.currency);
+    const s = shapeTransfer(t, plan.currency, rateFor);
     return {
       id: `t${i}`, groupId: "g", fromMember: idOf(t.from), toMember: idOf(t.to),
       ...s, baseAmountMinor: convertMinor(s.amountMinor, s.currency, plan.currency, s.rateToBase),
@@ -321,5 +321,57 @@ describe("a tricount in two currencies, split by parts", () => {
     const again = readTricount(broken, { dayToTimestamp: day });
     expect(again.entries[1]!.local).toBeUndefined();
     expect(land(again).expenses[1]!.currency).toBe("JPY");
+  });
+});
+
+describe("a CSV in two currencies, priced by day", () => {
+  const rows = [
+    ["Date", "Description", "Category", "Cost", "Currency", "Ana", "Bo"],
+    ["2026-04-03", "Dinner", "General", "30.00", "EUR", "15.00", "-15.00"],
+    ["2026-04-04", "Tagine", "General", "301.00", "MAD", "-150.50", "150.50"],
+    ["2026-04-05", "Riad", "General", "90.00", "EUR", "-45.00", "45.00"],
+    ["2026-04-05", "Coffee", "General", "4.00", "EUR", "2.00", "-2.00"],
+    ["2026-04-06", "Coffee", "General", "4.00", "EUR", "2.00", "-2.00"],
+    ["2026-04-05", "Rugs", "General", "500.00", "MAD", "400.00", "-400.00"],
+    ["2026-04-06", "Settling", "Payment", "100.00", "MAD", "100.00", "-100.00"],
+    ["2026-09-18", "Total balance", " ", " ", "EUR", "-26.00", "26.00"],
+    ["2026-09-18", "Total balance", " ", " ", "MAD", "349.50", "-349.50"],
+  ];
+  const plan = readCsvGroup(rows, { dayToTimestamp: day });
+  const rates: Record<string, DayRate> = {
+    "MAD 2026-04-04": { rate: "0.0921", source: "fetched" },
+    "MAD 2026-04-05": { rate: "0.0925", source: "fetched" },
+    "MAD 2026-04-06": { rate: "0.0925", source: "copied" },
+  };
+  const rateFor: RateFor = (currency, d) => rates[`${currency} ${d}`];
+
+  it("writes each foreign row in its own currency at its own day's rate", () => {
+    const { expenses, settlements } = land(plan, ticking(), rateFor);
+    expect(expenses.map((e) => [e.description, e.currency, e.rateToBase, e.rateSource])).toEqual([
+      ["Dinner", "EUR", "1", null],
+      ["Tagine", "MAD", "0.0921", "fetched"],
+      ["Riad", "EUR", "1", null],
+      ["Coffee", "EUR", "1", null],
+      ["Coffee", "EUR", "1", null],
+      ["Rugs", "MAD", "0.0925", "fetched"],
+    ]);
+    expect(settlements[0]).toMatchObject({ currency: "MAD", amountMinor: 10000, rateToBase: "0.0925", rateSource: "copied" });
+  });
+
+  it("splits a foreign row Evenly when its own shares are even, Amounts when not", () => {
+    const { expenses } = land(plan, ticking(), rateFor);
+    expect(expenses[1]!.split.mode).toBe("equal");
+    expect(expenses[5]!.split).toEqual({ mode: "exact", amounts: { [idOf("Ana")]: 10000, [idOf("Bo")]: 40000 } });
+  });
+
+  it("balances to the base foot plus the other foot at each row's rate, give or take each row's rounding", () => {
+    const { byName } = land(plan, ticking(), rateFor);
+    expect(byName["Ana"]! + byName["Bo"]!).toBe(0);
+    // -26 EUR; owes 150.50 MAD at 0.0921; up 400 MAD and then 100 more, at 0.0925.
+    expect(Math.abs(byName["Ana"]! - (-2600 - 1386 + 3700 + 925))).toBeLessThanOrEqual(2);
+  });
+
+  it("refuses to write a foreign row with no rate, rather than banking it at 1", () => {
+    expect(() => land(plan, ticking(), () => undefined)).toThrow(/no rate for MAD/);
   });
 });

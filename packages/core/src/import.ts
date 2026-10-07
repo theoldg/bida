@@ -20,6 +20,12 @@ import type { ImportSource } from "./types.js";
  * The `Total balance` foot is the checksum: recomputing it from the plan catches
  * a misread column, a wrong drop and rounding drift. It can't catch an income
  * read backwards (nets zero); a test holds that.
+ *
+ * **A file may mix currencies.** Every row's figures are in its own `Currency`,
+ * and each currency has its own foot, checked in that currency — nothing here
+ * converts. The one most rows are in becomes the group's; a row in another
+ * carries `currency`, and is priced at the rate for its day when it is written
+ * (`ratesWanted`, `shapeEntry`).
  */
 
 /** The five cells the format dictates, and the tokens `export.ts` writes into them. */
@@ -44,12 +50,16 @@ export type ImportRefusalCode =
   | "bad-member-name"
   /** A row with more cells than the header has columns. */
   | "extra-cells"
-  /** More than one `Currency` in the file. v1 has no rate to price them against. */
+  /** A tricount stating more than one currency, which has no rates to bridge them. (`tricount.ts`) */
   | "mixed-currency"
   /** A `Currency` cell that is not three letters. */
   | "unknown-currency"
-  /** No `Total balance` row, so there is no checksum to import against. */
+  /** A row with no `Currency` in a file that has several, so no telling which. */
+  | "blank-currency"
+  /** No `Total balance` row — or none for one of the file's currencies — so nothing to check against. */
   | "no-foot"
+  /** Two `Total balance` rows for one currency: which one is the checksum? */
+  | "duplicate-foot"
   /** A `Date` cell that is not `YYYY-MM-DD`. Guessing between 01/02 and 02/01 is not on. */
   | "bad-date"
   /** A `Cost` or member cell that is not a number. */
@@ -119,6 +129,12 @@ export interface PlannedEntry {
   local?: LocalMoney;
   /** name -> the parts the source split by. Tricount's `RATIO` allocations. */
   parts?: Record<string, number>;
+  /**
+   * The currency every figure on this row is in, when not the plan's: a CSV
+   * row in another currency, priced at the rate for its day when written.
+   * Absent means the plan's — the only case for a tricount.
+   */
+  currency?: CurrencyCode;
   /** 1-based line it came from, for the summary screen. */
   line: number;
 }
@@ -147,6 +163,8 @@ export interface PlannedTransfer {
   note: string | null;
   /** As `PlannedEntry.local`, without shares. */
   local?: Omit<LocalMoney, "owed">;
+  /** As `PlannedEntry.currency`. */
+  currency?: CurrencyCode;
   day: string;
   occurredAt: number;
   line: number;
@@ -172,6 +190,8 @@ export interface ImportPlan {
   dropped: DroppedRow[];
   /** name -> minor units, as the file's `Total balance` row states them. */
   stated: Record<string, number>;
+  /** The same for each other currency a CSV holds, in that currency's minor units. */
+  statedOther?: Record<CurrencyCode, Record<string, number>>;
 }
 
 /** One row, with its line number and the cells padded out to the header's width. */
@@ -231,38 +251,73 @@ export function readCsvGroup(
     while (row.cells.length < width) row.cells.push("");
   }
 
-  const currency = readCurrency(body);
-  const exp = exponentOf(currency);
+  const currencyOf = readCurrencies(body);
 
   // Found by its `Description`, never by position: its `Date` cell holds a real
   // date, so a shape-based reader books the checksum as an expense.
-  const footIndex = body.findIndex((row) => token(row.cells[1]) === TOTAL_BALANCE);
-  if (footIndex === -1) {
-    throw new ImportError("no-foot", "no Total balance row");
+  const isFoot = (row: Line) => token(row.cells[1]) === TOTAL_BALANCE;
+  const feet = new Map<CurrencyCode, Record<string, number>>();
+  for (const row of body) {
+    if (!isFoot(row)) continue;
+    const code = currencyOf(row);
+    if (feet.has(code)) {
+      throw new ImportError("duplicate-foot", `line ${row.line}: a second foot for ${code}`, row.line, code);
+    }
+    const stated: Record<string, number> = {};
+    members.forEach((name, i) => {
+      stated[name] = amount(row, HEADER.length + i, code, exponentOf(code));
+    });
+    feet.set(code, stated);
   }
-  const foot = body[footIndex]!;
-  const stated: Record<string, number> = {};
-  members.forEach((name, i) => {
-    stated[name] = amount(foot, HEADER.length + i, currency, exp);
-  });
+  if (feet.size === 0) throw new ImportError("no-foot", "no Total balance row");
 
   const entries: PlannedEntry[] = [];
   const transfers: PlannedTransfer[] = [];
   const dropped: DroppedRow[] = [];
+  /** Rows per currency, in order of first appearance, to choose the group's by. */
+  const counts = new Map<CurrencyCode, number>();
 
-  body.forEach((row, i) => {
-    if (i === footIndex) return;
-    const read = readRow(row, members, currency, exp, dayToTimestamp);
-    if (read.kind === "dropped") dropped.push(read.row);
-    else if (read.kind === "transfer") transfers.push(read.row);
-    else entries.push(read.row);
-  });
+  for (const row of body) {
+    if (isFoot(row)) continue;
+    const code = currencyOf(row);
+    const read = readRow(row, members, code, exponentOf(code), dayToTimestamp);
+    if (read.kind === "dropped") {
+      dropped.push(read.row);
+      continue;
+    }
+    if (!feet.has(code)) {
+      throw new ImportError("no-foot", `no Total balance row for ${code}`, undefined, code);
+    }
+    counts.set(code, (counts.get(code) ?? 0) + 1);
+    if (read.kind === "transfer") transfers.push({ ...read.row, currency: code });
+    else entries.push({ ...read.row, currency: code });
+  }
 
   if (entries.length === 0 && transfers.length === 0) {
     throw new ImportError("no-entries", "nothing to import");
   }
 
-  const plan: ImportPlan = { source: "file", currency, members, entries, transfers, dropped, stated };
+  // The busiest currency is the group's; a tie goes to whichever came first.
+  let currency = [...counts.keys()][0]!;
+  for (const [code, n] of counts) if (n > counts.get(currency)!) currency = code;
+  const ownCurrency = <T extends { currency?: CurrencyCode }>(row: T): T => {
+    if (row.currency !== currency) return row;
+    const { currency: _, ...rest } = row;
+    return rest as T;
+  };
+  const statedOther: Record<CurrencyCode, Record<string, number>> = {};
+  for (const [code, stated] of feet) if (code !== currency) statedOther[code] = stated;
+
+  const plan: ImportPlan = {
+    source: "file",
+    currency,
+    members,
+    entries: entries.map(ownCurrency),
+    transfers: transfers.map(ownCurrency),
+    dropped,
+    stated: feet.get(currency)!,
+    ...(Object.keys(statedOther).length > 0 ? { statedOther } : {}),
+  };
   checkStated(plan);
   return plan;
 }
@@ -312,19 +367,36 @@ export function checkMemberNames(names: readonly string[], line?: number): void 
   }
 }
 
-/** The file's one currency. */
-function readCurrency(body: readonly Line[]): CurrencyCode {
-  return oneCurrency(body.map((row) => ({
-    code: text(row.cells[HEADER.length - 1]).toLocaleUpperCase(),
-    line: row.line,
-  })));
+/**
+ * Each row's currency. A blank cell says nothing, which is fine while the file
+ * holds one currency — it can only be that one — and refused once it holds
+ * several.
+ */
+function readCurrencies(body: readonly Line[]): (row: Line) => CurrencyCode {
+  const codeOf = (row: Line) => text(row.cells[HEADER.length - 1]).toLocaleUpperCase();
+  const found = new Set<CurrencyCode>();
+  for (const row of body) {
+    const code = codeOf(row);
+    if (code === "") continue;
+    if (!isCurrencyCode(code)) {
+      throw new ImportError("unknown-currency", `line ${row.line}: ${code} is not a currency`, row.line, code);
+    }
+    found.add(code);
+  }
+  if (found.size === 0) throw new ImportError("unknown-currency", "nothing states a currency");
+  const only = found.size === 1 ? [...found][0]! : undefined;
+  return (row) => {
+    const code = codeOf(row);
+    if (code !== "") return code;
+    if (only) return only;
+    throw new ImportError("blank-currency", `line ${row.line} states no currency`, row.line);
+  };
 }
 
 /**
- * A source's one currency, from every code it states, already upper-cased;
- * blanks say nothing. More than one is refused by name: v1 has no rate to
- * bridge them, and the stated balances sum across them, so the checksum would
- * be meaningless. Shared with `tricount.ts`.
+ * A tricount's one currency, from every code it states, already upper-cased;
+ * blanks say nothing. More than one is refused by name: its `amount`s are all
+ * in the tricount's own, so a second means a payload we don't understand.
  */
 export function oneCurrency(stated: Iterable<{ code: string; line?: number }>): CurrencyCode {
   const found = new Set<string>();
@@ -524,30 +596,66 @@ export function isRealDay(day: string): boolean {
  * here too.
  */
 export function checkStated(plan: ImportPlan): void {
-  const computed: Record<string, number> = {};
-  const move = (name: string, minor: number) => {
-    computed[name] = at(computed, name) + minor;
+  /** Per currency, since nothing here converts: each foot is in its own. */
+  const computed = new Map<CurrencyCode, Record<string, number>>();
+  const move = (code: CurrencyCode, name: string, minor: number) => {
+    const sums = computed.get(code) ?? {};
+    sums[name] = at(sums, name) + minor;
+    computed.set(code, sums);
   };
-  for (const name of plan.members) computed[name] = 0;
 
   for (const e of plan.entries) {
+    const code = e.currency ?? plan.currency;
     const sign = e.kind === "income" ? -1 : 1;
-    for (const [name, minor] of Object.entries(e.paid)) move(name, sign * minor);
-    for (const [name, minor] of Object.entries(e.owed)) move(name, -sign * minor);
+    for (const [name, minor] of Object.entries(e.paid)) move(code, name, sign * minor);
+    for (const [name, minor] of Object.entries(e.owed)) move(code, name, -sign * minor);
   }
   for (const t of plan.transfers) {
-    move(t.from, t.amountMinor);
-    move(t.to, -t.amountMinor);
+    const code = t.currency ?? plan.currency;
+    move(code, t.from, t.amountMinor);
+    move(code, t.to, -t.amountMinor);
   }
 
-  const drift = plan.members
-    .filter((name) => at(computed, name) !== at(plan.stated, name))
-    .map((name) => `${name}: ${minorToDecimalString(at(computed, name), plan.currency)}`
-      + ` vs ${minorToDecimalString(at(plan.stated, name), plan.currency)}`);
+  const feet: [CurrencyCode, Record<string, number>][] = [
+    [plan.currency, plan.stated], ...Object.entries(plan.statedOther ?? {}),
+  ];
+  const drift: string[] = [];
+  for (const [code, stated] of feet) {
+    const sums = computed.get(code) ?? {};
+    for (const name of plan.members) {
+      if (at(sums, name) === at(stated, name)) continue;
+      drift.push(`${name}: ${minorToDecimalString(at(sums, name), code)}`
+        + ` vs ${minorToDecimalString(at(stated, name), code)}`);
+    }
+  }
   if (drift.length > 0) {
     throw new ImportError("checksum", "balances disagree with the foot", undefined,
       drift.join("; "));
   }
+}
+
+/**
+ * Every rate a plan needs before it can be written: one per foreign currency
+ * per day a row in it is dated. Sorted, so a lookup goes in a stable order.
+ */
+export function ratesWanted(plan: ImportPlan): { currency: CurrencyCode; day: string }[] {
+  const keys = new Set<string>();
+  for (const row of [...plan.entries, ...plan.transfers]) {
+    if (row.currency && row.currency !== plan.currency) keys.add(`${row.currency} ${row.day}`);
+  }
+  return [...keys].sort().map((key) => {
+    const [currency, day] = key.split(" ") as [CurrencyCode, string];
+    return { currency, day };
+  });
+}
+
+/** The currencies a plan holds besides its own, busiest first. */
+export function otherCurrencies(plan: ImportPlan): CurrencyCode[] {
+  const counts = new Map<CurrencyCode, number>();
+  for (const row of [...plan.entries, ...plan.transfers]) {
+    if (row.currency && row.currency !== plan.currency) counts.set(row.currency, (counts.get(row.currency) ?? 0) + 1);
+  }
+  return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([code]) => code);
 }
 
 /** How many entries a plan would write, which is what the summary counts. */

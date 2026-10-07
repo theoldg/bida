@@ -1,6 +1,6 @@
 import {
   colorSeedFor, memberIdFor, newGroupId, newGroupSecret, newId, shapeEntry, shapeTransfer,
-  type CurrencyCode, type Id, type ImportPlan, type OpDraft, type PlannedEntry, type PlannedTransfer,
+  type CurrencyCode, type Id, type ImportPlan, type OpDraft, type PlannedEntry, type PlannedTransfer, type RateFor,
 } from "@bida/core";
 import { appendOps } from "./append";
 import { expenseCreatePatch, settlementCreatePatch } from "./entries";
@@ -25,6 +25,8 @@ export interface ImportGroupInput {
   name: string;
   /** Who is holding this phone. Must be one of `plan.members`, which the screen's add row may have grown. */
   myName: string;
+  /** The rates a plan in several currencies needs (`lib/import/rates.ts`). */
+  rateFor?: RateFor;
 }
 
 /**
@@ -77,8 +79,8 @@ export async function importGroup(
       kind: "create",
       patch: { memberId: me, claimedAt: now },
     },
-    ...plan.entries.map((e) => expenseDraft(e, ids, plan.currency, now)),
-    ...plan.transfers.map((t) => transferDraft(t, ids, plan.currency, now)),
+    ...plan.entries.map((e) => expenseDraft(e, ids, plan.currency, now, input.rateFor)),
+    ...plan.transfers.map((t) => transferDraft(t, ids, plan.currency, now, input.rateFor)),
   ];
 
   await appendOps(groupId, me, drafts, now);
@@ -98,8 +100,9 @@ function expenseDraft(
   ids: Map<string, Id>,
   base: CurrencyCode,
   now: number,
+  rateFor?: RateFor,
 ): OpDraft {
-  const shape = shapeEntry(e, base, (name) => ids.get(name)!, { newId, now: () => performance.now() });
+  const shape = shapeEntry(e, base, (name) => ids.get(name)!, { newId, now: () => performance.now(), rateFor });
   return {
     entity: "expense",
     entityId: shape.id,
@@ -128,6 +131,7 @@ function transferDraft(
   ids: Map<string, Id>,
   base: CurrencyCode,
   now: number,
+  rateFor?: RateFor,
 ): OpDraft {
   return {
     entity: "settlement",
@@ -136,7 +140,7 @@ function transferDraft(
     patch: settlementCreatePatch({
       fromMember: ids.get(t.from)!,
       toMember: ids.get(t.to)!,
-      ...shapeTransfer(t, base),
+      ...shapeTransfer(t, base, rateFor),
       occurredAt: t.occurredAt,
       dateOnly: true,
       note: t.note,

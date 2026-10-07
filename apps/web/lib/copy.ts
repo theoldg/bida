@@ -165,6 +165,10 @@ export const copy = {
     /** The plan, before anything is written. */
     found: "What’s in the file",
     currency: "Currency",
+    /** A file's other currencies, busiest first, in the row under the group's own. */
+    alsoIn: "Also in",
+    /** Under the readout when there are other currencies: what happens to them. */
+    priced: "Those are converted at the rate on each entry’s day, looked up when the group is created.",
     people: "People",
     entries: "Entries",
     /**
@@ -176,6 +180,9 @@ export const copy = {
     named: (group: string) => `Import ${group}`,
     act: "Create the group",
     failed: (why: string) => `Couldn’t import that file: ${why}`,
+    /** `failed`'s why when no rate at all came back for a currency the file uses. */
+    noRates: (codes: string) => `bida couldn’t look up any ${codes} rates. Try again in a while`,
+    noRatesOffline: "this phone can’t reach the internet to look up the rates",
 
     /**
      * One sentence per `ImportRefusalCode`. `line` is 1-based, the way a
@@ -189,11 +196,15 @@ export const copy = {
       "blank-member": () => "One of the people in it has no name at all. Name them where it came from.",
       "bad-member-name": (f) => `Somebody in it is called “${f.detail}”, which bida can’t use as a name. Rename them where it came from.`,
       "extra-cells": (f) => `Line ${f.line} has more cells than the file has columns (${f.detail}).`,
-      "mixed-currency": (f) => `That mixes ${f.detail}. bida can import one currency at a time, so split it or convert it first.`,
+      "mixed-currency": (f) => `That tricount states its amounts in ${f.detail}, which bida doesn’t know how to read.`,
       "unknown-currency": (f) => (f.detail
         ? `“${f.detail}” isn’t a currency bida knows.`
         : "No row in that file says which currency it is in."),
-      "no-foot": () => "That file has no “Total balance” row, so there is nothing to check the import against.",
+      "no-foot": (f) => (f.detail
+        ? `That file has no “Total balance” row for ${f.detail}, so there is nothing to check those rows against.`
+        : "That file has no “Total balance” row, so there is nothing to check the import against."),
+      "duplicate-foot": (f) => `Line ${f.line} is a second “Total balance” row for ${f.detail}, so there is no telling which one to check against.`,
+      "blank-currency": (f) => `Line ${f.line} doesn’t say which currency it is in, and the file has more than one.`,
       "bad-date": (f) => `Line ${f.line} has “${f.detail}” where a date should be. bida reads dates written as YYYY-MM-DD.`,
       "bad-amount": (f) => `Line ${f.line} has “${f.detail}” where an amount should be.`,
       "too-precise": (f) => `Line ${f.line} has an amount finer than its currency goes (${f.detail}).`,

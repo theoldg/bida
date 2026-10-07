@@ -20,6 +20,12 @@ import type { EntryRateSource, Id, SplitSpec } from "./types.js";
  * chosen yet, so `seedFor` searches for one that puts the cents where the
  * source did. Odds are 1/C(n, k) per id, so each search is capped in time and
  * a miss falls through to the next mode.
+ *
+ * **A CSV row in another currency is the exception**: its figures are in that
+ * currency and the base ones don't exist until a rate does, so there is
+ * nothing in base to match. It is written in its own currency at the rate for
+ * its day — Evenly when its shares are, Amounts otherwise — and the file's
+ * checksum, in that currency, is what vouched for it.
  */
 
 /** Per search. Past it, the entry falls through to the next mode: `exact` always fits. */
@@ -28,10 +34,21 @@ const SEARCH_MS = 5;
 /** A UUID's last group: twelve random hex digits, the part the search varies. */
 const TAIL = 12;
 
+/** A rate for a currency on a day, and where it came from. */
+export interface DayRate {
+  rate: Rate;
+  source: EntryRateSource;
+}
+
+/** The rates `ratesWanted` asked for, by currency and day. */
+export type RateFor = (currency: CurrencyCode, day: string) => DayRate | undefined;
+
 interface ShapeOptions {
   newId: () => Id;
   /** Milliseconds, any origin: `performance.now`. Core takes the clock as an argument. */
   now: () => number;
+  /** Needed only by a row with its own `currency`. */
+  rateFor?: RateFor;
 }
 
 export interface EntryShape {
@@ -67,6 +84,7 @@ export function shapeEntry(
 ): EntryShape {
   const owed = byId(e.owed, idOf);
   const paid = byId(e.paid, idOf);
+  if (e.currency && e.currency !== base) return priced(e, e.currency, owed, paid, options);
   // Parts all alike are Evenly, which says so plainer.
   const parts = e.parts && new Set(Object.values(e.parts)).size > 1 ? byId(e.parts, idOf) : undefined;
   const localOwed = e.local?.owed ? byId(e.local.owed, idOf) : undefined;
@@ -109,13 +127,48 @@ export function shapeEntry(
 }
 
 /** A plan's transfer as written: in the currency it was sent in, when a rate reproduces the base figure. */
-export function shapeTransfer(t: PlannedTransfer, base: CurrencyCode): {
+export function shapeTransfer(t: PlannedTransfer, base: CurrencyCode, rateFor?: RateFor): {
   currency: CurrencyCode; amountMinor: number; rateToBase: Rate; rateSource: EntryRateSource | null;
 } {
+  if (t.currency && t.currency !== base) {
+    const { rate, source } = rateOf(t.currency, t.day, t.line, rateFor);
+    return { currency: t.currency, amountMinor: t.amountMinor, rateToBase: rate, rateSource: source };
+  }
   const foreign = foreignMoney(t.local, t.amountMinor, base);
   return foreign
     ? { currency: foreign.currency, amountMinor: foreign.amountMinor, rateToBase: foreign.rate, rateSource: "imported" }
     : { currency: base, amountMinor: t.amountMinor, rateToBase: "1", rateSource: null };
+}
+
+/** A row whose figures are in another currency, at the rate for its day. */
+function priced(
+  e: PlannedEntry,
+  currency: CurrencyCode,
+  owed: Record<Id, number>,
+  paid: Record<Id, number>,
+  { newId, rateFor }: ShapeOptions,
+): EntryShape {
+  const { rate, source } = rateOf(currency, e.day, e.line, rateFor);
+  const shares = Object.values(owed);
+  // Even to the cent in its own currency; the base cents are the app's to place, as on any foreign entry.
+  const even = shares.length > 0 && Math.max(...shares) - Math.min(...shares) <= 1;
+  return {
+    id: newId(),
+    currency,
+    amountMinor: e.amountMinor,
+    rateToBase: rate,
+    rateSource: source,
+    split: even ? { mode: "equal", members: Object.keys(owed).sort() } : { mode: "exact", amounts: owed },
+    payers: paid,
+  };
+}
+
+function rateOf(currency: CurrencyCode, day: string, line: number, rateFor?: RateFor): DayRate {
+  const found = rateFor?.(currency, day);
+  if (!found || !isValidRate(found.rate)) {
+    throw new RangeError(`line ${line}: no rate for ${currency} on ${day}`);
+  }
+  return found;
 }
 
 /**
