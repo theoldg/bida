@@ -130,7 +130,9 @@ per-unit price and states no total. So:
   rather than by shared paragraphs (`apps/api/src/scan-body.test.ts`).
 - **A line states its price either way.** `amount` is what the whole line came
   to; `unitAmount` is the price of one, beside a `quantity`. The model fills
-  whichever the bill gives and never both, and `lineMinor` does the
+  whichever the bill gives and never both (neither for a measure — litres of
+  fuel, kilos — which the integer `quantity` would round and `correctOneLine`
+  would then "fix" the printed amount to), and `lineMinor` does the
   multiplication in integer minor units, where it is tested — asking a model for
   a figure the page does not hold is what makes it invent one. Only the
   multiplied one is written out: `readBill` keeps the model's own string for a
