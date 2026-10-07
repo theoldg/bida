@@ -961,6 +961,15 @@ export const copy = {
     discardTitleEdits: "Discard edits?",
     discardBody: "Changes will be lost.",
     saveFailed: (why: string) => `Couldn’t save: ${why}`,
+    /**
+     * The Save dock's line for each missing field or step, said only after a
+     * refused Save (`dockLine`, lib/entry-check.ts).
+     */
+    noRate: (code: string) => `The group has no ${code} rate yet. Tap the ? to set it.`,
+    noAmount: "Type an amount.",
+    noTitle: "Give it a title.",
+    noScan: "Scan the bill, or split it another way.",
+    noItemsGiven: "Say who had what on the bill.",
     goneMember: (name: string) => `${name} is no longer in the group. Pick somebody else.`,
     nobodyTitle: "Nobody in this group yet",
     nobodyBody: "Add the people sharing this first.",

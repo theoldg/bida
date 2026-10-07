@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ExchangeRate } from "@bida/core";
-import { checkEntry, needsRate } from "./entry-check";
+import { checkEntry, dockLine, needsRate, REFUSAL_ORDER, type Refusable } from "./entry-check";
 import { blankDraft, type EntryDraft } from "./draft";
 import { copy } from "./copy";
 
@@ -71,7 +71,7 @@ describe("checkEntry", () => {
   });
 
   describe("a currency the group has no rate for", () => {
-    it("holds Save, and says so by pointing rather than in words", () => {
+    it("holds Save, and says so by pointing until a Save is refused", () => {
       const c = check(expense({ currency: "MAD" }));
       expect(c.ready).toBe(false);
       // The form's rate badge blooms on the refused Save; nothing is written
@@ -268,5 +268,43 @@ describe("needsRate", () => {
 
   it("asks nothing of a group that hasn't loaded", () => {
     expect(needsRate({}, undefined, "MAD")).toBe(false);
+  });
+});
+
+describe("dockLine", () => {
+  const none = Object.fromEntries(REFUSAL_ORDER.map((k) => [k, false])) as Record<Refusable, boolean>;
+  const all = Object.fromEntries(REFUSAL_ORDER.map((k) => [k, true])) as Record<Refusable, boolean>;
+
+  it("says nothing when nothing is wrong, refused or not", () => {
+    expect(dockLine(none, false)).toBeNull();
+    expect(dockLine(none, true)).toBeNull();
+  });
+
+  it("says a missing field or step only after a refused Save", () => {
+    for (const k of ["rate", "receipt", "amount", "title"] as const) {
+      expect(dockLine({ ...none, [k]: true }, false)).toBeNull();
+      expect(dockLine({ ...none, [k]: true }, true)).toBe(k);
+    }
+  });
+
+  it("says the payers and the split unasked", () => {
+    expect(dockLine({ ...none, blocker: true }, false)).toBe("blocker");
+    expect(dockLine({ ...none, split: true }, false)).toBe("split");
+  });
+
+  it("says one thing, least obvious first", () => {
+    // Fixing each in turn walks the order: a rate nothing on the form shows
+    // before the empty fields that show themselves.
+    const left = { ...all };
+    for (const k of REFUSAL_ORDER) {
+      expect(dockLine(left, true)).toBe(k);
+      left[k] = false;
+    }
+    expect(dockLine(left, true)).toBeNull();
+  });
+
+  it("puts the standing sentences first while nothing has been refused", () => {
+    expect(dockLine(all, false)).toBe("blocker");
+    expect(dockLine({ ...all, blocker: false }, false)).toBe("split");
   });
 });

@@ -70,8 +70,8 @@ interface EntryCheck {
   titleMissing: boolean;
   /**
    * Receipt mode hasn't produced its split. A missing step, like
-   * `amountMissing`: it blooms the control that takes the step and says nothing
-   * in words.
+   * `amountMissing`: it blooms the control that takes the step, and is said in
+   * words only after a refused Save (`dockLine`).
    */
   receiptMissing: boolean;
   /** Whether Save may light. */
@@ -188,9 +188,9 @@ export function checkEntry(input: {
   // adds up by construction.
   const splitTick = foot?.ok && activeTab !== "receipt" && tabSplit.mode === "exact" ? foot.text : null;
 
-  // The one place the form says why Save is refused, reachable from every
-  // state that refuses it. A missing rate says nothing here — there is no field;
-  // its badge blooms instead (design-system.md).
+  // Why Save is refused where no field or step is missing, said unasked. A
+  // missing rate is not here — it blooms its badge, and is said only once a
+  // Save is refused over it (`dockLine`).
   const blocker = goneMember
     ? copy.form.goneMember(nameOf(goneMember))
     : payerProblemText(payerCheck, draft.currency,
@@ -210,4 +210,24 @@ export function checkEntry(input: {
     onReceiptTab, activeSplit: tabSplit, receiptSplit, effectiveSplit,
     blocker, splitProblem, splitTick, amountMissing, titleMissing, receiptMissing, ready,
   };
+}
+
+/**
+ * What a refused Save can name, **least obvious first**. Every one of them
+ * still blooms at once; the line over Save says one, and it is the one a bloom
+ * explains worst. An empty field going red says "fill me", while a red `@ ?`
+ * chip says nothing a person can act on — so the words go there, and the
+ * obvious ones wait their turn. Amount before title is only the form's order.
+ */
+export const REFUSAL_ORDER = ["rate", "blocker", "split", "receipt", "amount", "title"] as const;
+export type Refusable = (typeof REFUSAL_ORDER)[number];
+
+/**
+ * Which problem the Save dock's one red line says, or null. The payers' and
+ * the split's sentences stand there unasked; a missing field or step is said
+ * only once a Save has been refused over it (`told`), or a blank form would
+ * open scolding.
+ */
+export function dockLine(missing: Record<Refusable, boolean>, told: boolean): Refusable | null {
+  return REFUSAL_ORDER.find((k) => missing[k] && (told || k === "blocker" || k === "split")) ?? null;
 }

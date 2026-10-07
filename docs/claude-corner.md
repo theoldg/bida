@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-07* — "Least or most obvious first?" asked inside a build request,
+  overturning a documented "point, don't explain". Answer with a pick and its
+  reason, build that, and rewrite the doc's rule rather than defend it.
+
 - *2026-10-06* — Brackets to a second line took four mock rounds: "roomier",
   "centred", then "ship that" — and mid-ship, "actually, smaller sizes". A
   live size toggle on the mock let them pick 12px alone. A ship order can be
@@ -71,8 +75,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the middle of my survey of the code. The owner designs while you read: stop
   and fold the hint in, and the mocks they then see are already theirs. Then
   "Build it" settled three open questions by accepting every proposal.
-
-- *2026-10-06* — "make only its check box clickable… it shouldn't be visible
-  in the tap feedback". A day after shipping the whole-row toggle: the owner
-  tunes by hand after use. The hit area may grow; what the eye sees answer
-  the tap must stay the box.

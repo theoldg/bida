@@ -702,6 +702,10 @@ await page.getByRole("button", { name: "Save" }).click();
 await settle(page, 120);
 report(/flash-/.test(await titleField.getAttribute("class")),
   "a refused Save flashes the field that stopped it");
+// And says one of them over Save: of an empty amount and title, the amount.
+const dockSays = () => page.locator(".whodock .splitfoot.bad").allInnerTexts();
+report((await dockSays()).join("|") === "Type an amount.",
+  "and says one thing missing in the Save dock", (await dockSays()).join("|"));
 await settle(page, 900);
 report(!/flash-/.test(await titleField.getAttribute("class")),
   "and the flash ends, taking its class with it");
@@ -718,6 +722,9 @@ await page.getByRole("button", { name: "Save" }).click();
 await settle(page, 120);
 report(/flash-/.test(await rateNote.getAttribute("class")),
   "a missing rate flashes the chip that opens where it is set");
+// The rate goes first: an empty field going red explains itself, a `?` does not.
+report(/no MAD rate/.test((await dockSays()).join("|")),
+  "and the dock says the rate over the empty fields", (await dockSays()).join("|"));
 await settle(page, 900);
 report(!/flash-/.test(await rateNote.getAttribute("class")),
   "and that flash ends too");

@@ -24,7 +24,7 @@ import {
 } from "@/lib/db/commands";
 import { ENTRY_KINDS, type EntryKind } from "@/lib/entry-kind";
 import { copy } from "@/lib/copy";
-import { checkEntry, needsRate } from "@/lib/entry-check";
+import { checkEntry, dockLine, needsRate } from "@/lib/entry-check";
 import { useRefusals } from "@/lib/refusal";
 import { bare, dateInputValue, errorText, money, plural, withDate } from "@/lib/format";
 import { formParent, parseEntrySource, route, type EntrySource } from "@/lib/group-link";
@@ -216,8 +216,26 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     amount: amountMissing, title: titleMissing, receipt: receiptMissing,
     rate: foreign && groupRate === undefined, blocker: blocker !== null, split: splitProblem !== null,
   };
+  /**
+   * A Save has been refused over a field or step still missing. Off again once
+   * none is, so emptying the title later doesn't bring the words back unasked.
+   */
+  const [told, setTold] = useState(false);
+  const fieldMissing = missing.rate || missing.receipt || missing.amount || missing.title;
+  useEffect(() => {
+    if (told && !fieldMissing) setTold(false);
+  }, [told, fieldMissing]);
+  /** The dock's one red line, chosen by `REFUSAL_ORDER`. */
+  const said = dockLine(missing, told);
+  const saidText = said === "rate" ? copy.form.noRate(draft.currency)
+    : said === "blocker" ? blocker
+    : said === "split" ? splitProblem
+    : said === "receipt" ? ((draft.receiptItems?.length ?? 0) > 0 ? copy.form.noItemsGiven : copy.form.noScan)
+    : said === "amount" ? copy.form.noAmount
+    : said === "title" ? copy.form.noTitle
+    : null;
   /** The dock's lines over Save: what is wrong, then the tick that nothing is. */
-  const docked = blocker !== null || splitProblem !== null || splitTick !== null;
+  const docked = said !== null || splitTick !== null;
   // Both of the form's first fields empty: the top shows both, where the
   // nearest would leave the amount above the fold.
   const refusals = useRefusals(missing, (aimed) => !!aimed.amount && !!aimed.title);
@@ -331,6 +349,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     const actor = data.me;
     if (!ready) {
       refusals.refuse(missing);
+      setTold(true);
       return;
     }
     if (saving || !actor) return;
@@ -565,25 +584,19 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
         {/* The form's last row, docked (`.whodock`): under the split while the
             form fits, at the foot of the screen once a long split scrolls above
             it, and above the keyboard while one is up. Always pressable: `save`
-            answers with the refusal flash on whatever is missing. What is wrong
-            with the payers or the split is said here, over Save, where scrolling
-            can't hide it, and so is the tick that typed amounts add up. */}
+            answers with the refusal flash on whatever is missing. One thing that
+            is wrong is said here, over Save, where scrolling can't hide it — the
+            payers or the split unasked, a missing field once Save is refused —
+            and so is the tick that typed amounts add up. */}
         {/* 9px between the lines, Save and whatever the scroll has cut off
             above them: the dock's own padding, never the form's, which is only
             there once the form is scrolled to its end. */}
         <div className="pad whodock" style={{ paddingTop: docked ? 9 : 18 }}>
-          {blocker ? (
-            <div role="status" data-refuse="blocker" style={{ marginBottom: 9 }}
-              className={`splitfoot bad alone${refusals.flash("blocker")}`}
-              onAnimationEnd={refusals.onFlashEnd("blocker")}>
-              <span>{blocker}</span>
-            </div>
-          ) : null}
-          {splitProblem ? (
-            <div role="status" data-refuse="split" style={{ marginBottom: 9 }}
-              className={`splitfoot bad alone${refusals.flash("split")}`}
-              onAnimationEnd={refusals.onFlashEnd("split")}>
-              <span>{splitProblem}</span>
+          {said ? (
+            <div role="status" data-refuse={said} style={{ marginBottom: 9 }}
+              className={`splitfoot bad alone${refusals.flash(said)}`}
+              onAnimationEnd={refusals.onFlashEnd(said)}>
+              <span>{saidText}</span>
             </div>
           ) : null}
           {splitTick ? (

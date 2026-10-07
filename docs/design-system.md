@@ -424,7 +424,7 @@ a single reason line beside the payer field rather than one per branch — but a
 line is not the only way to say it, and where the fix is a control on screen
 the control blooms and the sentence goes.
 
-A *refused* action points instead of explaining: a Save that can't go through
+A *refused* action points first: a Save that can't go through
 blooms whatever stopped it `--debit` and lets it settle back over ~600ms —
 **whole, ground included**. A missing figure blooms its field: the title's box
 fills like an ink block, its label and whatever is written in it riding along
@@ -433,8 +433,16 @@ rule it is typed on. The label goes with the fill because it is the word that
 says *which* field was refused. A missing *step* blooms the whole control that takes it, edge, label,
 icons and any rule inside it: the scan pair and the door to the who-had-what
 grid, which is the Items tab's entire complaint. Both of those are ink blocks,
-so both fill (below). Pointing beats wording there, because "scan a receipt" is
-true of every untouched bill and reads as a scolding for arriving. Where what is missing is spread over
+so both fill (below). Words come only once a Save is refused, because "scan a
+receipt" is true of every untouched bill and said unasked reads as a scolding
+for arriving. **A flash alone can be missed, so the entry form's refusal also
+says one thing in words** — one red line over Save, never a stack. Everything
+missing still blooms; the line names the problem a bloom explains worst, least
+obvious first (`REFUSAL_ORDER`, `lib/entry-check.ts`): a rate, the payers, the
+split, the Items step, then the amount and the title, which an empty field
+going red already says. Fix it and the line moves to the next. The payers' and
+split's sentences stand on that line unasked; the rest leave once nothing is
+missing, so a field emptied later is not scolded. Where what is missing is spread over
 several rows, every one of them blooms: a Done on the who-had-what grid points
 at each line nobody has been given: the row washes `--debit-wash` from edge to
 edge, its words go `--debit`, and every empty cell flashes a solid `--debit`
@@ -454,9 +462,9 @@ two are seen together.
 The button itself never goes red — it is the
 control that was pressed, not what is missing — it only greys for the length of
 the flash and any travel before it, like Save. A number that
-is not on the form at all blooms the way *to* it and loses its sentence for the
-same reason: a foreign entry whose currency the group has no rate for points at
-its rate chip. **A control fills whole**,
+is not on the form at all blooms the way *to* it: a foreign entry whose currency
+the group has no rate for points at its rate chip, and the dock line says which
+rate. **A control fills whole**,
 ground and border together, rather than colouring its label: that chip, the two ink blocks — the who-had-what door and the scan pair — and
 a field: a red line around unchanged grey writing is the smallest signal in the
 app for the biggest thing it has to say. A label alone is smaller still, and a `--brand` or `--rule-soft`
