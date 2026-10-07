@@ -170,7 +170,7 @@ API is reached with `fetch`.
   + drawn small and grey; having parts puts you in, none
   takes you out, and a tap on the name toggles. **An "as amounts" row is typed, sharing or
   out**: a figure typed, in with none (the rest — what the typed figures leave,
-  divided evenly, its share the field's grey placeholder on a dotted rule), or
+  divided evenly, its share the field's grey placeholder), or
   not in the split. A tap on the name never types: typed and sharing go out, out
   comes back sharing, under the mark that says so — a grey × or + for what the
   tap does, Evenly's ink tick for a row that shares. Typing makes any row
