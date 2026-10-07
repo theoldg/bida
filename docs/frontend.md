@@ -131,7 +131,7 @@ API is reached with `fetch`.
   member, payers that no longer add up to the amount) and `splitProblem` (the
   split now showing, following its tab). A refused Save flashes them and spends
   the button like any bloom. Typed amounts that do add up are ticked there too
-  (`splitTick`). The dock keeps 9px of its own above its first line, so a
+  (`splitTick`), but only while nothing is wrong: the dock holds one line. The dock keeps 9px of its own above its first line, so a
   half-scrolled form never runs into it. An Items tab short of
   its split says nothing in words — its step blooms.
 - **A press already spending the draft is the form's own `saving` flag.**

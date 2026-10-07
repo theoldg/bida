@@ -234,8 +234,10 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     : said === "amount" ? copy.form.noAmount
     : said === "title" ? copy.form.noTitle
     : null;
-  /** The dock's lines over Save: what is wrong, then the tick that nothing is. */
-  const docked = said !== null || splitTick !== null;
+  /** The dock's one line over Save: what is wrong, or else the tick that the
+   *  typed amounts add up. Never both — a tick beside a refusal reads as "fine". */
+  const tick = said === null ? splitTick : null;
+  const docked = said !== null || tick !== null;
   // The amount, its rate chip and the title head the form: any of them
   // refused goes to the top, where they are read together.
   const refusals = useRefusals(missing, (aimed) => !!aimed.rate || !!aimed.amount || !!aimed.title);
@@ -599,7 +601,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
             answers with the refusal flash on whatever is missing. One thing that
             is wrong is said here, over Save, where scrolling can't hide it — the
             payers or the split unasked, a missing field once Save is refused —
-            and so is the tick that typed amounts add up. */}
+            and, only when nothing is, the tick that typed amounts add up. */}
         {/* 9px between the lines, Save and whatever the scroll has cut off
             above them: the dock's own padding, never the form's, which is only
             there once the form is scrolled to its end. */}
@@ -611,10 +613,10 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
               <span>{saidText}</span>
             </div>
           ) : null}
-          {splitTick ? (
+          {tick ? (
             <div role="status" className="splitfoot ok alone" style={{ marginBottom: 9 }}>
               <Icon name="check" size={14} style={{ flex: "none" }} />
-              <span>{splitTick}</span>
+              <span>{tick}</span>
             </div>
           ) : null}
           {failed ? (
