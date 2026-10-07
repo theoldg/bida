@@ -448,8 +448,8 @@ function YourBalance({ up, down, net, currency }: {
 }
 
 /**
- * How it was shared out, under the form's ÷, then what that did to you on a
- * card of its own: the result of the two cards above, not a part of either.
+ * How it was shared out, under the form's ÷, then what that did to you, on the
+ * screen's ground under the card: the result of the two cards, not a part of either.
  */
 function ExpenseDetail({ expense, kind, group, data }: {
   expense: Expense; kind: EntryKind; group: Group; data: GroupData;
@@ -527,10 +527,10 @@ function ExpenseDetail({ expense, kind, group, data }: {
       </Card>
       {/* Unless you neither paid nor had a share. */}
       {me && kind !== "transfer" && ((putIn[me] ?? 0) > 0 || participants.includes(me)) ? (
-        <Card className="balcard">
+        <div className="balline">
           <YourBalance {...effectSum(kind, putIn[me] ?? 0, participants.includes(me) ? shares[me] ?? 0 : 0)}
             currency={group.baseCurrency} />
-        </Card>
+        </div>
       ) : null}
     </div>
   );

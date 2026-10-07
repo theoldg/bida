@@ -177,7 +177,7 @@ no part of drops to 58% opacity rather than disappearing. Balances' suggested
 reimbursements do the same, under rows that do wear the bar: a bar there
 would say "you" about a payment, and they end in the ledger card's chevron.
 
-**On an entry, your name carries "you" and a card of its own is your balance.** A
+**On an entry, your name carries "you" and the screen ends in your balance.** A
 small, faint `(you)` follows your name wherever the entry prints it: the one
 payer on the paid-by line, a payer row, a split row. A transfer gets neither;
 its two names and an arrow already say it. The rows themselves stay uncoloured. Under the split, unless you neither paid nor had
@@ -365,7 +365,7 @@ case has.
 
 **An expense or income is laid out as its form is**: the title, the figure and
 who paid in one card, the form's ÷ (`.splitrule`), then the split in a card of
-its own, and your balance in a third. Under a hairline the head card says who:
+its own, and your balance under it, on the screen's ground. Under a hairline the head card says who:
 one payer is a line — "paid by **Adaś**" — named nowhere else on the screen;
 several are rows carrying what each put in, under an eyebrow that counts them,
 "Paid by **2 people**". A transfer's head is no card: its card below is

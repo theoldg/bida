@@ -801,7 +801,8 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 /* The form's ÷ between the head card and the split, nearer both than on the
    form, where the tabs under it want air. */
 .splitrule.entrysplit { margin: 13px 0 }
-.balcard { margin-top: 10px; padding-block: 8px }
+/* On the screen's ground, inset to the cards' rows (padding plus border). */
+.balline { margin-top: 10px; padding-inline: 15px }
 .entryby b { color: var(--ink); font-weight: 600 }
 /* Read more often than pressed, so quiet text a thumb tall. `--ink-2`: at
    12px `--muted` is under 4.5:1. The line stays full width for `FitLine` to
