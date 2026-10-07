@@ -416,8 +416,8 @@ show the figure. The card's words and colour keep the old sign until the
 figure sets off, then fade over the roll, so a settle-up greys as it rolls to
 zero. Rows involving neither
 your money nor your share drop to `opacity: .58`; the rest are plain rows, with
-no wash or coloured edge. An expense or income on the entry screen repeats its row's figure as
-its card's last line, "Your balance", written out as `effectSum` (the same
+no wash or coloured edge. An expense or income on the entry screen repeats its row's figure on
+a card under the split, "Your balance", written out as `effectSum` (the same
 subtraction) when you both paid and had a share, and marks your name with a
 faint `(you)`; a transfer shows neither. What it looks like and why:
 [design-system.md](design-system.md#your-own-rows-are-highlighted).

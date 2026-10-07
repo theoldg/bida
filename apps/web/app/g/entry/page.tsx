@@ -224,13 +224,17 @@ function EntryScreen() {
               {brings.length > 0 ? <p className="hint">{copy.entry.restoreBrings(brings)}</p> : null}
             </div>
           ) : null}
-          <div className="pad entryhead" style={{ paddingTop: 2 }}>
+          {/* An expense's head is a card, as the form's fields are, and the ÷
+              under it parts it from the split: the screen is the form at rest.
+              A transfer's head stays bare above its own card of who. */}
+          <div className="pad" style={{ paddingTop: 2, paddingBottom: expense ? 0 : undefined }}>
+          <div className={expense ? "card entryhead" : "entryhead"}>
             {/* Nothing when there is no title: the bar already says "Expense". A
                 transfer has none — its words are the note. */}
             {title ? (
               <FitTitle className="entrytitle selectable" text={title} sizes={ENTRY_TITLE_SIZES} />
             ) : null}
-            <div className={`entryfig${expense ? " ruled" : ""}`}>
+            <div className="entryfig">
               <EntryFigure minor={entry.baseAmountMinor} currency={group.baseCurrency} />
               {foreign ? (
                 <EntrySpent minor={entry.amountMinor} currency={entry.currency}>
@@ -245,7 +249,11 @@ function EntryScreen() {
             </div>
             {/* Who, under the rule. A transfer's card is nothing but who, so it
                 has no line here. */}
-            {expense && kind !== "transfer" ? <EntryBy expense={expense} kind={kind} data={data} /> : null}
+            {expense && kind !== "transfer" ? <>
+              <div className="hairline" />
+              <EntryBy expense={expense} kind={kind} group={group} data={data} />
+            </> : null}
+          </div>
           </div>
 
           {expense
@@ -332,24 +340,44 @@ function EntrySpent({ minor, currency, children }: {
 }
 
 /**
- * "paid by Adaś". One payer is named here and nowhere else on the screen;
- * several keep their card rows, which carry what each put in, so this line
- * only counts them. How many ways it was split is the card's rows.
+ * Who put the money in, closing the head card. One payer is a line — "paid by
+ * Adaś" — and named nowhere else on the screen. Several are rows carrying what
+ * each put in, under an eyebrow that counts them: "Paid by 2 people".
  */
-function EntryBy({ expense, kind, data }: {
-  expense: Expense; kind: "expense" | "income"; data: GroupData;
+function EntryBy({ expense, kind, group, data }: {
+  expense: Expense; kind: "expense" | "income"; group: Group; data: GroupData;
 }) {
+  if (!isCoSponsored(expense)) {
+    return (
+      <p className="entryby">
+        {copy.entry.byLead[kind]} <b>{data.memberById.get(expense.paidBy)?.name ?? copy.someone}</b>
+        {expense.paidBy === data.me ? <You /> : null}
+      </p>
+    );
+  }
   const payers = payerList(expense);
-  const several = isCoSponsored(expense);
-  const who = several
-    ? plural(payers.length, copy.noun.person)
-    : data.memberById.get(expense.paidBy)?.name ?? copy.someone;
-  const mine = !several && expense.paidBy === data.me;
-  return (
-    <div className="entryby">
-      <p>{copy.entry.byLead[kind]} <b>{who}</b>{mine ? <You /> : null}</p>
-    </div>
-  );
+  const foreign = expense.currency !== group.baseCurrency;
+  // What each payer put in, in the base currency — the figure that actually
+  // moves their balance, so it is the one worth showing next to their name.
+  const putIn = resolvePayers(expense);
+  return <>
+    <Eyebrow style={{ marginBottom: 4 }}>
+      {copy.entryKind.payer[kind]} <b>{plural(payers.length, copy.noun.person)}</b>
+    </Eyebrow>
+    {payers.map((id) => {
+      const own = expense.payers?.[id] ?? 0;
+      return (
+        <KV key={id}
+          k={id === data.me
+            ? <span>{data.memberById.get(id)?.name ?? copy.someone}<You /></span>
+            : data.memberById.get(id)?.name ?? copy.someone}
+          v={foreign
+            ? <TwoCurrencies base={money(putIn[id] ?? 0, group.baseCurrency)}
+              own={money(own, expense.currency)} />
+            : money(putIn[id] ?? 0, group.baseCurrency)} />
+      );
+    })}
+  </>;
 }
 
 /** Beside your own name, wherever the entry prints it. */
@@ -403,7 +431,7 @@ function YourBalance({ up, down, net, currency }: {
   // One root whatever the form, so the observer above keeps watching it.
   return (
     <div ref={row} className={column ? "yourbal col" : "kv yourbal"}>
-      {/* Set as the card's section heads are ("PAID BY"), since it is one. */}
+      {/* Set as the cards' section heads are ("SPLIT BY ITEMS"), since it is one. */}
       <span ref={label} className="k eyebrow">{copy.entry.yourBalance}</span>
       {column ? (
         <div className="sumcol">
@@ -419,22 +447,22 @@ function YourBalance({ up, down, net, currency }: {
   );
 }
 
-/** Who put the money in, and how it was shared out. Same card either way. */
+/**
+ * How it was shared out, under the form's ÷, then what that did to you on a
+ * card of its own: the result of the two cards above, not a part of either.
+ */
 function ExpenseDetail({ expense, kind, group, data }: {
   expense: Expense; kind: EntryKind; group: Group; data: GroupData;
 }) {
   // Which language the bill is read in — the toggle on the who-had-what bar,
   // saved with the expense (`billLabel`).
   const english = expense.receiptEnglish === true;
-  const coSponsored = isCoSponsored(expense);
   const me = data.me;
   // One span, not a fragment: a scanned row's name sits in a flex box that
   // centres its children, which would float the smaller tag off the baseline.
   // The tag goes on the name, before any detail: "Luke (you) · 2 parts".
   const yours = (id: string, name: string, detail = "") =>
     (id === me ? <span>{name}<You />{detail}</span> : `${name}${detail}`);
-  // What each payer put in, in the base currency — the figure that actually
-  // moves their balance, so it is the one worth showing next to their name.
   const putIn = resolvePayers(expense);
   const participants = splitParticipants(expense.split);
   const foreign = expense.currency !== group.baseCurrency;
@@ -465,28 +493,9 @@ function ExpenseDetail({ expense, kind, group, data }: {
     : null;
 
   return (
-    <div className="pad" style={{ paddingTop: 2 }}>
+    <div className="pad" style={{ paddingTop: 0 }}>
+      <div className="splitrule entrysplit" aria-hidden="true"><span /></div>
       <Card>
-        {coSponsored ? (
-          <>
-            <Eyebrow style={{ marginBottom: 4 }}>
-              {copy.entryKind.payer[kind] /* the head already counts them */}
-            </Eyebrow>
-            {payerList(expense).map((id) => {
-              const m = data.memberById.get(id);
-              const own = expense.payers?.[id] ?? 0;
-              return (
-                <KV key={id}
-                  k={yours(id, m?.name ?? copy.someone)}
-                  v={foreign
-                    ? <TwoCurrencies base={money(putIn[id] ?? 0, group.baseCurrency)}
-                      own={money(own, expense.currency)} />
-                    : money(putIn[id] ?? 0, group.baseCurrency)} />
-              );
-            })}
-            <div className="hairline" />
-          </>
-        ) : null /* one payer is named in the head (`EntryBy`) */}
         <Eyebrow style={{ marginBottom: 4 }}>
           {copy.entry.splitMode(copy.entryKind.split[kind],
             copy.split.mode[expense.split.mode].toLowerCase())}
@@ -515,13 +524,14 @@ function ExpenseDetail({ expense, kind, group, data }: {
           return <MemberBill key={m.id} name={k} total={v} lines={lines}
             format={(minor) => money(minor, expense.currency)} startOpen={m.id === me} />;
         })}
-        {/* Unless you neither paid nor had a share. */}
-        {me && kind !== "transfer" && ((putIn[me] ?? 0) > 0 || participants.includes(me)) ? <>
-          <div className="hairline" />
+      </Card>
+      {/* Unless you neither paid nor had a share. */}
+      {me && kind !== "transfer" && ((putIn[me] ?? 0) > 0 || participants.includes(me)) ? (
+        <Card className="balcard">
           <YourBalance {...effectSum(kind, putIn[me] ?? 0, participants.includes(me) ? shares[me] ?? 0 : 0)}
             currency={group.baseCurrency} />
-        </> : null}
-      </Card>
+        </Card>
+      ) : null}
     </div>
   );
 }

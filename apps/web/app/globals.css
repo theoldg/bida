@@ -782,7 +782,6 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .entryhead { container-type: inline-size }
 .entryfig { display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
   margin-top: 10px }
-.entryfig.ruled { border-bottom: 1px solid var(--rule); padding-bottom: 10px }
 .entryamt { display: flex; align-items: baseline; gap: 8px }
 .entryspent { display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
 .entryspent .num { font-size: 13px; color: var(--muted) }
@@ -796,7 +795,13 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .entryamt .ccy.sym { font-size: 1em; margin-right: -.12em; color: inherit }
 .entryspent .sym { margin-right: -5px }
 .entryamt .frac { font-size: .55em; font-weight: 500; letter-spacing: -.03em; color: var(--muted) }
-.entryby { margin-top: 10px; font-size: 13px; color: var(--muted) }
+.entryby { font-size: 13px; color: var(--muted) }
+/* "Paid by 2 people": the count is the phrase's object, as the name is above. */
+.entryhead .eyebrow b { color: var(--ink-2); font-weight: 600 }
+/* The form's ÷ between the head card and the split, nearer both than on the
+   form, where the tabs under it want air. */
+.splitrule.entrysplit { margin: 13px 0 }
+.balcard { margin-top: 10px; padding-block: 8px }
 .entryby b { color: var(--ink); font-weight: 600 }
 /* Read more often than pressed, so quiet text a thumb tall. `--ink-2`: at
    12px `--muted` is under 4.5:1. The line stays full width for `FitLine` to
@@ -824,7 +829,7 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
   background: var(--paper); color: var(--ink); font-weight: 700 }
 .deletedband .btn:active:not(:disabled) { background-image: linear-gradient(var(--press), var(--press)) }
 .deletedband + .hint { margin-top: 8px }
-.pad:has(.deletedband) + .entryhead .entryamt :is(.whole, .sym) { color: var(--ink-2) }
+.pad:has(.deletedband) + .pad .entryamt :is(.whole, .sym) { color: var(--ink-2) }
 .bignum { font-family: var(--f-mono); font-variant-numeric: tabular-nums; letter-spacing: -.03em;
   font-weight: 500 }
 .kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px;

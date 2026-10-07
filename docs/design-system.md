@@ -177,10 +177,10 @@ no part of drops to 58% opacity rather than disappearing. Balances' suggested
 reimbursements do the same, under rows that do wear the bar: a bar there
 would say "you" about a payment, and they end in the ledger card's chevron.
 
-**On an entry, your name carries "you" and the card ends in your balance.** A
+**On an entry, your name carries "you" and a card of its own is your balance.** A
 small, faint `(you)` follows your name wherever the entry prints it: the one
 payer on the paid-by line, a payer row, a split row. A transfer gets neither;
-its two names and an arrow already say it. The rows themselves stay uncoloured. Under them, unless you neither paid nor had
+its two names and an arrow already say it. The rows themselves stay uncoloured. Under the split, unless you neither paid nor had
 a share, is the ledger row's figure, signed and coloured as it is there:
 `Your balance +CRD 40.00`. When two of the card's numbers made it, it is
 written as their uncoloured difference first: `50.00 − 20.00 = +CRD 30.00`
@@ -363,13 +363,14 @@ columns so the two sets of digits lined up broke on the edge cases (a symbol
 over a code, a code on the trailing side), and the margin is an edge every
 case has.
 
-On an expense or income a `--rule` hairline closes the figure off and one line
-under it says who — "paid by **Adaś**" — so the card below is only the split,
-whose rows already count the ways. Several payers keep their card rows, which
-carry what each put in, and the line just counts them, so their eyebrow is a
-bare "Paid by" — never the count twice. A transfer has no line: its card is
-nothing but who. The card's eyebrows read as phrases ("Split by items", "Paid
-by"), not a label, a dot and a value.
+**An expense or income is laid out as its form is**: the title, the figure and
+who paid in one card, the form's ÷ (`.splitrule`), then the split in a card of
+its own, and your balance in a third. Under a hairline the head card says who:
+one payer is a line — "paid by **Adaś**" — named nowhere else on the screen;
+several are rows carrying what each put in, under an eyebrow that counts them,
+"Paid by **2 people**". A transfer's head is no card: its card below is
+nothing but who. The cards' eyebrows read as phrases ("Split by items", "Paid
+by 2 people"), not a label, a dot and a value.
 
 **History is one quiet link, above Edit** (`.entryhist`) — never a top-bar
 icon as well, which was two ways to the same screen. A clock, then what is

@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-07* — Two screenshots, "mock it up", then three one-line turns of
+  tuning and "align left, and ship it". "Keep the existing special case" meant
+  the line as it was, left-aligned and all: when a nudge says keep, check the
+  original before obeying the adjective beside it.
+
 - *2026-10-07* — "Pause and tell me when I'm contradicting an ADR". The
   owner moves fast and forgets old decisions; a quick "this undoes ADR-N, sure?"
   is welcome friction, not second-guessing. Ask once, then build.
@@ -71,7 +76,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-06* — "Make the names louder to match the amounts on expense
   summary screens". Plural screens, one shared row: the quick split's answer
   too. Lift the people, not every `.kv` — a label beside a count stays quiet.
-
-- *2026-10-06* — "What's up with the variable sodas price??" with the receipt
-  beside it. A cent the owner can see is a bug, not rounding: find which
-  tap turned one printed line into three, and fix the arithmetic there.
