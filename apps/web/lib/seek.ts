@@ -3,14 +3,12 @@
  * and the wait — beside the geometry in `lib/reveal.ts`. Shared by the
  * who-had-what grid and the entry form: a bloom spent mid-scroll is one nobody
  * sees, and the refused thing may be fixed by the time the scroll lands. A
- * fold that opens travels the same way (`revealOpened`).
+ * fold travels the same way (`lib/fold.ts`).
  *
  * **Never `scrollTo({ behavior: "smooth" })`** — iOS glides, Android jumps,
  * and no end event is reliable. Driving it frame by frame moves the same
  * everywhere and knows when it arrived.
  */
-
-import { revealWhole, scrollTarget } from "./reveal";
 
 /** The shortest and longest a glide takes; distance decides in between. */
 const MIN_MS = 240;
@@ -83,18 +81,3 @@ export function glide(box: HTMLElement, target: number, done: () => void): () =>
  * settling, globals.css), but scrolling is movement, so it becomes a jump.
  */
 export const calmly = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-/**
- * Brings a fold that just opened wholly into its scroller — the question and
- * its answer, the top winning when both can't fit (`revealWhole`) — so an
- * answer that unfolds under the fold line isn't one nobody sees. Returns the
- * glide's cancel, for an effect's cleanup.
- */
-export function revealOpened(el: HTMLElement): () => void {
-  const box = el.closest<HTMLElement>(".scroll");
-  if (!box) return () => {};
-  const view = box.getBoundingClientRect();
-  const { top, bottom } = el.getBoundingClientRect();
-  const target = scrollTarget(box, revealWhole({ top, bottom }, { top: view.top, bottom: view.bottom }));
-  return target === box.scrollTop ? () => {} : glide(box, target, () => {});
-}

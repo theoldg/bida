@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
+import { useFold } from "../lib/fold";
 import { countText } from "../lib/format";
 import type { MemberLine } from "../lib/scan/items";
 
@@ -27,13 +27,14 @@ export function MemberBill({ name, total, lines, format, startOpen = false }: {
    */
   startOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(startOpen);
+  // Opened, the lines glide into view; shut, the list glides back (`useFold`).
+  const { open, toggle, ref } = useFold<HTMLDivElement>(startOpen);
   return (
     // Nothing between people and nothing under the open one: it is marked by
     // its turned chevron alone (`globals.css`).
-    <div className={`billgroup${open ? " on" : ""}`}>
+    <div ref={ref} className={`billgroup${open ? " on" : ""}`}>
       <button type="button" className="kv who" aria-expanded={open}
-        onClick={() => setOpen(!open)}>
+        onClick={toggle}>
         <span className="k">
           {name}<Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />
         </span>

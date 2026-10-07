@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { Transfer } from "@bida/core";
 import { Card, Eyebrow, signClass } from "@/components/bits";
 import {
@@ -13,8 +13,8 @@ import { SyncBanner } from "@/components/sync-banner";
 import { copy } from "@/lib/copy";
 import { recordSettlement } from "@/lib/db/commands";
 import { money, plural } from "@/lib/format";
+import { useFold } from "@/lib/fold";
 import { route } from "@/lib/group-link";
-import { revealOpened } from "@/lib/seek";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 import type { GroupData } from "@/lib/hooks";
 
@@ -173,14 +173,12 @@ function Balances({ data }: { data: GroupData }) {
  * are square, since then no row is yours to object to.
  */
 function NotWho({ net }: { net: number }) {
-  const [open, setOpen] = useState(false);
-  const fold = useRef<HTMLDivElement>(null);
-  useEffect(() => (open && fold.current ? revealOpened(fold.current) : undefined), [open]);
+  const { open, toggle, ref: fold } = useFold<HTMLDivElement>();
   if (net === 0) return null;
   const { ask, lead, term, owe, owed } = copy.group.notWho;
   return (
     <div ref={fold} className="installfold notwho">
-      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <button type="button" aria-expanded={open} onClick={toggle}>
         <Icon name="chev" size={10} className={`kvchev${open ? " on" : ""}`} />
         {ask}
       </button>
