@@ -156,9 +156,8 @@ report(incomeVoice, "the payers screen asks an income in the income's voice",
 await page.getByRole("button", { name: "Done" }).click();
 await page.waitForURL(/entry\/edit/);
 await save(2);
-// No avatar marks it any more (ADR-0023): the verb and the sign are the two
-// signals that an entry runs the other way.
-report((await page.locator(".rmeta").first().innerText()).includes("received"), "the income row says received");
+// No avatar marks it any more (ADR-0023), and the row's line names no verb:
+// the sign is what says an entry runs the other way.
 report(/^[-−]/.test(await page.locator(".ramt .big").first().innerText()), "the income row signs its figure with a minus");
 report(await page.locator(".avatar").count() === 0, "no screen of the ledger draws a person's initials");
 

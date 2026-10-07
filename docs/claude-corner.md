@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-07* — "Too much text in the subtitles", then mid-build "show me
+  designs first", with the rules for what may drop. Four mocks, "Ship A" (my
+  pick). The constraints they give alongside a mock request are the spec.
+
 - *2026-10-07* — "Make the group avatars little receipts, don't push", then
   bigger, torn both ends, no dots, "show me several", "ship it". The stop
   hook asked to push each turn; the owner's "don't push" outranks it until
@@ -73,7 +77,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   over my rows of struck names, and "too much detail". Wild meant clearer,
   not denser. Three text mocks per question got two picks in one reply: when
   a first pass misses, mock before rebuilding.
-
-- *2026-10-06* — "The group history link should have its icon aligned with
-  the timeline points". One element named, one alignment asked: measure the
-  rail, put the icon on it, and let the words fall into the column too.

@@ -309,18 +309,17 @@ in a column of "12.00"s looking like a different kind of number.
 
 ## A row says less rather than being cut off
 
-A ledger row's second line is a stack of facts — who paid, how many ways, in
-what mode — and a long name pushes it past the width of a phone. `ellipsis`
-cuts at the end, so the line loses whatever happened to be *last* rather than
-whatever mattered *least*. `FitLine` takes several wordings of the line,
-longest first, and renders the longest that measures under the box. Two rules
-set the order, and they live with the copy in `lib/row-meta.ts`: **shortening
-must not lie** (co-payers get abbreviated, "Alice +1 paid", never dropped), and
-**drop what the entry's own screen says better** — the split mode first, the
-share count next, the payer never. `.rmeta` keeps its ellipsis for the last
-rung, because a name can be any length at all. A group list row's line is the
-same ladder with a fixed bold lead: "N new changes" is never dropped, then
-people go, then entries, and the time is last standing — the lead and the time
+An expense row's second line is the payer and a head count, "Alice +1 · 👥5",
+and nothing else: the split mode, and paid versus received, are the entry's own
+screen's to say (an income's figure carries its sign). The name is never
+dropped and takes the ellipsis; the "+1" for co-payers stays beside it, since
+leaving it out would be untrue; the head count is what a long name pushes out.
+That needs no measuring — `.paidby` is one line tall and wraps, so a count with
+no room falls to a clipped second line. Lines with more than two facts use
+`FitLine`, which takes several wordings longest first and renders the longest
+that measures under the box (`lib/row-meta.ts` owns the order). A group list
+row's line is that ladder with a fixed bold lead: "N new changes" is never
+dropped, then people go, then entries, and the time is last standing — the lead and the time
 say whether to open the group, the counts only what is in it.
 
 A ledger row is always the same height, whether or not it carries a second

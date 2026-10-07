@@ -539,6 +539,17 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .rmain.solo > .rtitle { align-self: center }
 .sologhost { visibility: hidden }
 .sologhost > * { display: block }
+/* An expense's line (`ExpenseMeta`): one line tall and wrapping, so the head
+   count falls out of sight when the name leaves it no room. The name shrinks
+   into its ellipsis; the "+1" beside it never goes. */
+.rmeta.paidby { display: flex; flex-wrap: wrap; height: 1.5em; line-height: 1.5em }
+.paidby .who { display: flex; min-width: 0; max-width: 100% }
+.paidby .name { min-width: 0; overflow: hidden; text-overflow: ellipsis }
+.paidby .more { flex: none; padding-left: .6ch }
+.paidby .ways { flex: none; display: flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums }
+.paidby .sep { padding: 0 .6ch }
+/* For a screen reader only: the icon says it to the eye. */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
 /* Ink: green and red are money's. */
 .rmeta .rnew { color: var(--ink); font-weight: 600 }
 .ramt { text-align: right; flex: none }

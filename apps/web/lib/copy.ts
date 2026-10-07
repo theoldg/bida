@@ -230,7 +230,6 @@ export const copy = {
     newChange: { one: "new change", many: "new changes" } as Noun,
     /** A line of somebody else's spreadsheet — only the import counts these. */
     row: { one: "row", many: "rows" } as Noun,
-    way: { one: "way", many: "ways" } as Noun,
   },
 
   time: {
@@ -774,17 +773,11 @@ export const copy = {
       owed: "You’re owed",
       square: "You’re square",
     },
-    /** "Marie paid" · "Marie + 2 others received". */
-    payers: (who: string, others: string | null, verb: string) =>
-      (others ? `${who} + ${others} ${verb}` : `${who} ${verb}`),
-    /** Two payers are named: "Theo & Marie paid" is no longer than "Theo + 1 other paid". */
-    payersPair: (who: string, other: string, verb: string) => `${who} & ${other} ${verb}`,
-    /** For a row with no room for "+ 2 others" (the ladder in `lib/row-meta.ts`); dropping co-payers would be untrue. */
-    payersTight: (who: string, others: number, verb: string) => `${who} +${others} ${verb}`,
-    sharedWays: (n: string) => `shared ${n}`,
-    splitWays: (n: string) => `split ${n}`,
-    splitAs: (people: string, mode: string) => `${people}, ${mode}`,
-    /** Two facts on one line: "Marie paid · split 3 ways". */
+    /** An expense row's co-payers, after the payer's name: dropping them would be untrue. */
+    morePayers: (n: number) => `+${n}`,
+    /** What the people icon and its count stand for, to a screen reader. */
+    sharedBy: (people: string) => `shared by ${people}`,
+    /** Two facts on one line: "3 people · 12 entries". */
     metaLine: (a: string, b: string) => `${a} · ${b}`,
     transfer: "Transfer",
     paidTo: (from: string, to: string) => `${from} paid ${to}`,
@@ -920,8 +913,6 @@ export const copy = {
   /** The three kinds, and every word the app uses about them (ADR-0010). */
   entryKind: {
     label: { expense: "Expense", income: "Income", transfer: "Transfer" } as Record<EntryKind, string>,
-    /** Only expense and income: a transfer's row is `group.paidTo` ("Alice paid Bob"). */
-    verb: { expense: "paid", income: "received" } as Voiced<string>,
     /** Over the payer picker: who put it in, or who took it in. Short enough for the form's label column. */
     payer: { expense: "Paid by", income: "Paid to", transfer: "From" } as Record<EntryKind, string>,
     /** One word for expense and income: both answer "split how", and readers switch often. */

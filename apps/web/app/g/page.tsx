@@ -27,13 +27,13 @@ import { copy } from "@/lib/copy";
 import { useDeleteEntry } from "@/components/delete-entry";
 import { setLastOpenedGroup } from "@/lib/db/device";
 import { syncGroup } from "@/lib/db/sync";
-import { dayLabel, money } from "@/lib/format";
+import { dayLabel, money, plural } from "@/lib/format";
 import { ledgerItems, type LedgerRow } from "@/lib/ledger";
 import { route } from "@/lib/group-link";
 import { useLedgerPosition } from "@/lib/ledger-position";
 import { awaitRoll, peekSaved } from "@/lib/ledger-motion";
 import { keepShown, ROLL_BEAT, shownBefore } from "@/lib/roll";
-import { expenseMeta, transferMeta } from "@/lib/row-meta";
+import { transferMeta } from "@/lib/row-meta";
 import { useClaimGate, useDevice, useGroupData } from "@/lib/hooks";
 import type { GroupData } from "@/lib/hooks";
 
@@ -247,17 +247,8 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
         className={`row entryrow ${mine ? "" : "notmine"}`} {...hold}>
         <div className="rmain">
           <div className="rtitle">{expense.description || copy.group.untitled}</div>
-          {/* Who paid, how many ways, in what mode — more than a phone's
-              width holds when a name is long. The ladder that decides what
-              goes first is `lib/row-meta.ts`; this only picks off it. */}
-          <FitLine className="rmeta" options={expenseMeta({
-            payer: payer?.name ?? copy.someone,
-            coPayers: payers.filter((id) => id !== expense.paidBy)
-              .map((id) => memberById.get(id)?.name ?? copy.someone),
-            kind,
-            ways: participants,
-            mode: expense.split.mode,
-          })} />
+          <ExpenseMeta payer={payer?.name ?? copy.someone}
+            coPayers={payers.filter((id) => id !== expense.paidBy).length} ways={participants} />
         </div>
         <div className="ramt">
           {/* An income's figure carries a "−": it is the group's number, not
@@ -275,6 +266,34 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
 
       {menu}
     </>
+  );
+}
+
+/**
+ * An expense row's second line: who paid, and how many it is split between.
+ * The mode, and whether it was paid or received, are the entry's own screen's
+ * to say; the figure's sign already tells an income apart.
+ *
+ * The name is never dropped and takes the ellipsis; the co-payer count stays
+ * beside it, since leaving it out would be untrue. The head count is the one
+ * thing that goes: `.paidby` is one line tall and wraps, so a count with no
+ * room left beside the name falls to a second line that is clipped. No
+ * measuring, so nothing to redo when the font lands.
+ */
+function ExpenseMeta({ payer, coPayers, ways }: { payer: string; coPayers: number; ways: number }) {
+  return (
+    <div className="rmeta paidby">
+      <span className="who">
+        <span className="name">{payer}</span>
+        {coPayers > 0 ? <span className="more">{copy.group.morePayers(coPayers)}</span> : null}
+      </span>
+      <span className="ways">
+        <span className="sep" aria-hidden="true">·</span>
+        <Icon name="users" size={12} />
+        <span aria-hidden="true">{ways}</span>
+        <span className="vh">{copy.group.sharedBy(plural(ways, copy.noun.person))}</span>
+      </span>
+    </div>
   );
 }
 

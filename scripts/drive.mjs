@@ -211,7 +211,7 @@ const READ = `(() => {
 
   /**
    * A control's label, kept on the lines its layout gives it and then joined
-   * with a separator: "Dinner | Ana paid · split 3 ways | €120.00" reads, while
+   * with a separator: "Dinner | Ana · 3 | €120.00" reads, while
    * the same words run together do not.
    */
   const labelOf = (el) => {
