@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-07* — "Pause and tell me when I'm contradicting an ADR". The
+  owner moves fast and forgets old decisions; a quick "this undoes ADR-N, sure?"
+  is welcome friction, not second-guessing. Ask once, then build.
+
 - *2026-10-07* — "Should be only the link+icon (wash area)", in the same note
   as "clickable across the whole row". Not two rules: what the eye reads as
   one thing is one target, no more, no less. The wash names it. "Audit" meant
@@ -71,7 +75,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-06* — "What's up with the variable sodas price??" with the receipt
   beside it. A cent the owner can see is a bug, not rounding: find which
   tap turned one printed line into three, and fix the arithmetic there.
-
-- *2026-10-06* — I argued against inking a chip; they picked it anyway, with
-  three other letters, and in the same breath asked for the next round. An
-  argument is a footnote on the mock, not a veto: build the pick, then go on.

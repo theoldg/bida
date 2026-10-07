@@ -76,6 +76,11 @@ to remove more from this list than you add.
   with incorrect premises, very much so". Say the premise is wrong and why,
   then still fix the symptom it was reported about: a wrong reason does not
   make the report wrong.
+- **Stop when a request contradicts an ADR.** *2026-10-07* — "pause and tell
+  me when I'm contradicting an ADR, to avoid accidental costly undoing of
+  stuff". Before building, name the ADR and what the request would undo, and
+  wait for a yes; the owner may simply not remember it. Once they confirm, edit
+  that ADR in the same push ([decisions/](decisions/README.md)).
 - **Fix the friction you hit.** *2026-09-22* — "if any routine task wastes you
   a step, either update the corresponding script, or the instructions", and if
   two or three postcards name the same easy fix, make it in passing. "dont let
