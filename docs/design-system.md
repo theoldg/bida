@@ -190,7 +190,7 @@ since it is what moved you up). Always one figure under the other, digits
 aligned whichever side the locale puts the code; the result moves down into
 the sum rather than being printed twice. Opened under the fold line, it glides up until
 all of it shows, and shut, glides back to where it was opened from — never a
-jump — as each bill on the split card and Balances' "How are these worked
+jump, the docked Edit sliding with the list's foot — as each bill on the split card and Balances' "How are these worked
 out?" do (`useFold`).
 
 ## Nothing waits in silence
