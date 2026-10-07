@@ -1,8 +1,8 @@
 import {
   at, checkMemberNames, checkStated, ImportError, isRealDay, oneCurrency, strictMinor,
-  type ImportPlan, type PlannedEntry, type PlannedTransfer,
+  type ImportPlan, type LocalMoney, type PlannedEntry, type PlannedTransfer,
 } from "./import.js";
-import { exponentOf, minorToDecimalString, type CurrencyCode } from "./money.js";
+import { exponentOf, isCurrencyCode, minorToDecimalString, type CurrencyCode } from "./money.js";
 
 /**
  * A tricount read into the same **plan** `import.ts` returns from a CSV.
@@ -23,6 +23,13 @@ import { exponentOf, minorToDecimalString, type CurrencyCode } from "./money.js"
  * There is no foot row, so the checksum is computed from the raw figures by
  * the app's own route (allocations minus owned), not the plan's — which is why
  * it catches a transfer backwards, an unflipped income or a wrong payer.
+ *
+ * Every `amount` is in the tricount's own currency. An entry spent in another
+ * says so beside it — `amount_local` and `exchange_rate`, and an allocation's
+ * own `amount_local` — and a `RATIO` allocation carries the parts it was split
+ * by. Those are read as hints only (`LocalMoney`, `parts`): `import-shape.ts`
+ * writes them when they reproduce the figures exactly, so nothing here can
+ * refuse over one.
  */
 
 /** A repayment between two members rather than something that cost money. */
@@ -44,8 +51,25 @@ interface RawEntry {
   value: string;
   currency: string;
   owner: string;
+  /** `DELETED` for an entry somebody removed, which the app no longer counts. */
+  status: string;
+  /** What was spent, when that was another currency: `amount_local`. */
+  localValue: string;
+  localCurrency: string;
+  exchangeRate: string;
   /** name -> the allocation's own `amount.value`, still as the tricount wrote it. */
-  allocations: { name: string; value: string; currency: string }[];
+  allocations: RawAllocation[];
+}
+
+interface RawAllocation {
+  name: string;
+  value: string;
+  currency: string;
+  /** `AMOUNT` or `RATIO`; `share` is the ratio's parts. */
+  type: string;
+  share: unknown;
+  localValue: string;
+  localCurrency: string;
 }
 
 /** A value out of an unknown object, without asserting the object is one. */
@@ -95,7 +119,8 @@ export function readTricount(payload: unknown, { dayToTimestamp }: TricountOptio
   const registry = registryOf(payload);
   if (!registry) throw new ImportError("not-tricount", "no Registry in the payload");
 
-  const raw = readEntries(registry);
+  // A removed entry is still listed, and the app counts it nowhere.
+  const raw = readEntries(registry).filter((entry) => entry.status !== "DELETED");
   if (raw.length === 0) throw new ImportError("no-entries", "the tricount is empty");
   const currency = readCurrency(raw);
   const exp = exponentOf(currency);
@@ -142,11 +167,13 @@ export function readTricount(payload: unknown, { dayToTimestamp }: TricountOptio
     if (entry.balance && !income && shares.length === 1) {
       const to = shares[0]!;
       if (to.minor === -amountMinor && to.name !== entry.owner) {
+        const local = localOf(entry, false);
         transfers.push({
           from: entry.owner,
           to: to.name,
           amountMinor,
           note: entry.description === "" ? null : entry.description,
+          ...(local ? { local: { currency: local.currency, amountMinor: local.amountMinor, rate: local.rate } } : {}),
           day,
           occurredAt,
           line: entry.line,
@@ -167,7 +194,11 @@ export function readTricount(payload: unknown, { dayToTimestamp }: TricountOptio
       owed[share.name] = at(owed, share.name) + held;
     }
 
+    const local = localOf(entry, income);
+    const parts = partsOf(entry);
     entries.push({
+      ...(local ? { local } : {}),
+      ...(parts ? { parts } : {}),
       kind: income ? "income" : "expense",
       description: entry.description,
       // Free text, verbatim. Tricount's default reads as nothing, like `General`.
@@ -215,13 +246,21 @@ function readEntries(registry: unknown): RawEntry[] {
       category: str(entry, "category"),
       date: str(entry, "date"),
       balance: str(entry, "type_transaction").toUpperCase() === BALANCE,
+      status: str(entry, "status").toUpperCase(),
       value: str(field(entry, "amount"), "value"),
       currency: str(field(entry, "amount"), "currency"),
+      localValue: str(field(entry, "amount_local"), "value"),
+      localCurrency: str(field(entry, "amount_local"), "currency").toUpperCase(),
+      exchangeRate: str(entry, "exchange_rate"),
       owner: memberName(field(entry, "membership_owned")),
-      allocations: (Array.isArray(allocations) ? allocations : []).map((alloc) => ({
+      allocations: (Array.isArray(allocations) ? allocations : []).map((alloc): RawAllocation => ({
         name: memberName(field(alloc, "membership")),
         value: str(field(alloc, "amount"), "value"),
         currency: str(field(alloc, "amount"), "currency"),
+        type: str(alloc, "type").toUpperCase(),
+        share: field(alloc, "share_ratio"),
+        localValue: str(field(alloc, "amount_local"), "value"),
+        localCurrency: str(field(alloc, "amount_local"), "currency").toUpperCase(),
       })),
     };
   });
@@ -255,6 +294,58 @@ function readMembers(registry: unknown, raw: readonly RawEntry[]): string[] {
 
   checkMemberNames(names);
   return names;
+}
+
+/**
+ * What the entry was spent as, when that was another currency, or undefined.
+ * Anything unreadable is no hint rather than a refusal: the base figures
+ * already import. Shares only when every allocation states one that adds up.
+ */
+function localOf(entry: RawEntry, income: boolean): LocalMoney | undefined {
+  const currency = entry.localCurrency;
+  if (!isCurrencyCode(currency)) return undefined;
+  const minor = hintMinor(entry.localValue, currency);
+  if (minor === undefined || minor === 0) return undefined;
+  const local: LocalMoney = { currency, amountMinor: Math.abs(minor), rate: entry.exchangeRate || null };
+
+  const owed: Record<string, number> = {};
+  for (const alloc of entry.allocations) {
+    const share = alloc.localCurrency === currency ? hintMinor(alloc.localValue, currency) : undefined;
+    if (share === undefined) return local;
+    const held = income ? share : -share;
+    if (held < 0) return local;
+    if (held !== 0) owed[alloc.name] = at(owed, alloc.name) + held;
+  }
+  const total = Object.values(owed).reduce((a, b) => a + b, 0);
+  return total === local.amountMinor ? { ...local, owed } : local;
+}
+
+/** One hint's figure, or undefined when it isn't a figure in that currency. */
+function hintMinor(value: string, currency: CurrencyCode): number | undefined {
+  if (value === "") return undefined;
+  try {
+    return strictMinor(value, currency, exponentOf(currency), () => new ImportError("tricount-amount", value));
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The parts a `RATIO` split was made by: name -> positive whole parts, from
+ * every allocation that holds money. Undefined unless all of them are ratios.
+ */
+function partsOf(entry: RawEntry): Record<string, number> | undefined {
+  const parts: Record<string, number> = {};
+  let any = false;
+  for (const alloc of entry.allocations) {
+    if (/^-?0*(\.0*)?$/.test(alloc.value)) continue;
+    if (alloc.type !== "RATIO") return undefined;
+    const share = typeof alloc.share === "string" ? Number(alloc.share) : alloc.share;
+    if (typeof share !== "number" || !Number.isSafeInteger(share) || share <= 0) return undefined;
+    parts[alloc.name] = at(parts, alloc.name) + share;
+    any = true;
+  }
+  return any ? parts : undefined;
 }
 
 /** An entry as a person would recognise it in the app, for a refusal to name. */

@@ -174,10 +174,11 @@ export type RateSource = "fetched" | "typed";
 
 /**
  * Where an entry's own rate came from: the feed for its day, a person, the
- * group's latest entry in that currency when the feed failed, or the registry
- * an entry written before rates were the entry's was valued at. ADR-0005.
+ * group's latest entry in that currency when the feed failed, the ledger it
+ * was imported from, or the registry an entry written before rates were the
+ * entry's was valued at. ADR-0005.
  */
-export type EntryRateSource = RateSource | "copied" | "group";
+export type EntryRateSource = RateSource | "copied" | "imported" | "group";
 
 /**
  * The registry rates used to live in, before each entry carried its own. No

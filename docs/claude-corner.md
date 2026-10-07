@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-07* — "Did currencies unlock imports? Evenly and parts?" — a
+  question, then "isn't the worst case a ton of ids?", then "cap it, ship
+  it". Answer the doubt with the numbers before defending the design; they
+  were steering toward the better search, not away from the feature.
+
 - *2026-10-07* — "Retake the screenshots", nothing else. The committed six
   are the ones that go stale, so `readme-shots`; rebuild, look at each
   changed picture, and reshoot if dev moves under you before the push.
@@ -75,6 +80,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   one thing is one target, no more, no less. The wash names it. "Audit" meant
   look everywhere, then change only what breaks it.
 
-- *2026-10-07* — "Least or most obvious first?" asked inside a build request,
-  overturning a documented "point, don't explain". Answer with a pick and its
-  reason, build that, and rewrite the doc's rule rather than defend it.

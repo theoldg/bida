@@ -1399,6 +1399,8 @@ export const copy = {
       typed: "yours",
       /** The feed failed, so the entry took the group's most recent one in this currency. */
       copied: "couldn’t look it up: the group’s last rate",
+      /** Read off the ledger the group was imported from. */
+      imported: "the rate it was imported with",
       /** Written while rates were the group's: what the group said then. */
       group: "the group’s rate when this was written",
       loading: "looking it up…",

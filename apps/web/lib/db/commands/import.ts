@@ -1,5 +1,5 @@
 import {
-  colorSeedFor, memberIdFor, newGroupId, newGroupSecret, newId,
+  colorSeedFor, memberIdFor, newGroupId, newGroupSecret, newId, shapeEntry, shapeTransfer,
   type CurrencyCode, type Id, type ImportPlan, type OpDraft, type PlannedEntry, type PlannedTransfer,
 } from "@bida/core";
 import { appendOps } from "./append";
@@ -88,27 +88,21 @@ export async function importGroup(
 
 /**
  * One row as an expense op, built by the same `create` patch the form writes.
- * `rateToBase` is `"1"`: the file is single-currency in the group's base
- * (mixed files are refused upstream), so there is no registry to consult.
- *
- * The split is `exact` — the file hands over amounts, and `equal` would be a
- * claim about the original a re-export could contradict by a cent.
+ * `shapeEntry` picks its currency, rate, split mode and id — Evenly or Parts
+ * where those land every cent where the source did, in the currency it was
+ * spent in where a rate reproduces the base figure — and verifies the result
+ * reads back as the plan's figures.
  */
 function expenseDraft(
   e: PlannedEntry,
   ids: Map<string, Id>,
-  currency: CurrencyCode,
+  base: CurrencyCode,
   now: number,
 ): OpDraft {
-  const amounts: Record<Id, number> = {};
-  for (const [name, minor] of Object.entries(e.owed)) amounts[ids.get(name)!] = minor;
-
-  const payers: Record<Id, number> = {};
-  for (const [name, minor] of Object.entries(e.paid)) payers[ids.get(name)!] = minor;
-
+  const shape = shapeEntry(e, base, (name) => ids.get(name)!, { newId, now: () => performance.now() });
   return {
     entity: "expense",
-    entityId: newId(),
+    entityId: shape.id,
     kind: "create",
     patch: expenseCreatePatch({
       kind: e.kind,
@@ -117,21 +111,22 @@ function expenseDraft(
       // The row's own day, not the day it was imported: the ledger is the
       // trip, and `createdAt` is where "this arrived today" lives.
       dateOnly: true,
-      amountMinor: e.amountMinor,
-      currency,
-      rateToBase: "1",
-      paidBy: Object.keys(payers)[0]!,
-      payers,
-      split: { mode: "exact", amounts },
+      amountMinor: shape.amountMinor,
+      currency: shape.currency,
+      rateToBase: shape.rateToBase,
+      rateSource: shape.rateSource,
+      paidBy: Object.keys(shape.payers)[0]!,
+      payers: shape.payers,
+      split: shape.split,
       categoryId: e.categoryId,
-    }, currency, now),
+    }, base, now),
   };
 }
 
 function transferDraft(
   t: PlannedTransfer,
   ids: Map<string, Id>,
-  currency: CurrencyCode,
+  base: CurrencyCode,
   now: number,
 ): OpDraft {
   return {
@@ -141,12 +136,10 @@ function transferDraft(
     patch: settlementCreatePatch({
       fromMember: ids.get(t.from)!,
       toMember: ids.get(t.to)!,
-      amountMinor: t.amountMinor,
-      currency,
-      rateToBase: "1",
+      ...shapeTransfer(t, base),
       occurredAt: t.occurredAt,
       dateOnly: true,
       note: t.note,
-    }, currency, now),
+    }, base, now),
   };
 }

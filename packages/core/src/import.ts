@@ -115,8 +115,27 @@ export interface PlannedEntry {
   paid: Record<string, number>;
   /** name -> minor units owed. Sums to `amountMinor`; members owing nothing are absent. */
   owed: Record<string, number>;
+  /** What was spent, when that was another currency. A tricount says; a CSV never does. */
+  local?: LocalMoney;
+  /** name -> the parts the source split by. Tricount's `RATIO` allocations. */
+  parts?: Record<string, number>;
   /** 1-based line it came from, for the summary screen. */
   line: number;
+}
+
+/**
+ * The figure in the currency it was spent in, beside the plan's base one.
+ * Only ever a hint: `shapeEntry` writes it when a rate reproduces the base
+ * figure exactly, and the base figure otherwise.
+ */
+export interface LocalMoney {
+  currency: CurrencyCode;
+  /** Positive. */
+  amountMinor: number;
+  /** The source's own rate, 1 `currency` = `rate` base, if it gave one. */
+  rate: string | null;
+  /** name -> each share in `currency`, when the source states them and they add up. */
+  owed?: Record<string, number>;
 }
 
 /** A transfer the plan would write. */
@@ -126,6 +145,8 @@ export interface PlannedTransfer {
   amountMinor: number;
   /** The `Description` cell, or null when it is only the `Payment` token again. */
   note: string | null;
+  /** As `PlannedEntry.local`, without shares. */
+  local?: Omit<LocalMoney, "owed">;
   day: string;
   occurredAt: number;
   line: number;
@@ -142,7 +163,7 @@ export interface ImportPlan {
   source: ImportSource;
   /** The group's name, when the source has one (a tricount does; a CSV's is the filename). */
   title?: string;
-  /** The file's single currency. Becomes the group's base. */
+  /** The currency every figure in the plan is in. Becomes the group's base. */
   currency: CurrencyCode;
   /** Member names in header order — the order the columns are in, which is the writer's sort. */
   members: string[];

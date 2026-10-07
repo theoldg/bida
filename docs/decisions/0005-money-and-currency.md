@@ -19,7 +19,8 @@ currency"*.
 
 **A group has a base currency; every entry carries its own currency and rate**
 (`rateToBase`, foreign to base, frozen at save) and where the rate came from
-(`rateSource`: `fetched`, `typed`, `copied`, or `group` for the old registry's).
+(`rateSource`: `fetched`, `typed`, `copied`, `imported` from a tricount, or
+`group` for the old registry's).
 What an entry is worth is its amount at its own rate, re-derived on read
 (`atCurrentRates`), so nothing written later moves it.
 

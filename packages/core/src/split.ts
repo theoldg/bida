@@ -43,14 +43,24 @@ interface SplitOptions {
   tiebreakSeed?: string;
 }
 
-/** FNV-1a. Small, fast, and identical everywhere — which is all we need. */
-function hash32(input: string): number {
-  let h = 0x811c9dc5;
+/** FNV-1a's starting state. */
+export const FNV_OFFSET = 0x811c9dc5;
+
+/**
+ * FNV-1a, carried on from state `h` through `input`. Small, fast, and identical
+ * everywhere — which is all we need. Exported so `import-shape.ts` can hash a
+ * seed's prefix once and every candidate ending from there.
+ */
+export function fnv1a(h: number, input: string): number {
   for (let i = 0; i < input.length; i++) {
     h ^= input.charCodeAt(i);
     h = Math.imul(h, 0x01000193) >>> 0;
   }
   return h >>> 0;
+}
+
+function hash32(input: string): number {
+  return fnv1a(FNV_OFFSET, input);
 }
 
 /**

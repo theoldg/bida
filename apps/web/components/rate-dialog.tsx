@@ -31,7 +31,7 @@ import { errorText, rateText } from "../lib/format";
 type Provenance =
   | { kind: "loading" }
   | { kind: "fetched"; asOf: string | null }
-  | { kind: "typed" | "copied" | "group" }
+  | { kind: "typed" | "copied" | "imported" | "group" }
   | { kind: "offline" }
   | { kind: "unavailable" };
 
@@ -44,6 +44,7 @@ function provenanceText(from: Provenance): string {
       return from.asOf ? copy.rates.from.fetched(from.asOf) : copy.rates.from.fetchedUndated;
     case "typed": return copy.rates.from.typed;
     case "copied": return copy.rates.from.copied;
+    case "imported": return copy.rates.from.imported;
     case "group": return copy.rates.from.group;
   }
 }

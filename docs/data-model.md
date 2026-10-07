@@ -68,7 +68,7 @@ Expense {
                       // own, frozen at save (ADR-0005)
   baseAmountMinor,    // amountMinor × rateToBase, rounded once; stored, and
                       // re-derived on read (`atCurrentRates`)
-  rateSource?,        // 'fetched'|'typed'|'copied'|'group'; absent in the base
+  rateSource?,        // 'fetched'|'typed'|'copied'|'imported'|'group'; absent in the base
                       // currency, and on an entry from before the move
   paidBy,             // memberId — the payer, or the largest co-sponsor
   payers?,            // memberId -> minor units in THIS expense's currency,
@@ -346,7 +346,8 @@ a recovery:
 - **A member's cell is `paid − owed`.** `(+20, −10, −10)` at a cost of 30 is "A
   paid 30, split three ways" and half a dozen other entries equally. One
   positive column — every file Splitwise itself writes — is lossless: that
-  member paid the cost, and the split is `exact` at `owed = paid − delta`.
+  member paid the cost, and owes `paid − delta` (written as Evenly where that
+  lands every cent — [Writing a plan](#writing-a-plan)).
   Several are read as several payers at `paidᵢ = deltaᵢ × cost / Σ positive`,
   which reproduces every balance to the cent while the payer figures are a
   guess. Both branches need `Σ positive ≤ cost`, which the file does not
@@ -399,14 +400,42 @@ There is no foot row, so the checksum is computed **by the route the app
 itself uses** — allocations minus what you owned — which is not the route the
 plan takes. That is what makes it worth checking: a transfer read backwards, an
 income unflipped or a payer wrongly apportioned leaves the raw sums alone and
-moves the plan's. Mixed currencies are refused as they are in a CSV, and a
-refusal names the entry rather than a line, since a line is not what a person
-sees when they open the tricount.
+moves the plan's. A refusal names the entry rather than a line, since a line
+is not what a person sees when they open the tricount, and an entry marked
+`DELETED` is left out, as the app leaves it.
+
+**Every `amount` is in the tricount's own currency**, so a trip spent in three
+currencies reads like one in one. Beside it, an entry spent elsewhere states
+`amount_local` and `exchange_rate`, an allocation its own `amount_local`, and
+a `RATIO` allocation the `share_ratio` it was split by. The plan carries those
+as **hints** (`LocalMoney`, `parts`): unreadable is ignored, never refused,
+because the base figures already import.
 
 **The fetch is not here.** `apps/api/src/tricount.ts` makes the two calls and
 `apps/web/lib/import/tricount.ts` makes the key pair they want, because core is
 pure and because an undocumented API is exactly the thing to keep one file wide
 ([import-export.md](import-export.md#bringing-a-group-onto-the-phone)).
+
+### Writing a plan
+
+The plan's figures are base currency and passed the checksum, so
+`core/import-shape.ts` may write each row any way that **reads back as exactly
+those figures** through `resolveEntrySplit` and `resolvePayers` — and checks
+that it does. It prefers, in order: the currency it was spent in, at the
+source's rate or else the shortest one `convertMinor` takes to the base figure
+exactly (`rateSource: "imported"`); then Parts, Evenly, Amounts. Amounts always
+fits, so the balances never depend on what was picked.
+
+**The leftover cent decides Evenly and Parts.** It goes by
+`hash32("<entryId>:<memberId>")`, smallest first, and the id isn't chosen yet —
+so `seedFor` searches ids for one ranking the source's cent-takers first. The
+odds are 1/C(n, k) for k cents among n people; the id is a hashed prefix, so a
+try varies only the UUID's last twelve digits and costs a few dozen steps per
+member, and each search is capped at 5 ms before falling through. A CSV has no
+parts and no other currency, so only Evenly applies there.
+
+*Gotcha:* FNV-1a orders ids alike but for their last character rigidly — over
+`m0`…`m9` some orders never occur. Test with ids `memberIdFor` makes.
 
 ## D1 schema
 
