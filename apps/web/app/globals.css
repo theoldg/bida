@@ -1418,6 +1418,13 @@ dialog.scrim::backdrop { background: transparent }
 .field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 /* Weighed against the date field's calendar, the browser's own and drawn in ink. */
 .field .pick .pchev { color: var(--ink); flex: none }
+/* The form's head card (an expense or income): the figure on top, the fields
+   under it as rows of one card, ruled as the split's rows are, rather than
+   three cards of their own. */
+.formhead { padding: 0; overflow: hidden; overflow: clip }
+.formhead :is(.field, .card) { background: transparent; border: 0; border-radius: 0;
+  border-top: 1px solid var(--rule-soft) }
+.formhead .field { padding: 11px 12px }
 
 /* ---- save refusal (lib/refusal.ts) ----
    The whole field blooms red: a red edge around grey writing gets missed. No

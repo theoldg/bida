@@ -441,6 +441,14 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
         <Scroll>
           {scan.inputs}
 
+          {/* An expense's head is one card — figure, what, who, when — and the
+              split's ÷ under it, as the entry screen draws it: the form is the
+              summary left open. A transfer has no ÷ and keeps its loose fields,
+              so for it both wrappers dissolve (`display: contents`). */}
+          <div className={transfer ? undefined : "pad"}
+            style={transfer ? { display: "contents" } : { paddingTop: 2, paddingBottom: 0 }}>
+          <div className={transfer ? undefined : "card formhead"}
+            style={transfer ? { display: "contents" } : undefined}>
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
             {/* Grid rows, not centred lines: the typed amount, its converted figure
                 and the scan's badge share a right edge; the currency chip and rate
@@ -498,8 +506,8 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
             </div>
           </div>
 
-          <div className="pad" style={{ paddingTop: 4, paddingBottom: docked ? 0 : undefined,
-            display: "flex", flexDirection: "column", gap: 9 }}>
+          <div className="pad" style={transfer ? { paddingTop: 4, paddingBottom: docked ? 0 : undefined,
+            display: "flex", flexDirection: "column", gap: 9 } : { padding: 0 }}>
             {transfer ? (
               <TransferSides
                 members={data.members}
@@ -555,8 +563,12 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
               <input id="when" type="date" value={dateInputValue(draft.occurredAt)}
                 onChange={(e) => patch(retimed(draft, withDate(draft.occurredAt, e.target.value)))} />
             </div>
+          </div>
+          </div>
+          </div>
 
-            {transfer ? null : (
+          {transfer ? null : (
+            <div className="pad" style={{ paddingTop: 9, paddingBottom: docked ? 0 : undefined }}>
               <SplitEditor
                 members={data.members}
                 me={data.me}
@@ -577,9 +589,8 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                   editItemsHref: route.items(groupId, via),
                 } : null}
               />
-            )}
-
-          </div>
+            </div>
+          )}
         </Scroll>
         {/* The form's last row, docked (`.whodock`): under the split while the
             form fits, at the foot of the screen once a long split scrolls above

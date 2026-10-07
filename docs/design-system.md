@@ -367,9 +367,11 @@ columns so the two sets of digits lined up broke on the edge cases (a symbol
 over a code, a code on the trailing side), and the margin is an edge every
 case has.
 
-**An expense or income is laid out as its form is**: the title, the figure and
-who paid in one card, the form's ÷ (`.splitrule`), then the split in a card of
-its own, and your balance under it, on the screen's ground. Under a hairline the head card says who:
+**An expense or income is laid out as its form is**: a head card, the ÷
+(`.splitrule`), then the split in a card of its own. On the form the head card
+(`.formhead`) is the figure over What, Paid by and When as ruled rows; on the
+entry it is the title, the figure and who paid, with your balance under the
+split, on the screen's ground. A transfer's form has no ÷, so no head card. Under a hairline the head card says who:
 one payer is a line — "paid by **Adaś**" — named nowhere else on the screen;
 several are rows carrying what each put in, under an eyebrow that counts them,
 "Paid by **2 people**". A transfer's head is no card: its card below is
