@@ -798,8 +798,8 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .entryby { font-size: 13px; color: var(--muted) }
 /* "Paid by 2 people": the count is the phrase's object, as the name is above. */
 .entryhead .eyebrow b { color: var(--ink-2); font-weight: 600 }
-/* The form's ÷ between the head card and the split, nearer both than on the
-   form, where the tabs under it want air. */
+/* The entry's ÷ between the head card and the split: 13px each side, as on
+   the form. */
 .splitrule.entrysplit { margin: 13px 0 }
 /* On the screen's ground, inset to the cards' rows (padding plus border). */
 .balline { margin-top: 10px; padding-inline: 15px }
@@ -1262,8 +1262,9 @@ dialog.scrim::backdrop { background: transparent }
 /* In a card: between two fields a full-width list reads as another screen.
    The tabs are the lid of the list they govern. */
 /* What parts the split from the fields: a lone ÷, drawn rather than typed so
-   it is the logo's, square dots and all. */
-.splitrule { display: flex; justify-content: center; margin: 13px 0 22px;
+   it is the logo's, square dots and all. 13px each side, as on the entry: the
+   form's column gap (9px) is the rest of the top. */
+.splitrule { display: flex; justify-content: center; margin: 4px 0 13px;
   color: color-mix(in srgb, var(--muted) 50%, transparent) }
 .splitrule > span { position: relative; flex: none; width: 13px; height: 15px;
   background: linear-gradient(currentColor, currentColor) center / 100% 3px no-repeat }
