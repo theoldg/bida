@@ -373,6 +373,13 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .avatar { width: 34px; height: 34px; border-radius: var(--r-s); display: grid; place-items: center;
   font-size: 12px; font-weight: 600; letter-spacing: -.02em; flex: none;
   background: var(--card-2); color: var(--ink-2); border: 1px solid var(--rule) }
+/* A group's: the square gives way to a slip of paper (`Avatar`). The slip is
+   drawn, so its torn edges can carry the border the square's box would. */
+.avatar.receipt { background: none; border: 0; position: relative; display: block }
+.avatar.receipt svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible }
+.avatar.receipt .slip { fill: var(--card-2); stroke: var(--rule); stroke-width: 1; stroke-linejoin: round }
+.avatar.receipt .rinit { position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--f-mono) }
 
 /* Two jobs, so two squares echoing the ledger's FABs. Outside `.scroll`, or
    iOS's rubber-band would carry them. */

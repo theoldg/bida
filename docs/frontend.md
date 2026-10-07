@@ -374,7 +374,7 @@ right so the digits stand in columns. Everything else
 is ordinary markup; what more than one screen draws lives in
 `components/chrome.tsx` (the frame, plus `Blank` for a screen still waiting on
 Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and
-`components/bits.tsx` (`Avatar` — a *group's* initials — `Card`, `KV`).
+`components/bits.tsx` (`Avatar` — a *group's* initials on a little receipt — `Card`, `KV`).
 
 **Core says what is wrong; the screen says it in money.** `validateSplit` and
 `validatePayers` return `problem` (`"under"`, `"over"`, `"empty"`…) and

@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-07* — "Make the group avatars little receipts, don't push", then
+  bigger, torn both ends, no dots, "show me several", "ship it". The stop
+  hook asked to push each turn; the owner's "don't push" outranks it until
+  they say ship.
+
 - *2026-10-07* — "Visually consolidate the top", I mocked three rethinks; "I
   meant more like the current layout but in a box". A vague brief about
   likeness wants the smallest literal move first, the bold ones after.
@@ -72,8 +77,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-06* — "The group history link should have its icon aligned with
   the timeline points". One element named, one alignment asked: measure the
   rail, put the icon on it, and let the words fall into the column too.
-
-- *2026-10-06* — "Sort the amount chips by value": no direction given.
-  Biggest first is how a bill is read; pick it, tie-break so the row can't
-  shuffle, and let a correction come if it's wrong.
-

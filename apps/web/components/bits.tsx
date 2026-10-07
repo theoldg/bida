@@ -7,16 +7,19 @@ import { initials } from "../lib/format";
 import { copy } from "../lib/copy";
 
 /**
- * Initials in a square — for a *group*, in the list of them. **People don't
- * get one**: beside a name it only repeats its first letter
+ * A group's initials on a little receipt — a slip torn top and bottom — in
+ * the list of groups. **People don't get one**: beside a name it only repeats
+ * its first letter
  * ([ADR-0023](../../../docs/decisions/0023-monospace-monochrome.md)). The
- * who-had-what grid draws its own for column headings.
+ * who-had-what grid draws its own squares for column headings.
  */
-export function Avatar({ name, size = 34 }: { name: string; size?: number }) {
+export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
   return (
-    <span className="avatar"
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}>
-      {initials(name)}
+    <span className="avatar receipt" style={{ width: size, height: size }}>
+      <svg viewBox="0 0 26 34" aria-hidden="true">
+        <path className="slip" d="M1.5 3l2.875 -2.5l2.875 2.5l2.875 -2.5l2.875 2.5l2.875 -2.5l2.875 2.5l2.875 -2.5l2.875 2.5V31l-2.875 2.5l-2.875 -2.5l-2.875 2.5l-2.875 -2.5l-2.875 2.5l-2.875 -2.5l-2.875 2.5l-2.875 -2.5Z" />
+      </svg>
+      <span className="rinit" style={{ fontSize: Math.round(size * 0.3) }}>{initials(name)}</span>
     </span>
   );
 }
