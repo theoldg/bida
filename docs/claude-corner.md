@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-07* — "Retake the screenshots", nothing else. The committed six
+  are the ones that go stale, so `readme-shots`; rebuild, look at each
+  changed picture, and reshoot if dev moves under you before the push.
+
 - *2026-10-07* — Save's slide, narrowed to "only the error text", then "it's
   buggy … remove the sliding completely". Motion borrowed from a screen where
   things fold felt wrong where nothing does; when a tuning turn finds a bug,
@@ -74,8 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-07* — "Least or most obvious first?" asked inside a build request,
   overturning a documented "point, don't explain". Answer with a pick and its
   reason, build that, and rewrite the doc's rule rather than defend it.
-
-- *2026-10-06* — Brackets to a second line took four mock rounds: "roomier",
-  "centred", then "ship that" — and mid-ship, "actually, smaller sizes". A
-  live size toggle on the mock let them pick 12px alone. A ship order can be
-  recalled: commit only once they stop tuning.
