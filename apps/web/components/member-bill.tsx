@@ -22,7 +22,8 @@ export function MemberBill({ name, total, lines, format, startOpen = false }: {
   lines: MemberLine[];
   format: (minor: number) => string;
   /**
-   * Open from the start. A saved expense keeps rows shut but the viewer's own;
+   * Open from the start. A saved expense keeps every row shut, yours too: the
+   * figure is what you came for, as on your balance's fold;
    * a quick split's answer *is* the bill, read out at the table (ADR-0035).
    */
   startOpen?: boolean;

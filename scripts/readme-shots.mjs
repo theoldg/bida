@@ -144,13 +144,13 @@ async function main() {
     await shot("items");
 
     // The same bill read back as what each person owes, the viewer's own row
-    // open onto the lines behind their figure as it opens by itself (ADR-0016).
+    // pressed open onto the lines behind their figure (ADR-0016).
     // This is the shot that says the grid is not a one-way trip. Reached from
     // the ledger rather than by saving the draft above, which would append an
     // op for a screenshot. In English as well: the language is the
     // expense's, saved with it, so every screen of it reads alike.
     await page.goto(`${base}/g/entry?id=${GROUP}&e=${CANTINA}`);
-    await page.getByRole("button", { name: /^Luke/ }).waitFor();
+    await page.getByRole("button", { name: /^Luke/ }).click();
     await settle(page, 250);
     await shot("summary");
 
