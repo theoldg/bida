@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-07* — "On second thought, don't slide Save when switching tabs,
+  only when the error or split text appears". A motion asked for "whatever
+  moves it" is still felt per trigger: name each thing that moves it.
+
 - *2026-10-07* — "Rate per expense … any other design decisions you need
   from me?" — it undid ADR-0005's last revision. Four asked questions got
   four answers, one with a rider ("also fetch on receipt scan"). Ask the
@@ -74,7 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "centred", then "ship that" — and mid-ship, "actually, smaller sizes". A
   live size toggle on the mock let them pick 12px alone. A ship order can be
   recalled: commit only once they stop tuning.
-
-- *2026-10-06* — "Show me some designs before shipping", then "Ship slim
-  band", not my pick. Five tabs on the real stylesheet made the choice a tap.
-  A shared class reaches past the screen asked about: check what else wears it.
