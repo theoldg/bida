@@ -202,7 +202,10 @@ identical. Two states cover the gap, and neither is a spinner:
   reads as a dead button. The tint fills the control, not the column of text
   inside it: a press inset from the row it sits in reads as a misaligned box
   rather than as an answer (`.billgroup > button.kv`). And the control is
-  as big as what it sits in, so the wash is its hit area. One exception: a
+  as big as what it sits in, so the wash is its hit area — and the hit area is
+  what the eye takes for one thing: a `.pick` field answers on its label and
+  padding too (a stretched `::after`), a quiet link on its words and never the
+  empty line beside them (`.entryhist`). One exception: a
   who-had-what cell is hit anywhere between the rules, but washes only a 32px
   tile round its dot — rule to rule, a column read as one grey slab. The browser's own
   tap highlight is off (late, and it disagrees), with `touch-action:
@@ -371,8 +374,8 @@ by"), not a label, a dot and a value.
 **History is one quiet link, above Edit** (`.entryhist`) — never a top-bar
 icon as well, which was two ways to the same screen. A clock, then what is
 there — "Created by Luke", or "Edited 3 times · last by Han" — then a chevron
-right after the words, in grey, not underlined; a press washes those
-words, as `.tlink`'s does, not the row. The name is the first
+right after the words, in grey, not underlined; only those words are the
+link, and a press washes them, as `.tlink`'s does, not the row. The name is the first
 thing to go when the line is short (`historyMeta`); "Created by" with no room
 for the name says "History". Both ride the dock under the card; a deleted
 entry keeps the line where Edit was.

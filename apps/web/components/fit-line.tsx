@@ -16,22 +16,22 @@ const SEP = copy.group.metaLine("", "");
  * it leaves. `trail` is the same at the other end — a chevron that follows the
  * words rather than the box's edge — and `icon` goes before everything.
  *
- * `bodyClassName` wraps what is shown in an inline span, so a press can wash
- * the words and not the whole line: the box itself must stay as wide as the
- * room, or it would measure the rung it last chose.
+ * `body` wraps what is shown — in a link, say — so the words are the target
+ * and the press wash, not the whole line: the box itself must stay as wide as
+ * the room, or it would measure the rung it last chose.
  *
  * Renders `options[0]` on the server and first paint, then narrows in a layout
  * effect, before paint. Keep the ellipsis class anyway: the shortest rung
  * still holds a name of any length.
  */
-export function FitLine({ options, className, lead, leadClassName, icon, trail, bodyClassName }: {
+export function FitLine({ options, className, lead, leadClassName, icon, trail, body }: {
   options: readonly string[];
   className?: string;
   lead?: string;
   leadClassName?: string;
   icon?: ReactNode;
   trail?: ReactNode;
-  bodyClassName?: string;
+  body?: (shown: ReactNode) => ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const leadRef = useRef<HTMLElement>(null);
@@ -63,7 +63,7 @@ export function FitLine({ options, className, lead, leadClassName, icon, trail, 
   </>;
   return (
     <div ref={ref} className={className}>
-      {bodyClassName ? <span className={bodyClassName}>{shown}</span> : shown}
+      {body ? body(shown) : shown}
     </div>
   );
 }

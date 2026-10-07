@@ -800,13 +800,15 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .entryby b { color: var(--ink); font-weight: 600 }
 /* Read more often than pressed, so quiet text a thumb tall. `--ink-2`: at
    12px `--muted` is under 4.5:1. The line stays full width for `FitLine` to
-   measure, so the press washes the inline body. */
+   measure; the link is the inline body, so the press washes the words and the
+   rest of the line presses nothing. `::after` gives it back a thumb's height. */
 .entryhist { display: block; padding: 0 2px; font-size: 12px; color: var(--ink-2) }
 .entryhistline { line-height: 44px; margin: 0 -6px; padding: 0 6px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.entryhistbody { margin: 0 -6px; padding: 4px 6px; border-radius: var(--r-s);
+.entryhistbody { position: relative; margin: 0 -6px; padding: 4px 6px; border-radius: var(--r-s);
   transition: background-image .2s ease }
-.entryhist:active .entryhistbody { background-image: linear-gradient(var(--press), var(--press));
+.entryhistbody::after { content: ""; position: absolute; inset: -10px 0 }
+.entryhistbody:active { background-image: linear-gradient(var(--press), var(--press));
   transition-duration: 0s }
 .fiticon { display: inline-flex; vertical-align: middle; margin-right: 5px; color: var(--muted) }
 .fittrail { display: inline-flex; vertical-align: middle; margin-left: 3px; color: var(--muted) }
@@ -1397,8 +1399,11 @@ dialog.scrim::backdrop { background: transparent }
 .field input, .field .pick { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font: inherit; font-size: 14px; font-weight: 600; color: var(--ink) }
 .field input::placeholder { color: var(--muted); font-weight: 500 }
-/* Picked, not typed: the whole line is the button. */
+/* Picked, not typed: the whole line is the button — its label and padding
+   too, which the stretched `::after` lends it. */
+.field:has(> .pick) { position: relative }
 .field .pick { display: flex; align-items: center; gap: 8px; text-align: left }
+.field > .pick::after { content: ""; position: absolute; inset: 0; border-radius: inherit }
 .field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 /* Weighed against the date field's calendar, the browser's own and drawn in ink. */
 .field .pick .pchev { color: var(--ink); flex: none }

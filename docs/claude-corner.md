@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-07* — "Should be only the link+icon (wash area)", in the same note
+  as "clickable across the whole row". Not two rules: what the eye reads as
+  one thing is one target, no more, no less. The wash names it. "Audit" meant
+  look everywhere, then change only what breaks it.
+
 - *2026-10-07* — "Least or most obvious first?" asked inside a build request,
   overturning a documented "point, don't explain". Answer with a pick and its
   reason, build that, and rewrite the doc's rule rather than defend it.
@@ -70,8 +75,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-06* — I argued against inking a chip; they picked it anyway, with
   three other letters, and in the same breath asked for the next round. An
   argument is a footnote on the mock, not a veto: build the pick, then go on.
-
-- *2026-10-06* — "Maybe a checkmark next to unspecified rows", typed into
-  the middle of my survey of the code. The owner designs while you read: stop
-  and fold the hint in, and the mocks they then see are already theirs. Then
-  "Build it" settled three open questions by accepting every proposal.

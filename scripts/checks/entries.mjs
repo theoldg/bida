@@ -126,8 +126,9 @@ report(await page.getByText("Dinner").count() > 0, "an expense saves and lists")
 // ---- an income ---------------------------------------------------------
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 // With no amount there is nothing to divide among payers: the door is drawn
-// shut, saying what comes first.
-await page.locator("#paidby").click();
+// shut, saying what comes first. Pressed on its label: the whole field is the
+// button, not only the name.
+await page.locator(".field:has(> #paidby)").click({ position: { x: 16, y: 12 } });
 const multi = page.getByRole("option", { name: "Multiple people" });
 report(await multi.isDisabled() && (await multi.innerText()).includes("set the amount first"),
   "several payers wait for an amount, and say so");
@@ -600,7 +601,7 @@ await page.locator(".deletedband").getByText(/^by \S/).waitFor({ timeout: PATIEN
 const band = await page.locator(".deletedband").innerText();
 report(/deleted/i.test(band) && /by \S/.test(band), `and says at its head who deleted it — ${band.replace(/\s+/g, " ")}`);
 report(/^Deleted /.test(await page.locator(".topbar h3").innerText()), "and its bar says it is deleted");
-await page.locator("a.entryhist").click();
+await page.locator("a.entryhistbody").click();
 await page.waitForURL(/\/g\/history\?.*e=/);
 const titled = await page.locator(".sub").first().innerText();
 report(/coffee/i.test(titled), `a deleted entry's history is titled by what it was — ${titled}`);
@@ -659,7 +660,13 @@ await page.waitForFunction(
 );
 await page.locator("a.row").filter({ hasText: "Twice" }).click();
 await page.waitForURL(/\/g\/entry\?/);
-await page.locator("a.entryhist").click();
+await page.locator("a.entryhistbody").waitFor({ timeout: PATIENCE });
+report(await page.locator(".entryhist").evaluate((line) => {
+  // Just inside the line's right end, past the words: nothing to press there.
+  const box = line.getBoundingClientRect();
+  return !document.elementFromPoint(box.right - 4, box.top + box.height / 2)?.closest("a");
+}), "the history line is a link on its words alone, not the rest of the dock");
+await page.locator("a.entryhistbody").click();
 await page.waitForSelector(".tle");
 const creates = (await page.locator(".what").allInnerTexts())
   .filter((t) => /created this expense/i.test(t)).length;

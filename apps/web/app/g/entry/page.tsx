@@ -259,10 +259,15 @@ function EntryScreen() {
             and who last — quiet, since it is read more than it is pressed. A
             deleted entry keeps it where Edit would be. */}
         <div className="pad whodock" style={{ paddingTop: 2 }}>
-          <Link href={route.history(groupId, entry.id, via)} className="entryhist">
-            <FitLine className="entryhistline" bodyClassName="entryhistbody" options={historyLine}
-              icon={<Icon name="clock" size={14} />} trail={<Icon name="chev" size={13} />} />
-          </Link>
+          {/* The link is the words, not the line: the rest of the dock's width
+              is nothing to press. */}
+          <div className="entryhist">
+            <FitLine className="entryhistline" options={historyLine}
+              icon={<Icon name="clock" size={14} />} trail={<Icon name="chev" size={13} />}
+              body={(shown) => (
+                <Link href={route.history(groupId, entry.id, via)} className="entryhistbody">{shown}</Link>
+              )} />
+          </div>
           {deleted ? null : (
             <Link href={route.editEntry(groupId, entry.id, via)} className="btn btn-s">{copy.act.edit}</Link>
           )}
