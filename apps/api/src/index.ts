@@ -9,6 +9,7 @@ import {
 import { clientKey, countScans, overLimit, recordScan, turnstileOk } from "./scan-limits";
 import { MAX_NOTIFY_BODY_BYTES, declaredTooLarge, pushTooLarge } from "./push-limits";
 import { devAsset } from "./dev-env";
+import { pastDay } from "./rate-day";
 import { pageForPayload } from "./payload";
 import {
   fetchRegistry, isClientKey, isTricountKey, MAX_REGISTRY_BYTES, openSession,
@@ -84,7 +85,8 @@ async function jsonBody<T extends object>(c: Context<Env>): Promise<T | Response
 }
 
 /**
- * Today's rate for one currency pair, for the rate registry.
+ * One currency pair's rate, for an entry: today's, or with `?date=YYYY-MM-DD`
+ * the day the entry happened (ADR-0005).
  *
  * `@fawazahmed0/currency-api`: CC0, keyless, ~340 currencies (including MAD
  * and UZS, which ECB feeds lack), daily. jsDelivr first, the project's Pages
@@ -93,11 +95,23 @@ async function jsonBody<T extends object>(c: Context<Env>): Promise<T | Response
  * Fetched **by the entry's currency** (`currencies/mad.json` has `.eur`), so no
  * reciprocal is taken. Proxied for one shared cache, no CORS fight, and one
  * place to swap feeds. Unauthenticated: public data, costs nothing.
+ *
+ * **A past day is the feed's dated release**, tried before the latest one: a
+ * day the feed has no release for (before its history starts, or one it
+ * skipped) gets the latest rate rather than none.
  */
-const RATE_HOSTS = [
-  "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1",
-  "https://latest.currency-api.pages.dev/v1",
-];
+function rateHosts(date: string | null): string[] {
+  const latest = [
+    "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1",
+    "https://latest.currency-api.pages.dev/v1",
+  ];
+  if (!date) return latest;
+  return [
+    `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${date}/v1`,
+    `https://${date}.currency-api.pages.dev/v1`,
+    ...latest,
+  ];
+}
 
 app.get("/api/rates/:from/:to", async (c) => {
   const from = c.req.param("from").toUpperCase();
@@ -106,13 +120,15 @@ app.get("/api/rates/:from/:to", async (c) => {
     return c.json({ error: "from and to must be three-letter currency codes" }, 400);
   }
   if (from === to) return c.json({ from, to, rate: "1", asOf: null });
+  const date = pastDay(c.req.query("date"), Date.now());
 
-  for (const host of RATE_HOSTS) {
+  for (const host of rateHosts(date)) {
     let payload: { date?: unknown; [key: string]: unknown };
     try {
-      // The edge cache is the shared cache. Six hours on a daily feed.
+      // The edge cache is the shared cache. Six hours on a daily feed; a past
+      // day's release never changes.
       const upstream = await fetch(`${host}/currencies/${from.toLowerCase()}.json`, {
-        cf: { cacheTtl: 21600, cacheEverything: true },
+        cf: { cacheTtl: date ? 604800 : 21600, cacheEverything: true },
       });
       if (!upstream.ok) continue;
       payload = await upstream.json();

@@ -148,8 +148,8 @@ want the real thing. `pnpm --filter @bida/api db:migrate:local` seeds the local
 SQLite. Worker secrets in local dev come from `apps/api/.dev.vars`, which is
 gitignored.
 
-Exchange rates come from a public CC0 feed through `/api/rates/:from/:to` and
-need no key.
+Exchange rates come from a public CC0 feed through `/api/rates/:from/:to`
+(`?date=` for a past day) and need no key.
 
 ## Renaming it
 

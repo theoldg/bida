@@ -30,7 +30,7 @@ Cloudflare: ONE Worker ── static assets + Hono /api/*
                             POST /groups/:id/notify     relay sealed pushes
                             POST /groups/:id/scan       the one endpoint that
                               └─ D1 (scan_hits)         spends money
-                            GET  /rates/:from/:to       a rate suggestion
+                            GET  /rates/:from/:to       an entry's rate (?date= its day)
                             POST /tricount             somebody else's ledger
 ```
 
