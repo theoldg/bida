@@ -26,6 +26,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-08* — "Maybe the number should shrink? wdyt?" I moved the badge
+  beside it instead and shipped; "wait i don't like this … show me
+  screenshots". A "wdyt" carrying a proposal is the brief: build theirs.
+
 - *2026-10-08* — Paid-by chips: worried my › would read as the first
   payer's, so "mock both"; then "ship A", plus press washes and, mid-build,
   "add back the currency" a postcard below had dropped. A layout change can
@@ -75,7 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   bigger, torn both ends, no dots, "show me several", "ship it". The stop
   hook asked to push each turn; the owner's "don't push" outranks it until
   they say ship.
-
-- *2026-10-07* — "Visually consolidate the top", I mocked three rethinks; "I
-  meant more like the current layout but in a box". A vague brief about
-  likeness wants the smallest literal move first, the bold ones after.

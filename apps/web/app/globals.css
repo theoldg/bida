@@ -1411,11 +1411,13 @@ dialog.scrim::backdrop { background: transparent }
 .ratelink { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted);
   border: 0; background: none; padding: 0 11px 0 0 }
 .ratelink .bad { color: var(--debit) }
+/* The figure's cell, one height with or without the scan's badge under it. */
+.amtstack { height: 60px; display: flex; flex-direction: column; align-items: flex-end;
+  justify-content: center; gap: 2px }
+.amtstack.noted .amount { font-size: 34px }
 /* The scan that typed the amount, ending on its last digit like `.ratelink`. */
-.amtnotes { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
-  gap: 6px; margin-top: 3px; padding-right: 11px }
-.amtnote { font-size: 11px; color: var(--hl-ink); background: var(--hl);
-  padding: 2px 7px; border-radius: 2px }
+.amtnote { font-size: 10.5px; line-height: 14px; color: var(--hl-ink); background: var(--hl);
+  padding: 1px 6px; border-radius: 2px; margin-right: 11px }
 /* "@ 4.3731", the currency chip's twin. The figure leads; no rate is a red "?". */
 .ratechip { font-variant-numeric: tabular-nums }
 .ratechip .at { color: var(--muted) }
