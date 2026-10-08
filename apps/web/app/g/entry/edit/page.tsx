@@ -442,14 +442,14 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
           <div className={transfer ? undefined : "card formhead"}
             style={transfer ? { display: "contents" } : undefined}>
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
-            {/* Grid rows, not centred lines: the typed amount, the scan's badge
-                and the converted figure share a right edge; the currency chip and rate
+            {/* Grid rows, not centred lines: the typed amount, its converted figure
+                and the scan's badge share a right edge; the currency chip and rate
                 control share a left one. `.amountfield` is rendered by `AmountInput`,
                 so the refusal's `animationend` is caught here on the way up. */}
             <div className="amtgrid" data-refuse="amount" onAnimationEnd={refusals.onFlashEnd("amount")}>
-              {/* A fixed height either way: with the scan's badge the figure
-                  shrinks to make room under it, so the badge coming and going
-                  never moves the form under a thumb. */}
+              {/* With the scan's badge the figure's cell gives up exactly the
+                  badge row's height, so the badge coming and going never moves
+                  the form under a thumb. */}
               <div className={receiptLocksAmount ? "amtstack noted" : "amtstack"}>
               <AmountInput
                 className="amount"
@@ -466,7 +466,6 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                 autoSize={true}
                 disabled={receiptLocksAmount}
               />
-              {receiptLocksAmount ? <div className="amtnote">{copy.form.fromReceipt}</div> : null}
               </div>
               <button type="button" className="chip" aria-label={copy.form.currency}
                 onClick={() => setAsk("currency")}>
@@ -492,6 +491,15 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                     onClick={() => setAskRate(draft.currency)} />
                 </>
               ) : null}
+
+              {/* The scan that typed the amount — a grid row, so it ends on the
+                  amount's last digit (odd children are the right-hand column).
+                  Always rendered, folded shut without a scan, so it can grow in
+                  while the figure's cell shrinks by the same amount. */}
+              <div className={receiptLocksAmount ? "amtnotes open" : "amtnotes"}
+                aria-hidden={!receiptLocksAmount}>
+                <div className="amtnote">{copy.form.fromReceipt}</div>
+              </div>
             </div>
           </div>
 

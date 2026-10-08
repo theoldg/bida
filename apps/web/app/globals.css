@@ -1411,13 +1411,21 @@ dialog.scrim::backdrop { background: transparent }
 .ratelink { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted);
   border: 0; background: none; padding: 0 11px 0 0 }
 .ratelink .bad { color: var(--debit) }
-/* The figure's cell, one height with or without the scan's badge under it. */
-.amtstack { height: 60px; display: flex; flex-direction: column; align-items: flex-end;
-  justify-content: center; gap: 2px }
-.amtstack.noted .amount { font-size: 34px }
+/* The figure's cell gives up the badge row's 16px when the badge shows, so the
+   block never changes height; the row is always there, so its gap is too. Both
+   move on one curve, so the sum holds mid-flight as well. */
+.amtstack { height: 56px; display: flex; flex-direction: column; justify-content: center;
+  transition: height .2s ease }
+.amtstack.noted { height: 40px }
+.amtstack .amount { transition: font-size .2s ease, line-height .2s ease }
+.amtstack.noted .amount { font-size: 34px; line-height: 1 }
 /* The scan that typed the amount, ending on its last digit like `.ratelink`. */
+.amtnotes { display: flex; justify-content: flex-end; padding-right: 11px; overflow: hidden;
+  height: 0; opacity: 0; visibility: hidden;
+  transition: height .2s ease, opacity .2s ease, visibility .2s }
+.amtnotes.open { height: 16px; opacity: 1; visibility: visible }
 .amtnote { font-size: 10.5px; line-height: 14px; color: var(--hl-ink); background: var(--hl);
-  padding: 1px 6px; border-radius: 2px; margin-right: 11px }
+  padding: 1px 6px; border-radius: 2px }
 /* "@ 4.3731", the currency chip's twin. The figure leads; no rate is a red "?". */
 .ratechip { font-variant-numeric: tabular-nums }
 .ratechip .at { color: var(--muted) }
