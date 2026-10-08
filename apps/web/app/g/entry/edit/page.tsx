@@ -533,7 +533,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                   {coPayers.map(([id, amount]) => (
                     <span key={id} className="payerline">
                       <span>{data.memberById.get(id)?.name ?? copy.unknown}{id === data.me ? <You /> : null}</span>
-                      <span className="num">{money(amount, draft.currency)}</span>
+                      <span className="bignum">{money(amount, draft.currency)}</span>
                     </span>
                   ))}
                 </span>

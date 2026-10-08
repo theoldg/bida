@@ -375,8 +375,8 @@ case has.
 (`.splitrule`), then the split in a card of its own. On the form the head card
 (`.formhead`) is the figure over What, Paid by and When as ruled rows, each
 washing under a press. Several payers are one row (`.payersfield`): a line
-each in the value column, name and figure with its currency as the split's
-rows have it, and one › centred on the lines — it opens all of them, not the
+each in the value column, name and figure with its currency set as the item
+split's summary rows are, and one › centred on the lines — it opens all of them, not the
 first — standing where the date's calendar does and drawn at its weight; on the
 entry it is the title, the figure and who paid, with your balance under the
 split, on the screen's ground. A transfer's form has no ÷, so no head card. Under a hairline the head card says who:

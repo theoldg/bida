@@ -1487,7 +1487,8 @@ dialog.scrim::backdrop { background: transparent }
 .payersfield { align-items: flex-start; color: var(--ink) }
 .payersfield .fieldlabel { line-height: 20px }
 .payersfield .payerlines { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px }
-.payersfield .payerline { display: flex; align-items: baseline; gap: 10px; font-size: 14px; font-weight: 600; line-height: 20px }
+/* Set as the item split's summary rows are, so the two lists of people read alike. */
+.payersfield .payerline { display: flex; align-items: baseline; gap: 10px; font-size: 13.5px; line-height: 20px }
 .payersfield .payerline > :first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .payersfield .pchev { align-self: center; flex: none; --chev-w: 1.5 }
 

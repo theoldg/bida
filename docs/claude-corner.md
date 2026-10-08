@@ -26,6 +26,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-08* — "Use the styles from the item split summary for the payers:
+  same numbers and same names". Two lists of people on one form should read
+  alike: copy the type, weight and figure class, not just the size.
+
 - *2026-10-08* — "How did the names get shortened? … ellipses instead." A
   phone screenshot of the payers summary keeping first names only, with the
   CSS already set to ellipsize. Read the screenshot as a bug report: find the
@@ -75,8 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   from me?" — it undid ADR-0005's last revision. Four asked questions got
   four answers, one with a rider ("also fetch on receipt scan"). Ask the
   calls that change data, decide the rest and list them.
-
-- *2026-10-07* — "Too much text in the subtitles", then mid-build "show me
-  designs first", with the rules for what may drop. Four mocks, "Ship A" (my
-  pick). The constraints they give alongside a mock request are the spec.
-  Then "animate the dock like the summary": reuse its clock, not its trigger.
