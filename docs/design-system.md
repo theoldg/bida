@@ -160,9 +160,8 @@ replaced by "You".
 **The split and the payers take the pair apart.** There the question on the
 screen is who is in, so the wash marks every row that is in the split or put
 money in (`.inrow`), and you are marked by "(you)" after your name (`You`, as on
-the entry), with no bar — as are the form's Paid by, its payer chips (all one
-plain chip, no tint for yours, the figure bare since the amount above names
-the currency) and the bill's per-person lines under Items.
+the entry), with no bar — as are the form's Paid by, its payer lines (no tint
+for yours) and the bill's per-person lines under Items.
 
 **The split's foot row is a count and a box, right-aligned** (`.splithead`):
 "**3** of 4" beside a drawn checkbox — ink with a tick for everyone, ink with
@@ -374,7 +373,11 @@ case has.
 
 **An expense or income is laid out as its form is**: a head card, the ÷
 (`.splitrule`), then the split in a card of its own. On the form the head card
-(`.formhead`) is the figure over What, Paid by and When as ruled rows; on the
+(`.formhead`) is the figure over What, Paid by and When as ruled rows, each
+washing under a press. Several payers are one row (`.payersfield`): a line
+each in the value column, name and figure with its currency as the split's
+rows have it, and one › centred on the lines — it opens all of them, not the
+first — standing where the date's calendar does and drawn at its weight; on the
 entry it is the title, the figure and who paid, with your balance under the
 split, on the screen's ground. A transfer's form has no ÷, so no head card. Under a hairline the head card says who:
 one payer is a line — "paid by **Adaś**" — named nowhere else on the screen;

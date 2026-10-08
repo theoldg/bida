@@ -272,13 +272,15 @@ a, button, label, select, .seg button, .itemcell {
 }
 
 a.row, button.row, .fab, .btn, .iconbtn, .tlink, .seg button, a.card, button.card,
-.itemfold, a.chip, button.chip, .action, .starttile, .field:has(> .pick) {
+.itemfold, a.chip, button.chip, .action, .starttile, .field:has(> .pick), a.field,
+.formhead .field {
   transition: background-image .2s ease;
 }
 a.row:active, button.row:active, .fab:active, .iconbtn:active,
 .tlink:active, .seg button:active, a.card:active, button.card:active, .itemfold:active,
 a.chip:active, button.chip:active, .btn:active:not(:disabled), .starttile:active,
-.field:has(> .pick:active), .action:active:not(:disabled) {
+.field:has(> .pick:active), a.field:active, .action:active:not(:disabled),
+.formhead .field:has(> :is(input, label):active) {
   /* A gradient composites over the background instead of replacing it. */
   background-image: linear-gradient(var(--press), var(--press));
   transition-duration: 0s;
@@ -1446,6 +1448,15 @@ dialog.scrim::backdrop { background: transparent }
 .formhead :is(.field, .card) { background: transparent; border: 0; border-radius: 0;
   border-top: 1px solid var(--rule-soft) }
 .formhead .field { padding: 11px 12px }
+/* Several payers: a line each in the value column, and the whole row the door
+   to /g/payers. The chevron is centred on the lines, so it reads as all of
+   theirs, and stands where the calendar does below, at its weight. */
+.payersfield { align-items: flex-start; color: var(--ink) }
+.payersfield .fieldlabel { line-height: 20px }
+.payersfield .payerlines { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px }
+.payersfield .payerline { display: flex; align-items: baseline; gap: 10px; font-size: 14px; font-weight: 600; line-height: 20px }
+.payersfield .payerline > :first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.payersfield .pchev { align-self: center; flex: none; --chev-w: 1.5 }
 
 /* ---- save refusal (lib/refusal.ts) ----
    The whole field blooms red: a red edge around grey writing gets missed. No

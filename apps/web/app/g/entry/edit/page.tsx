@@ -8,7 +8,7 @@ import {
   type Group, type RateSource,
 } from "@bida/core";
 import { handOffReceiptTotal } from "@/lib/scan/items";
-import { Card, Chip, You } from "@/components/bits";
+import { You } from "@/components/bits";
 import { AmountInput, clipAmountToCurrency } from "@/components/amount-input";
 import { useReceiptScan } from "@/components/receipt-scan";
 import { useScanAs } from "@/lib/scan/credential";
@@ -27,7 +27,7 @@ import { copy } from "@/lib/copy";
 import { checkEntry, dockLine } from "@/lib/entry-check";
 import { rateDayOf, useEntryRate } from "@/lib/entry-rate";
 import { useRefusals } from "@/lib/refusal";
-import { bare, dateInputValue, errorText, money, plural, withDate } from "@/lib/format";
+import { bare, dateInputValue, errorText, money, withDate } from "@/lib/format";
 import { formParent, parseEntrySource, route, type EntrySource } from "@/lib/group-link";
 import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 import { markSaved } from "@/lib/ledger-motion";
@@ -521,25 +521,18 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
             </div>
 
             {transfer ? null : coPayers.length > 1 ? (
-              <Card style={{ padding: "10px 12px" }}>
-                <Link href={route.payers(groupId)} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600 }}>
-                    {plural(coPayers.length, copy.noun.person)}
-                  </span>
-                  <Icon name="chev" size={14} className="spacer muted" />
-                </Link>
-                <div className="hairline" />
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <Link href={route.payers(groupId)} className="field payersfield">
+                <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
+                <span className="payerlines">
                   {coPayers.map(([id, amount]) => (
-                    <Chip key={id}>
-                      {/* One span: the chip is a flex box, whose gap would part name and tag. */}
+                    <span key={id} className="payerline">
                       <span>{(data.memberById.get(id)?.name ?? copy.unknown).split(" ")[0]}{id === data.me ? <You /> : null}</span>
-                      {bare(amount, draft.currency)}
-                    </Chip>
+                      <span className="num">{money(amount, draft.currency)}</span>
+                    </span>
                   ))}
-                </div>
-              </Card>
+                </span>
+                <Icon name="chev" size={18} className="pchev" />
+              </Link>
             ) : (
               <div className="field">
                 <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>

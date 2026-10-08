@@ -17,7 +17,7 @@ export function IconSprite() {
   return (
     <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
       <defs>
-        <symbol id="i-chev" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><path d="M9 6l6 6-6 6" /></symbol>
+        <symbol id="i-chev" viewBox="0 0 24 24" {...S} style={{ strokeWidth: "var(--chev-w, 2.2)" }}><path d="M9 6l6 6-6 6" /></symbol>
         {/* "Opens a picker here", where the chevron says "goes to another screen". */}
         <symbol id="i-updown" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><path d="M8 9.5l4-4 4 4M8 14.5l4 4 4-4" /></symbol>
         <symbol id="i-back" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><path d="M15 6l-6 6 6 6" /></symbol>

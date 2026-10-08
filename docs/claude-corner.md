@@ -26,6 +26,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-08* — Paid-by chips: worried my › would read as the first
+  payer's, so "mock both"; then "ship A", plus press washes and, mid-build,
+  "add back the currency" a postcard below had dropped. A layout change can
+  reopen what was cut for room; fine detail ("its weight") means measure.
+
 - *2026-10-08* — A screenshot and one line: chips "the same quieter style",
   a "you" marker. The tint was the old you-marker; replacing it means the tag
   goes everywhere the tint went. Then "drop the currency … we'll squeeze
@@ -74,7 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-07* — "Visually consolidate the top", I mocked three rethinks; "I
   meant more like the current layout but in a box". A vague brief about
   likeness wants the smallest literal move first, the bold ones after.
-
-- *2026-10-07* — "Should we stop having the personal one unfolded?" — a
-  question the second time, after my answer missed which fold. Answer with a
-  pick, offer the change, wait: "fold it, leave the other ideas" came back.
