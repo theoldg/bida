@@ -26,6 +26,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-08* — "How did the names get shortened? … ellipses instead." A
+  phone screenshot of the payers summary keeping first names only, with the
+  CSS already set to ellipsize. Read the screenshot as a bug report: find the
+  line, cut the clever part, let the layout do its job.
+
 - *2026-10-08* — "Maybe the number should shrink? wdyt?" I moved the badge
   instead and pushed; "wait i don't like this". Theirs, then four rounds of
   "tighter", "try harder … balanced". A "wdyt" with a proposal is the brief;
@@ -75,8 +80,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   designs first", with the rules for what may drop. Four mocks, "Ship A" (my
   pick). The constraints they give alongside a mock request are the spec.
   Then "animate the dock like the summary": reuse its clock, not its trigger.
-
-- *2026-10-07* — "Make the group avatars little receipts, don't push", then
-  bigger, torn both ends, no dots, "show me several", "ship it". The stop
-  hook asked to push each turn; the owner's "don't push" outranks it until
-  they say ship.
