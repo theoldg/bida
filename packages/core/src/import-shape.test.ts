@@ -34,21 +34,7 @@ function ids() {
  */
 const idOf = (name: string) => memberIdFor("g", name);
 
-/**
- * A clock a microsecond on per look — a generous budget, but one that ends, so
- * a search that can't succeed fails the test instead of hanging it — and one
- * out after the first look.
- */
-function ticking() {
-  let t = 0;
-  return () => (t += 0.001);
-}
-function expired() {
-  let t = 0;
-  return () => (t += 1000);
-}
-
-const opts = (now: () => number = ticking()) => ({ newId: ids(), now });
+const opts = () => ({ newId: ids() });
 const day = (d: string) => Date.parse(`${d}T00:00:00Z`);
 
 function planned(over: Partial<PlannedEntry> & Pick<PlannedEntry, "amountMinor" | "paid" | "owed">): PlannedEntry {
@@ -59,12 +45,12 @@ function planned(over: Partial<PlannedEntry> & Pick<PlannedEntry, "amountMinor" 
 }
 
 /** Every entry and transfer shaped, written as rows, and balanced the way the app does. */
-function land(plan: ImportPlan, now: () => number = ticking(), rateFor?: RateFor): {
+function land(plan: ImportPlan, rateFor?: RateFor): {
   byName: Record<string, number>;
   expenses: Expense[];
   settlements: Settlement[];
 } {
-  const options = { newId: ids(), now, rateFor };
+  const options = { newId: ids(), rateFor };
   const expenses = plan.entries.map((e): Expense => {
     const s = shapeEntry(e, plan.currency, idOf, options);
     return {
@@ -109,7 +95,7 @@ describe("seedFor", () => {
     }
   });
 
-  it("solves the worst case — half the people a cent up — given the time", () => {
+  it("solves the worst case — half of ten people a cent up — within its tries", () => {
     const weights = ones(10);
     const target: Record<string, number> = {};
     people(10).forEach((id, i) => { target[id] = i % 2 === 0 ? 101 : 100; });
@@ -118,10 +104,10 @@ describe("seedFor", () => {
     expect(resolveSplit(1005, { mode: "shares", weights }, { tiebreakSeed: id! }).shares).toEqual(target);
   });
 
-  it("gives up when the clock runs out", () => {
+  it("gives up when its tries run out: half of 24 a cent up is 1 in C(24, 12)", () => {
     const target: Record<string, number> = {};
     people(24).forEach((id, i) => { target[id] = i % 2 === 0 ? 101 : 100; });
-    expect(seedFor(2412, ones(24), target, opts(expired()))).toBeUndefined();
+    expect(seedFor(2412, ones(24), target, opts())).toBeUndefined();
   });
 
   it("refuses a target no seed reaches: two cents apart, or the cent on a smaller remainder", () => {
@@ -198,11 +184,11 @@ describe("shapeEntry", () => {
     expect(shapeEntry(e, "EUR", idOf, opts()).split.mode).toBe("equal");
   });
 
-  it("falls back to Amounts when the search runs out of time", () => {
+  it("falls back to Amounts when the search runs out of tries", () => {
     const owed: Record<string, number> = {};
     for (let i = 0; i < 24; i++) owed[`p${i}`] = i % 2 === 0 ? 101 : 100;
     const e = planned({ amountMinor: 2412, paid: { p0: 2412 }, owed });
-    expect(shapeEntry(e, "EUR", idOf, opts(expired())).split.mode).toBe("exact");
+    expect(shapeEntry(e, "EUR", idOf, opts()).split.mode).toBe("exact");
   });
 
   it("keeps a foreign entry in its own currency, at a rate that lands on the base figure", () => {
@@ -346,7 +332,7 @@ describe("a CSV in two currencies, priced by day", () => {
   const rateFor: RateFor = (currency, d) => rates[`${currency} ${d}`];
 
   it("writes each foreign row in its own currency at its own day's rate", () => {
-    const { expenses, settlements } = land(plan, ticking(), rateFor);
+    const { expenses, settlements } = land(plan, rateFor);
     expect(expenses.map((e) => [e.description, e.currency, e.rateToBase, e.rateSource])).toEqual([
       ["Dinner", "EUR", "1", null],
       ["Tagine", "MAD", "0.0921", "fetched"],
@@ -359,19 +345,19 @@ describe("a CSV in two currencies, priced by day", () => {
   });
 
   it("splits a foreign row Evenly when its own shares are even, Amounts when not", () => {
-    const { expenses } = land(plan, ticking(), rateFor);
+    const { expenses } = land(plan, rateFor);
     expect(expenses[1]!.split.mode).toBe("equal");
     expect(expenses[5]!.split).toEqual({ mode: "exact", amounts: { [idOf("Ana")]: 10000, [idOf("Bo")]: 40000 } });
   });
 
   it("balances to the base foot plus the other foot at each row's rate, give or take each row's rounding", () => {
-    const { byName } = land(plan, ticking(), rateFor);
+    const { byName } = land(plan, rateFor);
     expect(byName["Ana"]! + byName["Bo"]!).toBe(0);
     // -26 EUR; owes 150.50 MAD at 0.0921; up 400 MAD and then 100 more, at 0.0925.
     expect(Math.abs(byName["Ana"]! - (-2600 - 1386 + 3700 + 925))).toBeLessThanOrEqual(2);
   });
 
   it("refuses to write a foreign row with no rate, rather than banking it at 1", () => {
-    expect(() => land(plan, ticking(), () => undefined)).toThrow(/no rate for MAD/);
+    expect(() => land(plan, () => undefined)).toThrow(/no rate for MAD/);
   });
 });

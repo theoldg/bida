@@ -16,6 +16,7 @@ in the Gotchas of the doc that owns it, a rule in
 The owner writes lower-case fragments; read each as the whole instruction.
 Taste arrives as feel ("the wrong vibe") — answer with the screen photographed,
 not described. Permission is usually pre-granted: build, then be corrected.
+When a request undoes an ADR, say so once ("this undoes ADR-N, sure?"), then build.
 
 The failure mode is *earnestness* — the extra paragraph, the ADR, prose
 restating what the code enforces. What gets praised is deleting.
@@ -24,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
+
+- *2026-10-08* — "How do you like the hash-hacking?" wanted a verdict, and
+  got a pick plus one change; "just measure … set that as the cap" came back.
+  An opinion question is a review: name the one fix worth doing, then stop.
 
 - *2026-10-07* — "I still get a bad link screen when the app updates
   mid-navigation." "Still" means an earlier fix guessed right in the test and
@@ -73,7 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   tuning and "align left, and ship it". "Keep the existing special case" meant
   the line as it was, left-aligned and all: when a nudge says keep, check the
   original before obeying the adjective beside it.
-
-- *2026-10-07* — "Pause and tell me when I'm contradicting an ADR". The
-  owner moves fast and forgets old decisions; a quick "this undoes ADR-N, sure?"
-  is welcome friction, not second-guessing. Ask once, then build.

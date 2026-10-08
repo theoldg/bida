@@ -102,7 +102,7 @@ function expenseDraft(
   now: number,
   rateFor?: RateFor,
 ): OpDraft {
-  const shape = shapeEntry(e, base, (name) => ids.get(name)!, { newId, now: () => performance.now(), rateFor });
+  const shape = shapeEntry(e, base, (name) => ids.get(name)!, { newId, rateFor });
   return {
     entity: "expense",
     entityId: shape.id,

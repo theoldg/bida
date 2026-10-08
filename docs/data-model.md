@@ -440,7 +440,8 @@ fits, so the balances never depend on what was picked.
 so `seedFor` searches ids for one ranking the source's cent-takers first. The
 odds are 1/C(n, k) for k cents among n people; the id is a hashed prefix, so a
 try varies only the UUID's last twelve digits and costs a few dozen steps per
-member, and each search is capped at 5 ms before falling through.
+member, and each search is capped at 4,000 tries (about 5 ms, measured) before
+falling through — a count, so the same file imports alike on any phone.
 
 **A CSV row in another currency skips the search**: its base figures don't
 exist until the rate does, so there is nothing to match. It is Evenly when its

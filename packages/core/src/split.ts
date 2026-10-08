@@ -183,7 +183,8 @@ function weightsOf(spec: SplitSpec, participants: Id[]): Map<Id, bigint> {
 
 /**
  * Distribute `total` across weighted participants using the largest-remainder
- * method. Deterministic: ties break by ascending member id.
+ * method. Deterministic: ties break by `hash32("<seed>:<memberId>")`, smallest
+ * first, then by member id — by member id alone when there is no seed.
  */
 function distribute(
   total: bigint,

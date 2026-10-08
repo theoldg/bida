@@ -18,8 +18,8 @@ import type { EntryRateSource, Id, SplitSpec } from "./types.js";
  * **The leftover cent is the hard part.** `equal` and `shares` hand it out by
  * `hash32("<entryId>:<memberId>")`, smallest first — and the entry id isn't
  * chosen yet, so `seedFor` searches for one that puts the cents where the
- * source did. Odds are 1/C(n, k) per id, so each search is capped in time and
- * a miss falls through to the next mode.
+ * source did. Odds are 1/C(n, k) per id, so each search is capped and a miss
+ * falls through to the next mode.
  *
  * **A CSV row in another currency is the exception**: its figures are in that
  * currency and the base ones don't exist until a rate does, so there is
@@ -28,8 +28,12 @@ import type { EntryRateSource, Id, SplitSpec } from "./types.js";
  * checksum, in that currency, is what vouched for it.
  */
 
-/** Per search. Past it, the entry falls through to the next mode: `exact` always fits. */
-const SEARCH_MS = 5;
+/**
+ * Ids tried per search. Past it, the entry falls through to the next mode:
+ * `exact` always fits. A count, not a time, so a file imports the same on any
+ * phone: about 5 ms on a 2.1 GHz Xeon at 16–24 people, measured October 2026.
+ */
+const SEARCH_TRIES = 4_000;
 
 /** A UUID's last group: twelve random hex digits, the part the search varies. */
 const TAIL = 12;
@@ -45,8 +49,6 @@ export type RateFor = (currency: CurrencyCode, day: string) => DayRate | undefin
 
 interface ShapeOptions {
   newId: () => Id;
-  /** Milliseconds, any origin: `performance.now`. Core takes the clock as an argument. */
-  now: () => number;
   /** Needed only by a row with its own `currency`. */
   rateFor?: RateFor;
 }
@@ -173,7 +175,7 @@ function rateOf(currency: CurrencyCode, day: string, line: number, rateFor?: Rat
 
 /**
  * An id under which `resolveSplit(total, shares by weights, seed id)` gives
- * exactly `target`, or undefined when none can or none was found in time.
+ * exactly `target`, or undefined when none can or none was found in `SEARCH_TRIES`.
  *
  * Largest remainder hands the leftover units out by remainder first, so most
  * of the answer is settled before the seed is read: only members whose
@@ -189,7 +191,7 @@ export function seedFor(
   totalMinor: number,
   weights: Record<Id, number>,
   target: Record<Id, number>,
-  { newId, now }: ShapeOptions,
+  { newId }: ShapeOptions,
 ): Id | undefined {
   const ids = Object.keys(weights).filter((id) => (weights[id] ?? 0) > 0).sort();
   if (ids.length === 0 || totalMinor <= 0) return undefined;
@@ -223,10 +225,7 @@ export function seedFor(
   if (!/^[0-9a-f]{12}$/.test(start.slice(-TAIL))) return undefined;
   const headState = fnv1a(FNV_OFFSET, head);
   let tail = parseInt(start.slice(-TAIL), 16);
-  const deadline = now() + SEARCH_MS;
-
-  for (let i = 0; ; i++) {
-    if ((i & 255) === 255 && now() > deadline) return undefined;
+  for (let i = 0; i < SEARCH_TRIES; i++) {
     tail = (tail + 1) % 2 ** 48;
     const ending = tail.toString(16).padStart(TAIL, "0");
     const state = fnv1a(headState, `${ending}:`);
@@ -250,6 +249,7 @@ export function seedFor(
     }
     if (ok) return head + ending;
   }
+  return undefined;
 }
 
 function byId(byName: Record<string, number>, idOf: (name: string) => Id): Record<Id, number> {
