@@ -532,8 +532,10 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                 <div className="hairline" />
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {coPayers.map(([id, amount]) => (
-                    <Chip key={id} variant={id === data.me ? "hl" : undefined}>
-                      {(data.memberById.get(id)?.name ?? copy.unknown).split(" ")[0]} {money(amount, draft.currency)}
+                    <Chip key={id}>
+                      {/* One span: the chip is a flex box, whose gap would part name and tag. */}
+                      <span>{(data.memberById.get(id)?.name ?? copy.unknown).split(" ")[0]}{id === data.me ? <You /> : null}</span>
+                      {money(amount, draft.currency)}
                     </Chip>
                   ))}
                 </div>

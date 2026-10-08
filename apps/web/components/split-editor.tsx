@@ -347,7 +347,7 @@ function ReceiptPanel({
         ) : null}
         {involved.map((m) => (
           <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{m.name}</span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{m.name}{m.id === me ? <You /> : null}</span>
             <span className="bignum" style={{ fontSize: 13.5 }}>{money(shares[m.id] ?? 0, currency)}</span>
           </div>
         ))}

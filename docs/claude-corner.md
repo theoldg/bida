@@ -26,6 +26,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-08* — A screenshot and one line: chips "the same quieter style",
+  a "you" marker. The tint was the old you-marker; replacing it means the tag
+  goes everywhere the tint went, and to the near list the line also named.
+
 - *2026-10-08* — A ticket scanned as 2020, "maybe we should discretely drop
   today's date in the prompt". I wrote a rule about yearless dates; "just say
   today is XYZ". "Discretely" meant the fact, not an instruction.
@@ -73,7 +77,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-07* — "Should we stop having the personal one unfolded?" — a
   question the second time, after my answer missed which fold. Answer with a
   pick, offer the change, wait: "fold it, leave the other ideas" came back.
-
-- *2026-10-07* — Two screenshots: the ÷ breathes more on the form than on
-  the summary. Measure the gap you see, not the margin you set: the form's
-  column gap was the hidden 9px.
