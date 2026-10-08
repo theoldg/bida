@@ -1411,19 +1411,42 @@ dialog.scrim::backdrop { background: transparent }
 .ratelink { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted);
   border: 0; background: none; padding: 0 11px 0 0 }
 .ratelink .bad { color: var(--debit) }
-/* The figure's cell gives up the badge row's 16px when the badge shows, so the
-   block never changes height; the row is always there, so its gap is too. Both
-   move on one curve, so the sum holds mid-flight as well. */
-.amtstack { height: 56px; display: flex; flex-direction: column; justify-content: center;
+/* With the badge the block keeps its height but is laid out again, balanced
+   by the glyphs' edges rather than the boxes': top and bottom margins alike,
+   and the lines between closer than either. The rows close up (gap 4px → 0),
+   the figure drops into the slack its hidden underline leaves, the badge
+   stands off the rate line, the padding moves from top to bottom, and the
+   figure's cell pays for all of it — 56 + 4 + 0 = 38.5 + 5.5 + 16 alone, and
+   44.5 + 3.5 + 16 with the rate row's 4px gap too. Every part moves on one
+   curve, so the sum holds mid-flight as well. */
+.amtpad { text-align: center; padding-top: 16px; padding-bottom: 10px; transition: padding .2s ease }
+.amtpad.noted { padding-top: 9.5px; padding-bottom: 16.5px }
+.amtpad.noted.foreign { padding-top: 7.75px; padding-bottom: 18.25px }
+.amtgrid { transition: row-gap .2s ease }
+.amtpad.noted .amtgrid { row-gap: 0 }
+.amtstack { height: 56px; display: flex; flex-direction: column; justify-content: flex-end;
   transition: height .2s ease }
-.amtstack.noted { height: 40px }
-.amtstack .amount { transition: font-size .2s ease, line-height .2s ease }
-.amtstack.noted .amount { font-size: 34px; line-height: 1 }
+.amtpad.noted .amtstack { height: 38.5px }
+.amtpad.noted.foreign .amtstack { height: 44.5px }
+.amtstack .amountfield { transition: margin-bottom .2s ease }
+.amtpad.noted .amtstack .amountfield { margin-bottom: -4.5px }
+/* The rate line reads tight under the big digits at an equal gap: a touch more. */
+.amtpad.noted.foreign .amtstack .amountfield { margin-bottom: -2px }
+/* The currency chip follows the figure's middle, which the row's no longer is. */
+.amtstack + .chip { position: relative; top: 0; transition: top .2s ease }
+.amtpad.noted .amtstack + .chip { top: 1px }
+.amtpad.noted.foreign .amtstack + .chip { top: 1.5px }
+/* The input's height set outright: left to itself, Chromium floors it at the
+   font's normal line height, ~1.3em, past what the cell has. */
+.amtstack .amount { height: 1.1em; transition: font-size .2s ease, line-height .2s ease, height .2s ease }
+.amtpad.noted .amtstack .amount { font-size: 38px; line-height: 1; height: 1em }
 /* The scan that typed the amount, ending on its last digit like `.ratelink`. */
 .amtnotes { display: flex; justify-content: flex-end; padding-right: 11px; overflow: hidden;
   height: 0; opacity: 0; visibility: hidden;
-  transition: height .2s ease, opacity .2s ease, visibility .2s }
+  transition: height .2s ease, margin-top .2s ease, opacity .2s ease, visibility .2s }
 .amtnotes.open { height: 16px; opacity: 1; visibility: visible }
+.amtpad.noted .amtnotes { margin-top: 5.5px }
+.amtpad.noted.foreign .amtnotes { margin-top: 3.5px }
 .amtnote { font-size: 10.5px; line-height: 14px; color: var(--hl-ink); background: var(--hl);
   padding: 1px 6px; border-radius: 2px }
 /* "@ 4.3731", the currency chip's twin. The figure leads; no rate is a red "?". */

@@ -27,8 +27,9 @@ restating what the code enforces. What gets praised is deleting.
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
 - *2026-10-08* — "Maybe the number should shrink? wdyt?" I moved the badge
-  beside it instead and shipped; "wait i don't like this … show me
-  screenshots". A "wdyt" carrying a proposal is the brief: build theirs.
+  instead and pushed; "wait i don't like this". Theirs, then four rounds of
+  "tighter", "try harder … balanced". A "wdyt" with a proposal is the brief;
+  balance means measured glyph edges, and hold the push till "ship it".
 
 - *2026-10-08* — Paid-by chips: worried my › would read as the first
   payer's, so "mock both"; then "ship A", plus press washes and, mid-build,

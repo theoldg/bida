@@ -441,7 +441,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
             style={transfer ? { display: "contents" } : { paddingTop: 2, paddingBottom: 0 }}>
           <div className={transfer ? undefined : "card formhead"}
             style={transfer ? { display: "contents" } : undefined}>
-          <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
+          <div className={`pad amtpad${receiptLocksAmount ? " noted" : ""}${foreign ? " foreign" : ""}`}>
             {/* Grid rows, not centred lines: the typed amount, its converted figure
                 and the scan's badge share a right edge; the currency chip and rate
                 control share a left one. `.amountfield` is rendered by `AmountInput`,
@@ -450,7 +450,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
               {/* With the scan's badge the figure's cell gives up exactly the
                   badge row's height, so the badge coming and going never moves
                   the form under a thumb. */}
-              <div className={receiptLocksAmount ? "amtstack noted" : "amtstack"}>
+              <div className="amtstack">
               <AmountInput
                 className="amount"
                 fieldClassName={`big${refusals.flash("amount")}`}
