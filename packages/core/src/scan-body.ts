@@ -318,6 +318,17 @@ const TEXT_REFUSAL: Record<ScanTone, string> = {
     + "field null or empty; otherwise leave error null.",
 };
 
+/**
+ * Today, last and in passing. A ticket or a bank screen prints "Friday, 9
+ * October" with no year, and the model fills one in from the weekday — 2020
+ * fits as well as this year does. Nothing else in the prompt mentions it, so
+ * it can't nudge a printed year.
+ */
+const dated = (today: string): string =>
+  ` Today is ${today}. Where the bill prints a date without its year, or with only `
+  + "two digits of it, use the year that puts the date nearest to today; a full year "
+  + "is copied as printed.";
+
 /** The four prompts. Within a medium only the refusal differs (`scan-body.test.ts`). */
 const PROMPT: Record<ScanMedium, Record<ScanTone, string>> = {
   photo: {
@@ -346,19 +357,25 @@ const MIME: Record<ScanMedium, string> = {
  * a receipt reader, not a general model endpoint on our key. A caller picks
  * `tone` and `medium`, never a word of the prompt. On `text` the bill is
  * user-written, but only a bill-shaped object can come back.
+ *
+ * `today` is the caller's "YYYY-MM-DD" (core takes no clock); anything else is
+ * left out rather than written into the prompt.
  */
 export function buildScanRequestBody(
   billBase64: string,
   tone: ScanTone = "kind",
   medium: ScanMedium = "photo",
+  today?: string,
 ): unknown {
+  const prompt = PROMPT[medium][tone]
+    + (today && /^\d{4}-\d{2}-\d{2}$/.test(today) ? dated(today) : "");
   return {
     // Optional on AI Studio, required by Vertex.
     contents: [{
       role: "user",
       parts: [
         { inlineData: { mimeType: MIME[medium], data: billBase64 } },
-        { text: PROMPT[medium][tone] },
+        { text: prompt },
       ],
     }],
     generationConfig: {

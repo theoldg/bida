@@ -2,6 +2,7 @@ import {
   AI_STUDIO_URL, buildScanRequestBody, checkScan, correctOneLine,
   scanCurrency, type ScanLimitScope, type ScanMedium, type ScanProblem, type ScanResult,
 } from "@bida/core";
+import { dateInputValue } from "../format";
 import { groupToken } from "../seal";
 import { noteScan, overCallerBudget } from "./budget";
 import { downscaleToBase64Jpeg } from "./downscale";
@@ -120,7 +121,9 @@ async function readOnOwnKey(
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify(
-        buildScanRequestBody(billBase64, stasMode() ? "stas" : "kind", medium),
+        buildScanRequestBody(
+          billBase64, stasMode() ? "stas" : "kind", medium, dateInputValue(Date.now()),
+        ),
       ),
     });
   } catch (err) {

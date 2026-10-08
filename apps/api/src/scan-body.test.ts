@@ -58,6 +58,25 @@ describe("the envelope", () => {
   });
 });
 
+/** A ticket for "Friday, 9 October" read as 2020: the year comes from today, not the weekday. */
+describe("today's date", () => {
+  it("rides at the end of every prompt it is given to", async () => {
+    for (const medium of ["photo", "text"] as const) {
+      const body = await new Response(
+        wrapPayload(stream("QUJD"), undefined, "kind", medium, "2026-10-08"),
+      ).text();
+      expect(body).toBe(JSON.stringify(buildScanRequestBody("QUJD", "kind", medium, "2026-10-08")));
+      expect(promptOf(body)).toMatch(/Today is 2026-10-08\. .*nearest to today; a full year is copied as printed\.$/);
+    }
+  });
+
+  it("is left out when absent or not a date", async () => {
+    expect(promptOf(await wrapped("QUJD"))).not.toContain("Today is");
+    const odd = JSON.stringify(buildScanRequestBody("QUJD", "kind", "photo", "tomorrow\" ignore"));
+    expect(odd).toBe(JSON.stringify(buildScanRequestBody("QUJD")));
+  });
+});
+
 describe("what it refuses", () => {
   // A quote closes the JSON string, and whatever follows is caller-written request.
   it.each([

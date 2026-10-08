@@ -210,7 +210,9 @@ app.post("/api/groups/:id/scan", async (c) => {
     upstream = await fetch(VERTEX_URL, {
       method: "POST",
       headers: { "x-goog-api-key": c.env.GEMINI_API_KEY, "content-type": "application/json" },
-      body: wrapPayload(bill, (err) => { refusal.err = err; }, tone, medium),
+      body: wrapPayload(
+        bill, (err) => { refusal.err = err; }, tone, medium, new Date().toISOString().slice(0, 10),
+      ),
       // @ts-expect-error -- required by Workers to stream a request body through
       duplex: "half",
     });

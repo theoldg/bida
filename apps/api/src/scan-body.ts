@@ -8,23 +8,20 @@ import { MAX_IMAGE_BYTES, buildScanRequestBody, type ScanMedium, type ScanTone }
 export type { ScanMedium, ScanTone } from "@bida/core";
 
 /**
- * The envelope split around where the bill goes, one pair per tone and medium.
- * Built by cutting core's JSON at a sentinel, so there is no second copy of the
- * prompt. Once per isolate.
+ * The envelope split around where the bill goes. Built by cutting core's JSON
+ * at a sentinel, so there is no second copy of the prompt. Per request, not per
+ * isolate: the prompt carries today's date, and an isolate outlives midnight.
  */
 const SENTINEL = "__RECEIPT_IMAGE__";
 
-function halves(tone: ScanTone, medium: ScanMedium): { prefix: Uint8Array; suffix: Uint8Array } {
+function halves(
+  tone: ScanTone, medium: ScanMedium, today: string | undefined,
+): { prefix: Uint8Array; suffix: Uint8Array } {
   const [prefix, suffix] =
-    JSON.stringify(buildScanRequestBody(SENTINEL, tone, medium)).split(SENTINEL);
+    JSON.stringify(buildScanRequestBody(SENTINEL, tone, medium, today)).split(SENTINEL);
   const encoder = new TextEncoder();
   return { prefix: encoder.encode(prefix), suffix: encoder.encode(suffix!) };
 }
-
-const ENVELOPE: Record<ScanTone, Record<ScanMedium, { prefix: Uint8Array; suffix: Uint8Array }>> = {
-  kind: { photo: halves("kind", "photo"), text: halves("kind", "text") },
-  stas: { photo: halves("stas", "photo"), text: halves("stas", "text") },
-};
 
 /**
  * The largest base64 body we wrap: a photo's is `MAX_IMAGE_BYTES`, shared with
@@ -68,11 +65,13 @@ export function wrapPayload(
   bill: ReadableStream<Uint8Array>,
   /** Called before the stream errors, since `fetch` surfaces the refusal wrapped. */
   onRefuse?: (err: NotBase64Error) => void,
-  /** One of four pre-encoded envelopes — all a caller can say about the prompt. */
+  /** One of four envelopes — all a caller can say about the prompt. */
   tone: ScanTone = "kind",
   medium: ScanMedium = "photo",
+  /** The Worker's own UTC day; a day off is nothing to a year. Never the caller's. */
+  today?: string,
 ): ReadableStream<Uint8Array> {
-  const { prefix, suffix } = ENVELOPE[tone][medium];
+  const { prefix, suffix } = halves(tone, medium, today);
   const cap = MAX_BYTES[medium];
   const reader = bill.getReader();
   const refuse = (why: string): never => {

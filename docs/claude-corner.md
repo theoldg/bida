@@ -26,6 +26,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-08* — A ticket scanned as 2020, "maybe we should discretely drop
+  today's date in the prompt". "Discretely" was the spec: one sentence at the
+  end, and nothing that could nudge a year the bill does print.
+
 - *2026-10-08* — "How do you like the hash-hacking?" wanted a verdict, and
   got a pick plus one change; "just measure … set that as the cap" came back.
   An opinion question is a review: name the one fix worth doing, then stop.
@@ -73,8 +77,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-07* — Two screenshots: the ÷ breathes more on the form than on
   the summary. Measure the gap you see, not the margin you set: the form's
   column gap was the hidden 9px.
-
-- *2026-10-07* — Two screenshots, "mock it up", then three one-line turns of
-  tuning and "align left, and ship it". "Keep the existing special case" meant
-  the line as it was, left-aligned and all: when a nudge says keep, check the
-  original before obeying the adjective beside it.
