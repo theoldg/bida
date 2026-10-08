@@ -27,8 +27,8 @@ restating what the code enforces. What gets praised is deleting.
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
 - *2026-10-08* — A ticket scanned as 2020, "maybe we should discretely drop
-  today's date in the prompt". "Discretely" was the spec: one sentence at the
-  end, and nothing that could nudge a year the bill does print.
+  today's date in the prompt". I wrote a rule about yearless dates; "just say
+  today is XYZ". "Discretely" meant the fact, not an instruction.
 
 - *2026-10-08* — "How do you like the hash-hacking?" wanted a verdict, and
   got a pick plus one change; "just measure … set that as the cap" came back.

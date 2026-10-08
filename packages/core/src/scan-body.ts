@@ -319,15 +319,10 @@ const TEXT_REFUSAL: Record<ScanTone, string> = {
 };
 
 /**
- * Today, last and in passing. A ticket or a bank screen prints "Friday, 9
- * October" with no year, and the model fills one in from the weekday — 2020
- * fits as well as this year does. Nothing else in the prompt mentions it, so
- * it can't nudge a printed year.
+ * Today, last and bare. A ticket printing "Friday, 9 October" with no year got
+ * one from the weekday — 2020 fits as well as this year does.
  */
-const dated = (today: string): string =>
-  ` Today is ${today}. Where the bill prints a date without its year, or with only `
-  + "two digits of it, use the year that puts the date nearest to today; a full year "
-  + "is copied as printed.";
+const dated = (today: string): string => ` Today is ${today}.`;
 
 /** The four prompts. Within a medium only the refusal differs (`scan-body.test.ts`). */
 const PROMPT: Record<ScanMedium, Record<ScanTone, string>> = {

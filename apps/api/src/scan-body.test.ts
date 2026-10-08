@@ -66,7 +66,7 @@ describe("today's date", () => {
         wrapPayload(stream("QUJD"), undefined, "kind", medium, "2026-10-08"),
       ).text();
       expect(body).toBe(JSON.stringify(buildScanRequestBody("QUJD", "kind", medium, "2026-10-08")));
-      expect(promptOf(body)).toMatch(/Today is 2026-10-08\. .*nearest to today; a full year is copied as printed\.$/);
+      expect(promptOf(body)).toMatch(/ Today is 2026-10-08\.$/);
     }
   });
 
