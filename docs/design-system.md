@@ -161,7 +161,8 @@ replaced by "You".
 screen is who is in, so the wash marks every row that is in the split or put
 money in (`.inrow`), and you are marked by "(you)" after your name (`You`, as on
 the entry), with no bar — as are the form's Paid by, its payer chips (all one
-plain chip, no tint for yours) and the bill's per-person lines under Items.
+plain chip, no tint for yours, the figure bare since the amount above names
+the currency) and the bill's per-person lines under Items.
 
 **The split's foot row is a count and a box, right-aligned** (`.splithead`):
 "**3** of 4" beside a drawn checkbox — ink with a tick for everyone, ink with

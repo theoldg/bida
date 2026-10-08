@@ -28,7 +28,8 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 
 - *2026-10-08* — A screenshot and one line: chips "the same quieter style",
   a "you" marker. The tint was the old you-marker; replacing it means the tag
-  goes everywhere the tint went, and to the near list the line also named.
+  goes everywhere the tint went. Then "drop the currency … we'll squeeze
+  more": a chip is room, not a sentence.
 
 - *2026-10-08* — A ticket scanned as 2020, "maybe we should discretely drop
   today's date in the prompt". I wrote a rule about yearless dates; "just say

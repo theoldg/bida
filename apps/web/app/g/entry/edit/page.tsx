@@ -535,7 +535,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                     <Chip key={id}>
                       {/* One span: the chip is a flex box, whose gap would part name and tag. */}
                       <span>{(data.memberById.get(id)?.name ?? copy.unknown).split(" ")[0]}{id === data.me ? <You /> : null}</span>
-                      {money(amount, draft.currency)}
+                      {bare(amount, draft.currency)}
                     </Chip>
                   ))}
                 </div>
