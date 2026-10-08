@@ -291,7 +291,7 @@ API is reached with `fetch`.
 - **A deleted entry keeps its screen** (ADR-0031): drawn as it was, at the rates
   it was saved at, from `useGroupData`'s `withTombstones`. Drawn as it was, it
   read as live, so the state leads: the bar says "Deleted expense", and an
-  inverted band above the title says who deleted it and when, and holds
+  inverted band above the title says "Deleted by {name}", and holds
   **Restore** — which asks nothing and turns the screen back into the live
   entry in place. The trash and Edit are gone. What else it brings back, a
   removed person or a cleared rate, is named under the band before the press

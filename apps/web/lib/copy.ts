@@ -907,8 +907,7 @@ export const copy = {
     /** A deleted entry's bar: "Deleted expense". */
     deletedTitle: (kind: string) => `Deleted ${kind.toLowerCase()}`,
     /** The band at the head of a deleted entry's screen, beside Restore. */
-    deleted: "Deleted",
-    deletedBy: (who: string | undefined, when: string) => (who ? `by ${who} · ${when}` : when),
+    deleted: (who: string | undefined) => (who ? `Deleted by ${who}` : "Deleted"),
     restore: "Restore",
     /** What else Restore puts back: people removed since, a cleared rate. */
     restoreBrings: (things: string[]) => {

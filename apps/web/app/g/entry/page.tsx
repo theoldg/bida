@@ -215,10 +215,8 @@ function EntryScreen() {
             <div className="pad" style={{ paddingTop: 2, paddingBottom: 8 }}>
               <div className="deletedband" role="status">
                 <p>
-                  <b><Icon name="trash" size={14} /> {copy.entry.deleted}</b>
-                  {/* Who comes from the log, a read behind the row: until it lands, when. */}
-                  <span>{copy.entry.deletedBy(log?.lastDelete && data.nameOf(log.lastDelete.actor),
-                    whenLabel({ occurredAt: entry.deletedAt! }))}</span>
+                  {/* Who comes from the log, a read behind the row: until it lands, just "Deleted". */}
+                  <b><Icon name="trash" size={14} /> {copy.entry.deleted(log?.lastDelete && data.nameOf(log.lastDelete.actor))}</b>
                 </p>
                 <button className="btn" onClick={restore} disabled={restoring}>{copy.entry.restore}</button>
               </div>
