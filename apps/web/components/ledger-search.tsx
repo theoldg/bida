@@ -124,9 +124,15 @@ export function LedgerSearch({ banner, query, onQuery }: {
       const rows = box.querySelector<HTMLElement>(".lrows");
       if (!rows) return 0;
       const h = bar.offsetHeight;
-      // How far the rows still are from the bar's foot: none at the base state.
-      const short = rows.getBoundingClientRect().top - box.getBoundingClientRect().top - h;
-      return Math.min(1, Math.max(0, 1 - short / h));
+      // The base state's `scrollTop`, and how far the list still is from it.
+      const base = rows.offsetTop - h;
+      const short = base - box.scrollTop;
+      // Over the last bar's height of that scroll — or all of it, where the
+      // head is too short to give one: measured against the bar alone, a head
+      // of about two bars left a sliver of it out with the list at rest at
+      // its very top, a line across the head of the screen.
+      const span = Math.min(h, base);
+      return span <= 0 ? 1 : Math.min(1, Math.max(0, 1 - short / span));
     };
     let shown = asked();
     const draw = () => {
