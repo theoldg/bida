@@ -12,7 +12,7 @@ import {
 } from "@bida/core";
 import { db, type DeviceRecord } from "./db/dexie";
 import { useLive } from "./db/live";
-import { getDevice } from "./db/device";
+import { getDevice, getMe } from "./db/device";
 import { applyStash } from "./db/sync";
 import { writeClipboardText } from "./clipboard";
 import { copy } from "./copy";
@@ -273,12 +273,22 @@ export function useGroupData(groupId: string | undefined): GroupData {
  * Every `/g` screen redirects (each is reachable on its own) except
  * `/g/claim`. Returns whether we are leaving, so the caller draws a frame
  * rather than somebody else's ledger.
+ *
+ * **Asks the device again before leaving.** `data` can be the read's last
+ * answer (`useLive`'s `remembered`) from before the claim landed, so the
+ * Continue that just answered the question would be bounced straight back to
+ * it — a ledger first mounted unclaimed, then claimed, then reopened.
  */
 export function useClaimGate(groupId: string | undefined, data: GroupData): boolean {
   const router = useRouter();
   const unclaimed = !data.loading && !!data.group && !data.me;
   useEffect(() => {
-    if (groupId && unclaimed) router.replace(route.claim(groupId));
+    if (!groupId || !unclaimed) return;
+    let current = true;
+    void getMe(groupId).then((me) => {
+      if (current && !me) router.replace(route.claim(groupId));
+    });
+    return () => { current = false; };
   }, [groupId, unclaimed, router]);
   return unclaimed;
 }
