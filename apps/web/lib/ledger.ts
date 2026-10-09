@@ -99,30 +99,51 @@ export interface SearchContext {
   base: string;
 }
 
-/** Which tiers hold `word` on this row. */
-function tiersOf(row: LedgerRow, word: string, { nameOf, kindWord, base }: SearchContext): SearchTier[] {
+/** A row as a search reads it: each place a word can be found, made plain once. */
+interface Searched {
+  title: string; payer: string; participant: string;
+  currency: string; kind: string;
+  /** As entered and as converted (`figureMatches`). */
+  figures: [string, string];
+}
+
+function searched(row: LedgerRow, { nameOf, kindWord, base }: SearchContext): Searched {
   const entry = entryOf(row);
   const names = (ids: string[]) => plain(ids.map(nameOf).filter(Boolean).join("\n"));
-  // A transfer's title is what its row is headed with, "Luke → Han", so both
-  // names are found there before they are found as its two sides; the arrow as
-  // it is typed finds it too. Its note is the only thing anyone wrote on it.
-  const by: Record<SearchTier, boolean> = row.row === "expense" ? {
-    title: plain(row.expense.description ?? "").includes(word),
-    payer: names(payerList(row.expense)).includes(word),
-    participant: names(splitParticipants(row.expense.split)).includes(word),
-    currency: false, kind: false, amount: false,
-  } : {
-    title: plain([
-      nameOf(row.settlement.fromMember), "→ ->", nameOf(row.settlement.toMember), row.settlement.note,
-    ].filter(Boolean).join("\n")).includes(word),
-    payer: names([row.settlement.fromMember]).includes(word),
-    participant: names([row.settlement.toMember]).includes(word),
-    currency: false, kind: false, amount: false,
+  return {
+    // A transfer's title is what its row is headed with, "Luke → Han", so both
+    // names are found there before they are found as its two sides; the arrow as
+    // it is typed finds it too. Its note is the only thing anyone wrote on it.
+    ...(row.row === "expense" ? {
+      title: plain(row.expense.description ?? ""),
+      payer: names(payerList(row.expense)),
+      participant: names(splitParticipants(row.expense.split)),
+    } : {
+      title: plain([
+        nameOf(row.settlement.fromMember), "→ ->", nameOf(row.settlement.toMember), row.settlement.note,
+      ].filter(Boolean).join("\n")),
+      payer: names([row.settlement.fromMember]),
+      participant: names([row.settlement.toMember]),
+    }),
+    currency: plain(entry.currency),
+    kind: plain(kindWord(row.row === "expense" ? kindOf(row.expense) : "transfer")),
+    figures: [
+      minorToDecimalString(entry.amountMinor, entry.currency),
+      minorToDecimalString(entry.baseAmountMinor, base),
+    ],
   };
-  by.currency = plain(entry.currency) === word;
-  by.kind = plain(kindWord(row.row === "expense" ? kindOf(row.expense) : "transfer")) === word;
-  by.amount = figureMatches(word, minorToDecimalString(entry.amountMinor, entry.currency))
-    || figureMatches(word, minorToDecimalString(entry.baseAmountMinor, base));
+}
+
+/** Which tiers hold `word` on this row. */
+function tiersOf(row: Searched, word: string): SearchTier[] {
+  const by: Record<SearchTier, boolean> = {
+    title: row.title.includes(word),
+    payer: row.payer.includes(word),
+    participant: row.participant.includes(word),
+    currency: row.currency === word,
+    kind: row.kind === word,
+    amount: row.figures.some((figure) => figureMatches(word, figure)),
+  };
   return SEARCH_TIERS.filter((t) => by[t]);
 }
 
@@ -151,7 +172,8 @@ export function searchLedger(
   const hits: { item: LedgerItem<LedgerRow>; tier: number; count: number }[] = [];
   for (const item of items) {
     if (item.kind !== "row") continue;
-    const found = words.map((w) => tiersOf(item.row, w, context));
+    const row = searched(item.row, context);
+    const found = words.map((w) => tiersOf(row, w));
     if (found.some((tiers) => tiers.length === 0)) continue;
     const tier = Math.min(...found.flat().map((t) => SEARCH_TIERS.indexOf(t)));
     hits.push({ item, tier, count: found.filter((tiers) => tiers.includes(SEARCH_TIERS[tier]!)).length });
