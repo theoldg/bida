@@ -381,7 +381,9 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .searchbar { height: var(--search-h); padding: 0 16px 10px; background: var(--card); border-bottom: 1px solid var(--rule-soft);
   transform: translateY(calc((var(--shown, 0) - 1) * 100%)) }
 .searchdock[data-on] .searchbar { pointer-events: auto }
-.searchdock[data-held] .searchbar { transform: none }
+/* Held, it is out whole — by the same transform, so handing it back to the
+   scroll is a change of number and not of how the bar is drawn. */
+.searchdock[data-held] .searchbar { --shown: 1 }
 .searchdock[data-ease] .searchbar { transition: transform .26s cubic-bezier(.2, .8, .2, 1) }
 .searchbar .field { height: 100%; padding-block: 0 }
 /* Once the bar is out over the whole ledger, the rows' box fills the screen

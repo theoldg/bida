@@ -57,6 +57,9 @@ export function summonLedgerSearch(): void {
 /** The least time the scroll may take to bring the whole bar out or put it away (ms). */
 const REVEAL_MS = 180;
 
+/** How long after the bar is handed back to the scroll it may only come further out (ms). */
+const SETTLE_MS = 250;
+
 /** How long the bar eases for when it is taken from the scroll or handed back (ms); `.searchdock[data-ease]`'s. */
 const EASE_MS = 260;
 
@@ -91,6 +94,14 @@ export function LedgerSearch({ banner, query, onQuery }: {
   const [out, setOut] = useState(false);
   const [room, setRoom] = useState(false);
   const onNow = useRef(false);
+  // For the scroll's loop below, which outlives a render: whether the bar is
+  // held, when it last stopped being, and a way to have it measure again.
+  const heldNow = useRef(held);
+  const letGoAt = useRef(-Infinity);
+  const kick = useRef<(() => void) | null>(null);
+  if (heldNow.current && !held) letGoAt.current = performance.now();
+  heldNow.current = held;
+  useEffect(() => kick.current?.(), [held]);
   const handed = useRef(false);
   const pressed = useRef(0);
   useEffect(() => {
@@ -125,7 +136,14 @@ export function LedgerSearch({ banner, query, onQuery }: {
       const want = asked();
       const reach = calmly() ? 1 : (now - last) / REVEAL_MS;
       last = now;
-      shown += Math.min(reach, Math.max(-reach, want - shown));
+      // Held, the bar is out whatever this says, so there is nothing to slide:
+      // it keeps up exactly, and is right the moment the bar is the scroll's
+      // again. For a beat after that it only ever comes further out: the frames
+      // around a search being cleared read the list mid-change, and one low
+      // reading drew the bar part-way back for a frame.
+      if (heldNow.current) shown = want;
+      else if (now - letGoAt.current < SETTLE_MS) shown = Math.max(shown, want);
+      else shown += Math.min(reach, Math.max(-reach, want - shown));
       draw();
       if (shown !== want) frame = requestAnimationFrame(step);
     };
@@ -136,6 +154,7 @@ export function LedgerSearch({ banner, query, onQuery }: {
       frame = requestAnimationFrame(step);
     };
     draw();
+    kick.current = ask;
     box.addEventListener("scroll", ask, { passive: true });
     // A finger dragging the list, or a wheel, lets go of the field.
     const byHand = () => {
@@ -156,6 +175,7 @@ export function LedgerSearch({ banner, query, onQuery }: {
     sizes.observe(banner);
     if (banner.parentElement) sizes.observe(banner.parentElement);
     return () => {
+      kick.current = null;
       if (frame) cancelAnimationFrame(frame);
       box.removeEventListener("scroll", ask);
       box.removeEventListener("touchmove", byHand);

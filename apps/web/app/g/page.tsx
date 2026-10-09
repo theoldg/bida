@@ -171,9 +171,9 @@ function Ledger({ data }: { data: GroupData }) {
   return (
     <>
     <LedgerSearch banner={banner} query={query} onQuery={(next) => {
-      // Results read from their first row.
-      if (scroll.current) scroll.current.scrollTop = 0;
+      // Results read from their first row; a search emptied is placed below.
       emptied.current = query !== "" && next === "";
+      if (scroll.current && !emptied.current) scroll.current.scrollTop = 0;
       setQuery(next);
     }} />
     <Scroll ref={scroll}>
