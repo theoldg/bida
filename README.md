@@ -44,7 +44,7 @@
 
 - **No accounts.** A group is a secret link. Click it and you're in, no app, no login. Helpful if you have Splitwise-resistant friends.
 
-- **Online, or installable PWA.** You can add bida to your Android or iOS device, no app store required.
+- **Online, or installable PWA.** You can add bida to your Android or iOS device as a Progressive Web App, no app store required.
 
 - **Works offline.** Append-only data model prevents merge conflicts.
 
