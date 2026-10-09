@@ -44,14 +44,6 @@ export function computeBalances(state: GroupState): BalanceReport {
   let totalSpendMinor = 0;
   let totalIncomeMinor = 0;
 
-  for (const m of alive(state.members)) {
-    byMember[m.id] = 0;
-    paidMinor[m.id] = 0;
-    owedMinor[m.id] = 0;
-    receivedMinor[m.id] = 0;
-    incomeShareMinor[m.id] = 0;
-    settledMinor[m.id] = 0;
-  }
   const touch = (id: Id) => {
     // A member deleted after their expenses still has to appear, or the
     // balances stop summing to zero.
@@ -62,6 +54,8 @@ export function computeBalances(state: GroupState): BalanceReport {
     incomeShareMinor[id] ??= 0;
     settledMinor[id] ??= 0;
   };
+
+  for (const m of alive(state.members)) touch(m.id);
 
   for (const e of alive(state.expenses)) {
     let shares: Record<Id, number>;
@@ -81,25 +75,18 @@ export function computeBalances(state: GroupState): BalanceReport {
     else totalSpendMinor += e.baseAmountMinor;
 
     // On an income the payer map names who received, and runs the other way.
+    const sign = income ? -1 : 1;
+    const putIn = income ? receivedMinor : paidMinor;
+    const share = income ? incomeShareMinor : owedMinor;
     for (const [id, amount] of Object.entries(resolvePayers(e))) {
       touch(id);
-      if (income) {
-        receivedMinor[id] = (receivedMinor[id] ?? 0) + amount;
-        byMember[id] = (byMember[id] ?? 0) - amount;
-      } else {
-        paidMinor[id] = (paidMinor[id] ?? 0) + amount;
-        byMember[id] = (byMember[id] ?? 0) + amount;
-      }
+      putIn[id] = (putIn[id] ?? 0) + amount;
+      byMember[id] = (byMember[id] ?? 0) + sign * amount;
     }
     for (const [id, amount] of Object.entries(shares)) {
       touch(id);
-      if (income) {
-        incomeShareMinor[id] = (incomeShareMinor[id] ?? 0) + amount;
-        byMember[id] = (byMember[id] ?? 0) + amount;
-      } else {
-        owedMinor[id] = (owedMinor[id] ?? 0) + amount;
-        byMember[id] = (byMember[id] ?? 0) - amount;
-      }
+      share[id] = (share[id] ?? 0) + amount;
+      byMember[id] = (byMember[id] ?? 0) - sign * amount;
     }
   }
 

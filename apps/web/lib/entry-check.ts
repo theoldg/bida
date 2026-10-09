@@ -173,7 +173,7 @@ export function checkEntry(input: {
   const splitProblem = foot && !foot.ok ? foot.text : null;
   // Only amounts are a column someone types toward a total; a bill's split
   // adds up by construction.
-  const splitTick = foot?.ok && activeTab !== "receipt" && tabSplit.mode === "exact" ? foot.text : null;
+  const splitTick = foot?.ok && tabSplit.mode === "exact" ? foot.text : null;
 
   // Why Save is refused where no field or step is missing, said unasked. A
   // missing rate is not here — it blooms its badge, and is said only once a

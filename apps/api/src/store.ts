@@ -117,10 +117,6 @@ export async function acceptOps(
   now: number,
 ): Promise<{ assigned: Record<string, number>; latestSeq: number }> {
   const assigned: Record<string, number> = {};
-  if (ops.length === 0) {
-    const group = await getGroup(db, groupId);
-    return { assigned, latestSeq: group?.last_op_seq ?? 0 };
-  }
 
   const existingSeqById = new Map<string, number>();
   for (const ids of chunk(ops.map((op) => op.id), IDS_PER_QUERY)) {

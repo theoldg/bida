@@ -395,9 +395,9 @@ export function validateSplit(
   }
 
   try {
-    const { shares } = resolveSplit(totalMinor, spec, options);
-    const allocated = Object.values(shares).reduce((a, b) => a + b, 0);
-    return { ok: allocated === totalMinor, allocatedMinor: allocated, totalMinor };
+    // It sums to the total or it throws.
+    resolveSplit(totalMinor, spec, options);
+    return { ok: true, allocatedMinor: totalMinor, totalMinor };
   } catch (err) {
     return {
       ok: false,
@@ -488,7 +488,7 @@ export function convertSplitMode(
       }
       // Force the rounding drift onto the largest holder so it still sums to 100%.
       const sum = participants.reduce((a, id) => a + (bps[id] ?? 0), 0);
-      if (sum !== 10_000 && participants.length > 0) {
+      if (sum !== 10_000) {
         const biggest = [...participants].sort(
           (a, b) => (bps[b] ?? 0) - (bps[a] ?? 0) || (a < b ? -1 : 1),
         )[0]!;

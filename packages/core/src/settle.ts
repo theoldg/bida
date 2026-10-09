@@ -42,7 +42,6 @@ export function settleUp(balances: Record<Id, number>): Transfer[] {
     .filter(([, balance]) => balance !== 0)
     .map(([id, balance]) => ({ id, amount: balance }))
     .sort((a, b) => (a.id < b.id ? -1 : 1));
-  if (people.length === 0) return [];
 
   const pieces = partition(people);
   // Smallest debt first across pieces too, so the whole list reads the way each
@@ -83,7 +82,7 @@ function partition(people: readonly Party[]): Party[][] {
   const take = (chosen: readonly number[]) =>
     pieces.push(amounts.flatMap((a, i) => holders.get(a)!.splice(0, chosen[i]!)));
 
-  if (counts.some((c) => c > 0)) {
+  if (amounts.length > 0) {
     try {
       // (2) + (3): search the counts, then replay the cut onto the people.
       const memo = new Map<string, { best: number; cut: number[] | null }>();
@@ -97,7 +96,7 @@ function partition(people: readonly Party[]): Party[][] {
       }
     } catch (error) {
       if (!(error instanceof OutOfBudget)) throw error;
-      for (const cut of peel(amounts, amounts.map((a) => holders.get(a)!.length))) take(cut);
+      for (const cut of peel(amounts, counts)) take(cut);
     }
     // Whatever the search or the fallback left over is one last piece.
     const rest = amounts.flatMap((a) => holders.get(a)!.splice(0));

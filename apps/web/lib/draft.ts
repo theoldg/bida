@@ -150,8 +150,7 @@ export function draftReceiptSplit(draft: EntryDraft): SplitSpec | null {
 
 /** Receipt falls back to Evenly while the grid is unfilled. */
 export function activeSplit(draft: EntryDraft): SplitSpec {
-  return (activeSplitTab(draft) === "receipt" ? draftReceiptSplit(draft) : null)
-    ?? arithmeticSplit(draft);
+  return draftReceiptSplit(draft) ?? arithmeticSplit(draft);
 }
 
 /** Ignores the bill, so a scan never feeds As parts (ADR-0016). */

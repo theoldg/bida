@@ -232,7 +232,7 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
     const said = text.trim();
     // An entity (&rsquo;) or a lone symbol is punctuation around an expression,
     // not a sentence — `{copy.split.rest}</button>` must not read as one.
-    if (said.length < 3 || !/[A-Za-z]{2}/.test(said) || /^&\w+;$/.test(said)) continue;
+    if (said.length < 3 || /^&\w+;$/.test(said)) continue;
     if (/^(import|export|from|const|let|type|interface|return|function|null|undefined)$/.test(said)) continue;
     fail(file, `${JSON.stringify(said)} — words a person reads live in lib/copy.ts (ADR-0033)`);
   }

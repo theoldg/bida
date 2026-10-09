@@ -1,5 +1,5 @@
 import { compareHlc, parseHlc } from "./hlc.js";
-import { IMMUTABLE_FIELDS, WRITE_ONCE_FIELDS, type Op } from "./ops.js";
+import type { Op } from "./ops.js";
 import { applyPatch, sortOps } from "./fold.js";
 import { isDemo } from "./demo.js";
 import type { Id } from "./types.js";
@@ -115,10 +115,9 @@ function revisionsForEntity(
       // Diff the folds; a whole-entity patch names every field and moves almost none.
       applyPatch(running, op.patch);
       for (const field of Object.keys(op.patch)) {
-        if (IMMUTABLE_FIELDS.has(field) || quiet?.has(field)) continue;
-        // The fold ignores it on an entity that already has one.
-        if (WRITE_ONCE_FIELDS.has(field) && before[field] !== undefined
-          && before[field] !== null) continue;
+        // An immutable or already-set write-once field needs no check of its
+        // own: the fold ignored it, so the diff below finds nothing.
+        if (quiet?.has(field)) continue;
         if (equalish(before[field], running[field])) continue;
         changes.push({ field, before: before[field] ?? null, after: running[field] });
       }

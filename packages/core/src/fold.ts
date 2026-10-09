@@ -1,4 +1,4 @@
-import { compareHlc, maxHlc, type Hlc } from "./hlc.js";
+import { compareHlc } from "./hlc.js";
 import { IMMUTABLE_FIELDS, WRITE_ONCE_FIELDS, type Op } from "./ops.js";
 import { upgradeReceiptSplit } from "./split.js";
 import {
@@ -81,14 +81,8 @@ function applyOp(state: GroupState, op: Op): void {
 }
 
 export function foldOps(ops: readonly Op[]): GroupState {
-  const state = emptyGroupState();
-  let last: Hlc | undefined;
-  for (const op of sortOps(ops)) {
-    applyOp(state, op);
-    last = maxHlc(last, op.hlc);
-  }
-  state.lastHlc = last;
-  return state;
+  // Nothing sorts before an empty state, so this never comes back null.
+  return foldForward(emptyGroupState(), ops)!;
 }
 
 /**
@@ -97,17 +91,12 @@ export function foldOps(ops: readonly Op[]): GroupState {
  */
 export function foldForward(state: GroupState, incoming: readonly Op[]): GroupState | null {
   const sorted = sortOps(incoming);
-  if (state.lastHlc !== undefined) {
-    for (const op of sorted) {
-      if (compareHlc(op.hlc, state.lastHlc) <= 0) return null;
-    }
-  }
-  let last = state.lastHlc;
-  for (const op of sorted) {
-    applyOp(state, op);
-    last = maxHlc(last, op.hlc);
-  }
-  state.lastHlc = last;
+  const first = sorted[0];
+  if (!first) return state;
+  // Sorted, so the first op is the earliest and the last the latest.
+  if (state.lastHlc !== undefined && compareHlc(first.hlc, state.lastHlc) <= 0) return null;
+  for (const op of sorted) applyOp(state, op);
+  state.lastHlc = sorted[sorted.length - 1]!.hlc;
   return state;
 }
 

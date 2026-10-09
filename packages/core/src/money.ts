@@ -50,7 +50,7 @@ function divRound(num: bigint, den: bigint): bigint {
  * Accepts "12.34", "12,34", " 1 234,56 ", "-5". Rejects anything else.
  */
 export function parseMinor(input: string, currency: CurrencyCode): number {
-  const cleaned = input.trim().replace(/\s| |_/g, "").replace(",", ".");
+  const cleaned = input.trim().replace(/[\s_]/g, "").replace(",", ".");
   if (!/^-?\d*(\.\d*)?$/.test(cleaned) || cleaned === "" || cleaned === "-") {
     throw new RangeError(`parseMinor: cannot parse ${JSON.stringify(input)}`);
   }
