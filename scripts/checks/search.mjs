@@ -155,7 +155,7 @@ await page.waitForSelector(".skelveil", { state: "detached" });
   await summon(page);
   await until(page, (s) => s.caret && s.top === s.base);
   await field(page).fill("passage");
-  let now = await until(page, (s) => s.labels.length === 1 && s.top === 0);
+  let now = await until(page, (s) => s.labels.length === 1 && s.top === 0 && s.shown === 1);
   const hits = now.titles.length;
   report(hits > 0 && now.titles.every((t) => /passage/i.test(t)) && now.labels.length === 1,
     "typing narrows the rows, under one line saying where the word was found", say(now));
@@ -222,7 +222,7 @@ await page.waitForSelector(".skelveil", { state: "detached" });
   await page.locator(".topbar .iconbtn").first().click();
   await page.waitForURL(/\/g\?id=/);
   await page.waitForSelector(".searchbar");
-  let now = await until(page, (s) => s.query === "passage" && s.titles.length === before.titles.length);
+  let now = await until(page, (s) => s.query === "passage" && s.titles.length === before.titles.length && s.shown === 1);
   report(now.query === "passage" && now.titles.join() === before.titles.join() && !now.head && now.shown === 1,
     "back from a result, the search is as it was left", say(now));
 
@@ -232,7 +232,7 @@ await page.waitForSelector(".skelveil", { state: "detached" });
   await page.locator(".rows a.row, .rows button.row").first().click();
   await page.waitForURL(/\/g\?id=/);
   await page.waitForSelector(".rows a.row");
-  now = await until(page, (s) => s.query === "" && s.head);
+  now = await until(page, (s) => s.query === "" && s.head && !s.on);
   report(now.query === "" && now.head && !now.on && now.top === 0, "a tap into the group starts blank, at the top", say(now));
 }
 await short.close();
@@ -254,7 +254,8 @@ await short.close();
   await tall.waitForFunction(() => !document.querySelector(".rows .saved"), null, { timeout: PATIENCE });
   await tall.waitForSelector(".skelveil", { state: "detached" });
   await summon(tall);
-  let now = await until(tall, (s) => s.caret && s.top === s.base && s.top > 0);
+  // The bar's ease outlasts the shortest glide: wait for both.
+  let now = await until(tall, (s) => s.caret && s.top === s.base && s.top > 0 && s.shown === 1);
   report(now.caret && now.top === now.base && now.top > 0 && now.room && now.shown === 1,
     "a list too short to scroll is lent the room to reach the base state", say(now));
   await tall.keyboard.press("Enter");
