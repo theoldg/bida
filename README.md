@@ -62,6 +62,8 @@
 
 - **Dark mode.**
 
+- **Search in group.**
+
 ### Might add
 
 These features exist in other splitters. I might add them if people ask.
@@ -71,8 +73,6 @@ These features exist in other splitters. I might add them if people ask.
 - **Spending stats.** Some expense splitters track the amounts per person, per category etc.
 
 - **Recurring payments.** E.g. for utility bills in a shared flat.
-
-- **Search in group.**
 
 ### Won't add
 
