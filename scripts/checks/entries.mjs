@@ -217,7 +217,7 @@ report((await page.locator(".rmeta").allInnerTexts()).some((t) => t.startsWith("
   "a transfer saves and lists");
 
 // ---- and every one of them is editable ---------------------------------
-await page.locator("a.row").filter({ hasText: "paid" }).first().click();
+await page.locator("a.row").filter({ hasText: "→" }).first().click();
 await page.waitForURL(/\/g\/entry\?/);
 await page.waitForSelector(".transfer");
 report((await page.locator(".topbar h3").innerText()) === "Transfer", "a transfer has a detail screen");
@@ -475,7 +475,7 @@ const transferRows = async () =>
 // the form wrote the other — so this deletes one and counts, rather than
 // asking whether any are left.
 const before = await transferRows();
-await page.locator("a.row").filter({ hasText: "paid" }).first().click({ button: "right" });
+await page.locator("a.row").filter({ hasText: "→" }).first().click({ button: "right" });
 await page.waitForSelector(".rowmenu");
 report(await page.getByRole("menuitem", { name: "Delete" }).count() === 1,
   "a long press on a transfer row offers to delete it");
