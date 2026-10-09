@@ -26,6 +26,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-09* — "Critique search", then "make the fixes that don't impact
+  the UI", then "the code should be simple, stuff should be obvious". Half my
+  critique died on contact with the code; say so. Write the check first: it
+  found a real sliver. Stage before a throwaway edit: I reverted my rewrite.
+
 - *2026-10-09* — "Is this trigger even a good idea?" then "critique the
   following design", then theirs built anyway: sections answered my objection
   to ranking. Give the critique straight, then build what they pick — and
@@ -76,7 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   a "you" marker. The tint was the old you-marker; replacing it means the tag
   goes everywhere the tint went. Then "drop the currency … we'll squeeze
   more": a chip is room, not a sentence.
-
-- *2026-10-08* — A ticket scanned as 2020, "maybe we should discretely drop
-  today's date in the prompt". I wrote a rule about yearless dates; "just say
-  today is XYZ". "Discretely" meant the fact, not an instruction.

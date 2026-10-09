@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { flushSync } from "react-dom";
 import { copy } from "@/lib/copy";
+import { shownAt } from "@/lib/ledger-search";
 import { returnTo } from "@/lib/nav";
 import { calmly, glide } from "@/lib/seek";
 import { Icon } from "./icons";
@@ -26,139 +28,91 @@ export function useLedgerQuery(groupId: string): [string, (query: string) => voi
  * The search's base state: the bar out, empty, and the whole ledger under it
  * with its first row where the first result would be — where a search starts
  * from and where clearing one returns to. This is the `scrollTop` that puts
- * the list there, given the ledger's scroller.
+ * the list there, under a bar `bar` pixels tall.
  */
-export function searchBase(box: HTMLElement): number {
-  const rows = box.querySelector<HTMLElement>(".lrows");
-  const bar = box.parentElement?.querySelector<HTMLElement>(".searchbar");
-  return Math.max(0, (rows?.offsetTop ?? 0) - (bar?.offsetHeight ?? 0));
-}
-
-/**
- * The group menu's way in: the caret in the bar, which brings it out, and the
- * list gliding to the base state under it. The focus is in the tap's own turn,
- * or iOS keeps its keyboard down; the bar is taken out of `inert` by hand for
- * that, and marked out, since hidden it can't hold a caret.
- */
-export function summonLedgerSearch(): void {
-  const bar = document.querySelector<HTMLElement>(".searchbar");
-  const field = bar?.querySelector("input");
-  const box = bar?.closest(".appbody")?.querySelector<HTMLElement>(".scroll");
-  if (!bar || !field) return;
-  const dock = bar.closest<HTMLElement>(".searchdock");
-  const was = bar.inert;
-  bar.inert = false;
-  // Away, it is not drawn either (`visibility`), which refuses a caret too.
-  dock?.setAttribute("data-on", "");
-  // The glide is the only thing that may move the list here.
-  field.focus({ preventScroll: true });
-  if (document.activeElement !== field) {
-    bar.inert = was;
-    if (was) dock?.removeAttribute("data-on");
-    return;
-  }
-  // Not over a search already up: its results are where they should be.
-  if (box && field.value === "") glide(box, searchBase(box), () => {});
+function searchBase(box: HTMLElement, bar: number): number {
+  return Math.max(0, (box.querySelector<HTMLElement>(".lrows")?.offsetTop ?? 0) - bar);
 }
 
 /** The least time the scroll may take to bring the whole bar out or put it away (ms). */
 const REVEAL_MS = 180;
 
-/** How long after the bar is handed back to the scroll it may only come further out (ms). */
-const SETTLE_MS = 250;
+/** How long after a press on a row a field let go of is taken to be that press's doing (ms). */
+const PRESS_MS = 700;
 
-/** How long the bar eases for when it is taken from the scroll or handed back (ms); `.searchdock[data-ease]`'s. */
-const EASE_MS = 260;
+/** The mounted bar's way in from the group menu. */
+let summon: (() => void) | null = null;
+
+/** The group menu's **Search**: the caret in the bar, wherever the list is. */
+export function summonLedgerSearch(): void {
+  summon?.();
+}
 
 /**
- * The ledger's search: a bar that comes out from under the top bar as the
- * you-owe card (`banner`) leaves the list's view. **Tied to the scroll, not
- * set off by it**: over the last bar's height the rows travel towards the base
- * state (`searchBase`), each pixel of theirs brings a pixel of the bar, so it
- * is whole exactly as the first row meets its foot. A slow scroll unfolds it
- * slowly and stopping halfway leaves it halfway — up to a speed
- * (`REVEAL_MS`), past which it slides out behind the scroll rather than
- * appearing whole. Typed in or holding a query it is out whole, wherever the
- * list is.
+ * The ledger's search: a bar that comes out from under the top bar. One rule
+ * places it — **held, it is out whole; otherwise it is where the scroll puts
+ * it** (`shownAt`) — and held is the caret in it or a query typed.
  *
- * **The caret pins nothing a finger wants moved**: a drag on the list lets go
- * of the field, and with nothing typed the bar is the scroll's again. Let go
- * of any other way at the base state or above it, the list glides back to its
- * head, taking the bar with it.
+ * - **The scroll** unfolds it as slowly as it is scrolled, and stopping
+ *   halfway leaves it halfway — up to a speed (`REVEAL_MS`), past which it
+ *   slides out behind a fling rather than appearing whole.
+ * - **The group menu** puts the caret in it, and glides the list to the base
+ *   state (`searchBase`) under it.
+ * - **A query** stands it in the column (`.searchdock[data-searching]`) with
+ *   the results from its foot; emptied, the list is back at the base state.
+ * - **Let go of empty** at the base state or short of it, the list glides
+ *   back to its head, and the bar goes with it as the scroll's. Not when a
+ *   finger on the list is what let go — a drag does, and it is driving — nor
+ *   on the way into a row.
  *
- * Idle it lies over the head of the list, so showing it moves nothing; holding
- * a query it takes its own room (`.searchdock[data-searching]`), since the
- * results start under it.
+ * Idle it lies over the head of the list, so showing it moves nothing.
  */
-export function LedgerSearch({ banner, query, onQuery }: {
-  banner: HTMLElement | null; query: string; onQuery: (query: string) => void;
+export function LedgerSearch({ scroll, query, onQuery }: {
+  /** The ledger's scroller: its head in `.lhead`, its rows in `.lrows`. */
+  scroll: RefObject<HTMLElement | null>;
+  query: string;
+  onQuery: (query: string) => void;
 }) {
   const dock = useRef<HTMLDivElement>(null);
+  const bar = useRef<HTMLDivElement>(null);
+  const field = useRef<HTMLInputElement>(null);
   const [focused, setFocused] = useState(false);
   const held = focused || query !== "";
-  // Whether any of it shows: all a render needs to know. How much is written
-  // straight onto the dock as `--shown`, a frame at a time.
+  // Whether any of it is drawn: all a render needs to know. How much is
+  // `shown`, written straight onto the dock as `--shown` a frame at a time.
   const [out, setOut] = useState(false);
+  const on = out || held;
+  const shown = useRef<number | null>(null);
+  // A list too short to scroll to the base state is lent the room to
+  // (`.searchroom`) while the bar is out, and keeps it until it is back at
+  // its head: taken any sooner, the list would drop there.
   const [room, setRoom] = useState(false);
-  const onNow = useRef(false);
-  // For the scroll's loop below, which outlives a render: whether the bar is
-  // held, when it last stopped being, and a way to have it measure again.
-  const heldNow = useRef(held);
-  const letGoAt = useRef(-Infinity);
-  const kick = useRef<(() => void) | null>(null);
-  if (heldNow.current && !held) letGoAt.current = performance.now();
-  heldNow.current = held;
-  useEffect(() => kick.current?.(), [held]);
-  const handed = useRef(false);
-  const pressed = useRef(0);
+  const base = (box: HTMLElement) => searchBase(box, bar.current?.offsetHeight ?? 0);
+
+  // The bar follows the scroll, or stands whole while held. What is drawn
+  // chases what is wanted by no more than the whole bar per `REVEAL_MS`: a
+  // slow scroll never asks for more, so the bar stays under the finger, and a
+  // fling gets a slide instead of a cut.
   useEffect(() => {
-    const box = banner?.closest<HTMLElement>(".scroll");
-    const bar = dock.current?.querySelector<HTMLElement>(".searchbar");
-    if (!banner || !box || !bar) return;
-    // What the scroll asks for, and what is drawn. Drawn chases asked at no
-    // more than the whole bar per `REVEAL_MS`: a slow scroll never asks for
-    // more than that, so the bar stays under the finger, and a fling that
-    // would have it there in one frame gets a slide instead of a cut.
-    const asked = () => {
-      // Asked of the scroller each time: a search redraws the rows' box.
-      const rows = box.querySelector<HTMLElement>(".lrows");
-      if (!rows) return 0;
-      const h = bar.offsetHeight;
-      // The base state's `scrollTop`, and how far the list still is from it.
-      const base = rows.offsetTop - h;
-      const short = base - box.scrollTop;
-      // Over the last bar's height of that scroll — or all of it, where the
-      // head is too short to give one: measured against the bar alone, a head
-      // of about two bars left a sliver of it out with the list at rest at
-      // its very top, a line across the head of the screen.
-      const span = Math.min(h, base);
-      return span <= 0 ? 1 : Math.min(1, Math.max(0, 1 - short / span));
-    };
-    let shown = asked();
-    const draw = () => {
-      dock.current?.style.setProperty("--shown", String(shown));
-      setOut(shown > 0);
-      // The room a short list was lent goes only at its head, where taking it
-      // moves nothing (see `room`).
-      if (box.scrollTop <= 0 && !onNow.current) setRoom(false);
-    };
+    const box = scroll.current;
+    const el = dock.current;
+    if (!box || !el) return;
     let frame = 0;
-    let last = 0;
+    let last = performance.now() - 16;
     const step = (now: number) => {
       frame = 0;
-      const want = asked();
-      const reach = calmly() ? 1 : (now - last) / REVEAL_MS;
+      const want = held ? 1 : shownAt(box.scrollTop, base(box), bar.current?.offsetHeight ?? 0);
+      // Arriving, it is where it should be; held, CSS has it whole already.
+      const from = shown.current ?? want;
+      const reach = held || calmly() ? 1 : (now - last) / REVEAL_MS;
       last = now;
-      // Held, the bar is out whatever this says, so there is nothing to slide:
-      // it keeps up exactly, and is right the moment the bar is the scroll's
-      // again. For a beat after that it only ever comes further out: the frames
-      // around a search being cleared read the list mid-change, and one low
-      // reading drew the bar part-way back for a frame.
-      if (heldNow.current) shown = want;
-      else if (now - letGoAt.current < SETTLE_MS) shown = Math.max(shown, want);
-      else shown += Math.min(reach, Math.max(-reach, want - shown));
-      draw();
-      if (shown !== want) frame = requestAnimationFrame(step);
+      const to = Math.abs(want - from) <= reach ? want : from + Math.sign(want - from) * reach;
+      shown.current = to;
+      el.style.setProperty("--shown", String(to));
+      setOut(to > 0);
+      const atHead = box.scrollTop <= 0;
+      setRoom((lent) => held || to > 0 || (lent && !atHead));
+      if (to !== want) frame = requestAnimationFrame(step);
     };
     const ask = () => {
       if (frame) return;
@@ -166,91 +120,102 @@ export function LedgerSearch({ banner, query, onQuery }: {
       last = performance.now() - 16;
       frame = requestAnimationFrame(step);
     };
-    draw();
-    kick.current = ask;
+    step(performance.now());
     box.addEventListener("scroll", ask, { passive: true });
-    // A finger dragging the list, or a wheel, lets go of the field.
-    const byHand = () => {
-      const field = bar.querySelector("input");
-      if (document.activeElement !== field) return;
-      handed.current = true;
-      field?.blur();
+    // The head comes and goes without a scroll: a card folded, a search begun.
+    const sizes = new ResizeObserver(ask);
+    const head = box.querySelector(".lhead");
+    if (head) sizes.observe(head);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      box.removeEventListener("scroll", ask);
+      sizes.disconnect();
     };
-    // A press on a row is on its way somewhere: not a letting go to answer.
+  }, [held, scroll]);
+
+  // A query begun or changed reads from its first result; emptied, the list
+  // is at the base state. After the commit: the head is back in the column.
+  const placed = useRef(query);
+  useLayoutEffect(() => {
+    const box = scroll.current;
+    if (!box || placed.current === query) return;
+    placed.current = query;
+    box.scrollTop = query === "" ? base(box) : 0;
+  }, [query, scroll]);
+
+  // The one glide this owns at a time: to the base state, or back to the head.
+  const gliding = useRef<(() => void) | null>(null);
+  const stopGlide = () => { gliding.current?.(); gliding.current = null; };
+  const glideTo = (box: HTMLElement, top: number) => {
+    stopGlide();
+    gliding.current = glide(box, top, () => { gliding.current = null; });
+  };
+  useEffect(() => stopGlide, []);
+
+  // **The caret pins nothing a finger wants moved**: a drag on the list, or a
+  // wheel, lets go of the field. And a press on a row is noted, for `letGo`.
+  const driving = useRef(false);
+  const pressed = useRef(0);
+  useEffect(() => {
+    const box = scroll.current;
+    if (!box) return;
+    const drive = () => {
+      if (document.activeElement !== field.current) return;
+      driving.current = true;
+      field.current?.blur();
+      driving.current = false;
+    };
     const press = (e: PointerEvent) => {
       if (e.target instanceof Element && e.target.closest("a, button")) pressed.current = Date.now();
     };
-    box.addEventListener("touchmove", byHand, { passive: true });
-    box.addEventListener("wheel", byHand, { passive: true });
+    box.addEventListener("touchmove", drive, { passive: true });
+    box.addEventListener("wheel", drive, { passive: true });
     box.addEventListener("pointerdown", press, { passive: true });
-    // What sits above the card comes and goes without a scroll.
-    const sizes = new ResizeObserver(ask);
-    sizes.observe(banner);
-    if (banner.parentElement) sizes.observe(banner.parentElement);
     return () => {
-      kick.current = null;
-      if (frame) cancelAnimationFrame(frame);
-      box.removeEventListener("scroll", ask);
-      box.removeEventListener("touchmove", byHand);
-      box.removeEventListener("wheel", byHand);
+      box.removeEventListener("touchmove", drive);
+      box.removeEventListener("wheel", drive);
       box.removeEventListener("pointerdown", press);
-      sizes.disconnect();
     };
-  }, [banner]);
+  }, [scroll]);
 
-  // Taken from the scroll or handed back, the bar has a distance to cover that
-  // no finger is moving it through, so that one move is eased.
-  const [ease, setEase] = useState(false);
-  const was = useRef(held);
-  useEffect(() => {
-    if (was.current === held) return;
-    was.current = held;
-    setEase(true);
-    const timer = setTimeout(() => setEase(false), EASE_MS);
-    return () => clearTimeout(timer);
-  }, [held]);
-
-  // Let go of with nothing typed, at the base state or short of it (after the
-  // menu, or a search cleared), the list glides back to its head and the bar
-  // goes with it as the scroll's. Not when a finger on the list is what let go
-  // — it is driving — nor on the way into a row. `closing` keeps the bar
-  // counted as out until the list has arrived.
-  const [closing, setClosing] = useState(false);
-  const stop = useRef<(() => void) | null>(null);
-  const settle = () => { stop.current?.(); stop.current = null; setClosing(false); };
-  useEffect(() => () => stop.current?.(), []);
   const letGo = () => {
     setFocused(false);
-    const box = dock.current?.parentElement?.querySelector<HTMLElement>(".scroll");
-    const hand = handed.current;
-    handed.current = false;
-    if (query !== "" || hand || Date.now() - pressed.current < 700) return;
-    if (!box || box.scrollTop === 0 || box.scrollTop > searchBase(box) + 1) return;
-    setClosing(true);
-    stop.current = glide(box, 0, () => { stop.current = null; setClosing(false); });
+    const box = scroll.current;
+    if (!box || query !== "" || driving.current || Date.now() - pressed.current < PRESS_MS) return;
+    // Already at its head, or further down than the base state: nothing to undo.
+    if (box.scrollTop === 0 || box.scrollTop > base(box) + 1) return;
+    glideTo(box, 0);
   };
 
-  const on = out || held || closing;
-  // A list too short to scroll to the base state is lent the room to
-  // (`.searchroom`) once the bar is out, and keeps it until it is back at its
-  // head with the bar away: taken any sooner, the list would drop there.
-  onNow.current = on;
   useEffect(() => {
-    if (on) setRoom(true);
-    else if ((dock.current?.parentElement?.querySelector(".scroll")?.scrollTop ?? 0) <= 0) setRoom(false);
-  }, [on]);
+    summon = () => {
+      const box = scroll.current;
+      const input = field.current;
+      if (!box || !input) return;
+      // Out before the caret: away, the bar is not drawn and can't hold one.
+      // And all of it in the tap's own turn, or iOS keeps its keyboard down.
+      flushSync(() => setFocused(true));
+      // The glide is the only thing that may move the list here.
+      input.focus({ preventScroll: true });
+      if (document.activeElement !== input) { setFocused(false); return; }
+      // Not over a search already up: its results are where they should be.
+      if (input.value === "") glideTo(box, base(box));
+    };
+    return () => { summon = null; };
+  });
+
   return (
-    <div className="searchdock" ref={dock} data-on={on ? "" : undefined} data-room={room || on ? "" : undefined} data-held={held ? "" : undefined}
-      data-ease={ease ? "" : undefined} data-searching={query ? "" : undefined}>
+    <div className="searchdock" ref={dock} role="search" data-on={on ? "" : undefined} data-room={room || on ? "" : undefined}
+      data-held={held ? "" : undefined} data-searching={query ? "" : undefined}>
       <div className="searchclip">
-        <div className="searchbar" inert={!on}>
+        <div className="searchbar" ref={bar}>
           <label className="field">
             <Icon name="search" size={15} className="muted" style={{ flex: "none" }} />
-            <input value={query} onChange={(e) => onQuery(e.target.value)}
+            <input ref={field} value={query} onChange={(e) => onQuery(e.target.value)}
               placeholder={copy.group.search.field} aria-label={copy.group.search.field}
               inputMode="search" enterKeyHint="search" autoCapitalize="none" autoCorrect="off"
               autoComplete="off" spellCheck={false}
-              onFocus={() => { settle(); setFocused(true); }} onBlur={letGo}
+              onFocus={() => { stopGlide(); setFocused(true); }} onBlur={letGo}
               // The confirm key has nothing to submit: the list is already the answer.
               onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) e.currentTarget.blur(); }} />
             {query ? (

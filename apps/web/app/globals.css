@@ -328,7 +328,7 @@ html[data-resuming] .resumeframe { display: flex }
 .ghost { display: none }
 html[data-resuming="demo"] .ghost-demo, html[data-resuming="notify"] .ghost-notify,
 html[data-resuming="manual"] .ghost-manual { display: block }
-.appbody { flex: 1; display: flex; flex-direction: column; min-height: 0 }
+.appbody { flex: 1; display: flex; flex-direction: column; min-height: 0; --search-h: 50px }
 /* The keyboard overlays the shell, so the scroller pays it back: as room past
    the last row, and as where a scroll may stop, clear of the accessory bar. */
 .scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative;
@@ -374,7 +374,7 @@ html[data-resuming="manual"] .ghost-manual { display: block }
    of its own. Holding a query it stands in the column instead. `--shown` is
    how far out the scroll has brought it, 0 to 1, written a frame at a time:
    no transition follows it, or a slow scroll would lag. */
-.appbody > .searchdock { flex: none; position: relative; height: 0; z-index: 2; --search-h: 50px }
+.appbody > .searchdock { flex: none; position: relative; height: 0; z-index: 2 }
 .searchclip { position: absolute; inset: 0 0 auto; overflow: hidden; pointer-events: none }
 .searchdock[data-searching] { height: auto }
 .searchdock[data-searching] .searchclip { position: static }
@@ -386,15 +386,16 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .searchdock:not([data-on]) .searchbar { visibility: hidden }
 .searchdock[data-on] .searchbar { pointer-events: auto }
 /* Held, it is out whole — by the same transform, so handing it back to the
-   scroll is a change of number and not of how the bar is drawn. */
-.searchdock[data-held] .searchbar { --shown: 1 }
-.searchdock[data-ease] .searchbar { transition: transform .26s cubic-bezier(.2, .8, .2, 1) }
+   scroll is a change of number and not of how the bar is drawn. Taken from
+   the scroll it has a distance to cover that no finger is moving it through,
+   so that one move is eased; handed back, it is the scroll's at once. */
+.searchdock[data-held] .searchbar { --shown: 1; transition: transform .26s cubic-bezier(.2, .8, .2, 1) }
 .searchbar .field { height: 100%; padding-block: 0 }
 /* Once the bar is out over the whole ledger, the rows' box fills the screen
    under it, so a list too short to scroll can still be brought to the search's
    base state (`searchBase`). `data-room` outlasts the bar until the list is
-   back at its head. The 50px is `--search-h`, out of reach of a sibling. */
-.searchdock[data-room]:not([data-searching]) + .scroll > .searchroom { min-height: calc(100% - 50px) }
+   back at its head. */
+.searchdock[data-room]:not([data-searching]) + .scroll > .searchroom { min-height: calc(100% - var(--search-h)) }
 .searchclear { flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin: -6px -8px -6px 0;
   color: var(--ink-2); border-radius: var(--r-s) }
 .searchclear:active { background: var(--press) }

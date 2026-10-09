@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type Ref } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   payerList, resolvePayers, resolveEntrySplit, splitParticipants,
   type Expense, type Member, type Settlement,
@@ -21,7 +21,7 @@ import { NewEdits } from "@/components/new-edits";
 import { RollingFigure } from "@/components/rolling-figure";
 import { Icon } from "@/components/icons";
 import { LedgerRows } from "@/components/ledger-rows";
-import { LedgerSearch, searchBase, useLedgerQuery } from "@/components/ledger-search";
+import { LedgerSearch, useLedgerQuery } from "@/components/ledger-search";
 import { useLongPressMenu } from "@/components/long-press";
 import { SyncBanner } from "@/components/sync-banner";
 import { copy } from "@/lib/copy";
@@ -136,9 +136,8 @@ function Ledger({ data }: { data: GroupData }) {
   const items = useMemo(() => ledgerItems(expenses, settlements, dayLabel), [expenses, settlements]);
   const scroll = useRef<HTMLDivElement>(null);
   useLedgerPosition(scroll, group?.id ?? "");
-  // The search bar comes out as the you-owe card scrolls away, and what is
-  // typed in it narrows the rows (components/ledger-search.tsx).
-  const [banner, setBanner] = useState<HTMLDivElement | null>(null);
+  // The search bar comes out as the head scrolls away, and what is typed in
+  // it narrows the rows (components/ledger-search.tsx).
   const [query, setQuery] = useLedgerQuery(group?.id ?? "");
   const found = useMemo(
     () => searchLedger(items, query, {
@@ -149,15 +148,6 @@ function Ledger({ data }: { data: GroupData }) {
     }),
     [items, query, memberById, group?.baseCurrency],
   );
-  // A search emptied returns to its base state (`searchBase`), not to the top
-  // of the screen, where the bar would lie over the card. After the commit:
-  // the head is back in the column by then.
-  const emptied = useRef(false);
-  useLayoutEffect(() => {
-    if (!emptied.current) return;
-    emptied.current = false;
-    if (scroll.current) scroll.current.scrollTop = searchBase(scroll.current);
-  }, [query]);
   if (!group) return null;
   // Whatever is typed, a space alone included: the bar stands in the column
   // on the same test (`.searchdock[data-searching]`), and the head would show
@@ -173,16 +163,11 @@ function Ledger({ data }: { data: GroupData }) {
 
   return (
     <>
-    <LedgerSearch banner={banner} query={query} onQuery={(next) => {
-      // Results read from their first row; a search emptied is placed below.
-      emptied.current = query !== "" && next === "";
-      if (scroll.current && !emptied.current) scroll.current.scrollTop = 0;
-      setQuery(next);
-    }} />
+    <LedgerSearch scroll={scroll} query={query} onQuery={setQuery} />
     <Scroll ref={scroll}>
       {/* Hidden rather than dropped while a search is on: the card keeps the
           figure it has drawn, and the fold its place. */}
-      <div hidden={searching}>
+      <div className="lhead" hidden={searching}>
       {/* Inside the scroll, not fixed above it, so the ledger isn't pushed a
           third of the way down. */}
       {/* Either platform's install offer, folded to one line (docs/ios.md),
@@ -193,7 +178,7 @@ function Ledger({ data }: { data: GroupData }) {
           nothing for every other group. */}
       <DemoCard groupId={gid} />
       <LedgerInstall groupId={gid} />
-      {me ? <MySummary ref={setBanner} net={net} base={base} gid={gid} /> : null}
+      {me ? <MySummary net={net} base={base} gid={gid} /> : null}
       {/* Between where you stand and the rows, since it is why either moved. */}
       <NewEdits groupId={gid} currency={base} source={group.importedFrom} />
       </div>
@@ -224,9 +209,7 @@ function Ledger({ data }: { data: GroupData }) {
  * The figure is sized to its own length (`.mysum` in globals.css), so a long
  * sum shrinks to fit rather than running under the chevron.
  */
-function MySummary({ net, base, gid, ref }: {
-  net: number; base: string; gid: string; ref?: Ref<HTMLDivElement>;
-}) {
+function MySummary({ net, base, gid }: { net: number; base: string; gid: string }) {
   // Unsigned, unlike every other figure: "You owe" already says the direction,
   // and a "-" reads as arithmetic rather than debt.
   const figure = money(Math.abs(net), base);
@@ -248,7 +231,7 @@ function MySummary({ net, base, gid, ref }: {
   useEffect(() => setTone((t) => (Math.abs(t) === Math.abs(net) ? net : t)), [net]);
   const label = tone < 0 ? copy.group.you.owe : tone > 0 ? copy.group.you.owed : copy.group.you.square;
   return (
-    <div className="mysummary pad" ref={ref}>
+    <div className="mysummary pad">
       <Link href={route.balances(gid)} className={`card mysum ${signClass(tone)}`}
         style={{ "--chars": figure.length } as CSSProperties}>
         <span className="mysumtext">
