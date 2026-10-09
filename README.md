@@ -42,13 +42,13 @@
 
 - **Split expenses.** As an expense splitter might. Multi payer, uneven splits, debt simplification, etc.
 
-- **No accounts.** A group is a secret link. Anyone with the link can edit.
+- **No accounts.** A group is a secret link. Click it and you're in, no app, no login. Helpful if you have Splitwise-resistant friends.
 
-- **Online, or installable PWA.** Click the link and you're in. You can also add bida to your Android or iOS device, no app store required.
+- **Online, or installable PWA.** You can add bida to your Android or iOS device, no app store required.
 
 - **Works offline.** Append-only data model prevents merge conflicts.
 
-- **End-to-end encrypted.** Decryption happens locally via the URL hash. The server only ever sees scrambled ciphertext.
+- **End-to-end encrypted.** Decryption happens locally via the URL hash. The server only ever sees scrambled ciphertext. *See the disclaimer below!*
 
 - **Receipt parsing and itemized splitting.** Extracts line items from receipt photos. Grid-like UI for assigning who-had-what.
 
@@ -78,6 +78,10 @@ These features exist in other splitters. I might add them if people ask.
 
 - **Image hosting.** Keeping the app text-only is what makes it dirt cheap to run. The item details from receipts aren't lost, they can be parsed and stored in text form too.
 
+## Privacy needs an audit
+
+I am not a cybersecurity expert! The whole thing is set up to be E2EE compatible, the data is encrypted, and the key never reaches the server... But I can't guarantee there isn't some subtle fingerprinting possibility or other bug. I hope to eventually get a code audit from someone with credentials. For now, please treat bida as "probably E2EE".
+
 ## Vibe-coded... carefully
 
 This is a personal project, almost entirely written with Claude Code, but I put love into it.
@@ -90,8 +94,8 @@ as the app grew. Check [CLAUDE.md](CLAUDE.md) if you're curious about the setup.
 Next.js static export · hand-written CSS · Dexie/IndexedDB ·
 Cloudflare Worker + D1.
 
-The core functionality is hosted for free on Cloudflare. The LLM-powered
-receipt scanning is very cheap and funded by a tip jar.
+The core functionality is hosted for free on Cloudflare, and would need around 100k users to exceed the free plan's limits. The LLM-powered
+receipt scanning costs around 0.1 cent each and is funded by a tip jar.
 
 ## Self-hosting
 
