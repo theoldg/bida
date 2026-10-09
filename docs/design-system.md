@@ -284,7 +284,10 @@ appears.
 ## Type
 
 **One face: JetBrains Mono**, 400–700, a variable font committed under
-`public/fonts/` with its `@font-face` rules at the head of `globals.css`. `--f-display` and `--f-body` are aliases of `--f-mono`, kept so the
+`public/fonts/` with its `@font-face` rules at the head of `globals.css`. A
+character outside Google's subsets falls back to the phone's font, which is
+how "→" once came out small and low: it has its own file now, the face's
+"->" ligature drawn onto →, so the text stays a real arrow. `--f-display` and `--f-body` are aliases of `--f-mono`, kept so the
 CSS still speaks in roles. Hierarchy is weight and tracking, with size the last
 step: headings 700 at `-.03em` — and a screen whose own title carries it rather
 than the bar (`.question`) sets that title above the bar's 17px, centred — body
