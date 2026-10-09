@@ -382,9 +382,10 @@ html[data-resuming="manual"] .ghost-manual { display: block }
   transform: translateY(calc((var(--shown, 0) - 1) * 100%)) }
 /* Away, it is not drawn at all: slid up by its own height its bottom rule
    still landed on the clip's first pixel row on some screens, a line across
-   the head of the list. */
-.searchdock:not([data-on]) .searchbar { visibility: hidden }
-.searchdock[data-on] .searchbar { pointer-events: auto }
+   the head of the list. Held counts as out: `data-on` is the next frame's to
+   write, and the menu's caret goes in within the tap. */
+.searchdock:not([data-on], [data-held]) .searchbar { visibility: hidden }
+.searchdock:is([data-on], [data-held]) .searchbar { pointer-events: auto }
 /* Held, it is out whole — by the same transform, so handing it back to the
    scroll is a change of number and not of how the bar is drawn. Taken from
    the scroll it has a distance to cover that no finger is moving it through,
@@ -395,7 +396,7 @@ html[data-resuming="manual"] .ghost-manual { display: block }
    under it, so a list too short to scroll can still be brought to the search's
    base state (`searchBase`). `data-room` outlasts the bar until the list is
    back at its head. */
-.searchdock[data-room]:not([data-searching]) + .scroll > .searchroom { min-height: calc(100% - var(--search-h)) }
+.searchdock:is([data-room], [data-held]):not([data-searching]) + .scroll > .searchroom { min-height: calc(100% - var(--search-h)) }
 .searchclear { flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin: -6px -8px -6px 0;
   color: var(--ink-2); border-radius: var(--r-s) }
 .searchclear:active { background: var(--press) }

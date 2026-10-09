@@ -319,7 +319,8 @@ API is reached with `fetch`.
   best place a word was found, in that order, under lines drawn like date
   lines; within a section more words there comes first, then recency. A
   transfer's title is its two names and its note. A query is kept for the way
-  back from a result, like the ledger's position.
+  back from a result, like the ledger's position, and a way back draws the bar
+  where the list is put from its first frame, lending the room first.
 - **The ledger's new-changes line** (`components/new-edits.tsx`) sits under the
   you-owe card, drawn as a date line in full-ink text, with a chevron at its
   right edge that swings into a cross as it opens, because folding it clears it:
@@ -476,6 +477,12 @@ faint `(you)`; a transfer shows neither. What it looks like and why:
   on a settled field replays it every time the field is emptied. Take the class
   off on `animationend`; `e.pseudoElement` says whether the event came from the
   element or its placeholder.
+- **What a frame must draw can't be React state set from an effect.** A
+  passive effect runs after the paint and its `setState` commits a frame
+  later, so the search bar went missing for two frames on a way back. Write
+  it to the DOM in a layout effect or a frame callback. A layout effect runs
+  before its parent's and before a later sibling's ref is attached, so one
+  reading either waits for the frame callback or finds the element in the DOM.
 - **Back from a save, the ledger draws the old net for a frame** — its live
   query answers before the write lands. So a save's roll is usually a change
   arriving while the card is mounted, not one read from `bida.shown`; a check

@@ -196,7 +196,7 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
     // The buttons float over the foot of the list; a row under them is not in view.
     const fab = document.querySelector(".fab")?.getBoundingClientRect().top ?? view.bottom;
     // So does the search bar over its head, when it is out.
-    const bar = document.querySelector(".searchdock[data-on] .searchclip")?.getBoundingClientRect().bottom ?? view.top;
+    const bar = document.querySelector(".searchdock:is([data-on], [data-held]) .searchclip")?.getBoundingClientRect().bottom ?? view.top;
     const band = { top: Math.max(view.top, bar), bottom: Math.min(view.bottom, fab) };
     // A row that would sit in the top half of the screen with the list at its
     // very top goes there instead, so the summary banner shows with it: what

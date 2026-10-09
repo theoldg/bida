@@ -75,6 +75,50 @@ const watch = (page) => page.evaluate(() => {
   tick();
 });
 const watched = (page) => page.evaluate(() => { cancelAnimationFrame(window.__watch); return window.__seen; });
+
+/**
+ * The same, across a way back: each frame finds the bar afresh, since the
+ * screen it was on is gone, and frames without the ledger are left out. Each
+ * reading is taken after that frame's layout, just before it is painted: an
+ * observer made to fire every frame runs last, after every frame callback.
+ */
+const watchArrival = (page) => page.evaluate(() => {
+  window.__seen = [];
+  const probe = document.body.appendChild(document.createElement("div"));
+  probe.style.cssText = "position: fixed; left: -9px; top: 0; height: 1px";
+  const read = new ResizeObserver(() => {
+    const bar = document.querySelector(".searchbar");
+    if (!bar || !document.querySelector(".lrows .row")) return;
+    const clip = document.querySelector(".searchclip").getBoundingClientRect();
+    const b = bar.getBoundingClientRect();
+    const drawn = getComputedStyle(bar).visibility === "hidden" ? 0 : (b.bottom - clip.top) / b.height;
+    window.__seen.push({ shown: Math.round(100 * Math.min(1, Math.max(0, drawn))) / 100, top: Math.round(document.querySelector(".scroll").scrollTop) });
+  });
+  read.observe(probe);
+  let odd = false;
+  const tick = () => {
+    probe.style.width = (odd = !odd) ? "2px" : "1px";
+    window.__watch = requestAnimationFrame(tick);
+  };
+  tick();
+  window.__unwatch = () => { read.disconnect(); probe.remove(); };
+});
+const arrived = (page) => page.evaluate(() => { cancelAnimationFrame(window.__watch); window.__unwatch(); return window.__seen; });
+/** Out by the back arrow, with what each frame of the way in drew. */
+async function wayBack(page, row) {
+  const left = await read(page);
+  await row.click();
+  await page.waitForURL(/\/g\/entry\?/);
+  await page.waitForSelector(".topbar .iconbtn");
+  await watchArrival(page);
+  await page.locator(".topbar .iconbtn").first().click();
+  await page.waitForURL(/\/g\?id=/);
+  await page.waitForSelector(".lrows .row");
+  await settle(page, 400);
+  return { left, seen: await arrived(page) };
+}
+/** The frames of a way in that did not draw the bar whole, or the list where it was left. */
+const astray = ({ left, seen }) => seen.filter((f) => f.shown !== 1 || f.top !== left.top);
 /** Frames that drew the bar part-way. */
 const partWay = (seen) => seen.filter((v) => v > 0.02 && v < 0.98).length;
 
@@ -211,7 +255,23 @@ await page.waitForSelector(".skelveil", { state: "detached" });
   await until(page, (s) => !s.on);
 }
 
-// ---- 5. a query is kept for the way back, and only for that --------------
+// ---- 5. a way back draws the bar where it was from its first frame --------
+{
+  // Out with the scroll, not held: placed only by where the list is put back.
+  const whole = (await read(page)).base;
+  await scrollTo(page, whole + 120);
+  await until(page, (s) => s.shown === 1 && s.top === whole + 120);
+  // A row already on the screen, so nothing scrolls it there first.
+  const row = page.locator(".rows a.row").filter({ visible: true }).nth(1);
+  const trip = await wayBack(page, row);
+  report(trip.seen.length > 0 && astray(trip).length === 0,
+    "back from an entry, the bar is out from the ledger's first frame",
+    `${astray(trip).length} of ${trip.seen.length} frames astray, first ${say(trip.seen[0])}, left ${trip.left.top}`);
+  await scrollTo(page, 0);
+  await until(page, (s) => !s.on);
+}
+
+// ---- 6. a query is kept for the way back, and only for that --------------
 {
   await summon(page);
   await until(page, (s) => s.caret && s.top === s.base);
@@ -237,7 +297,7 @@ await page.waitForSelector(".skelveil", { state: "detached" });
 }
 await short.close();
 
-// ---- 6. a list too short to scroll ----------------------------------------
+// ---- 7. a list too short to scroll ----------------------------------------
 {
   const ctx = await newPhone(browser);
   const tall = await ctx.newPage();
@@ -258,6 +318,14 @@ await short.close();
   let now = await until(tall, (s) => s.caret && s.top === s.base && s.top > 0 && s.shown === 1);
   report(now.caret && now.top === now.base && now.top > 0 && now.room && now.shown === 1,
     "a list too short to scroll is lent the room to reach the base state", say(now));
+  // Lent room is lent again on the way back, or the list could not be put
+  // back where it was left: it would stop short, with the bar away.
+  const trip = await wayBack(tall, tall.locator(".rows a.row").first());
+  report(trip.left.top > 0 && trip.seen.length > 0 && astray(trip).length === 0,
+    "and back from its one entry, the list is at the base state again with the bar out",
+    `${astray(trip).length} of ${trip.seen.length} frames astray, first ${say(trip.seen[0])}, left ${trip.left.top}`);
+  await field(tall).focus();
+  await until(tall, (s) => s.caret);
   await tall.keyboard.press("Enter");
   now = await until(tall, (s) => s.top === 0 && !s.on && !s.room);
   report(now.top === 0 && !now.on && !now.room, "and gives it back once it is at its head with the bar away", say(now));

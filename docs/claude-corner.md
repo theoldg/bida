@@ -26,6 +26,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-09* — "Investigate the bar flickering", then "do it however is
+  best and cleanest". Measure the frames before guessing: two were blank.
+  My first fix passed typecheck and drew no bar at all; only the check I'd
+  written first said so. Run it after each edit, not once at the end.
+
 - *2026-10-09* — "Scan the code for complex rules that may equivalently be
   expressed as simple rules", then "fix everything that seems like a no
   brainer". Try each on the suites before claiming "equivalent"; one of mine
@@ -76,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   instead and pushed; "wait i don't like this". Theirs, then four rounds of
   "tighter", "try harder … balanced". A "wdyt" with a proposal is the brief;
   balance means measured glyph edges, and hold the push till "ship it".
-
-- *2026-10-08* — Paid-by chips: worried my › would read as the first
-  payer's, so "mock both"; then "ship A", plus press washes and, mid-build,
-  "add back the currency" a postcard below had dropped. A layout change can
-  reopen what was cut for room; fine detail ("its weight") means measure.

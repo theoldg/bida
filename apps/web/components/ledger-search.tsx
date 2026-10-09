@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { copy } from "@/lib/copy";
+import { yieldPosition } from "@/lib/ledger-position";
 import { shownAt } from "@/lib/ledger-search";
 import { returnTo } from "@/lib/nav";
 import { calmly, glide } from "@/lib/seek";
@@ -67,38 +68,52 @@ export function summonLedgerSearch(): void {
  *
  * Idle it lies over the head of the list, so showing it moves nothing.
  */
-export function LedgerSearch({ scroll, query, onQuery }: {
-  /** The ledger's scroller: its head in `.lhead`, its rows in `.lrows`. */
-  scroll: RefObject<HTMLElement | null>;
+export function LedgerSearch({ query, onQuery }: {
   query: string;
   onQuery: (query: string) => void;
 }) {
   const dock = useRef<HTMLDivElement>(null);
+  // The ledger's scroller, its head in `.lhead` and its rows in `.lrows`, is
+  // the element after the dock, as the CSS has it (`.searchdock + .scroll`).
+  // Found there rather than by a ref, since a later sibling's ref is not yet
+  // attached when this one's layout effect runs.
+  const scroller = () => {
+    const next = dock.current?.nextElementSibling;
+    return next instanceof HTMLElement ? next : null;
+  };
   const bar = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
   const [focused, setFocused] = useState(false);
   const held = focused || query !== "";
-  // Whether any of it is drawn: all a render needs to know. How much is
-  // `shown`, written straight onto the dock as `--shown` a frame at a time.
-  const [out, setOut] = useState(false);
-  const on = out || held;
+  // How much of the bar the scroll has out, written straight onto the dock a
+  // frame at a time as `--shown`, with `data-on` while any of it is. Not
+  // state: a render is a frame late, and a frame drawn without the bar is a
+  // flicker. Held, CSS has it whole whatever these say.
   const shown = useRef<number | null>(null);
   // A list too short to scroll to the base state is lent the room to
-  // (`.searchroom`) while the bar is out, and keeps it until it is back at
-  // its head: taken any sooner, the list would drop there.
-  const [room, setRoom] = useState(false);
+  // (`.searchroom`, `data-room`) while the bar is out, and keeps it until it
+  // is back at its head: taken any sooner, the list would drop there. A way
+  // back lends it from the start, so the list can be put back where it was.
+  const lent = useRef(returnTo(location.href) !== null);
   const base = (box: HTMLElement) => searchBase(box, bar.current?.offsetHeight ?? 0);
 
   // The bar follows the scroll, or stands whole while held. What is drawn
   // chases what is wanted by no more than the whole bar per `REVEAL_MS`: a
   // slow scroll never asks for more, so the bar stays under the finger, and a
   // fling gets a slide instead of a cut.
-  useEffect(() => {
-    const box = scroll.current;
+  //
+  // **Placed in the first frame, before it is painted**: a layout effect, so
+  // the room is there before the ledger's own layout effect puts its position
+  // back (lib/ledger-position.ts, the parent's, so after this), and the first
+  // step a frame callback, by when that has. Arriving, it is where the list
+  // was put, at once.
+  useLayoutEffect(() => {
+    const box = scroller();
     const el = dock.current;
     if (!box || !el) return;
+    el.toggleAttribute("data-room", lent.current);
     let frame = 0;
-    let last = performance.now() - 16;
+    let last = 0;
     const step = (now: number) => {
       frame = 0;
       const want = held ? 1 : shownAt(box.scrollTop, base(box), bar.current?.offsetHeight ?? 0);
@@ -109,9 +124,9 @@ export function LedgerSearch({ scroll, query, onQuery }: {
       const to = Math.abs(want - from) <= reach ? want : from + Math.sign(want - from) * reach;
       shown.current = to;
       el.style.setProperty("--shown", String(to));
-      setOut(to > 0);
-      const atHead = box.scrollTop <= 0;
-      setRoom((lent) => held || to > 0 || (lent && !atHead));
+      el.toggleAttribute("data-on", to > 0);
+      lent.current = held || to > 0 || (lent.current && box.scrollTop > 0);
+      el.toggleAttribute("data-room", lent.current);
       if (to !== want) frame = requestAnimationFrame(step);
     };
     const ask = () => {
@@ -120,7 +135,7 @@ export function LedgerSearch({ scroll, query, onQuery }: {
       last = performance.now() - 16;
       frame = requestAnimationFrame(step);
     };
-    step(performance.now());
+    ask();
     box.addEventListener("scroll", ask, { passive: true });
     // The head comes and goes without a scroll: a card folded, a search begun.
     const sizes = new ResizeObserver(ask);
@@ -131,23 +146,25 @@ export function LedgerSearch({ scroll, query, onQuery }: {
       box.removeEventListener("scroll", ask);
       sizes.disconnect();
     };
-  }, [held, scroll]);
+  }, [held]);
 
   // A query begun or changed reads from its first result; emptied, the list
   // is at the base state. After the commit: the head is back in the column.
   const placed = useRef(query);
   useLayoutEffect(() => {
-    const box = scroll.current;
+    const box = scroller();
     if (!box || placed.current === query) return;
     placed.current = query;
     box.scrollTop = query === "" ? base(box) : 0;
-  }, [query, scroll]);
+  }, [query]);
 
   // The one glide this owns at a time: to the base state, or back to the head.
   const gliding = useRef<(() => void) | null>(null);
   const stopGlide = () => { gliding.current?.(); gliding.current = null; };
   const glideTo = (box: HTMLElement, top: number) => {
     stopGlide();
+    // Moving the list, it is the bar's: a way back putting it back stops.
+    yieldPosition();
     gliding.current = glide(box, top, () => { gliding.current = null; });
   };
   useEffect(() => stopGlide, []);
@@ -157,7 +174,7 @@ export function LedgerSearch({ scroll, query, onQuery }: {
   const driving = useRef(false);
   const pressed = useRef(0);
   useEffect(() => {
-    const box = scroll.current;
+    const box = scroller();
     if (!box) return;
     const drive = () => {
       if (document.activeElement !== field.current) return;
@@ -176,11 +193,11 @@ export function LedgerSearch({ scroll, query, onQuery }: {
       box.removeEventListener("wheel", drive);
       box.removeEventListener("pointerdown", press);
     };
-  }, [scroll]);
+  }, []);
 
   const letGo = () => {
     setFocused(false);
-    const box = scroll.current;
+    const box = scroller();
     if (!box || query !== "" || driving.current || Date.now() - pressed.current < PRESS_MS) return;
     // Already at its head, or further down than the base state: nothing to undo.
     if (box.scrollTop === 0 || box.scrollTop > base(box) + 1) return;
@@ -189,7 +206,7 @@ export function LedgerSearch({ scroll, query, onQuery }: {
 
   useEffect(() => {
     summon = () => {
-      const box = scroll.current;
+      const box = scroller();
       const input = field.current;
       if (!box || !input) return;
       // Out before the caret: away, the bar is not drawn and can't hold one.
@@ -205,7 +222,8 @@ export function LedgerSearch({ scroll, query, onQuery }: {
   });
 
   return (
-    <div className="searchdock" ref={dock} role="search" data-on={on ? "" : undefined} data-room={room || on ? "" : undefined}
+    // `data-on` and `data-room` are the frame's to write, above; React never names them.
+    <div className="searchdock" ref={dock} role="search"
       data-held={held ? "" : undefined} data-searching={query ? "" : undefined}>
       <div className="searchclip">
         <div className="searchbar" ref={bar}>
