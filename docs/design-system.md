@@ -314,12 +314,11 @@ in a column of "12.00"s looking like a different kind of number.
 ## A row says less rather than being cut off
 
 An expense row's second line is the payer and a head count, "Alice +1 · 👥5",
-and nothing else: the split mode, and paid versus received, are the entry's own
-screen's to say (an income's figure carries its sign). The name is never
-dropped and takes the ellipsis; the "+1" for co-payers stays beside it, since
-leaving it out would be untrue; the head count is what a long name pushes out.
-That needs no measuring — `.paidby` is one line tall and wraps, so a count with
-no room falls to a clipped second line. Lines with more than two facts use
+plus an income's tag; the split mode is the entry's own screen's to say. The
+name is never dropped and takes the ellipsis; the "+1" for co-payers and the
+tag stay beside it, since leaving either out would be untrue; the head count is
+what a long name pushes out. That needs no measuring — the count's box shrinks
+first and wraps it onto a clipped second line. Lines with more than two facts use
 `FitLine`, which takes several wordings longest first and renders the longest
 that measures under the box (`lib/row-meta.ts` owns the order). A group list
 row's line is that ladder with a fixed bold lead: "N new changes" is never
@@ -398,7 +397,8 @@ entry keeps the line where Edit was.
 ## An arrow points one way, and an income says so twice
 
 A settle row is a *thing to do* — "you pay Marie €12" — not a statement that two
-people are connected, so never a double-headed arrow. `i-arrow` always points payer → payee, left to right, matching
+people are connected, so never a double-headed arrow. A transfer's row is
+titled the same way, "Marie → Bob", not "Marie paid Bob". `i-arrow` always points payer → payee, left to right, matching
 the names beside it; on the transfer form (`.transfer`) it sits between the two
 sides and *pressing it reverses them*, because backwards is the mistake that
 control exists to make cheap — so there it is an inked square, a control, and on
@@ -406,8 +406,9 @@ the detail screen a bare glyph on the card. Each side is labelled above the name
 read before the person it qualifies.
 
 Which way an entry runs is the one distinction with no colour left to spend on
-it, so an income says **"received"** in its row and prints a `−` on its ledger
-figure
+it, so an income ends its row's second line with an **"income"** tag — the
+`--hl` wash of the form's "from receipt", no dot before it, the wash being
+separation enough — and prints a `−` on its ledger figure
 ([ADR-0010](decisions/0010-what-an-entry-is.md)). Two signals, never one.
 
 ## A dialog is ours, and its button says the act

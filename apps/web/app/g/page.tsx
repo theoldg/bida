@@ -247,7 +247,7 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
         className={`row entryrow ${mine ? "" : "notmine"}`} {...hold}>
         <div className="rmain">
           <div className="rtitle">{expense.description || copy.group.untitled}</div>
-          <ExpenseMeta payer={payer?.name ?? copy.someone}
+          <ExpenseMeta payer={payer?.name ?? copy.someone} income={income}
             coPayers={payers.filter((id) => id !== expense.paidBy).length} ways={participants} />
         </div>
         <div className="ramt">
@@ -270,29 +270,33 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
 }
 
 /**
- * An expense row's second line: who paid, and how many it is split between.
- * The mode, and whether it was paid or received, are the entry's own screen's
- * to say; the figure's sign already tells an income apart.
+ * An expense row's second line: who paid, how many it is split between, and
+ * an "income" tag on an income — the figure's "−" alone is easy to miss. The
+ * mode is the entry's own screen's to say.
  *
- * The name is never dropped and takes the ellipsis; the co-payer count stays
- * beside it, since leaving it out would be untrue. The head count is the one
- * thing that goes: `.paidby` is one line tall and wraps, so a count with no
- * room left beside the name falls to a second line that is clipped. No
- * measuring, so nothing to redo when the font lands.
+ * The name is never dropped and takes the ellipsis; the co-payer count and the
+ * tag stay beside it, since leaving either out would be untrue. The head count
+ * is the one thing that goes: its box gives way first and wraps the count onto
+ * a clipped second line. No measuring, so nothing to redo when the font lands.
  */
-function ExpenseMeta({ payer, coPayers, ways }: { payer: string; coPayers: number; ways: number }) {
+function ExpenseMeta({ payer, coPayers, ways, income }: {
+  payer: string; coPayers: number; ways: number; income: boolean;
+}) {
   return (
     <div className="rmeta paidby">
       <span className="who">
         <span className="name">{payer}</span>
         {coPayers > 0 ? <span className="more">{copy.group.morePayers(coPayers)}</span> : null}
       </span>
-      <span className="ways">
-        <span className="sep" aria-hidden="true">·</span>
-        <Icon name="users" size={12} />
-        <span aria-hidden="true">{ways}</span>
-        <span className="vh">{copy.group.sharedBy(plural(ways, copy.noun.person))}</span>
+      <span className="waysbox">
+        <span className="ways">
+          <span className="sep" aria-hidden="true">·</span>
+          <Icon name="users" size={12} />
+          <span aria-hidden="true">{ways}</span>
+          <span className="vh">{copy.group.sharedBy(plural(ways, copy.noun.person))}</span>
+        </span>
       </span>
+      {income ? <span className="incometag">{copy.group.incomeTag}</span> : null}
     </div>
   );
 }

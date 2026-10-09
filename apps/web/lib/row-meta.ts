@@ -14,7 +14,7 @@ const joined = (a: string, b: string) => copy.group.metaLine(a, b);
 
 /**
  * A transfer's line: its note, or "Transfer" when it has none. The title
- * already says "Alice paid Bob", so a note leaves the label nothing to add.
+ * already says "Alice → Bob", so a note leaves the label nothing to add.
  */
 export function transferMeta(note: string | null | undefined): string[] {
   const trimmed = note?.trim();

@@ -791,7 +791,10 @@ export const copy = {
     /** Two facts on one line: "3 people · 12 entries". */
     metaLine: (a: string, b: string) => `${a} · ${b}`,
     transfer: "Transfer",
-    paidTo: (from: string, to: string) => `${from} paid ${to}`,
+    /** The tag at the end of an income's row: the figure's "−" alone is easy to miss. */
+    incomeTag: "income",
+    /** A transfer's title: "Alice → Bob". The arrow is `i-arrow`'s, payer → payee. */
+    paidTo: (from: string, to: string) => `${from} → ${to}`,
 
     unsplittable: (n: string) => `${n} couldn’t be split`,
     unsplittableWhy: (reason: string) => `${reason}: left out of the balances.`,

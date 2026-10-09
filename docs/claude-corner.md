@@ -26,6 +26,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-09* — "Try a few variants … don't push before my approval", then
+  five rounds narrowing an "income" pill: place, tone, "lowercase, not loose",
+  the dot. Ship each round as a set of shots and one pick; "approval" means a
+  yes, not a stop hook asking to push.
+
 - *2026-10-08* — "Use the styles from the item split summary for the payers:
   same numbers and same names". Two lists of people on one form should read
   alike: copy the type, weight and figure class, not just the size.
@@ -74,8 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   buggy … remove the sliding completely". Motion borrowed from a screen where
   things fold felt wrong where nothing does; when a tuning turn finds a bug,
   offer removal before a second patch.
-
-- *2026-10-07* — "Rate per expense … any other design decisions you need
-  from me?" — it undid ADR-0005's last revision. Four asked questions got
-  four answers, one with a rider ("also fetch on receipt scan"). Ask the
-  calls that change data, decide the rest and list them.
