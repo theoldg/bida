@@ -40,7 +40,7 @@
 
 ## Features
 
-The usual stuff, plus:
+- **Split expenses.** As an expense splitter might. Multi payer, uneven splits, debt simplification, etc.
 
 - **No accounts.** A group is a secret link. Anyone with the link can edit.
 
