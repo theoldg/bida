@@ -80,7 +80,9 @@ These features exist in other splitters. I might add them if people ask.
 
 ## Privacy needs an audit
 
-I am not a cybersecurity expert! The whole thing is set up to be E2EE compatible, the data is encrypted, and the key never reaches the server... But I can't guarantee there isn't some subtle fingerprinting possibility or other bug. I hope to eventually get a code audit from someone more qualified. For now, please treat bida as "probably E2EE".
+I am not a cybersecurity expert! The whole thing is set up with E2EE mind, the data is encrypted, and the key never reaches the server... But I can't guarantee there isn't some subtle fingerprinting possibility or other bug. I hope to eventually get a code audit from someone more qualified. For now, please treat bida as "probably E2EE".
+
+Receipt scans and Tricount imports go through bida's servers unencrypted, but are not stored.
 
 ## Vibe-coded... carefully
 
