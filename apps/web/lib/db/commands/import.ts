@@ -112,7 +112,8 @@ function expenseDraft(
       description: e.description,
       occurredAt: e.occurredAt,
       // The row's own day, not the day it was imported: the ledger is the
-      // trip, and `createdAt` is where "this arrived today" lives.
+      // trip. `createdAt` orders the day, so it is when the source says the
+      // row was entered, if it says (`recordedAt`).
       dateOnly: true,
       amountMinor: shape.amountMinor,
       currency: shape.currency,
@@ -122,7 +123,7 @@ function expenseDraft(
       payers: shape.payers,
       split: shape.split,
       categoryId: e.categoryId,
-    }, base, now),
+    }, base, e.recordedAt ?? now),
   };
 }
 
@@ -144,6 +145,6 @@ function transferDraft(
       occurredAt: t.occurredAt,
       dateOnly: true,
       note: t.note,
-    }, base, now),
+    }, base, t.recordedAt ?? now),
   };
 }

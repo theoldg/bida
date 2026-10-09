@@ -413,6 +413,15 @@ moves the plan's. A refusal names the entry rather than a line, since a line
 is not what a person sees when they open the tricount, and an entry marked
 `DELETED` is left out, as the app leaves it.
 
+**What it holds to is the entries' stated shares**, which Tricount rounds to
+the cent one entry at a time. Its own balance screen does not sum those — its
+figures can be cents off them and need not add to zero — so an imported group
+can disagree with that screen by a few cents and be right by every entry.
+
+An entry's `date` carries a time of day, and Tricount lists a day by it, latest
+first. It is kept as the entry's `createdAt` (`recordedAt` on the plan), the
+tiebreak `byWhen` orders a date-only day by, so the day reads in Tricount's order.
+
 **Every `amount` is in the tricount's own currency**, so a trip spent in three
 currencies reads like one in one. Beside it, an entry spent elsewhere states
 `amount_local` and `exchange_rate`, an allocation its own `amount_local`, and

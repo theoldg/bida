@@ -163,6 +163,8 @@ export function readTricount(payload: unknown, { dayToTimestamp }: TricountOptio
     const amountMinor = Math.abs(value);
     const day = readDay(entry);
     const occurredAt = dayToTimestamp(day);
+    const clock = readClock(entry);
+    const recordedAt = clock === undefined ? {} : { recordedAt: occurredAt + clock };
 
     if (entry.balance && !income && shares.length === 1) {
       const to = shares[0]!;
@@ -176,6 +178,7 @@ export function readTricount(payload: unknown, { dayToTimestamp }: TricountOptio
           ...(local ? { local: { currency: local.currency, amountMinor: local.amountMinor, rate: local.rate } } : {}),
           day,
           occurredAt,
+          ...recordedAt,
           line: entry.line,
         });
         continue;
@@ -206,6 +209,7 @@ export function readTricount(payload: unknown, { dayToTimestamp }: TricountOptio
         ? null : entry.category,
       day,
       occurredAt,
+      ...recordedAt,
       amountMinor,
       paid: { [entry.owner]: amountMinor },
       owed,
@@ -373,4 +377,19 @@ function readDay(entry: RawEntry): string {
       undefined, `${named(entry)} — ${entry.date || "no date"}`);
   }
   return head;
+}
+
+/**
+ * The time of day after the date, as milliseconds into it, or undefined when
+ * there is none. Only ever an order: Tricount lists a day by it, latest first,
+ * and every import otherwise stamps one instant on all of them, leaving a day
+ * in id order. Read as the phone's own clock, like the day before it.
+ */
+function readClock(entry: RawEntry): number | undefined {
+  const m = /^\d{4}-\d{2}-\d{2}[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?/.exec(entry.date);
+  if (!m) return undefined;
+  const [h, min, s] = [Number(m[1]), Number(m[2]), Number(m[3] ?? "0")];
+  if (h > 23 || min > 59 || s > 59) return undefined;
+  const ms = Number((m[4] ?? "").slice(0, 3).padEnd(3, "0"));
+  return ((h * 60 + min) * 60 + s) * 1000 + ms;
 }

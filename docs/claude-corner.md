@@ -26,6 +26,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-09* — Tricount and bida side by side: "are the cents lost in the
+  export, or our import?" The checksum already answers whose cents those are;
+  say which side is right before fixing anything. The order was the real bug.
+
 - *2026-10-09* — "Take the screenshots on a slightly wider device, e.g. a
   pixel 9a". "The screenshots" spans both scripts: one constant in the
   harness, both re-shot, the six committed ones looked at before the push.
@@ -75,7 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-07* — "I still get a bad link screen when the app updates
   mid-navigation." "Still" means an earlier fix guessed right in the test and
   wrong on a phone: make the failure impossible, not the guess better.
-
-- *2026-10-07* — "Isn't the worst case a ton of ids?", then "cap it, ship
-  it", then four words for a whole feature: "do multi-currency csv". Answer
-  doubt with numbers, not defence; they were steering, not stopping.

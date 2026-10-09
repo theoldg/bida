@@ -116,6 +116,7 @@ describe("readTricount", () => {
       note: null,
       day: "2026-04-11",
       occurredAt: at("2026-04-11"),
+      recordedAt: Date.parse("2026-04-11T18:22:05Z"),
       line: 2,
     }]);
     // Why the direction matters.
@@ -251,6 +252,21 @@ describe("readTricount", () => {
       entry({ date: "2026-04-11T18:22:05Z", value: "-1.00", owner: "Ana", shares: { Ana: "-1.00" } }),
     ]));
     expect(plan.entries[0]!.day).toBe("2026-04-11");
+    expect(plan.entries[0]!.recordedAt).toBe(Date.parse("2026-04-11T18:22:05Z"));
+  });
+
+  it("keeps the time of day, which orders a day the way Tricount lists it", () => {
+    const plan = read(tricount(["Ana", "Bo"], [
+      entry({ date: "2026-04-11 18:22:05.250000", value: "-1.00", owner: "Ana", shares: { Ana: "-1.00" } }),
+      entry({ date: "2026-04-11 09:05:00.000000", type: "BALANCE", value: "-1.00", owner: "Ana", shares: { Bo: "-1.00" } }),
+      entry({ date: "2026-04-11", value: "-1.00", owner: "Ana", shares: { Ana: "-1.00" } }),
+    ]));
+    const day = at("2026-04-11");
+    expect(plan.entries[0]!.recordedAt).toBe(day + (18 * 3600 + 22 * 60 + 5) * 1000 + 250);
+    expect(plan.transfers[0]!.recordedAt).toBe(day + (9 * 3600 + 5 * 60) * 1000);
+    // No time is no order to keep: the import's own moment stands.
+    expect(plan.entries[1]!.recordedAt).toBeUndefined();
+    expect(plan.entries[0]!.occurredAt).toBe(day);
   });
 
   it("holds a hundred entries to the cent", () => {

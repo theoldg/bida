@@ -120,6 +120,12 @@ export interface PlannedEntry {
   categoryId: string | null;
   day: string;
   occurredAt: number;
+  /**
+   * When the source says it was entered, written as `createdAt` — the order
+   * inside a day (`byWhen`). A tricount's `date` carries a time; a CSV's never
+   * does, and absent means the moment of import.
+   */
+  recordedAt?: number;
   amountMinor: number;
   /** name -> minor units handed over. Sums to `amountMinor`. */
   paid: Record<string, number>;
@@ -167,6 +173,8 @@ export interface PlannedTransfer {
   currency?: CurrencyCode;
   day: string;
   occurredAt: number;
+  /** As `PlannedEntry.recordedAt`. */
+  recordedAt?: number;
   line: number;
 }
 
