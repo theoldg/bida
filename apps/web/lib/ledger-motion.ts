@@ -103,6 +103,12 @@ export const STILL_MS = 300;
  * before anything on it moves.
  */
 export const SAVED_BEAT = 600;
+/**
+ * How long a saved row the ledger had to scroll to stays washed after it
+ * lands: the eye arrives with the scroll, and a wash already fading by then
+ * is missed.
+ */
+export const SAVED_DWELL = 600;
 
 // ------------------------------------------------------------- the saved row
 

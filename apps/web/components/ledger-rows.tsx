@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
   clearSaved, FADE_IN_MS, letRoll, FADE_OUT_MS, FOLD_MS, foldFrame, foldTotal, OPEN_MS, peekSaved,
-  presence, runs, SAVED_BEAT, standard, STILL_MS, type LedgerItem, type Shown,
+  presence, runs, SAVED_BEAT, SAVED_DWELL, standard, STILL_MS, type LedgerItem, type Shown,
 } from "@/lib/ledger-motion";
 import { yieldPosition } from "@/lib/ledger-position";
 import { revealWhole, scrollTarget } from "@/lib/reveal";
@@ -178,10 +178,19 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
   };
   const toTop = nearTop();
   if (!toTop) letRoll(groupId);
-  const release = () => {
-    if (toTop) letRoll(groupId);
+  const letGo = () => {
     target.classList.add("released");
     target.addEventListener("animationend", () => target.classList.remove("saved", "released"), { once: true });
+  };
+  const release = () => {
+    if (toTop) letRoll(groupId);
+    letGo();
+  };
+  // Scrolled to, the row holds its wash a while where it landed before
+  // letting go; the banner's roll does not wait for that.
+  const land = () => {
+    if (toTop) letRoll(groupId);
+    setTimeout(letGo, SAVED_DWELL);
   };
   setTimeout(() => {
     if (!target.isConnected) return;
@@ -198,7 +207,7 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
     // the save changed, beside the row that changed it.
     if (toTop) {
       if (box.scrollTop === 0) release();
-      else glide(box, 0, release);
+      else glide(box, 0, land);
       return;
     }
     const reach = revealWhole(
@@ -206,7 +215,7 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
       band,
     );
     if (reach === 0) release();
-    else glide(box, scrollTarget(box, reach), release);
+    else glide(box, scrollTarget(box, reach), land);
   }, SAVED_BEAT);
   return true;
 }

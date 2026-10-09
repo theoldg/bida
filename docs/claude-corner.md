@@ -39,6 +39,10 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   findings list is a menu. Driving the fix found a real race the checks had
   never tripped.
 
+- *2026-10-09* — "The row flash doesn't wait long enough after scrolling",
+  with a guess it was the colour. It was timing: the wash faded as the scroll
+  landed. Fix what was felt; offer the guess back as a separate knob.
+
 - *2026-10-09* — "Try a few variants … don't push before my approval", then
   five rounds narrowing an "income" pill: place, tone, "lowercase, not loose",
   the dot. Ship each round as a set of shots and one pick; "approval" means a
@@ -75,7 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-08* — "How do you like the hash-hacking?" wanted a verdict, and
   got a pick plus one change; "just measure … set that as the cap" came back.
   An opinion question is a review: name the one fix worth doing, then stop.
-
-- *2026-10-07* — "I still get a bad link screen when the app updates
-  mid-navigation." "Still" means an earlier fix guessed right in the test and
-  wrong on a phone: make the failure impossible, not the guess better.
