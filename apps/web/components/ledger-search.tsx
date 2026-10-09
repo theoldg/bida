@@ -118,7 +118,23 @@ export function LedgerSearch({ banner, query, onQuery }: {
     return () => clearTimeout(timer);
   }, [held]);
 
-  const on = out || held;
+  // Let go of with nothing typed, where the scroll alone wouldn't have it out
+  // (after the menu, or a search cleared), the bar leaves and the list glides
+  // back to its head rather than being dropped there. `closing` keeps the room
+  // the list was lent (`.searchroom`) until it has arrived.
+  const [closing, setClosing] = useState(false);
+  const stop = useRef<(() => void) | null>(null);
+  const settle = () => { stop.current?.(); stop.current = null; setClosing(false); };
+  useEffect(() => () => stop.current?.(), []);
+  const letGo = () => {
+    setFocused(false);
+    const box = dock.current?.parentElement?.querySelector<HTMLElement>(".scroll");
+    if (query !== "" || out || !box || box.scrollTop === 0) return;
+    setClosing(true);
+    stop.current = glide(box, 0, () => { stop.current = null; setClosing(false); });
+  };
+
+  const on = out || held || closing;
   return (
     <div className="searchdock" ref={dock} data-on={on ? "" : undefined} data-held={held ? "" : undefined}
       data-ease={ease ? "" : undefined} data-searching={query ? "" : undefined}>
@@ -130,7 +146,7 @@ export function LedgerSearch({ banner, query, onQuery }: {
               placeholder={copy.group.search.field} aria-label={copy.group.search.field}
               inputMode="search" enterKeyHint="search" autoCapitalize="none" autoCorrect="off"
               autoComplete="off" spellCheck={false}
-              onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+              onFocus={() => { settle(); setFocused(true); }} onBlur={letGo}
               // The confirm key has nothing to submit: the list is already the answer.
               onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) e.currentTarget.blur(); }} />
             {query ? (

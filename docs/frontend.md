@@ -306,7 +306,8 @@ API is reached with `fetch`.
   the group menu, which puts the caret in it and glides the list to the
   search's *base state* — the whole ledger with its first row directly under
   the bar, which is also where clearing a search returns (`searchBase`; a list
-  too short to scroll there is lent the room while the bar is out). Every word
+  too short to scroll there is lent the room while the bar is out). Let go of
+  empty there, the bar leaves and the list glides back to its head. Every word
   typed must be found somewhere on a row (`searchLedger`, lib/ledger.ts): in
   its title, its payers or its participants; as the whole of its currency or
   kind; or as a number in either of its figures. Results are sectioned by the
