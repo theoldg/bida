@@ -154,14 +154,15 @@ a real one.
 The seed's arithmetic is core's own (`demo.test.ts`: the balances clear to zero
 under `settle`, every amount is a positive integer minor unit, any permutation
 folds identically). What this check asks is what the seed cannot: that
-`/demo` lands on a populated ledger rather than a claim gate or an empty
-state, that the balances do not cancel, that the mark is at its head, that the
+`/demo` first asks which of the four you are — nobody preselected — and the
+answer lands on a populated ledger rather than an empty state, that the balances do not cancel, that the mark is at its head, that the
 cantina tab opens onto the bill it was itemised from, that **Copy invite link**
 refuses out loud, and that clearing a demo somebody has added an entry to
 takes the whole group off the phone while the address lays the shipped story
 down again — entry for entry, and without the one that was added. A demo
 address copied from any `/g` screen opens the demo on a second, fresh phone
-rather than "bad link", and does not re-seed it on the phone that cleared it. The dialog
+rather than "bad link", and does not re-seed it on the phone that cleared it;
+a cleared demo asks again who you are, a re-seeded one keeps the answer. The dialog
 that offers it has to name this server's own `/demo`, host and all: the host is
 the browser's to supply, so an unwired one would read as a bare path.
 

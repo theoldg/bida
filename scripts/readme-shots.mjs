@@ -22,7 +22,7 @@
  */
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { ROOT, ensureBuild, serveExport, launch, newPhone, settle } from "./lib/harness.mjs";
+import { ROOT, ensureBuild, serveExport, launch, newPhone, openDemo, settle } from "./lib/harness.mjs";
 import { PHOTO } from "./lib/receipts.mjs";
 
 const MEDIA = join(ROOT, "docs/media");
@@ -89,7 +89,7 @@ async function main() {
 
     // Laying the demo down is the whole seed: one visit, and the group exists
     // with its evening already in it.
-    await page.goto(`${base}/demo`);
+    await openDemo(page, base);
     await page.getByText("Passage to Alderaan").first().waitFor();
     await settle(page, 250);
 

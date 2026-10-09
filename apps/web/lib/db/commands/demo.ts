@@ -1,10 +1,8 @@
-import {
-  demoCast, demoStamp, demoTimeline, memberIdFor, DEMO_GROUP_ID, DEMO_ME, type Id,
-} from "@bida/core";
+import { demoCast, demoStamp, demoTimeline, DEMO_GROUP_ID, type Id } from "@bida/core";
 import { db } from "../dexie";
-import { getDevice, setMe, unhideGroup, updateDevice } from "../device";
+import { getDevice, unhideGroup, updateDevice } from "../device";
 import { appendOps } from "./append";
-import { eraseGroupLocally } from "./groups";
+import { claimIdentity, eraseGroupLocally } from "./groups";
 
 /**
  * The demo group: open it, and clear it.
@@ -27,32 +25,34 @@ import { eraseGroupLocally } from "./groups";
  * — the demo is this version's pitch, not a group anyone keeps.
  */
 export async function openDemo(now = Date.now()): Promise<Id> {
-  const me = memberIdFor(DEMO_GROUP_ID, DEMO_ME);
   const stamp = demoStamp();
+  // Who the visitor said they were, kept across a re-seed: a new build is not
+  // a reason to ask again. Member ids derive from names, so it still exists.
+  let kept: Id | undefined;
 
   if ((await getDevice()).demoSeed !== stamp && await db().groups.get(DEMO_GROUP_ID)) {
+    kept = (await getDevice()).meByGroup[DEMO_GROUP_ID];
     // Erase rather than fold over the old: seed entity ids move between versions,
     // so anything the last story had would survive as a stray row.
     await clearDemo();
   }
   if (!(await db().groups.get(DEMO_GROUP_ID))) {
-    const device = await getDevice();
     // Unstamped until the last step lands: a tab that dies between steps
     // leaves a half-told story, which the next visit then erases and retells.
     await updateDevice({ demoSeed: undefined });
-    for (const step of demoTimeline(demoCast(device.nodeId), now)) {
+    for (const step of demoTimeline(demoCast(), now)) {
       await appendOps(DEMO_GROUP_ID, step.by, step.ops, step.at);
     }
     await updateDevice({ demoSeed: stamp });
+    if (kept) await claimIdentity(DEMO_GROUP_ID, kept);
   }
 
   // Read the device after the writes above, not before: clearing the demo
   // patches this same record, and a copy taken earlier would put its
   // `deletedGroups` back.
   const device = await getDevice();
-  // Say who this phone is before the ledger asks: an unclaimed group sends you
-  // to the claim gate, and being one of the four is what the demo is for.
-  await setMe(DEMO_GROUP_ID, me);
+  // Nobody is claimed: the ledger's claim gate asks which of the four you are,
+  // the same question a joined group asks, so the personal lens is one you chose.
   await unhideGroup(DEMO_GROUP_ID);
   // A demo cleared earlier left its id in `deletedGroups`, which is how the
   // screens tell a deleted group from a bad link. Reopening un-says that.

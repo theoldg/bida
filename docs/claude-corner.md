@@ -26,6 +26,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-09* — A blind walk as "clueless Luke" found seven things; the
+  owner picked one: "Make the demo start with the who are you screen". A
+  findings list is a menu. Driving the fix found a real race the checks had
+  never tripped.
+
 - *2026-10-09* — "Try a few variants … don't push before my approval", then
   five rounds narrowing an "income" pill: place, tone, "lowercase, not loose",
   the dot. Ship each round as a set of shots and one pick; "approval" means a
@@ -74,8 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-07* — "Retake the screenshots", nothing else. The committed six
   are the ones that go stale, so `readme-shots`; rebuild, look at each
   changed picture, and reshoot if dev moves under you before the push.
-
-- *2026-10-07* — Save's slide, narrowed to "only the error text", then "it's
-  buggy … remove the sliding completely". Motion borrowed from a screen where
-  things fold felt wrong where nothing does; when a tuning turn finds a bug,
-  offer removal before a second patch.

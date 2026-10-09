@@ -17,7 +17,7 @@ anything short of the full photo set or a checked-in test
 
 ```bash
 pnpm drive start &                                   # holds the session open
-pnpm drive do "as ana goto /demo" "click \"Add an entry\""
+pnpm drive do "as ana goto /demo" "click \"Han\"" "click \"Continue as Han\"" "click \"Add an entry\""
 pnpm drive stop
 ```
 
@@ -26,7 +26,8 @@ where it landed and anything the page complained about; `do --all` prints
 every screen.
 
 **Start from `/demo`, not from a group built by hand**: it is a real group
-with four people and every kind of entry, one command away. Building one
+with four people and every kind of entry, one answer away — it asks which of
+the four you are first (`goto /demo` · `click "Luke"` · `click "Continue as Luke"`). Building one
 through `/new` costs a command per person ([below](#looking-at-one-screen)).
 
 | | |
@@ -95,7 +96,7 @@ No check runs it — using it is what keeps it alive.
 
 ```bash
 pnpm drive start &
-pnpm drive do "goto /demo"            # a group with history, in one step
+pnpm drive do "goto /demo" "click \"Luke\"" "click \"Continue as Luke\""  # a group with history
 pnpm drive do "click 11" "fill 3 90"  # numbers from the answer above
 pnpm drive do "shot split" "theme dark" "shot split-dark"
 ```

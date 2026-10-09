@@ -291,6 +291,23 @@ export async function newGroup(page, base, { name, me, members = [], onForm }) {
   return new URL(page.url()).searchParams.get("id");
 }
 
+/**
+ * `/demo`, answered as a visitor answers it: a fresh demo asks which of the
+ * four you are, a phone that already said lands on the ledger.
+ */
+export async function openDemo(page, base, me = "Luke") {
+  await page.goto(`${base}/demo`);
+  // Not the URL alone: `/demo` hands over to the ledger, whose gate then
+  // replaces it with the question — so wait for a screen that has decided.
+  await page.waitForFunction(() => (location.pathname === "/g/claim" && document.querySelector("button.row"))
+    || (location.pathname === "/g" && document.querySelector(".rows .row:not(.skelrow)")), null, { timeout: PATIENCE });
+  if (new URL(page.url()).pathname === "/g/claim") {
+    await page.locator("button.row").filter({ hasText: me }).first().click();
+    await page.getByRole("button", { name: `Continue as ${me}` }).click();
+    await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
+  }
+}
+
 /** A phone that has opened a group is put back into it, so the list is one Back away. */
 export async function openGroupsList(page, base) {
   await page.goto(`${base}/`);

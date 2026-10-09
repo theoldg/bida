@@ -607,7 +607,6 @@ describe("the demo's itemised cantina tab", () => {
     const dinner = foldOps(demoOps({
       ids: { Luke: "m-luke", Han: "m-han", Chewie: "m-chewie", Ben: "m-ben" },
       colorSeeds: { Luke: 1, Han: 2, Chewie: 3, Ben: 4 },
-      deviceNodeId: "node0001",
     }, Date.UTC(2026, 8, 18)).map((draft, i) => ({
       ...draft,
       id: `op-${i}`,

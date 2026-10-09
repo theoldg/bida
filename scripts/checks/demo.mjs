@@ -14,7 +14,7 @@
  * additions) off the phone while leaving `/demo` able to lay a fresh one.
  */
 import {
-  onePhone, newPhone, PATIENCE, readStore, readDevice, putDevice,
+  onePhone, newPhone, openDemo, PATIENCE, readStore, readDevice, putDevice,
 } from "../lib/harness.mjs";
 import { PHOTO, stubScan } from "../lib/receipts.mjs";
 
@@ -36,12 +36,19 @@ const menuItem = (text) => page.locator(".rowmenu-item").filter({ hasText: text 
 
 // ---- the address is the whole door -------------------------------------
 await page.goto(`${base}/demo`);
+await page.waitForURL(/\/g\/claim\?id=/, { timeout: PATIENCE });
+await page.waitForSelector("button.row");
+// The first thing asked, as a joined group asks it: the personal lens on every
+// screen after is the visitor's own choice, not a Luke they never picked.
+const names = await page.locator("button.row").allInnerTexts();
+report(names.length === 4 && ["Ben", "Chewie", "Han", "Luke"].every((n) => names.some((t) => t.includes(n)))
+  && await page.locator('button.row[aria-pressed="true"]').count() === 0,
+  "/demo asks which of the four you are, with nobody picked for you", names.join(" · "));
+await page.locator("button.row").filter({ hasText: "Luke" }).first().click();
+await page.getByRole("button", { name: "Continue as Luke" }).click();
 await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
 const groupId = new URL(page.url()).searchParams.get("id");
-report(groupId === "demodemodemo", "/demo lands in the demo group's ledger", groupId);
-// No claim gate on the way in: the device is one of the four, which is what
-// the personal lens on this screen is for.
-report(!page.url().includes("/g/claim"), "and is not stopped at the claim gate");
+report(groupId === "demodemodemo", "and the answer lands in the demo group's ledger", groupId);
 
 await page.waitForSelector(".rows .row:not(.skelrow)");
 const rows = await page.locator(".rows .row:not(.skelrow)").count();
@@ -158,16 +165,21 @@ report(await page.getByText("Passage to Alderaan").count() === 0,
 // ---- a copied address is a door too ------------------------------------
 // What a friend gets sent is the address bar, not `/demo`, and from any screen.
 // On a phone that never had the demo it must lay one down rather than say "bad
-// link" (`BadLink`) — and land in the ledger, `/demo`'s own way out, whose
-// skeleton is `.rows .row` too, hence the real rows back on `/g`.
+// link" (`BadLink`) — and land on `/demo`'s own question, then the ledger.
 const friend = await (await newPhone(browser)).newPage();
 await friend.goto(`${base}/g/balances?id=demodemodemo`);
+await friend.waitForFunction(
+  () => location.pathname === "/g/claim" && document.querySelector("button.row"),
+  null, { timeout: PATIENCE },
+);
+await friend.locator("button.row").filter({ hasText: "Han" }).first().click();
+await friend.getByRole("button", { name: "Continue as Han" }).click();
 await friend.waitForFunction(
   () => location.pathname === "/g" && document.querySelector(".rows .row:not(.skelrow)"),
   null, { timeout: PATIENCE },
 );
 report(await friend.locator(".rows .row:not(.skelrow)").count() === rows && (await keysHeld(friend)).length === 0,
-  "a demo address copied off another phone opens the demo, still with no key");
+  "a demo address copied off another phone opens the demo as whoever they pick, still with no key");
 await friend.close();
 // Not on the phone that cleared it, though: the screen draws "no group" there
 // before the menu has left, and re-seeding on that would undo the clear.
@@ -181,7 +193,10 @@ report(new URL(page.url()).pathname === "/g" && await page.getByText("Passage to
 // beside it. This is what the clear dialog promises, in as many words.
 const reopenedAt = Date.now();
 await page.goto(`${base}/demo`);
-await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
+// Cleared took the answer with it, so a fresh demo asks again.
+const askedAgain = await page.waitForURL(/\/g\/claim\?id=/, { timeout: PATIENCE }).then(() => true, () => false);
+report(askedAgain, "a cleared demo asks again who you are", page.url());
+await openDemo(page, base);
 await page.waitForSelector(".rows .row:not(.skelrow)");
 report(new URL(page.url()).searchParams.get("id") === "demodemodemo"
   && await page.locator(".rows .row:not(.skelrow)").count() === rows,
@@ -207,8 +222,11 @@ report(await page.getByText("Still reading this phone").count() === 0,
 const before = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 await stampAs(page, "some-older-build");
 await page.goto(`${base}/demo`);
-await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
-await page.waitForSelector(".rows .row:not(.skelrow)");
+// A new build is no reason to ask again: the answer survives the re-seed.
+await page.waitForFunction(
+  () => location.pathname === "/g" && document.querySelector(".rows .row:not(.skelrow)"),
+  null, { timeout: PATIENCE },
+);
 const after = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 const kept = new Set(before.map((op) => op.id));
 report(after.length === before.length && !after.some((op) => kept.has(op.id)),
@@ -219,8 +237,10 @@ report(await page.locator(".rows .row:not(.skelrow)").count() === rows && (await
 // ...and only once: the stamp it just stored makes the next visit ordinary.
 const third = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 await page.goto(`${base}/demo`);
-await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
-await page.waitForSelector(".rows .row:not(.skelrow)");
+await page.waitForFunction(
+  () => location.pathname === "/g" && document.querySelector(".rows .row:not(.skelrow)"),
+  null, { timeout: PATIENCE },
+);
 const fourth = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 report(fourth.map((op) => op.id).sort().join() === third.map((op) => op.id).sort().join(),
   "while a visit on the seed it already holds rewrites nothing");

@@ -20,12 +20,9 @@ export function isDemo(groupId: string | undefined): boolean {
   return groupId === DEMO_GROUP_ID;
 }
 
-/** The device is Luke, or the personal lens is blank. */
+/** The four people; which one this phone is, the visitor says (`/g/claim`). */
 export const DEMO_NAMES = ["Luke", "Han", "Chewie", "Ben"] as const;
 type DemoName = (typeof DEMO_NAMES)[number];
-
-/** The member the device speaks for: the demo is a group you are already in. */
-export const DEMO_ME: DemoName = "Luke";
 
 /** Credits, and the local coin the spaceport actually takes. */
 const DEMO_CURRENCY = "CRD";
@@ -34,27 +31,25 @@ const DEMO_FOREIGN = "WUP";
 const DEMO_RATE = "0.0625";
 
 /**
- * Only the device's node id comes from the caller; member ids and hues derive
- * from the constant group id, which lets `demoStamp` fingerprint the seed.
+ * Member ids and hues derive from the constant group id, so every phone lays
+ * the same seed and `demoStamp` can fingerprint it.
  */
 export interface DemoCast {
   /** Member id per name, from `memberIdFor(DEMO_GROUP_ID, name)`. */
   ids: Record<DemoName, Id>;
   /** Avatar hue per name, from `colorSeedFor(DEMO_GROUP_ID, name)`. */
   colorSeeds: Record<DemoName, number>;
-  /** The device's HLC node id, so the identity claim is this phone's own. */
-  deviceNodeId: Id;
 }
 
-/** The cast every phone derives identically, given the device's node id. */
-export function demoCast(deviceNodeId: Id): DemoCast {
+/** The cast every phone derives identically. */
+export function demoCast(): DemoCast {
   const ids = {} as Record<DemoName, Id>;
   const colorSeeds = {} as Record<DemoName, number>;
   for (const name of DEMO_NAMES) {
     ids[name] = memberIdFor(DEMO_GROUP_ID, name);
     colorSeeds[name] = colorSeedFor(DEMO_GROUP_ID, name);
   }
-  return { ids, colorSeeds, deviceNodeId };
+  return { ids, colorSeeds };
 }
 
 const DAY = 86_400_000;
@@ -189,13 +184,8 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
         kind: "create",
         patch: { name, colorSeed: cast.colorSeeds[name], deletedAt: null },
       })),
-      // Without a claim the personal lens is blank and the claim gate blocks the demo.
-      {
-        entity: "identity",
-        entityId: cast.deviceNodeId,
-        kind: "create",
-        patch: { memberId: ids[DEMO_ME], claimedAt: dayBefore(now, 9) },
-      },
+      // No identity: the claim gate asks the visitor which of the four they
+      // are, as it asks anyone joining a group.
     ),
     // So history is not all creates: deleted, further down.
     step("Han", at(8, 18, 5), {
@@ -343,7 +333,7 @@ export function demoStamp(): string {
   const dated = /^(occurredAt|createdAt|claimedAt|asOf|at)$/;
   // The timeline, not the ops: who wrote what is part of the story too.
   const json = JSON.stringify(
-    demoTimeline(demoCast("stamp"), 0),
+    demoTimeline(demoCast(), 0),
     (key, value) => (dated.test(key) ? 0 : value),
   );
   // FNV-1a, base 36. A fingerprint, not a digest: nothing here is secret.

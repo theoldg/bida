@@ -10,7 +10,7 @@
  *
  * So every assertion here reads `navigation.entries()`, never `location`.
  */
-import { ensureBuild, launch, newPhone, openGroupsList, reporter, serveExport, settle }
+import { ensureBuild, launch, newPhone, openDemo, openGroupsList, reporter, serveExport, settle }
   from "../lib/harness.mjs";
 
 ensureBuild();
@@ -424,8 +424,7 @@ async function onLedger() {
 {
   const short = await newPhone(browser, { viewport: { width: 390, height: 480 } });
   const page = await short.newPage();
-  await page.goto(`${base}/demo`);
-  await page.waitForURL(/\/g\?id=/, { timeout: 30_000 });
+  await openDemo(page, base);
   await page.waitForSelector(".rows a.row");
   await page.waitForSelector(".skelveil", { state: "detached" });
 

@@ -18,7 +18,6 @@ const NOW = Date.UTC(2026, 8, 18, 12, 0, 0);
 const CAST: DemoCast = {
   ids: { Luke: "m-luke", Han: "m-han", Chewie: "m-chewie", Ben: "m-ben" },
   colorSeeds: { Luke: 10, Han: 100, Chewie: 200, Ben: 300 },
-  deviceNodeId: "node0001",
 };
 
 /** The timeline, stamped the way `openDemo` stamps it: one HLC run, a batch per step. */
@@ -59,8 +58,8 @@ describe("demoOps", () => {
     expect(state.group?.baseCurrency).toBe("CRD");
     expect(alive(state.members).map((m) => m.name).sort())
       .toEqual([...DEMO_NAMES].sort());
-    // This phone is one of them, or the ledger's personal lens is blank.
-    expect(Object.values(state.identities)[0]?.memberId).toBe(CAST.ids.Luke);
+    // Nobody is claimed: the visitor picks one of the four (`/g/claim`).
+    expect(Object.values(state.identities)).toHaveLength(0);
   });
 
   it("gives every screen something to say", () => {
