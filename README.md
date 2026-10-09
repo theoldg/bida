@@ -62,20 +62,21 @@ The usual stuff, plus:
 
 - **Dark mode.**
 
-### Might add 
+### Might add
 
-I'm personally not convinced about the utility of those, but might add them if users want it.
+These features exist in other splitters. I might add them if people ask.
 
 - **Expense categories.** Annotating expenses as travel, food, etc.
 
 - **Spending stats.** Some expense splitters track the amounts per person, per category etc.
 
-- **Recurring payments.** E.g. for utility bills in a shared flat scenario.
+- **Recurring payments.** E.g. for utility bills in a shared flat.
+
+- **Search in group.**
 
 ### Won't add
 
-- **Image hosting.** Keeping the app text-only is what makes it dirt cheap to run. The item details from receipts can be parsed and stored in text form too.
-
+- **Image hosting.** Keeping the app text-only is what makes it dirt cheap to run. The item details from receipts aren't lost, they can be parsed and stored in text form too.
 
 ## Vibe-coded... carefully
 
