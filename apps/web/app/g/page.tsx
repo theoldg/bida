@@ -159,7 +159,10 @@ function Ledger({ data }: { data: GroupData }) {
     if (scroll.current) scroll.current.scrollTop = searchBase(scroll.current);
   }, [query]);
   if (!group) return null;
-  const searching = found !== items;
+  // Whatever is typed, a space alone included: the bar stands in the column
+  // on the same test (`.searchdock[data-searching]`), and the head would show
+  // above a list that had just been put at its top.
+  const searching = query !== "";
   // Read out once past the guard: both row components take them as props.
   const { id: gid, baseCurrency: base } = group;
 
