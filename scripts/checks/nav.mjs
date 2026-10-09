@@ -513,8 +513,9 @@ async function onLedger() {
     "and Save, with a new row above it, keeps the same row rather than the same offset",
     `left ${JSON.stringify(left)} got ${JSON.stringify(got)}`);
   // Then, from there, the row it saved is brought into view — today's, so near
-  // the top that the list goes all the way up and the banner shows too.
-  await settle(page, 1400);
+  // the top that the list goes all the way up and the banner shows too —
+  // beat, glide and the dwell after it (SAVED_BEAT, MAX_MS, SAVED_DWELL).
+  await settle(page, 2000);
   const shown = await page.evaluate(() => {
     const scroll = document.querySelector(".scroll");
     const box = scroll.getBoundingClientRect();
