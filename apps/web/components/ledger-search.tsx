@@ -222,8 +222,12 @@ export function LedgerSearch({ banner, query, onQuery }: {
               onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) e.currentTarget.blur(); }} />
             {query ? (
               <button type="button" className="searchclear" aria-label={copy.group.search.clear}
-                // The caret stays: clearing is the start of the next search as often as the end of this one.
-                onClick={(e) => { onQuery(""); e.currentTarget.parentElement?.querySelector("input")?.focus(); }}>
+                // The press never takes the focus, so the field is left as it was: the caret
+                // stays if it was there, and a keyboard that was down stays down — Android
+                // keeps the caret in a field whose keyboard was dismissed, and focusing it
+                // again would raise it.
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => onQuery("")}>
                 <Icon name="cross" size={14} />
               </button>
             ) : null}
