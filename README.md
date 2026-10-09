@@ -48,7 +48,7 @@
 
 - **Works offline.** Append-only data model prevents merge conflicts.
 
-- **End-to-end encrypted.** Decryption happens locally via the URL hash. The server only ever sees scrambled ciphertext. *See the disclaimer below!*
+- **End-to-end encrypted.** Decryption happens locally via the URL hash. *See the disclaimer below!*
 
 - **Receipt parsing and itemized splitting.** Extracts line items from receipt photos. Grid-like UI for assigning who-had-what.
 
@@ -76,11 +76,11 @@ These features exist in other splitters. I might add them if people ask.
 
 ### Won't add
 
-- **Image hosting.** Keeping the app text-only is what makes it dirt cheap to run. The item details from receipts aren't lost, they can be parsed and stored in text form too.
+- **Image hosting.** Keeping the app text-only is what makes it dirt cheap to run. The item details from receipts aren't lost, they are parsed and stored in text form too.
 
 ## Privacy needs an audit
 
-I am not a cybersecurity expert! The whole thing is set up to be E2EE compatible, the data is encrypted, and the key never reaches the server... But I can't guarantee there isn't some subtle fingerprinting possibility or other bug. I hope to eventually get a code audit from someone with credentials. For now, please treat bida as "probably E2EE".
+I am not a cybersecurity expert! The whole thing is set up to be E2EE compatible, the data is encrypted, and the key never reaches the server... But I can't guarantee there isn't some subtle fingerprinting possibility or other bug. I hope to eventually get a code audit from someone more qualified. For now, please treat bida as "probably E2EE".
 
 ## Vibe-coded... carefully
 
