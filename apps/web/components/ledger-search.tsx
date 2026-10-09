@@ -38,18 +38,25 @@ export function searchBase(box: HTMLElement): number {
  * The group menu's way in: the caret in the bar, which brings it out, and the
  * list gliding to the base state under it. The focus is in the tap's own turn,
  * or iOS keeps its keyboard down; the bar is taken out of `inert` by hand for
- * that, since hidden it can't hold a caret.
+ * that, and marked out, since hidden it can't hold a caret.
  */
 export function summonLedgerSearch(): void {
   const bar = document.querySelector<HTMLElement>(".searchbar");
   const field = bar?.querySelector("input");
   const box = bar?.closest(".appbody")?.querySelector<HTMLElement>(".scroll");
   if (!bar || !field) return;
+  const dock = bar.closest<HTMLElement>(".searchdock");
   const was = bar.inert;
   bar.inert = false;
+  // Away, it is not drawn either (`visibility`), which refuses a caret too.
+  dock?.setAttribute("data-on", "");
   // The glide is the only thing that may move the list here.
   field.focus({ preventScroll: true });
-  if (document.activeElement !== field) { bar.inert = was; return; }
+  if (document.activeElement !== field) {
+    bar.inert = was;
+    if (was) dock?.removeAttribute("data-on");
+    return;
+  }
   // Not over a search already up: its results are where they should be.
   if (box && field.value === "") glide(box, searchBase(box), () => {});
 }

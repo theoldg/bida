@@ -380,6 +380,10 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .searchdock[data-searching] .searchclip { position: static }
 .searchbar { height: var(--search-h); padding: 0 16px 10px; background: var(--card); border-bottom: 1px solid var(--rule-soft);
   transform: translateY(calc((var(--shown, 0) - 1) * 100%)) }
+/* Away, it is not drawn at all: slid up by its own height its bottom rule
+   still landed on the clip's first pixel row on some screens, a line across
+   the head of the list. */
+.searchdock:not([data-on]) .searchbar { visibility: hidden }
 .searchdock[data-on] .searchbar { pointer-events: auto }
 /* Held, it is out whole — by the same transform, so handing it back to the
    scroll is a change of number and not of how the bar is drawn. */
