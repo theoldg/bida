@@ -178,20 +178,14 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
   };
   const toTop = nearTop();
   if (!toTop) letRoll(groupId);
-  const letGo = () => {
+  const release = () => {
+    if (toTop) letRoll(groupId);
     target.classList.add("released");
     target.addEventListener("animationend", () => target.classList.remove("saved", "released"), { once: true });
   };
-  const release = () => {
-    if (toTop) letRoll(groupId);
-    letGo();
-  };
   // Scrolled to, the row holds its wash a while where it landed before
-  // letting go; the banner's roll does not wait for that.
-  const land = () => {
-    if (toTop) letRoll(groupId);
-    setTimeout(letGo, SAVED_DWELL);
-  };
+  // letting go, and the banner's roll with it.
+  const land = () => setTimeout(release, SAVED_DWELL);
   setTimeout(() => {
     if (!target.isConnected) return;
     // Back from a save the ledger was first put back where it was left
