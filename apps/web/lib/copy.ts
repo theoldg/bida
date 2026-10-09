@@ -775,6 +775,20 @@ export const copy = {
     addEntry: "Add an entry",
 
     empty: { title: "Nothing here yet", body: "Tap + to add the first thing." },
+    /** The ledger's search bar, which slides in once the you-owe card is out of view. */
+    search: {
+      /** The blank field's words, and its name to a screen reader. */
+      field: "Search",
+      clear: "Clear search",
+      /** The group menu's item, which brings the bar out wherever the list is. */
+      menu: "Search",
+      /** What heads each run of results: where on the row the words were found, best first. */
+      by: {
+        title: "by name", payer: "by payer", participant: "by participant",
+        currency: "by currency", kind: "by kind", amount: "by amount",
+      },
+      none: { title: "Nothing found", body: (query: string) => `No entry matches “${query}”.` },
+    },
     untitled: "Untitled",
     notYours: "not yours",
     /** The foot of the new-changes fold, always: History has the rest. */

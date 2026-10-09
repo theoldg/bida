@@ -68,8 +68,10 @@ export function RowMenu({ anchor, actions, onClose }: {
     opener.current = document.activeElement;
     return () => {
       const back = opener.current;
-      // The action may have unmounted the row, or opened a dialog that takes focus after this.
-      if (back instanceof HTMLElement && back.isConnected) back.focus();
+      // The action may have unmounted the row, or opened a dialog that takes focus after this —
+      // or put the caret somewhere itself (the ledger's search), which is not to be taken back.
+      const taken = document.activeElement !== null && document.activeElement !== document.body;
+      if (back instanceof HTMLElement && back.isConnected && !taken) back.focus();
     };
   }, []);
 

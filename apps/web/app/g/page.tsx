@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type Ref } from "react";
 import {
   payerList, resolvePayers, resolveEntrySplit, splitParticipants,
   type Expense, type Member, type Settlement,
@@ -21,6 +21,7 @@ import { NewEdits } from "@/components/new-edits";
 import { RollingFigure } from "@/components/rolling-figure";
 import { Icon } from "@/components/icons";
 import { LedgerRows } from "@/components/ledger-rows";
+import { LedgerSearch, searchBase, useLedgerQuery } from "@/components/ledger-search";
 import { useLongPressMenu } from "@/components/long-press";
 import { SyncBanner } from "@/components/sync-banner";
 import { copy } from "@/lib/copy";
@@ -28,7 +29,7 @@ import { useDeleteEntry } from "@/components/delete-entry";
 import { setLastOpenedGroup } from "@/lib/db/device";
 import { syncGroup } from "@/lib/db/sync";
 import { dayLabel, money, plural } from "@/lib/format";
-import { ledgerItems, type LedgerRow } from "@/lib/ledger";
+import { ledgerItems, searchLedger, type LedgerRow } from "@/lib/ledger";
 import { route } from "@/lib/group-link";
 import { useLedgerPosition } from "@/lib/ledger-position";
 import { awaitRoll, peekSaved } from "@/lib/ledger-motion";
@@ -135,7 +136,30 @@ function Ledger({ data }: { data: GroupData }) {
   const items = useMemo(() => ledgerItems(expenses, settlements, dayLabel), [expenses, settlements]);
   const scroll = useRef<HTMLDivElement>(null);
   useLedgerPosition(scroll, group?.id ?? "");
+  // The search bar comes out as the you-owe card scrolls away, and what is
+  // typed in it narrows the rows (components/ledger-search.tsx).
+  const [banner, setBanner] = useState<HTMLDivElement | null>(null);
+  const [query, setQuery] = useLedgerQuery(group?.id ?? "");
+  const found = useMemo(
+    () => searchLedger(items, query, {
+      nameOf: (id) => memberById.get(id)?.name,
+      kindWord: (kind) => copy.entryKind.label[kind],
+      tierLabel: (tier) => copy.group.search.by[tier],
+      base: group?.baseCurrency ?? "",
+    }),
+    [items, query, memberById, group?.baseCurrency],
+  );
+  // A search emptied returns to its base state (`searchBase`), not to the top
+  // of the screen, where the bar would lie over the card. After the commit:
+  // the head is back in the column by then.
+  const emptied = useRef(false);
+  useLayoutEffect(() => {
+    if (!emptied.current) return;
+    emptied.current = false;
+    if (scroll.current) scroll.current.scrollTop = searchBase(scroll.current);
+  }, [query]);
   if (!group) return null;
+  const searching = found !== items;
   // Read out once past the guard: both row components take them as props.
   const { id: gid, baseCurrency: base } = group;
 
@@ -145,7 +169,17 @@ function Ledger({ data }: { data: GroupData }) {
   const net = me ? balances.byMember[me] ?? 0 : 0;
 
   return (
+    <>
+    <LedgerSearch banner={banner} query={query} onQuery={(next) => {
+      // Results read from their first row.
+      if (scroll.current) scroll.current.scrollTop = 0;
+      emptied.current = query !== "" && next === "";
+      setQuery(next);
+    }} />
     <Scroll ref={scroll}>
+      {/* Hidden rather than dropped while a search is on: the card keeps the
+          figure it has drawn, and the fold its place. */}
+      <div hidden={searching}>
       {/* Inside the scroll, not fixed above it, so the ledger isn't pushed a
           third of the way down. */}
       {/* Either platform's install offer, folded to one line (docs/ios.md),
@@ -156,19 +190,28 @@ function Ledger({ data }: { data: GroupData }) {
           nothing for every other group. */}
       <DemoCard groupId={gid} />
       <LedgerInstall groupId={gid} />
-      {me ? <MySummary net={net} base={base} gid={gid} /> : null}
+      {me ? <MySummary ref={setBanner} net={net} base={base} gid={gid} /> : null}
       {/* Between where you stand and the rows, since it is why either moved. */}
       <NewEdits groupId={gid} currency={base} source={group.importedFrom} />
+      </div>
 
+      {/* One box, so the search can ask it to be tall enough (`.searchroom`). */}
+      <div className="searchroom">
       {items.length === 0 ? (
         <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>
+      ) : found.length === 0 ? (
+        <Empty title={copy.group.search.none.title}>{copy.group.search.none.body(query.trim())}</Empty>
       ) : null}
 
-      <LedgerRows groupId={gid} items={items} row={(entry: LedgerRow) => entry.row === "expense"
+      {/* Keyed by the search, so a keystroke redraws the list at once: the
+          rows' fold and fade are for an entry that came or went. */}
+      <LedgerRows key={searching ? query : ""} groupId={gid} items={found} row={(entry: LedgerRow) => entry.row === "expense"
         ? <ExpenseRow expense={entry.expense} gid={gid} base={base} me={me} memberById={memberById} />
         : <SettlementRow settlement={entry.settlement} gid={gid} base={base} me={me} memberById={memberById} />} />
       <div style={{ height: 88 }} />
+      </div>
     </Scroll>
+    </>
   );
 }
 
@@ -178,7 +221,9 @@ function Ledger({ data }: { data: GroupData }) {
  * The figure is sized to its own length (`.mysum` in globals.css), so a long
  * sum shrinks to fit rather than running under the chevron.
  */
-function MySummary({ net, base, gid }: { net: number; base: string; gid: string }) {
+function MySummary({ net, base, gid, ref }: {
+  net: number; base: string; gid: string; ref?: Ref<HTMLDivElement>;
+}) {
   // Unsigned, unlike every other figure: "You owe" already says the direction,
   // and a "-" reads as arithmetic rather than debt.
   const figure = money(Math.abs(net), base);
@@ -200,7 +245,7 @@ function MySummary({ net, base, gid }: { net: number; base: string; gid: string 
   useEffect(() => setTone((t) => (Math.abs(t) === Math.abs(net) ? net : t)), [net]);
   const label = tone < 0 ? copy.group.you.owe : tone > 0 ? copy.group.you.owed : copy.group.you.square;
   return (
-    <div className="mysummary pad">
+    <div className="mysummary pad" ref={ref}>
       <Link href={route.balances(gid)} className={`card mysum ${signClass(tone)}`}
         style={{ "--chars": figure.length } as CSSProperties}>
         <span className="mysumtext">

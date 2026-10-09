@@ -26,6 +26,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-09* — "Is this trigger even a good idea?" then "critique the
+  following design", then theirs built anyway: sections answered my objection
+  to ranking. Give the critique straight, then build what they pick — and
+  while they test locally, leave their running app alone.
+
 - *2026-10-09* — Tricount and bida side by side: "are the cents lost in the
   export, or our import?" The checksum already answers whose cents those are;
   say which side is right before fixing anything. The order was the real bug.
@@ -75,7 +80,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-08* — A ticket scanned as 2020, "maybe we should discretely drop
   today's date in the prompt". I wrote a rule about yearless dates; "just say
   today is XYZ". "Discretely" meant the fact, not an instruction.
-
-- *2026-10-08* — "How do you like the hash-hacking?" wanted a verdict, and
-  got a pick plus one change; "just measure … set that as the cap" came back.
-  An opinion question is a review: name the one fix worth doing, then stop.

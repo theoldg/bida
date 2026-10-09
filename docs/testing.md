@@ -157,6 +157,10 @@ total spend 963,14 · transfers theo→marie 105,62 · sam→marie 111,47 · ada
 
 ## Gotchas
 
+- **`pnpm verify`, `shots` and `drive` build into the same `apps/web/.next` a
+  running `next dev` serves from.** With the owner's dev server up, the build
+  fails on missing page modules and their server breaks with it. Check for one
+  first (`pgrep -f "next dev"`), and drive that server instead of building.
 - **`pnpm` skips postinstall scripts by default, which breaks vitest and
   `wrangler dev`.** The root `package.json` carries
   `"pnpm": { "onlyBuiltDependencies": ["esbuild", "workerd"] }`; anything that

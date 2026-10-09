@@ -300,6 +300,20 @@ API is reached with `fetch`.
   navigation does on a phone, so from the answer on it keeps drawing the entry
   as it was. "Gone" is only
   an id this phone has never had.
+- **The ledger's search** (`components/ledger-search.tsx`) is a bar under the
+  top bar, out by two doors: the scroll, which brings a pixel of it for each
+  pixel the you-owe card's foot travels past the top edge, and **Search** in
+  the group menu, which puts the caret in it and glides the list to the
+  search's *base state* — the whole ledger with its first row directly under
+  the bar, which is also where clearing a search returns (`searchBase`; a list
+  too short to scroll there is lent the room while the bar is out). Every word
+  typed must be found somewhere on a row (`searchLedger`, lib/ledger.ts): in
+  its title, its payers or its participants; as the whole of its currency or
+  kind; or as a number in either of its figures. Results are sectioned by the
+  best place a word was found, in that order, under lines drawn like date
+  lines; within a section more words there comes first, then recency. A
+  transfer's title is its two names and its note. A query is kept for the way
+  back from a result, like the ledger's position.
 - **The ledger's new-changes line** (`components/new-edits.tsx`) sits under the
   you-owe card, drawn as a date line in full-ink text, with a chevron at its
   right edge that swings into a cross as it opens, because folding it clears it:
