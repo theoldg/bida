@@ -302,12 +302,15 @@ API is reached with `fetch`.
   an id this phone has never had.
 - **The ledger's search** (`components/ledger-search.tsx`) is a bar under the
   top bar, out by two doors: the scroll, which brings a pixel of it for each
-  pixel the you-owe card's foot travels past the top edge, and **Search** in
+  pixel the rows travel over the last bar's height before the base state —
+  no faster than the whole bar in 180ms, so a fling gets a slide — and
+  **Search** in
   the group menu, which puts the caret in it and glides the list to the
   search's *base state* — the whole ledger with its first row directly under
   the bar, which is also where clearing a search returns (`searchBase`; a list
-  too short to scroll there is lent the room while the bar is out). Let go of
-  empty there, the bar leaves and the list glides back to its head. Every word
+  too short to scroll there is lent the room once the bar is out, until it is back at its head). The
+  caret pins nothing: a drag on the list lets go of the field, and let go of
+  empty any other way at the base state, the list glides back to its head. Every word
   typed must be found somewhere on a row (`searchLedger`, lib/ledger.ts): in
   its title, its payers or its participants; as the whole of its currency or
   kind; or as a number in either of its figures. Results are sectioned by the

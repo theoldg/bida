@@ -384,11 +384,11 @@ html[data-resuming="manual"] .ghost-manual { display: block }
 .searchdock[data-held] .searchbar { transform: none }
 .searchdock[data-ease] .searchbar { transition: transform .26s cubic-bezier(.2, .8, .2, 1) }
 .searchbar .field { height: 100%; padding-block: 0 }
-/* While the bar is out over the whole ledger, the rows' box fills the screen
+/* Once the bar is out over the whole ledger, the rows' box fills the screen
    under it, so a list too short to scroll can still be brought to the search's
-   base state (`searchBase`). Gone with the bar: the room is nothing to scroll
-   into otherwise. The 50px is `--search-h`, out of reach of a sibling. */
-.searchdock[data-on]:not([data-searching]) + .scroll > .searchroom { min-height: calc(100% - 50px) }
+   base state (`searchBase`). `data-room` outlasts the bar until the list is
+   back at its head. The 50px is `--search-h`, out of reach of a sibling. */
+.searchdock[data-room]:not([data-searching]) + .scroll > .searchroom { min-height: calc(100% - 50px) }
 .searchclear { flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin: -6px -8px -6px 0;
   color: var(--ink-2); border-radius: var(--r-s) }
 .searchclear:active { background: var(--press) }

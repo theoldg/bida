@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { copy } from "@/lib/copy";
 import { returnTo } from "@/lib/nav";
-import { glide } from "@/lib/seek";
+import { calmly, glide } from "@/lib/seek";
 import { Icon } from "./icons";
 
 /**
@@ -54,16 +54,27 @@ export function summonLedgerSearch(): void {
   if (box && field.value === "") glide(box, searchBase(box), () => {});
 }
 
+/** The least time the scroll may take to bring the whole bar out or put it away (ms). */
+const REVEAL_MS = 180;
+
 /** How long the bar eases for when it is taken from the scroll or handed back (ms); `.searchdock[data-ease]`'s. */
 const EASE_MS = 260;
 
 /**
  * The ledger's search: a bar that comes out from under the top bar as the
  * you-owe card (`banner`) leaves the list's view. **Tied to the scroll, not
- * set off by it**: each pixel the card's foot travels past the top edge brings
- * a pixel of the bar, so a slow scroll unfolds it slowly and stopping halfway
- * leaves it halfway. Typed in or holding a query it is out whole, wherever the
+ * set off by it**: over the last bar's height the rows travel towards the base
+ * state (`searchBase`), each pixel of theirs brings a pixel of the bar, so it
+ * is whole exactly as the first row meets its foot. A slow scroll unfolds it
+ * slowly and stopping halfway leaves it halfway — up to a speed
+ * (`REVEAL_MS`), past which it slides out behind the scroll rather than
+ * appearing whole. Typed in or holding a query it is out whole, wherever the
  * list is.
+ *
+ * **The caret pins nothing a finger wants moved**: a drag on the list lets go
+ * of the field, and with nothing typed the bar is the scroll's again. Let go
+ * of any other way at the base state or above it, the list glides back to its
+ * head, taking the bar with it.
  *
  * Idle it lies over the head of the list, so showing it moves nothing; holding
  * a query it takes its own room (`.searchdock[data-searching]`), since the
@@ -78,23 +89,68 @@ export function LedgerSearch({ banner, query, onQuery }: {
   // Whether any of it shows: all a render needs to know. How much is written
   // straight onto the dock as `--shown`, a frame at a time.
   const [out, setOut] = useState(false);
+  const [room, setRoom] = useState(false);
+  const onNow = useRef(false);
+  const handed = useRef(false);
+  const pressed = useRef(0);
   useEffect(() => {
     const box = banner?.closest<HTMLElement>(".scroll");
     const bar = dock.current?.querySelector<HTMLElement>(".searchbar");
     if (!banner || !box || !bar) return;
-    let frame = 0;
-    const measure = () => {
-      frame = 0;
-      // Not drawn (a search hides the head) is as gone as scrolled away.
-      const past = banner.offsetParent === null ? Infinity
-        : box.getBoundingClientRect().top - banner.getBoundingClientRect().bottom;
-      const shown = Math.min(1, Math.max(0, past / bar.offsetHeight));
+    // What the scroll asks for, and what is drawn. Drawn chases asked at no
+    // more than the whole bar per `REVEAL_MS`: a slow scroll never asks for
+    // more than that, so the bar stays under the finger, and a fling that
+    // would have it there in one frame gets a slide instead of a cut.
+    const asked = () => {
+      // Asked of the scroller each time: a search redraws the rows' box.
+      const rows = box.querySelector<HTMLElement>(".lrows");
+      if (!rows) return 0;
+      const h = bar.offsetHeight;
+      // How far the rows still are from the bar's foot: none at the base state.
+      const short = rows.getBoundingClientRect().top - box.getBoundingClientRect().top - h;
+      return Math.min(1, Math.max(0, 1 - short / h));
+    };
+    let shown = asked();
+    const draw = () => {
       dock.current?.style.setProperty("--shown", String(shown));
       setOut(shown > 0);
+      // The room a short list was lent goes only at its head, where taking it
+      // moves nothing (see `room`).
+      if (box.scrollTop <= 0 && !onNow.current) setRoom(false);
     };
-    const ask = () => { frame ||= requestAnimationFrame(measure); };
-    measure();
+    let frame = 0;
+    let last = 0;
+    const step = (now: number) => {
+      frame = 0;
+      const want = asked();
+      const reach = calmly() ? 1 : (now - last) / REVEAL_MS;
+      last = now;
+      shown += Math.min(reach, Math.max(-reach, want - shown));
+      draw();
+      if (shown !== want) frame = requestAnimationFrame(step);
+    };
+    const ask = () => {
+      if (frame) return;
+      // A frame's worth to start with, as if the last one had just been drawn.
+      last = performance.now() - 16;
+      frame = requestAnimationFrame(step);
+    };
+    draw();
     box.addEventListener("scroll", ask, { passive: true });
+    // A finger dragging the list, or a wheel, lets go of the field.
+    const byHand = () => {
+      const field = bar.querySelector("input");
+      if (document.activeElement !== field) return;
+      handed.current = true;
+      field?.blur();
+    };
+    // A press on a row is on its way somewhere: not a letting go to answer.
+    const press = (e: PointerEvent) => {
+      if (e.target instanceof Element && e.target.closest("a, button")) pressed.current = Date.now();
+    };
+    box.addEventListener("touchmove", byHand, { passive: true });
+    box.addEventListener("wheel", byHand, { passive: true });
+    box.addEventListener("pointerdown", press, { passive: true });
     // What sits above the card comes and goes without a scroll.
     const sizes = new ResizeObserver(ask);
     sizes.observe(banner);
@@ -102,6 +158,9 @@ export function LedgerSearch({ banner, query, onQuery }: {
     return () => {
       if (frame) cancelAnimationFrame(frame);
       box.removeEventListener("scroll", ask);
+      box.removeEventListener("touchmove", byHand);
+      box.removeEventListener("wheel", byHand);
+      box.removeEventListener("pointerdown", press);
       sizes.disconnect();
     };
   }, [banner]);
@@ -118,10 +177,11 @@ export function LedgerSearch({ banner, query, onQuery }: {
     return () => clearTimeout(timer);
   }, [held]);
 
-  // Let go of with nothing typed, where the scroll alone wouldn't have it out
-  // (after the menu, or a search cleared), the bar leaves and the list glides
-  // back to its head rather than being dropped there. `closing` keeps the room
-  // the list was lent (`.searchroom`) until it has arrived.
+  // Let go of with nothing typed, at the base state or short of it (after the
+  // menu, or a search cleared), the list glides back to its head and the bar
+  // goes with it as the scroll's. Not when a finger on the list is what let go
+  // — it is driving — nor on the way into a row. `closing` keeps the bar
+  // counted as out until the list has arrived.
   const [closing, setClosing] = useState(false);
   const stop = useRef<(() => void) | null>(null);
   const settle = () => { stop.current?.(); stop.current = null; setClosing(false); };
@@ -129,14 +189,25 @@ export function LedgerSearch({ banner, query, onQuery }: {
   const letGo = () => {
     setFocused(false);
     const box = dock.current?.parentElement?.querySelector<HTMLElement>(".scroll");
-    if (query !== "" || out || !box || box.scrollTop === 0) return;
+    const hand = handed.current;
+    handed.current = false;
+    if (query !== "" || hand || Date.now() - pressed.current < 700) return;
+    if (!box || box.scrollTop === 0 || box.scrollTop > searchBase(box) + 1) return;
     setClosing(true);
     stop.current = glide(box, 0, () => { stop.current = null; setClosing(false); });
   };
 
   const on = out || held || closing;
+  // A list too short to scroll to the base state is lent the room to
+  // (`.searchroom`) once the bar is out, and keeps it until it is back at its
+  // head with the bar away: taken any sooner, the list would drop there.
+  onNow.current = on;
+  useEffect(() => {
+    if (on) setRoom(true);
+    else if ((dock.current?.parentElement?.querySelector(".scroll")?.scrollTop ?? 0) <= 0) setRoom(false);
+  }, [on]);
   return (
-    <div className="searchdock" ref={dock} data-on={on ? "" : undefined} data-held={held ? "" : undefined}
+    <div className="searchdock" ref={dock} data-on={on ? "" : undefined} data-room={room || on ? "" : undefined} data-held={held ? "" : undefined}
       data-ease={ease ? "" : undefined} data-searching={query ? "" : undefined}>
       <div className="searchclip">
         <div className="searchbar" inert={!on}>
