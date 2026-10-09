@@ -26,6 +26,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-09* — "Take the screenshots on a slightly wider device, e.g. a
+  pixel 9a". "The screenshots" spans both scripts: one constant in the
+  harness, both re-shot, the six committed ones looked at before the push.
+
 - *2026-10-09* — A blind walk as "clueless Luke" found seven things; the
   owner picked one: "Make the demo start with the who are you screen". A
   findings list is a menu. Driving the fix found a real race the checks had
@@ -75,7 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-07* — "Isn't the worst case a ton of ids?", then "cap it, ship
   it", then four words for a whole feature: "do multi-currency csv". Answer
   doubt with numbers, not defence; they were steering, not stopping.
-
-- *2026-10-07* — "Retake the screenshots", nothing else. The committed six
-  are the ones that go stale, so `readme-shots`; rebuild, look at each
-  changed picture, and reshoot if dev moves under you before the push.

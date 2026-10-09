@@ -19,7 +19,7 @@
 import { Buffer } from "node:buffer";
 import { mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { ROOT, ensureBuild, serveExport, launch, newPhone, openGroupsList, pick, newGroup }
+import { ROOT, ensureBuild, serveExport, launch, newPhone, PIXEL_9A, openGroupsList, pick, newGroup }
   from "./lib/harness.mjs";
 import { PHOTO, stubScan } from "./lib/receipts.mjs";
 
@@ -177,7 +177,7 @@ async function main() {
   const browser = await launch();
   try {
     for (const theme of ["light", "dark"]) {
-      const context = await newPhone(browser, { deviceScaleFactor: 2, colorScheme: theme });
+      const context = await newPhone(browser, { ...PIXEL_9A, colorScheme: theme });
       const page = await context.newPage();
       const groupId = await seed(page, base);
 
@@ -409,7 +409,7 @@ async function main() {
       // The kebab that holds the import, and the empty list behind it: a
       // phone that holds no groups at all, in a context of its own, because
       // the one above has a trip in it.
-      const fresh = await newPhone(browser, { deviceScaleFactor: 2, colorScheme: theme });
+      const fresh = await newPhone(browser, { ...PIXEL_9A, colorScheme: theme });
       const blank = await fresh.newPage();
       await blank.goto(`${base}/`);
       await blank.waitForSelector(".empty");

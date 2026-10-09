@@ -161,6 +161,13 @@ export async function asInstalledApp(page) {
   });
 }
 
+/**
+ * What the photographs are taken on — a Pixel 9a (1080×2424 at 2.625), a
+ * little wider than the checks' 390, so a picture shows a common phone rather
+ * than the narrowest one designed for.
+ */
+export const PIXEL_9A = { viewport: { width: 412, height: 923 }, deviceScaleFactor: 2.625 };
+
 /** 390×844, touch: what every screen is designed against. A navigation gets twice `PATIENCE`. */
 export async function newPhone(browser, opts = {}) {
   const ctx = await browser.newContext({

@@ -22,7 +22,7 @@
  */
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import { ROOT, ensureBuild, serveExport, launch, newPhone, openDemo, settle } from "./lib/harness.mjs";
+import { ROOT, ensureBuild, serveExport, launch, newPhone, PIXEL_9A, openDemo, settle } from "./lib/harness.mjs";
 import { PHOTO } from "./lib/receipts.mjs";
 
 const MEDIA = join(ROOT, "docs/media");
@@ -74,7 +74,7 @@ async function main() {
      * phone's clock (`lib/format.ts`), so the phone is what's set.
      */
     const context = await newPhone(browser, {
-      deviceScaleFactor: 2, colorScheme: "light",
+      ...PIXEL_9A, colorScheme: "light",
       locale: "en-GB", timezoneId: "Europe/Paris",
     });
     // Resumed immediately: a frozen clock stops the scan's bar, and the demo
