@@ -52,23 +52,26 @@ API is reached with `fetch`.
   reopens whichever of list and group was last. `resumeGroupId` is that
   decision, pure and tested. A replace that
   doesn't take releases the list after two seconds rather than leaving the app
-  on a skeleton nothing will fill. **The list's frame never paints on a resume**:
-  the exported `/` is the list, and IndexedDB answers after first paint, so
-  `lib/resume-hint.ts` mirrors the group to resume into localStorage and a
-  script before the body marks `<html data-resuming>`, under which `/` shows
-  the ledger's skeleton (`LedgerSkeleton`) — the frame `/g` then takes over.
-  **A skeleton wears every card it can know without the database**: the
-  demo's mark and the folded install or notifications offer
-  (`SkeletonBanner`), so the rows never drop when the ledger lands. The mark's
-  value names which, decided by the same script and tested against the real
-  cards' logic; Chrome's one-tap offer waits on an event and still arrives
-  late, as do the sync banner and the new-edits line, which are data. The
-  frame goes once the launch decides: hidden is not gone, and its bar's arrow
-  would stay registered with the back button. **Nor does the tutorial paint
-  on an iOS icon launch**, whose `start_url` is `/install` — prerendered as the
-  tutorial: the same script marks `<html data-launching>` there, and `/install`
-  carries the launch's frames (`LaunchFrames`, the list's own `HomeFrame` and
-  the ledger's skeleton) for it to pick.
+  on a skeleton nothing will fill. **A launch paints the frame it is heading
+  for, from the first** (`lib/first-frame.ts`). Its route's export is the
+  wrong picture — `/` is the list, though a launch may reopen a group;
+  `/install`, the iOS icon's `start_url`, is the tutorial — and the real
+  decisions read IndexedDB after first paint. So one pure function,
+  `firstFrame`, is serialised into a script before the body and marks
+  `<html data-frame>` ledger, list or join, from localStorage mirrors of the
+  group to reopen and of whether the icon was ever launched. It is tested
+  against `isLaunchFrom` and `launchPlan`, the code that decides for real.
+  `/` and `/install` draw `FirstFrames` — the ledger's skeleton, the list's
+  own `HomeFrame` empty, and `JoiningFrame` — hidden, CSS shows the one the
+  mark names in place of the route's own (`.ownframe`), and all of them are
+  `inert`: a tap on a skeleton races the decision it stands in for. **A
+  ledger's skeleton wears every card it can know without the database**: the
+  demo's mark and the folded install or notifications offer (`data-banner`,
+  `SkeletonBanner`), so the rows never drop when it lands; Chrome's one-tap
+  offer waits on an event and still arrives late, as do the sync banner and
+  the new-edits line, which are data. The frames go once the launch decides,
+  and the mark with them (`clearFirstFrame`): hidden is not gone, and each
+  bar's arrow would stay registered with the back button.
   *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
   ([ADR-0003](decisions/0003-link-only-access.md)). `setMe` is the

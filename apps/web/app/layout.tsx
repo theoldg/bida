@@ -11,7 +11,7 @@ import { ThemeScript } from "@/components/theme";
 import { copy } from "@/lib/copy";
 import { preview } from "@/lib/preview";
 import { arrivalScript } from "@/lib/diag";
-import { resumeScript } from "@/lib/resume-hint";
+import { firstFrameScript } from "@/lib/first-frame";
 import { manifestScript, type WebManifest } from "@/lib/install";
 import { CarryToHomeScreen } from "@/components/install";
 import { EmbeddedGate } from "@/components/embedded";
@@ -78,9 +78,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ThemeScript />
-        {/* Before the body paints: a launch reopening a group hides the list's
-            frame, which would otherwise flash first (lib/resume-hint.ts). */}
-        <script dangerouslySetInnerHTML={{ __html: resumeScript }} />
+        {/* Before the body paints: a launch marks the frame it will show, so the
+            route's own exported HTML never flashes first (lib/first-frame.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: firstFrameScript }} />
         {/* The URL this load arrived at, before the router can change it (lib/diag.ts). */}
         <script dangerouslySetInnerHTML={{ __html: arrivalScript }} />
         <IconSprite />

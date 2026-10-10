@@ -76,7 +76,7 @@ function GroupScreen() {
   // When the skeleton went up, so the ledger can dissolve it rather than cut to
   // it — but only one that was seen: under SKELETON_SEEN it barely registered,
   // and a fade would stretch a flash into a wait. A launch reopening this group
-  // wore the same frame on `/` since first paint (lib/resume-hint.ts), and
+  // wore the same frame on `/` since first paint (lib/first-frame.ts), and
   // that mark is still on during this screen's first render. Decided once, on
   // the ledger's first render.
   const skeletonSince = useRef<number>(undefined);
@@ -88,7 +88,7 @@ function GroupScreen() {
   // The whole frame while loading, which also covers the redirect above rather
   // than flashing somebody else's ledger.
   if (data.loading || unclaimed) {
-    skeletonSince.current ??= document.documentElement.hasAttribute("data-resuming") ? 0 : performance.now();
+    skeletonSince.current ??= document.documentElement.dataset.frame === "ledger" ? 0 : performance.now();
     return <LedgerSkeleton groupId={groupId} head={<SkeletonBanner groupId={groupId} />} />;
   }
   // A group deleted from the server takes this phone's copy with it

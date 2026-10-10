@@ -15,9 +15,10 @@ import { walkFields } from "./viewport";
 import { Icon, type IconName } from "./icons";
 
 /** A fixed head, one scrolling middle, an optional fixed foot. One column, always: a pocket app. */
-export function Screen({ children, className }: { children: ReactNode; className?: string }) {
+/** `inert` for a frame that only stands in for a screen still deciding (`FirstFrames`). */
+export function Screen({ children, className, inert }: { children: ReactNode; className?: string; inert?: boolean }) {
   return (
-    <div className={`app${className ? ` ${className}` : ""}`}>
+    <div className={`app${className ? ` ${className}` : ""}`} inert={inert}>
       {/* Here, because the read that stalled could belong to any screen. */}
       <StallNotice />
       {children}
@@ -193,14 +194,14 @@ export function SkeletonVeil({ head, onGone }: { head?: ReactNode; onGone: () =>
 
 /**
  * The whole frame: a bare top bar looks like a tap that didn't land. With no
- * `groupId`, a launch reopening a group (lib/resume-hint.ts), with FABs that go
+ * `groupId`, a launch reopening a group (lib/first-frame.ts), with FABs that go
  * nowhere yet. `head` is passed in, so the frame stays free of the banners' imports.
  */
-export function LedgerSkeleton({ groupId, className, head }: {
-  groupId?: string; className?: string; head?: ReactNode;
+export function LedgerSkeleton({ groupId, className, head, inert }: {
+  groupId?: string; className?: string; head?: ReactNode; inert?: boolean;
 }) {
   return (
-    <Screen className={className}>
+    <Screen className={className} inert={inert}>
       <Body>
         <TopBar title=" " back={route.groups()} />
         <Scroll>{head}<SkeletonSummary /><SkeletonRows count={6} days /></Scroll>

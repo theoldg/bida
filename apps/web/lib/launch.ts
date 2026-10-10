@@ -6,7 +6,8 @@ import type { Group } from "@bida/core";
 import { getDevice, setLeftOnList } from "./db/device";
 import { db, type DeviceRecord } from "./db/dexie";
 import { route } from "./group-link";
-import { clearResuming } from "./resume-hint";
+import { clearFirstFrame } from "./first-frame";
+import type { CarriedGroup } from "./group-link";
 
 /**
  * Launching the app puts you back in the group you were last in (`/g` records
@@ -114,24 +115,51 @@ export function useResumeLastGroup(): { deciding: boolean; joining: boolean } {
     return () => { cancelled = true; clearTimeout(timer); };
   }, [deciding, came, router]);
 
+  // The launch has landed — settled on the list, or replaced by the group,
+  // whose own skeleton is the same frame — so the mark goes (lib/first-frame.ts).
+  // Before paint: a launch that arrives marked yet not deciding (an icon's that
+  // only saved keys) would otherwise hide this very frame for one.
+  useLayoutEffect(() => {
+    if (!deciding) clearFirstFrame();
+  }, [deciding]);
+  useEffect(() => clearFirstFrame, []);
   // Settled on the list, so the list is this device's place until a group takes
   // it back. Written on the way in: a phone gives no reliable word before the
   // app is killed.
-  // The mark before paint, though: an icon launch onto `/install` that only
-  // saved keys arrives here marked yet not deciding, and the mark hides this
-  // very frame (globals.css).
-  useLayoutEffect(() => {
-    if (!deciding) clearResuming();
-  }, [deciding]);
   useEffect(() => {
     if (deciding) return;
     void setLeftOnList();
   }, [deciding]);
-  // Replaced by the group: its own skeleton is the same frame, so the mark
-  // goes with the list rather than hiding the next visit's (lib/resume-hint.ts).
-  useEffect(() => clearResuming, []);
 
   return { deciding, joining: deciding && came?.kind === "group" };
+}
+
+/**
+ * What an icon launch onto `/install` does with the groups it carries
+ * (docs/ios.md). Pure: `firstFrame` (lib/first-frame.ts) is tested against it.
+ *
+ * - **join**: one carried group this phone lacks, nobody named in it, nothing
+ *   else to claim — the newcomer who added the icon before picking a name.
+ * - **save**: keys to save or names to claim, then the list.
+ * - **list**: the fragment is spent; an ordinary launch (`launchedOnto`).
+ *
+ * **Nothing un-forgets**: a group in `leftGroups` is neither saved nor claimed.
+ */
+export type LaunchPlan =
+  | { kind: "join"; invite: CarriedGroup }
+  | { kind: "save"; fresh: CarriedGroup[]; naming: CarriedGroup[] }
+  | { kind: "list" };
+
+export function launchPlan(
+  invites: readonly CarriedGroup[], held: ReadonlySet<string>, left: ReadonlySet<string>,
+  meByGroup: Readonly<Record<string, string>>,
+): LaunchPlan {
+  const fresh = invites.filter((invite) => !held.has(invite.groupId) && !left.has(invite.groupId));
+  const naming = invites.filter((invite) => invite.me && !left.has(invite.groupId)
+    && !(invite.groupId in meByGroup));
+  if (fresh.length === 1 && !fresh[0]!.me && naming.length === 0) return { kind: "join", invite: fresh[0]! };
+  if (fresh.length || naming.length) return { kind: "save", fresh, naming };
+  return { kind: "list" };
 }
 
 /**

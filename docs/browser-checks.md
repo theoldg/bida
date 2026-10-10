@@ -233,9 +233,11 @@ each; and one named group skips `/join` and is claimed too. The keys and names
 are read out of IndexedDB rather than off a screen: no sync API stands behind
 this check, so a group whose key just arrived has no ops to draw a row with —
 which is also the slow phone's first launch held still, where the list must
-say it is fetching them rather than that there are none. Every frame of two
-launches is sampled from the first: none may show the tutorial — `/install`
-is its route too — or no screen at all.
+say it is fetching them rather than that there are none. Every frame of three
+launches — the newcomer's, a reopen, several groups — is sampled from the
+first: none may show the tutorial (`/install` is its route too), no screen at
+all, or a pressable control while `/install` stands in; the newcomer and the
+reopen never show the list either.
 
 **The in-app browser**, last: a webview is turned round rather than joined in,
 named, handed the link it arrived with, and writes nothing. Then the half that

@@ -6,6 +6,7 @@ import { Body, LedgerSkeleton, Screen, Scroll, SkeletonRows, TopBar } from "./ch
 import { HomeMenu } from "./home-menu";
 import { Icon } from "./icons";
 import { SkeletonBanner } from "./install";
+import { JoiningFrame } from "./joining";
 import { usePasteLink } from "./paste-link";
 import { copy } from "@/lib/copy";
 import { route } from "@/lib/group-link";
@@ -13,16 +14,18 @@ import { iosHomeScreenApp } from "@/lib/install";
 
 /**
  * The groups list's frame: the name, the menu, the scroller and the start
- * tiles. One component, so the frame `/install` draws while an icon launch
- * hands over is the list's own, not a copy that can drift from it.
+ * tiles. One component, so the list's skeleton a launch stands up
+ * (`FirstFrames`) is the list's own frame, not a copy that can drift from it.
  */
-export function HomeFrame({ brand, children }: {
+export function HomeFrame({ brand, className, inert, children }: {
   /** On the name — the list's long press into /diag. */
   brand?: HTMLAttributes<HTMLSpanElement>;
+  className?: string;
+  inert?: boolean;
   children: ReactNode;
 }) {
   return (
-    <Screen className="homeframe">
+    <Screen className={className} inert={inert}>
       <Body>
         <TopBar title={<span className="brand" {...brand}>{copy.app.name}</span>} right={<HomeMenu />} />
         <Scroll>{children}</Scroll>
@@ -33,17 +36,26 @@ export function HomeFrame({ brand, children }: {
   );
 }
 
+/** The list before Dexie answers, standing in for it: nothing in it is pressable. */
+export function ListSkeleton({ className }: { className?: string }) {
+  return <HomeFrame className={className} inert><SkeletonRows count={4} /></HomeFrame>;
+}
+
 /**
- * What a launch is about to show, before anything has read the database: the
- * reopened group's skeleton under `data-resuming`, the list's otherwise.
- * Both are drawn and globals.css picks, since the mark is set before React
- * runs (lib/resume-hint.ts) — the frames `/` draws while it hydrates.
+ * Every frame a launch can be heading for (`FirstFrame`, lib/first-frame.ts),
+ * drawn hidden for globals.css to show the one `<html data-frame>` names —
+ * the mark is set before React runs, and the export can't know it. **Inert**:
+ * a tap on a skeleton would race the decision it stands in for.
+ *
+ * Drawn only while that decision is pending — hidden is not gone, and each
+ * frame's back arrow registers with the back button.
  */
-export function LaunchFrames() {
+export function FirstFrames() {
   return (
     <>
-      <LedgerSkeleton className="resumeframe" head={<SkeletonBanner />} />
-      <HomeFrame><SkeletonRows count={4} /></HomeFrame>
+      <LedgerSkeleton className="firstframe firstframe-ledger" inert head={<SkeletonBanner />} />
+      <ListSkeleton className="firstframe firstframe-list" />
+      <JoiningFrame className="firstframe firstframe-join" inert />
     </>
   );
 }

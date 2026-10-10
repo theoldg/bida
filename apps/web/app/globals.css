@@ -322,16 +322,14 @@ a { color: inherit; text-decoration: none }
 .app { background: var(--card); height: 100dvh; max-height: 100%; overflow: hidden;
   display: flex; flex-direction: column;
   position: relative; max-width: 560px; margin: 0 auto; box-shadow: var(--shadow-s) }
-/* `data-resuming` is set before paint on a launch reopening a group (lib/resume-hint.ts). */
-.resumeframe, html[data-resuming] .homeframe { display: none }
-html[data-resuming] .resumeframe { display: flex }
-/* `data-launching`: the icon opened `/install`, the tutorial's own route, so its
-   prerender holds the launch's frames as well and this picks before paint. */
-.launchframe, html[data-launching] .tutorialframe { display: none }
-html[data-launching] .launchframe { display: contents }
+/* What a launch will show, marked before paint (lib/first-frame.ts): the route's
+   own frame steps aside for the one `FirstFrames` drew for that answer. */
+.firstframe, html[data-frame] .ownframe { display: none }
+html[data-frame="ledger"] .firstframe-ledger, html[data-frame="list"] .firstframe-list,
+html[data-frame="join"] .firstframe-join { display: flex }
 .ghost { display: none }
-html[data-resuming="demo"] .ghost-demo, html[data-resuming="notify"] .ghost-notify,
-html[data-resuming="manual"] .ghost-manual { display: block }
+html[data-banner="demo"] .ghost-demo, html[data-banner="notify"] .ghost-notify,
+html[data-banner="manual"] .ghost-manual { display: block }
 .appbody { flex: 1; display: flex; flex-direction: column; min-height: 0; --search-h: 50px }
 /* The keyboard overlays the shell, so the scroller pays it back: as room past
    the last row, and as where a scroll may stop, clear of the accessory bar. */

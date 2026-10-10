@@ -26,6 +26,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-10* — "Do they feel crystal clear and aesthetic to you in the
+  code?" I'd just shipped a fix; honest answer was no, three mechanisms for
+  one question. "Do it." An aesthetics question about your own work wants
+  the critique, not a defence.
+
 - *2026-10-10* — "Reopening should remember who was rest … you have to figure
   it out." Six repros kept the rest; the cause was upstream: parts had arrived
   typed. When a bug won't reproduce, ask what wrote the data, not what reads it.
@@ -77,7 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   five rounds narrowing an "income" pill: place, tone, "lowercase, not loose",
   the dot. Ship each round as a set of shots and one pick; "approval" means a
   yes, not a stop hook asking to push.
-
-- *2026-10-08* — "Use the styles from the item split summary for the payers:
-  same numbers and same names". Two lists of people on one form should read
-  alike: copy the type, weight and figure class, not just the size.

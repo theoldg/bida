@@ -1,16 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
-import { LaunchFrames } from "@/components/home-frame";
+import { FirstFrames, ListSkeleton } from "@/components/home-frame";
 import { useBrowserName, useInstallOffer } from "@/components/install";
 import { Icon } from "@/components/icons";
 import { claimIdentity, saveGroupKey } from "@/lib/db/commands";
 import { getDevice } from "@/lib/db/device";
 import { db } from "@/lib/db/dexie";
 import { keepNote } from "@/lib/diag";
-import { launchedOnto } from "@/lib/launch";
+import { firstFrameMarked, markLaunched } from "@/lib/first-frame";
+import { launchPlan, launchedOnto } from "@/lib/launch";
 import { syncGroup } from "@/lib/db/sync";
 import { copy } from "@/lib/copy";
 import { formatJoinLink, parseInvites, route, type CarriedGroup } from "@/lib/group-link";
@@ -34,27 +35,27 @@ export default function InstallPage() {
   useEffect(() => setInvites(parseInvites(window.location.hash)), []);
 
   useLaunchedFromHomeScreen(offer === "installed" ? invites : undefined);
+  const hydrating = useSyncExternalStore(never, () => false, () => true);
+  const marked = useSyncExternalStore(never, firstFrameMarked, () => false);
 
-  // The tutorial is for a browser tab. In the home-screen app this screen is
-  // only ever the doorway above, about to leave, so it wears the frame the
-  // launch is heading to rather than a blank.
-  if (offer === "installed") return <LaunchFrames />;
-
-  // The prerender can't tell a tab from an icon launch, and an iOS launch
-  // paints it before any script here runs — so it carries both, and the mark
-  // `resumeScript` sets before paint (`data-launching`) picks in globals.css.
-  return <><div className="launchframe"><LaunchFrames /></div><Tutorial /></>;
+  // The export can't tell a tab from an icon launch, and iOS paints it before
+  // any script here runs: so it carries the launch's frames too, and the mark
+  // set before paint picks (lib/first-frame.ts). The tutorial is the route's own.
+  if (hydrating) return <><FirstFrames /><Tutorial /></>;
+  // In the home-screen app this screen is only the doorway above, about to
+  // leave: it wears the frame the launch is heading for. Unmarked — a reload
+  // here — that is the list, where it goes.
+  if (offer === "installed") return marked ? <FirstFrames /> : <ListSkeleton />;
+  return <Tutorial />;
 }
 
+const never = () => () => {};
+
 /**
- * The icon's first launch: the groups the tab held, and who it was in each.
- *
- * Keys are saved for groups this phone doesn't hold. A member the tab had
- * named is claimed here too — the icon is a device of its own — before sync,
- * since the claim is an op riding the next push.
- *
- * One unnamed group is a newcomer who added the icon before picking a name,
- * so it goes to `/join`. Anything else lands on the list.
+ * An icon launch: the groups the tab held, and who it was in each, carried out
+ * as `launchPlan` (lib/launch.ts) says. A member the tab had named is claimed
+ * before sync — the icon is a device of its own — since the claim is an op
+ * riding the next push.
  *
  * A spent fragment is still a launch, and **`lib/launch.ts` answers it, not
  * this screen** — set `launchedOnto` and let the list decide.
@@ -74,23 +75,23 @@ function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined): void {
     void (async () => {
       const [keys, device] = await Promise.all([db().groupKeys.toArray(), getDevice()]);
       const held = new Set(keys.map((key) => key.groupId));
-      const left = new Set(device.leftGroups ?? []);
-      const fresh = invites.filter((invite) => !held.has(invite.groupId) && !left.has(invite.groupId));
-      const naming = invites.filter((invite) => invite.me && !left.has(invite.groupId)
-        && !(invite.groupId in device.meByGroup));
+      const plan = launchPlan(invites, held, new Set(device.leftGroups ?? []), device.meByGroup);
       if (cancelled) return;
-      const newcomer = fresh.length === 1 && !fresh[0]!.me && naming.length === 0;
       keepNote("install.app", `${invites.length} groups, ${invites.filter((i) => i.me).length} named; `
-        + `${held.size} keys held, ${fresh.length} fresh, ${naming.length} to claim → `
-        + (newcomer ? "join" : fresh.length || naming.length ? "save" : "groups list"));
-      if (newcomer) { location.replace(formatJoinLink(fresh[0]!)); return; }
-      for (const invite of fresh) await saveGroupKey(invite.groupId, invite.secret);
-      for (const invite of naming) await claimIdentity(invite.groupId, invite.me!);
-      // Best-effort: `StartSync`'s loop retries every group anyway, and the
-      // list fills from the live query as each one lands.
-      for (const invite of [...fresh, ...naming]) syncGroup(invite.groupId).catch(() => {});
+        + `${held.size} keys held → ${plan.kind === "save"
+          ? `save ${plan.fresh.length} fresh, claim ${plan.naming.length}` : plan.kind}`);
+      // Before leaving, whichever way: no later launch of this icon is a first join.
+      markLaunched();
+      if (plan.kind === "join") { location.replace(formatJoinLink(plan.invite)); return; }
+      if (plan.kind === "save") {
+        for (const invite of plan.fresh) await saveGroupKey(invite.groupId, invite.secret);
+        for (const invite of plan.naming) await claimIdentity(invite.groupId, invite.me!);
+        // Best-effort: `StartSync`'s loop retries every group anyway, and the
+        // list fills from the live query as each one lands.
+        for (const invite of [...plan.fresh, ...plan.naming]) syncGroup(invite.groupId).catch(() => {});
+      }
       if (cancelled) return;
-      if (!fresh.length && !naming.length) launchedOnto();
+      if (plan.kind === "list") launchedOnto();
       router.replace(route.groups());
     })();
     return () => { cancelled = true; };
@@ -102,7 +103,7 @@ function Tutorial() {
   const { page } = copy.install;
 
   return (
-    <Screen className="tutorialframe">
+    <Screen className="ownframe">
       <Body>
         <TopBar title={page.title} back />
         <Scroll>

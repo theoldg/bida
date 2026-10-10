@@ -17,7 +17,7 @@ import {
   type InstallOffer,
 } from "../lib/install";
 import { pushState, subscribePushState, turnOnNotifications, type PushState } from "../lib/push";
-import { resumeHintId, type LedgerBanner } from "../lib/resume-hint";
+import { resumeHintId, type LedgerBanner } from "../lib/first-frame";
 
 export function useInstallOffer(): InstallOffer {
   return useSyncExternalStore(subscribeInstall, installOffer, () => "none" as const);
@@ -93,7 +93,7 @@ const GHOSTS: Exclude<LedgerBanner, undefined>[] = ["demo", "notify", "manual"];
 /**
  * Drawn into the ledger's skeleton so the rows don't drop when it lands. With
  * no `groupId`, exported HTML draws every candidate hidden, and the mark set
- * before paint picks one (lib/resume-hint.ts).
+ * before paint picks one (`data-banner`, lib/first-frame.ts).
  */
 export function SkeletonBanner({ groupId }: { groupId?: string }) {
   // True through the prerender and hydration, which must draw the same HTML.

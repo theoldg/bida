@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLaunchFrom, resumeGroupId, startedOnList } from "./launch";
+import { isLaunchFrom, launchPlan, resumeGroupId, startedOnList } from "./launch";
 
 const GROUP = { id: "g1" };
 
@@ -85,5 +85,26 @@ describe("isLaunchFrom", () => {
 
   it("takes a browser that gives no timing entry for a launch, as before", () => {
     expect(isLaunchFrom(undefined, undefined)).toBe(true);
+  });
+});
+
+describe("launchPlan", () => {
+  const a = { groupId: "ga", secret: "sa" };
+  const b = { groupId: "gb", secret: "sb" };
+  const none = new Set<string>();
+
+  it("joins only the one group this phone lacks, nobody named in it", () => {
+    expect(launchPlan([a], none, none, {})).toEqual({ kind: "join", invite: a });
+    expect(launchPlan([{ ...a, me: "m" }], none, none, {}).kind).toBe("save");
+    expect(launchPlan([a, b], none, none, {}).kind).toBe("save");
+    // Held already: the join happened on an earlier launch.
+    expect(launchPlan([a], new Set(["ga"]), none, {}).kind).toBe("list");
+  });
+
+  it("saves keys and claims names, and un-forgets nothing", () => {
+    expect(launchPlan([a, { ...b, me: "m" }], new Set(["gb"]), none, {}))
+      .toEqual({ kind: "save", fresh: [a], naming: [{ ...b, me: "m" }] });
+    expect(launchPlan([{ ...a, me: "m" }], none, new Set(["ga"]), {}).kind).toBe("list");
+    expect(launchPlan([{ ...a, me: "m" }], new Set(["ga"]), none, { ga: "m" }).kind).toBe("list");
   });
 });

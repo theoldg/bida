@@ -11,9 +11,11 @@ import { route } from "@/lib/group-link";
  *
  * The app's name, not "Join a group": this is where a stranger meets bida.
  */
-export function JoiningFrame({ children }: { children?: ReactNode }) {
+export function JoiningFrame({ children, className, inert }: {
+  children?: ReactNode; className?: string; inert?: boolean;
+}) {
   return (
-    <Screen><Body>
+    <Screen className={className} inert={inert}><Body>
       <TopBar title={<span className="brand">{copy.app.name}</span>} back={route.groups()} />
       <Scroll>
         <Empty title={copy.join.joining.title}>{children}</Empty>

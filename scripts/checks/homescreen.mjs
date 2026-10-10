@@ -338,26 +338,39 @@ report(androidFolded && await androidAdd.waitFor({ timeout: 2000 }).then(() => t
 
 /**
  * Look at every frame a launch paints, from the first: an icon opens
- * `/install`, the tutorial's route, whose prerender holds both and picks
- * before paint (`data-launching`, lib/resume-hint.ts). Counted per frame in
- * `sessionStorage`, which outlives the document should a launch reload.
+ * `/install`, the tutorial's route, whose export also holds the launch's
+ * frames and lets a mark set before paint pick (lib/first-frame.ts). Counted
+ * per frame into `sessionStorage` under `run`, which outlives the reload into
+ * `/join`. On `/install`, what is drawn there is only standing in, so nothing
+ * on it may be pressable either.
  */
-const watchFrames = (page) => page.addInitScript(() => {
-  const count = (key) => sessionStorage.setItem(key, String(Number(sessionStorage.getItem(key) ?? 0) + 1));
+const watchFrames = (page, run) => page.addInitScript((run) => {
+  const count = (key) => {
+    const at = `frames.${run}.${key}`;
+    sessionStorage.setItem(at, String(Number(sessionStorage.getItem(at) ?? 0) + 1));
+  };
   const shown = (el) => el.getClientRects().length > 0;
   const look = () => {
     // Before the body is parsed there is nothing to paint yet.
     if (document.body) {
-      count("frames.frames");
-      if ([...document.querySelectorAll(".tutorialframe")].some(shown)) count("frames.tutorial");
-      if (![...document.querySelectorAll(".app .topbar")].some(shown)) count("frames.blank");
+      count("frames");
+      const install = location.pathname === "/install";
+      if (install && [...document.querySelectorAll(".ownframe")].some(shown)) count("tutorial");
+      if (![...document.querySelectorAll(".app .topbar")].some(shown)) count("blank");
+      if (install && [...document.querySelectorAll(".starttiles")].some(shown)) count("list");
+      if (install && [...document.querySelectorAll("a, button")].some((el) => shown(el) && !el.closest("[inert]"))) {
+        count("pressable");
+      }
     }
     requestAnimationFrame(look);
   };
   requestAnimationFrame(look);
-});
-const framesSeen = (page) => page.evaluate(() => Object.fromEntries(["frames", "tutorial", "blank"]
-  .map((k) => [k, Number(sessionStorage.getItem(`frames.${k}`) ?? 0)])));
+}, run);
+const framesSeen = (page, run) => page.evaluate((run) => Object.fromEntries(
+  ["frames", "tutorial", "blank", "list", "pressable"]
+    .map((k) => [k, Number(sessionStorage.getItem(`frames.${run}.${k}`) ?? 0)])), run);
+/** Painted, and never the tutorial, nothing at all, or a live control on `/install`. */
+const steady = (seen) => seen.frames > 0 && seen.tutorial === 0 && seen.blank === 0 && seen.pressable === 0;
 
 // ---- the icon's first launch ---------------------------------------------
 // An invite nobody has picked a name in yet: this launch is the join the tab
@@ -365,11 +378,16 @@ const framesSeen = (page) => page.evaluate(() => Object.fromEntries(["frames", "
 const fresh = await iphone();
 const freshPage = await fresh.newPage();
 await asInstalledApp(freshPage);
+await watchFrames(freshPage, "newcomer");
 await freshPage.goto(`${base}/install${fragment}`);
 const handed = await freshPage.waitForURL(
   (url) => url.pathname === "/join" && url.hash === fragment, { timeout: PATIENCE },
 ).then(() => true, () => false);
 report(handed, "launching the icon opens the invite it was added for", freshPage.url());
+const newcomerFrames = await framesSeen(freshPage, "newcomer");
+report(steady(newcomerFrames) && newcomerFrames.list === 0,
+  "wearing \"Joining…\" from the first frame: never the tutorial, nor the list it is not going to",
+  JSON.stringify(newcomerFrames));
 // The secret is written by the join screen, not by the launch — wait for the
 // line that only draws once it has been (and stays, since no other phone is
 // pushing to this server), or the launch below has nothing to have held.
@@ -402,7 +420,7 @@ const made = await newGroup(freshPage, base, { name: "Ferry", me: "Ana", members
 // of race this comment is about.
 await freshPage.waitForSelector(".fab");
 await untilDevice(freshPage, (d) => d?.lastOpenedGroupId === made);
-await watchFrames(freshPage);
+await watchFrames(freshPage, "reopen");
 await freshPage.goto(`${base}/install${fragment}`);
 const reopened = await freshPage.waitForURL(
   (url) => url.pathname === "/g" && url.searchParams.get("id") === made, { timeout: PATIENCE },
@@ -410,9 +428,9 @@ const reopened = await freshPage.waitForURL(
 report(reopened, "and reopens the group this phone was last in, as any other launch does",
   freshPage.url());
 await freshPage.waitForSelector(".fab");
-const reopenFrames = await framesSeen(freshPage);
-report(reopenFrames.frames > 0 && reopenFrames.tutorial === 0 && reopenFrames.blank === 0,
-  "without the tutorial or a blank screen in any frame on the way: `/install` is its route too",
+const reopenFrames = await framesSeen(freshPage, "reopen");
+report(steady(reopenFrames) && reopenFrames.list === 0,
+  "in the group's skeleton from the first frame: never the tutorial, a blank, or the list",
   JSON.stringify(reopenFrames));
 
 // ---- a phone that brought several over -----------------------------------
@@ -421,15 +439,15 @@ report(reopenFrames.frames > 0 && reopenFrames.tutorial === 0 && reopenFrames.bl
 const many = await iphone();
 const manyPage = await many.newPage();
 await asInstalledApp(manyPage);
-await watchFrames(manyPage);
+await watchFrames(manyPage, "many");
 await manyPage.goto(`${base}/install#${carried}`);
 const landed = await manyPage.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE })
   .then(() => true, () => false);
 report(landed, "launching an icon added with several groups lands on the list", manyPage.url());
 await manyPage.getByText("Getting your groups").waitFor({ timeout: PATIENCE }).catch(() => {});
-const manyFrames = await framesSeen(manyPage);
-report(manyFrames.frames > 0 && manyFrames.tutorial === 0 && manyFrames.blank === 0,
-  "and shows neither the tutorial nor a blank screen on the way there", JSON.stringify(manyFrames));
+const manyFrames = await framesSeen(manyPage, "many");
+report(steady(manyFrames), "and shows the list's skeleton on the way, never the tutorial or a blank",
+  JSON.stringify(manyFrames));
 report((await secretsHeld(manyPage)).sort().join(" ") === [ski, flat].sort().join(" "),
   "holding every secret it was added with");
 const claimed = await namesHeld(manyPage);

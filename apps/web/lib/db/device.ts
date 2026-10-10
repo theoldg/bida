@@ -1,6 +1,6 @@
 import { newNodeId } from "@bida/core";
 import { started } from "../diag";
-import { hintResume } from "../resume-hint";
+import { hintResume } from "../first-frame";
 import { db, type DeviceRecord } from "./dexie";
 import { whenVisible } from "./visible";
 
