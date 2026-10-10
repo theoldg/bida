@@ -3,7 +3,7 @@ import {
   type CurrencyCode, type Rate, type SplitSpec,
 } from "@bida/core";
 import {
-  activeSplit, activeSplitTab, draftAmountMinor, draftReceiptSplit, draftReceiptTotal,
+  arithmeticSplit, draftAmountMinor, draftReceiptSplit, draftReceiptTotal,
   splitSeed, type EntryDraft, type SplitTab,
 } from "./draft";
 import { copy } from "./copy";
@@ -40,10 +40,6 @@ interface EntryCheck {
    * would leave nothing to type and a Save that never lights.
    */
   receiptLocksAmount: boolean;
-  /** True while Receipt mode is showing a bill it actually has. */
-  onReceiptTab: boolean;
-  /** What the tab now showing holds — the rows the split editor draws. */
-  activeSplit: SplitSpec;
   /**
    * The split read off the bill, or null until the grid says who had what.
    * Never touches the three arithmetic tabs (`SplitInputs`).
@@ -101,19 +97,16 @@ export function checkEntry(input: {
   const { draft, base, nameOf } = input;
   const kind = draft.kind;
   const transfer = kind === "transfer";
-  const activeTab = activeSplitTab(draft);
+  const activeTab = draft.splitTab;
 
   const canScan = kind === "expense";
-  const hasReceiptItems = (draft.receiptItems?.length ?? 0) > 0;
-  const onReceiptTab = canScan && activeTab === "receipt" && hasReceiptItems;
 
   // Derived where it is read, never cached into the draft (ADR-0016).
   const receiptTotal = draftReceiptTotal(draft);
   // Null until the grid has been filled; the arithmetic tab behind it is what
   // a save would write, and `receiptBlocker` refuses that.
   const receiptSplit = draftReceiptSplit(draft);
-  const tabSplit = activeSplit(draft);
-  const effectiveSplit = receiptSplit ?? tabSplit;
+  const effectiveSplit = receiptSplit ?? arithmeticSplit(draft);
 
   // The same question the payers editor asks, answered by the same function.
   const amountMinor = draftAmountMinor(draft);
@@ -173,7 +166,7 @@ export function checkEntry(input: {
   const splitProblem = foot && !foot.ok ? foot.text : null;
   // Only amounts are a column someone types toward a total; a bill's split
   // adds up by construction.
-  const splitTick = foot?.ok && tabSplit.mode === "exact" ? foot.text : null;
+  const splitTick = foot?.ok && effectiveSplit.mode === "exact" ? foot.text : null;
 
   // Why Save is refused where no field or step is missing, said unasked. A
   // missing rate is not here — it blooms its badge, and is said only once a
@@ -194,7 +187,7 @@ export function checkEntry(input: {
   return {
     amountMinor, baseMinor, foreign, rate, rateOk,
     activeTab, canScan, receiptTotal, receiptLocksAmount: receiptTotal !== null,
-    onReceiptTab, activeSplit: tabSplit, receiptSplit, effectiveSplit,
+    receiptSplit, effectiveSplit,
     blocker, splitProblem, splitTick, amountMissing, titleMissing, receiptMissing, ready,
   };
 }

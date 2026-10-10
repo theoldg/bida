@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { clipAmountToCurrency } from "./amount-input";
 import { copy } from "../lib/copy";
 import { Icon } from "./icons";
-import { activeSplitTab, getDraft, saveDraft, tabAfterScan } from "../lib/draft";
+import { getDraft, saveDraft, tabAfterScan } from "../lib/draft";
 import { normalizeScan, readBill, scanCurrency, type ScanMedium, type ScanResult } from "@bida/core";
 import {
   parseBillText, scanReceipt,
@@ -86,7 +86,7 @@ export function useReceiptScan(
     if (!groupId || !latestScanAs.current) return;
     const current = getDraft(groupId);
     if (!current) return;
-    const tabAtStart = activeSplitTab(current);
+    const tabAtStart = current.splitTab;
     beginScan(groupId, medium);
     try {
       const sender = latestScanAs.current;

@@ -1042,7 +1042,6 @@ export const copy = {
       equal: "Evenly",
       shares: "As parts",
       exact: "As amounts",
-      percent: "By percent",
       receipt: "By items",
     } as Record<SplitSpec["mode"], string>,
     /** The tab label, without the preposition — a quarter width has no room. */

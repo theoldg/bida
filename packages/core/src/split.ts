@@ -17,7 +17,7 @@ interface SplitResult {
  * Why a split doesn't add up. Core names the problem and never formats it:
  * it doesn't know the currency, so the sentence is the caller's.
  */
-export type SplitProblem = "empty" | "under" | "over" | "percent" | "nothingLeft";
+export type SplitProblem = "empty" | "under" | "over" | "nothingLeft";
 
 export interface SplitValidation {
   ok: boolean;
@@ -69,11 +69,15 @@ function hash32(input: string): number {
  * out here too, whatever wrote it. Being in with no figure is `rest`.
  */
 export function splitParticipants(spec: SplitSpec): Id[] {
-  const ids =
-    spec.mode === "equal" ? spec.members
-    : spec.mode === "exact" ? [...Object.keys(exactAmounts(spec.amounts)), ...restOf(spec)]
-    : spec.mode === "shares" || spec.mode === "receipt" ? Object.keys(spec.weights)
-    : Object.keys(spec.bps);
+  let ids: Id[];
+  switch (spec.mode) {
+    case "equal": ids = spec.members; break;
+    case "exact": ids = [...Object.keys(exactAmounts(spec.amounts)), ...restOf(spec)]; break;
+    case "shares": case "receipt": ids = Object.keys(spec.weights); break;
+    // A mode this build doesn't know names nobody, so `resolveSplit` refuses it
+    // and the balances list it as a problem rather than a screen throwing.
+    default: ids = [];
+  }
   return [...new Set(ids)].sort();
 }
 
@@ -157,7 +161,6 @@ export function canonicalSplit(spec: SplitSpec): SplitSpec {
         ? { mode: "exact", amounts: sortedKeys(spec.amounts), rest }
         : { mode: "exact", amounts: sortedKeys(spec.amounts) };
     }
-    case "percent": return { mode: "percent", bps: sortedKeys(spec.bps) };
     case "receipt": return { mode: "receipt", weights: sortedKeys(spec.weights) };
   }
 }
@@ -170,7 +173,6 @@ function weightsOf(spec: SplitSpec, participants: Id[]): Map<Id, bigint> {
     switch (spec.mode) {
       case "equal": w = 1; break;
       case "shares": case "receipt": w = spec.weights[id] ?? 0; break;
-      case "percent": w = spec.bps[id] ?? 0; break;
       case "exact": w = 0; break;
     }
     if (!Number.isInteger(w) || w < 0) {
@@ -381,19 +383,6 @@ export function validateSplit(
     return { ok: true, allocatedMinor: totalMinor, totalMinor, rest: { ids, leftMinor } };
   }
 
-  if (spec.mode === "percent") {
-    const sum = participants.reduce((a, id) => a + (spec.bps[id] ?? 0), 0);
-    if (sum !== 10_000) {
-      return {
-        ok: false,
-        allocatedMinor: 0,
-        totalMinor,
-        problem: "percent",
-        message: `Percentages add up to ${(sum / 100).toFixed(2)}%, not 100%`,
-      };
-    }
-  }
-
   try {
     // It sums to the total or it throws.
     resolveSplit(totalMinor, spec, options);
@@ -441,12 +430,9 @@ export function shareOf(
  * Switch tabs carrying who is in and none of the numbers: parts are not
  * amounts, and a figure nobody typed is not one. Into As amounts everyone
  * shares the rest, so typing one figure re-divides the others. Never into
- * `receipt` (ADR-0016) or the legacy `percent`, which nobody types.
+ * `receipt`, which nobody types (ADR-0016).
  */
-export function convertSplitMode(
-  spec: SplitSpec,
-  mode: Exclude<ArithmeticMode, "percent">,
-): ArithmeticSplit {
+export function convertSplitMode(spec: SplitSpec, mode: ArithmeticMode): ArithmeticSplit {
   if (spec.mode === mode) return spec as ArithmeticSplit;
   const participants = splitParticipants(spec);
   switch (mode) {
@@ -470,7 +456,7 @@ export function convertSplitMode(
  * the rest, even with nothing left, where `validateSplit` says so.
  */
 export function toggleEveryone(
-  spec: Exclude<ArithmeticSplit, { mode: "percent" }>,
+  spec: ArithmeticSplit,
   memberIds: readonly Id[],
 ): ArithmeticSplit {
   const inNow = new Set(splitParticipants(spec));

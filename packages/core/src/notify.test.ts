@@ -121,7 +121,7 @@ describe("notices: shares agree with the ledger to the last minor unit", () => {
     ["JPY", 1000, { mode: "equal", members: [ADA, MARIE, SAM] }],
     ["KWD", 10_001, { mode: "equal", members: [ADA, MARIE, SAM] }],
     ["EUR", 1001, { mode: "shares", weights: { [ADA]: 2, [MARIE]: 1, [SAM]: 1 } }],
-    ["JPY", 999, { mode: "percent", bps: { [ADA]: 3333, [MARIE]: 3333, [SAM]: 3334 } }],
+    ["JPY", 999, { mode: "shares", weights: { [ADA]: 1, [MARIE]: 1, [SAM]: 1 } }],
     ["KWD", 1234, { mode: "exact", amounts: { [ADA]: 1000, [MARIE]: 200, [SAM]: 34 } }],
     ["EUR", 2003, { mode: "receipt", weights: { [ADA]: 7, [MARIE]: 5, [SAM]: 3 } }],
   ];

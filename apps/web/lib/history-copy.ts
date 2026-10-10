@@ -94,8 +94,7 @@ function proportions(spec: SplitSpec | null | undefined): string {
     for (const id of splitParticipants(spec)) {
       const w = spec.mode === "equal" ? 1
         : spec.mode === "shares" || spec.mode === "receipt" ? spec.weights[id] ?? 0
-          : spec.mode === "exact" ? spec.amounts[id] ?? 0
-            : spec.bps[id] ?? 0;
+          : spec.amounts[id] ?? 0;
       // Exact amounts are money and the rest are counts, but as a ratio they
       // are the same question.
       if (Number.isSafeInteger(w) && w > 0) weights[id] = w;

@@ -73,7 +73,7 @@ Expense {
   paidBy,             // memberId — the payer, or the largest co-sponsor
   payers?,            // memberId -> minor units in THIS expense's currency,
                       // summing to amountMinor. Absent = one payer (ADR-0010)
-  split: { mode: 'equal' | 'exact' | 'shares' | 'percent' | 'receipt', ... },
+  split: { mode: 'equal' | 'exact' | 'shares' | 'receipt', ... },
   attachmentIds?,     // absent when there are none, which is every
                       // expense today: nothing appends an attachment op yet
   receiptItems?, receiptTip?, receiptInvolved?, receiptAssignments?,
@@ -89,7 +89,7 @@ Expense {
 ```
 
 Split payloads: `equal { members[] }`, `exact { amounts, rest? }`, `shares { weights }`,
-`percent { bps }` (basis points), `receipt { weights }`. **An `exact` zero is
+`receipt { weights }`. **An `exact` zero is
 nobody**: none is ever written, and `splitParticipants` reads one as out.
 **`rest` is who is in with no figure typed**: they share what the typed figures
 leave, evenly and seeded as Evenly is (`exactFigures`), worked out again at
@@ -97,9 +97,9 @@ every read. Their figures are still written into `amounts` (`settleRest`, on
 save), so a phone that predates `rest` reads a whole split that adds up; the
 key is absent when nobody floats, so older splits serialise unchanged.
 `convertSplitMode` carries who is in and no numbers, so every mode opens "as
-amounts" as everyone in `rest`, nothing typed. **`percent` is legacy
-and read-only** ([ADR-0010](decisions/0010-what-an-entry-is.md)); **`receipt` is
-the only mode nobody types** — a scanned bill writes it and `convertSplitMode`
+amounts" as everyone in `rest`, nothing typed. A mode this build doesn't know
+(the retired `percent`, never written) names nobody, so it reads as a split
+that can't be resolved, not a crash. **`receipt` is the only mode nobody types** — a scanned bill writes it and `convertSplitMode`
 never converts into it ([ADR-0016](decisions/0016-receipts.md)).
 What a person calls each mode is `copy.split.mode` in `apps/web/lib/copy.ts`
 and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).

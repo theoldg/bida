@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addsUp, canonicalSplit, convertSplitMode, ownCurrencySplit, resolveEntrySplit, resolveSplit, shareOf, splitParticipants,
-  restOf, settleRest, toggleEveryone, upgradeReceiptSplit, validateSplit,
+  restOf, settleRest, SplitError, toggleEveryone, upgradeReceiptSplit, validateSplit,
 } from "./split.js";
 import type { SplitSpec } from "./types.js";
 
@@ -72,18 +72,6 @@ describe("resolveSplit — shares", () => {
   });
 });
 
-describe("resolveSplit — percent", () => {
-  it("apportions by basis points", () => {
-    const r = resolveSplit(10000, { mode: "percent", bps: { a: 2500, b: 7500 } });
-    expect(r.shares).toEqual({ a: 2500, b: 7500 });
-  });
-
-  it("sums exactly on thirds", () => {
-    const r = resolveSplit(10000, { mode: "percent", bps: { a: 3333, b: 3333, c: 3334 } });
-    expect(sum(r.shares)).toBe(10000);
-  });
-});
-
 describe("resolveSplit — exact", () => {
   it("passes exact amounts through", () => {
     const spec: SplitSpec = { mode: "exact", amounts: { a: 8520, b: 8519 } };
@@ -139,10 +127,13 @@ describe("validateSplit", () => {
     for (const v of [under, over]) expect(v.message).not.toMatch(/minor units|\d/);
   });
 
-  it("catches percentages that don't reach 100", () => {
-    const v = validateSplit(10000, { mode: "percent", bps: { a: 5000, b: 4000 } });
-    expect(v.ok).toBe(false);
-    expect(v.message).toMatch(/90\.00%/);
+  // A mode this build doesn't know (the retired `percent`) names nobody, so
+  // it is refused rather than throwing where a screen reads it.
+  it("refuses a mode it doesn't know without blowing up", () => {
+    const spec = { mode: "percent", bps: { a: 5000, b: 5000 } } as unknown as SplitSpec;
+    expect(splitParticipants(spec)).toEqual([]);
+    expect(validateSplit(10000, spec).ok).toBe(false);
+    expect(() => resolveSplit(10000, spec)).toThrow(SplitError);
   });
 
   it("rejects an empty split without blowing up", () => {
@@ -173,7 +164,6 @@ describe("convertSplitMode", () => {
   it("drops the parts moving to exact, keeping who is in", () => {
     const from: SplitSpec[] = [
       { mode: "shares", weights: { a: 2, b: 1, c: 1 } },
-      { mode: "percent", bps: { a: 5000, b: 2500, c: 2500 } },
       { mode: "receipt", weights: { a: 2000, b: 500, c: 500 } },
     ];
     for (const start of from) {
@@ -218,7 +208,6 @@ describe("convertSplitMode", () => {
       { mode: "equal", members: [] },
       { mode: "exact", amounts: {} },
       { mode: "shares", weights: {} },
-      { mode: "percent", bps: {} },
     ];
     for (const start of empty) {
       for (const mode of ["equal", "exact", "shares"] as const) {
@@ -401,8 +390,6 @@ describe("canonicalSplit", () => {
       .toBe(JSON.stringify({ mode: "shares", weights: { a: 1, b: 2 } }));
     expect(JSON.stringify(canonicalSplit({ mode: "exact", amounts: { b: 200, a: 100 } })))
       .toBe(JSON.stringify({ mode: "exact", amounts: { a: 100, b: 200 } }));
-    expect(JSON.stringify(canonicalSplit({ mode: "percent", bps: { b: 4000, a: 6000 } })))
-      .toBe(JSON.stringify({ mode: "percent", bps: { a: 6000, b: 4000 } }));
   });
 
   it("changes nothing about the arithmetic", () => {

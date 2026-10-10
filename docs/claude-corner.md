@@ -15,7 +15,8 @@ in the Gotchas of the doc that owns it, a rule in
 
 The owner writes lower-case fragments; read each as the whole instruction.
 Taste arrives as feel ("the wrong vibe") — answer with the screen photographed,
-not described. Permission is usually pre-granted: build, then be corrected.
+not described. Permission is usually pre-granted: build, then be corrected —
+but "wait for my approval" means stop until a yes.
 When a request undoes an ADR, say so once ("this undoes ADR-N, sure?"), then build.
 
 The failure mode is *earnestness* — the extra paragraph, the ADR, prose
@@ -25,6 +26,11 @@ restating what the code enforces. What gets praised is deleting.
 
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
+
+- *2026-10-10* — "Audit the split tabs", then "explain and wait for my
+  approval", then "percent splits … are safe to delete". The legacy case I'd
+  been tiptoeing round was the tangle; ask whether old data is real before
+  building around it.
 
 - *2026-10-10* — "Do they feel crystal clear and aesthetic to you in the
   code?" I'd just shipped a fix; honest answer was no, three mechanisms for
@@ -77,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-09* — "The row flash doesn't wait long enough after scrolling",
   with a guess it was the colour. It was timing: the wash faded as the scroll
   landed. Fix what was felt; offer the guess back as a separate knob.
-
-- *2026-10-09* — "Try a few variants … don't push before my approval", then
-  five rounds narrowing an "income" pill: place, tone, "lowercase, not loose",
-  the dot. Ship each round as a set of shots and one pick; "approval" means a
-  yes, not a stop hook asking to push.

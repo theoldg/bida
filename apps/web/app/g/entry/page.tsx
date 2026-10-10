@@ -498,9 +498,7 @@ function ExpenseDetail({ expense, kind, group, data }: {
           // instead, line by line, under the row (`MemberBill`).
           const detail = expense.split.mode === "shares"
             ? ` · ${plural(expense.split.weights[m.id] ?? 0, copy.noun.part)}`
-            : expense.split.mode === "percent"
-              ? ` · ${(expense.split.bps[m.id] ?? 0) / 100}%`
-              : "";
+            : "";
           const k = yours(m.id, m.name, detail);
           const v = foreign
             ? <TwoCurrencies base={money(shares[m.id] ?? 0, group.baseCurrency)}

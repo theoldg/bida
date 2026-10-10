@@ -101,9 +101,10 @@ API is reached with `fetch`.
   shows the cent on one row and writes it to another. `addExpense`
   takes the id rather than minting one. `pnpm verify entries` holds it.
 - **Each split tab is its own input** (`SplitInputs`, ADR-0010): the editor
-  draws and edits the tab showing, `openSplitTab` is the one place a newly
-  opened tab is handed a starting point, and `activeSplit` says which spec is
-  on screen — the receipt's, on its tab, read off the bill. What a first-time
+  draws and edits the tab showing, `changeSplitTab` is the one way the tab
+  moves (handing a newly opened tab its start through `openSplitTab`), and
+  `activeSplit` says which spec a save writes — the receipt's, on its tab,
+  read off the bill. Which tab is lit is `splitTab` alone, never the spec. What a first-time
   tab is handed is who `arithmeticSplit` has in, never the receipt: a scan is an answer of
   its own, in a mode of its own, and does not fill in As parts (ADR-0016).
   Which tab is showing lives on the draft alone; a saved entry carries its

@@ -4,10 +4,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import {
-  latestRate, minorToDecimalString, receiptExtras, receiptOf, settleRest,
-  type Group, type RateSource,
+  latestRate, minorToDecimalString, receiptOf, settleRest,
+  type ArithmeticSplit, type Group, type RateSource,
 } from "@bida/core";
-import { handOffReceiptTotal } from "@/lib/scan/items";
 import { You } from "@/components/bits";
 import { AmountInput, clipAmountToCurrency } from "@/components/amount-input";
 import { useReceiptScan } from "@/components/receipt-scan";
@@ -33,7 +32,7 @@ import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 import { markSaved } from "@/lib/ledger-motion";
 import { goUp, goBack, sameScreen } from "@/lib/nav";
 import {
-  blankDraft, clearDraft, draftSeedKey, expenseDraft, getDraft, isDraftDirty, newEntryKey, openSplitTab,
+  arithmeticSplit, blankDraft, changeSplitTab, clearDraft, draftSeedKey, expenseDraft, getDraft, isDraftDirty, newEntryKey,
   retimed, saveDraft, seedDraft, splitSeed, transferDraft, useDraft, withSplit,
   type EntryDraft, type SplitTab,
 } from "@/lib/draft";
@@ -202,8 +201,8 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   // arithmetic behind that button has a test suite rather than a screen to
   // mount (lib/entry-check.ts). The form reads its answers; it writes nothing.
   const {
-    activeTab, canScan, activeSplit, receiptSplit, effectiveSplit, receiptTotal, receiptLocksAmount,
-    onReceiptTab, amountMinor, baseMinor, foreign, rate, rateOk, blocker, splitProblem, splitTick,
+    activeTab, canScan, receiptSplit, effectiveSplit, receiptTotal, receiptLocksAmount,
+    amountMinor, baseMinor, foreign, rate, rateOk, blocker, splitProblem, splitTick,
     receiptMissing, ready,
     amountMissing, titleMissing,
   } = checkEntry({
@@ -264,33 +263,22 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     patch({ currency });
   }
 
-  /**
-   * Switching tabs. Two handoffs, each only into a tab with nothing of its own
-   * yet: `openSplitTab` gives it a split to start from, and `handOffReceiptTotal`
-   * gives the amount field Receipt's derived total — without it the expense
-   * silently becomes worth zero (ADR-0016). A tab holding an answer keeps it.
-   */
   function changeTab(splitTab: SplitTab) {
-    const handoff = handOffReceiptTotal(
-      activeTab, splitTab, draft.receiptItems, receiptExtras(draft), draft.currency,
-    );
-    patch({
-      splitTab,
-      splits: openSplitTab(draft, splitTab),
-      ...(handoff !== null ? { amountText: handoff } : {}),
-    });
+    patch(changeSplitTab(getDraft(groupId) ?? draft, splitTab));
+  }
+
+  /** The tab's edit, into the latest draft's tabs so it can't drop another's. */
+  function changeSplit(split: ArithmeticSplit) {
+    patch({ splits: withSplit((getDraft(groupId) ?? draft).splits, split) });
   }
 
   /**
    * Change which of the three this is, keeping what the new kind can use.
-   * Leaving Receipt takes the same handoff as a tab switch.
+   * Only an expense has Items: any other kind leaves it for Evenly, scanned or
+   * not, so the tab on the draft is always one the form can show.
    */
   function changeKind(next: EntryKind) {
     if (next === kind) return;
-    const leavingReceipt = onReceiptTab && next !== "expense";
-    const handoff = leavingReceipt
-      ? handOffReceiptTotal(activeTab, "equal", draft.receiptItems, receiptExtras(draft), draft.currency)
-      : null;
     // "Reimbursement" is only written by settle up's card. A transfer leaving that
     // kind hands on an empty field rather than a word that no longer fits.
     const note = next !== "transfer" && draft.description === copy.form.reimbursement
@@ -298,10 +286,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     patch({
       kind: next,
       description: note,
-      ...(leavingReceipt
-        ? { splitTab: "equal" as SplitTab, splits: openSplitTab(draft, "equal") }
-        : {}),
-      ...(handoff !== null ? { amountText: handoff } : {}),
+      ...(activeTab === "receipt" && next !== "expense" ? changeSplitTab(draft, "equal") : {}),
     });
   }
 
@@ -568,10 +553,10 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                 title={copy.entryKind.split[kind]}
                 amountMinor={amountMinor}
                 amountCurrency={draft.currency}
-                spec={activeSplit}
+                spec={arithmeticSplit(draft)}
                 receiptSplit={receiptSplit}
                 seed={splitSeed(draft)}
-                onChange={(split) => patch({ splits: withSplit(draft.splits, split) })}
+                onChange={changeSplit}
                 tab={activeTab}
                 onTabChange={changeTab}
                 receipt={canScan ? {

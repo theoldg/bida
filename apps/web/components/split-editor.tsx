@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  exactFigures, resolveSplit, restOf, splitParticipants, toggleEveryone,
+  exactFigures, resolveSplit, restOf, splitParticipants, toggleEveryone, validateSplit,
   type ArithmeticSplit, type Id, type Member, type SplitSpec,
 } from "@bida/core";
 import { MAX_PARTS, MinorAmountInput, PartsInput } from "./amount-input";
@@ -16,10 +16,10 @@ import { bare, money, plural } from "../lib/format";
 import type { SplitTab } from "../lib/draft";
 
 /**
- * Inline on the form, never a route: an expense is one thought. Nothing new is
- * written as `percent`; touching any tab converts one away. The receipt split
- * is never written here: it arrives as `receiptSplit` (ADR-0016). The tab bar
- * only reports a tap; the draft hands a new tab its start (`openSplitTab`).
+ * Inline on the form, never a route: an expense is one thought. The receipt
+ * split is never written here: it arrives as `receiptSplit` (ADR-0016). The
+ * tab bar only reports a tap and lights `tab`; the draft hands a new tab its
+ * start (`openSplitTab`).
  */
 
 const MODES = ["equal", "shares", "exact"] as const;
@@ -54,8 +54,8 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   /** In the entry's own currency, as the payers are: the figures on the bill need no rate. */
   amountMinor: number;
   amountCurrency: string;
-  /** The arithmetic tab now showing — the only thing this edits. */
-  spec: SplitSpec;
+  /** What the arithmetic tab showing holds (Evenly's under Items) — the only thing this edits. */
+  spec: ArithmeticSplit;
   /** Null while the grid is unfilled. */
   receiptSplit: SplitSpec | null;
   seed: string;
@@ -66,8 +66,6 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   receipt: ReceiptTabProps | null;
 }) {
   const opts = { tiebreakSeed: seed };
-  // Shows its numbers but has no tab: touching any tab converts it away.
-  const legacy = spec.mode === "percent";
   const showReceipt = tab === "receipt" && receipt !== null;
   // Receipt draws none until its grid is filled: the spec underneath isn't what a save would write.
   const shown: SplitSpec | null = showReceipt ? receiptSplit : spec;
@@ -81,11 +79,10 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   // As amounts: who shares the rest, what each gets, and whether there is any
   // to get. Over the total, or with less than a cent each, a share would be a
   // lie, so the rows say "?" — but never before there is an amount at all.
+  // With anybody sharing, those are the only ways `validateSplit` refuses.
   const rest = new Set(restOf(spec));
   const figures = spec.mode === "exact" ? exactFigures(amountMinor, spec, opts) : {};
-  const typedSum = spec.mode === "exact"
-    ? Object.entries(spec.amounts).reduce((a, [id, v]) => a + (rest.has(id) ? 0 : v), 0) : 0;
-  const restShort = amountMinor > 0 && rest.size > 0 && typedSum + rest.size > amountMinor;
+  const restShort = amountMinor > 0 && rest.size > 0 && !validateSplit(amountMinor, spec, opts).ok;
   const rowOf = (id: Id): AmountRow =>
     rest.has(id) ? "rest" : spec.mode === "exact" && (spec.amounts[id] ?? 0) > 0 ? "typed" : "out";
 
@@ -103,19 +100,14 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
         if (next.has(memberId)) weights[memberId] = 1; else delete weights[memberId];
         return onChange({ mode: "shares", weights });
       }
+      // Its rows answer `tapRow`, which knows typed from sharing.
       case "exact": return;
-      case "percent": {
-        const bps = { ...spec.bps };
-        if (next.has(memberId)) bps[memberId] = 0; else delete bps[memberId];
-        return onChange({ mode: "percent", bps });
-      }
     }
   }
 
   // The head box: one tap for the whole list, the same verb in every tab.
   // Three people at least: with two, the other row is the same one tap.
-  const head = !showReceipt && (spec.mode === "equal" || spec.mode === "shares" || spec.mode === "exact")
-    && members.length >= 3 ? spec : null;
+  const head = !showReceipt && members.length >= 3 ? spec : null;
   const inCount = members.filter((m) => included.has(m.id)).length;
   const headState = inCount === 0 ? "none" : inCount === members.length ? "all" : "some";
 
@@ -168,7 +160,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
         <div className="seg">
           {/* `aria-pressed`: painting it says so only to an eye. */}
           {MODES.map((mode) => {
-            const on = !showReceipt && !legacy && spec.mode === mode;
+            const on = !showReceipt && tab === mode;
             return (
               <button key={mode} type="button" className={on ? "on" : ""} aria-pressed={on}
                 onClick={() => onTabChange(mode)}>{copy.split.mode[mode]}</button>
@@ -190,7 +182,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
             const on = included.has(m.id);
             // Where the right side is only a read-out, the toggle takes the whole
             // row: one that answers on its left half only reads as broken.
-            const wholeRow = spec.mode === "equal" || spec.mode === "percent";
+            const wholeRow = spec.mode === "equal";
             const typing = spec.mode === "exact";
             const fieldId = `sp-${m.id}`;
             const row = rowOf(m.id);
@@ -224,10 +216,6 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
                   placeholder={row !== "rest" ? bare(0, amountCurrency)
                     : restShort ? "?" : bare(figures[m.id] ?? 0, amountCurrency)}
                   onChangeMinor={(minor) => setExact(m.id, minor)} />
-              </span>
-            ) : spec.mode === "percent" ? (
-              <span className="bignum" style={{ fontSize: 14, color: on ? "var(--ink)" : "var(--muted)" }}>
-                {(spec.bps[m.id] ?? 0) / 100}%
               </span>
             ) : (
               // Ink, not green: being in the split is not a credit.

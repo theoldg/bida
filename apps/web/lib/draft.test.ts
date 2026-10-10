@@ -4,7 +4,7 @@ import {
   exactFigures, resolveSplit, splitParticipants, startOfLocalDay, type Expense, type Settlement, type SplitSpec,
 } from "@bida/core";
 import {
-  activeSplit, activeSplitTab, blankDraft, draftReceiptSplit, expenseDraft, legacyPercent, newEntryKey,
+  activeSplit, arithmeticSplit, blankDraft, changeSplitTab, draftReceiptSplit, expenseDraft, newEntryKey,
   openSplitTab, receiptBill, retimed, splitSeed, tabAfterScan, transferDraft, withSplit,
   type EntryDraft, type SplitTab,
 } from "./draft";
@@ -148,34 +148,48 @@ describe("Receipt is a fourth answer, not a fourth way of writing one", () => {
       .toEqual({ mode: "receipt", weights: { [A]: 6000, [B]: 3000 } });
   });
 
-  it("is where a draft with a bill and no chosen tab starts", () => {
-    expect(activeSplitTab(expense({ receiptItems: items, splitTab: undefined }))).toBe("receipt");
+  it("reopens a saved bill on Items, with Evenly's split underneath", () => {
+    const d = expenseDraft({
+      id: "e1", groupId: "g", description: "Dinner", occurredAt: 1000, amountMinor: 9000, currency: "EUR",
+      rateToBase: "1", baseAmountMinor: 9000, paidBy: A,
+      split: { mode: "receipt", weights: { [A]: 6000, [B]: 3000 } },
+      receiptItems: items, receiptInvolved: [A, B], receiptAssignments: [[A], [B]],
+    }, A, MEMBERS);
+    expect(d.splitTab).toBe("receipt");
+    expect(activeSplit(d)).toEqual({ mode: "receipt", weights: { [A]: 6000, [B]: 3000 } });
+    expect(arithmeticSplit(d)).toEqual({ mode: "equal", members: MEMBERS });
   });
 });
 
-describe("a legacy percent split", () => {
-  const bps: SplitSpec = { mode: "percent", bps: { [A]: 6000, [B]: 4000 } };
-  /** How an expense saved before the tabs existed is seeded: no tab of its own. */
-  const saved = expense({ splits: withSplit({}, bps), splitTab: undefined });
+describe("changeSplitTab", () => {
+  const items = [{ label: "Steak", amount: "60.00" }, { label: "Coffee", amount: "30.00" }];
 
-  it("shows under As parts, with nothing pressed, until a tab is tapped", () => {
-    expect(activeSplitTab(saved)).toBe("shares");
-    expect(legacyPercent(saved)).toEqual(bps);
-    expect(activeSplit(saved)).toEqual(bps);
+  // Items derives the amount; leaving it must not leave an expense worth zero.
+  it("hands the bill's total to the amount field leaving Items", () => {
+    const d = expense({ amountText: "", receiptItems: items, splitTab: "receipt" });
+    expect(changeSplitTab(d, "shares")).toMatchObject({ splitTab: "shares", amountText: "90.00" });
   });
 
-  it("converts away for good on the first tap", () => {
-    const d = open(saved, "shares");
-    expect(legacyPercent(d)).toBeNull();
-    expect(d.splits.percent).toBeUndefined();
-    expect(d.splits.shares).toEqual({ mode: "shares", weights: { [A]: 1, [B]: 1 } });
+  it("keeps the typed amount everywhere else", () => {
+    const d = expense({ amountText: "12.00" });
+    expect(changeSplitTab(d, "exact").amountText).toBe("12.00");
+    expect(changeSplitTab({ ...d, splitTab: "receipt" }, "equal").amountText).toBe("12.00");
+    expect(changeSplitTab(d, "receipt").amountText).toBe("12.00");
+  });
+
+  it("opens the tab it moves to, and only that one", () => {
+    const next = changeSplitTab(expense(), "exact");
+    expect(next.splits).toEqual({
+      equal: { mode: "equal", members: MEMBERS },
+      exact: { mode: "exact", amounts: {}, rest: MEMBERS },
+    });
   });
 });
 
 describe("a blank draft", () => {
   it("opens on Evenly with everybody in it", () => {
     const d = blankDraft("expense", A, "EUR", MEMBERS);
-    expect(activeSplitTab(d)).toBe("equal");
+    expect(d.splitTab).toBe("equal");
     expect(activeSplit(d)).toEqual({ mode: "equal", members: MEMBERS });
   });
 
@@ -213,7 +227,7 @@ describe("a draft that edits a saved entry", () => {
 
   it("opens on the entry's own tab, holding its split", () => {
     const d = expenseDraft(saved, A, MEMBERS);
-    expect(activeSplitTab(d)).toBe("exact");
+    expect(d.splitTab).toBe("exact");
     expect(activeSplit(d)).toEqual(saved.split);
     expect(d.recordedAt).toBe(900);
   });

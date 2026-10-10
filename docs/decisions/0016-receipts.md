@@ -85,8 +85,9 @@ only raw inputs. Every bug in this feature's first week was a derived value
 mirrored into a draft field by an effect on one screen watching a write made by
 another. Recomputing is one cheap call; the cache was the bug. Leaving Receipt
 hands the total over exactly once (`handOffReceiptTotal`), beside the split a
-first-time tab is handed (`openSplitTab`) — two handoffs made in the handler
-that switched tabs, not mirrors anything later resyncs.
+first-time tab is handed (`openSplitTab`) — two handoffs made in one place,
+`changeSplitTab`, whether a tab tap or a kind with no Items moved it, not
+mirrors anything later resyncs.
 
 **A "×2" line unfolds into portions, and a portion is an ordinary line.**
 A bill arrives with such a line already as N rows, each carrying its share of

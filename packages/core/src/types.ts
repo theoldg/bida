@@ -3,7 +3,7 @@ import type { Hlc } from "./hlc.js";
 
 export type Id = string;
 
-export type SplitMode = "equal" | "exact" | "shares" | "percent" | "receipt";
+export type SplitMode = "equal" | "exact" | "shares" | "receipt";
 
 /** `receipt`'s weights are read off a scanned bill: no editor tab writes it. */
 export type ArithmeticMode = Exclude<SplitMode, "receipt">;
@@ -24,8 +24,6 @@ export type SplitSpec =
    */
   | { mode: "exact"; amounts: Record<Id, number>; rest?: Id[] }
   | { mode: "shares"; weights: Record<Id, number> }
-  /** Basis points (10000 = 100%) so percentages stay integers. */
-  | { mode: "percent"; bps: Record<Id, number> }
   /** `shares` arithmetic, kept apart because a bill read out is not parts somebody chose. ADR-0016. */
   | { mode: "receipt"; weights: Record<Id, number> };
 

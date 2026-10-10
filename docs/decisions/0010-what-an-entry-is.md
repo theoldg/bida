@@ -58,10 +58,8 @@ amounts would only let you type for whoever Evenly had ticked. A tab opened for
 the first time is handed who is in on screen, once — "even, then nudge one
 person" is why — but none of its numbers: parts are not amounts, and a figure
 carried over reads as typed when nobody typed it. It keeps what was typed into
-it after that. `percent` stays
-in `SplitSpec` readable but unwritable: removing the variant would break the
-one thing the op log promises, and it has no tab, so the first tap converts one
-away for good.
+it after that. Which tab shows is `splitTab` on the draft, always set — one
+field, never derived. `percent` is gone: nothing ever wrote it.
 
 ## Consequences
 

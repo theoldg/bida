@@ -9,20 +9,18 @@ import {
 } from "@bida/core";
 import { kindOf, type EntryKind } from "./entry-kind";
 import { dateInputValue } from "./format";
-import { receiptBreakdown, receiptTotalMinor, type MemberLine } from "./scan/items";
+import { handOffReceiptTotal, receiptBreakdown, receiptTotalMinor, type MemberLine } from "./scan/items";
 import { clearScan } from "./scan/live";
 import { signal } from "./signal";
 
-/** `percent` has no tab and survives only so old entries render (ADR-0010). */
-export type SplitTab = Exclude<SplitMode, "percent">;
-
-type ArithmeticTab = Exclude<SplitTab, "receipt">;
+/** Every mode is a tab: Evenly, As parts, As amounts, Items. */
+export type SplitTab = SplitMode;
 
 /**
  * One per tab: a shared spec would let leaving somebody out under Evenly
  * delete their parts under As parts. `undefined` until first opened.
  */
-export type SplitInputs = { [M in ArithmeticMode]?: Extract<SplitSpec, { mode: M }> };
+export type SplitInputs = { [M in ArithmeticMode]?: Extract<ArithmeticSplit, { mode: M }> };
 
 /**
  * Outside React, so moving between the form, payers and grid keeps it. In
@@ -61,16 +59,10 @@ export interface EntryDraft extends Receipt {
   /** What `retimed` measures against. Never saved. */
   recordedAt: number;
   categoryId: string | null;
-  splitTab?: SplitTab;
+  /** The tab showing — the one thing that says so. A saved entry reopens on its mode. */
+  splitTab: SplitTab;
   /** So a rescan can replace its own guess but not a typed title. */
   scannedDescription?: string;
-}
-
-/** Unset derives from the entry: a bill means Receipt, a legacy percent As parts. */
-export function activeSplitTab(draft: EntryDraft): SplitTab {
-  return draft.splitTab
-    ?? ((draft.receiptItems?.length ?? 0) > 0 ? "receipt"
-      : draft.splits.percent ? "shares" : "equal");
 }
 
 /** A tap during the scan must not be overruled by its result. */
@@ -78,14 +70,7 @@ export function tabAfterScan(
   draft: EntryDraft, tabAtStart: SplitTab, hasItems: boolean,
 ): SplitTab | undefined {
   if (!hasItems) return undefined;
-  return activeSplitTab(draft) === tabAtStart ? "receipt" : undefined;
-}
-
-/** Shown with no tab pressed until the first tap converts it. */
-export function legacyPercent(draft: EntryDraft): SplitSpec | null {
-  return draft.splitTab === undefined && (draft.receiptItems?.length ?? 0) === 0
-    ? draft.splits.percent ?? null
-    : null;
+  return draft.splitTab === tabAtStart ? "receipt" : undefined;
 }
 
 /** So the cent the form quotes is the cent kept. */
@@ -93,7 +78,7 @@ export function splitSeed(draft: EntryDraft): string {
   return draft.entryId ?? draft.newEntryId;
 }
 
-function emptySplit(tab: ArithmeticTab): SplitSpec {
+function emptySplit(tab: ArithmeticMode): ArithmeticSplit {
   switch (tab) {
     case "equal": return { mode: "equal", members: [] };
     case "shares": return { mode: "shares", weights: {} };
@@ -107,7 +92,6 @@ export function withSplit(splits: SplitInputs, spec: ArithmeticSplit): SplitInpu
     case "equal": return { ...splits, equal: spec };
     case "shares": return { ...splits, shares: spec };
     case "exact": return { ...splits, exact: spec };
-    case "percent": return { ...splits, percent: spec };
   }
 }
 
@@ -133,7 +117,7 @@ export function receiptBill(
 
 function showsReceipt(draft: EntryDraft): boolean {
   return draft.kind === "expense"
-    && activeSplitTab(draft) === "receipt" && (draft.receiptItems?.length ?? 0) > 0;
+    && draft.splitTab === "receipt" && (draft.receiptItems?.length ?? 0) > 0;
 }
 
 /** Null until the grid is filled. Never written into the draft: the grid is the record. */
@@ -153,13 +137,13 @@ export function activeSplit(draft: EntryDraft): SplitSpec {
   return draftReceiptSplit(draft) ?? arithmeticSplit(draft);
 }
 
-/** Ignores the bill, so a scan never feeds As parts (ADR-0016). */
-function arithmeticSplit(draft: EntryDraft): SplitSpec {
-  const legacy = legacyPercent(draft);
-  if (legacy) return legacy;
-  const tab = activeSplitTab(draft);
-  const arithmetic: ArithmeticTab = tab === "receipt" ? "equal" : tab;
-  return draft.splits[arithmetic] ?? emptySplit(arithmetic);
+/**
+ * What the arithmetic tabs hold for the tab showing — Evenly's under Items.
+ * Ignores the bill, so a scan never feeds As parts (ADR-0016).
+ */
+export function arithmeticSplit(draft: EntryDraft): ArithmeticSplit {
+  const tab: ArithmeticMode = draft.splitTab === "receipt" ? "equal" : draft.splitTab;
+  return draft.splits[tab] ?? emptySplit(tab);
 }
 
 /**
@@ -167,12 +151,24 @@ function arithmeticSplit(draft: EntryDraft): SplitSpec {
  * from who is in, never the numbers (`convertSplitMode`).
  */
 export function openSplitTab(draft: EntryDraft, tab: SplitTab): SplitInputs {
-  if (tab === "receipt") return draft.splits;
-  const kept = { ...draft.splits };
-  // The first arithmetic tab converts a legacy percent split away for good.
-  delete kept.percent;
-  if (kept[tab]) return kept;
-  return withSplit(kept, convertSplitMode(arithmeticSplit(draft), tab));
+  if (tab === "receipt" || draft.splits[tab]) return draft.splits;
+  return withSplit(draft.splits, convertSplitMode(arithmeticSplit(draft), tab));
+}
+
+/**
+ * Moving to `tab`, whoever asks — the tab bar, or a kind with no Items. Two
+ * handoffs, each only into a tab with nothing of its own yet: `openSplitTab`
+ * gives it a split to start from, and leaving Items puts the bill's total in
+ * the amount field, without which the expense silently becomes worth zero
+ * (ADR-0016). A tab holding an answer keeps it.
+ */
+export function changeSplitTab(
+  draft: EntryDraft, tab: SplitTab,
+): Pick<EntryDraft, "splitTab" | "splits" | "amountText"> {
+  const handoff = handOffReceiptTotal(
+    draft.splitTab, tab, draft.receiptItems, receiptExtras(draft), draft.currency,
+  );
+  return { splitTab: tab, splits: openSplitTab(draft, tab), amountText: handoff ?? draft.amountText };
 }
 
 /** Null for ≤ 0 too: the amount is disabled on a derived number, and disabled-and-empty can't save. */
@@ -321,8 +317,7 @@ export function expenseDraft(e: Expense, me: string, members: string[]): EntryDr
     recordedAt: e.createdAt ?? e.occurredAt,
     categoryId: e.categoryId ?? null,
     ...receiptOf(e),
-    // Percent has no tab: `legacyPercent` draws it.
-    splitTab: e.split.mode === "percent" ? undefined : e.split.mode,
+    splitTab: e.split.mode,
   };
 }
 
