@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import type { Group } from "@bida/core";
 import { getDevice, setLeftOnList } from "./db/device";
 import { db, type DeviceRecord } from "./db/dexie";
@@ -117,9 +117,14 @@ export function useResumeLastGroup(): { deciding: boolean; joining: boolean } {
   // Settled on the list, so the list is this device's place until a group takes
   // it back. Written on the way in: a phone gives no reliable word before the
   // app is killed.
+  // The mark before paint, though: an icon launch onto `/install` that only
+  // saved keys arrives here marked yet not deciding, and the mark hides this
+  // very frame (globals.css).
+  useLayoutEffect(() => {
+    if (!deciding) clearResuming();
+  }, [deciding]);
   useEffect(() => {
     if (deciding) return;
-    clearResuming();
     void setLeftOnList();
   }, [deciding]);
   // Replaced by the group: its own skeleton is the same frame, so the mark

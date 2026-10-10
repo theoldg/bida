@@ -56,10 +56,18 @@ const ledgerBannerSource = `function(id,standalone,ios,push,permission){if(id===
  * set. The groups page then shows the ledger's skeleton, with that banner's
  * folded card, in place of its own frame (globals.css) until
  * `useResumeLastGroup` settles and takes the mark off.
+ *
+ * **And `<html data-launching>` on an icon launch onto `/install`** — iOS's
+ * `start_url` (docs/ios.md), whose prerender is the tutorial: that page holds
+ * the launch's frames too, and the mark hides the tutorial before paint. The
+ * resume mark goes with it, since `/install` hands such a launch to the list
+ * (`launchedOnto`).
  */
-export const resumeScript = `try{var n=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0],p=location.pathname,id=localStorage.getItem("${KEY}"),N=navigator;if((!n||n.type==="navigate")&&(p==="/"||p==="/index.html")&&id)document.documentElement.dataset.resuming=(${ledgerBannerSource})(id,matchMedia("(display-mode: standalone)").matches||N.standalone===true,/iPad|iPhone|iPod/.test(N.userAgent)||(N.platform==="MacIntel"&&N.maxTouchPoints>1),"serviceWorker"in N&&"PushManager"in window&&"Notification"in window,window.Notification&&Notification.permission)||""}catch(e){}`;
+export const resumeScript = `try{var n=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0],p=location.pathname,id=localStorage.getItem("${KEY}"),N=navigator,d=document.documentElement,s=matchMedia("(display-mode: standalone)").matches||N.standalone===true,v=!n||n.type==="navigate",L=v&&s&&(p==="/install"||p==="/install.html");if(L)d.dataset.launching="";if(v&&(p==="/"||p==="/index.html"||L)&&id)d.dataset.resuming=(${ledgerBannerSource})(id,s,/iPad|iPhone|iPod/.test(N.userAgent)||(N.platform==="MacIntel"&&N.maxTouchPoints>1),"serviceWorker"in N&&"PushManager"in window&&"Notification"in window,window.Notification&&Notification.permission)||""}catch(e){}`;
 
-/** Take the mark off: the list is showing, or the group has taken over. */
+/** Take the marks off: the list is showing, or the group has taken over. */
 export function clearResuming(): void {
-  if (typeof document !== "undefined") delete document.documentElement.dataset.resuming;
+  if (typeof document === "undefined") return;
+  delete document.documentElement.dataset.resuming;
+  delete document.documentElement.dataset.launching;
 }

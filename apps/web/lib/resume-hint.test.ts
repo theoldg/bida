@@ -16,8 +16,8 @@ interface Env {
   permission?: NotificationPermission;
 }
 
-/** Run the script before paint in a made-up browser; what it marks `<html>` with. */
-function run(env: Env): string | undefined {
+/** Run the script before paint in a made-up browser; both marks it leaves on `<html>`. */
+function marks(env: Env): Record<string, string> {
   const dataset: Record<string, string> = {};
   const win: Record<string, unknown> = env.push ? { PushManager: {}, Notification: { permission: env.permission } } : {};
   const nav: Record<string, unknown> = {
@@ -35,8 +35,11 @@ function run(env: Env): string | undefined {
     win.Notification,
     { documentElement: { dataset } },
   );
-  return dataset.resuming;
+  return dataset;
 }
+
+/** What it marks `<html data-resuming>` with. */
+const run = (env: Env): string | undefined => marks(env).resuming;
 
 /** The same answer, from the functions the ledger's cards really ask. */
 function expected(env: Env): string {
@@ -72,5 +75,16 @@ describe("resumeScript", () => {
         const env = { hint, standalone, push, permission, ...u };
         expect(run(env), JSON.stringify(env)).toBe(expected(env));
       }
+  });
+
+  it("marks an icon launch onto /install, whose prerender is the tutorial, and nothing else there", () => {
+    // iOS's start_url: the tutorial hides, and the resume goes with it.
+    expect(marks({ hint: "g1", path: "/install", standalone: true })).toEqual({ launching: "", resuming: "" });
+    expect(marks({ hint: null, path: "/install", standalone: true })).toEqual({ launching: "" });
+    // A tab reading the tutorial, or the app reloading the page, is no launch.
+    expect(marks({ hint: "g1", path: "/install" })).toEqual({});
+    expect(marks({ hint: "g1", path: "/install", standalone: true, nav: "reload" })).toEqual({});
+    // And the list's own launch never says it came through /install.
+    expect(marks({ hint: "g1", standalone: true }).launching).toBeUndefined();
   });
 });

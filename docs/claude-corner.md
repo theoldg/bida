@@ -26,6 +26,12 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-10* — "I think i saw the install tutorial page briefly? What say
+  you", then "Fix it". The owner's eye was right: the icon opens the
+  tutorial's own route. A glimpse reported from a phone is a frame the
+  prerender painted; sample every frame in a check rather than trust a
+  screenshot.
+
 - *2026-10-09* — "Investigate the bar flickering", then "do it however is
   best and cleanest". Measure the frames before guessing: two were blank.
   My first fix passed typecheck and drew no bar at all; only the check I'd
@@ -76,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   phone screenshot of the payers summary keeping first names only, with the
   CSS already set to ellipsize. Read the screenshot as a bug report: find the
   line, cut the clever part, let the layout do its job.
-
-- *2026-10-08* — "Maybe the number should shrink? wdyt?" I moved the badge
-  instead and pushed; "wait i don't like this". Theirs, then four rounds of
-  "tighter", "try harder … balanced". A "wdyt" with a proposal is the brief;
-  balance means measured glyph edges, and hold the push till "ship it".

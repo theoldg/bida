@@ -64,7 +64,11 @@ API is reached with `fetch`.
   cards' logic; Chrome's one-tap offer waits on an event and still arrives
   late, as do the sync banner and the new-edits line, which are data. The
   frame goes once the launch decides: hidden is not gone, and its bar's arrow
-  would stay registered with the back button.
+  would stay registered with the back button. **Nor does the tutorial paint
+  on an iOS icon launch**, whose `start_url` is `/install` — prerendered as the
+  tutorial: the same script marks `<html data-launching>` there, and `/install`
+  carries the launch's frames (`LaunchFrames`, the list's own `HomeFrame` and
+  the ledger's skeleton) for it to pick.
   *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
   ([ADR-0003](decisions/0003-link-only-access.md)). `setMe` is the

@@ -7,19 +7,17 @@ import { useMemo, useSyncExternalStore } from "react";
 import { Avatar, signClass } from "@/components/bits";
 import { FitLine } from "@/components/fit-line";
 import { Icon } from "@/components/icons";
-import { Body, Empty, LedgerSkeleton, Screen, Scroll, SkeletonRows, TopBar } from "@/components/chrome";
+import { Empty, LedgerSkeleton, SkeletonRows } from "@/components/chrome";
+import { HomeFrame } from "@/components/home-frame";
 import { InstallOfferCard, SkeletonBanner } from "@/components/install";
 import { useGroupActions } from "@/components/group-actions";
-import { usePasteLink } from "@/components/paste-link";
 import { LedgerRows } from "@/components/ledger-rows";
 import { useHold, useLongPressMenu } from "@/components/long-press";
-import { HomeMenu } from "@/components/home-menu";
 import { UpdateNudge } from "@/components/update";
 import { copy } from "@/lib/copy";
 import { ago, money, plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { groupMeta } from "@/lib/row-meta";
-import { iosHomeScreenApp } from "@/lib/install";
 import { JoiningFrame } from "@/components/joining";
 import { useResumeLastGroup } from "@/lib/launch";
 import { useArrivingGroups, useGroupSummaries, type GroupSummary } from "@/lib/hooks";
@@ -51,83 +49,31 @@ export default function GroupsPage() {
     {/* Both frames are drawn and globals.css picks, because the mark is set
         before React runs and the prerender can't know it (lib/resume-hint.ts). */}
     {hydrating || (resuming && marked) ? <LedgerSkeleton className="resumeframe" head={<SkeletonBanner />} /> : null}
-    <Screen className="homeframe">
-      <Body>
-        {/* A long press on the name opens /diag, for a phone with no devtools. */}
-        <TopBar
-          title={
-            <span className="brand" {...diagHold}>
-              {copy.app.name}
-            </span>
-          }
-          right={<HomeMenu />} />
+    <HomeFrame brand={diagHold}>
+      {/* undefined is "Dexie hasn't answered yet", not "no groups". */}
+      {groups === undefined ? <SkeletonRows count={4} /> : null}
 
-        <Scroll>
-          {/* undefined is "Dexie hasn't answered yet", not "no groups". */}
-          {groups === undefined ? <SkeletonRows count={4} /> : null}
+      {/* Only once there is a group to lose. */}
+      {lead ? <InstallOfferCard groupId={lead.group.id} /> : null}
 
-          {/* Only once there is a group to lose. */}
-          {lead ? <InstallOfferCard groupId={lead.group.id} /> : null}
+      {groups && groups.length === 0 && arriving !== undefined ? (
+        arriving > 0 ? (
+          <Empty title={copy.groups.arriving.title}>{copy.groups.arriving.body}</Empty>
+        ) : (
+          <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
+        )
+      ) : null}
 
-          {groups && groups.length === 0 && arriving !== undefined ? (
-            arriving > 0 ? (
-              <Empty title={copy.groups.arriving.title}>{copy.groups.arriving.body}</Empty>
-            ) : (
-              <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
-            )
-          ) : null}
+      <LedgerRows opens={false} items={rows} row={(summary: GroupSummary) => <GroupRow summary={summary} />} />
 
-          <LedgerRows opens={false} items={rows} row={(summary: GroupSummary) => <GroupRow summary={summary} />} />
-
-          <UpdateNudge />
-        </Scroll>
-
-        {/* Beside the scroller, so its rubber-band never carries the tiles. */}
-        <StartTiles />
-      </Body>
-    </Screen>
+      <UpdateNudge />
+    </HomeFrame>
     </>
-  );
-}
-
-/** "Quick split" writes nothing (ADR-0035), so it is outlined; "New group" is under the thumb. */
-function StartTiles() {
-  return (
-    <div className="homepair">
-      <div className="starttiles">
-        <PasteLinkTile />
-        <Link href={route.quick()} className="starttile start-s">
-          <Icon name="cam" size={26} />
-          {copy.groups.quickSplit}
-        </Link>
-        <Link href={route.newGroup()} className="starttile start-p">
-          <Icon name="plus" size={28} />
-          {copy.groups.newGroup}
-        </Link>
-      </div>
-    </div>
   );
 }
 
 const never = () => () => {};
 const resumingMarked = () => document.documentElement.hasAttribute("data-resuming");
-
-/** A tapped invite never reaches an iOS home-screen app; elsewhere this draws nothing. */
-function PasteLinkTile() {
-  const shown = useSyncExternalStore(never, iosHomeScreenApp, () => false);
-  const { paste, dialog } = usePasteLink();
-  if (!shown) return null;
-
-  return (
-    <>
-      <button type="button" onClick={() => void paste()} className="starttile start-s">
-        <Icon name="link" size={26} />
-        {copy.groups.pasteLink}
-      </button>
-      {dialog}
-    </>
-  );
-}
 
 function GroupRow({ summary }: { summary: GroupSummary }) {
   const { group, memberCount, entryCount, netMinor, lastActivity, newCount } = summary;

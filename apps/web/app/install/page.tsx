@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Blank, Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { LaunchFrames } from "@/components/home-frame";
 import { useBrowserName, useInstallOffer } from "@/components/install";
 import { Icon } from "@/components/icons";
 import { claimIdentity, saveGroupKey } from "@/lib/db/commands";
@@ -35,10 +36,14 @@ export default function InstallPage() {
   useLaunchedFromHomeScreen(offer === "installed" ? invites : undefined);
 
   // The tutorial is for a browser tab. In the home-screen app this screen is
-  // only ever the doorway above, and it is about to leave.
-  if (offer === "installed") return <Blank back={route.groups()} />;
+  // only ever the doorway above, about to leave, so it wears the frame the
+  // launch is heading to rather than a blank.
+  if (offer === "installed") return <LaunchFrames />;
 
-  return <Tutorial />;
+  // The prerender can't tell a tab from an icon launch, and an iOS launch
+  // paints it before any script here runs — so it carries both, and the mark
+  // `resumeScript` sets before paint (`data-launching`) picks in globals.css.
+  return <><div className="launchframe"><LaunchFrames /></div><Tutorial /></>;
 }
 
 /**
@@ -97,7 +102,7 @@ function Tutorial() {
   const { page } = copy.install;
 
   return (
-    <Screen>
+    <Screen className="tutorialframe">
       <Body>
         <TopBar title={page.title} back />
         <Scroll>

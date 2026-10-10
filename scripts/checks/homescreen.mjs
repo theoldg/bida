@@ -336,6 +336,29 @@ if (androidFolded) await androidOffer(androidPage).click();
 report(androidFolded && await androidAdd.waitFor({ timeout: 2000 }).then(() => true, () => false),
   "a group's ledger offers Android the same card, folded");
 
+/**
+ * Look at every frame a launch paints, from the first: an icon opens
+ * `/install`, the tutorial's route, whose prerender holds both and picks
+ * before paint (`data-launching`, lib/resume-hint.ts). Counted per frame in
+ * `sessionStorage`, which outlives the document should a launch reload.
+ */
+const watchFrames = (page) => page.addInitScript(() => {
+  const count = (key) => sessionStorage.setItem(key, String(Number(sessionStorage.getItem(key) ?? 0) + 1));
+  const shown = (el) => el.getClientRects().length > 0;
+  const look = () => {
+    // Before the body is parsed there is nothing to paint yet.
+    if (document.body) {
+      count("frames.frames");
+      if ([...document.querySelectorAll(".tutorialframe")].some(shown)) count("frames.tutorial");
+      if (![...document.querySelectorAll(".app .topbar")].some(shown)) count("frames.blank");
+    }
+    requestAnimationFrame(look);
+  };
+  requestAnimationFrame(look);
+});
+const framesSeen = (page) => page.evaluate(() => Object.fromEntries(["frames", "tutorial", "blank"]
+  .map((k) => [k, Number(sessionStorage.getItem(`frames.${k}`) ?? 0)])));
+
 // ---- the icon's first launch ---------------------------------------------
 // An invite nobody has picked a name in yet: this launch is the join the tab
 // never finished, and it must hand the invite on without anyone pasting.
@@ -379,12 +402,18 @@ const made = await newGroup(freshPage, base, { name: "Ferry", me: "Ana", members
 // of race this comment is about.
 await freshPage.waitForSelector(".fab");
 await untilDevice(freshPage, (d) => d?.lastOpenedGroupId === made);
+await watchFrames(freshPage);
 await freshPage.goto(`${base}/install${fragment}`);
 const reopened = await freshPage.waitForURL(
   (url) => url.pathname === "/g" && url.searchParams.get("id") === made, { timeout: PATIENCE },
 ).then(() => true, () => false);
 report(reopened, "and reopens the group this phone was last in, as any other launch does",
   freshPage.url());
+await freshPage.waitForSelector(".fab");
+const reopenFrames = await framesSeen(freshPage);
+report(reopenFrames.frames > 0 && reopenFrames.tutorial === 0 && reopenFrames.blank === 0,
+  "without the tutorial or a blank screen in any frame on the way: `/install` is its route too",
+  JSON.stringify(reopenFrames));
 
 // ---- a phone that brought several over -----------------------------------
 // There is no one group to open, so the keys go in where they are read and the
@@ -392,10 +421,15 @@ report(reopened, "and reopens the group this phone was last in, as any other lau
 const many = await iphone();
 const manyPage = await many.newPage();
 await asInstalledApp(manyPage);
+await watchFrames(manyPage);
 await manyPage.goto(`${base}/install#${carried}`);
 const landed = await manyPage.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE })
   .then(() => true, () => false);
 report(landed, "launching an icon added with several groups lands on the list", manyPage.url());
+await manyPage.getByText("Getting your groups").waitFor({ timeout: PATIENCE }).catch(() => {});
+const manyFrames = await framesSeen(manyPage);
+report(manyFrames.frames > 0 && manyFrames.tutorial === 0 && manyFrames.blank === 0,
+  "and shows neither the tutorial nor a blank screen on the way there", JSON.stringify(manyFrames));
 report((await secretsHeld(manyPage)).sort().join(" ") === [ski, flat].sort().join(" "),
   "holding every secret it was added with");
 const claimed = await namesHeld(manyPage);

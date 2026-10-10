@@ -112,7 +112,10 @@ is cached it would be a network load racing the worker's own fetches, so it
 waits for the next reloadable screen.
 
 **Every launch of the icon** (`app/install/page.tsx`) — `start_url` is this
-route for the life of the bookmark, not just the first time. A key this phone lacks is
+route for the life of the bookmark, not just the first time. Its prerender is
+the tutorial, which iOS paints before any script runs, so it also carries the
+launch's own frames and a mark set before paint picks them
+([frontend.md](frontend.md)). A key this phone lacks is
 saved. A group the tab had named is claimed here, before its first sync — an
 identity op of this app's own, since it is a device of its own, which history
 reads as "Ana started editing from a new device". Nobody is asked who they are.
