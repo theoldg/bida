@@ -438,63 +438,27 @@ export function shareOf(
 }
 
 /**
- * Switch modes keeping everyone's current amounts. Never into `receipt`:
- * its weights come from the bill only (ADR-0016).
+ * Switch tabs carrying who is in and none of the numbers: parts are not
+ * amounts, and a figure nobody typed is not one. Into As amounts everyone
+ * shares the rest, so typing one figure re-divides the others. Never into
+ * `receipt` (ADR-0016) or the legacy `percent`, which nobody types.
  */
 export function convertSplitMode(
-  totalMinor: number,
   spec: SplitSpec,
-  mode: ArithmeticMode,
-  options: SplitOptions = {},
+  mode: Exclude<ArithmeticMode, "percent">,
 ): ArithmeticSplit {
   if (spec.mode === mode) return spec as ArithmeticSplit;
   const participants = splitParticipants(spec);
-  // The editor lets you sit with nobody included and must still switch tabs;
-  // `resolveSplit` refuses an empty split, so build it here.
-  if (participants.length === 0) {
-    switch (mode) {
-      case "equal": return { mode: "equal", members: [] };
-      case "exact": return { mode: "exact", amounts: {} };
-      case "shares": return { mode: "shares", weights: {} };
-      case "percent": return { mode: "percent", bps: {} };
-    }
-  }
   switch (mode) {
-    case "equal":
-      return { mode: "equal", members: participants };
-    case "exact": {
-      // Evenly is everybody sharing the rest of nothing typed: kept that way,
-      // so typing one figure re-divides the others instead of over-filling.
-      if (spec.mode === "equal") return { mode: "exact", amounts: {}, rest: participants };
-      const { shares } = resolveSplit(totalMinor, spec, options);
-      return { mode: "exact", amounts: exactAmounts(shares) };
-    }
+    case "equal": return { mode: "equal", members: participants };
+    // No `rest` key when nobody is in, as `canonicalSplit` writes it.
+    case "exact": return participants.length > 0
+      ? { mode: "exact", amounts: {}, rest: participants }
+      : { mode: "exact", amounts: {} };
     case "shares": {
       const weights: Record<Id, number> = {};
       for (const id of participants) weights[id] = 1;
       return { mode: "shares", weights };
-    }
-    case "percent": {
-      const { shares } = resolveSplit(totalMinor, spec, options);
-      const bps: Record<Id, number> = {};
-      if (totalMinor === 0) {
-        // Nothing to apportion; fall back to even percentages.
-        const each = Math.floor(10_000 / participants.length);
-        for (const id of participants) bps[id] = each;
-      } else {
-        for (const id of participants) {
-          bps[id] = Math.round(((shares[id] ?? 0) / totalMinor) * 10_000);
-        }
-      }
-      // Force the rounding drift onto the largest holder so it still sums to 100%.
-      const sum = participants.reduce((a, id) => a + (bps[id] ?? 0), 0);
-      if (sum !== 10_000) {
-        const biggest = [...participants].sort(
-          (a, b) => (bps[b] ?? 0) - (bps[a] ?? 0) || (a < b ? -1 : 1),
-        )[0]!;
-        bps[biggest] = (bps[biggest] ?? 0) + (10_000 - sum);
-      }
-      return { mode: "percent", bps };
     }
   }
 }

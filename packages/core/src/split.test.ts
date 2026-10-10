@@ -162,47 +162,47 @@ describe("shareOf", () => {
 });
 
 describe("convertSplitMode", () => {
-  it("keeps everyone's amounts when moving to exact", () => {
-    const from: SplitSpec = { mode: "shares", weights: { a: 2, b: 1, c: 1 } };
-    const spec = convertSplitMode(1000, from, "exact");
-    expect(spec).toEqual({ mode: "exact", amounts: resolveSplit(1000, from).shares });
-  });
-
   // Evenly is everyone sharing the rest of nothing typed, and stays it.
   it("moves evenly to exact as everyone sharing the rest", () => {
-    const spec = convertSplitMode(1000, { mode: "equal", members: ["a", "b", "c"] }, "exact");
+    const spec = convertSplitMode({ mode: "equal", members: ["a", "b", "c"] }, "exact");
     expect(spec).toEqual({ mode: "exact", amounts: {}, rest: ["a", "b", "c"] });
     expect(resolveSplit(1000, spec).shares).toEqual(resolveSplit(1000, { mode: "equal", members: ["a", "b", "c"] }).shares);
   });
 
-  it("produces percentages that still total 100%", () => {
-    const spec = convertSplitMode(1000, { mode: "equal", members: ["a", "b", "c"] }, "percent");
-    expect(spec.mode).toBe("percent");
-    if (spec.mode !== "percent") throw new Error("unreachable");
-    expect(Object.values(spec.bps).reduce((a, b) => a + b, 0)).toBe(10_000);
-    expect(validateSplit(1000, spec).ok).toBe(true);
-  });
-
-  it("preserves the participant set in every direction", () => {
-    const start: SplitSpec = { mode: "shares", weights: { a: 2, b: 1 } };
-    for (const mode of ["equal", "exact", "shares", "percent"] as const) {
-      expect(splitParticipants(convertSplitMode(3000, start, mode))).toEqual(["a", "b"]);
+  // Parts are not amounts: whoever held one comes over in, untyped.
+  it("drops the parts moving to exact, keeping who is in", () => {
+    const from: SplitSpec[] = [
+      { mode: "shares", weights: { a: 2, b: 1, c: 1 } },
+      { mode: "percent", bps: { a: 5000, b: 2500, c: 2500 } },
+      { mode: "receipt", weights: { a: 2000, b: 500, c: 500 } },
+    ];
+    for (const start of from) {
+      expect(convertSplitMode(start, "exact")).toEqual({ mode: "exact", amounts: {}, rest: ["a", "b", "c"] });
     }
   });
 
-  // A zero share is nobody: kept, it would light every row of an empty
-  // "as amounts" tab as in.
-  it("moves to exact with nobody in when there is nothing to hand out", () => {
-    const spec = convertSplitMode(0, { mode: "shares", weights: { a: 1, b: 1, c: 1 } }, "exact");
-    expect(spec).toEqual({ mode: "exact", amounts: {} });
-    expect(splitParticipants(spec)).toEqual([]);
+  // A typed figure is not a part either.
+  it("moves exact to parts as one part each, typed or rest", () => {
+    const spec = convertSplitMode({ mode: "exact", amounts: { a: 700, b: 150 }, rest: ["b", "c"] }, "shares");
+    expect(spec).toEqual({ mode: "shares", weights: { a: 1, b: 1, c: 1 } });
   });
 
-  it("leaves out whoever a tiny total hands nothing", () => {
-    const spec = convertSplitMode(2, { mode: "shares", weights: { a: 1, b: 1, c: 1 } }, "exact");
-    expect(spec.mode === "exact" && Object.values(spec.amounts)).toEqual([1, 1]);
-    expect(splitParticipants(spec)).toHaveLength(2);
-    expect(validateSplit(2, spec).ok).toBe(true);
+  it("preserves the participant set in every direction", () => {
+    const start: SplitSpec[] = [
+      { mode: "shares", weights: { a: 2, b: 1 } },
+      { mode: "exact", amounts: { a: 2000 }, rest: ["b"] },
+      { mode: "equal", members: ["b", "a"] },
+    ];
+    for (const from of start) {
+      for (const mode of ["equal", "exact", "shares"] as const) {
+        expect(splitParticipants(convertSplitMode(from, mode))).toEqual(["a", "b"]);
+      }
+    }
+  });
+
+  it("hands back a spec already in the mode untouched", () => {
+    const spec: SplitSpec = { mode: "exact", amounts: { a: 500 }, rest: ["b"] };
+    expect(convertSplitMode(spec, "exact")).toBe(spec);
   });
 
   it("reads a zero amount already written as out", () => {
@@ -212,13 +212,8 @@ describe("convertSplitMode", () => {
     expect(shareOf(500, spec, "b")).toBe(0);
   });
 
-  it("survives converting a zero-total expense", () => {
-    const spec = convertSplitMode(0, { mode: "equal", members: ["a", "b", "c"] }, "percent");
-    expect(validateSplit(0, spec).ok).toBe(true);
-  });
-
-  // Zeroing every part then switching tabs must not throw out of `resolveSplit`.
-  it("carries an empty split into every mode instead of throwing", () => {
+  // Zeroing every part then switching tabs must not invent anybody.
+  it("carries an empty split into every mode", () => {
     const empty: SplitSpec[] = [
       { mode: "equal", members: [] },
       { mode: "exact", amounts: {} },
@@ -226,10 +221,11 @@ describe("convertSplitMode", () => {
       { mode: "percent", bps: {} },
     ];
     for (const start of empty) {
-      for (const mode of ["equal", "exact", "shares", "percent"] as const) {
-        const spec = convertSplitMode(4500, start, mode);
+      for (const mode of ["equal", "exact", "shares"] as const) {
+        const spec = convertSplitMode(start, mode);
         expect(spec.mode).toBe(mode);
         expect(splitParticipants(spec)).toEqual([]);
+        expect(spec).toEqual(canonicalSplit(spec));
       }
     }
   });
@@ -474,8 +470,8 @@ describe("a receipt split", () => {
   });
 
   it("converts away into a mode somebody types", () => {
-    expect(convertSplitMode(3000, spec, "equal")).toEqual({ mode: "equal", members: ["a", "b"] });
-    expect(convertSplitMode(3000, spec, "exact")).toEqual({ mode: "exact", amounts: { a: 2000, b: 1000 } });
+    expect(convertSplitMode(spec, "equal")).toEqual({ mode: "equal", members: ["a", "b"] });
+    expect(convertSplitMode(spec, "exact")).toEqual({ mode: "exact", amounts: {}, rest: ["a", "b"] });
   });
 });
 

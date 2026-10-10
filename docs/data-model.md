@@ -95,8 +95,9 @@ nobody**: none is ever written, and `splitParticipants` reads one as out.
 leave, evenly and seeded as Evenly is (`exactFigures`), worked out again at
 every read. Their figures are still written into `amounts` (`settleRest`, on
 save), so a phone that predates `rest` reads a whole split that adds up; the
-key is absent when nobody floats, so older splits serialise unchanged. Evenly
-converts into "as amounts" as everyone in `rest`. **`percent` is legacy
+key is absent when nobody floats, so older splits serialise unchanged.
+`convertSplitMode` carries who is in and no numbers, so every mode opens "as
+amounts" as everyone in `rest`, nothing typed. **`percent` is legacy
 and read-only** ([ADR-0010](decisions/0010-what-an-entry-is.md)); **`receipt` is
 the only mode nobody types** — a scanned bill writes it and `convertSplitMode`
 never converts into it ([ADR-0016](decisions/0016-receipts.md)).

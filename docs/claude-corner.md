@@ -26,6 +26,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-10* — "Reopening should remember who was rest … you have to figure
+  it out." Six repros kept the rest; the cause was upstream: parts had arrived
+  typed. When a bug won't reproduce, ask what wrote the data, not what reads it.
+
 - *2026-10-10* — "I think i saw the install tutorial page briefly? What say
   you", then "Fix it". The owner's eye was right: the icon opens the
   tutorial's own route. A glimpse reported from a phone is a frame the
@@ -77,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-08* — "Use the styles from the item split summary for the payers:
   same numbers and same names". Two lists of people on one form should read
   alike: copy the type, weight and figure class, not just the size.
-
-- *2026-10-08* — "How did the names get shortened? … ellipses instead." A
-  phone screenshot of the payers summary keeping first names only, with the
-  CSS already set to ellipsize. Read the screenshot as a bug report: find the
-  line, cut the clever part, let the layout do its job.

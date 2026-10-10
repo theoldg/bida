@@ -163,20 +163,16 @@ function arithmeticSplit(draft: EntryDraft): SplitSpec {
 }
 
 /**
- * A tab keeps what was typed into it; one opened for the first time is
- * converted once, not kept in sync. As amounts divides the entry's own amount,
- * the others `baseMinor`.
+ * A tab keeps what was typed into it; one opened for the first time starts
+ * from who is in, never the numbers (`convertSplitMode`).
  */
-export function openSplitTab(draft: EntryDraft, tab: SplitTab, baseMinor: number): SplitInputs {
+export function openSplitTab(draft: EntryDraft, tab: SplitTab): SplitInputs {
   if (tab === "receipt") return draft.splits;
   const kept = { ...draft.splits };
   // The first arithmetic tab converts a legacy percent split away for good.
   delete kept.percent;
   if (kept[tab]) return kept;
-  const totalMinor = tab === "exact" ? draftAmountMinor(draft) : baseMinor;
-  return withSplit(kept, convertSplitMode(totalMinor, arithmeticSplit(draft), tab, {
-    tiebreakSeed: splitSeed(draft),
-  }));
+  return withSplit(kept, convertSplitMode(arithmeticSplit(draft), tab));
 }
 
 /** Null for ≤ 0 too: the amount is disabled on a derived number, and disabled-and-empty can't save. */

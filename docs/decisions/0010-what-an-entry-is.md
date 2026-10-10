@@ -55,8 +55,10 @@ restored while its successor lives. Wrong kind is fixed by deleting and adding.
 `SplitSpec` converted on every switch made the tabs edit each other: leaving
 somebody out of Evenly deleted the parts they had under As parts, and As
 amounts would only let you type for whoever Evenly had ticked. A tab opened for
-the first time is handed what is on screen, once — "even, then nudge one
-person" is why — and keeps what was typed into it after that. `percent` stays
+the first time is handed who is in on screen, once — "even, then nudge one
+person" is why — but none of its numbers: parts are not amounts, and a figure
+carried over reads as typed when nobody typed it. It keeps what was typed into
+it after that. `percent` stays
 in `SplitSpec` readable but unwritable: removing the variant would break the
 one thing the op log promises, and it has no tab, so the first tap converts one
 away for good.

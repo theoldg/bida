@@ -276,7 +276,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     );
     patch({
       splitTab,
-      splits: openSplitTab(draft, splitTab, baseMinor),
+      splits: openSplitTab(draft, splitTab),
       ...(handoff !== null ? { amountText: handoff } : {}),
     });
   }
@@ -299,7 +299,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
       kind: next,
       description: note,
       ...(leavingReceipt
-        ? { splitTab: "equal" as SplitTab, splits: openSplitTab(draft, "equal", baseMinor) }
+        ? { splitTab: "equal" as SplitTab, splits: openSplitTab(draft, "equal") }
         : {}),
       ...(handoff !== null ? { amountText: handoff } : {}),
     });

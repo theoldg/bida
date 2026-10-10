@@ -101,7 +101,7 @@ API is reached with `fetch`.
   draws and edits the tab showing, `openSplitTab` is the one place a newly
   opened tab is handed a starting point, and `activeSplit` says which spec is
   on screen — the receipt's, on its tab, read off the bill. What a first-time
-  tab is handed is `arithmeticSplit`, never the receipt: a scan is an answer of
+  tab is handed is who `arithmeticSplit` has in, never the receipt: a scan is an answer of
   its own, in a mode of its own, and does not fill in As parts (ADR-0016).
   Which tab is showing lives on the draft alone; a saved entry carries its
   mode, and that is what reopens it.

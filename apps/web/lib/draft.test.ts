@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { withDate } from "./format";
 import {
-  resolveSplit, splitParticipants, startOfLocalDay, type Expense, type Settlement, type SplitSpec,
+  exactFigures, resolveSplit, splitParticipants, startOfLocalDay, type Expense, type Settlement, type SplitSpec,
 } from "@bida/core";
 import {
   activeSplit, activeSplitTab, blankDraft, draftReceiptSplit, expenseDraft, legacyPercent, newEntryKey,
@@ -24,8 +24,8 @@ function expense(over: Partial<EntryDraft> = {}): EntryDraft {
 }
 
 /** Open a tab the way the form does: the inputs it gets, and the tab it is on. */
-function open(draft: EntryDraft, tab: SplitTab, totalMinor = 9000): EntryDraft {
-  return { ...draft, splitTab: tab, splits: openSplitTab(draft, tab, totalMinor) };
+function open(draft: EntryDraft, tab: SplitTab): EntryDraft {
+  return { ...draft, splitTab: tab, splits: openSplitTab(draft, tab) };
 }
 
 describe("the arithmetic tabs are independent", () => {
@@ -40,7 +40,7 @@ describe("the arithmetic tabs are independent", () => {
   // Nobody is handed a zero figure: opened before the amount is typed, everyone
   // shares the rest, and the shares arrive with the amount.
   it("hands a first-time As amounts everyone sharing while the total is still zero", () => {
-    const d = open(expense({ amountText: "" }), "exact", 0);
+    const d = open(expense({ amountText: "" }), "exact");
     expect(d.splits.exact).toEqual({ mode: "exact", amounts: {}, rest: [A, B, C] });
     expect(splitParticipants(activeSplit(d))).toEqual([A, B, C]);
   });
@@ -57,9 +57,18 @@ describe("the arithmetic tabs are independent", () => {
     expect(splitParticipants(activeSplit(d))).toEqual([A, B, C]);
   });
 
+  // Parts are not amounts: whoever held one arrives in, sharing the rest.
+  it("hands As amounts who was in As parts, and none of the parts", () => {
+    let d = open(expense(), "shares");
+    d = { ...d, splits: withSplit(d.splits, { mode: "shares", weights: { [A]: 2, [B]: 1 } }) };
+    d = open(d, "exact");
+    expect(d.splits.exact).toEqual({ mode: "exact", amounts: {}, rest: [A, B] });
+    expect(resolveSplit(9000, activeSplit(d)).shares).toEqual({ [A]: 4500, [B]: 4500 });
+  });
+
   it("starts As amounts in the entry's own currency, not the base", () => {
-    // 90.00 MAD, whatever the euro total handed in: the fields are dirham.
-    const d = open(expense({ currency: "MAD" }), "exact", 828);
+    // 90.00 MAD: the fields are dirham.
+    const d = open(expense({ currency: "MAD" }), "exact");
     expect(resolveSplit(9000, activeSplit(d)).shares).toEqual({ [A]: 3000, [B]: 3000, [C]: 3000 });
   });
 
@@ -85,7 +94,7 @@ describe("the arithmetic tabs are independent", () => {
     for (const first of ["equal", "shares", "exact"] as const) {
       for (const total of [9000, 10_000, 1]) {
         // Same currency, so the typed amount is the base total As amounts divides.
-        const d = open(expense({ amountText: (total / 100).toFixed(2) }), first, total);
+        const d = open(expense({ amountText: (total / 100).toFixed(2) }), first);
         const spec = activeSplit(d);
         const allocated = spec.mode === "exact"
           ? Object.values(resolveSplit(total, spec).shares).reduce((a, b) => a + b, 0) : total;
@@ -104,7 +113,7 @@ describe("Receipt is a fourth answer, not a fourth way of writing one", () => {
     // What the scan handler writes: the bill, and the tab it belongs to.
     d = { ...d, receiptItems: items, splitTab: "receipt" };
     expect(d.splits.shares).toEqual({ mode: "shares", weights: { [A]: 3, [B]: 1 } });
-    expect(openSplitTab(d, "receipt", 9000)).toBe(d.splits);
+    expect(openSplitTab(d, "receipt")).toBe(d.splits);
     expect(activeSplit(open(d, "shares"))).toEqual({ mode: "shares", weights: { [A]: 3, [B]: 1 } });
   });
 
@@ -207,6 +216,16 @@ describe("a draft that edits a saved entry", () => {
     expect(activeSplitTab(d)).toBe("exact");
     expect(activeSplit(d)).toEqual(saved.split);
     expect(d.recordedAt).toBe(900);
+  });
+
+  // Saved with its rest's figures filled in (`settleRest`); reopened, the rest
+  // still float and only the typed figure reads as typed.
+  it("reopens As amounts knowing who shared the rest", () => {
+    const split = { mode: "exact" as const, amounts: { [A]: 23450, [B]: 50000, [C]: 50000 }, rest: [B, C] };
+    const d = expenseDraft({ ...saved, split }, A, MEMBERS);
+    expect(d.splits.exact).toEqual(split);
+    expect(exactFigures(123450, split)).toEqual({ [A]: 23450, [B]: 50000, [C]: 50000 });
+    expect(exactFigures(150000, split)).toEqual({ [A]: 23450, [B]: 63275, [C]: 63275 });
   });
 
   it("leaves a receipt's weights off the arithmetic tabs and keeps the bill", () => {
