@@ -280,13 +280,13 @@ a, button, label, select, .seg button, .itemcell {
   touch-action: manipulation;
 }
 
-a.row, button.row, .fab, .btn, .iconbtn, .tlink, .seg button, a.card, button.card,
+a.row, button.row, .fab, .btn, .iconbtn, .tlink, .setlink, .seg button, a.card, button.card,
 .itemfold, a.chip, button.chip, .action, .starttile, .field:has(> .pick), a.field,
 .formhead .field {
   transition: background-image .2s ease;
 }
 a.row:active, button.row:active, .fab:active, .iconbtn:active,
-.tlink:active, .seg button:active, a.card:active, button.card:active, .itemfold:active,
+.tlink:active, .setlink:active, .seg button:active, a.card:active, button.card:active, .itemfold:active,
 a.chip:active, button.chip:active, .btn:active:not(:disabled), .starttile:active,
 .field:has(> .pick:active), a.field:active, .action:active:not(:disabled),
 .formhead .field:has(> :is(input, label):active) {
@@ -532,16 +532,18 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .settings .addrow.keyrow { margin: 16px 0 0; width: 100% }
 /* Set down from the lede, or the fold reads as that paragraph's last line. */
 .settings .installfold { margin-top: 16px }
-/* Settings' way on to Advanced: titled like a group of settings, and the
-   chevron says it is a screen, not a section. */
+/* Settings' way on to Advanced: a row, out to the column's edges so its press
+   wash has room, and quieter than the settings above it — the chevron says it
+   is a screen, not a section. */
 .setlink { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 12px 0; border-top: 1px solid var(--rule-soft); font-size: 16px; font-weight: 650;
-  letter-spacing: -.02em; color: var(--ink) }
+  margin-inline: -16px; padding: 13px 16px; border-top: 1px solid var(--rule-soft);
+  font-size: 14px; font-weight: 500; color: var(--ink-2) }
 .setlink svg { color: var(--muted) }
 /* As wide as its words, not the column: a choice of two or three, not a tab
    bar. Equal columns, so the chosen one's weight moves nothing. */
 .settings .seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin-top: 2px }
-.settings .seg button { padding: 7px 16px; font-size: 12.5px }
+.settings .seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 7px 16px; font-size: 12.5px }
 .settings .seg button:disabled { color: var(--muted); opacity: .5 }
 .notwho { margin-top: 14px }
 .notwho p { font-size: 12px; line-height: 1.55; color: var(--ink-2); margin-top: 6px; padding-left: 16px }

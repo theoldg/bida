@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { setDark, useDark } from "@/components/dark-mode";
-import { Icon } from "@/components/icons";
+import { Icon, type IconName } from "@/components/icons";
 import { useInstallOffer, usePushState } from "@/components/install";
 import { copy } from "@/lib/copy";
 import { type NotifyLevel } from "@/lib/db/dexie";
@@ -46,7 +46,7 @@ export default function SettingsPage() {
  */
 function Choice<T extends string>({ title, options, chosen, onChoose, disabled, note }: {
   title: string;
-  options: readonly { value: T; label: string }[];
+  options: readonly { value: T; label: string; icon?: IconName }[];
   chosen: T;
   onChoose: (value: T) => void;
   disabled?: boolean;
@@ -59,7 +59,10 @@ function Choice<T extends string>({ title, options, chosen, onChoose, disabled, 
         {options.map((o) => (
           <button key={o.value} type="button" className={o.value === chosen ? "on" : ""}
             aria-pressed={o.value === chosen} disabled={disabled}
-            onClick={() => { if (o.value !== chosen) onChoose(o.value); }}>{o.label}</button>
+            onClick={() => { if (o.value !== chosen) onChoose(o.value); }}>
+            {o.icon ? <Icon name={o.icon} size={13} /> : null}
+            {o.label}
+          </button>
         ))}
       </div>
       {note ? <p className="keynote">{note}</p> : null}
@@ -73,7 +76,10 @@ function Theme() {
   const { theme } = copy.settings;
   return (
     <Choice title={theme.title} chosen={dark ? "dark" : "light"}
-      options={[{ value: "light", label: theme.light }, { value: "dark", label: theme.dark }]}
+      options={[
+        { value: "light", label: theme.light, icon: "sun" },
+        { value: "dark", label: theme.dark, icon: "moon" },
+      ]}
       onChoose={(v) => setDark(v === "dark")} />
   );
 }
