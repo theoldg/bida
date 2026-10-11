@@ -100,7 +100,10 @@ key is absent when nobody floats, so older splits serialise unchanged.
 amounts" as everyone in `rest`, nothing typed. A mode this build doesn't know
 (the retired `percent`, never written) names nobody, so it reads as a split
 that can't be resolved, not a crash. **`receipt` is the only mode nobody types** — a scanned bill writes it and `convertSplitMode`
-never converts into it ([ADR-0016](decisions/0016-receipts.md)).
+never converts into it ([ADR-0016](decisions/0016-receipts.md)). A `shares`
+split saved beside a kept bill is written with `splitTab: "shares"`, the one
+field an op carries that no state keeps: the fold reads it and drops it
+(`upgradeReceiptSplit`).
 What a person calls each mode is `copy.split.mode` in `apps/web/lib/copy.ts`
 and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
 

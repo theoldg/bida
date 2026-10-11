@@ -135,7 +135,8 @@ under it cannot disagree.
 - **Two things that mean different things to a person are two things in the
   code, however alike their arithmetic.** `receipt` is its own `SplitMode`, not
   `shares` with a flag; old ops carrying the flag are upgraded on the way out of
-  the op log (`upgradeReceiptSplit`).
+  the op log (`upgradeReceiptSplit`). That upgrade also takes unflagged `shares`
+  beside a bill, so a write must flag parts typed there (`partsBesideBill`).
 - `validateSplit(0, spec)` reads as **fully allocated**, not incomplete
   (`allocated === total === 0`). The verdict is `splitFooter`'s
   (`lib/format.ts`), so "€0.00 of €0.00 allocated" is unreachable rather than

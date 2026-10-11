@@ -1,5 +1,5 @@
 import {
-  canonicalSplit, newId, primaryPayer, receiptOf, restoreEntryDrafts,
+  canonicalSplit, newId, partsBesideBill, primaryPayer, receiptOf, restoreEntryDrafts,
   type CurrencyCode, type EntryEntity, type EntryRateSource, type ExpenseKind, type Id, type OpDraft, type Rate,
   type Receipt, type SplitSpec,
 } from "@bida/core";
@@ -87,6 +87,7 @@ function expenseContent(input: ExpenseInput, base: CurrencyCode) {
     // Canonical from the very first op: `sameValue` sorts object keys but not
     // arrays, so re-picking the same people would otherwise read as an edit.
     split: canonicalSplit(input.split),
+    splitTab: partsBesideBill(input),
     categoryId: input.categoryId,
     attachmentIds: input.attachmentIds,
     ...receiptOf(input),
@@ -143,8 +144,10 @@ export async function editExpense(
   const patch = wholeEntity(expenseContent({ ...existing, ...changes }, base));
 
   // A save that moved nothing is a revision saying nothing happened — measured
-  // against the stored split made canonical too, as the patch's is.
-  if (!movesAnything({ ...existing, split: canonicalSplit(existing.split) }, patch)) return;
+  // against the stored split made canonical too, as the patch's is, and beside
+  // the flag the fold dropped from it.
+  const held = { ...existing, split: canonicalSplit(existing.split), splitTab: partsBesideBill(existing) };
+  if (!movesAnything(held, patch)) return;
   await write(groupId, actor, [
     { entity: "expense", entityId: expenseId, kind: "update", patch, note: note ?? null },
   ]);

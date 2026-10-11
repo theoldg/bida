@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addsUp, canonicalSplit, convertSplitMode, ownCurrencySplit, resolveEntrySplit, resolveSplit, shareOf, splitParticipants,
-  restOf, settleRest, SplitError, toggleEveryone, upgradeReceiptSplit, validateSplit,
+  partsBesideBill, restOf, settleRest, SplitError, toggleEveryone, upgradeReceiptSplit, validateSplit,
 } from "./split.js";
 import type { SplitSpec } from "./types.js";
 
@@ -429,7 +429,18 @@ describe("upgradeReceiptSplit", () => {
     expect(legacy({ splitTab: "shares", receiptItems: items }).split.mode).toBe("shares");
   });
 
-  it("drops the flag either way — nothing reads it any more", () => {
+  // A write no longer stores the tab, so parts typed over a kept bill would be
+  // the case above: the write says so itself, in the flag the upgrade honours.
+  it("leaves parts a write flagged as typed beside a bill", () => {
+    const typed = { split: { mode: "shares" as const, weights }, receiptItems: items };
+    expect(partsBesideBill(typed)).toBe("shares");
+    expect(legacy({ receiptItems: items, splitTab: partsBesideBill(typed) }).split.mode).toBe("shares");
+    expect(partsBesideBill({ split: typed.split })).toBeNull();
+    expect(partsBesideBill({ split: { mode: "equal", members: ["a"] }, receiptItems: items })).toBeNull();
+    expect(partsBesideBill({ split: { mode: "receipt", weights }, receiptItems: items })).toBeNull();
+  });
+
+  it("drops the flag either way — no state keeps it", () => {
     expect("splitTab" in legacy({ splitTab: "receipt", receiptItems: items })).toBe(false);
     expect("splitTab" in legacy({ splitTab: "equal", receiptItems: items })).toBe(false);
   });

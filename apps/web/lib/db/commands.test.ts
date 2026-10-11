@@ -302,7 +302,7 @@ describe("commands", () => {
       "dateOnly", "description", "kind", "occurredAt", "paidBy", "payers", "rateSource", "rateToBase",
       "receiptAssignments", "receiptDiscounts", "receiptEnglish", "receiptInvolved", "receiptItems",
       "receiptTax", "receiptText", "receiptTip",
-      "split",
+      "split", "splitTab",
     ]);
     // Lifecycle and identity never: a stale content save must not re-tombstone
     // what a healer just put back, or move the field list order breaks ties on.
@@ -534,6 +534,35 @@ describe("commands", () => {
     await editExpense(groupId, theo, expenseId, {});
 
     expect(await db().ops.count()).toBe(before);
+  });
+
+  // The fold reads `shares` beside a bill with no flag as a receipt from before
+  // `receipt` was a mode (`upgradeReceiptSplit`), so parts typed over a kept
+  // bill reopened as "By items" and the next save wrote the grid's split.
+  it("keeps parts typed beside a kept bill as parts, through a save and an edit", async () => {
+    const { groupId, theo, marie } = await trip();
+    const parts = { mode: "shares" as const, weights: { [theo]: 2, [marie]: 1 } };
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Dinner",
+      occurredAt: 1,
+      amountMinor: 9000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: parts,
+      receiptItems: [{ label: "Steak", amount: "60.00" }, { label: "Coffee", amount: "30.00" }],
+    });
+    const stored = async () => (await db().expenses.get(expenseId))!;
+    expect((await stored()).split).toEqual(parts);
+    expect(await stored()).not.toHaveProperty("splitTab");
+
+    const before = await db().ops.count();
+    await editExpense(groupId, theo, expenseId, {});
+    expect(await db().ops.count()).toBe(before);
+
+    await editExpense(groupId, theo, expenseId, { description: "Supper" });
+    expect((await stored()).split).toEqual(parts);
+    await assertMaterialisedMatchesLog(groupId);
   });
 
   it("deletes by tombstone, so the log still holds what was there", async () => {

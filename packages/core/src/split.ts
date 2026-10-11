@@ -477,9 +477,21 @@ export function toggleEveryone(
 }
 
 /**
+ * What a write puts in `splitTab`: `"shares"` for parts typed beside a kept
+ * bill, null for everything else. Without it the fold below reads that entry
+ * as a legacy receipt, and the parts somebody typed reopen as "By items".
+ */
+export function partsBesideBill(
+  entry: { split: SplitSpec; receiptItems?: readonly unknown[] | null },
+): "shares" | null {
+  return entry.split.mode === "shares" && (entry.receiptItems?.length ?? 0) > 0 ? "shares" : null;
+}
+
+/**
  * Rewrite a legacy receipt expense (`shares` plus `splitTab: "receipt"`, or
- * `shares` beside a scanned bill) into `receipt` mode. Runs in `applyPatch`,
- * so every reader sees one shape. Mutates in place. ADR-0016.
+ * `shares` beside a scanned bill with no flag at all) into `receipt` mode.
+ * Runs in `applyPatch`, so every reader sees one shape, and no state keeps the
+ * flag: a write derives it again (`partsBesideBill`). Mutates in place. ADR-0016.
  */
 export function upgradeReceiptSplit(entity: Record<string, unknown>): void {
   const spec = entity["split"] as SplitSpec | undefined;
