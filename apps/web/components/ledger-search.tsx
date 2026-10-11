@@ -4,23 +4,15 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { copy } from "@/lib/copy";
 import { yieldPosition } from "@/lib/ledger-position";
-import { shownAt } from "@/lib/ledger-search";
+import { keepQuery, openingQuery, shownAt } from "@/lib/ledger-search";
 import { returnTo } from "@/lib/nav";
 import { calmly, glide } from "@/lib/seek";
 import { Icon } from "./icons";
 
-/**
- * What each group's ledger was last searched for, kept for the way back to it
- * like its position (lib/ledger-position.ts): a result opened and backed out
- * of returns to the results. A tap into the group starts blank.
- */
-const kept = new Map<string, string>();
-
 export function useLedgerQuery(groupId: string): [string, (query: string) => void] {
-  const [query, setQuery] = useState(() => (returnTo(location.href) === null ? "" : kept.get(groupId) ?? ""));
+  const [query, setQuery] = useState(() => openingQuery(groupId, returnTo(location.href) !== null));
   return [query, (next) => {
-    if (next) kept.set(groupId, next);
-    else kept.delete(groupId);
+    keepQuery(groupId, next);
     setQuery(next);
   }];
 }

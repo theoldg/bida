@@ -327,7 +327,8 @@ API is reached with `fetch`.
   best place a word was found, in that order, under lines drawn like date
   lines; within a section more words there comes first, then recency. A
   transfer's title is its two names and its note. A query is kept for the way
-  back from a result, like the ledger's position, and a way back draws the bar
+  back from a result and forgotten by any other arrival, like the ledger's
+  position (`openingQuery`), and a way back draws the bar
   where the list is put from its first frame, lending the room first.
 - **The ledger's new-changes line** (`components/new-edits.tsx`) sits under the
   you-owe card, drawn as a date line in full-ink text, with a chevron at its

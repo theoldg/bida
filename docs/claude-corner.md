@@ -27,6 +27,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-11* — "How did this bug even arise". A copied pattern copies half:
+  the query was kept like the position, but only the position was forgotten
+  on a fresh visit. The check stopped one step short of the repro. Answer
+  the how; it was the question.
+
 - *2026-10-10* — "Audit the split tabs", then "explain and wait for my
   approval", then "percent splits … are safe to delete". The legacy case I'd
   been tiptoeing round was the tangle; ask whether old data is real before
@@ -79,7 +84,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   owner picked one: "Make the demo start with the who are you screen". A
   findings list is a menu. Driving the fix found a real race the checks had
   never tripped.
-
-- *2026-10-09* — "The row flash doesn't wait long enough after scrolling",
-  with a guess it was the colour. It was timing: the wash faded as the scroll
-  landed. Fix what was felt; offer the guess back as a separate knob.

@@ -294,6 +294,16 @@ await page.waitForSelector(".skelveil", { state: "detached" });
   await page.waitForSelector(".rows a.row");
   now = await until(page, (s) => s.query === "" && s.head && !s.on);
   report(now.query === "" && now.head && !now.on && now.top === 0, "a tap into the group starts blank, at the top", say(now));
+
+  // And stays blank: the search left behind is not the way back's to restore.
+  await page.locator(".rows a.row").first().click();
+  await page.waitForURL(/\/g\/entry\?/);
+  await page.locator(".topbar .iconbtn").first().click();
+  await page.waitForURL(/\/g\?id=/);
+  await page.waitForSelector(".rows a.row");
+  await settle(page, 400);
+  now = await read(page);
+  report(now.query === "" && now.head, "and back from an entry opened there, it is still blank", say(now));
 }
 await short.close();
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { shownAt } from "./ledger-search";
+import { keepQuery, openingQuery, shownAt } from "./ledger-search";
 
 /** A 50px bar, as `--search-h` has it. */
 const BAR = 50;
@@ -28,5 +28,26 @@ describe("shownAt", () => {
   it("never leaves 0 to 1, whatever a rubber-banding scroller reports", () => {
     expect(shownAt(-80, 108, BAR)).toBe(0);
     expect(shownAt(1e6, 108, BAR)).toBe(1);
+  });
+});
+
+describe("openingQuery", () => {
+  it("gives the kept query back on a way back, and only to its group", () => {
+    keepQuery("a", "pizza");
+    expect(openingQuery("a", true)).toBe("pizza");
+    expect(openingQuery("b", true)).toBe("");
+  });
+
+  it("forgets it on an arrival that is not a way back", () => {
+    // search → result → back → up to the list → tap in → entry → back
+    keepQuery("a", "pizza");
+    expect(openingQuery("a", false)).toBe("");
+    expect(openingQuery("a", true)).toBe("");
+  });
+
+  it("forgets a cleared query", () => {
+    keepQuery("a", "pizza");
+    keepQuery("a", "");
+    expect(openingQuery("a", true)).toBe("");
   });
 });
