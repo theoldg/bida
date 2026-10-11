@@ -21,7 +21,7 @@ corners. Colour is a scarce resource spent only on money —
 underneath: ruled rows, a red column and a green column.
 
 **The app names itself once**, on the groups list: *bida* — lower-case always
-— with one kebab opposite holding the light/dark switch and "About bida"
+— with one kebab opposite holding Import, Settings and "About bida"
 as words, and nothing under it; a sub-line would caption the list you are already looking at. Every
 other top bar says the thing you opened, so a second name would be branding
 where a title should be. **The mark is not in the app**: `design/brand/logo.svg`
@@ -29,7 +29,7 @@ is the home-screen icon `pnpm icons` rasterises. If it ever comes back it comes
 back as that file in an `<img>`, never redrawn in `--brand` to make it
 theme-aware — a tracing of a logo is a worse logo.
 
-The screen behind the info glyph (`/about`) is the app's only prose: a measured column (`.about`, ~34em, centred in the shell — `/advanced` and `/install` wear it too), each claim under a
+The screen behind the info glyph (`/about`) is the app's only prose: a measured column (`.about`, ~34em, centred in the shell — `/settings` and `/install` wear it too), each claim under a
 monospace eyebrow in `--ink-2` — the `.daylabel` register, which is how this app
 already writes a heading that is not a title. No cards there; a box per
 paragraph makes a settings list out of something read once, top to bottom. One

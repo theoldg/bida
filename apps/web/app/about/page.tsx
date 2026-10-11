@@ -63,7 +63,7 @@ export default function AboutPage() {
                   {/* The own-key pointer is the paragraph's last clause, an aside about
                       scanning, not a claim of its own. */}
                   {privacy.ownKeyPointer}{" "}
-                  <Link href={route.advanced()}>{copy.advanced.key.title}</Link>.
+                  <Link href={route.settings()}>{copy.settings.key.title}</Link>.
                 </p>
                 <p><strong>{privacy.importTitle}</strong> {privacy.import}</p>
               </>

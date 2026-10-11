@@ -6,7 +6,6 @@ import { exportFilename, groupCsv, handOffCsv } from "../lib/export";
 import { route } from "../lib/group-link";
 import { type GroupData } from "../lib/hooks";
 import { useGroupActions } from "./group-actions";
-import { summonLedgerSearch } from "./ledger-search";
 import { MenuButton, type SheetAction } from "./row-menu";
 
 /**
@@ -41,8 +40,9 @@ export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData 
   const actions: SheetAction[] = [
     ...group.copyLink,
     { label: copy.group.people, icon: "users", onSelect: () => router.push(route.members(groupId)) },
-    { label: copy.group.search.menu, icon: "search", onSelect: summonLedgerSearch },
     { label: copy.group.export, icon: "share", onSelect: () => void exportData() },
+    // The phone's, not the group's: the same screen the groups list opens.
+    { label: copy.groups.settings, icon: "sliders", onSelect: () => router.push(route.settings()) },
     group.forget,
   ];
 

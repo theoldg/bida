@@ -120,7 +120,7 @@ export const route = {
   about: () => "/about",
   /** Linked from nowhere: `/about` prints the address, as deliberate friction. */
   deleteMyData: () => "/delete-my-data",
-  advanced: () => "/advanced",
+  settings: () => "/settings",
   /** The phone's invites ride in the fragment: iOS writes the home-screen bookmark from this URL. */
   install: (links: readonly CarriedGroup[] = []) =>
     `/install${links.length ? `#${formatInvites(links)}` : ""}`,

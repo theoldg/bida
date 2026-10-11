@@ -23,7 +23,7 @@ export function useInstallOffer(): InstallOffer {
   return useSyncExternalStore(subscribeInstall, installOffer, () => "none" as const);
 }
 
-function usePushState(): PushState {
+export function usePushState(): PushState {
   return useSyncExternalStore(subscribePushState, pushState, () => "unsupported" as const);
 }
 

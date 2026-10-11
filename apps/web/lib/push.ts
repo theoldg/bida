@@ -5,10 +5,10 @@
  * to tell; the server keeps nothing.
  */
 
-import { fromBase64Url, isDemo, type DevicePush, type Identity } from "@bida/core";
+import { fromBase64Url, isDemo, type DevicePush, type Identity, type NotifyScope } from "@bida/core";
 import { appendOps } from "./db/commands/append";
-import { db } from "./db/dexie";
-import { getDevice } from "./db/device";
+import { db, type NotifyLevel } from "./db/dexie";
+import { getDevice, updateDevice } from "./db/device";
 import { keepNote } from "./diag";
 
 /**
@@ -59,7 +59,23 @@ export function pushFromSubscription(json: PushSubscriptionJSON): DevicePush | n
 
 function samePush(a: DevicePush | null | undefined, b: DevicePush | null): boolean {
   if (!a || !b) return (a ?? null) === b;
-  return a.endpoint === b.endpoint && a.p256dh === b.p256dh && a.auth === b.auth;
+  return a.endpoint === b.endpoint && a.p256dh === b.p256dh && a.auth === b.auth
+    && (a.scope ?? "own") === (b.scope ?? "own");
+}
+
+/**
+ * What the log should say for this subscription at this level. "own" leaves
+ * `scope` out, as every subscription written before the choice existed did,
+ * so choosing it rewrites nothing.
+ */
+export function pushAt(json: PushSubscriptionJSON | null, level: NotifyLevel): DevicePush | null {
+  const push = json && level !== "off" ? pushFromSubscription(json) : null;
+  return push && level === "all" ? { ...push, scope: "all" } : push;
+}
+
+/** Where Settings stands: off without permission, else the level chosen, "own" if none was. */
+export function notifyLevel(state: PushState, chosen: NotifyLevel | undefined): NotifyLevel {
+  return state === "on" ? chosen ?? "own" : "off";
 }
 
 /**
@@ -145,21 +161,42 @@ async function publish(want: DevicePush | null, now = Date.now()): Promise<void>
 }
 
 /**
- * From the offer's tap. **`requestPermission` comes first, before any await**:
- * iOS shows the prompt only inside the tap's own turn, and anything awaited
- * ahead of it spends that.
+ * From the offer's tap or Settings'. **`requestPermission` comes first, before
+ * any await**: iOS shows the prompt only inside the tap's own turn, and
+ * anything awaited ahead of it spends that.
  */
-export async function turnOnNotifications(): Promise<void> {
+export async function turnOnNotifications(level: NotifyScope = "own"): Promise<void> {
   if (!supported()) return;
   const answer = await Notification.requestPermission();
   asked = true;
   try {
     if (answer !== "granted") return;
+    await updateDevice({ notify: level });
     const reg = await navigator.serviceWorker.getRegistration();
     const sub = reg ? await subscription(reg) : null;
-    await publish(sub ? pushFromSubscription(sub.toJSON()) : null);
+    await publish(pushAt(sub?.toJSON() ?? null, level));
   } catch (err) {
     keepNote("push.subscribe", String(err));
+  } finally {
+    for (const listener of listeners) listener();
+  }
+}
+
+/**
+ * Settings' control. Off keeps the browser's subscription and writes `null`
+ * to the log, so turning back on asks nothing. **Without permission, the tap
+ * goes straight to the prompt** — nothing may be awaited ahead of it.
+ */
+export async function setNotifyLevel(level: NotifyLevel): Promise<void> {
+  if (!supported()) return;
+  if (level !== "off" && Notification.permission !== "granted") return turnOnNotifications(level);
+  try {
+    await updateDevice({ notify: level });
+    const reg = level === "off" ? null : await navigator.serviceWorker.getRegistration();
+    const sub = reg ? await subscription(reg) : null;
+    await publish(pushAt(sub?.toJSON() ?? null, level));
+  } catch (err) {
+    keepNote("push.level", String(err));
   } finally {
     for (const listener of listeners) listener();
   }
@@ -177,8 +214,10 @@ export async function reconcilePush(): Promise<void> {
     const reg = await navigator.serviceWorker.getRegistration();
     if (!reg) return;
     // A permission taken back leaves the subscription dead, not gone: null.
-    const sub = Notification.permission === "granted" ? await subscription(reg) : null;
-    await publish(sub ? pushFromSubscription(sub.toJSON()) : null);
+    // And Settings' "off" is kept off however the browser stands.
+    const level = (await getDevice()).notify ?? "own";
+    const sub = Notification.permission === "granted" && level !== "off" ? await subscription(reg) : null;
+    await publish(pushAt(sub?.toJSON() ?? null, level));
   } catch (err) {
     keepNote("push.reconcile", String(err));
   }

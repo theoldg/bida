@@ -122,16 +122,11 @@ await tap("tap a suggested transfer", () => page.locator("button.card").first().
 await page.keyboard.press("Escape");
 await tap("history", () => page.goto(`${base}/g/history?id=${g}`), ".tle");
 await tap("members", () => page.goto(`${base}/g/members?id=${g}`), ".rows .row");
-// The one switch that isn't in a group: light/dark, on the groups list.
-// Found by the sun or moon glyph, which nothing else in the menu carries
-// (components/home-menu.tsx) — never by position or wording, which keep
-// changing under this check.
+// The phone's own switch, light/dark, on Settings. Found by its role, the
+// screen's only switch — never by wording, which keeps changing under this check.
 await tap("theme toggle", async () => {
-  await openGroupsList(page, base);
-  await page.locator(".topbar button.iconbtn").first().click();
-  // `[role=menuitem]`, not `button`: the rows carry an explicit role, which
-  // replaces the implicit one the element would have had (row-menu.tsx).
-  await page.locator('[role=menuitem]:has(use[href="#i-sun"], use[href="#i-moon"])').click();
+  await page.goto(`${base}/settings`);
+  await page.locator('[role=switch]').click();
 }, "html[data-theme]");
 
 await tap("new entry form", () => page.goto(`${base}/g/entry/edit?id=${g}`), "input.amount");

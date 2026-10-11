@@ -8,7 +8,7 @@ the other phones do when a group is deleted is
 
 ## Bringing a group onto the phone
 
-**Import a group**, in the groups list's kebab above About, is the other
+**Import a group**, first in the groups list's kebab, is the other
 direction: somebody else's ledger read into a new group. The kebab is the whole
 of the entry point.
 
@@ -102,7 +102,7 @@ most people are actually after — Export data — before it asks for a link.
 
 ## Getting a group off the phone
 
-**Export data**, above Forget group in the group menu, hands over one CSV in
+**Export data**, in the group menu, hands over one CSV in
 Splitwise's export shape — the only format anything else imports, Tricount
 included, whose import *is* "import from Splitwise". The file is
 `core/export.ts`; `lib/export.ts` is the part with a platform in it.

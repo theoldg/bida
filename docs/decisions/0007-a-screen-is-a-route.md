@@ -27,12 +27,12 @@ expenses you'd looked at rather than climbing out.
   pressed into from it** — the balances (`/g/balances`) from the "you owe" card
   at its head, History from a clock beside the menu (`components/history-button.tsx`,
   standing alone because its dot is how the ledger says what changed elsewhere),
-  and the invite link, People and "Forget group" from one top-bar menu
-  (`components/group-menu.tsx`). Three icons is the ceiling for a top bar and
-  the group outgrew it. There is no settings or options screen: the two
-  device-wide preferences were a taste you set once (light/dark, one button on
-  the groups list) and a way of reading the ledger the app simply does (the
-  personal lens, unconditional).
+  and the invite link, People, Export, Settings and "Forget group" from one
+  top-bar menu (`components/group-menu.tsx`). Three icons is the ceiling for a
+  top bar and the group outgrew it. **Settings is the phone's, not the
+  group's** — one screen from both kebabs: light/dark, how much it is
+  notified, and a key of its own. The personal lens is not a setting; the app
+  simply does it.
 - **An up-link unwinds; it doesn't navigate.** `lib/nav.ts`'s `goUp` finds the
   parent among the entries *behind* the current one and goes straight back to
   it, so only descending pushes. The parent is found by comparing path and

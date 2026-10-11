@@ -287,8 +287,8 @@ export const copy = {
       body: (host: string) => `That group lives on ${host}, so this app can’t open it. Open the link there, or ask for one made on this app.`,
     },
     about: "About bida",
-    /** Last in the kebab, named for what's behind it. */
-    advanced: "Advanced",
+    /** In both kebabs: the phone's settings, the same screen from either. */
+    settings: "Settings",
     /** The bar's kebab: the phone's switches and the app's own screens. */
     menu: "Menu",
     whoAreYou: "who are you?",
@@ -297,7 +297,6 @@ export const copy = {
     youOwe: "you owe",
     youreOwed: "you’re owed",
     settled: "settled",
-    theme: { toLight: "Light mode", toDark: "Dark mode" },
   },
 
   notify: {
@@ -440,11 +439,27 @@ export const copy = {
    * if that stops being true.
    */
   /**
-   * The screen for rarely needed settings, starting with bringing your own key.
-   * Short: the phone calls Google itself, and Google bills the key.
+   * The phone's settings (`app/settings/page.tsx`): its look and its
+   * notifications, then what most people never need under Advanced.
    */
-  advanced: {
-    title: "Advanced",
+  settings: {
+    title: "Settings",
+    dark: "Dark mode",
+    notify: {
+      title: "Notifications",
+      /** The three answers, in a segmented control. `own` is the offer card's yes. */
+      level: { off: "Off", own: "Just me", all: "All" },
+      /** Under the control, saying what the chosen one means. */
+      means: {
+        off: "Nothing is sent to this phone.",
+        own: "Only entries that affect you.",
+        all: "Every entry in your groups, even ones you aren’t in.",
+      },
+      /** Permission refused at the phone: no tap here can ask again. */
+      blocked: "Turned off in your phone’s settings. Allow notifications for bida there to choose here.",
+    },
+    advanced: "Advanced",
+    /** Short: the phone calls Google itself, and Google bills the key. */
     key: {
       title: "Bring your own key",
       lede: "Scans normally go through bida’s server, unencrypted and rate limited. You can use your own Gemini API key to avoid the rate limits and send your requests straight to Google.",
@@ -501,7 +516,7 @@ export const copy = {
       key: "The key that decodes the contents is part of the secret link, and it never reaches the server. I can see how many groups there are, and how many edits each one has had. That’s it.",
       scanTitle: "Receipt scanning leaves your phone.",
       scan: "Receipt photos are sent to Google’s Vertex AI to be read. Google doesn’t use them to train its models. For a day afterwards, the server remembers that this group scanned something, and a salted hash of your IP address: never the photo, never the raw address, only enough to keep the rate limits fair.",
-      /** Points at `/advanced` instead of repeating it; ends before the inline link (`app/about/page.tsx`). */
+      /** Points at `/settings` instead of repeating it; ends before the inline link (`app/about/page.tsx`). */
       ownKeyPointer: "If you want to send your own requests to Google directly, see",
       /**
        * The second of the two things that leave the phone readable. Also said under
@@ -782,8 +797,6 @@ export const copy = {
       /** The blank field's words, and its name to a screen reader. */
       field: "Search",
       clear: "Clear search",
-      /** The group menu's item, which brings the bar out wherever the list is. */
-      menu: "Search",
       /** What heads each run of results: where on the row the words were found, best first. */
       by: {
         title: "by title", payer: "by payer", participant: "by participant",
@@ -1199,8 +1212,8 @@ export const copy = {
     },
     /** A brought key stops working; neither is fixed by retrying, so both name the screen the key lives on. */
     key: {
-      refused: "Google refused your key. Check it under Advanced.",
-      spent: "Your key is out of quota for now. Try later, or remove it under Advanced to use the shared one.",
+      refused: "Google refused your key. Check it under Settings.",
+      spent: "Your key is out of quota for now. Try later, or remove it under Settings to use the shared one.",
     },
   },
 

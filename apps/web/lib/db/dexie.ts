@@ -8,9 +8,13 @@ import type {
   Identity,
   Member,
   Notice,
+  NotifyScope,
   Op,
   Settlement,
 } from "@bida/core";
+
+/** Settings' three answers: no subscription on the log, or one with a scope. */
+export type NotifyLevel = "off" | NotifyScope;
 
 /**
  * The op log is the truth; every other folded table can be rebuilt from it
@@ -42,6 +46,11 @@ export interface DeviceRecord {
   installNudgeCollapsed?: boolean;
   /** Its own field: on Android the tab and the installed app share this row. */
   notifyNudgeCollapsed?: boolean;
+  /**
+   * What Settings chose for notifications (lib/push.ts). Absent is "own" once
+   * permission is granted; "off" keeps a granted phone's subscription off the log.
+   */
+  notify?: NotifyLevel;
   /**
    * What this phone scans with outside a group (lib/scan/credential.ts). Not in
    * `groupKeys`, which sync walks.

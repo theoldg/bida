@@ -30,3 +30,4 @@ export function applyTheme(theme: Theme): void {
     try { localStorage.setItem("bida.theme", theme); } catch { /* private mode */ }
   }
 }
+

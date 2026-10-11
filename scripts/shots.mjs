@@ -153,6 +153,7 @@ const BAD_CSV = CSV.replace("2026-04-04,Dinner", "04/04/2026,Dinner");
 const routes = (g) => [
   ["groups", "/"],
   ["about", "/about"],
+  ["settings", "/settings"],
   ["new", "/new"],
   ["import", "/import"],
   ["group-ledger", `/g?id=${g}`],

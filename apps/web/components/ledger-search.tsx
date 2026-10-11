@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { flushSync } from "react-dom";
 import { copy } from "@/lib/copy";
 import { yieldPosition } from "@/lib/ledger-position";
 import { keepQuery, openingQuery, shownAt } from "@/lib/ledger-search";
@@ -33,14 +32,6 @@ const REVEAL_MS = 180;
 /** How long after a press on a row a field let go of is taken to be that press's doing (ms). */
 const PRESS_MS = 700;
 
-/** The mounted bar's way in from the group menu. */
-let summon: (() => void) | null = null;
-
-/** The group menu's **Search**: the caret in the bar, wherever the list is. */
-export function summonLedgerSearch(): void {
-  summon?.();
-}
-
 /**
  * The ledger's search: a bar that comes out from under the top bar. One rule
  * places it — **held, it is out whole; otherwise it is where the scroll puts
@@ -49,8 +40,6 @@ export function summonLedgerSearch(): void {
  * - **The scroll** unfolds it as slowly as it is scrolled, and stopping
  *   halfway leaves it halfway — up to a speed (`REVEAL_MS`), past which it
  *   slides out behind a fling rather than appearing whole.
- * - **The group menu** puts the caret in it, and glides the list to the base
- *   state (`searchBase`) under it.
  * - **A query** stands it in the column (`.searchdock[data-searching]`) with
  *   the results from its foot; emptied, the list is back at the base state.
  * - **Let go of empty** at the base state or short of it, the list glides
@@ -195,23 +184,6 @@ export function LedgerSearch({ query, onQuery }: {
     if (box.scrollTop === 0 || box.scrollTop > base(box) + 1) return;
     glideTo(box, 0);
   };
-
-  useEffect(() => {
-    summon = () => {
-      const box = scroller();
-      const input = field.current;
-      if (!box || !input) return;
-      // Out before the caret: away, the bar is not drawn and can't hold one.
-      // And all of it in the tap's own turn, or iOS keeps its keyboard down.
-      flushSync(() => setFocused(true));
-      // The glide is the only thing that may move the list here.
-      input.focus({ preventScroll: true });
-      if (document.activeElement !== input) { setFocused(false); return; }
-      // Not over a search already up: its results are where they should be.
-      if (input.value === "") glideTo(box, base(box));
-    };
-    return () => { summon = null; };
-  });
 
   return (
     // `data-on` and `data-room` are the frame's to write, above; React never names them.

@@ -54,10 +54,16 @@ it is still missing after.
   card stood, on the groups list and each ledger
   ([ios.md](ios.md#the-card--the-groups-list-and-the-ledger)); the tap asks
   permission before any await, which iOS requires. The subscription is written
-  as `push` on this phone's identity in every held, claimed group. The VAPID
+  as `push` on this phone's identity in every held, claimed group, with
+  `scope: "all"` when Settings says All (Just me leaves it out, which reads as
+  "own"). **Settings** (`/settings`, installed app only) offers Off · Just me ·
+  All, kept on the device as `notify`; choosing one without permission is the
+  tap that asks. Off writes `null` and keeps the browser's subscription, so
+  turning back on asks nothing. The VAPID
   public key comes from `GET /api/push/key`, since one build serves both
   Workers. Every start and every claim runs `reconcilePush`, which rewrites a
-  rotated or new-key subscription, writes `null` for a revoked permission,
+  rotated or new-key subscription, writes `null` for a revoked permission or
+  Settings' Off,
   keeps what is there when offline, and writes nothing when the log agrees.
 - **Keeping** (`appendOps`'s `notify`, passed only by `commands/entries.ts`).
   core's `notices` runs against the log just before and after the command and
@@ -82,7 +88,6 @@ it is still missing after.
 - **Leaving** (`forgetGroup`) writes `push: null` first, and the group is kept
   on the phone until the sync that pushes it, then erased. That sync heals
   nothing: forgetting drops the claim. Rejoining puts the subscription back.
-- **Not built:** a screen for `scope` ("everything" is readable, never written).
 
 ## Gotchas
 
