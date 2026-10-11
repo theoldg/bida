@@ -252,6 +252,8 @@ self.addEventListener("push", (event) => {
       tag,
       // A replacement is news, so it buzzes again. Chrome refuses `renotify` without a tag.
       renotify: !!tag,
+      // The status bar's glyph; without it Android shows the browser's own.
+      badge: "/notify-badge.png",
       // Blank: the app icon would repeat the badge, and no icon draws a grey letter.
       icon: "/notify-blank.png",
       data: { url: sameOriginPath(data.url) },

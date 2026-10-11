@@ -59,6 +59,21 @@ if (svg.split(PAPER).length !== 2) throw new Error(`logo.svg must hold exactly o
 const devSvg = svg.replace(PAPER, 'fill="#86b4ea"');
 
 /**
+ * The status bar's small icon (the notification's `badge`, public/sw.js).
+ * Android reads only its alpha, so the receipt is drawn opaque on transparent
+ * with the ÷ cut through it, and cropped to the receipt so it fills the slot.
+ */
+const BADGE = { file: "notify-badge.png", size: 96 };
+function badgeSvg(art) {
+  const ground = /<rect [^>]*\/>([\s\S]*)<\/svg>/;
+  const mark = art.match(ground)?.[1];
+  if (!mark) throw new Error("logo.svg must open with its ground <rect/>");
+  const masked = mark.replace(PAPER, 'fill="#fff"').replaceAll('fill="#141517"', 'fill="#000"');
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="88 88 336 336">`
+    + `<mask id="m">${masked}</mask><rect x="0" y="0" width="512" height="512" fill="#fff" mask="url(#m)"/></svg>`;
+}
+
+/**
  * The banner is set in JetBrains Mono, from the app's own committed Latin file
  * (apps/web/public/fonts/, globals.css) inlined, so it draws the app's glyphs
  * — and the render fails rather than fall back to another mono.
@@ -85,6 +100,18 @@ try {
       await page.close();
       console.log(`${out}  ${size}×${size}`);
     }
+  }
+
+  {
+    const { file, size } = BADGE;
+    const page = await browser.newPage({ viewport: { width: size, height: size } });
+    await page.setContent(
+      `<style>html,body{margin:0;width:${size}px;height:${size}px;overflow:hidden;background:transparent}
+       svg{display:block;width:100%;height:100%}</style>${badgeSvg(svg)}`,
+    );
+    await writeFile(join(ROOT, "apps/web/public", file), await page.screenshot({ omitBackground: true }));
+    await page.close();
+    console.log(`${file}  ${size}×${size}`);
   }
 
   /**

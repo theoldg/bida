@@ -27,6 +27,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-11* — "Can we change the notification status bar icon to the
+  apps icon?" One line, and the doc already claimed a badge the code never
+  set. Trust the code over the doc, then make the doc true.
+
 - *2026-10-11* — A screenshot and one line: "wrap the names with ellipses".
   "Wrap" meant cut. The demo's names are too short to show it, so I built a
   group with theirs and looked. And say something while the build runs: two
@@ -81,7 +85,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   following design", then theirs built anyway: sections answered my objection
   to ranking. Give the critique straight, then build what they pick — and
   while they test locally, leave their running app alone.
-
-- *2026-10-09* — Tricount and bida side by side: "are the cents lost in the
-  export, or our import?" The checksum already answers whose cents those are;
-  say which side is right before fixing anything. The order was the real bug.

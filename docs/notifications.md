@@ -91,6 +91,9 @@ it is still missing after.
 - **The free plan's 50 subrequests per invocation** is from memory (Cloudflare's
   page was unreachable 2026-09-23). The batch of 40 sits under it; confirm
   before raising it.
+- **The status bar shows the `badge`** (`notify-badge.png`, from `pnpm icons`):
+  the receipt as an alpha mask, since Android reads nothing else. Without one,
+  Android shows the browser's icon there.
 - **The large `icon` is a transparent PNG** (`notify-blank.png`). The app's
   icon there repeats the badge, and with none Android draws a grey letter
   avatar of the host name.

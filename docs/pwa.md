@@ -12,7 +12,8 @@ and why `viewport.themeColor` repeats the same value rather than tracking the
 theme (Gotcha below). The
 three PNGs are rasterised from `design/brand/logo.svg` by `pnpm icons`, which
 also copies that file to `public/logo.svg` for the top-bar mark to point at —
-run it when the logo changes rather than editing any of the four; the maskable
+run it when the logo changes rather than editing any of the four (or the
+notification badge it also draws, [notifications.md](notifications.md#gotchas)); the maskable
 one draws the receipt at 72%, because a launcher crops to the central 80% and
 the artwork as drawn crowded that circle's rim. The same run draws
 `public/og.png`, the 1200×630 banner a pasted link shows, from
