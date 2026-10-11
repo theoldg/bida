@@ -61,16 +61,26 @@ const devSvg = svg.replace(PAPER, 'fill="#86b4ea"');
 /**
  * The status bar's small icon (the notification's `badge`, public/sw.js).
  * Android reads only its alpha, so the receipt is drawn opaque on transparent
- * with the ÷ cut through it, and cropped to the receipt so it fills the slot.
+ * with the ÷ cut through it, cropped to the receipt so it fills the slot.
+ * Redrawn for ~24px rather than copied from the logo: there, five teeth blur
+ * into a fringe and the ÷ into a smudge, so this one has three teeth and a
+ * larger ÷, in the logo's own 512 grid.
  */
 const BADGE = { file: "notify-badge.png", size: 96 };
-function badgeSvg(art) {
-  const ground = /<rect [^>]*\/>([\s\S]*)<\/svg>/;
-  const mark = art.match(ground)?.[1];
-  if (!mark) throw new Error("logo.svg must open with its ground <rect/>");
-  const masked = mark.replace(PAPER, 'fill="#fff"').replaceAll('fill="#141517"', 'fill="#000"');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="88 88 336 336">`
-    + `<mask id="m">${masked}</mask><rect x="0" y="0" width="512" height="512" fill="#fff" mask="url(#m)"/></svg>`;
+function badgeSvg() {
+  const [left, right, top, bottom, teeth, depth] = [140, 372, 96, 416, 3, 32];
+  const step = (right - left) / (2 * teeth);
+  const edge = (y, inward) => Array.from({ length: 2 * teeth + 1 }, (_, i) => [i * step, i % 2 ? y : y + inward]);
+  const outline = [
+    ...edge(top, depth).map(([dx, y]) => `${left + dx},${y}`),
+    ...edge(bottom, -depth).map(([dx, y]) => `${right - dx},${y}`),
+  ];
+  const square = (x, y, w, h) => `M${x},${y} h${w} v${h} h${-w} Z`;
+  // A 156×36 bar on the centre, and a 40px dot 26px above and below it.
+  const divide = [square(178, 238, 156, 36), square(236, 172, 40, 40), square(236, 300, 40, 40)].join(" ");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="88 88 336 336"><mask id="m">`
+    + `<path fill="#fff" d="M${outline.join(" L")} Z"/><path fill="#000" d="${divide}"/></mask>`
+    + `<rect width="512" height="512" fill="#fff" mask="url(#m)"/></svg>`;
 }
 
 /**
@@ -107,7 +117,7 @@ try {
     const page = await browser.newPage({ viewport: { width: size, height: size } });
     await page.setContent(
       `<style>html,body{margin:0;width:${size}px;height:${size}px;overflow:hidden;background:transparent}
-       svg{display:block;width:100%;height:100%}</style>${badgeSvg(svg)}`,
+       svg{display:block;width:100%;height:100%}</style>${badgeSvg()}`,
     );
     await writeFile(join(ROOT, "apps/web/public", file), await page.screenshot({ omitBackground: true }));
     await page.close();
