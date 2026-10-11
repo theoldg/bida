@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { CATCH_UP_MS, compareHlc, unseenRevisions, type ImportSource, type Revision } from "@bida/core";
-import { foldAway } from "@/components/ledger-rows";
+import { arrive, foldAway } from "@/components/ledger-rows";
 import { RevisionEntry, type RevisionContext } from "@/components/revision";
 import { copy } from "@/lib/copy";
 import { markEditsSeen } from "@/lib/db/commands";
@@ -11,6 +11,7 @@ import { db } from "@/lib/db/dexie";
 import { opsForGroup } from "@/lib/db/fold";
 import { useLive } from "@/lib/db/live";
 import { plural } from "@/lib/format";
+import { calmly } from "@/lib/seek";
 
 /**
  * What changed on other phones since this one last showed it: a folded line
@@ -79,7 +80,18 @@ export function NewEdits({ groupId, currency, source }: {
   const names = useRef(fresh);
   if (fresh?.revisions) names.current = fresh;
 
-  if (shown.length === 0 || !names.current?.revisions) return null;
+  // Turning up under a ledger already drawn, it opens its space the way an
+  // arriving row does rather than pushing the list down a line in one frame.
+  // There when the ledger first answers, it is simply there.
+  const visible = shown.length > 0 && !!names.current?.revisions;
+  const was = useRef<boolean | null>(null);
+  useLayoutEffect(() => {
+    if (fresh === undefined) return;
+    if (visible && was.current === false && box.current && !calmly()) arrive(box.current);
+    was.current = visible;
+  }, [visible, fresh]);
+
+  if (!visible || !names.current?.revisions) return null;
   const { memberById, expenseById, settlementById } = names.current;
   const context: RevisionContext = { groupId, currency, memberById, expenseById, settlementById, source };
 

@@ -216,8 +216,12 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
   return true;
 }
 
-/** Opens a new slot's gap, then fades it in — to the row's own strength, a dimmed row included. */
-function arrive(slot: HTMLElement) {
+/**
+ * Opens a new slot's gap, then fades it in — to the row's own strength, a
+ * dimmed row included. Also how the ledger's new-changes line turns up, so it
+ * doesn't push the list down a line in one frame.
+ */
+export function arrive(slot: HTMLElement) {
   const h = slot.offsetHeight;
   slot.style.overflow = "hidden";
   const open = slot.animate([{ height: "0px" }, { height: `${h}px` }],

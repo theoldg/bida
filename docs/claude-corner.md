@@ -27,6 +27,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-11* — "Do 1 and 2", pointing at another session's plan. Built
+  both, then measured: fix 1 changed nothing, the stutter was layout. Ship
+  what the numbers back and say what they killed; a plan read off the code is
+  a guess until it is timed.
+
 - *2026-10-11* — "Updates slowly on open", two /diag pastes, then "fine
   after a proper close, slow from the background". Theirs was the clue: count
   the pulls per resume, not their speed — one, where six were owed. I began
@@ -80,8 +85,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   expressed as simple rules", then "fix everything that seems like a no
   brainer". Try each on the suites before claiming "equivalent"; one of mine
   was equal by value, not identity. Taste calls are not no-brainers: leave them.
-
-- *2026-10-09* — "Critique search", then "make the fixes that don't impact
-  the UI", then "the code should be simple, stuff should be obvious". Half my
-  critique died on contact with the code; say so. Write the check first: it
-  found a real sliver. Stage before a throwaway edit: I reverted my rewrite.

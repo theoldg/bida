@@ -275,8 +275,9 @@ line, whose band is its own edge, and under the last row.
   under a finger or still gliding takes no change until 300ms after it stops.
   Into an empty ledger (a first pull), rows just appear.
 
-The ledger's new-changes line, folded back, leaves the same way a row does
-(`foldAway`).
+The ledger's new-changes line arrives the way a row does (`arrive`) when it
+turns up under a ledger already drawn, and leaves the way one does when
+folded back (`foldAway`).
 
 Under reduced motion the movement is instant and only the wash still plays.
 The groups list is the same list: a forgotten group folds out like a deleted
@@ -576,6 +577,13 @@ share, but too small to be a target.
    left alone.
 
 ## Gotchas
+
+- **A height moved frame by frame re-lays out every row under it.** On a
+  300-entry ledger at 4× CPU each frame of a fold cost ~85ms of layout, synced
+  delete or local. The sync run around it was not the cause: holding the
+  ledger until it finished changed nothing. `content-visibility: auto` on the
+  slots took it to one long frame, but off-screen rows then report a
+  placeholder height to the scroll compensation, so it is not on.
 
 - **In dark, `--card` is darker than `--card-3`.** A tab filled `--card` on a
   `--card-3` track looked raised in light and sunk in dark; a raised thing
