@@ -15,9 +15,9 @@ import {
 } from "@/components/chrome";
 import { FitLine } from "@/components/fit-line";
 import { GroupMenu } from "@/components/group-menu";
+import { HistoryButton } from "@/components/history-button";
 import { DemoCard } from "@/components/demo";
 import { LedgerInstall, SkeletonBanner } from "@/components/install";
-import { NewEdits } from "@/components/new-edits";
 import { RollingFigure } from "@/components/rolling-figure";
 import { Icon } from "@/components/icons";
 import { LedgerRows } from "@/components/ledger-rows";
@@ -114,9 +114,9 @@ function GroupScreen() {
         <TopBar
           title={group.name}
           back={route.groups()}
-          /* One button: the group's own actions are a menu
-             (components/group-menu.tsx), which leaves the bar to its name. */
-          right={<GroupMenu groupId={group.id} data={data} />}
+          /* History, dotted when other phones changed something, then the
+             group's other actions as a menu (components/group-menu.tsx). */
+          right={<><HistoryButton groupId={group.id} /><GroupMenu groupId={group.id} data={data} /></>}
         />
         <Ledger data={data} />
       </Body>
@@ -179,8 +179,6 @@ function Ledger({ data }: { data: GroupData }) {
       <DemoCard groupId={gid} />
       <LedgerInstall groupId={gid} />
       {me ? <MySummary net={net} base={base} gid={gid} /> : null}
-      {/* Between where you stand and the rows, since it is why either moved. */}
-      <NewEdits groupId={gid} currency={base} source={group.importedFrom} />
       </div>
 
       {/* One box, so the search can ask it to be tall enough (`.searchroom`). */}

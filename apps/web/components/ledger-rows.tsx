@@ -218,10 +218,9 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
 
 /**
  * Opens a new slot's gap, then fades it in — to the row's own strength, a
- * dimmed row included. Also how the ledger's new-changes line turns up, so it
- * doesn't push the list down a line in one frame.
+ * dimmed row included.
  */
-export function arrive(slot: HTMLElement) {
+function arrive(slot: HTMLElement) {
   const h = slot.offsetHeight;
   slot.style.overflow = "hidden";
   const open = slot.animate([{ height: "0px" }, { height: `${h}px` }],
@@ -230,22 +229,6 @@ export function arrive(slot: HTMLElement) {
   // own rather than overriding it and snapping back.
   slot.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FADE_IN_MS, delay: OPEN_MS, fill: "backwards" });
   void open.finished.then(() => { slot.style.overflow = ""; }, () => {});
-}
-
-/**
- * A block that goes the way a row does — fades (`FADE_OUT_MS`), then its
- * space folds (`FOLD_MS`) on the same curve — for one that isn't in this
- * list: the ledger's new-changes line, folded away. Held folded until its
- * owner drops it. Under reduced motion it is simply gone.
- */
-export async function foldAway(el: HTMLElement): Promise<void> {
-  if (calmly()) return;
-  el.style.overflow = "hidden";
-  await el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FADE_OUT_MS, fill: "forwards" })
-    .finished.catch(() => {});
-  await el.animate([{ height: `${el.offsetHeight}px` }, { height: "0px" }],
-    { duration: FOLD_MS, easing: "cubic-bezier(.2, 0, 0, 1)", fill: "forwards" })
-    .finished.catch(() => {});
 }
 
 /**

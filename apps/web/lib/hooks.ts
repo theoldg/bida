@@ -303,7 +303,7 @@ export interface GroupSummary {
   lastActivity: number;
   /** The member this device is, in this group — same undefined-until-claimed as `GroupData.me`. */
   me: string | undefined;
-  /** What the ledger's new-changes line would count (`components/new-edits.tsx`). */
+  /** What the ledger's history dot counts (`components/history-button.tsx`). */
   newCount: number;
 }
 

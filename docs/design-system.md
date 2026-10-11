@@ -269,15 +269,11 @@ line, whose band is its own edge, and under the last row.
   motion: it is gone and the empty state is up at once — too rare to earn one.
 - **A row that arrives** from another phone opens a gap (220ms) and fades in
   (180ms), at the slot's opacity so a dimmed row fades to its own 58% and not
-  past it. No flash: the new-changes line already says it came. **Above what
+  past it. No flash: the history clock's dot already says it came. **Above what
   you are reading, it grows the list upward instead** — the view is held by
   hand, nothing under your eye moves, and nothing animates. A list moving
   under a finger or still gliding takes no change until 300ms after it stops.
   Into an empty ledger (a first pull), rows just appear.
-
-The ledger's new-changes line arrives the way a row does (`arrive`) when it
-turns up under a ledger already drawn, and leaves the way one does when
-folded back (`foldAway`).
 
 Under reduced motion the movement is instant and only the wash still plays.
 The groups list is the same list: a forgotten group folds out like a deleted

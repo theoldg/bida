@@ -688,22 +688,21 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 @keyframes roll-open { from { width: 0 } }
 @keyframes roll-close { to { width: 0 } }
 
-/* Drawn as a date line, in full ink to say it can be pressed — at the old,
-   taller height, since a slim date line is too thin a thing to tap. */
-.neweditsbar { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
-  padding-top: 10px; padding-bottom: 9px; border-top: 1px solid var(--rule-soft); color: var(--ink) }
-/* A chevron that becomes a cross once open: folding it back clears the line,
-   which a chevron alone would promise to reopen. */
-.neweditsglyph { width: 20px; height: 20px; flex: none; margin: -4px -5px -4px auto;
-  fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; color: var(--muted) }
-.neweditsglyph line { transform-box: view-box; transform-origin: 12px 12px;
-  transition: transform .26s cubic-bezier(.2, .8, .2, 1) }
-.neweditsglyph line:first-child { transform: translate(-3px, .5px) rotate(45deg) scaleX(.57) }
-.neweditsglyph line:last-child { transform: translate(3px, .5px) rotate(-45deg) scaleX(.57) }
-.newedits.on .neweditsglyph { color: var(--ink) }
-.newedits.on .neweditsglyph line:first-child { transform: rotate(45deg) }
-.newedits.on .neweditsglyph line:last-child { transform: rotate(-45deg) }
-.tl.neweditslist { margin: 0; padding: 14px 16px 0 42px; border-bottom: 1px solid var(--rule-soft) }
+/* The ledger's clock, dotted while other phones' changes wait unseen: ink,
+   since colour is spent on balances, ringed in card so it reads on the box. */
+.histbtn { position: relative }
+.histdot { position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--ink); box-shadow: 0 0 0 2px var(--card-2) }
+/* History's line under what is new: torn paper across the rail, the word on
+   its right where it sits clear of the dots. */
+.torn { position: relative; display: flex; align-items: center; justify-content: flex-end;
+  height: 13px; margin: -5px 0 10px -26px }
+.torn::before { content: ""; position: absolute; inset: 3px 0; background: var(--ink-2);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='7'%3E%3Cpath d='M0 5.5 4 1.5 8 5.5' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3C/svg%3E") repeat-x left center / 8px 7px;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='7'%3E%3Cpath d='M0 5.5 4 1.5 8 5.5' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3C/svg%3E") repeat-x left center / 8px 7px }
+.torn span { position: relative; padding-left: 8px; background: var(--card); font-family: var(--f-mono);
+  font-size: 10px; line-height: 13px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-2); font-weight: 500 }
 /* Read as one more point: the clock centred on the dots' rail (9px in, less
    the 6px press padding), the words in the revisions' column at 26px. */
 .tlink.entrygroup { margin: 2px 0 0 -3.5px; gap: 10.5px }

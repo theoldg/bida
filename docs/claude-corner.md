@@ -27,6 +27,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-11* — A UI request, cut off, then "Any questions?". The owner
+  wanted questions before code: four, each with a pick. They took the safe
+  default on three and kept today's rule on the fourth, which changed how
+  the build went. When asked to ask, ask.
+
 - *2026-10-11* — "Do 1 and 2", pointing at another session's plan. Built
   both, then measured: fix 1 changed nothing, the stutter was layout. Ship
   what the numbers back and say what they killed; a plan read off the code is
@@ -80,8 +85,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   best and cleanest". Measure the frames before guessing: two were blank.
   My first fix passed typecheck and drew no bar at all; only the check I'd
   written first said so. Run it after each edit, not once at the end.
-
-- *2026-10-09* — "Scan the code for complex rules that may equivalently be
-  expressed as simple rules", then "fix everything that seems like a no
-  brainer". Try each on the suites before claiming "equivalent"; one of mine
-  was equal by value, not identity. Taste calls are not no-brainers: leave them.

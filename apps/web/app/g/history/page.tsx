@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
-import { activityFeed, entityHistory } from "@bida/core";
+import { Fragment, useState } from "react";
+import { activityFeed, CATCH_UP_MS, entityHistory, unseenRevisions, type Revision } from "@bida/core";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { Icon } from "@/components/icons";
 import { RevisionEntry, type RevisionContext } from "@/components/revision";
+import { getDevice } from "@/lib/db/device";
 import { db } from "@/lib/db/dexie";
 import { useLive } from "@/lib/db/live";
 import { opsForGroup } from "@/lib/db/fold";
@@ -30,6 +31,9 @@ function HistoryScreen() {
   // An entry's own history is below the entry, so it carries the entry's own
   // `via` back up with it (lib/group-link.ts).
   const via = parseEntrySource(params.get("via"));
+  // The ledger's seen mark from before its clock was pressed (HistoryButton).
+  const sinceParam = params.get("since");
+  const since = sinceParam !== null && /^\d+$/.test(sinceParam) ? Number(sinceParam) : undefined;
   const data = useGroupData(groupId);
   const unclaimed = useClaimGate(groupId, data);
   const [shown, setShown] = useState(PAGE);
@@ -45,6 +49,7 @@ function HistoryScreen() {
   const memberById = new Map(allMembers.map((m) => [m.id, m]));
 
   const ops = useLive("historyOps", async () => (groupId ? opsForGroup(groupId) : []), [groupId]) ?? [];
+  const nodeId = useLive("historyNode", async () => (await getDevice()).nodeId, []);
 
   // Every expense ever, deleted ones included: a deleted expense is half the
   // reason to open history.
@@ -76,7 +81,14 @@ function HistoryScreen() {
       ? (subject.description?.trim() || copy.history.untitled) : copy.group.transfer;
   // **Rendering is paged, never the list**: slicing it would make the count
   // report the slice size as the group's revision total.
-  const revisions = !groupId ? [] : entryId ? entityHistory(ops, entryId) : activityFeed(ops);
+  const feed = !groupId ? [] : entryId ? entityHistory(ops, entryId) : activityFeed(ops);
+  // **What the ledger's dot meant goes above a jagged line**, the rest under
+  // it. Pulled up rather than marked in place: a phone that was offline lands
+  // changes stamped days back, and above the line has to mean exactly new.
+  const fresh = new Set(since === undefined || entryId || nodeId === undefined ? []
+    : unseenRevisions(ops, since, nodeId, Date.now() - CATCH_UP_MS).revisions.map((r) => r.op.id));
+  const isNew = (r: Revision) => fresh.has(r.op.id);
+  const revisions = fresh.size === 0 ? feed : [...feed.filter(isNew), ...feed.filter((r) => !isNew(r))];
   const visible = revisions.slice(0, shown);
   const rest = revisions.length - visible.length;
 
@@ -111,8 +123,10 @@ function HistoryScreen() {
             ) : (
               <div className="tl">
                 {visible.map((rev, i) => (
-                  <RevisionEntry key={rev.op.id} rev={rev} first={i === 0} context={context}
-                    linked={!entryId} />
+                  <Fragment key={rev.op.id}>
+                    <RevisionEntry rev={rev} first={i === 0} context={context} linked={!entryId} />
+                    {i === fresh.size - 1 && i < revisions.length - 1 ? <Torn /> : null}
+                  </Fragment>
                 ))}
               </div>
             )}
@@ -137,5 +151,14 @@ function HistoryScreen() {
         </Scroll>
       </Body>
     </Screen>
+  );
+}
+
+/** Where what's new ends: a torn edge, labelled, across the rail. */
+function Torn() {
+  return (
+    <div className="torn" role="separator" aria-label={copy.history.newLine}>
+      <span>{copy.history.newLine}</span>
+    </div>
   );
 }

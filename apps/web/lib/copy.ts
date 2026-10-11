@@ -763,6 +763,8 @@ export const copy = {
     /** The balances screen's title, over the group's name. */
     balances: "Balances",
     history: "History",
+    /** The ledger's clock while it wears its dot. */
+    historyNew: "History, new changes",
     people: "People",
     copyLink: "Copy invite link",
     /** In the menu, above Forget group: the way out with your numbers. */
@@ -1274,6 +1276,8 @@ export const copy = {
     deleted: (label: string) => `${label} · deleted`,
     untitled: "Untitled entry",
     more: (rest: string) => `Show ${rest} more`,
+    /** On the jagged line under what is new since the ledger last showed it. */
+    newLine: "↑ New",
 
     /** A field name on a secondary line of one revision; the sentence above said who. */
     field: {

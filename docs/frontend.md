@@ -69,7 +69,7 @@ API is reached with `fetch`.
   demo's mark and the folded install or notifications offer (`data-banner`,
   `SkeletonBanner`), so the rows never drop when it lands; Chrome's one-tap
   offer waits on an event and still arrives late, as do the sync banner and
-  the new-edits line, which are data. The frames go once the launch decides,
+  the history dot, which are data. The frames go once the launch decides,
   and the mark with them (`clearFirstFrame`): hidden is not gone, and each
   bar's arrow would stay registered with the back button.
   *Changing* who you are is not device-local:
@@ -331,18 +331,17 @@ API is reached with `fetch`.
   back from a result and forgotten by any other arrival, like the ledger's
   position (`openingQuery`), and a way back draws the bar
   where the list is put from its first frame, lending the room first.
-- **The ledger's new-changes line** (`components/new-edits.tsx`) sits under the
-  you-owe card, drawn as a date line in full-ink text, with a chevron at its
-  right edge that swings into a cross as it opens, because folding it clears it:
-  "4 new changes", unfolding onto every one of those revisions and nothing
-  else — no cap, since there is no link on to the rest. New is `unseenRevisions`
+- **The ledger's history clock** (`components/history-button.tsx`) stands in
+  the top bar beside the menu, wearing an ink dot while there is something new.
+  Pressed with the dot, it carries the mark from before (`since`), and history
+  pulls those revisions above a torn line labelled "↑ New" (`.torn`) — pulled up
+  rather than marked in place, since a phone that was offline lands changes
+  stamped days back. Going on to an entry and back drops the line. New is `unseenRevisions`
   (`core/history.ts`): an op numbered past `groupKeys.seenSeq` whose stamp is
   another phone's, your own laptop included, less a device claiming a name.
-  **Showing it is seeing it**: the line stays up for as long
+  **Showing it is seeing it**: the dot stays up for as long
   as the ledger is open, and the next navigation away marks all of it seen —
   the catch-up is optional, so it is offered once rather than on every visit.
-  Folding it back after unfolding is done with it: it fades and folds away
-  like a deleted row (`foldAway`), and only a later change brings it back.
   What waits on a group nobody opens ages out after a week (`CATCH_UP_MS`)
   rather than sitting on the groups list forever. The groups list is ordered
   by when each group last changed — its newest op, an edit or a delete as much

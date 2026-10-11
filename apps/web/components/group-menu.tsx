@@ -10,9 +10,10 @@ import { summonLedgerSearch } from "./ledger-search";
 import { MenuButton, type SheetAction } from "./row-menu";
 
 /**
- * Everything a group can be asked for besides the ledger, behind one button —
- * **not a row of icons in the top bar**, where glyphs are guesses and squeeze
- * the name. The same card as a row's long press (`RowMenu`); copying the link
+ * Everything a group can be asked for besides the ledger and its history,
+ * behind one button — **not a row of icons in the top bar**, where glyphs are
+ * guesses and squeeze the name. History alone stands beside it
+ * (`HistoryButton`), since its dot is how the ledger says what changed. The same card as a row's long press (`RowMenu`); copying the link
  * and forgetting are the groups list's too (`useGroupActions`).
  *
  * `data` comes from the screen: export needs the whole ledger, `/g` already
@@ -40,7 +41,6 @@ export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData 
   const actions: SheetAction[] = [
     ...group.copyLink,
     { label: copy.group.people, icon: "users", onSelect: () => router.push(route.members(groupId)) },
-    { label: copy.group.history, icon: "clock", onSelect: () => router.push(route.history(groupId)) },
     { label: copy.group.search.menu, icon: "search", onSelect: summonLedgerSearch },
     { label: copy.group.export, icon: "share", onSelect: () => void exportData() },
     group.forget,
