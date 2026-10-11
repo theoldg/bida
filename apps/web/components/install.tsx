@@ -16,7 +16,7 @@ import {
   headIsStale, installOffer, iosBrowser, keepCarried, promptInstall, subscribeInstall,
   type InstallOffer,
 } from "../lib/install";
-import { pushState, subscribePushState, turnOnNotifications, type PushState } from "../lib/push";
+import { pushPermission, pushState, subscribePushState, turnOnNotifications, type PushState } from "../lib/push";
 import { resumeHintId, type LedgerBanner } from "../lib/first-frame";
 
 export function useInstallOffer(): InstallOffer {
@@ -25,6 +25,11 @@ export function useInstallOffer(): InstallOffer {
 
 export function usePushState(): PushState {
   return useSyncExternalStore(subscribePushState, pushState, () => "unsupported" as const);
+}
+
+/** Unlike `usePushState`, a dismissed prompt is not "denied" (Settings). */
+export function usePushPermission(): PushState {
+  return useSyncExternalStore(subscribePushState, pushPermission, () => "unsupported" as const);
 }
 
 /** Mounted once, in the layout (`keepCarried`, docs/ios.md). */

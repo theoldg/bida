@@ -39,12 +39,21 @@ export function subscribePushState(listener: () => void): () => void {
   return () => void listeners.delete(listener);
 }
 
-/** A string, so `useSyncExternalStore` compares it by value. */
-export function pushState(): PushState {
-  const state = pushStateFrom({
+/**
+ * What the phone allows, as Settings shows it: a prompt dismissed is still
+ * "ask", and can be asked again. A string, so `useSyncExternalStore` compares
+ * it by value.
+ */
+export function pushPermission(): PushState {
+  return pushStateFrom({
     supported: supported(),
     permission: supported() ? Notification.permission : undefined,
   });
+}
+
+/** The offer's reading of `pushPermission`. */
+export function pushState(): PushState {
+  const state = pushPermission();
   // Answered "not now" in the prompt leaves the permission at "default"; the
   // offer goes for this launch rather than standing there as if unasked.
   return state === "ask" && asked ? "denied" : state;

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { setDark, useDark } from "@/components/dark-mode";
 import { Icon, type IconName } from "@/components/icons";
-import { useInstallOffer, usePushState } from "@/components/install";
+import { useInstallOffer, usePushPermission } from "@/components/install";
 import { copy } from "@/lib/copy";
 import { type NotifyLevel } from "@/lib/db/dexie";
 import { route } from "@/lib/group-link";
@@ -105,7 +105,7 @@ const BELLS = { off: { icon: "bell-off", iconSize: 13 }, own: { icon: "bell", ic
  */
 function Notifications() {
   const installed = useInstallOffer() === "installed";
-  const state = usePushState();
+  const state = usePushPermission();
   const device = useDevice();
   const [pending, setPending] = useState<NotifyLevel | null>(null);
   if (!installed || state === "unsupported" || !device) return null;
