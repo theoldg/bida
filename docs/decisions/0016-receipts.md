@@ -48,7 +48,9 @@ upgrade takes `shares` beside a bill with no flag for a receipt from before the
 flag existed, so **the one entry that still writes `splitTab` is parts typed
 beside a kept bill** (`partsBesideBill`): unflagged, it folded into `receipt`,
 reopened on Items and had its split rewritten from the grid by the next save.
-No state keeps the flag; a write derives it. The
+No state keeps the flag; a write derives it, so the upgrade runs only on a
+patch that writes the split, the bill or the flag — a restore after it would
+otherwise reread the parts as a grid. The
 Dexie migration that carried the materialised cache over has been collapsed
 away with the rest of the chain
 ([data-model.md](../data-model.md#indexeddb-dexie)); the fold is what

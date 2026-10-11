@@ -33,7 +33,10 @@ export function applyPatch(target: Bag, patch: Record<string, unknown>): void {
     if (WRITE_ONCE_FIELDS.has(key) && target[key] !== undefined && target[key] !== null) continue;
     target[key] = value;
   }
-  upgradeReceiptSplit(target);
+  // Only a patch that wrote the split, the bill or the flag: the flag never
+  // stays in state, so rerunning on a restore or a rate repair would read
+  // flagged parts as an unflagged legacy grid.
+  if ("split" in patch || "receiptItems" in patch || "splitTab" in patch) upgradeReceiptSplit(target);
 }
 
 function bucketFor(state: GroupState, entity: Op["entity"]): Record<Id, Bag> | null {

@@ -240,6 +240,27 @@ describe("an expense written in the old receipt shape", () => {
     expect(e["split"]).toEqual({ mode: "equal", members: ["a", "b"] });
     expect("splitTab" in e).toBe(false);
   });
+
+  // The flag rides only the op that wrote the parts; a restore or a rate
+  // repair after it patches neither, and must not reread them as a grid.
+  it("keeps typed parts as parts through a later partial patch", () => {
+    const typed = { ...legacy, splitTab: "shares" };
+    for (const patch of [{ deletedAt: null }, { rateToBase: "1", rateSource: "group" }]) {
+      const ops = [
+        op({ entityId: "e1", kind: "create", hlc: at(1), patch: typed }),
+        op({ entityId: "e1", kind: "update", hlc: at(2), patch }),
+      ];
+      expect(foldOps(ops).expenses["e1"]?.split.mode).toBe("shares");
+    }
+  });
+
+  it("still upgrades a legacy grid that a later partial patch follows", () => {
+    const ops = [
+      op({ entityId: "e1", kind: "create", hlc: at(1), patch: legacy }),
+      op({ entityId: "e1", kind: "update", hlc: at(2), patch: { deletedAt: null } }),
+    ];
+    expect(foldOps(ops).expenses["e1"]?.split.mode).toBe("receipt");
+  });
 });
 
 describe("foldForward", () => {

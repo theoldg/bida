@@ -490,8 +490,9 @@ export function partsBesideBill(
 /**
  * Rewrite a legacy receipt expense (`shares` plus `splitTab: "receipt"`, or
  * `shares` beside a scanned bill with no flag at all) into `receipt` mode.
- * Runs in `applyPatch`, so every reader sees one shape, and no state keeps the
- * flag: a write derives it again (`partsBesideBill`). Mutates in place. ADR-0016.
+ * Runs in `applyPatch` on a patch that writes the split, the bill or the flag,
+ * so every reader sees one shape, and no state keeps the flag: a write derives
+ * it again (`partsBesideBill`). Mutates in place. ADR-0016.
  */
 export function upgradeReceiptSplit(entity: Record<string, unknown>): void {
   const spec = entity["split"] as SplitSpec | undefined;
