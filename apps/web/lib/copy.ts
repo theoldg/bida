@@ -458,7 +458,11 @@ export const copy = {
       /** Permission refused at the phone: no tap here can ask again. */
       blocked: "Turned off in your phone’s settings. Allow notifications for bida there to choose here.",
     },
-    advanced: "Advanced",
+  },
+
+  /** What nobody needs by default (`app/advanced/page.tsx`), off Settings' last row. */
+  advanced: {
+    title: "Advanced",
     /** Short: the phone calls Google itself, and Google bills the key. */
     key: {
       title: "Bring your own key",
@@ -516,7 +520,7 @@ export const copy = {
       key: "The key that decodes the contents is part of the secret link, and it never reaches the server. I can see how many groups there are, and how many edits each one has had. That’s it.",
       scanTitle: "Receipt scanning leaves your phone.",
       scan: "Receipt photos are sent to Google’s Vertex AI to be read. Google doesn’t use them to train its models. For a day afterwards, the server remembers that this group scanned something, and a salted hash of your IP address: never the photo, never the raw address, only enough to keep the rate limits fair.",
-      /** Points at `/settings` instead of repeating it; ends before the inline link (`app/about/page.tsx`). */
+      /** Points at `/advanced` instead of repeating it; ends before the inline link (`app/about/page.tsx`). */
       ownKeyPointer: "If you want to send your own requests to Google directly, see",
       /**
        * The second of the two things that leave the phone readable. Also said under
@@ -1212,8 +1216,8 @@ export const copy = {
     },
     /** A brought key stops working; neither is fixed by retrying, so both name the screen the key lives on. */
     key: {
-      refused: "Google refused your key. Check it under Settings.",
-      spent: "Your key is out of quota for now. Try later, or remove it under Settings to use the shared one.",
+      refused: "Google refused your key. Check it in Settings, under Advanced.",
+      spent: "Your key is out of quota for now. Try later, or remove it in Settings, under Advanced, to use the shared one.",
     },
   },
 

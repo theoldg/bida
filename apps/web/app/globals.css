@@ -532,6 +532,12 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .settings .addrow.keyrow { margin: 16px 0 0; width: 100% }
 /* Set down from the lede, or the fold reads as that paragraph's last line. */
 .settings .installfold { margin-top: 16px }
+/* Settings' way on to Advanced: titled like a group of settings, and the
+   chevron says it is a screen, not a section. */
+.setlink { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 0; border-top: 1px solid var(--rule-soft); font-size: 16px; font-weight: 650;
+  letter-spacing: -.02em; color: var(--ink) }
+.setlink svg { color: var(--muted) }
 /* As wide as its words, not the column: a choice of two or three, not a tab
    bar. Equal columns, so the chosen one's weight moves nothing. */
 .settings .seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin-top: 2px }

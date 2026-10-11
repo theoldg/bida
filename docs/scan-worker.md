@@ -26,7 +26,7 @@ server.
 
 ## A key of your own
 
-**Settings → Advanced → Bring your own key** (`/settings`, off either kebab).
+**Settings → Advanced → Bring your own key** (`/advanced`, off Settings).
 Paste a Gemini API key and this phone stops using the shared one: it builds the
 envelope itself and calls Google directly, so the scan never touches the
 Worker at all.
@@ -346,10 +346,10 @@ Deliberate, for a group of friends under fifty people:
   photographed. `/about` names it as the exception rather than
   burying it in a clause. It is not training data: Vertex does not train on
   what it reads.
-- **A brought key is the exception to that exception.** `/settings` takes an AI
+- **A brought key is the exception to that exception.** `/advanced` takes an AI
   Studio key, and the free tier of that API *is* used to improve Google's
   products. So the path that keeps the photo away from our server is the one
-  where Google may train on it, and `/settings` says so in as many words —
+  where Google may train on it, and `/advanced` says so in as many words —
   `/about` only points there, rather than repeating it. The inversion is worth
   re-reading before editing either sentence.
 - **Terms can change overnight.** If they do, scanning 404s and the button

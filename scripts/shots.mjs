@@ -154,6 +154,7 @@ const routes = (g) => [
   ["groups", "/"],
   ["about", "/about"],
   ["settings", "/settings"],
+  ["advanced", "/advanced"],
   ["new", "/new"],
   ["import", "/import"],
   ["group-ledger", `/g?id=${g}`],

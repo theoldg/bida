@@ -31,7 +31,7 @@ expenses you'd looked at rather than climbing out.
   top-bar menu (`components/group-menu.tsx`). Three icons is the ceiling for a
   top bar and the group outgrew it. **Settings is the phone's, not the
   group's** — one screen from both kebabs: light/dark, how much it is
-  notified, and a key of its own. The personal lens is not a setting; the app
+  notified, and a way on to `/advanced` for a key of its own. The personal lens is not a setting; the app
   simply does it.
 - **An up-link unwinds; it doesn't navigate.** `lib/nav.ts`'s `goUp` finds the
   parent among the entries *behind* the current one and goes straight back to
@@ -88,7 +88,7 @@ expenses you'd looked at rather than climbing out.
 - Every screen survives a refresh and has a real URL; the export still has a
   fixed build-time set of pages. The group id lands in a history entry, which
   confers nothing without the secret, and old bookmarks (`/g/options`,
-  `/settings`, `/g/settle`, `/g/split`, `/g/expense*`) 404.
+  `/g/settle`, `/g/split`, `/g/expense*`) 404.
 - **A screen with nothing under it cannot take the press as a traversal.**
   A cold load or a launch's resume is the first entry, so its back press is
   cross-document — `cancelable: false`, `canIntercept: false`. A `CloseWatcher`
@@ -124,8 +124,9 @@ expenses you'd looked at rather than climbing out.
 - **Keep drawers and round-trip their state through the query string** — that is
   per-screen routing with extra indirection, not less.
 - **Keep Settle as a fourth tab, or `/settings` for the theme alone** — the
-  first two screens divided a sentence rather than a subject; the second is a
-  route and a nav item for one binary you set once.
+  first two screens divided a sentence rather than a subject; the second was a
+  route for one binary you set once. `/settings` came back once it had
+  notifications and a way on to `/advanced` to hold as well.
 - **Leave the back button to the browser** (this ADR's original position: that
   cancelling it fights the platform's own gesture, and breaks the moment the
   user means to leave the app). Unwinding got the common paths to agree and no
