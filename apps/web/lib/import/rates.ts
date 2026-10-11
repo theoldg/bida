@@ -35,8 +35,10 @@ export async function lookUpRates(
     while (next < wanted.length) {
       const { currency, day } = wanted[next++]!;
       try {
-        const { rate } = await fetch(currency, plan.currency, day);
-        got.set(currency, [...(got.get(currency) ?? []), { day, rate }]);
+        // Filed under the day the feed answered for: a day it has no release
+        // for comes back as its latest, which is a borrow, not that day's rate.
+        const { rate, asOf } = await fetch(currency, plan.currency, day);
+        got.set(currency, [...(got.get(currency) ?? []), { day: asOf ?? day, rate }]);
       } catch (err) {
         if (err instanceof RateOfflineError) offline = true;
       }

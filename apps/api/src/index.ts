@@ -100,15 +100,15 @@ async function jsonBody<T extends object>(c: Context<Env>): Promise<T | Response
  * day the feed has no release for (before its history starts, or one it
  * skipped) gets the latest rate rather than none.
  */
-function rateHosts(date: string | null): string[] {
+function rateHosts(date: string | null): { host: string; dated: boolean }[] {
   const latest = [
     "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1",
     "https://latest.currency-api.pages.dev/v1",
-  ];
+  ].map((host) => ({ host, dated: false }));
   if (!date) return latest;
   return [
-    `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${date}/v1`,
-    `https://${date}.currency-api.pages.dev/v1`,
+    { host: `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${date}/v1`, dated: true },
+    { host: `https://${date}.currency-api.pages.dev/v1`, dated: true },
     ...latest,
   ];
 }
@@ -122,13 +122,14 @@ app.get("/api/rates/:from/:to", async (c) => {
   if (from === to) return c.json({ from, to, rate: "1", asOf: null });
   const date = pastDay(c.req.query("date"), Date.now());
 
-  for (const host of rateHosts(date)) {
+  for (const { host, dated } of rateHosts(date)) {
     let payload: { date?: unknown; [key: string]: unknown };
     try {
-      // The edge cache is the shared cache. Six hours on a daily feed; a past
-      // day's release never changes.
+      // The edge cache is the shared cache, keyed by URL. Six hours on a daily
+      // feed; a past day's release never changes — but the latest one a dated
+      // miss falls through to is today's too, so it keeps the six hours.
       const upstream = await fetch(`${host}/currencies/${from.toLowerCase()}.json`, {
-        cf: { cacheTtl: date ? 604800 : 21600, cacheEverything: true },
+        cf: { cacheTtl: dated ? 604800 : 21600, cacheEverything: true },
       });
       if (!upstream.ok) continue;
       payload = await upstream.json();

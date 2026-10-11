@@ -381,7 +381,9 @@ and each currency needs its own `Total balance` row, checked in that currency �
 nothing is converted to read it. The currency most rows are in becomes the
 group's; a row in another keeps its currency and is priced when the group is
 written, at the rate on its own day (`ratesWanted`, `lib/import/rates.ts`). A
-day the feed misses borrows the nearest day it answered (`copied`); a currency
+day the feed misses — before its history starts in March 2024, the endpoint
+answers with its latest rate, whose `asOf` says so — borrows the nearest day it
+answered (`copied`); a currency
 it answers for on no day stops the import. A foot per currency is our reading
 of Splitwise, whose multi-currency export nobody documents: a file with one foot
 summed across currencies is refused, its checksum being meaningless.

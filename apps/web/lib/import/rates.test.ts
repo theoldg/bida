@@ -43,6 +43,16 @@ describe("lookUpRates", () => {
     expect(rateFor("MAD", "2026-04-05")).toEqual({ rate: "0.091", source: "copied" });
   });
 
+  // The endpoint answers a day before the feed's history with its latest rate.
+  it("reads an answer for another day as a miss, not that day's rate", async () => {
+    const rateFor = await lookUpRates(plan, async (from, _to, d) => {
+      if (from === "MAD" && d === "2026-04-05") return { rate: "0.5", asOf: "2026-10-11" };
+      return { rate: d === "2026-04-03" ? "0.091" : "0.093", asOf: d ?? null };
+    });
+    expect(rateFor("MAD", "2026-04-05")).toEqual({ rate: "0.091", source: "copied" });
+    expect(rateFor("MAD", "2026-04-09")).toEqual({ rate: "0.093", source: "fetched" });
+  });
+
   it("stops the import when a currency has no rate at all, naming it", async () => {
     const err = await lookUpRates(plan, async (from) => {
       if (from === "USD") throw new Error("no rate");
