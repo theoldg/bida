@@ -4,7 +4,7 @@ import { db } from "./dexie";
 import { createGroup } from "./commands";
 import { eraseGroupLocally } from "./commands/groups";
 import { getDevice } from "./device";
-import { applyStash, syncGroup } from "./sync";
+import { applyStash, applyStashes, syncGroup } from "./sync";
 
 /**
  * The pull ahead (docs/sync.md#the-pull-ahead): `public/sw.js` leaves a pull in
@@ -116,6 +116,21 @@ describe("applying what the worker pulled ahead", () => {
     await applyStash(groupId);
 
     expect(await db().ops.get("op-5")).toBeUndefined();
+    expect(entries.size).toBe(0);
+  });
+
+  // A page coming back to the front, or the groups list, mounts no group screen
+  // to apply its own: every group's goes in at once.
+  it("applies every group's at once when asked for all of them", async () => {
+    const first = await heldGroup();
+    const second = await heldGroup();
+    await stash(entries, first.groupId, [peerExpense(first.groupId, first.theo, 5, "Riad")]);
+    await stash(entries, second.groupId, [peerExpense(second.groupId, second.theo, 6, "Tagine")]);
+
+    await applyStashes();
+
+    expect(await db().expenses.where("groupId").equals(first.groupId).count()).toBe(1);
+    expect(await db().expenses.where("groupId").equals(second.groupId).count()).toBe(1);
     expect(entries.size).toBe(0);
   });
 

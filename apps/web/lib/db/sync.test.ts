@@ -704,6 +704,32 @@ describe("syncAll", () => {
     expect(fetchMock).toHaveBeenCalled();
   });
 
+  it("asks for every group at once, the most recently changed first", async () => {
+    const older = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    const newer = await createGroup({ name: "Lisbon", baseCurrency: "EUR", myName: "Theo" });
+    await db().ops.toCollection().modify({ pending: 0 });
+    const asked: string[] = [];
+    let inFlight = 0;
+    let most = 0;
+    // Each answer waits for the other request, up to a second: in turn, the
+    // first would wait alone and time out; at once, both are in the air.
+    let bothAsked!: () => void;
+    const both = new Promise<void>((r) => { bothAsked = r; });
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      asked.push(decodeURIComponent(url.split("/")[3]!));
+      most = Math.max(most, ++inFlight);
+      if (asked.length === 2) bothAsked();
+      await Promise.race([both, new Promise((r) => setTimeout(r, 1000))]);
+      inFlight -= 1;
+      return new Response(JSON.stringify({ assigned: {}, ops: [], latestSeq: 0 }), { status: 200 });
+    }));
+
+    await syncAll();
+
+    expect(asked).toEqual([newer.groupId, older.groupId]);
+    expect(most).toBe(2);
+  });
+
   // Five things trigger syncAll. An overlapping call must join the run in
   // flight — attempting nothing and reporting "no failures" would reset the
   // backoff and retry a dead server every two seconds.
@@ -836,6 +862,62 @@ describe("the sync loop's requests", () => {
       rateToBase: "1", paidBy: me.id, split: { mode: "equal", members: [me.id] },
     });
     await vi.waitFor(() => expect(asked).toEqual([a]), { timeout: 3000 });
+  });
+
+  /**
+   * The app goes to the background with a run's answers in hand: their commits
+   * park (`whenVisible`), and those pulls are from before it went away.
+   */
+  function hideOnAnswer() {
+    const page = document as unknown as EventTarget & { visibilityState: string };
+    const answer = globalThis.fetch;
+    const hiding = { on: true };
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => {
+      const res = await answer(url, init);
+      if (hiding.on) page.visibilityState = "hidden";
+      return res;
+    }));
+    const comeBack = () => {
+      hiding.on = false;
+      page.visibilityState = "visible";
+      page.dispatchEvent(new Event("visibilitychange"));
+    };
+    return comeBack;
+  }
+
+  // Joining the parked run pulled only what it had not reached yet: a reopened
+  // app showed news in the groups it had already pulled minutes late.
+  it("pulls every group again on coming back, not just what a parked run had left", async () => {
+    const { a, b, asked } = await twoGroups();
+    onPage("/");
+    const comeBack = hideOnAnswer();
+    const stop = startSyncLoop();
+    await vi.waitFor(() => expect(asked).toHaveLength(2));
+    await new Promise((r) => setTimeout(r, 20));
+    asked.length = 0;
+
+    comeBack();
+
+    await vi.waitFor(() => expect([...asked].sort()).toEqual([a, b].sort()));
+    stop();
+  });
+
+  it("pulls the group on screen again when its own run parked", async () => {
+    const { a, asked } = await twoGroups();
+    onPage("/g", `?id=${a}`);
+    const stop = startSyncLoop();
+    await vi.waitFor(() => expect(asked).toHaveLength(2));
+    await new Promise((r) => setTimeout(r, 20));
+    const comeBack = hideOnAnswer();
+    void syncGroup(a);
+    await vi.waitFor(() => expect(asked).toHaveLength(3));
+    await new Promise((r) => setTimeout(r, 20));
+    asked.length = 0;
+
+    comeBack();
+
+    await vi.waitFor(() => expect(asked).toContain(a));
+    stop();
   });
 
   it("polls the group on screen each tick, all of them each sweep, none when idle", async () => {

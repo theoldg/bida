@@ -6,6 +6,7 @@ import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { writeClipboardText } from "@/lib/clipboard";
 import { copy } from "@/lib/copy";
 import { db } from "@/lib/db/dexie";
+import { pullNotes, type PullNote } from "@/lib/db/stash";
 import { format, handoff, loadedAt, otherPages, timeline } from "@/lib/diag";
 import { route } from "@/lib/group-link";
 import { useFlash } from "@/lib/hooks";
@@ -239,6 +240,9 @@ async function collect(): Promise<string> {
     until,
   );
   const copiesLine = within(copies(), "no answer from the worker", until);
+  // What the worker did when notifications landed (docs/sync.md#the-pull-ahead):
+  // it writes to no timeline, so this is the only proof a push pulled anything.
+  const pullsLine = within<PullNote[] | undefined>(pullNotes(), undefined, until);
 
   const counts = await countsLine;
   if (counts) {
@@ -269,6 +273,12 @@ async function collect(): Promise<string> {
   say("worker", navigator.serviceWorker?.controller ? "controlling" : "none");
   say("stores", await storeLine);
   say("copies", await copiesLine);
+  const pulls = await pullsLine;
+  if (!pulls) say("pull ahead", "no answer");
+  else if (pulls.length === 0) say("pull ahead", "none recorded");
+  for (const note of [...(pulls ?? [])].reverse()) {
+    say("pull ahead", `${new Date(note.at).toISOString()} ${note.group} ${note.outcome}`);
+  }
 
   const rows = timeline();
 

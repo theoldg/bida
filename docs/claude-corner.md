@@ -27,6 +27,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-11* — "Updates slowly on open", two /diag pastes, then "fine
+  after a proper close, slow from the background". Theirs was the clue: count
+  the pulls per resume, not their speed — one, where six were owed. I began
+  editing before saying what; they stopped me to ask.
+
 - *2026-10-11* — "Can we change the notification status bar icon to the
   apps icon?" One line, and the doc already claimed a badge the code never
   set. Trust the code over the doc, then make the doc true.
@@ -80,8 +85,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the UI", then "the code should be simple, stuff should be obvious". Half my
   critique died on contact with the code; say so. Write the check first: it
   found a real sliver. Stage before a throwaway edit: I reverted my rewrite.
-
-- *2026-10-09* — "Is this trigger even a good idea?" then "critique the
-  following design", then theirs built anyway: sections answered my objection
-  to ranking. Give the critique straight, then build what they pick — and
-  while they test locally, leave their running app alone.

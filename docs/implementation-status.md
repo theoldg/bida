@@ -36,7 +36,8 @@ One thing: a design waiting to be built. The visual review is closed
   tab reached the owner's installed app (2026-09-23). The rest of the phone
   checklist in [on-a-phone.md](on-a-phone.md) is unrun.
   VAPID keys are set on both Workers. A notification also pulls its group
-  ahead ([sync.md](sync.md#the-pull-ahead)), untried on a phone. Open: a
+  ahead ([sync.md](sync.md#the-pull-ahead)), untried on a phone — `/diag`'s
+  `pull ahead:` lines now say whether it ran. Open: a
   screen for "everything" rather than "entries I'm in".
 
 **Three things are closed as decisions, not as work**, so a session that

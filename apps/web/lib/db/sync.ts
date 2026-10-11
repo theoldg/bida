@@ -265,10 +265,27 @@ const PUSH_CHUNK = 50;
  */
 export function syncGroup(groupId: string): Promise<SyncOutcome | undefined> {
   const already = inFlight.get(groupId);
-  if (already) return already;
-  const run = syncGroupOnce(groupId).finally(() => { inFlight.delete(groupId); });
+  if (already && !stale.has(already)) return already;
+  // One from before the app went away pulled too early to count: run again
+  // behind it rather than beside it, so it stays one run at a time.
+  const run: Promise<SyncOutcome | undefined> = (already
+    ? already.catch(() => undefined).then(() => syncGroupOnce(groupId))
+    : syncGroupOnce(groupId)
+  ).finally(() => { if (inFlight.get(groupId) === run) inFlight.delete(groupId); });
   inFlight.set(groupId, run);
   return run;
+}
+
+/**
+ * Runs that were in flight when the app last came back to the front. None
+ * starts while hidden, so each began before the app went away — its pull is
+ * from then, and joining it would leave that group's news for the next sweep.
+ */
+const stale = new WeakSet<Promise<unknown>>();
+
+function markInFlightStale(): void {
+  for (const run of inFlight.values()) stale.add(run);
+  if (running) stale.add(running);
 }
 
 async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> {
@@ -528,10 +545,13 @@ let backoffMs = 2000;
 const BACKOFF_MAX_MS = 60000;
 
 /**
- * Runs every group's sync once, sequentially. **Single-flight across the whole
+ * Runs every group's sync once, all at once. **Single-flight across the whole
  * run, not per group**: an overlapping call joins the run in flight. Per group,
  * a second caller would find everything in flight, attempt nothing, and reset
  * the backoff to 2s — against a dead server it would never grow.
+ *
+ * A run the app went to the background during is stale (`markInFlightStale`):
+ * the next call queues a fresh pass behind it instead of joining it.
  */
 export function syncAll(): Promise<void> {
   // Not while hidden (see `whenVisible`). Coming to the front runs a sync anyway
@@ -539,29 +559,33 @@ export function syncAll(): Promise<void> {
   if (typeof document !== "undefined" && document.visibilityState === "hidden") {
     return running ?? Promise.resolve();
   }
-  running ??= runSyncAll().finally(() => { running = undefined; });
-  return running;
+  if (running && !stale.has(running)) return running;
+  const before = running;
+  const run: Promise<void> = (before ? before.catch(() => undefined).then(runSyncAll) : runSyncAll())
+    .finally(() => { if (running === run) running = undefined; });
+  running = run;
+  return run;
 }
 
 async function runSyncAll(): Promise<void> {
-  const keys = await db().groupKeys.toArray();
+  const keys = await byRecency(await db().groupKeys.toArray());
   // A forgotten group still here has ops to push — the `push: null` that stops
   // it buzzing this phone, or an edit made offline — and `syncGroup` erases it
   // once they are out. One with none left is erased without asking the server:
   // the one a phone forgot before erasing was what forgetting did.
   const left = new Set((await getDevice()).leftGroups ?? []);
-  let anyFailure = false;
-  for (const key of keys) {
-    try {
-      if (left.has(key.groupId) && !(await hasPending(key.groupId))) {
-        await dropForgotten(key.groupId);
-        continue;
-      }
-      await syncGroup(key.groupId);
-    } catch {
-      anyFailure = true;
+  // All at once: each group is a round trip, and in turn six of them were the
+  // seconds a reopened app took to show news in the fifth. Started newest
+  // first, so a cap, if one is ever wanted, keeps the groups most likely to
+  // have moved. The commits still queue on the database, a few ms each.
+  const results = await Promise.allSettled(keys.map(async (key) => {
+    if (left.has(key.groupId) && !(await hasPending(key.groupId))) {
+      await dropForgotten(key.groupId);
+      return;
     }
-  }
+    await syncGroup(key.groupId);
+  }));
+  const anyFailure = results.some((r) => r.status === "rejected");
 
   if (backoffTimer) {
     clearTimeout(backoffTimer);
@@ -574,6 +598,28 @@ async function runSyncAll(): Promise<void> {
   } else {
     backoffMs = 2000;
   }
+}
+
+/** Newest change first, as the groups list orders them: one indexed read each. */
+async function byRecency<T extends { groupId: string }>(keys: T[]): Promise<T[]> {
+  const ops = db().ops;
+  const newest = await Promise.all(keys.map(async (key) =>
+    (await ops.where("[groupId+hlc]").between([key.groupId, ""], [key.groupId, "\uffff"]).last())?.hlc ?? ""));
+  return keys
+    .map((key, i) => ({ key, hlc: newest[i]! }))
+    .sort((a, b) => (a.hlc < b.hlc ? 1 : a.hlc > b.hlc ? -1 : 0))
+    .map(({ key }) => key);
+}
+
+/**
+ * Every group's pull ahead, for a page starting or coming back to the front.
+ * A screen applies its own group's on mounting (`useGroupData`), but one
+ * already open — or the groups list, which mounts none — would otherwise leave
+ * what a notification pulled sitting there while the ordinary pull redoes it.
+ */
+export async function applyStashes(): Promise<void> {
+  const keys = await db().groupKeys.toArray().catch(() => []);
+  await Promise.all(keys.map((key) => applyStash(key.groupId)));
 }
 
 async function hasPending(groupId: string): Promise<boolean> {
@@ -646,6 +692,10 @@ export function startSyncLoop(): () => void {
   const onVisible = () => {
     if (document.visibilityState !== "visible") return;
     lastInput = Date.now();
+    markInFlightStale();
+    // Alongside, not before: neither moves the other's cursor, so whichever
+    // lands an op first, the other stores nothing twice.
+    void applyStashes();
     sweep();
   };
   const onInput = () => {
@@ -665,6 +715,7 @@ export function startSyncLoop(): () => void {
   document.addEventListener("visibilitychange", onVisible);
   window.addEventListener("online", sweep);
   for (const type of inputs) window.addEventListener(type, onInput, { capture: true, passive: true });
+  void applyStashes();
   sweep();
 
   return () => {

@@ -229,10 +229,16 @@ from `fromSeq - 1`: a row nothing can read costs a re-pull per deploy. A single-
 a foreground tick. **Each group is a request**, so the tick is thrifty
 (`planTick`): the group on screen every 60 s, every group every 5 min, nothing
 once nobody has touched the app for 5 min — and the first touch after that
-syncs everything. Backoff 2/4/8 s capped at 60 s, reset on success. Never
+syncs everything. A sweep asks for every group at once, newest change first:
+in turn, six round trips were the seconds a reopened app took to show news in
+the fifth. Backoff 2/4/8 s capped at 60 s, reset on success. Never
 block the UI; never let two runs overlap — `syncAll` is single-flight over the
 whole run and `syncGroup` over one group, and an overlapping call gets back the
-promise already in flight. Both guards are needed: opening a group syncs it
+promise already in flight — **unless that run is stale**: coming back to the
+front marks every run in flight (`markInFlightStale`), since none starts while
+hidden and its pull is from before the app went away. The next call queues a
+fresh run behind it instead of joining it, or a reopened app left the groups a
+parked run had already pulled to the next sweep. Both guards are needed: opening a group syncs it
 directly, and without the per-group guard that races the loop into pushing and
 pulling the same ops twice and taking the `rebuild()` lock twice. A run that attempted nothing must never conclude "no
 failures" and reset a backoff the failing run had grown. **Nothing writes while
@@ -309,7 +315,11 @@ in the `bida-pull` cache (`lib/db/stash.ts`). A push for the group — its `tag`
 group waits in `useGroupData` for `applyStash`, which opens the ops, stores the
 ones not held, adopts their stamps and rebuilds, so a group opened from a
 notification draws with the news in it — even offline — instead of animating
-the pull in. Cache Storage and plain JS, so the worker needs no bundle and
+the pull in. A screen already open, or the groups list, mounts nothing to ask,
+so starting and coming back to the front apply every group's (`applyStashes`),
+alongside the sweep. Each pull ahead leaves a note — `3 ops`, `no cursor`,
+`http 503` — the last eight of which `/diag` prints as `pull ahead:`, the
+worker's only line in a report. Cache Storage and plain JS, so the worker needs no bundle and
 never takes a database lock.
 
 **Applying a stash never moves `lastSeq`**, so the ordinary pull behind it

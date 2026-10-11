@@ -21,7 +21,8 @@ interface Sandbox {
   payloadFor: (url: URL, request: unknown, clientId: string) =>
     Promise<{ redirectedTo?: string; body?: string; failed?: boolean; url?: string }>;
   reuseFromEarlierBuilds: (cache: unknown, urls: string[]) => Promise<string[]>;
-  pullAhead: (groupId: string) => Promise<void>;
+  pullAhead: (groupId: string) => Promise<string>;
+  notePull: (groupId: string, outcome: string) => Promise<void>;
   caches: { open: (name: string) => Promise<unknown> };
   fetch: (url: string, init: RequestInit) => Promise<{ ok: boolean; text?: () => Promise<string> }>;
   /** Every listener the worker added, to fire one by hand. */
@@ -255,6 +256,26 @@ describe("pulling ahead when a notification lands", () => {
     sw.fetch = async () => ({ ok: false });
     await sw.pullAhead("g 1");
     expect(Object.keys(stored["bida-pull"]!)).toEqual(["/pull/g%201/cursor"]);
+  });
+
+  it("says what happened, for the note /diag prints", async () => {
+    expect(await load({}).pullAhead("g 1")).toBe("no cursor");
+    const refused = load({ "bida-pull": { ...cursor } });
+    refused.fetch = async () => ({ ok: false, status: 503 } as { ok: boolean });
+    expect(await refused.pullAhead("g 1")).toBe("http 503");
+    const pulled = load({ "bida-pull": { ...cursor } });
+    pulled.fetch = async () => ({ ok: true, text: async () => JSON.stringify({ ops: [1, 2, 3] }) });
+    expect(await pulled.pullAhead("g 1")).toBe("3 ops");
+  });
+
+  it("keeps the last eight notes, newest last", async () => {
+    const stored: Caches = {};
+    const sw = load(stored);
+    for (let i = 1; i <= 10; i++) await sw.notePull("g 1", `${i} ops`);
+    const notes = JSON.parse(stored["bida-pull"]!["/pull-log"]!) as { group: string; outcome: string }[];
+    expect(notes.map((n) => n.outcome)).toEqual(
+      ["3 ops", "4 ops", "5 ops", "6 ops", "7 ops", "8 ops", "9 ops", "10 ops"]);
+    expect(notes[0]!.group).toBe("g 1");
   });
 
   it("survives a new build taking over, which deletes every other cache", async () => {

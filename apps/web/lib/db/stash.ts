@@ -47,3 +47,19 @@ export async function dropStash(groupId: string): Promise<void> {
   if (!cache) return;
   await Promise.all([cache.delete(cursorKey(groupId)), cache.delete(stashKey(groupId))]);
 }
+
+/** One pull ahead, as `sw.js`'s `notePull` wrote it. */
+export interface PullNote {
+  at: number;
+  group: string;
+  /** `3 ops`, `no cursor`, `http 500`, `failed: …`. */
+  outcome: string;
+}
+
+/** The worker's last few pulls ahead, newest last — /diag's only view of them. */
+export async function pullNotes(): Promise<PullNote[]> {
+  const res = await (await stashes())?.match("/pull-log");
+  if (!res) return [];
+  const notes: unknown = await res.json();
+  return Array.isArray(notes) ? (notes as PullNote[]) : [];
+}

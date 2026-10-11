@@ -258,29 +258,67 @@ self.addEventListener("push", (event) => {
       icon: "/notify-blank.png",
       data: { url: sameOriginPath(data.url) },
     }),
-    tag ? pullAhead(tag).catch(() => undefined) : undefined,
+    tag
+      ? pullAhead(tag)
+        .catch((err) => `failed: ${err && err.message ? err.message : String(err)}`)
+        .then((outcome) => notePull(tag, outcome))
+        .catch(() => undefined)
+      : undefined,
   ]));
 });
 
 /**
  * Pull the notified group and stash the sealed answer for the app to apply
  * before it draws (`applyStash`). Never the only copy: a lost stash leaves the
- * ops to the ordinary pull.
+ * ops to the ordinary pull. Resolves to what happened, for `notePull`.
  */
 async function pullAhead(groupId) {
   const cache = await caches.open(PULLS);
   const base = `/pull/${encodeURIComponent(groupId)}`;
   const found = await cache.match(`${base}/cursor`);
-  if (!found) return;
+  if (!found) return "no cursor";
   const cursor = await found.json();
-  if (typeof cursor.token !== "string" || typeof cursor.since !== "number") return;
+  if (typeof cursor.token !== "string" || typeof cursor.since !== "number") return "bad cursor";
   const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/ops`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${cursor.token}` },
     body: JSON.stringify({ ops: [], since: cursor.since }),
   });
-  if (!res.ok) return;
-  await cache.put(`${base}/ops`, new Response(await res.text(), {
+  if (!res.ok) return `http ${res.status}`;
+  const text = await res.text();
+  await cache.put(`${base}/ops`, new Response(text, {
+    headers: { "Content-Type": "application/json" },
+  }));
+  let count = "?";
+  try {
+    count = String(JSON.parse(text).ops.length);
+  } catch {
+    // The page opens it, or not; the count is only for the note.
+  }
+  return `${count} ops`;
+}
+
+/** The pull ahead's own notes, for /diag; names shared with lib/db/stash.ts. */
+const PULL_LOG = "/pull-log";
+const PULL_LOG_KEEP = 8;
+
+/**
+ * One line per pull ahead, newest last: nothing the worker does reaches the
+ * page's timeline, and without this a report cannot say whether a notification
+ * pulled at all. Read-modify-write, so two landing together can lose a line.
+ */
+async function notePull(groupId, outcome) {
+  const cache = await caches.open(PULLS);
+  const found = await cache.match(PULL_LOG);
+  let notes = [];
+  try {
+    notes = found ? await found.json() : [];
+  } catch {
+    // A torn log starts again.
+  }
+  if (!Array.isArray(notes)) notes = [];
+  notes.push({ at: Date.now(), group: groupId, outcome });
+  await cache.put(PULL_LOG, new Response(JSON.stringify(notes.slice(-PULL_LOG_KEEP)), {
     headers: { "Content-Type": "application/json" },
   }));
 }
