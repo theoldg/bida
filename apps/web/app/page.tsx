@@ -13,7 +13,6 @@ import { InstallOfferCard } from "@/components/install";
 import { useGroupActions } from "@/components/group-actions";
 import { LedgerRows } from "@/components/ledger-rows";
 import { useHold, useLongPressMenu } from "@/components/long-press";
-import { UpdateNudge } from "@/components/update";
 import { endCatchUp } from "@/lib/catch-up";
 import { copy } from "@/lib/copy";
 import { ago, money, plural } from "@/lib/format";
@@ -70,7 +69,6 @@ export default function GroupsPage() {
 
       <LedgerRows opens={false} items={rows} row={(summary: GroupSummary) => <GroupRow summary={summary} />} />
 
-      <UpdateNudge />
     </HomeFrame>
     </>
   );

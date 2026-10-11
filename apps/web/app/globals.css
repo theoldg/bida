@@ -552,6 +552,11 @@ html[data-banner="manual"] .ghost-manual { display: block }
 /* Locked: muted ground, so the row reads as filled in rather than waiting. */
 .keyrow.locked { background: var(--card-2); border-color: var(--rule-soft) }
 .keyrow.locked .keyinput { color: var(--ink-2); -webkit-text-fill-color: var(--ink-2); opacity: 1 }
+/* The build number, and beside it the Reload when a newer one is waiting. */
+.verrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px }
+.vernum { font-family: var(--f-mono); font-size: 13px; color: var(--ink) }
+.vernote { font-size: 12px; line-height: 1.5; color: var(--muted); margin-top: 2px }
+.verrow .btn { width: auto; padding: 7px 16px; font-size: 12.5px }
 .keynote { font-size: 12px; line-height: 1.5; color: var(--muted); margin: 9px 2px 0 }
 
 .aboutcontact { display: flex; align-items: center; gap: 22px }

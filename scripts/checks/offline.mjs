@@ -220,7 +220,7 @@ await tap("still loads offline on the next launch", () => openGroupsList(page, b
 // after a real absence:
 //
 // - one untouched on the groups list, which takes the build at once;
-// - one being used, in the installed app, which is offered the reload instead;
+// - one being used, on Settings, which is offered the reload instead;
 // - one untouched on a group, which stays put — untouched is not enough;
 // - one on a group that is resumed, which stays on its own build (served from
 //   that build's kept cache) through a quick switch, and reloads after a long one.
@@ -249,9 +249,11 @@ const reloaded = async (p) => {
   } catch { return false; }
 };
 
-// The offer is drawn only in the installed app: a tab has a reload button already.
+// The offer lives in Settings › Version (app/settings), the only place it is drawn.
 await asInstalledApp(page);
 await openGroupsList(page, base);
+await page.goto(`${base}/settings`);
+await page.waitForSelector(".verrow");
 await mark(page);
 await touch(page);
 
@@ -284,7 +286,7 @@ await page.bringToFront();
 // deploy would already be the build the pages above booted on.
 swRevision = "gooddeploy01";
 await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
-await tap("a page in use is offered the new build", () => reload.waitFor({ state: "visible", timeout: PATIENCE }), ".card");
+await tap("a page in use is offered the new build", () => reload.waitFor({ state: "visible", timeout: PATIENCE }), ".verrow");
 report(new URL(doorstep.url()).pathname === "/" && await reloaded(doorstep),
   "an untouched page on the groups list reloads onto it by itself", doorstep.url().replace(base, ""));
 report(await page.evaluate(() => !!window.__beforeTheUpdate), "a page in use is not reloaded under the person");
@@ -319,8 +321,11 @@ await resume(straggler, 2 * 60_000);
 report(await reloaded(straggler), "and a return after a long absence reloads it onto the new build",
   straggler.url().replace(base, ""));
 
+let spent = false;
 try {
   await Promise.all([page.waitForNavigation({ timeout: PATIENCE }), reload.click()]);
+  await page.waitForSelector(".verrow", { timeout: PATIENCE });
+  spent = await reload.count() === 0;
   await openGroupsList(page, base);
   await page.waitForSelector(".rows a.row", { timeout: PATIENCE });
   report(true, "tapping the offer reloads onto the new build");
@@ -333,7 +338,7 @@ report(shells.includes(`bida-shell-${swRevision}`), "the new build's cache is th
 report(shells.length === 2 && shells.includes(oldShell),
   "and the previous one is kept, for pages still running it", shells.join(", "));
 report(await page.evaluate(() => !!navigator.serviceWorker.controller), "the new worker controls the page");
-report(await reload.count() === 0, "the offer is spent");
+report(spent, "the offer is spent");
 // A reloaded page is the new build's, and must never be answered from the old
 // cache: that is an old `/g.txt` naming chunks this build doesn't have.
 const probe = await page.evaluate(async () => {

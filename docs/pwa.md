@@ -134,10 +134,8 @@ list a newcomer never passes — is its other caller ([ios.md](ios.md#a-in-detai
 resumed far more often than it is launched) and records when
 `navigator.serviceWorker.ready` resolves (`shellIsWarm`) — the only flag that
 says the precache is done, since a worker that never claims a first visit leaves
-`controller` null for the whole of that page's life. In between,
-`components/update.tsx` offers a Reload at the foot of the groups list, **only in
-the installed app** — a tab has the browser's own, and the install nudge shows on
-exactly the phones this doesn't. `checks/offline` holds pages open across a
+`controller` null for the whole of that page's life. In between, **Settings › Version** shows the build and, when a
+newer one is waiting, a Reload (`app/settings`) — no card anywhere else. `checks/offline` holds pages open across a
 deploy: untouched, in use, and on a group through a quick and a long absence.
 
 ## Gotchas

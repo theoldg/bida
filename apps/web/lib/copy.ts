@@ -445,6 +445,7 @@ export const copy = {
   settings: {
     title: "Settings",
     theme: { title: "Theme", light: "Light", dark: "Dark" },
+    version: { title: "Version" },
     notify: {
       title: "Notifications",
       /** The three answers, in a segmented control. `own` is the offer card's yes. */

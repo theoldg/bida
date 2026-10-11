@@ -11,11 +11,14 @@ import { type NotifyLevel } from "@/lib/db/dexie";
 import { route } from "@/lib/group-link";
 import { useDevice } from "@/lib/hooks";
 import { notifyLevel, setNotifyLevel } from "@/lib/push";
+import { useUpdateState } from "@/components/update";
+import { applyUpdate } from "@/lib/update";
+import { VERSION } from "@/lib/version";
 
 /**
  * The phone's settings, the same screen from the groups list and from inside
  * a group, so back goes wherever it was opened from: how it looks, what it
- * is told, and a way on to **Advanced** (`/advanced`) for what nobody needs
+ * is told, which build it runs, and a way on to **Advanced** (`/advanced`) for what nobody needs
  * by default.
  */
 export default function SettingsPage() {
@@ -27,6 +30,7 @@ export default function SettingsPage() {
           <div className="pad about settings">
             <Theme />
             <Notifications />
+            <Version />
             {/* What nobody needs by default is a screen of its own, one press away. */}
             <Link href={route.advanced()} className="setlink">
               {copy.advanced.title}
@@ -114,5 +118,31 @@ function Notifications() {
     <Choice title={notify.title} chosen={level} disabled={blocked}
       options={LEVELS.map((l) => ({ value: l, label: notify.level[l] }))}
       onChoose={choose} note={blocked ? notify.blocked : notify.means[level]} />
+  );
+}
+
+/**
+ * Which build this is, and — when a newer one has taken over and this page is
+ * still the old one — the tap that takes it. The app takes it by itself on
+ * the next return to the front (lib/update.ts); this is for not waiting.
+ */
+function Version() {
+  const state = useUpdateState();
+  const { version } = copy.settings;
+  return (
+    <section className="aboutsect">
+      <h4>{version.title}</h4>
+      <div className="verrow">
+        <div>
+          <div className="vernum">{copy.about.version}{VERSION}</div>
+          {state === "none" ? null : <div className="vernote">{copy.update.title}</div>}
+        </div>
+        {state === "none" ? null : (
+          <button type="button" className="btn btn-s" disabled={state === "applying"} onClick={applyUpdate}>
+            {state === "applying" ? <span className="spinner" /> : null}{copy.update.act}
+          </button>
+        )}
+      </div>
+    </section>
   );
 }
