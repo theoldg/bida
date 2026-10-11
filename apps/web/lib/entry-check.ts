@@ -145,18 +145,20 @@ export function checkEntry(input: {
   const sidesOk = !transfer
     || (draft.fromMember !== draft.toMember && live.has(draft.fromMember) && live.has(draft.toMember));
 
-  // Everybody an entry names must still be in the group: a member removed while
-  // this was open leaves an id no picker can show — money against a name on no
-  // list, or a transfer side showing "—". (docs/data-model.md)
-  const goneMember = (transfer
-    ? [draft.fromMember, draft.toMember]
-    : [draft.paidBy, ...Object.keys(draft.payers ?? {}), ...splitParticipants(effectiveSplit)])
-    .find((id) => id && !live.has(id));
-
   // The Receipt tab is a claim; `receiptSplit` is whether it's true. Without
   // this, saving over an even split would say "by items" about a split nobody
   // read off a receipt.
   const receiptMissing = canScan && activeTab === "receipt" && receiptSplit === null;
+
+  // Everybody an entry names must still be in the group: a member removed while
+  // this was open leaves an id no picker can show — money against a name on no
+  // list, or a transfer side showing "—". (docs/data-model.md) Not the split
+  // waiting under an unfilled Items tab: it is neither shown nor saved.
+  const goneMember = (transfer
+    ? [draft.fromMember, draft.toMember]
+    : [draft.paidBy, ...Object.keys(draft.payers ?? {}),
+      ...(receiptMissing ? [] : splitParticipants(effectiveSplit))])
+    .find((id) => id && !live.has(id));
 
   // Worded as the split editor counts it: in the entry's own currency, the
   // figures on the bill. A Receipt tab with no split yet blooms its step instead.

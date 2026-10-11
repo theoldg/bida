@@ -107,6 +107,7 @@ API is reached with `fetch`.
   read off the bill. Which tab is lit is `splitTab` alone, never the spec. What a first-time
   tab is handed is who `arithmeticSplit` has in, never the receipt: a scan is an answer of
   its own, in a mode of its own, and does not fill in As parts (ADR-0016).
+  Items opens the Evenly under it the same way, so that is never nobody.
   Which tab is showing lives on the draft alone; a saved entry carries its
   mode, and that is what reopens it.
 - **Whether the entry may be saved is `checkEntry` (`lib/entry-check.ts`)**,

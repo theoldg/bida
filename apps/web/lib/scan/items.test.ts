@@ -3,7 +3,7 @@ import {
   demoOps, foldOps, parseMinor, receiptExtras, DEMO_GROUP_ID, type BillExtras, type ReceiptItem,
 } from "@bida/core";
 import {
-  billCharges, billExtrasIn, billLabel, billLabels, foldedLine, hasTranslation, handOffReceiptTotal, portions, receiptBreakdown, receiptTotalMinor,
+  billCharges, billExtrasIn, billLabel, billLabels, foldedLine, hasTranslation, portions, receiptBreakdown, receiptTotalMinor,
   runAssignment,
   printedBill, printedCount, unfoldAll, unfoldItem,
   MAX_PORTIONS, unfoldableInto, weightsFromItems,
@@ -107,44 +107,6 @@ describe("receiptTotalMinor", () => {
 
   it("ignores an unparsable tip but keeps the items", () => {
     expect(receiptTotalMinor([{ amount: "10.00" }], extras({ tip: "garbage" }), "EUR")).toBe(1000);
-  });
-});
-
-describe("handOffReceiptTotal", () => {
-  it("pins the derived total when leaving Receipt for an arithmetic tab", () => {
-    // The bug this exists for: Receipt derives its total and never stores it,
-    // so switching to Evenly fell back to a blank `amountText` and the
-    // expense silently became worth zero — a greyed-out Save, and
-    // "€0.00 of €0.00 allocated" one more tap along.
-    expect(handOffReceiptTotal(
-      "receipt", "equal", [{ amount: "30.00" }, { amount: "10.00" }], extras({ tip: "4.00" }), "EUR",
-    )).toBe("44.00");
-  });
-
-  it("hands over text the amount field can parse back", () => {
-    // `bare()` would give "1,234.50" here, which parseMinor rejects outright —
-    // and JPY "25,000", which it reads as 25. The handoff has to be canonical.
-    const eur = handOffReceiptTotal("receipt", "exact", [{ amount: "1234.50" }], null, "EUR");
-    expect(parseMinor(eur!, "EUR")).toBe(123450);
-    const jpy = handOffReceiptTotal("receipt", "exact", [{ amount: "25000" }], null, "JPY");
-    expect(parseMinor(jpy!, "JPY")).toBe(25000);
-  });
-
-  it("leaves a hand-typed amount alone between two arithmetic tabs", () => {
-    // Once someone has taken the number back, it is theirs — this is a
-    // one-shot handoff at the transition, not a mirror of the bill.
-    expect(handOffReceiptTotal("equal", "exact", [{ amount: "30.00" }], null, "EUR")).toBeNull();
-  });
-
-  it("leaves the amount alone when switching into Receipt", () => {
-    // Receipt takes the total over by deriving it; nothing to write.
-    expect(handOffReceiptTotal("exact", "receipt", [{ amount: "30.00" }], null, "EUR")).toBeNull();
-  });
-
-  it("leaves the amount alone when the bill has no readable total", () => {
-    expect(handOffReceiptTotal("receipt", "equal", [], null, "EUR")).toBeNull();
-    expect(handOffReceiptTotal("receipt", "equal", null, null, "EUR")).toBeNull();
-    expect(handOffReceiptTotal("receipt", "equal", undefined, null, "EUR")).toBeNull();
   });
 });
 

@@ -177,6 +177,40 @@ describe("changeSplitTab", () => {
     expect(changeSplitTab(d, "receipt").amountText).toBe("12.00");
   });
 
+  // The field is unlocked on a bill worth nothing, so what stands in it was
+  // typed: "0.00" written over it on the way out is a figure nobody entered.
+  it("never writes a bill worth nothing over a typed amount", () => {
+    const d = expense({
+      amountText: "50.00", receiptItems: [{ label: "x", amount: "0" }], splitTab: "receipt",
+    });
+    expect(changeSplitTab(d, "equal").amountText).toBe("50.00");
+  });
+
+  it("hands the total over as text the amount field parses back", () => {
+    const yen = expense({
+      currency: "JPY", receiptItems: [{ label: "x", amount: "25000" }], splitTab: "receipt",
+    });
+    expect(changeSplitTab(yen, "exact").amountText).toBe("25000");
+    const big = expense({ receiptItems: [{ label: "x", amount: "1234.50" }], splitTab: "receipt" });
+    expect(changeSplitTab(big, "exact").amountText).toBe("1234.50");
+  });
+
+  // An edited As parts entry holds that one tab. A look at Items used to leave
+  // Evenly empty under it, so the next tab opened — or an income — had nobody in.
+  it("opens Evenly under Items from who was in the tab left for it", () => {
+    const parts = { mode: "shares" as const, weights: { [A]: 2, [B]: 1 } };
+    const looked = open(expense({ splits: { shares: parts }, splitTab: "shares" }), "receipt");
+    expect(arithmeticSplit(looked)).toEqual({ mode: "equal", members: [A, B] });
+    expect(open(looked, "exact").splits.exact).toEqual({ mode: "exact", amounts: {}, rest: [A, B] });
+    expect(open(looked, "shares").splits.shares).toEqual(parts);
+  });
+
+  it("leaves an Evenly that holds an answer alone when Items opens over it", () => {
+    const d = open(expense({ splits: { equal: { mode: "equal", members: [C] } } }), "shares");
+    expect(open(d, "receipt").splits).toBe(d.splits);
+    expect(open(open(d, "receipt"), "receipt").splits).toBe(d.splits);
+  });
+
   it("opens the tab it moves to, and only that one", () => {
     const next = changeSplitTab(expense(), "exact");
     expect(next.splits).toEqual({

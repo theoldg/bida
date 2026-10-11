@@ -1,6 +1,6 @@
 import {
   extrasMinor, minorToDecimalString, parseMinor, resolveSplit,
-  type BillExtras, type ExtraKind, type ReceiptItem, type SplitMode,
+  type BillExtras, type ExtraKind, type ReceiptItem,
 } from "@bida/core";
 
 /** A line of the bill, and how much of it was one person's. */
@@ -192,24 +192,6 @@ export function receiptTotalMinor(
   }
   if (extras) total += extrasMinor(extras, currency) ?? 0;
   return any ? total : null;
-}
-
-/**
- * Receipt's total is derived at read time (ADR-0016), so leaving Receipt
- * without this would revert the amount to whatever preceded the scan, often
- * nothing. One-shot, not a mirror: arithmetic tabs never overwrite a typed amount.
- */
-export function handOffReceiptTotal(
-  from: SplitMode,
-  to: SplitMode,
-  items: { amount: string }[] | null | undefined,
-  extras: BillExtras | null,
-  currency: string,
-): string | null {
-  if (from !== "receipt" || to === "receipt") return null;
-  const total = receiptTotalMinor(items ?? [], extras, currency);
-  // Not `bare`, which groups thousands that `parseMinor` can't read back.
-  return total === null ? null : minorToDecimalString(total, currency);
 }
 
 // Unfolding: "Salad ×2 9.00" becomes two rows at half each, with their own

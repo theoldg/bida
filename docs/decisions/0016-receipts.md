@@ -43,7 +43,12 @@ ordinary optional fields on `Expense` — together the `Receipt` type, which
 sync, replay and fold with no change to `Op`, `fold.ts`, the D1 schema or the
 Dexie schema, and the grid reopens later from any device. Ops already written
 in the old shape are upgraded in one place, `upgradeReceiptSplit`, where ops
-become state (`applyPatch`, so the fold and the history read it alike). The
+become state (`applyPatch`, so the fold and the history read it alike). That
+upgrade takes `shares` beside a bill with no flag for a receipt from before the
+flag existed, so **the one entry that still writes `splitTab` is parts typed
+beside a kept bill** (`partsBesideBill`): unflagged, it folded into `receipt`,
+reopened on Items and had its split rewritten from the grid by the next save.
+No state keeps the flag; a write derives it. The
 Dexie migration that carried the materialised cache over has been collapsed
 away with the rest of the chain
 ([data-model.md](../data-model.md#indexeddb-dexie)); the fold is what
@@ -66,7 +71,8 @@ receipt expense seeded the tabs from its stored `shares` spec — which is the
 grid's own arithmetic, not parts anybody chose. Either way As parts opened
 holding a number the scan had put there, on a screen it does not own, and
 editing it produced a split that agreed with neither. The arithmetic tabs now
-start where an unscanned entry starts: even, over everyone.
+start where an unscanned entry starts: from the Evenly under Items — everyone,
+or, on an entry that came to Items from another tab, whoever was in that one.
 **The tab is a claim, and Save is held until it is true**: with
 no bill scanned, or a bill nobody has been assigned a line of, there is no
 receipt split, and saving stored "Receipt" over an ordinary even one. What a
@@ -84,10 +90,11 @@ inline, where both are read: the form's render. The who-had-what screen writes
 only raw inputs. Every bug in this feature's first week was a derived value
 mirrored into a draft field by an effect on one screen watching a write made by
 another. Recomputing is one cheap call; the cache was the bug. Leaving Receipt
-hands the total over exactly once (`handOffReceiptTotal`), beside the split a
+hands the total over exactly once, beside the split a
 first-time tab is handed (`openSplitTab`) — two handoffs made in one place,
 `changeSplitTab`, whether a tab tap or a kind with no Items moved it, not
-mirrors anything later resyncs.
+mirrors anything later resyncs. Only a total the amount field was showing is
+handed over, so a bill worth nothing never overwrites a typed figure.
 
 **A "×2" line unfolds into portions, and a portion is an ordinary line.**
 A bill arrives with such a line already as N rows, each carrying its share of

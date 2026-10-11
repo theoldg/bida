@@ -192,6 +192,14 @@ describe("checkEntry", () => {
       expect(c.receiptLocksAmount).toBe(false);
     });
 
+    // The split under an unfilled Items tab is neither shown nor saved, so it
+    // can't be why Save is refused: nobody could find the name it complains of.
+    it("doesn't blame the split waiting under it for somebody who has left", () => {
+      const under = expense({ splitTab: "receipt", splits: { equal: { mode: "equal", members: [THEO, GONE] } } });
+      expect(check(under).blocker).toBeNull();
+      expect(check({ ...under, splitTab: "equal" }).blocker).toContain("Bruno");
+    });
+
     it("is not a thing an income has", () => {
       const c = check(expense({ kind: "income", splitTab: "receipt", receiptItems: items }));
       expect(c.canScan).toBe(false);

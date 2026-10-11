@@ -9,7 +9,7 @@ import {
 } from "@bida/core";
 import { kindOf, type EntryKind } from "./entry-kind";
 import { dateInputValue } from "./format";
-import { handOffReceiptTotal, receiptBreakdown, receiptTotalMinor, type MemberLine } from "./scan/items";
+import { receiptBreakdown, receiptTotalMinor, type MemberLine } from "./scan/items";
 import { clearScan } from "./scan/live";
 import { signal } from "./signal";
 
@@ -148,27 +148,34 @@ export function arithmeticSplit(draft: EntryDraft): ArithmeticSplit {
 
 /**
  * A tab keeps what was typed into it; one opened for the first time starts
- * from who is in, never the numbers (`convertSplitMode`).
+ * from who is in, never the numbers (`convertSplitMode`). Items opens the
+ * Evenly under it the same way, so `arithmeticSplit` there is never nobody:
+ * a parts entry looked at under Items used to leave it for an empty tab.
  */
 export function openSplitTab(draft: EntryDraft, tab: SplitTab): SplitInputs {
-  if (tab === "receipt" || draft.splits[tab]) return draft.splits;
-  return withSplit(draft.splits, convertSplitMode(arithmeticSplit(draft), tab));
+  const opened: ArithmeticMode = tab === "receipt" ? "equal" : tab;
+  if (draft.splitTab === tab || draft.splits[opened]) return draft.splits;
+  return withSplit(draft.splits, convertSplitMode(arithmeticSplit(draft), opened));
 }
 
 /**
  * Moving to `tab`, whoever asks — the tab bar, or a kind with no Items. Two
- * handoffs, each only into a tab with nothing of its own yet: `openSplitTab`
- * gives it a split to start from, and leaving Items puts the bill's total in
- * the amount field, without which the expense silently becomes worth zero
- * (ADR-0016). A tab holding an answer keeps it.
+ * handoffs: `openSplitTab` gives a tab with nothing of its own a split to
+ * start from, and leaving Items puts the bill's total in the amount field,
+ * without which the expense silently becomes worth zero (ADR-0016). One-shot,
+ * and only a total the field was showing (`draftReceiptTotal`): a bill worth
+ * nothing leaves a typed amount alone.
  */
 export function changeSplitTab(
   draft: EntryDraft, tab: SplitTab,
 ): Pick<EntryDraft, "splitTab" | "splits" | "amountText"> {
-  const handoff = handOffReceiptTotal(
-    draft.splitTab, tab, draft.receiptItems, receiptExtras(draft), draft.currency,
-  );
-  return { splitTab: tab, splits: openSplitTab(draft, tab), amountText: handoff ?? draft.amountText };
+  const total = tab === "receipt" ? null : draftReceiptTotal(draft);
+  return {
+    splitTab: tab,
+    splits: openSplitTab(draft, tab),
+    // Not `bare`, which groups thousands that `parseMinor` can't read back.
+    amountText: total === null ? draft.amountText : minorToDecimalString(total, draft.currency),
+  };
 }
 
 /** Null for ≤ 0 too: the amount is disabled on a derived number, and disabled-and-empty can't save. */

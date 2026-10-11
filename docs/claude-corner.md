@@ -27,6 +27,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-11* — "Audit the split mode tab logic … subtle unintuitive
+  nonsense." Another session landed the same rework while I wrote mine; the
+  push found out. Fetch dev before a rewrite and again before the tests, then
+  keep only the faults theirs left: here, what a save wrote, not the tabs.
+
 - *2026-10-11* — "How did this bug even arise". A copied pattern copies half:
   the query was kept like the position, but only the position was forgotten
   on a fresh visit. The check stopped one step short of the repro. Answer
@@ -79,8 +84,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-09* — "Take the screenshots on a slightly wider device, e.g. a
   pixel 9a". "The screenshots" spans both scripts: one constant in the
   harness, both re-shot, the six committed ones looked at before the push.
-
-- *2026-10-09* — A blind walk as "clueless Luke" found seven things; the
-  owner picked one: "Make the demo start with the who are you screen". A
-  findings list is a menu. Driving the fix found a real race the checks had
-  never tripped.
