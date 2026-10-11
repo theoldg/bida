@@ -122,11 +122,11 @@ await tap("tap a suggested transfer", () => page.locator("button.card").first().
 await page.keyboard.press("Escape");
 await tap("history", () => page.goto(`${base}/g/history?id=${g}`), ".tle");
 await tap("members", () => page.goto(`${base}/g/members?id=${g}`), ".rows .row");
-// The phone's own switch, light/dark, on Settings. Found by its role, the
-// screen's only switch — never by wording, which keeps changing under this check.
+// The phone's own setting, light/dark, first on Settings. Found by place and
+// state — never by wording, which keeps changing under this check.
 await tap("theme toggle", async () => {
   await page.goto(`${base}/settings`);
-  await page.locator('[role=switch]').click();
+  await page.locator('.settings .seg').first().locator('button[aria-pressed="false"]').click();
 }, "html[data-theme]");
 
 await tap("new entry form", () => page.goto(`${base}/g/entry/edit?id=${g}`), "input.amount");

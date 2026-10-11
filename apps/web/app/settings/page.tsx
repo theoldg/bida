@@ -24,12 +24,10 @@ export default function SettingsPage() {
         <TopBar title={copy.settings.title} back />
         <Scroll>
           <div className="pad about settings">
-            <section className="aboutsect">
-              <DarkSwitch />
-            </section>
+            <Theme />
             <Notifications />
             <section className="aboutsect">
-              <h4>{copy.settings.advanced}</h4>
+              <h3>{copy.settings.advanced}</h3>
               <OwnKey />
             </section>
           </div>
@@ -39,49 +37,75 @@ export default function SettingsPage() {
   );
 }
 
-/** Two ways: the phone's own look until it is pressed (`setDark`). */
-function DarkSwitch() {
-  const dark = useDark();
+/**
+ * One setting: an eyebrow over a segmented control as wide as its words, and
+ * under it, when there is one, a line saying what the chosen answer means.
+ * Theme and notifications are both this, so they read alike.
+ */
+function Choice<T extends string>({ title, options, chosen, onChoose, disabled, note }: {
+  title: string;
+  options: readonly { value: T; label: string }[];
+  chosen: T;
+  onChoose: (value: T) => void;
+  disabled?: boolean;
+  note?: string;
+}) {
   return (
-    <button type="button" role="switch" aria-checked={dark} className="setrow"
-      onClick={() => setDark(!dark)}>
-      <span>{copy.settings.dark}</span>
-      <span className="switch" aria-hidden="true" />
-    </button>
+    <section className="aboutsect">
+      <h4>{title}</h4>
+      <div className="seg" role="group" aria-label={title}>
+        {options.map((o) => (
+          <button key={o.value} type="button" className={o.value === chosen ? "on" : ""}
+            aria-pressed={o.value === chosen} disabled={disabled}
+            onClick={() => { if (o.value !== chosen) onChoose(o.value); }}>{o.label}</button>
+        ))}
+      </div>
+      {note ? <p className="keynote">{note}</p> : null}
+    </section>
   );
 }
+
+/** Two ways: the phone's own look until one is pressed (`setDark`). */
+function Theme() {
+  const dark = useDark();
+  const { theme } = copy.settings;
+  return (
+    <Choice title={theme.title} chosen={dark ? "dark" : "light"}
+      options={[{ value: "light", label: theme.light }, { value: "dark", label: theme.dark }]}
+      onChoose={(v) => setDark(v === "dark")} />
+  );
+}
+
+const LEVELS: readonly NotifyLevel[] = ["off", "own", "all"];
 
 /**
  * Off, just me, or all (`NotifyScope`). **Only in the installed app**, which
  * is the only place iOS delivers a push and where the offer card asks first.
  * Choosing one without permission is the tap that asks for it.
+ *
+ * **The tapped answer is drawn chosen at once**, and held until the device
+ * says so: nothing is disabled meanwhile, since a control dimming while it
+ * saves reads as every other option flickering. A tap while one is in flight
+ * is ignored; a refused prompt puts the old answer back.
  */
 function Notifications() {
   const installed = useInstallOffer() === "installed";
   const state = usePushState();
   const device = useDevice();
-  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<NotifyLevel | null>(null);
   if (!installed || state === "unsupported" || !device) return null;
   const { notify } = copy.settings;
-  const level = notifyLevel(state, device.notify);
-  const blocked = state === "denied";
+  const level = pending ?? notifyLevel(state, device.notify);
+  const blocked = state === "denied" && pending === null;
   const choose = (next: NotifyLevel) => {
-    if (next === level || busy) return;
-    setBusy(true);
-    void setNotifyLevel(next).finally(() => setBusy(false));
+    if (pending !== null) return;
+    setPending(next);
+    void setNotifyLevel(next).finally(() => setPending(null));
   };
-  const levels: NotifyLevel[] = ["off", "own", "all"];
   return (
-    <section className="aboutsect">
-      <h4>{notify.title}</h4>
-      <div className="seg" role="group" aria-label={notify.title}>
-        {levels.map((l) => (
-          <button key={l} type="button" className={l === level ? "on" : ""} aria-pressed={l === level}
-            disabled={blocked || busy} onClick={() => choose(l)}>{notify.level[l]}</button>
-        ))}
-      </div>
-      <p className="keynote">{blocked ? notify.blocked : notify.means[level]}</p>
-    </section>
+    <Choice title={notify.title} chosen={level} disabled={blocked}
+      options={LEVELS.map((l) => ({ value: l, label: notify.level[l] }))}
+      onChoose={choose} note={blocked ? notify.blocked : notify.means[level]} />
   );
 }
 
@@ -129,7 +153,7 @@ function OwnKey() {
 
   return (
     <>
-      <h5>{key.title}</h5>
+      <h4>{key.title}</h4>
       <p>{key.lede}</p>
       <FreeKeyFold />
 

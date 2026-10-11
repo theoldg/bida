@@ -525,28 +525,18 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .aboutrow td { color: var(--ink); overflow-wrap: anywhere }
 .aboutrow + p { margin-top: 13px }
 /* `/settings` borrows /about's column, eyebrows and all, and the add-a-name
-   row; a setting under an eyebrow is titled like a field. */
-.settings .aboutsect h5 { font-size: 16px; font-weight: 650; letter-spacing: -.02em;
-  color: var(--ink); margin: 4px 0 9px }
+   row. A group of settings is titled large, each setting under an eyebrow. */
+.settings .aboutsect h3 { font-size: 16px; font-weight: 650; letter-spacing: -.02em;
+  color: var(--ink); margin-bottom: 8px }
 /* Outweighs `.addrow.editing`'s margins by a class: here the row is the column's width. */
 .settings .addrow.keyrow { margin: 16px 0 0; width: 100% }
 /* Set down from the lede, or the fold reads as that paragraph's last line. */
 .settings .installfold { margin-top: 16px }
-.settings .seg { margin-top: 4px }
-.settings .seg button { padding: 8px 0; font-size: 12.5px }
-.settings .seg button:disabled { opacity: .5 }
-/* The whole row is the switch's target, the words as much as the track. */
-.setrow { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  width: 100%; padding: 4px 0; font-size: 16px; font-weight: 650; letter-spacing: -.02em;
-  color: var(--ink); text-align: left }
-/* Square like everything else: a track and a block, ink when on. */
-.switch { position: relative; flex: none; width: 42px; height: 24px; border-radius: var(--r-s);
-  background: var(--card-3); border: 1px solid var(--rule); transition: background .18s, border-color .18s }
-.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
-  border-radius: 1px; background: var(--card); box-shadow: var(--shadow-s);
-  transition: transform .18s cubic-bezier(.2, .8, .2, 1) }
-.setrow[aria-checked="true"] .switch { background: var(--ink); border-color: var(--ink) }
-.setrow[aria-checked="true"] .switch::after { transform: translateX(18px) }
+/* As wide as its words, not the column: a choice of two or three, not a tab
+   bar. Equal columns, so the chosen one's weight moves nothing. */
+.settings .seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin-top: 2px }
+.settings .seg button { padding: 7px 16px; font-size: 12.5px }
+.settings .seg button:disabled { color: var(--muted); opacity: .5 }
 .notwho { margin-top: 14px }
 .notwho p { font-size: 12px; line-height: 1.55; color: var(--ink-2); margin-top: 6px; padding-left: 16px }
 .notwho p strong { color: var(--ink); font-weight: 600 }

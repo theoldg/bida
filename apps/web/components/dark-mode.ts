@@ -35,7 +35,7 @@ export function useDark(): boolean {
 }
 
 /**
- * Settings' switch. **Two ways, with the phone as the default**: nothing is
+ * Settings' Theme. **Two ways, with the phone as the default**: nothing is
  * forced until it is pressed, and after that it says what it says. The record
  * stays the durable copy — `applyTheme` writes through to localStorage, this to
  * Dexie.

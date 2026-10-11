@@ -444,16 +444,16 @@ export const copy = {
    */
   settings: {
     title: "Settings",
-    dark: "Dark mode",
+    theme: { title: "Theme", light: "Light", dark: "Dark" },
     notify: {
       title: "Notifications",
       /** The three answers, in a segmented control. `own` is the offer card's yes. */
       level: { off: "Off", own: "Just me", all: "All" },
       /** Under the control, saying what the chosen one means. */
       means: {
-        off: "Nothing is sent to this phone.",
-        own: "Only entries that affect you.",
-        all: "Every entry in your groups, even ones you aren’t in.",
+        off: "No notifications at all.",
+        own: "Only entries that involve you.",
+        all: "Every edit in your groups.",
       },
       /** Permission refused at the phone: no tap here can ask again. */
       blocked: "Turned off in your phone’s settings. Allow notifications for bida there to choose here.",
