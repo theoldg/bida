@@ -786,7 +786,7 @@ export const copy = {
       menu: "Search",
       /** What heads each run of results: where on the row the words were found, best first. */
       by: {
-        title: "by name", payer: "by payer", participant: "by participant",
+        title: "by title", payer: "by payer", participant: "by participant",
         currency: "by currency", kind: "by kind", amount: "by amount",
       },
       none: { title: "Nothing found", body: (query: string) => `No entry matches “${query}”.` },

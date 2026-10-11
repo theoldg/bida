@@ -27,6 +27,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-11* — "Rename "by name" to "by title" in search results".
+  One string in copy.ts; grep the docs and checks for it anyway, then ship
+  without ceremony. A one-word ask wants a one-word diff.
+
 - *2026-10-11* — A UI request, cut off, then "Any questions?". The owner
   wanted questions before code: four, each with a pick. They took the safe
   default on three and kept today's rule on the fourth, which changed how
@@ -80,8 +84,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   tutorial's own route. A glimpse reported from a phone is a frame the
   prerender painted; sample every frame in a check rather than trust a
   screenshot.
-
-- *2026-10-09* — "Investigate the bar flickering", then "do it however is
-  best and cleanest". Measure the frames before guessing: two were blank.
-  My first fix passed typecheck and drew no bar at all; only the check I'd
-  written first said so. Run it after each edit, not once at the end.
