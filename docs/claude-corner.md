@@ -27,6 +27,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-11* — "1 minute than 5, or no timer at all? Wdyt" — an either-or
+  ending in wdyt wants a pick with its one reason, then the build, not a
+  survey. And when the owner pastes another session's proposal, that paste is
+  the whole brief.
 - *2026-10-11* — "Rename "by name" to "by title" in search results".
   One string in copy.ts; grep the docs and checks for it anyway, then ship
   without ceremony. A one-word ask wants a one-word diff.
@@ -78,9 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-10* — "Reopening should remember who was rest … you have to figure
   it out." Six repros kept the rest; the cause was upstream: parts had arrived
   typed. When a bug won't reproduce, ask what wrote the data, not what reads it.
-
-- *2026-10-10* — "I think i saw the install tutorial page briefly? What say
-  you", then "Fix it". The owner's eye was right: the icon opens the
-  tutorial's own route. A glimpse reported from a phone is a frame the
-  prerender painted; sample every frame in a check rather than trust a
-  screenshot.

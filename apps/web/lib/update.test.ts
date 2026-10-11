@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reloadCostsNothing } from "./update";
+import { AWAY_MS, mayReloadOnReturn, reloadCostsNothing } from "./update";
 
 /**
  * The one list, asked by two reloads: the update's (lib/update.ts) and the iOS
@@ -29,5 +29,26 @@ describe("reloadCostsNothing", () => {
     expect(reloadCostsNothing("/")).toBe(true);
     expect(reloadCostsNothing("")).toBe(true);
     expect(reloadCostsNothing("/g/entry/edit/")).toBe(false);
+  });
+});
+
+/** Which return to the front takes a waiting build. */
+describe("mayReloadOnReturn", () => {
+  it("is always the groups list, however short the absence", () => {
+    expect(mayReloadOnReturn("/", 0)).toBe(true);
+    expect(mayReloadOnReturn("", 0)).toBe(true);
+  });
+
+  it("is a ledger only after a real absence, not an app switch", () => {
+    expect(mayReloadOnReturn("/g", 5_000)).toBe(false);
+    expect(mayReloadOnReturn("/g", AWAY_MS - 1)).toBe(false);
+    expect(mayReloadOnReturn("/g", AWAY_MS)).toBe(true);
+    expect(mayReloadOnReturn("/g/balances/", AWAY_MS)).toBe(true);
+  });
+
+  it("is never a form or a flow, however long away", () => {
+    for (const path of ["/g/entry/edit", "/new", "/join", "/g/claim", "/quick"]) {
+      expect(mayReloadOnReturn(path, 24 * 3_600_000)).toBe(false);
+    }
   });
 });

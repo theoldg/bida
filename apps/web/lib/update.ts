@@ -3,8 +3,8 @@
  *
  * `public/sw.js` activates the moment a build is precached and serves each open
  * page its own build. Here, a page whose build changed reloads onto the new
- * one — but not where it is standing, nor while being looked at
- * (`mayReloadHere`).
+ * one — on the groups list as it is opened, or on any screen with nothing to
+ * lose once the app comes back after a while away (`mayReloadOnReturn`).
  *
  * **Never wait for every client to close** — on iOS that is nearly never. A
  * page in use is offered the tap instead (`components/update.tsx`).
@@ -34,8 +34,14 @@ export function reloadCostsNothing(pathname: string): boolean {
   return NOTHING_TO_LOSE.has(pathname.replace(/\/$/, "") || "/");
 }
 
-/** The app's front door: the only screen an update reloads on by itself. */
+/** The app's front door: the one screen an update reloads on at once. */
 const FRONT_DOOR = "/";
+
+/**
+ * Away this long, coming back to a fresh screen reads as having left — not as a
+ * crash. Shorter would catch an app switch to copy a number mid-read.
+ */
+export const AWAY_MS = 60_000;
 
 let stale = false;
 let applying = false;
@@ -48,15 +54,22 @@ let touched = false;
 let waiting = false;
 const { emit: announce, subscribe } = signal();
 
+function atFrontDoor(pathname: string): boolean {
+  return (pathname.replace(/\/$/, "") || FRONT_DOOR) === FRONT_DOOR;
+}
+
 /**
- * May the app reload itself where it is standing? **The front door only.** In
- * the installed app a reload is a relaunch: on the groups list it looks like
- * one; on a ledger it looks like a crash; on a form it raises "leave site?".
- * Waiting costs a stale screen, never a broken one — `sw.js` keeps each
- * window's cache.
+ * May the app reload itself as it comes back to the front, having been away
+ * `awayMs`? In the installed app a reload is a relaunch: on the groups list it
+ * looks like one, so always; on a ledger after a short switch it looks like a
+ * crash, so only after `AWAY_MS` — launches resume the last group
+ * (`lib/launch.ts`), so waiting for the list alone left most phones on an old
+ * build for days; on a form or a flow it would lose work, so never. Waiting
+ * costs a stale screen, never a broken one — `sw.js` keeps each window's cache.
  */
-function mayReloadHere(): boolean {
-  return (location.pathname.replace(/\/$/, "") || FRONT_DOOR) === FRONT_DOOR;
+export function mayReloadOnReturn(pathname: string, awayMs: number): boolean {
+  if (atFrontDoor(pathname)) return true;
+  return awayMs >= AWAY_MS && reloadCostsNothing(pathname);
 }
 
 /**
@@ -85,7 +98,7 @@ export function registerServiceWorker(): void {
     announce();
     // Untouched on the front door is a launch nobody has got to yet: go, and
     // the person never knows there was a build in between.
-    const now = mayReloadHere() && !touched && document.visibilityState === "visible";
+    const now = atFrontDoor(location.pathname) && !touched && document.visibilityState === "visible";
     // On the timeline because an update is when a second copy is most likely
     // left behind holding the database (lib/db/live.ts), and because which way
     // this went is the first question to ask of a phone on a stale build.
@@ -116,12 +129,14 @@ export function registerServiceWorker(): void {
 function reloadWhenFree(): void {
   if (waiting) return;
   waiting = true;
-  let wasHidden = document.visibilityState !== "visible";
+  // When the page last went hidden; null while it is in front.
+  let hiddenAt: number | null = document.visibilityState !== "visible" ? Date.now() : null;
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState !== "visible") { wasHidden = true; return; }
-    if (!wasHidden) return;
-    wasHidden = false;
-    if (mayReloadHere()) window.location.reload();
+    if (document.visibilityState !== "visible") { hiddenAt ??= Date.now(); return; }
+    if (hiddenAt === null) return;
+    const away = Date.now() - hiddenAt;
+    hiddenAt = null;
+    if (mayReloadOnReturn(location.pathname, away)) window.location.reload();
   });
 }
 

@@ -117,12 +117,17 @@ so the group id is lost on the way. Refused, the router falls back to the URL
 is that the window's next tap is a full load rather than a routed one (Gotcha
 below).
 
-**The app reloads itself on the groups list and nowhere else.** `lib/update.ts`
-hears `controllerchange` and waits for the front door — at once if the page is
-there already and nobody has touched it, otherwise the first time the app is
-resumed onto it, never while hidden. A reload in the installed app is a
-relaunch, splash and all, and one on a ledger reads as a crash; on the two forms
-it would throw away a draft that lives only in memory (`lib/draft.ts`). `reloadCostsNothing` is the one list of screens that hold
+**The app reloads itself onto a new build where nothing can be lost, never
+mid-use.** `lib/update.ts` hears `controllerchange`: on the groups list,
+untouched, it reloads at once; otherwise it waits for the app to come back to
+the front (`mayReloadOnReturn`, never while hidden) — onto the list after any
+absence, onto any other `reloadCostsNothing` screen (a ledger, balances…) only
+after a minute away (`AWAY_MS`). A reload in the installed app is a relaunch,
+splash and all: after a quick app switch, on a ledger, it reads as a crash;
+after a minute it reads as having left. The list alone was too rare a door —
+launches resume the last group (`lib/launch.ts`). On the two forms a reload
+would throw away a draft that lives only in memory (`lib/draft.ts`), and on a
+flow drop a step, so never there. `reloadCostsNothing` is the one list of screens that hold
 nothing only this page has, and the iOS carry reload — which cannot wait for a
 list a newcomer never passes — is its other caller ([ios.md](ios.md#a-in-detail)).
 `lib/update.ts` also re-checks `sw.js` on every resume (an installed app is
@@ -132,8 +137,8 @@ says the precache is done, since a worker that never claims a first visit leaves
 `controller` null for the whole of that page's life. In between,
 `components/update.tsx` offers a Reload at the foot of the groups list, **only in
 the installed app** — a tab has the browser's own, and the install nudge shows on
-exactly the phones this doesn't. `checks/offline` holds three pages open across a
-deploy: untouched, in use, and on a group.
+exactly the phones this doesn't. `checks/offline` holds pages open across a
+deploy: untouched, in use, and on a group through a quick and a long absence.
 
 ## Gotchas
 

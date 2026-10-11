@@ -220,27 +220,33 @@ await tap("still loads offline on the next launch", () => openGroupsList(page, b
 
 // ---- a deploy that arrives by itself ------------------------------------
 // The worker activates as soon as a new build is precached (public/sw.js), so
-// four pages are open across it, and **the front door is the only screen a
-// reload happens on** (lib/update.ts):
+// four pages are open across it, and **only the front door reloads at once**
+// (lib/update.ts) — any other screen with nothing to lose waits for a return
+// after a real absence:
 //
 // - one untouched on the groups list, which takes the build at once;
 // - one being used, in the installed app, which is offered the reload instead;
 // - one untouched on a group, which stays put — untouched is not enough;
 // - one on a group that is resumed, which stays on its own build (served from
-//   that build's kept cache) until it reaches the list.
+//   that build's kept cache) through a quick switch, and reloads after a long one.
 console.log("\nupdating:");
 await ctx.setOffline(false);
 const oldShell = (await page.evaluate(() => caches.keys())).find((k) => k.startsWith("bida-shell-"));
 
 const mark = (p) => p.evaluate(() => { window.__beforeTheUpdate = true; });
 const touch = (p) => p.evaluate(() => window.dispatchEvent(new PointerEvent("pointerdown")));
-// Headless pages never go hidden, so a resume is played out by hand.
-const resume = (p) => p.evaluate(() => {
-  for (const state of ["hidden", "visible"]) {
+// Headless pages never go hidden, so a resume is played out by hand — and a
+// long absence by moving the page's clock while it is away.
+const resume = (p, awayMs = 0) => p.evaluate((away) => {
+  const show = (state) => {
     Object.defineProperty(document, "visibilityState", { configurable: true, get: () => state });
     document.dispatchEvent(new Event("visibilitychange"));
-  }
-});
+  };
+  show("hidden");
+  const real = Date.now;
+  Date.now = () => real() + away;
+  show("visible");
+}, awayMs);
 const reloaded = async (p) => {
   try {
     await p.waitForFunction(() => !window.__beforeTheUpdate, null, { timeout: PATIENCE });
@@ -311,22 +317,11 @@ try {
 }
 await resume(straggler);
 report(await straggler.evaluate(() => !!window.__beforeTheUpdate),
-  "and a resume on a group is not the moment either");
+  "and a quick switch away and back is not the moment either");
 
-// The front door is. Walked to in-app — a `goto` would be a document load, and
-// would take the new build by itself and prove nothing.
-// Two taps, because back from balances is the ledger and only the ledger
-// leaves the group (app/g/balances) — each waited out by the address it lands
-// on rather than by a pause that was long enough on one machine.
-for (const landed of [
-  (url) => url.pathname === "/g",
-  (url) => url.pathname === "/",
-]) {
-  await straggler.locator(".topbar a.iconbtn").first().click().catch(() => {});
-  await straggler.waitForURL(landed, { timeout: PATIENCE }).catch(() => {});
-}
-await resume(straggler);
-report(await reloaded(straggler), "and reloads onto the new build once it reaches the list",
+// A long absence is, on any screen with nothing to lose (AWAY_MS).
+await resume(straggler, 2 * 60_000);
+report(await reloaded(straggler), "and a return after a long absence reloads it onto the new build",
   straggler.url().replace(base, ""));
 
 try {
