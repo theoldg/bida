@@ -142,11 +142,8 @@ export const route = {
   scan: (groupId: string) => withGroup("/g/scan", groupId),
   /** Carries the form's own `via`, so a detour here doesn't change where saving lands. */
   items: (groupId: string, via?: EntrySource) => withGroup("/g/entry/items", groupId) + viaParam(via),
-  /** `since` is the ledger's seen mark from before it was left: history draws
-   *  its new-changes line under what came after it (`components/history-button.tsx`). */
-  history: (groupId: string, entryId?: string, via?: EntrySource, since?: number) =>
-    withGroup("/g/history", groupId) + entryParam(entryId) + viaParam(via)
-    + (since === undefined ? "" : `&since=${since}`),
+  history: (groupId: string, entryId?: string, via?: EntrySource) =>
+    withGroup("/g/history", groupId) + entryParam(entryId) + viaParam(via),
   tip: (groupId: string) => withGroup("/g/tip", groupId),
   /** The tip jar with no group behind it. */
   support: () => "/tip",

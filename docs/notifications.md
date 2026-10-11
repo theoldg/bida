@@ -41,8 +41,8 @@ other mix is "Ana changed 3 entries", and one entry's several commands read as
 its latest. Each
 notification is `tag`ged with the group id, so a group's latest replaces its
 last. Tapping opens `/g/entry?id=&e=` for one entry, deleted or not — a
-deleted one's screen is where Restore is — and `/g?id=` for several, where the
-history clock's dot leads to what changed. The worker pulls the group as the
+deleted one's screen is where Restore is — and `/g/history?id=` for several, where
+the torn line marks what changed. The worker pulls the group as the
 notification lands ([sync.md](sync.md#the-pull-ahead)), so the entry is usually
 there by the tap; where it is not, an entry screen missing its entry shows
 "Fetching the latest…" through one sync of the group, and says "Gone" only if

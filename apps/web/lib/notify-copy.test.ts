@@ -117,7 +117,7 @@ describe("pushPayload: several entries", () => {
       notice({ after: dinner() }),
       notice({ after: dinner({ id: "e2", share: 500 }) }),
       notice({ after: dinner({ id: "e3", share: null }) }),
-    )).toMatchObject({ body: `Ana added 3 entries\nYour share ${eur(1550)}`, url: "/g?id=g1" });
+    )).toMatchObject({ body: `Ana added 3 entries\nYour share ${eur(1550)}`, url: "/g/history?id=g1" });
   });
 
   it("says changed for any other mix, with no figure", () => {

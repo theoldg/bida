@@ -83,7 +83,7 @@ interface GroupKey {
   secret: string;
   /** The sync cursor. */
   lastSeq: number;
-  /** Highest seq the ledger has shown under its history dot; a joining group starts with nothing new. */
+  /** Highest seq the group's history has shown (`useCatchUp`); a joining group starts with nothing new. */
   seenSeq?: number;
   lastSyncedAt?: number;
   failure?: SyncFailure;

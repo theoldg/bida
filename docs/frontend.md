@@ -333,15 +333,16 @@ API is reached with `fetch`.
   where the list is put from its first frame, lending the room first.
 - **The ledger's history clock** (`components/history-button.tsx`) stands in
   the top bar beside the menu, wearing an ink dot while there is something new.
-  Pressed with the dot, it carries the mark from before (`since`), and history
-  pulls those revisions above a torn line labelled "↑ New" (`.torn`) — pulled up
-  rather than marked in place, since a phone that was offline lands changes
-  stamped days back. Going on to an entry and back drops the line. New is `unseenRevisions`
+  History pulls those revisions above a torn line labelled "↑ New" (`.torn`) —
+  pulled up rather than marked in place, since a phone that was offline lands
+  changes stamped days back. New is `unseenRevisions`
   (`core/history.ts`): an op numbered past `groupKeys.seenSeq` whose stamp is
   another phone's, your own laptop included, less a device claiming a name.
-  **Showing it is seeing it**: the dot stays up for as long
-  as the ledger is open, and the next navigation away marks all of it seen —
-  the catch-up is optional, so it is offered once rather than on every visit.
+  **Opening history is seeing it** (`useCatchUp`, `lib/catch-up.ts`): the dot
+  stays, across visits, until the group's history is opened, which moves the
+  mark past everything there and everything landing while it is open. The
+  mark from before is held in memory for that look, so the line survives a
+  trip into an entry and back; the ledger or the groups list ends the look.
   What waits on a group nobody opens ages out after a week (`CATCH_UP_MS`)
   rather than sitting on the groups list forever. The groups list is ordered
   by when each group last changed — its newest op, an edit or a delete as much

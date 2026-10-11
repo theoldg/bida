@@ -129,7 +129,8 @@ const entryId = (n: Notice) => (n.after ?? n.before)!.id;
 
 /** One device's notification for everything this round told its member. */
 export function pushPayload(groupId: Id, groupName: string, told: readonly Notice[], name: Names): PushPayload {
-  const group = `/g?id=${encodeURIComponent(groupId)}`;
+  // Several entries open the group's history, where its torn line marks them.
+  const group = `/g/history?id=${encodeURIComponent(groupId)}`;
   const entries = new Set(told.map(entryId));
   const tag = groupId;
   if (entries.size === 1) {

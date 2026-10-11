@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Fragment, useState } from "react";
-import { activityFeed, CATCH_UP_MS, entityHistory, unseenRevisions, type Revision } from "@bida/core";
+import { activityFeed, entityHistory, type Revision } from "@bida/core";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { Icon } from "@/components/icons";
 import { RevisionEntry, type RevisionContext } from "@/components/revision";
-import { getDevice } from "@/lib/db/device";
 import { db } from "@/lib/db/dexie";
 import { useLive } from "@/lib/db/live";
 import { opsForGroup } from "@/lib/db/fold";
+import { useCatchUp } from "@/lib/catch-up";
 import { copy } from "@/lib/copy";
 import { plural } from "@/lib/format";
 import { parseEntrySource, route } from "@/lib/group-link";
@@ -31,9 +31,6 @@ function HistoryScreen() {
   // An entry's own history is below the entry, so it carries the entry's own
   // `via` back up with it (lib/group-link.ts).
   const via = parseEntrySource(params.get("via"));
-  // The ledger's seen mark from before its clock was pressed (HistoryButton).
-  const sinceParam = params.get("since");
-  const since = sinceParam !== null && /^\d+$/.test(sinceParam) ? Number(sinceParam) : undefined;
   const data = useGroupData(groupId);
   const unclaimed = useClaimGate(groupId, data);
   const [shown, setShown] = useState(PAGE);
@@ -48,8 +45,10 @@ function HistoryScreen() {
   ) ?? [];
   const memberById = new Map(allMembers.map((m) => [m.id, m]));
 
-  const ops = useLive("historyOps", async () => (groupId ? opsForGroup(groupId) : []), [groupId]) ?? [];
-  const nodeId = useLive("historyNode", async () => (await getDevice()).nodeId, []);
+  const loaded = useLive("historyOps", async () => (groupId ? opsForGroup(groupId) : []), [groupId]);
+  const ops = loaded ?? [];
+  // The group's feed is where what's new gets seen; one entry's history isn't.
+  const fresh = useCatchUp(entryId ? undefined : groupId, loaded) ?? new Set<string>();
 
   // Every expense ever, deleted ones included: a deleted expense is half the
   // reason to open history.
@@ -85,8 +84,6 @@ function HistoryScreen() {
   // **What the ledger's dot meant goes above a jagged line**, the rest under
   // it. Pulled up rather than marked in place: a phone that was offline lands
   // changes stamped days back, and above the line has to mean exactly new.
-  const fresh = new Set(since === undefined || entryId || nodeId === undefined ? []
-    : unseenRevisions(ops, since, nodeId, Date.now() - CATCH_UP_MS).revisions.map((r) => r.op.id));
   const isNew = (r: Revision) => fresh.has(r.op.id);
   const revisions = fresh.size === 0 ? feed : [...feed.filter(isNew), ...feed.filter((r) => !isNew(r))];
   const visible = revisions.slice(0, shown);

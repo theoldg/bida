@@ -3,7 +3,7 @@
 import { isDemo } from "@bida/core";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { Avatar, signClass } from "@/components/bits";
 import { FitLine } from "@/components/fit-line";
 import { Icon } from "@/components/icons";
@@ -14,6 +14,7 @@ import { useGroupActions } from "@/components/group-actions";
 import { LedgerRows } from "@/components/ledger-rows";
 import { useHold, useLongPressMenu } from "@/components/long-press";
 import { UpdateNudge } from "@/components/update";
+import { endCatchUp } from "@/lib/catch-up";
 import { copy } from "@/lib/copy";
 import { ago, money, plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
@@ -33,6 +34,8 @@ export default function GroupsPage() {
   const hydrating = useSyncExternalStore(never, () => false, () => true);
   const marked = useSyncExternalStore(never, firstFrameMarked, () => true);
   const diagHold = useHold(() => router.push(route.diag()));
+  // Back at the list, the next look at any group's history starts afresh.
+  useEffect(() => endCatchUp(), []);
   // Nothing archives a group any more, but a production log may carry an
   // `archivedAt`. Memoised: the list below takes a new array as a change.
   const groups = useMemo(() => resuming ? undefined : summaries?.filter((g) => !g.group.archivedAt),
