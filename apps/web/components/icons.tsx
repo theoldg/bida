@@ -9,9 +9,14 @@ export type IconName =
   | "chev" | "updown" | "back" | "plus" | "minus" | "cross" | "cam" | "off" | "check" | "clock"
   | "users" | "arrow" | "sync" | "trash" | "edit" | "link"
   | "image" | "split" | "merge" | "share" | "import" | "sun" | "moon" | "more" | "info"
-  | "mail" | "dollar" | "sliders" | "translate" | "search";
+  | "mail" | "dollar" | "sliders" | "translate" | "search" | "bell" | "bell-off" | "bells";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
+
+/** One bell, which the three notification glyphs are built from. */
+const BELL_BODY = "M6.2 16.2V11a5.8 5.8 0 0111.6 0v5.2l1.6 2.1H4.6z";
+const BELL_CLAPPER = "M10 20.6a2.1 2.1 0 004 0";
+const FRONT_BELL = "translate(-.8 4.8) scale(.74)";
 
 export function IconSprite() {
   return (
@@ -125,6 +130,34 @@ export function IconSprite() {
         </symbol>
         {/* The theme switch says what you'd get, not what you have: the sun
             when a tap would turn the lights on. */}
+        {/* Notifications' three answers. The masks cut a gap in what lies
+            behind — the bell under the stroke, the back bell under the front
+            one — in the symbol's own space, never the moved bell's. */}
+        <symbol id="i-bell" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <path d={BELL_BODY} /><path d={BELL_CLAPPER} />
+        </symbol>
+        <symbol id="i-bell-off" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <mask id="m-bell-off" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+            <rect width="24" height="24" fill="#fff" />
+            <path d="M3.5 3.5l17 17" stroke="#000" strokeWidth="5" />
+          </mask>
+          <g mask="url(#m-bell-off)"><path d={BELL_BODY} /><path d={BELL_CLAPPER} /></g>
+          <path d="M3.5 3.5l17 17" />
+        </symbol>
+        {/* Two bells, one behind and up to the right: drawn smaller to fit
+            both, so it is shown a size up beside the other two. */}
+        <symbol id="i-bells" viewBox="0 0 24 24" {...S} strokeWidth="2.4">
+          <mask id="m-bells" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+            <rect width="24" height="24" fill="#fff" />
+            <g transform={FRONT_BELL} stroke="#000" strokeWidth="5.5">
+              <path d={BELL_BODY} fill="#000" /><path d={BELL_CLAPPER} />
+            </g>
+          </mask>
+          <g mask="url(#m-bells)">
+            <g transform="translate(6.9 -1.9) scale(.74)"><path d={BELL_BODY} /><path d={BELL_CLAPPER} /></g>
+          </g>
+          <g transform={FRONT_BELL}><path d={BELL_BODY} /><path d={BELL_CLAPPER} /></g>
+        </symbol>
         <symbol id="i-sun" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
           <circle cx="12" cy="12" r="4.2" />
           <path d="M12 2.6v2.2M12 19.2v2.2M21.4 12h-2.2M4.8 12H2.6M18.6 5.4l-1.6 1.6M7 17l-1.6 1.6M18.6 18.6L17 17M7 7L5.4 5.4" />

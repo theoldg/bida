@@ -50,7 +50,7 @@ export default function SettingsPage() {
  */
 function Choice<T extends string>({ title, options, chosen, onChoose, disabled, note }: {
   title: string;
-  options: readonly { value: T; label: string; icon?: IconName }[];
+  options: readonly { value: T; label: string; icon?: IconName; iconSize?: number }[];
   chosen: T;
   onChoose: (value: T) => void;
   disabled?: boolean;
@@ -64,7 +64,7 @@ function Choice<T extends string>({ title, options, chosen, onChoose, disabled, 
           <button key={o.value} type="button" className={o.value === chosen ? "on" : ""}
             aria-pressed={o.value === chosen} disabled={disabled}
             onClick={() => { if (o.value !== chosen) onChoose(o.value); }}>
-            {o.icon ? <Icon name={o.icon} size={13} /> : null}
+            {o.icon ? <Icon name={o.icon} size={o.iconSize ?? 13} /> : null}
             {o.label}
           </button>
         ))}
@@ -89,6 +89,9 @@ function Theme() {
 }
 
 const LEVELS: readonly NotifyLevel[] = ["off", "own", "all"];
+/** The double bell is two small bells, so a size up to sit level with one. */
+const BELLS = { off: { icon: "bell-off", iconSize: 13 }, own: { icon: "bell", iconSize: 13 },
+  all: { icon: "bells", iconSize: 15 } } as const satisfies Record<NotifyLevel, { icon: IconName; iconSize: number }>;
 
 /**
  * Off, just me, or all (`NotifyScope`). **Only in the installed app**, which
@@ -116,7 +119,7 @@ function Notifications() {
   };
   return (
     <Choice title={notify.title} chosen={level} disabled={blocked}
-      options={LEVELS.map((l) => ({ value: l, label: notify.level[l] }))}
+      options={LEVELS.map((l) => ({ value: l, label: notify.level[l], ...BELLS[l] }))}
       onChoose={choose} note={blocked ? notify.blocked : notify.means[level]} />
   );
 }

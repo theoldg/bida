@@ -544,6 +544,8 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .settings .seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin-top: 2px }
 .settings .seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   padding: 7px 16px; font-size: 12.5px }
+/* A glyph a size up mustn't make its button taller than the others. */
+.settings .seg button svg { margin-block: -2px }
 .settings .seg button:disabled { color: var(--muted); opacity: .5 }
 .notwho { margin-top: 14px }
 .notwho p { font-size: 12px; line-height: 1.55; color: var(--ink-2); margin-top: 6px; padding-left: 16px }
