@@ -27,6 +27,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-11* — A screenshot and one line: "wrap the names with ellipses".
+  "Wrap" meant cut. The demo's names are too short to show it, so I built a
+  group with theirs and looked. And say something while the build runs: two
+  nudges came before my first word.
+
 - *2026-10-11* — "Audit the split mode tab logic … subtle unintuitive
   nonsense." Another session landed the same rework while I wrote mine; the
   push found out. Fetch dev before a rewrite and again before the tests, then
@@ -80,7 +85,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-09* — Tricount and bida side by side: "are the cents lost in the
   export, or our import?" The checksum already answers whose cents those are;
   say which side is right before fixing anything. The order was the real bug.
-
-- *2026-10-09* — "Take the screenshots on a slightly wider device, e.g. a
-  pixel 9a". "The screenshots" spans both scripts: one constant in the
-  harness, both re-shot, the six committed ones looked at before the push.

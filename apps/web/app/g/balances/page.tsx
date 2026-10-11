@@ -143,9 +143,9 @@ function Balances({ data }: { data: GroupData }) {
               <button key={`${t.from}-${t.to}`} type="button"
                 onClick={() => setSettling(t)}
                 className={`card suggestrow${involvesMe ? "" : " notmine"}`}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{nameOf(t.from)}</span>
+                <span className="suggestname">{nameOf(t.from)}</span>
                 <Icon name="arrow" size={16} className="muted" />
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{nameOf(t.to)}</span>
+                <span className="suggestname">{nameOf(t.to)}</span>
                 <span className="bignum spacer" style={{ fontSize: 13.5 }}>
                   {money(t.amountMinor, group.baseCurrency)}
                 </span>

@@ -1747,6 +1747,11 @@ dialog.scrim::backdrop { background: transparent }
 .suggestrow { display: flex; align-items: center; gap: 9px; padding: 11px 8px 11px 12px;
   position: relative; width: 100%; text-align: left }
 .suggestchev { color: var(--ink); flex: none; margin-left: 2px }
+/* Cut, not wrapped: two long names on two lines each made the row twice as tall
+   as its neighbours. Only the names give way — the figure is never cut. */
+.suggestname { font-size: 13px; font-weight: 600; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.suggestrow > :not(.suggestname) { flex: none }
 
 /* ---- settling up: a card, not the form, since nothing here is yours to change ---- */
 .settle { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 5px 0 1px }
