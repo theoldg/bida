@@ -135,11 +135,14 @@ report(await multi.isDisabled() && (await multi.innerText()).includes("set the a
   "several payers wait for an amount, and say so");
 await page.keyboard.press("Escape");
 await settle(page, 150);
+// The tab strip by count, not by its words: the Items tab is the one an
+// expense has and an income must not.
+const expenseTabs = await page.locator(".splitbox .seg button").count();
 await pick(page, '[aria-label="What kind of entry"]', "Income");
 await page.locator("input.amount").fill("300");
 await page.locator("#what").fill("Deposit back");
 report(await page.getByText("Paid to").count() > 0, "an income relabels the payer picker");
-report(await page.getByRole("button", { name: "Receipt" }).count() === 0, "an income offers no Receipt tab");
+report(await page.locator(".splitbox .seg button").count() === expenseTabs - 1, "an income offers no Items tab");
 
 // On an income the payer question is "who received it", and every line of
 // the screen must stay in that voice. The rows carry names alone, so the
@@ -547,6 +550,7 @@ report((await amountOf("Cab")).includes("40") && (await amountOf("Tram")).includ
 
 // There is no group-wide rate left to edit, so no screen for it.
 await page.locator(".topbar .iconbtn[aria-label='Group menu']").click();
+await page.locator(".rowmenu-item").first().waitFor();
 report(await page.getByRole("menuitem", { name: "Rates" }).count() === 0,
   "the group menu has no Rates screen");
 await page.keyboard.press("Escape");
