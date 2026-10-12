@@ -49,22 +49,52 @@ export function useFold<T extends HTMLElement>(startOpen = false) {
     }
 
     const lost = Math.max(0, press.height - el.offsetHeight);
-    const pad = box.style.paddingBottom;
-    box.style.paddingBottom = `${parseFloat(getComputedStyle(box).paddingBottom) + lost}px`;
+    const hold = holdPadding(box, lost);
     box.scrollTop = press.top;
-    const end = Math.max(0, box.scrollHeight - lost - box.clientHeight);
+    const end = Math.max(0, box.scrollHeight - hold.extra - box.clientHeight);
     // Back to before the opening glide, unless the list was moved since.
     const back = trip.current && Math.abs(press.top - trip.current.to) <= 2 ? trip.current.from : press.top;
     trip.current = null;
     const target = Math.max(0, Math.min(back, end));
     // The padding held the list's height, so the dock moves only once it goes.
-    const settle = () => { box.style.paddingBottom = pad; };
+    const settle = hold.release;
     if (target === box.scrollTop) { settle(); return; }
     const stop = glide(box, target, settle);
     return () => { stop(); settle(); };
   }, [open]);
 
   return { open, toggle, ref };
+}
+
+/**
+ * The padding closes hold under a scroller, shared: a second fold closing
+ * mid-glide adds to the first's rather than taking it for the list's own, and
+ * it goes when the last lets go. `extra` is all of it, the list's real end being
+ * that far above the scroller's.
+ */
+const held = new WeakMap<HTMLElement, { pad: string; base: number; extra: number; holders: number }>();
+
+function holdPadding(box: HTMLElement, px: number): { extra: number; release: () => void } {
+  let e = held.get(box);
+  if (!e) {
+    e = { pad: box.style.paddingBottom, base: parseFloat(getComputedStyle(box).paddingBottom), extra: 0, holders: 0 };
+    held.set(box, e);
+  }
+  const entry = e;
+  entry.extra += px;
+  entry.holders++;
+  box.style.paddingBottom = `${entry.base + entry.extra}px`;
+  let gone = false;
+  return {
+    extra: entry.extra,
+    release: () => {
+      if (gone) return;
+      gone = true;
+      if (--entry.holders > 0) return;
+      box.style.paddingBottom = entry.pad;
+      held.delete(box);
+    },
+  };
 }
 
 /** Drawn `by` px from where layout put it, gliding home on the fold's clock. */
