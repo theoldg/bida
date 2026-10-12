@@ -368,7 +368,9 @@ async function onLedger() {
   };
   // Honest: `settle` ends a frame after the restore's window, on the page's clock.
   const back = async () => {
-    await page.waitForURL(/\/g\?id=/);
+    await page.waitForURL(/\/g\?id=/).catch(async () => {
+      throw new Error(`never back on the ledger: ${JSON.stringify(await stack(page))}`);
+    });
     await page.waitForSelector(".rows a.row");
     await settle(page, 1400);
   };

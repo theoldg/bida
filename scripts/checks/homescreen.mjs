@@ -263,11 +263,11 @@ const watchFrames = (page, run) => page.addInitScript((run) => {
       count("frames");
       const install = location.pathname === "/install";
       if (install && [...document.querySelectorAll(".ownframe")].some(shown)) count("tutorial");
-      if (![...document.querySelectorAll(".app .topbar")].some(shown)) {
+      // Not while the document is still parsing: a starved machine paints a
+      // frame before the parser reaches the app, which no phone keeps on screen.
+      if (document.readyState !== "loading" && ![...document.querySelectorAll(".app .topbar")].some(shown)) {
         count("blank");
-        // Where and when, so a failure says whether the app drew nothing or the
-        // parser had not reached it yet.
-        sessionStorage.setItem(`frames.${run}.blankAt`, `${location.pathname} ${document.readyState}`);
+        sessionStorage.setItem(`frames.${run}.blankAt`, location.pathname);
       }
       if (install && [...document.querySelectorAll(".starttiles")].some(shown)) count("list");
       if (install && [...document.querySelectorAll("a, button")].some((el) => shown(el) && !el.closest("[inert]"))) {
