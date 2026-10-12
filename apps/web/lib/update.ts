@@ -88,6 +88,11 @@ export function registerServiceWorker(): void {
   });
 
   navigator.serviceWorker.register("/sw.js").then((registration) => {
+    nudgeWhileWaiting(registration);
+    registration.addEventListener("updatefound", () => {
+      const sw = registration.installing;
+      sw?.addEventListener("statechange", () => { if (sw.state === "installed") nudgeWhileWaiting(registration); });
+    });
     // An installed app is resumed far more often than launched, so ask on each
     // return.
     document.addEventListener("visibilitychange", () => {
@@ -96,6 +101,29 @@ export function registerServiceWorker(): void {
   }).catch(() => {
     // A failed registration shouldn't be user-visible.
   });
+}
+
+/**
+ * A worker that called `skipWaiting` while the old one was busy can be left
+ * waiting for good: Chromium tries the activation once, at the end of the
+ * install, and not again. Asking again is what moves it (`sw.js`'s message).
+ */
+const NUDGE_MS = 5000;
+const NUDGES = 12;
+let nudging = false;
+
+export function nudgeWhileWaiting(registration: ServiceWorkerRegistration): void {
+  if (nudging || !registration.waiting) return;
+  nudging = true;
+  let left = NUDGES;
+  const ask = () => {
+    const waiting = registration.waiting;
+    if (!waiting || left-- <= 0) { nudging = false; return; }
+    mark("sw.nudge", `${NUDGES - left}`);
+    waiting.postMessage({ type: "skip-waiting" });
+    setTimeout(ask, NUDGE_MS);
+  };
+  setTimeout(ask, NUDGE_MS);
 }
 
 /**

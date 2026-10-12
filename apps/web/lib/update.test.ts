@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { AWAY_MS, mayReloadOnReturn, reloadCostsNothing } from "./update";
+import { describe, expect, it, vi } from "vitest";
+import { AWAY_MS, mayReloadOnReturn, nudgeWhileWaiting, reloadCostsNothing } from "./update";
 
 /**
  * The one list, asked by two reloads: the update's (lib/update.ts) and the iOS
@@ -55,5 +55,40 @@ describe("mayReloadOnReturn", () => {
     for (const path of ["/g/entry/edit", "/new", "/join", "/g/claim", "/quick"]) {
       expect(mayReloadOnReturn(path, 24 * 3_600_000)).toBe(false);
     }
+  });
+});
+
+describe("nudgeWhileWaiting", () => {
+  const registration = (waiting: { postMessage: (m: unknown) => void } | null) =>
+    ({ waiting }) as unknown as ServiceWorkerRegistration;
+
+  it("asks a stalled worker again until it stops waiting", () => {
+    vi.useFakeTimers();
+    const asked: unknown[] = [];
+    const reg = registration({ postMessage: (m) => asked.push(m) });
+    nudgeWhileWaiting(reg);
+    expect(asked).toHaveLength(0); // the ordinary activation gets its moment first
+    vi.advanceTimersByTime(10_000);
+    expect(asked).toEqual([{ type: "skip-waiting" }, { type: "skip-waiting" }]);
+    (reg as { waiting: unknown }).waiting = null;
+    vi.advanceTimersByTime(60_000);
+    expect(asked).toHaveLength(2);
+    vi.useRealTimers();
+  });
+
+  it("asks nothing when nothing waits", () => {
+    vi.useFakeTimers();
+    nudgeWhileWaiting(registration(null));
+    expect(vi.getTimerCount()).toBe(0);
+    vi.useRealTimers();
+  });
+
+  it("gives up after a minute rather than asking forever", () => {
+    vi.useFakeTimers();
+    let asked = 0;
+    nudgeWhileWaiting(registration({ postMessage: () => { asked++; } }));
+    vi.advanceTimersByTime(10 * 60_000);
+    expect(asked).toBe(12);
+    vi.useRealTimers();
   });
 });

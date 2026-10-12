@@ -178,7 +178,7 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("message", (event) => {
-  // Sent by older builds' update offer; kept so they can still take a worker mid-install.
+  // Sent by a page whose new worker stalled in waiting (lib/update.ts), and by older builds' offer.
   if (event.data && event.data.type === "skip-waiting") self.skipWaiting();
   if (event.data && event.data.type === "clients" && event.ports[0]) {
     event.waitUntil(describeClients(event.source, event.ports[0]));

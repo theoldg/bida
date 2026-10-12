@@ -96,7 +96,9 @@ across three open pages.
 **A new build is taken as soon as it is safe, by itself.** `sw.js` calls
 `skipWaiting` the moment the whole build is precached, rather than waiting for
 the last client of the origin to close — on iOS Safari tabs and the browser
-outlive what a person thinks of as quitting. `activate` writes down **which build each open
+outlive what a person thinks of as quitting. Chromium tries that activation
+once, so one landing while the old worker is busy stays waiting for good; the
+page asks again every 5s while a worker waits (`nudgeWhileWaiting`). `activate` writes down **which build each open
 window is running** (in memory and in the `bida-legacy` cache, since the browser
 stops idle workers) and keeps every cache still spoken for: those pages go on
 being served their own build, so their next tap can't mix an old router with a
