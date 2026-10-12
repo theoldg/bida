@@ -17,7 +17,7 @@ The owner writes lower-case fragments; read each as the whole instruction.
 Taste arrives as feel ("the wrong vibe") — answer with the screen photographed,
 not described. Permission is usually pre-granted: build, then be corrected —
 but "wait for my approval" means stop until a yes.
-When a request undoes an ADR, say so once ("this undoes ADR-N, sure?"), then build.
+When a request undoes an ADR, say so ("this undoes ADR-N, sure?") and wait for the yes.
 
 The failure mode is *earnestness* — the extra paragraph, the ADR, prose
 restating what the code enforces. What gets praised is deleting.
@@ -26,6 +26,11 @@ restating what the code enforces. What gets praised is deleting.
 
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
+
+- *2026-10-11* — "Scan the latest ~100 commits for … anything falling apart",
+  then mid-scan "push whatever you have … this machine might be dropped". An
+  audit's findings are work product: commit them as a list in the docs as
+  they land, not only in chat.
 
 - *2026-10-11* — Three numbered answers to questions this session never
   asked; they were another session's. I said so, then they pasted the whole
@@ -79,8 +84,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   approval", then "percent splits … are safe to delete". The legacy case I'd
   been tiptoeing round was the tangle; ask whether old data is real before
   building around it.
-
-- *2026-10-10* — "Do they feel crystal clear and aesthetic to you in the
-  code?" I'd just shipped a fix; honest answer was no, three mechanisms for
-  one question. "Do it." An aesthetics question about your own work wants
-  the critique, not a defence.

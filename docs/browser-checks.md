@@ -197,7 +197,7 @@ that step can be, and all of it looks fine in jsdom — so the check wears an
 iPhone's user agent and drives both ends.
 
 The tab end: a join that is not stopped to ask about installing; no page's
-HTML carrying a manifest; the banner — on the groups list, and at a ledger's foot — the first landing on a `/install` whose
+HTML carrying a manifest; the banner — on the groups list, and at a ledger's head — the first landing on a `/install` whose
 fragment is every group the tab holds and who it is in each, the top of the
 list first; the claim list's "Have the app?" card holding the group's link;
 every page's head — `/`, a group, its members, not only the tutorial — holding
@@ -298,8 +298,7 @@ What a search finds is unit-tested (`lib/ledger.test.ts`), and so is how much
 of the bar a scroll brings out (`lib/ledger-search.test.ts`). This holds what
 neither reaches, the bar's every state on a real screen
 ([frontend.md](frontend.md#state)): away at the head and half out half a bar
-short of the base state; out whole from the menu with the list glided under
-it; in the column over results; back at the base state when cleared; home
+short of the base state; in the column over results; back at the base state when cleared; home
 again when let go of empty, but not when a drag is what let go; kept for the
 way back from a result and blank on a tap in; drawn where the list is put
 back from the first frame of a way back from an entry; and a list too short
@@ -324,7 +323,7 @@ fail.
 
 - **A browser check that asks for a sentence will be rearranged under.** Copy
   is settled by ear here, one word at a time, so a selector naming the words is
-  a selector with an expiry date — and nothing runs these on a push. Name what a control
+  a selector with an expiry date. Name what a control
   *is* — its icon, its class, its role — and leave the wording to `copy.ts`.
 - **`/g` is both a file and a directory** in the export, so the static server
   must `statSync(p).isFile()` before serving and only then fall through to

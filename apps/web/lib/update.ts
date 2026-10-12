@@ -7,7 +7,7 @@
  * lose once the app comes back after a while away (`mayReloadOnReturn`).
  *
  * **Never wait for every client to close** — on iOS that is nearly never. A
- * page in use is offered the tap instead (`components/update.tsx`).
+ * page in use is offered a Reload in Settings › Version (`components/update.tsx`).
  */
 
 import { mark } from "./diag";

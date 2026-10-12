@@ -946,7 +946,7 @@ export const copy = {
     /** The band at the head of a deleted entry's screen, beside Restore. */
     deleted: (who: string | undefined) => (who ? `Deleted by ${who}` : "Deleted"),
     restore: "Restore",
-    /** What else Restore puts back: people removed since, a cleared rate. */
+    /** What else Restore puts back: people removed since. */
     restoreBrings: (things: string[]) => {
       const list = things.length < 2 ? things.join("")
         : `${things.slice(0, -1).join(", ")} and ${things[things.length - 1]}`;

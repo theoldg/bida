@@ -103,8 +103,8 @@ standalone come from the `apple-*` tags either way.
 **A group joined or named after the page loaded** leaves its head stale, and
 Safari won't read a swapped link. The link records what it was built with (`data-carry`); when that no
 longer matches, `CarryToHomeScreen` reloads the page — on the first screen where
-nothing can be lost (`reloadCostsNothing`: the list, a group, members, history,
-an entry, about), never mid-join or in a form, and never before the app shell is
+nothing can be lost (`reloadCostsNothing`: the list, a group, balances, members,
+history, an entry, about), never mid-join or in a form, and never before the app shell is
 precached (`shellIsWarm`, [pwa.md](pwa.md)). Unlike the
 update's own reload, which on a ledger waits for a minute's absence, this one
 fires as soon as the screen allows: a newcomer needs the new head now. From cache it is a flash, once; before the shell

@@ -17,7 +17,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 | **Dev**         | <https://hajsik-dev.hajsik-api.workers.dev>, its own D1 and scan secrets, deployed by every push to `dev` — the branch sessions push to. Production moves only when the owner releases ([hosting.md](hosting.md#dev-and-production))                                                                                                                                                                          |
 | **Sealed**      | The server cannot read a group ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). The D1 log is finished data: a schema change from here is a new numbered migration ([hosting.md](hosting.md#a-schema-change-from-here-on))                                                                                                                                                                     |
 | **Scanning**    | The Worker composes the request, so a caller picks one of four envelopes it holds and never a word of one, and the scan has a budget — three buckets, a global daily cap, and Turnstile in front of every call ([scan-worker.md](scan-worker.md#what-the-scan-costs)). The phone straightens and crops a photo to the bill with an ML corner detector, then caps it at a megapixel ([scan-worker.md](scan-worker.md#cropping-to-the-bill)); `/diag/crop` shows its work. Staś mode, off and hidden on `/diag`, swaps the refusal wording for the vicious one ([scan-worker.md](scan-worker.md#staś-mode)). **A bill reads in the language it was printed in**, with the translation icon on the who-had-what bar switching every line — grid, entry screen and quick-split text — to the English the scan already returned, and absent on a bill printed in English; saved with the expense, so every phone reads it alike ([ADR-0016](decisions/0016-receipts.md)). A phone that pastes its own Gemini key under **Advanced** skips all of that and calls Google directly ([scan-worker.md](scan-worker.md#a-key-of-your-own)). **A bill can be typed instead of photographed** — "Type" on the Items tab ("As text" once a bill is read), capped at 4,000 characters, kept on the expense — where a photographed bill writes its reading too, in English, so the box opens on it for correcting — counted against the same budget and read by **its own prompt**: free form, a price per unit or per line, a total only where the bill states one, and almost never a title; that is also the one place a caller's own words reach the shared key, which the owner ruled on knowingly ([receipt-scanning.md](receipt-scanning.md#typing-a-bill-in)). The shared path runs on `gemini-3.1-flash-lite` **via Vertex**, which is where Cloud credit can be spent and which does not train on what it reads; a brought key is an AI Studio one, whose free tier does |
-| **Versioned**   | `major.semi.minor` in the root `package.json`, in the corner of the `/about` top bar and the first line of `/diag`. Every push to `dev` deploys, so every push bumps the minor and `pnpm check` insists on it; the major is the owner's alone ([hosting.md](hosting.md#versions))                                                                                                                             |
+| **Versioned**   | `major.semi.minor` in the root `package.json`, in the corner of the `/about` top bar, Settings › Version and the first line of `/diag`. Every push to `dev` deploys, so every push bumps the minor and `pnpm check` insists on it; the major is the owner's alone ([hosting.md](hosting.md#versions))                                                                                                                             |
 | **The tip jar** | A FAB on the balances screen opens `/g/tip`, which prices the only paid part of the app and offers to split a donation like any other expense ([product.md](product.md#the-mvp)). `/tip` is the same jar with no group behind it, linked from `/about`'s guarantees section                                                                                                                                    |
 | **Deletable**   | `/delete-my-data` takes an invite link, shows the group it opens, and deletes it from D1 for everybody in it, leaving a tombstone no phone can push past ([import-export.md](import-export.md#deleting-a-group), [sync.md](sync.md#deleting-a-group)). |
 | **Searchable**  | The ledger has a search bar, out as the you-owe card scrolls away, over titles, people, currency, kind and figures, sectioned by where the words were found ([frontend.md](frontend.md)) |
@@ -28,7 +28,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-One thing: a design waiting to be built. The visual review is closed
+One thing: push notifications, built and unchecked on a phone. The visual review is closed
 ([design-review.md](design-review.md)).
 
 - **Push notifications are built and work on dev**
@@ -39,6 +39,70 @@ One thing: a design waiting to be built. The visual review is closed
   ahead ([sync.md](sync.md#the-pull-ahead)), untried on a phone — `/diag`'s
   `pull ahead:` lines now say whether it ran. Settings' Off · Just me · All
   is built; All is untried on a phone.
+
+### Found by the audit of 2026-10-11, not yet fixed
+
+A read of the hundred commits to 1.3.65; each item names where to start. Delete
+a line in the push that fixes it.
+
+- **Money, silently.** The rate healer (`core/invariants.ts:110-146`) patches
+  only the rate fields for the currency it saw: merged with an offline edit
+  that changed the currency, the entry keeps the old currency's rate, and
+  `rateSource` set means it is never healed again. The entry form takes a
+  fallback answer (`asOf` ≠ the day asked; the feed starts March 2024) as
+  `fetched` (`settleRate`, `lib/entry-rate.ts`) — the import no longer does.
+  Moving an edited entry's date away and back refetches over an imported or
+  copied rate. Save on an untouched rate dialog writes the 6-digit display
+  figure as `typed` (`components/rate-dialog.tsx:91,129,137`; the `changed`
+  check went in 716a933b), and "Look it up" there saves 6 digits where the
+  automatic look-up keeps 12.
+- **The form.** A one-person `payers` table (retype your own figure under
+  Multiple people, Done) draws as the plain picker, yet `checkEntry` holds Save
+  over it once the amount changes (`app/g/payers/page.tsx:90-101`). Two
+  refusals at once spend Save for good — the dock draws one line, so the
+  second flash never ends (`edit/page.tsx:235,324,585`, `lib/refusal.ts`).
+  Save can be refused saying nothing: a rate that overflows, or a split that
+  fits `amountMinor` but not `baseMinor` (`lib/entry-check.ts:124-135,186`).
+- **A mode this build doesn't know crashes**, despite data-model.md: the entry
+  screen and history call `.toLowerCase()` on `copy.split.mode[mode]`
+  (`app/g/entry/page.tsx:488`, `lib/history-copy.ts:282`), the form gets
+  `undefined` from `withSplit`, `canonicalSplit` has no default. `percent` *was*
+  written (8647b859 to 5ea9b0a7, Aug 27–28), so only a pre-wipe IndexedDB
+  could hold one — but "never written" in data-model.md and ADR-0010 is wrong.
+- **Reload on return** (`mayReloadOnReturn`, 076621a4) uses `NOTHING_TO_LOSE`,
+  which was drawn for the iOS carry: `/g/members` loses a half-typed name,
+  the ledger its search, balances and members an open confirm.
+- **Smaller.** Two folds closing within one glide leave padding under the list
+  (`lib/fold.ts:52-61`). Sync fetches have no timeout, so a parked one holds
+  the fresh run queued behind it (`lib/db/sync.ts`). `reconcilePush` can
+  republish the old level over one just chosen in Settings. An icon launch
+  whose `/install` fragment still has a key to save paints the ledger skeleton,
+  then the list (`firstFrame`). Parts typed beside a bill between 0336c2a9
+  and 97037e75 carry no flag and open on Items.
+- **Rules.** `effectSum` (`lib/entry-kind.ts:57-60`, and the older `myEffect`)
+  signs an income outside `computeBalances`. The bill-pricing rule in
+  `rules-check.mjs:89-100` bans `weightsFromItems`, which nothing calls, while
+  `receiptBreakdown` is called from `app/g/entry/page.tsx:472`; its message
+  still says `receiptWeights`.
+- **Checks.** Fixed waits against timers: `nav.mjs:518` (2000ms against
+  600+480+600), `nav.mjs:446`, `entries.mjs:756`, `homescreen.mjs:307,402`;
+  `search.mjs:150` hard-codes half of `--search-h`. A check that reports
+  nothing passes (`verify.mjs:83`). The pre-push hook drops `BUSY` before the
+  push has succeeded.
+- **Docs.** browser-checks.md: "ten browsers at once" (CI runs one), nav's
+  "Seven" sections (ten), no `offline` section; testing.md:62 "seven" checks
+  (eight); shots.md:29's count. `copy.settings.notify.means.all` says "Every
+  edit" where only money-moving edits notify. design-review.md:27 names
+  "Advanced" in the wrong shot. CLAUDE.md's core list omits rates. README.md:97
+  (the owner's) says self-host for your own Gemini key, which Advanced takes.
+- **Dead or stale.** `.ratecell` CSS; `activeSplit`, `weightsFromItems`,
+  `maxHlc` used by tests alone; `demoStamp`'s `asOf`; a second `bare` in
+  `app/g/entry/page.tsx:385`; `changeKind`'s Reimbursement branch (settle-up
+  never seeds the form); `applyTheme`'s unreachable `"system"`. Comments that
+  outlived their code: `lib/fold.ts:14` (Save slides), `entry-check.ts:59-61`,
+  `app/g/history/page.tsx:139`, `copy.ts:814`, `icons.tsx:131`,
+  `history-copy.ts:127` (JSDoc now on a const), `import-shape.ts:32-35` (the
+  seed search is bounded, not the same on every phone).
 
 **Three things are closed as decisions, not as work**, so a session that
 rediscovers one is rediscovering a call the owner has already made:

@@ -71,8 +71,8 @@ because it is a row in everyone else's ledger.
 **Platform.** Installable PWA, fully usable offline for reads *and* writes.
 Shared, not solo — sync is part of the MVP, and so are push notifications of
 the entries you are in, worded and sealed by the phone that made the change
-([notifications.md](notifications.md)). Multi-currency, with one rate per
-currency held by the group and corrected in one place
+([notifications.md](notifications.md)). Multi-currency: each entry carries its
+own rate, fetched for the day it was spent and corrected on that entry alone
 ([ADR-0005](decisions/0005-money-and-currency.md)).
 
 ## Deliberately not in the MVP

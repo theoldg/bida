@@ -303,7 +303,7 @@ API is reached with `fetch`.
   inverted band above the title says "Deleted by {name}", and holds
   **Restore** — which asks nothing and turns the screen back into the live
   entry in place. The trash and Edit are gone. What else it brings back, a
-  removed person or a cleared rate, is named under the band before the press
+  removed person, is named under the band before the press
   (`restoreEntryDrafts`). Deleting still leaves for the ledger, and the screen
   never turns into its deleted self on the way: the live read lands before the
   navigation does on a phone, so from the answer on it keeps drawing the entry
