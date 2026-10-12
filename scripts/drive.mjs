@@ -1,40 +1,8 @@
 /**
- * A text-mode driver: a live session you send one command at a time, which
- * answers with the screen written out in words — reproduce a bug, check a
- * screen, watch two phones disagree, all without a screenshot.
- *
- * Shaped for handing an agent the app the way a stranger gets it, so nothing
- * here speaks the app's vocabulary (no `#g-name`, no `newGroup`): every control
- * is a number the last screen handed you.
- *
- * A daemon, because replaying the story for each step doesn't keep
- * IndexedDB, the service worker and history honest. One process holds the
- * Worker, the browser and every phone; commands and answers travel by file.
- *
- *   pnpm drive start &                  # holds the session open
- *   pnpm drive do "goto /" "click 3"
- *   pnpm drive stop
- *
- * Commands:
- *   as <who>            switch phone, creating it on first mention
- *   goto <path>         open a path on the app's own origin
- *   click <n>           press the control numbered <n> on the last screen
- *   fill <n> <text>     put a value in field <n> in one go
- *   type <n> <text>     key it in one character at a time, at the caret
- *   select <n> <label>  choose an option by its visible text
- *   press <Key> [times] a raw key, e.g. Enter, Escape, Backspace 3
- *   hold <n>            long-press it, for menus a tap cannot open
- *   back | forward | reload | screen | wait <ms>
- *   offline on|off      cut this phone's network, or restore it
- *   theme light|dark    the phone's colour scheme, for a shot of either look
- *   receipt <name>      hand this phone a canned receipt — see `receipt list`
- *                       (it answers a typed bill — "Type" or "As text" — as well)
- *   file <path>         answer the next file chooser with a file from disk, once
- *   shot [name]         save a screenshot of this phone to .drive/shots/
- *   clipboard           read what the page put on this phone's clipboard
- *   forget              throw this phone away and start it factory-fresh
- *   html [n]            markup and computed style — for calibrating the reader
- *                       below, and off limits to anyone testing blind
+ * The app as text: a daemon you send one command at a time, answering with the
+ * screen written out in words. Nothing here speaks the app's vocabulary — every
+ * control is a number the last screen handed you. Commands and when to use them:
+ * docs/drive.md.
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -50,42 +18,28 @@ const READY = join(DIR, "ready.json");
 /* ---- reading the screen ------------------------------------------------- */
 
 /**
- * The page as experienced rather than as written. Four things separate this
- * from dumping `innerText`:
- *
- *  - **Layout decides the lines, not tags.** The app uses block `<span>`s
- *    everywhere; only computed `display` knows where a line ends.
- *  - **What a modal covers is not on the screen.** Reachability is
- *    hit-tested, so controls behind a sheet aren't offered.
- *  - **A phone is 844px tall.** Content under the fold is real but unread;
- *    saying so is often the finding itself.
- *  - **CSS is also text.** `text-transform` is what a person reads, and
- *    `text-overflow` what they never get to. Screen-reader-only text (Next's
- *    route announcer, visually-hidden labels) is left out.
+ * The page as experienced rather than as written: layout decides the lines, not
+ * tags; what a modal covers is not on the screen; the fold is real;
+ * `text-transform` is what a person reads and `text-overflow` what they never get
+ * to.
  */
 const READ = `(() => {
   const vw = innerWidth, vh = innerHeight;
   const out = [];        // { text, where } in document order
   let n = 0, line = "", lineWhere = "on", alerts = 0;
 
-  // Numbers are fresh every read, so clear the last read's first — stale ones
-  // let \`click 1\` match an element under a sheet's scrim and time out.
+  // Stale numbers let \`click 1\` match an element under a scrim and time out.
   for (const el of document.querySelectorAll("[data-drive]")) {
     el.removeAttribute("data-drive");
     el.removeAttribute("data-drive-at");
     el.removeAttribute("data-drive-name");
   }
 
-  // A native modal makes the rest of the document inert, which is exactly the
-  // question being asked; :modal answers it without knowing the app's classes.
   const modal = [...document.querySelectorAll("dialog[open]")].filter((d) => d.matches(":modal")).pop() ?? null;
 
   /**
-   * A scrim: a layer over the whole screen swallowing taps meant for what is
-   * under it. Not every sheet is a \`<dialog>\` — the row menu is a fixed veil
-   * beside a \`role="menu"\`, which \`:modal\` misses — so the hit test decides.
-   * Walking up from what is painted at the centre finds only what is on top: a
-   * full-screen layer *behind* content is never an ancestor of that point.
+   * Not every sheet is a \`<dialog>\` (the row menu is a fixed veil), so the hit
+   * test decides.
    */
   const veil = (() => {
     if (modal) return null;
@@ -97,32 +51,26 @@ const READ = `(() => {
     return null;
   })();
 
-  /** The sheet the scrim belongs to, for naming it — it sits beside the veil, not inside it. */
   const overlay = veil
     ? [...document.querySelectorAll('[role="menu"],[role="dialog"],[role="listbox"]')]
         .filter((el) => el !== veil && getComputedStyle(el).position === "fixed").pop() ?? null
     : null;
 
-  /** Whatever is on top, whichever kind it is — what a scrim leaves reachable. */
   const sheet = modal ?? overlay ?? veil;
 
   let behind = 0;
 
   const BLOCKISH = new Set(["block", "flow-root", "list-item", "table", "table-row", "table-caption", "flex", "grid"]);
   const CONTROL = new Set(["A", "BUTTON", "INPUT", "SELECT", "TEXTAREA", "SUMMARY"]);
-  // Sets whose members are alternatives rather than separate offers. Reading
-  // them out as loose buttons loses the only thing that matters about them:
-  // that they are one question, and which answer is currently given.
+  // Alternatives, read as one question with its current answer.
   const SETS = { tablist: "tabs", radiogroup: "options", listbox: "list", menu: "menu", tabs: "tabs" };
 
   const isControl = (el) => CONTROL.has(el.tagName) || el.getAttribute("role") === "button";
 
   const breaks = (el, style, parentStyle) =>
     el.tagName === "BR" || BLOCKISH.has(style.display) ||
-    // A flex or grid item is a block box whatever it was written as.
     (parentStyle && ["flex", "grid", "inline-flex", "inline-grid"].includes(parentStyle.display));
 
-  /** Visually hidden but still spoken: real to a screen reader, absent to an eye. */
   const srOnly = (style, r) =>
     style.clipPath === "inset(50%)" ||
     style.clip === "rect(0px, 0px, 0px, 0px)" ||
@@ -142,24 +90,15 @@ const READ = `(() => {
   };
 
   /**
-   * Where on the last-reached control a finger should land, as an offset
-   * inside it, or null for its middle. Read by \`emit\` immediately after
-   * \`reach\`, which is the only caller that can still say which element it
-   * belongs to.
+   * An offset inside the last-reached control for the finger, or null for its
+   * middle.
    */
   let reachAt = null;
 
   /**
-   * Where a finger would land: on it, past the fold, or nowhere.
-   *
-   * **A scrim takes the whole screen, fold and all** — the scroll that would
-   * fetch a row closes the sheet (\`components/row-menu.tsx\`). So the sheet is
-   * asked *before* the fold; otherwise a row below the fold would be offered
-   * under an open menu.
-   *
-   * **Something small on top covers a point, not a control.** The tab bar and
-   * FABs overlap rows that stay pressable elsewhere, so several points are
-   * tested and only a control with none left is out of reach.
+   * **A scrim takes the whole screen, fold and all**, so the sheet is asked
+   * before the fold. Several points are tested: the tab bar and FABs cover a
+   * point, not a control.
    */
   const reach = (el) => {
     reachAt = null;
@@ -169,8 +108,6 @@ const READ = `(() => {
     const away = r.bottom <= 0 ? "above" : r.top >= vh ? "below" : null;
     if (away) return sheet && !sheet.contains(el) ? "behind" : away;
     const inset = Math.min(8, r.width / 2, r.height / 2);
-    // The middle first, so an ordinary control records no offset at all and
-    // a press stays a press in the middle of the thing.
     for (const [dx, dy] of [
       [r.width / 2, r.height / 2],
       [inset, r.height / 2], [r.width - inset, r.height / 2],
@@ -183,14 +120,11 @@ const READ = `(() => {
       if (dx !== r.width / 2 || dy !== r.height / 2) reachAt = { x: dx, y: dy };
       return "on";
     }
-    // Under a scrim there is nothing to distinguish from being behind a modal:
-    // it is off the screen a person has. Without one, something is sitting on
-    // top of the whole of it — a dump that numbered it would be offering a
-    // press that lands somewhere else.
+    // Under a scrim it is off the screen a person has; without one, a number
+    // would offer a press that lands elsewhere.
     return veil ? "behind" : "covered";
   };
 
-  /** Text the box is too narrow to show — the ellipsis a person actually sees. */
   const clipped = (el, style) =>
     (style.overflow === "hidden" || style.overflow === "clip") && el.scrollWidth > el.clientWidth + 1;
 
@@ -200,19 +134,16 @@ const READ = `(() => {
     line = "";
   };
 
-  /** Content drawn by CSS rather than written in the markup, e.g. separators. */
   const pseudo = (el, which) => {
     const c = getComputedStyle(el, which).content;
     if (!c || c === "none" || c === "normal" || c.startsWith("url") || c.includes("counter")) return "";
     const text = c.replace(/^["']|["']$/g, "");
-    // Icon fonts live in the private use area and mean nothing written down.
     return /[\\uE000-\\uF8FF]/.test(text) ? "" : text;
   };
 
   /**
-   * A control's label, kept on the lines its layout gives it and then joined
-   * with a separator: "Dinner | Ana · 3 | €120.00" reads, while
-   * the same words run together do not.
+   * Joined with a separator: "Dinner | Ana · 3 | €120.00" reads; run together it
+   * does not.
    */
   const labelOf = (el) => {
     const parts = [];
@@ -244,9 +175,8 @@ const READ = `(() => {
     if (cur.trim()) lines.push(cur.trim());
     const joined = lines.join(" | ").replace(/\\s+/g, " ").trim();
     if (joined) return { text: joined, spoken: false };
-    // An icon-only control's accessible name is the whole of what it offers.
-    // Saying where the name came from is the difference between "this button is
-    // fine" and "this button is a mystery to anyone not looking at the icon".
+    // Saying where the name came from separates "fine" from "a mystery to anyone
+    // not looking at the icon".
     return { text: el.getAttribute("aria-label") || el.title || el.querySelector("img")?.alt || "", spoken: true };
   };
 
@@ -259,7 +189,6 @@ const READ = `(() => {
     return \`\${kind} "\${named}" = \${el.value ? JSON.stringify(el.value) : "(empty)"}\${el.readOnly ? " (read-only)" : ""}\`;
   };
 
-  /** What the control itself claims about being the chosen one; null if silent. */
   const chosenSays = (el) => {
     for (const a of ["aria-selected", "aria-checked", "aria-pressed"]) {
       const v = el.getAttribute(a);
@@ -272,20 +201,14 @@ const READ = `(() => {
     return null;
   };
 
-  /** How a control is painted — the difference a person reads as "this one". */
   const look = (el) => {
     const s = getComputedStyle(el);
     return [s.backgroundColor, s.color, s.fontWeight, s.borderBottomColor, s.boxShadow, s.opacity].join("|");
   };
 
   /**
-   * Same-tag siblings painted exactly two ways: the shape of a segmented
-   * control, ARIA or not. This asks only whether they are one question;
-   * \`oddOne\` answers it.
-   *
-   * Members of one set carry words labelled alike, which separates a segmented
-   * control from a control between two fields — the transfer's two sides and
-   * the swap button between them must not read as a choice.
+   * Same-tag siblings painted exactly two ways, carrying words labelled alike —
+   * so the transfer's swap button between two sides is not read as a choice.
    */
   const alternatives = (els) => {
     const words = (el) => (el.innerText ?? "").trim().length > 0;
@@ -295,12 +218,8 @@ const READ = `(() => {
   };
 
   /**
-   * The odd one out of a set of look-alikes, or -1. Some choice sets carry ARIA,
-   * others only paint; when appearance answered, the dump says so — a control
-   * only visibly selected is a finding.
-   *
-   * Two is not a set with an odd one out: the tally can't tell them apart.
-   * Three is the smallest number with a majority.
+   * The odd one out, or -1. A control only visibly selected is a finding. Three
+   * is the smallest set with a majority.
    */
   const oddOne = (els) => {
     if (els.length < 3) return -1;
@@ -312,22 +231,15 @@ const READ = `(() => {
     return rare ? looks.indexOf(rare[0]) : -1;
   };
 
-  /** Number a control and describe it. Returns its rendered text, or "" if unreachable. */
   const emit = (el, inSet = false) => {
     const where = reach(el);
     const at = reachAt;
     if (where === "behind" || where === "covered") { behind++; return null; }
-    // Only what a finger can reach gets a number. A control you cannot press is
-    // not an option, and numbering it invites pressing it anyway.
+    // Only what a finger can reach gets a number.
     el.setAttribute("data-drive", String(++n));
-    // Where the press goes, when the middle is not free: the tab bar crossing
-    // the last ledger row leaves the row pressable above it, and a press
-    // aimed at the middle would land on the bar instead.
     if (at) el.setAttribute("data-drive-at", \`\${at.x},\${at.y}\`);
     const isField = ["INPUT", "SELECT", "TEXTAREA"].includes(el.tagName);
     const name = isField ? null : labelOf(el);
-    // The name as printed, so a command can say "Add someone" instead of a
-    // number that moves every time a row is added above it.
     el.setAttribute("data-drive-name", isField
       ? el.getAttribute("aria-label") || el.placeholder || el.name || ""
       : name.text);
@@ -336,9 +248,7 @@ const READ = `(() => {
       : \`\${el.tagName === "A" ? "link" : el.tagName.toLowerCase()} \${name.text ? \`"\${name.text}"\` : "(NO ACCESSIBLE NAME)"}\`;
     const flags = [
       name?.spoken && name.text ? "icon only" : "",
-      // A control on its own can still say it is the chosen one — the row you
-      // picked, the page you are on. Inside a set the (•) already says it, and
-      // saying it twice reads as two different claims.
+      // Inside a set the (•) already says it.
       !inSet && chosenSays(el) === true ? "chosen" : "",
       el.disabled ? "disabled" : "",
       el === document.activeElement ? "focused" : "",
@@ -346,11 +256,6 @@ const READ = `(() => {
     return { where, text: \`[\${n}] \${what}\${flags.length ? \` (\${flags.join(", ")})\` : ""}\` };
   };
 
-  /**
-   * A set of alternatives, read as one question. Short sets go on a line, long
-   * ones stack, and either way the chosen answer is marked rather than left for
-   * the reader to infer from four buttons that look alike in text.
-   */
   const emitSet = (kids, kind, name) => {
     const says = kids.map(chosenSays);
     let chosen = says.indexOf(true);
@@ -396,8 +301,6 @@ const READ = `(() => {
       return;
     }
 
-    // A set of alternatives is read as one thing, so it is taken here rather
-    // than met one button at a time on the way down.
     const role = el.getAttribute("role");
     const kids = [...el.children].filter((c) => isControl(c) && !hidden(c, getComputedStyle(c)));
     if (kids.length >= 2 && kids.length === el.children.length && (SETS[role] || alternatives(kids))) {
@@ -409,11 +312,7 @@ const READ = `(() => {
     const heading = /^H[1-6]$/.test(tag);
     const br = breaks(el, style, parentStyle);
     if (br || heading) flush();
-    // Text under a scrim is not on the screen either — \`reach\` calls it
-    // \`behind\`, and the line it would contribute is dropped below. Text merely
-    // under a small popup still is, which is what \`covered\` keeps separate.
     lineWhere = reach(el);
-    // A live region is the app raising its voice; the dump does the same.
     const shouts = role === "alert" || role === "status";
     if (shouts) alerts++;
     const before = pseudo(el, "::before");
@@ -430,24 +329,18 @@ const READ = `(() => {
   walk(document.body, getComputedStyle(document.body));
   flush();
 
-  // Group the lines by reachability, in the order a person meets them: what is
-  // on the screen, then what a scroll would bring, then a count of the rest.
   const lines = [];
   let last = null;
   const LABEL = { above: "↑ scrolled past, above the screen", below: "↓ below the fold — a scroll away" };
   for (const item of out) {
     if (item.where === "behind") continue;
     if (item.where !== last && LABEL[item.where]) lines.push(\`── \${LABEL[item.where]} ──\`);
-    // Only a fold has a far side to come back from, not the end of a \`covered\`
-    // run.
     else if (item.where === "on" && LABEL[last]) lines.push("── back on screen ──");
     last = item.where;
     lines.push(item.text);
   }
-  // Keyboard is the only way into some controls, so where focus sits is part of
-  // the screen. A numbered control wears it as "(focused)"; anywhere else there
-  // is nothing to hang it on, and saying nothing reads as "nothing is focused"
-  // when it may equally mean "focus is somewhere your key press will go".
+  // Where focus sits is part of the screen; saying nothing would read as "nothing
+  // is focused".
   const active = document.activeElement;
   if (!active || active === document.body) lines.push("── nothing has keyboard focus ──");
   else if (!active.hasAttribute("data-drive"))
@@ -478,19 +371,13 @@ async function start() {
   const phones = new Map();
   let current = "me";
 
-  /** A phone belongs to one person: its own storage, its own device identity. */
   const phone = async (who) => {
     if (!phones.has(who)) {
-      // The invite link reaches the next person through the clipboard, so a
-      // phone that cannot read its own clipboard cannot follow the app's
-      // central journey.
+      // The invite link travels by clipboard.
       const ctx = await newPhone(browser, { permissions: ["clipboard-read", "clipboard-write"] });
       const page = await ctx.newPage();
       const noise = [];
-      // An offline phone failing to reach the API is the test, not news — and
-      // it arrives twice, as a failed request and as the console error the
-      // browser logs beside it. Both are dropped, or `offline on` answers
-      // every command with a warning about the thing you just asked for.
+      // An offline phone failing to reach the API is the test, not news.
       const offlineChatter = (text) => text.includes("ERR_INTERNET_DISCONNECTED");
       page.on("pageerror", (e) => noise.push(`page error: ${e.message.split("\n")[0]}`));
       page.on("console", (m) => {
@@ -508,7 +395,6 @@ async function start() {
   const stop = async () => { await browser.close(); close(); rmSync(READY, { force: true }); process.exit(0); };
 
   const run = async (line) => {
-    // A quoted run is one word: `fill "Add someone" Bruno`.
     const [head, ...rest] = line.trim().match(/"[^"]*"|\S+/g) ?? [];
     let verb = head, args = rest;
     if (verb === "as") { current = args[0]; [verb, ...args] = args.slice(1); }
@@ -516,11 +402,7 @@ async function start() {
     const { page, ctx, noise } = await phone(who);
     const arg = args.join(" ");
 
-    /**
-     * The number of the one control the last read printed under this name,
-     * ignoring case. A row printed "Ana | €30.00" also answers to "Ana". Two
-     * matches is refused rather than guessed at: the number says which.
-     */
+    /** Two matches are refused rather than guessed at. */
     const named = async (label) => {
       const hits = await page.evaluate((want) => {
         const norm = (s) => (s ?? "").trim().toLowerCase();
@@ -536,11 +418,9 @@ async function start() {
     };
 
     /**
-     * The control a number names, or why it names none. The two failures want
-     * opposite responses: a number never handed out means read again; a number
-     * matching twice means this script lost track and nothing should be guessed.
-     * Playwright is told `strict` too — the page can re-render between counting
-     * and pressing, and a wrong press is worse than a failed one.
+     * A number never handed out means read again; one matching twice means this
+     * script lost track. Playwright is `strict` too: a wrong press is worse than
+     * a failed one.
      */
     const target = async (ref) => {
       const n = ref?.startsWith('"') ? await named(ref.slice(1, -1)) : ref;
@@ -552,15 +432,10 @@ async function start() {
     };
 
     /**
-     * Where on a control to press. Its middle, unless the dump found the
-     * middle taken — the tab bar crosses the last ledger row, and Playwright
-     * refuses a press whose point lands on something else.
+     * Its middle, unless the dump found the middle taken: Playwright refuses a
+     * press that lands on something else.
      */
-    /**
-     * The text a command carries. Commands are split on whitespace, so a newline
-     * is written `\n` — as the dump writes one out. The typed bill's box needs it:
-     * its lines are the items.
-     */
+    /** Commands split on whitespace, so a newline is written `\n`. */
     const typed = (parts) => parts.join(" ").replace(/\\n/g, "\n");
 
     const aim = async (sel) => {
@@ -579,16 +454,12 @@ async function start() {
         break;
       }
       case "fill": await page.fill(await target(args[0]), typed(args.slice(1)), { strict: true }); break;
-      // `fill` sets a value; it doesn't type one. The amount field regroups digits
-      // and restores the caret per keystroke, which a single fill never exercises.
-      // This keys one character at a time at the caret, so `press Backspace` can
-      // delete through a separator.
+      // Keyed one at a time: the amount field regroups and restores the caret per
+      // keystroke, which `fill` never exercises.
       case "type": await page.locator(await target(args[0])).pressSequentially(typed(args.slice(1)), { delay: 20, timeout: 5000 }); break;
       case "select": await page.selectOption(await target(args[0]), { label: args.slice(1).join(" ") }, { strict: true }); break;
       case "press": for (let i = Math.max(1, Number(args[1] ?? 1)); i > 0; i--) await page.keyboard.press(args[0]); break;
-      // Some actions live behind a long press and nowhere else, so a driver
-      // that can only click cannot reach them at all. A right click is the
-      // same `contextmenu` event a touch hold sends.
+      // A right click is the same `contextmenu` a touch hold sends.
       case "hold": {
         const sel = await target(args[0]);
         await page.click(sel, { button: "right", strict: true, ...(await aim(sel)) });
@@ -599,14 +470,10 @@ async function start() {
       case "reload": await page.reload(); break;
       case "wait": await page.waitForTimeout(Number(args[0] ?? 500)); break;
       case "offline": await ctx.setOffline(args[0] !== "off"); break;
-      // The phone's own setting, not the app's: every screen has two looks to get
-      // right, and a one-off shot of only the light one is half a look.
       case "theme": await page.emulateMedia({ colorScheme: args[0] === "dark" ? "dark" : "light" }); break;
       case "forget": await ctx.close(); phones.delete(who); return { who, url: "(phone thrown away)", title: "", lines: [], noise: [] };
-      // Scanning needs a camera and a network, so a button-presser can't reach the
-      // who-had-what grid otherwise. Like `offline`, this sets up the world, not the
-      // screen: the scan button is still pressed by number, and the file chooser it
-      // opens is answered with a real (1x1) photo the client really downscales.
+      // Sets up the world, not the screen: the scan button is still pressed by
+      // number, and its chooser gets a real photo the client really downscales.
       case "receipt": {
         const say = (lines) => ({ who, url: page.url().replace(base, ""), title: "", lines, noise: noise.splice(0) });
         if (!args[0] || args[0] === "list") return say(["receipts on offer:", ...receiptList()]);
@@ -617,9 +484,7 @@ async function start() {
           return say(["this phone scans for real again — which needs a key it hasn't got"]);
         }
         const fixture = await stubScan(page, args[0]);
-        // Persistent, not one-shot: rescanning is a thing people do, and an
-        // arming spent by the first press would answer the second with the
-        // silence of a cancelled chooser.
+        // Persistent: a second scan would otherwise meet a cancelled chooser.
         if (!phones.get(who).chooser) {
           const answer = (chooser) => chooser
             .setFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO })
@@ -633,10 +498,7 @@ async function start() {
           "the stub answers a typed bill too: press \"Type\" (\"As text\" over a bill), fill the box and press \"Read it\"",
         ]);
       }
-      // The import's chooser, or any other that wants a real file: answered once,
-      // with a file from disk, so a ledger from elsewhere can be walked in by
-      // the app's own button. A receipt's chooser is persistent, so the two
-      // would race; one at a time.
+      // Once, since a receipt's chooser is persistent and the two would race.
       case "file": {
         const say = (lines) => ({ who, url: page.url().replace(base, ""), title: "", lines, noise: noise.splice(0) });
         if (phones.get(who).chooser) return say(["a receipt is armed on this phone: `receipt off` first"]);
@@ -646,8 +508,6 @@ async function start() {
         page.once("filechooser", (chooser) => chooser.setFiles(full).catch(() => {}));
         return say([`the next file chooser this phone opens is answered with ${path}`]);
       }
-      // The words are the point; a picture settles what they can't — colour,
-      // crowding, what a person's eye lands on first. Saved, never read back.
       case "shot": {
         mkdirSync(join(DIR, "shots"), { recursive: true });
         const file = join(DIR, "shots", `${(args[0] ?? `shot-${Date.now()}`).replace(/[^\w-]/g, "_")}.png`);
@@ -676,17 +536,14 @@ async function start() {
       default: throw new Error(`no such command: ${verb}`);
     }
 
-    // Long enough for a render and a sync round trip, short enough to stay a
-    // conversation. `screen` again is how to see what a slow thing settled into.
     await page.waitForTimeout(verb === "goto" || verb === "reload" ? 700 : 350);
     const seen = await page.evaluate(READ);
     return { ...seen, who, url: seen.url.replace(base, ""), noise: noise.splice(0) };
   };
 
   let done = 0;
-  // The batch a command failed in. Later commands were written against a screen
-  // that never arrived; their numbers now mean something else (one day,
-  // Delete). A batch stops at its first failure and says so.
+  // Later commands were written against a screen that never arrived, so a batch
+  // stops at its first failure.
   let aborted = null;
   for (;;) {
     const lines = readFileSync(IN, "utf8").split("\n").filter(Boolean);
@@ -725,9 +582,8 @@ function send(commands) {
     process.exit(1);
   }
   let seq = readFileSync(IN, "utf8").split("\n").filter(Boolean).length;
-  // One `do` is one batch, so the daemon can drop the rest of it when a command
-  // in it fails. The first sequence number names it: unique without agreeing
-  // on anything, and readable in the file when something needs explaining.
+  // The first sequence number names the batch: unique without agreeing on
+  // anything.
   const batch = seq;
   return commands.map((cmd) => {
     appendFileSync(IN, `${JSON.stringify({ seq, batch, cmd })}\n`);
@@ -736,11 +592,8 @@ function send(commands) {
 }
 
 /**
- * Prints the answers. A chain's screens on the way are steps nobody reads
- * twice, and a long chain printed every one of them in full — so only the last
- * screen that arrived is printed whole, and every step before it as where it
- * landed plus whatever the page complained about. Short answers (a shot's path,
- * the clipboard, a failure) are always whole. `--all` prints every screen.
+ * Only the last screen whole; each step before it as where it landed and what the
+ * page complained about. `--all` prints every screen.
  */
 async function collect(wanted, all = false) {
   const bodies = [];

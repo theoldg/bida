@@ -1,16 +1,14 @@
+// Doc: docs/frontend.md#every-word-in-libcopyts
 import type {
   ExtraKind, ImportRefusalCode, ImportSource, ScanMedium, ScanProblem, SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 
 /**
- * Every word the app says to a person, in one place — for translation (a
- * second language is a second copy of this object, ADR-0033) and for tone.
- *
- * - Screens never hold a readable literal; `scripts/rules-check.mjs` enforces it.
- * - A string needing a value is a function here: translations reorder words.
- * - Plurals go through `plural()` with a `{ one, many }` noun, never `${n}s`.
- * - Say it once, short ([standing-instructions](../../../docs/standing-instructions.md#interface)).
+ * Every word the app says to a person, in one place — for translation (ADR-0033)
+ * and tone. Screens hold no readable literal (`rules-check`); a string needing a
+ * value is a function, since translations reorder words; plurals go through
+ * `plural()`.
  */
 
 export interface Noun {
@@ -18,40 +16,31 @@ export interface Noun {
   many: string;
 }
 
-/**
- * What a refused import interpolates: the line a spreadsheet would show, and
- * the one fact that code carries (`ImportError` in core/import.ts).
- */
 interface RefusalFact {
   line?: number;
   detail?: string;
 }
 
-/** Money out is *paid*, money in is *received*. A transfer has no payer side. */
 export type Voice = "expense" | "income";
 type Voiced<T> = Record<Voice, T>;
 
-/** The bill's charges mid-sentence, lower case — one caption line fits three and a verb. */
 const extraSubject: Record<ExtraKind, string> = {
   discount: "discount", tax: "tax", tip: "tip",
 };
 
-/** The iOS browser by name when `iosBrowser` can tell, at a sentence's start or inside it. */
 const upper = (browser: string | undefined) => browser ?? "This browser";
 const lower = (browser: string | undefined) => browser ?? "this browser";
 
 export const copy = {
   app: {
     name: "bida",
-    /** The page description: the line under "bida" in a pasted-link preview. Never shown in-app. */
     description: "Split things. Mostly bills.",
-    /** Alt text for the preview banner, public/og.png — what the picture says. */
-    /** An invite's preview title. The banner already says "bida" and the slogan, and the group's name can't be had (docs/pwa.md). */
+    /** The group's name can't be had here (docs/pwa.md). */
     invite: "Join the group",
     banner: "bida, split things, mostly bills: a receipt split between Ana and Ben",
   },
 
-  /** Buttons. One verb each — a button never says "OK". */
+  /** One verb each — never "OK". */
   act: {
     add: "Add",
     back: "Back",
@@ -70,124 +59,84 @@ export const copy = {
     reload: "Reload",
   },
 
-  /** Reading this phone's database failed; without these the screen just stays on skeletons. lib/db/live.ts. */
   db: {
-    /** A read that has stopped answering — the app is asking again. */
     stalled: "Still reading this phone’s data…",
-    /** Another copy of the app is holding the database open on an old version. */
     blocked: "Another copy of bida is open. Close it to carry on here.",
-    /** The read didn’t just stall, it failed — the screen can’t draw. */
     broken: {
       title: "Can’t read this phone’s data",
       body: "Nothing is lost: it is still on this phone. Reloading usually clears this.",
     },
   },
 
-  /** `/diag` (long-press the wordmark on the groups list). Untranslated preformatted text. */
   diag: {
     title: "Diagnostics",
     reading: "Reading…",
     copyAll: "Copy the report",
     copied: "Copied",
-    /** The switch in lib/scan/stas.ts; the line under it warns the refusals get personal. */
     stas: "Staś mode",
     stasNote: "Send a bad photo, get insulted.",
     on: "On",
     off: "Off",
-    /** The door to app/diag/crop/page.tsx, under Staś mode. */
     cropLink: "Test the scan crop",
     crop: {
       title: "Scan crop",
-      /** What the screen does, over the button. Nothing is sent anywhere. */
       lede: "Pick photos of bills to see what a scan would send. Nothing leaves the phone.",
       pick: "Pick photos",
       loading: "Loading the crop model…",
       loaded: (ms: number) => `Crop model ready in ${ms} ms`,
       failed: "The crop model didn’t load. Scans will send the whole photo.",
       working: "Working…",
-      /** No crop: the model found no bill, or wasn't there. */
       whole: "whole photo",
-      /** The × on an image opened over the whole screen. */
       close: "Close",
     },
   },
 
-  /** Names Splitwise and Tricount, since "CSV" doesn't tell you it's the right button. */
   export: {
     title: "Export data",
-    /** Only where the browser really can't save a file (`fileHandoff`). */
     body: "This browser can’t save a file. Copy the text below into a"
       + " spreadsheet, or into Splitwise or Tricount.",
-    /** The same screen, reached by a browser that could have saved it. */
     bodyPlain: "Copy the text below into a spreadsheet, or into Splitwise or Tricount.",
     copyAll: "Copy the spreadsheet",
     copied: "Copied",
     building: "Reading…",
-    /** A group with no entries yet: a file of nothing but column headings. */
     nothing: "Nothing to export yet.",
   },
 
   /**
-   * `app/import/page.tsx`: a Splitwise export (or ours) as a new group. Nothing
-   * existing changes, and the file is read out before any op is written.
-   *
-   * **The refusals are the most-read words here**: a file is refused whole, so
-   * each names the line and the fix. `ImportRefusalCode` in `core/import.ts` is
-   * the list; `detail` is the fact each needs.
+   * The refusals are the most-read words here: a file is refused whole, so each
+   * names the line and the fix.
    */
   importData: {
-    /** Also the groups screen's kebab row, since what it makes is a group. */
     title: "Import a group",
-    /** What this makes, and what it's made from. */
     lede: "Create a new bida group using a file exported from Splitwise (or from bida).",
     pick: "Choose a file",
 
-    /** Fetched from its link, so it asks nothing of the other app. */
     orTricount: "Or paste a Tricount link:",
     tricountPlaceholder: "https://tricount.com/…",
     fetch: "Fetch it",
     fetching: "Fetching…",
-    /**
-     * Under the button: the link goes through our Worker (the browser can't call
-     * bunq), the one thing that leaves the phone readable (`apps/api/src/index.ts`).
-     */
+    /** The one thing that leaves the phone readable. */
     fineprint: "Sent through bida’s server, unencrypted. Not stored.",
-    /** Pasted something with no tricount key in it, before anything is sent. */
     notTricount: "That isn’t a Tricount link. In Tricount, open the tricount, then Share, then copy the link.",
-    /** The phone is off the network — its own failure, not the link's. */
     tricountOffline: "This phone can’t reach the internet, and a Tricount link has to be fetched.",
-    /** Tricount is not answering us. Nothing about the link is wrong. */
     tricountDown: "Tricount isn’t answering. Tricount has no official way to export a group, so bida reads it the way Tricount’s own app does, and that can stop working without warning. Try again in a while.",
-    /** Picked something that is plainly not a ledger (`looksLikeCsv`). */
     notFile: "That isn’t a spreadsheet file. In Splitwise, open the group, then Export as spreadsheet.",
     tooBig: "That file is far too big to be a group’s ledger.",
 
-    /** The plan, before anything is written. */
     found: "What’s in the file",
     currency: "Currency",
-    /** A file's other currencies, busiest first, in the row under the group's own. */
     alsoIn: "Also in",
-    /** Under the readout when there are other currencies: what happens to them. */
     priced: "Those are converted at the rate on each entry’s day, looked up when the group is created.",
     people: "People",
     entries: "Entries",
-    /**
-     * All-zero rows (what bida's export writes for an unapportionable expense).
-     * Named, since they're the only thing lost and the count would differ.
-     */
+    /** Named, since they're the only thing lost. */
     dropped: (rows: string) => `${rows} left out, carrying no money`,
-    /** The picker's bar at the end, as joining's is; the question is `copy.claim`'s. */
     named: (group: string) => `Import ${group}`,
     act: "Create the group",
     failed: (why: string) => `Couldn’t import that file: ${why}`,
-    /** `failed`'s why when no rate at all came back for a currency the file uses. */
     noRates: (codes: string) => `bida couldn’t look up any ${codes} rates. Try again in a while`,
     noRatesOffline: "this phone can’t reach the internet to look up the rates",
 
-    /**
-     * One sentence per `ImportRefusalCode`. `line` is 1-based, the way a
-     * spreadsheet counts, and `detail` is whatever that code carries.
-     */
     refused: {
       empty: () => "There is nothing in that file.",
       header: () => "That file doesn’t start with a Splitwise export’s columns: Date, Description, Category, Cost, Currency, and then one column per person.",
@@ -211,10 +160,8 @@ export const copy = {
       "row-not-zero": (f) => `Line ${f.line} doesn’t add up: the people’s columns should come to zero, and they come to ${f.detail}.`,
       overpaid: (f) => `Line ${f.line} says more was paid than the thing cost (${f.detail}).`,
       "no-entries": () => "There is nothing to import: nothing in it carries any money.",
-      /** Says the file was left alone: bida's sums didn't match the file's own total. */
       checksum: (f) => `The balances bida read don’t match the ones it was given (${f.detail}). Nothing was imported.`,
 
-      /** Name the entry, not a line. The first is nobody's fault: Tricount's API is unofficial. */
       "not-tricount": () => "That link doesn’t open a Tricount. Check that it is the link Tricount’s own Share gives you, and that the tricount still exists.",
       "tricount-amount": (f) => `One entry (${f.detail}) has an amount bida can’t read.`,
       "tricount-date": (f) => `One entry (${f.detail}) has no date bida can read, and filing a whole trip under today isn’t a guess worth making.`,
@@ -222,7 +169,6 @@ export const copy = {
     } as Record<ImportRefusalCode, (fact: RefusalFact) => string>,
   },
 
-  /** Stand-ins for a value the app hasn't got: a name, a figure, a field. */
   unknown: "?",
   none: "—",
   someone: "Someone",
@@ -239,7 +185,6 @@ export const copy = {
     photo: { one: "photo", many: "photos" } as Noun,
     revision: { one: "revision", many: "revisions" } as Noun,
     newChange: { one: "new change", many: "new changes" } as Noun,
-    /** A line of somebody else's spreadsheet — only the import counts these. */
     row: { one: "row", many: "rows" } as Noun,
   },
 
@@ -251,12 +196,11 @@ export const copy = {
     hoursAgo: (n: number) => `${n}h ago`,
     daysAgo: (n: number) => `${n}d ago`,
     agoYesterday: "yesterday",
-    /** Ours, not the phone's locale: a phone in French would print "sam. 5 avril" under "Yesterday". */
+    /** Ours, not the phone's locale. */
     weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     months: ["January", "February", "March", "April", "May", "June", "July",
       "August", "September", "October", "November", "December"],
     monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-    /** "Sat 5 April"; the year only when it isn't this one. */
     day: (weekday: string, day: number, month: string) => `${weekday} ${day} ${month}`,
     dayInYear: (day: number, month: string, year: number) => `${day} ${month} ${year}`,
     monthInYear: (month: string, year: number) => `${month} ${year}`,
@@ -269,30 +213,22 @@ export const copy = {
       title: "No groups yet",
       body: "A trip, a flat, a dinner: anything several people pay for.",
     },
-    /**
-     * Keys held whose groups haven't arrived yet — a new home-screen icon carrying
-     * its invites. Not "No groups yet", which would read as losing them.
-     */
+    /** Not "No groups yet", which would read as losing them. */
     arriving: {
       title: "Getting your groups",
       body: "Finishes by itself once they sync.",
     },
     newGroup: "New group",
     quickSplit: "Quick split",
-    /** Only on an iOS home-screen app, which can't be handed a tapped link. */
     pasteLink: "Paste link",
-    /** A good link for a group on another deployment, which this one can't open. */
     elsewhere: {
       title: "Link for another server",
       body: (host: string) => `That group lives on ${host}, so this app can’t open it. Open the link there, or ask for one made on this app.`,
     },
     about: "About bida",
-    /** In both kebabs: the phone's settings, the same screen from either. */
     settings: "Settings",
-    /** The bar's kebab: the phone's switches and the app's own screens. */
     menu: "Menu",
     whoAreYou: "who are you?",
-    /** Replaces the figure for a moment after copying a row's link; lower case like it. */
     copied: "copied",
     youOwe: "you owe",
     youreOwed: "you’re owed",
@@ -300,21 +236,13 @@ export const copy = {
   },
 
   notify: {
-    /**
-     * The installed app's card, in the install offer's place (components/install.tsx).
-     * Its tap is the one iOS lets ask for permission. Worded as a choice, not a
-     * pitch: either answer clears the card, so the tap is also how it goes away.
-     */
+    /** Worded as a choice, not a pitch: either answer clears the card. */
     offer: {
       title: "Notifications?",
       body: "Only sent for entries that affect you. Answer yes or no to hide this card.",
       act: "Choose",
     },
 
-    /**
-     * What another phone shows (lib/notify-copy.ts): the group's name over
-     * these. `what` arrives quoted already; `who` is a member's name.
-     */
     added: (who: string, what: string, amount: string) => `${who} added ${what} · ${amount}`,
     deleted: (who: string, what: string, amount: string) => `${who} deleted ${what} · ${amount}`,
     restored: (who: string, what: string, amount: string) => `${who} restored ${what} · ${amount}`,
@@ -325,13 +253,11 @@ export const copy = {
     changedPayers: (who: string, what: string) => `${who} changed who paid for ${what}`,
     toIncome: (who: string, what: string) => `${who} turned ${what} into an income`,
     toExpense: (who: string, what: string) => `${who} turned ${what} into an expense`,
-    /** Several entries in one push: the share line under it is their sum. */
     addedMany: (who: string, entries: string) => `${who} added ${entries}`,
     changedMany: (who: string, entries: string) => `${who} changed ${entries}`,
     quoted: (description: string) => `“${description}”`,
     untitled: "an entry",
 
-    /** A transfer, from where the reader stands. */
     paidYou: (who: string, amount: string) => `${who} paid you ${amount}`,
     recordedPaidYou: (who: string, from: string, amount: string) =>
       `${who} recorded that ${from} paid you ${amount}`,
@@ -339,12 +265,10 @@ export const copy = {
       `${who} recorded that you paid ${to} ${amount}`,
     recordedPaid: (who: string, from: string, to: string, amount: string) =>
       `${who} recorded that ${from} paid ${to} ${amount}`,
-    /** A transfer's name in the sentences above: "Bo → you". */
     transfer: (from: string, to: string) => `${from} → ${to}`,
     you: "you",
     them: "them",
 
-    /** The second line: the reader's side of it. */
     share: (share: string) => `Your share ${share}`,
     shareMoved: (was: string, now: string) => `Your share ${was} → ${now}`,
     shareWas: (share: string) => `Your share was ${share}`,
@@ -356,24 +280,17 @@ export const copy = {
   },
 
   install: {
-    /**
-     * Chrome's card: an **offer** — on Android the tab and the app share storage.
-     * Its button is just "Add" (`act.add`); the card is the sentence.
-     */
     title: "Keep bida on your home screen",
     body: "Own icon, no browser bar, works offline.",
-    /** The long form, for `/install` on iOS and `/about`, which have no card above. */
     act: "Add bida to home screen",
     /**
-     * The iOS tab's card once it holds a group (docs/ios.md): a **warning**, as
-     * Safari really does clear groups — but titled with the gain, since it stands
-     * until installed and a standing alarm nags.
+     * A warning, as Safari really does clear groups, but titled with the gain,
+     * since it stands until installed.
      */
     banner: {
       title: "Keep your groups on this phone",
       body: (browser: string | undefined) => `${upper(browser)} may forget them.`,
     },
-    /** `/install`: why, the folded after-note, then the recording. */
     page: {
       title: "Add to home screen",
       why: (browser: string | undefined) =>
@@ -382,18 +299,13 @@ export const copy = {
       keepBold: "add bida to your home screen.",
       clipAlt: "In Safari: the menu, Share, View More, Add to Home Screen, then Add.",
       /**
-       * The walk the recording shows, in words above it: the clip can't be read at
-       * a glance, searched, or heard by a screen reader. Two steps, naming the two
-       * buttons; the taps between are what the clip is for.
+       * The clip can't be read at a glance, searched, or heard by a screen
+       * reader.
        */
       steps: [
         { icon: "share", text: "Tap the Share button" },
         { icon: "plus", text: "Select Add to home screen" },
       ],
-      /**
-       * For whoever installed and still sees the banner: a tab can't see the
-       * home-screen app, and they don't share storage (docs/ios.md).
-       */
       after: {
         ask: "Still seeing this after adding bida?",
         answer: (browser: string | undefined) =>
@@ -402,28 +314,18 @@ export const copy = {
     },
   },
 
-  /**
-   * The in-app-browser screen (`components/embedded.tsx`): what this is, and the
-   * ways out. Names the host app where known, since "the menu" differs per app.
-   */
   embedded: {
     title: "Open bida in your browser",
     why: (app: string | undefined) =>
       `${app ?? "This app"} opens links in a browser of its own. Nothing you do here is kept.`,
-    /**
-     * Written twice: the menu is an ellipsis on iOS and a kebab on Android, and
-     * the item names Safari or "external browser". Position is omitted —
-     * Instagram and Facebook differ.
-     */
+    /** Written twice: the menu is an ellipsis on iOS and a kebab on Android. */
     how: {
       ios: "Tap the ⋯ menu, then “Open in Safari”.",
       android: "Tap the ⋮ menu, then “Open in external browser”.",
     },
-    /** App wordings drift between versions, so the link is the fallback. */
     orPaste: "Can’t find it? Copy this link and paste it into your browser.",
   },
 
-  /** The waiting service worker (lib/update.ts). */
   update: {
     title: "A new version is ready",
     act: "Reload",
@@ -432,15 +334,8 @@ export const copy = {
   // ----------------------------------------------------------------- about
 
   /**
-   * The app's one screen about itself (app/about/page.tsx): who can edit, does
-   * it work offline, who can read it. The privacy section is a claim about the
-   * code — bodies are sealed under a key the server never sees (ADR-0036),
-   * which is why the sample is a real `SealedOp`. Change it in the same commit
-   * if that stops being true.
-   */
-  /**
-   * The phone's settings (`app/settings/page.tsx`): its look and its
-   * notifications, then what most people never need under Advanced.
+   * The privacy section is a claim about the code (ADR-0036): change it in the
+   * same commit if that stops being true.
    */
   settings: {
     title: "Settings",
@@ -448,44 +343,31 @@ export const copy = {
     version: { title: "Version" },
     notify: {
       title: "Notifications",
-      /** The three answers, in a segmented control. `own` is the offer card's yes. */
       level: { off: "Off", own: "Just me", all: "All" },
-      /** Under the control, saying what the chosen one means. */
       means: {
         off: "No notifications at all.",
         own: "Only entries that involve you.",
         all: "Every edit in your groups.",
       },
-      /** Permission refused at the phone: no tap here can ask again. */
       blocked: "Turned off in your phone’s settings. Allow notifications for bida there to choose here.",
     },
   },
 
-  /** What nobody needs by default (`app/advanced/page.tsx`), off Settings' last row. */
   advanced: {
     title: "Advanced",
-    /** Short: the phone calls Google itself, and Google bills the key. */
     key: {
       title: "Bring your own key",
       lede: "Scans normally go through bida’s server, unencrypted and rate limited. You can use your own Gemini API key to avoid the rate limits and send your requests straight to Google.",
       where: "Get one free at Google AI Studio.",
       whereUrl: "https://aistudio.google.com/apikey",
-      /** Google's terms, not ours — re-check before editing (docs/scan-worker.md#trust-and-what-were-accepting). */
+      /** Google's terms, not ours — re-check before editing. */
       freeTier: "As of September 2026, the free plan allows 500 requests to Gemini 3.1 Flash Lite per day. Data may be used for model training.",
-      /** Split around the inline link. */
       site: { lede: "Check their ", link: "website", tail: "." },
       placeholder: "Paste a Gemini API key",
-      /** The plus files the key, the way the plus on a name files a name. */
       use: "Use this key",
-      /** Between the press and Google's answer. */
       checking: "Checking…",
       remove: "Remove key",
-      /** Under the locked field: the one line that says the paste worked. */
       accepted: "This phone scans with your key.",
-      /**
-       * `refused` is the key's fault; `blocked` is this browser's, worth catching
-       * on paste since a brought-key scan is a call the browser makes itself.
-       */
       refused: "Google wouldn’t accept that key.",
       blocked: "This browser couldn’t reach Google. Something is blocking generativelanguage.googleapis.com.",
     },
@@ -493,7 +375,6 @@ export const copy = {
 
   about: {
     title: "About bida",
-    /** Prefix on the build number (lib/version.ts): `v0.1.3`. */
     version: "v",
     noAccounts: {
       title: "No account",
@@ -502,48 +383,36 @@ export const copy = {
     offline: {
       title: "Works offline",
       body: "Add bida to your home screen and it keeps working with no signal at all. Expenses you write offline sync when you’re back online.",
-      /** When already installed, so it states the fact instead of the offer. */
       bodyInstalled: "Because bida is added to your home screen, it keeps working with no signal at all. Expenses you write offline sync when you’re back online.",
     },
     privacy: {
       title: "Privacy",
-      /** Leads the section: the rule first, then its two exceptions. */
       e2eTitle: "Nearly everything is encrypted end to end.",
       body: "That includes notifications, if you turn them on. When you save an expense, the server (and I, the developer) can see something like this:",
-      /** One D1 row: a `SealedOp` (core/seal.ts). Plain-English labels; the point is there are only four fields. */
       sealed: [
         { k: "group", v: "c9f0f8…" },
         { k: "edit", v: "8f14e4…" },
         { k: "number", v: "42" },
         { k: "contents", v: "AQz8k…w==" },
       ],
-      /** One paragraph: the key, then what that leaves visible. */
       key: "The key that decodes the contents is part of the secret link, and it never reaches the server. I can see how many groups there are, and how many edits each one has had. That’s it.",
       scanTitle: "Receipt scanning leaves your phone.",
       scan: "Receipt photos are sent to Google’s Vertex AI to be read. Google doesn’t use them to train its models. For a day afterwards, the server remembers that this group scanned something, and a salted hash of your IP address: never the photo, never the raw address, only enough to keep the rate limits fair.",
-      /** Points at `/advanced` instead of repeating it; ends before the inline link (`app/about/page.tsx`). */
       ownKeyPointer: "If you want to send your own requests to Google directly, see",
-      /**
-       * The second of the two things that leave the phone readable. Also said under
-       * the import button (`importData.fineprint`); repeated where people come to ask.
-       */
       importTitle: "Importing a Tricount leaves your phone.",
       import: "Your browser can’t fetch a tricount, so bida’s server does it for you. It’s not encrypted, but nothing is stored.",
     },
     /**
-     * The hosted service's one disclaimer: MIT covers the code, not bida.bid, whose
-     * users are strangers (hosting.md). After Privacy on purpose — losing a link is
-     * a consequence of the sealing above, and before it would read as an excuse.
+     * MIT covers the code, not bida.bid. After Privacy on purpose: before it,
+     * losing a link would read as an excuse.
      */
     guarantees: {
       title: "No guarantees",
       lede: "Please back up anything important and use at your own risk.",
-      /** The first and last warnings; the middle links out mid-sentence, so it's `scanBreaks` (`app/about/page.tsx`). */
       warnings: [
         "The server runs on its own, for free, so your data is not going anywhere… unless Cloudflare changes their free-plan policy.",
         "If you manage to remove a group from every device and then lose the invite link, there’s no way to bring it back.",
       ],
-      /** Split around the words linking to `/tip`; rendered between the two `warnings`. */
       scanBreaks: { lede: "Receipt scanning will break if I stop paying for it. The ", link: "tip jar", tail: " helps!" },
     },
     feedback: {
@@ -559,26 +428,21 @@ export const copy = {
   // --------------------------------------------------- deleting a group
 
   /**
-   * `/delete-my-data` (docs/import-export.md#deleting-a-group), the only screen that
-   * destroys anything. Written to be read slowly: it's irreversible with no
-   * backup, and the group is shared, so "your" data is others' trip too. Typing
-   * the name is required because reading is optional.
+   * The only screen that destroys anything, written to be read slowly. Typing the
+   * name is required because reading is optional.
    */
   deleteData: {
     title: "Delete a group",
-    /** Its section on `/about`, the only mention. The address is spelled out, not linked: typing it is the first friction. */
     fromAbout: {
       title: "Delete your data",
       body: (address: string) => `You can request data deletion by visiting ${address}.`,
     },
     lede: "This permanently erases a whole group from the server.",
-    /** The three things people get wrong about what this button is for. */
     warnings: [
       "It deletes the group for everybody. Nobody else is asked.",
       "Every member device will also destroy their copy next time they open bida.",
       "It cannot be undone.",
     ],
-    /** The one thing worth doing before the field below. */
     backup: "Make sure this is what you want, and consider backing up via the “export data” button.",
     ask: {
       title: "Which group?",
@@ -587,7 +451,6 @@ export const copy = {
       paste: "Paste link",
       act: "Find this group",
     },
-    /** One sentence per way the link can fail to name a group to delete. */
     problems: {
       bad: "That is not an invite link. Open the group on a phone that has it, choose Copy invite link, and paste that.",
       elsewhere: (host: string) => `That link belongs to ${host}, not to this server. Open it there.`,
@@ -597,19 +460,15 @@ export const copy = {
       unreadable: "That link opened nothing this app can read.",
       offline: "Couldn’t reach the server. Check your connection and try again.",
     },
-    /** The folded group, shown before it can be deleted. */
     found: {
       title: "This is what will be deleted",
-      /** Labels, so the card reads as a group rather than bare figures. */
       rows: { people: "People", entries: "Entries", edits: "Edits", started: "Started" },
-      /** The friction: a button alone is one tap from somebody's trip. */
       confirm: (name: string) => `Type ${name} below to confirm.`,
       placeholder: "Group name",
       mismatch: "That is not this group’s name.",
       act: "Delete this group",
       other: "Delete a different group",
     },
-    /** The group named in the title, so the dialog can't be answered unread. */
     sure: {
       title: (name: string) => `Delete ${name}?`,
       body: "This is the point of no return. The server’s copy goes now, for everyone in the group, and cannot be restored.",
@@ -619,7 +478,6 @@ export const copy = {
     done: {
       title: "Deleted",
       body: (name: string) => `${name} is gone from the server, and off this phone.`,
-      /** Said last because it is the one thing the button could not do. */
       rest: "Every other phone that has this group will destroy its own copy the next time it opens bida.",
       back: "Back to my groups",
     },
@@ -627,38 +485,26 @@ export const copy = {
 
   // ------------------------------------------------------------- tip jar
 
-  /**
-   * The only screen asking for money, from the foot of the balances. It asks
-   * for the one thing not free to run, with the figure `SCAN_LIMITS` is set from
-   * (core/scan.ts, docs/scan-worker.md#what-the-scan-costs).
-   */
   tip: {
     title: "Support bida",
-    /** The balances' FAB — the only one with a word in it. */
     fab: "Support bida",
     lede: "Enjoying bida? Consider donating a few bucks.",
-    /** Why there is an ask at all, in one line, above the figure it explains. */
     why: "Scanning is the only part of bida that costs money to run. I pay for it.",
-    /** The same figure as `SCAN_LIMITS`' day cap (core/scan.ts); if the price moves, both move. */
+    /**
+     * The same figure as `SCAN_LIMITS`' day cap (core/scan.ts); if the price
+     * moves, both move.
+     */
     rate: "$5 ≈ 4,000 receipt scans",
-    /** The $5 split the way this group splits things. */
     each: (share: string) => `You can split it! In this group, that’s ${share} each.`,
-    /** For a solo group, where the joke owns that the math doesn't work. */
     eachSolo: (share: string) => `You can split it! In this group, that’s ${share} each. `
       + "Okay, that doesn’t really land when it’s just you here, but you get the point.",
-    /** The joke that stops four earnest lines reading as a pitch. */
     yacht: "If there’s any money left over, I’ll buy a yacht.",
     donate: {
       cta: "Donate",
       url: "https://buymeacoffee.com/theoldg",
     },
-    /**
-     * A donation split is an ordinary expense (ADR-0010). It opens the form rather
-     * than writing itself: it lands in everyone's ledger, and only you know the amount.
-     */
     split: {
       cta: "Add as a group expense",
-      /** The expense's title in the ledger, forever. "We": once saved it's the group's row. */
       entryTitle: "We liked bida",
     },
   },
@@ -667,7 +513,6 @@ export const copy = {
 
   newGroup: {
     title: "New group",
-    /** The "Which one are you?" step's bar, as joining's is. */
     named: (group: string) => `Create ${group}`,
     name: "Name",
     namePlaceholder: "Group name",
@@ -686,60 +531,44 @@ export const copy = {
       title: "Bad link",
       body: "Ask whoever shared it to send it again.",
     },
-    /** Over the link a failed screen prints (`FailedLink`). */
     linkUsed: "Link used",
     /**
-     * A group link with no secret — usually the address bar copied off a group
-     * screen (group-link.ts). Shown on `/join` with no secret and on `/g` for a
-     * group this phone doesn't hold; "bad link" would send the same address back.
+     * Usually the address bar copied off a group screen; "bad link" would send
+     * the same address back.
      */
     keyless: {
       empty: "This link is missing its password",
       body: "A group’s address in the browser bar leaves out the part that unlocks it. Ask someone in the group to send the invite link from the app’s menu instead.",
-      /** The drawn top bar's title — any group, not one of yours. */
       groupName: "Your group",
     },
     joining: {
       title: "Joining…",
-      /** After a few seconds with nothing: the pull failed, or found nothing yet. */
       body: "Taking a while. Either this phone is offline, or whoever sent the link hasn’t been online since making the group. It carries on by itself.",
     },
-    /**
-     * The group was deleted for everybody (app/delete-my-data/page.tsx). Shown on
-     * `/join`, which would otherwise sit on "Joining…", and on `/g`.
-     */
     deleted: {
       title: "This group was deleted",
       body: "Somebody in the group deleted it from the server, for everyone. Nothing of it is left.",
     },
   },
 
-  /**
-   * Paste link read nothing, so the box asks by hand (components/paste-link.tsx).
-   * Not "Nothing to paste": iOS can withhold a pasteboard that has the link.
-   */
+  /** Not "Nothing to paste": iOS can withhold a pasteboard that has the link. */
   paste: {
     title: "Invite link",
     placeholder: "Paste it here",
     open: "Open",
   },
 
-  /** The demo (app/demo/page.tsx): the words say the one thing looking can't — nothing leaves the phone. */
   demo: {
     opening: "Opening the demo",
-    /** The card at the head of its ledger; it stays, not a toast. */
     title: "Demo group: not synced",
-    /** In the group menu, where Forget group sits for every other group. */
     clear: "Clear the demo",
     clearTitle: "Clear the demo?",
     /**
-     * Not "brings it back": the seed is deterministic, so it restores the story as
-     * shipped. The address is written out because nothing links to `/demo`, and
-     * the caller passes the host since a static export can't know it (`useHost`).
+     * Not "brings it back": the seed restores the story as shipped. The caller
+     * passes the host, which a static export can't know.
      */
     clearBody: (address: string) =>
       `This wipes the demo off the phone, along with anything you did in it. Visit ${address} to create a fresh one.`,
-    /** The one genuinely broken thing: no key, so no invite link to hand over. */
     noLink: {
       title: "No invite link",
       body: "The demo is only ever on the phone it was opened on, so there is nothing to invite anybody to. Make a group of your own to share one.",
@@ -748,18 +577,15 @@ export const copy = {
 
   claim: {
     title: "Which one are you?",
-    /** `/g/claim`'s bar names the group; the question is the body's title. */
     join: (group: string) => `Join ${group}`,
     addPlaceholder: "Add your name",
     continueAs: (name: string) => `Continue as ${name}`,
     pickFirst: "Pick your name",
-    /** In an iOS tab, a tapped link opens the browser, so a home-screen user must paste it. */
     inApp: {
       title: "Have the app?",
       body: (browser: string | undefined) => `Links always open in ${lower(browser)}. Paste this there instead.`,
       copyLink: "Copy",
       copied: "Copied",
-      /** No clipboard at all (some in-app browsers, lib/clipboard.ts). */
       hold: "Hold to copy",
     },
   },
@@ -768,7 +594,6 @@ export const copy = {
 
   group: {
     noGroup: "No group",
-    /** Three ways to be out of step, in the order of how badly you need to know. */
     offlineIdle: "Offline: you may not have everyone’s latest.",
     offlinePending: (waiting: string) => `Offline: ${waiting} waiting.`,
     // There is no secret rotation, so a "fresh" link is identical; reopening the
@@ -777,32 +602,23 @@ export const copy = {
     unreachableIdle: "Can’t reach the server: you may not have everyone’s latest.",
     unreachablePending: (waiting: string) => `Can’t reach the server: ${waiting} stuck on this phone.`,
 
-    /** Marks a balance row for somebody who is no longer in the group. */
     hasLeft: "removed",
 
-    /** The balances screen's title, over the group's name. */
     balances: "Balances",
     history: "History",
-    /** The ledger's clock while it wears its dot. */
     historyNew: "History, new changes",
     people: "People",
     copyLink: "Copy invite link",
-    /** In the menu, above Forget group: the way out with your numbers. */
     export: "Export data",
-    /** The top bar's one button: everything the group can be asked for. */
     menu: "Group menu",
-    /** The clipboard can refuse, and the link is shown nowhere else. */
     linkTitle: "The invite link",
     linkBody: "Copying didn’t work: hold the link to copy it.",
     addEntry: "Add an entry",
 
     empty: { title: "Nothing here yet", body: "Tap + to add the first thing." },
-    /** The ledger's search bar, which slides in once the you-owe card is out of view. */
     search: {
-      /** The blank field's words, and its name to a screen reader. */
       field: "Search",
       clear: "Clear search",
-      /** What heads each run of results: where on the row the words were found, best first. */
       by: {
         title: "by title", payer: "by payer", participant: "by participant",
         currency: "by currency", kind: "by kind", amount: "by amount",
@@ -811,23 +627,17 @@ export const copy = {
     },
     untitled: "Untitled",
     notYours: "not yours",
-    /** The foot of one entry's history, out to the whole group's. */
     groupHistory: "Group history",
     you: {
       owe: "You owe",
       owed: "You’re owed",
       square: "You’re square",
     },
-    /** An expense row's co-payers, after the payer's name: dropping them would be untrue. */
     morePayers: (n: number) => `+${n}`,
-    /** What the people icon and its count stand for, to a screen reader. */
     sharedBy: (people: string) => `shared by ${people}`,
-    /** Two facts on one line: "3 people · 12 entries". */
     metaLine: (a: string, b: string) => `${a} · ${b}`,
     transfer: "Transfer",
-    /** The tag at the end of an income's row: the figure's "−" alone is easy to miss. */
     incomeTag: "income",
-    /** A transfer's title: "Alice → Bob". The arrow is `i-arrow`'s, payer → payee. */
     paidTo: (from: string, to: string) => `${from} → ${to}`,
 
     unsplittable: (n: string) => `${n} couldn’t be split`,
@@ -835,14 +645,8 @@ export const copy = {
     suggestedReimbursements: "Suggested reimbursements",
     allSquare: "Everyone’s square",
     recordTitle: "Record this reimbursement?",
-    /**
-     * Under the suggestions, folded, for whoever the list sends to or from a
-     * stranger. Asked neutrally and answered as the app's reasoning, so it
-     * never tells the reader they misread; only the example takes their seat.
-     */
     notWho: {
       ask: "How are these worked out?",
-      /** Then the term, in bold so it can be searched for, then the case's example. */
       lead: "They use as few payments as possible (",
       term: "debt simplification",
       owe: "). If you owe Luke 10 and Luke owes Leia 10, "
@@ -857,15 +661,12 @@ export const copy = {
   members: {
     title: "People",
     addPlaceholder: "Add someone",
-    /** The name is the member's key, so a duplicate would be one row both write to. */
     taken: (name: string) => `${name} is already here.`,
     removeLabel: (name: string) => `Remove ${name}`,
-    /** A dialog, since the row also removes and invites; the check mark already shows *which*. */
     whoChange: "Change who you are",
     removeTitle: (name: string) => `Remove ${name}?`,
     removeBody: "They aren’t involved in any entry.",
     blockedTitle: (name: string) => `Can’t remove ${name}`,
-    /** "entries", not "expenses": a transfer blocks removal too. */
     blockedBody: (entries: string) => `Named on ${entries}.`,
     lastBody: "Add somebody else first.",
     forget: "Forget group",
@@ -875,39 +676,25 @@ export const copy = {
 
   // ------------------------------------------------------------- quick split
 
-  /** A bill split with people who aren't a group (ADR-0035). It ends by handing you text. */
   quick: {
     title: "Quick split",
-    /**
-     * Under the drawing: the tap between photo and figures, and that nothing is
-     * kept. Not `copy.scan.lede`, which promises an expense form (ADR-0035).
-     */
     lede: "Take a photo of the bill, then tap who had what. It ends in text to paste, and nothing is kept.",
     who: "Who’s splitting",
-    /** The one bill this flow can do nothing with: a total and no lines. */
     noLines: "That receipt has no lines on it. There’s nothing to assign.",
     discardTitle: "Discard this split?",
-    /** Done is the way out of the answer, and the answer is not kept either. */
     doneTitle: "Finished with this split?",
     discardBody: "Nothing about it is kept.",
-    /** Back from the grid: the screen behind it can only scan again. */
     backTitle: "Discard this receipt?",
     backBody: "You’ll have to scan it again.",
     split: "The split",
     copy: "Copy the split",
     copied: "Copied",
-    /** The clipboard refused; the text has to be read off the screen instead. */
     fallbackTitle: "The split",
     fallbackBody: "Copying didn’t work: hold the text to copy it.",
-    /**
-     * Plain lines with an em dash: chat apps aren't monospaced, so space-aligned
-     * tables arrive mangled. Figures are bare — nothing converts (ADR-0035).
-     */
     summary: {
       line: (label: string, amount: string) => `${label}: ${amount}`,
       item: (label: string, amount: string) => `  ${label}: ${amount}`,
       count: (label: string, count: string) => `${label} ×${count}`,
-      /** Stands in as the heading when the scan read no merchant name. */
       total: "Total",
     },
   },
@@ -916,37 +703,25 @@ export const copy = {
 
   entry: {
     gone: { title: "Gone", body: "There is no such entry in this group." },
-    /** Waiting on the sync that may bring it — a notification's tap outruns it. */
     arriving: "Fetching the latest…",
-    /** The link above Edit, when there is no room to say who (`historyMeta`). */
     history: "History",
     createdBy: (who: string) => `Created by ${who}`,
-    /** In place of `createdBy` for an entry that came in with the group. `from` is `importSource`'s. */
     importedBy: (who: string, from?: string) =>
       (from ? `Imported from ${from} by ${who}` : `Imported by ${who}`),
     imported: (from?: string) => (from ? `Imported from ${from}` : "Imported"),
     edited: (n: number) => (n === 1 ? "Edited once" : `Edited ${n} times`),
-    /** After the count: one edit was by somebody, several were last by one. */
     editedBy: (n: number, who: string) => (n === 1 ? `by ${who}` : `last by ${who}`),
-    /** The head's line under the figure: "paid by **Adaś**". */
     byLead: { expense: "paid by", income: "received by" } as Voiced<string>,
-    /** Beside your own name, wherever the entry names you. */
     you: "you",
-    /** The card's last line: what the entry did to you (`YourBalance`). */
     yourBalance: "Your balance",
-    /** Its unfolded sum's two lines, in `effectSum`'s order: up, then down. */
     sumWords: { expense: ["you paid", "your share"], income: ["your share", "you received"] } as
       Record<"expense" | "income", readonly [string, string]>,
-    /** "Split evenly" · "Split by items". */
     splitMode: (label: string, mode: string) => `${label} ${mode}`,
     deleteTitle: (kind: string) => `Delete this ${kind}?`,
     deleteBody: "It can be restored from the history.",
-    /** A deleted entry's bar: "Deleted expense". */
     deletedTitle: (kind: string) => `Deleted ${kind.toLowerCase()}`,
-    /** The band at the head of a deleted entry's screen, beside Restore. */
     deleted: (who: string | undefined) => (who ? `Deleted by ${who}` : "Deleted"),
     restore: "Restore",
-    /** What else Restore puts back: people removed since. */
     restoreBrings: (things: string[]) => {
       const list = things.length < 2 ? things.join("")
         : `${things.slice(0, -1).join(", ")} and ${things[things.length - 1]}`;
@@ -956,14 +731,15 @@ export const copy = {
     to: "To",
   },
 
-  /** The three kinds, and every word the app uses about them (ADR-0010). */
   entryKind: {
     label: { expense: "Expense", income: "Income", transfer: "Transfer" } as Record<EntryKind, string>,
-    /** Over the payer picker: who put it in, or who took it in. Short enough for the form's label column. */
     payer: { expense: "Paid by", income: "Paid to", transfer: "From" } as Record<EntryKind, string>,
-    /** One word for expense and income: both answer "split how", and readers switch often. */
+    /** One word for both: they answer "split how", and readers switch often. */
     split: { expense: "Split", income: "Split", transfer: "To" } as Record<EntryKind, string>,
-    /** "Transfer" versus "expense" is the pair picked wrong, so each says where the money goes. */
+    /**
+     * "Transfer" versus "expense" is the pair picked wrong, so each says where
+     * the money goes.
+     */
     blurb: {
       expense: "Money the group spent",
       income: "Money the group took in",
@@ -976,9 +752,7 @@ export const copy = {
   form: {
     newTitle: "New",
     editTitle: "Edit",
-    /** The title when the kind can't change: editing a transfer. */
     editKind: (kind: string) => `Edit ${kind}`,
-    /** The kind chip's label, and the title of the dialog it opens. */
     kindTitle: "What kind of entry",
     amount: (currency: string) => `Amount in ${currency}`,
     currency: "Currency",
@@ -990,20 +764,13 @@ export const copy = {
     /** The note on a transfer settle-up's Record writes (`balances/page.tsx`); the form never seeds it. */
     reimbursement: "Reimbursement",
     when: "When",
-    /** The payer picker's first row, out to the payers screen. */
     multiPayer: "Multiple people",
-    /** Under "Multiple people" while there is no amount to divide. */
     multiPayerNeedsAmount: "set the amount first",
     discardTitle: (kind: string) => `Discard this ${kind}?`,
     discardTitleEdits: "Discard edits?",
     discardBody: "Changes will be lost.",
     saveFailed: (why: string) => `Couldn’t save: ${why}`,
-    /**
-     * The Save dock's line for each missing field or step, said only after a
-     * refused Save (`dockLine`, lib/entry-check.ts).
-     */
     noRate: (code: string) => `Set the ${code} rate`,
-    /** The same refusal while the feed is still being asked for it. */
     rateLooking: (code: string) => `Looking up the ${code} rate…`,
     noAmount: "Set the amount",
     noTitle: "Set the title",
@@ -1020,8 +787,8 @@ export const copy = {
   },
 
   /**
-   * Who put the money in — or took it in, on an income. Every sentence is
-   * `Voiced`, or an income would say "Ana didn't pay" under "Who received it".
+   * Every sentence is `Voiced`, or an income would say "Ana didn't pay" under
+   * "Who received it".
    */
   payers: {
     title: {
@@ -1032,7 +799,6 @@ export const copy = {
       expense: (name: string) => `${name}’s contribution`,
       income: (name: string) => `How much ${name} received`,
     } as Voiced<(name: string) => string>,
-    /** A row's tap, named by what it would do (`tapLabel`). */
     clear: (name: string) => `Clear ${name}’s amount`,
     giveRest: (name: string) => `Give ${name} the rest`,
     edit: (name: string) => `Type ${name}’s amount`,
@@ -1051,9 +817,8 @@ export const copy = {
 
   split: {
     /**
-     * Each mode's name wherever a split is named. A receipt is one (ADR-0016).
      * "By items", not "From receipt": these name how money divides, not how it
-     * was typed; the photo has its own badge (`form.fromReceipt`).
+     * was typed.
      */
     mode: {
       equal: "Evenly",
@@ -1061,7 +826,6 @@ export const copy = {
       exact: "As amounts",
       receipt: "By items",
     } as Record<SplitSpec["mode"], string>,
-    /** The tab label, without the preposition — a quarter width has no room. */
     receipt: "Items",
     include: (name: string) => `Include ${name}`,
     leaveOut: (name: string) => `Leave ${name} out`,
@@ -1069,23 +833,20 @@ export const copy = {
     moreParts: (name: string) => `More parts for ${name}`,
     partsFor: (name: string) => `${name}’s parts`,
     amountFor: (name: string) => `${name}’s amount`,
-    /** An "as amounts" row's tap, named by what it would do. */
     clearOut: (name: string) => `Clear ${name}’s amount and leave them out`,
     joinRest: (name: string) => `Have ${name} share what’s left`,
     notInvolved: "not involved",
-    /** The head box over the list (`toggleEveryone`): its count, and what its tap would do. */
     everyone: {
       of: (total: number) => `of ${total}`,
       count: (n: number, total: number) => `${n} of ${total} in the split`,
       in: "Include everyone",
       out: "Leave everyone out",
     },
-    /** The footer's verdicts. Wording checked by lib/format.test.ts. */
+    /** Wording checked by lib/format.test.ts. */
     nobody: "Nobody is included yet",
     allocated: (allocated: string, total: string) => `${allocated} of ${total} allocated`,
     under: "left to split",
     over: "too much",
-    /** As amounts, the rows with no figure: what they share, or that there's none. */
     restShared: (left: string, n: number) => `${left} left, shared by ${n}`,
     nothingLeft: (who: string) => `Nothing left for ${who}`,
     people: (n: number) => `${n} people`,
@@ -1094,17 +855,11 @@ export const copy = {
   // ------------------------------------------------------------- receipts
 
   scan: {
-    /** The scan-first screen: its title, which the scan FAB says too, and what it promises. */
     title: "Scan a receipt",
-    /**
-     * The screen's drawing: a bill and the expense it becomes. These are its
-     * contents, not a caption; `alt` describes it for whoever can't see it.
-     */
     diagram: {
       alt: "Photograph the bill and the expense fills itself in: what it cost, what it’s called, and when.",
       /**
-       * A cantina tab, to go with the stand-ins below. The lines add up to
-       * `amount`, the form's figure — `lib/scan/diagram.test.ts` checks the sum.
+       * The lines add up to `amount` — `lib/scan/diagram.test.ts` checks the sum.
        */
       lines: [
         ["Bantha steak", "18.00"],
@@ -1116,67 +871,48 @@ export const copy = {
       title: "Cantina",
       amount: "48.20",
       date: "4 May",
-      /** Fills the drawing's three people when the group has fewer. */
       people: ["Chewie", "Obi-Wan", "Leia"],
     },
-    /** Under the drawing: the form comes back filled, and the lines are a way to split. */
     lede: "Take a photo to fill in the expense. Split it evenly, or line by line.",
-    /** The two halves of `ScanPair`: two doors to one act. What's scanned is said by the screen. */
     snap: "Scan",
     rescan: "Rescan",
     upload: "Upload",
     reading: "Reading…",
     camera: "Take a photo of a receipt",
     library: "Upload a receipt photo",
-    /**
-     * The third way in, on the Items tab only: words instead of a photo
-     * (docs/receipt-scanning.md#typing-a-bill-in). Apart from the pair, which is
-     * one act with two doors. An invitation, not a noun like "Bill text".
-     */
     typeIn: {
-      /** Short, as three doors share a phone’s width. */
       open: "Type",
-      /**
-       * At the chip register a bill is already read, and the box opens on it
-       * (`billAsText`). Not "Edit": it stands under "Edit who-had-what", on a
-       * screen reached by "Edit", and the grid is the edit people mean.
-       */
+      /** Not "Edit": the grid is the edit people mean. */
       asText: "As text",
       title: "The bill as text",
       /**
-       * Asks for items (the Items tab needs lines) and no format: per-unit or
-       * per-line prices and no total all work. Naming a format teaches people to
-       * tidy bills for the app.
+       * Asks for items and no format: naming one teaches people to tidy bills for
+       * the app.
        */
       lede: "The items and prices, in any format.",
       placeholder: "3 chicken skewers at 13\nand 10 beef at 15\nlarge cola 10\ntip 10",
       field: "The bill, as text",
       confirm: "Read it",
-      /** Only near the cap. */
       left: (n: number) => `${n} characters left`,
       full: "That’s the longest bill this will read. Trim it, or photograph it instead.",
       /**
-       * A photograph's reading written back into the box (`billAsText`), in the
-       * words the typed prompt reads: "Tax on top" because tax inside the prices
-       * is read as none, and a deduction is written with its minus.
+       * In the words the typed prompt reads: "Tax on top" because tax inside the
+       * prices is read as none.
        */
       written: { tip: "Tip", tax: "Tax on top", discount: "Discount", total: "Total" },
     },
-    /** The same screen, named for the step left: nobody assigned yet, or a change to one. */
     assignWhoHadWhat: "Assign who had what",
     editWhoHadWhat: "Edit who-had-what",
     /**
-     * True of both paths: this line can't tell whether a key was brought, and
-     * only a brought free-tier key trains on the bill. `/about` draws the difference.
+     * True of both paths: only a brought free-tier key trains on the bill, and
+     * `/about` draws the difference.
      */
-    /** Names what the control sends: a photo or the text. */
     terms: "The bill is sent to Google",
     failed: "Couldn’t read that receipt.",
     keptOld: "The old one is still assigned.",
     /**
-     * One refusal per way `checkScan` fails, each asking for something different
-     * back. Two sets, because the fix depends on the medium: "a flatter photo" is
-     * no help to somebody who typed it.
+     * Two sets, because the fix depends on the medium: "a flatter photo" is no
+     * help to somebody who typed it.
      */
     problem: {
       photo: {
@@ -1196,23 +932,21 @@ export const copy = {
     offline: "You’re offline: scanning needs a connection.",
     busy: "Gemini’s busy. Try again in a minute.",
     /**
-     * Our cap, unlike `busy`: waiting doesn't help a spent budget. The only place
-     * the cap is mentioned. "Type this one in" means into the form by hand — the
-     * Type button would spend the same refused budget.
+     * Waiting doesn't help a spent budget. "Type this one in" means by hand — the
+     * Type button would spend the same budget.
      */
     limit: {
       you: "That’s your readings for now: reading a bill is capped. Fill the form in by hand, or come back later.",
       global: "The shared reading budget is spent. Fill the form in by hand, or try later.",
     },
     /**
-     * Fail-closed and named. `browser` is this phone's network (try another);
-     * `server` is the deployment's key (retrying can't help).
+     * `browser` is this phone's network (try another); `server` is the
+     * deployment's key (retrying can't help).
      */
     unverified: {
       browser: "Couldn’t check this browser: scanning needs challenges.cloudflare.com.",
       server: "This browser check was refused: scanning is misconfigured here. Fill the form in by hand.",
     },
-    /** A brought key stops working; neither is fixed by retrying, so both name the screen the key lives on. */
     key: {
       refused: "Google refused your key. Check it in Settings, under Advanced.",
       spent: "Your key is out of quota for now. Try later, or remove it in Settings, under Advanced, to use the shared one.",
@@ -1225,26 +959,14 @@ export const copy = {
     whoWasThere: "Who was there",
     wasThere: (name: string) => `${name} was there`,
     wasntThere: (name: string) => `${name} wasn’t there`,
-    /** Charges nobody ordered (`BillExtras`). "Discounts" plural: every deduction pooled. */
     extra: { tip: "Tip + service", tax: "Tax", discount: "Discounts" } satisfies Record<ExtraKind, string>,
     tipPercent: (percent: number) => `${percent}%`,
-    /** `null` where the screen prints no currency at all — a quick split (ADR-0035). */
     tipLabel: (currency: string | null) =>
       currency ? `Tip and service, in ${currency}` : "Tip and service",
-    /** Named for what a press does, like the theme switch. "As printed": the words on the paper. */
     translate: { on: "Show the bill in English", off: "Show the bill as printed" },
-    /** The two readings, on a history diff line. */
     shown: { english: "In English", printed: "As printed" },
-    /**
-     * Which portion of a split line this is. Short: that line is the narrowest on
-     * screen, and "1 of 2" wrapped, making portions uneven. `hadPortion` is the
-     * screen-reader version.
-     */
+    /** Short: "1 of 2" wrapped on the narrowest line on screen. */
     portion: (index: number, of: number) => `${index}/${of}`,
-    /**
-     * ×N toggles the portions view. The bill holds them split from the start,
-     * so folding is never called merging.
-     */
     showPortions: (n: number) => `Show the ${n} portions one by one`,
     openItem: (label: string, n: number) => `Show the ${n} ${label} portions one by one`,
     mergeBack: "Show as one line",
@@ -1253,21 +975,14 @@ export const copy = {
     mergeItem: (label: string, n: number) => `Show the ${n} ${label} portions as one line`,
     had: (name: string, label: string) => `${name} had ${label}`,
     hadAll: (name: string, label: string, n: number) => `${name} had all ${n} ${label}`,
-    /** The same cell while somebody else is on every portion too. */
     sharedAll: (name: string, label: string, n: number) => `${name} shared the ${n} ${label}`,
-    /** A cell that cannot be tapped like the others: the tap opens the line. */
     hadSome: (name: string, label: string, n: number) =>
       `${name} had some of the ${n} ${label}. Open the line to see which`,
     hadPortion: (name: string, label: string, index: number, of: number) =>
       `${name} had ${label}, portion ${index} of ${of}`,
-    /** The line itself, which is the everybody/nobody switch for its row. */
     everyone: (label: string) => `${label}: everyone, or no one`,
     share: (name: string) => `${name}’s share`,
     needsSomeone: "Every item needs at least one person.",
-    /**
-     * Why the rows under the items have no cells: said once, beneath them. Names
-     * only the kinds this bill has, in print order.
-     */
     extraNote: (kinds: ExtraKind[]) => {
       const names = kinds.map((k) => extraSubject[k]);
       const subject = names.length < 2
@@ -1291,16 +1006,13 @@ export const copy = {
     deleted: (label: string) => `${label} · deleted`,
     untitled: "Untitled entry",
     more: (rest: string) => `Show ${rest} more`,
-    /** On the jagged line under what is new since the ledger last showed it. */
     newLine: "↑ New",
 
-    /** A field name on a secondary line of one revision; the sentence above said who. */
     field: {
       kind: "Kind",
       involved: "Who’s involved",
       split: "Split",
       splitMode: "Split mode",
-      /** A new entry's split, its mode in the label: "Split by items". */
       splitAs: (mode: string) => `Split ${mode}`,
       receipt: "Receipt",
       billText: "Bill text",
@@ -1318,9 +1030,7 @@ export const copy = {
       note: "Note",
     },
 
-    /** One sentence per revision. `who` is the actor's own name. */
     createdEntry: (who: string, noun: string) => `${who} created this ${noun}`,
-    /** An entry that came in with the group: every one shares the import's moment and author. */
     importedEntry: (who: string, noun: string, from?: string) =>
       `${who} imported this ${noun}${from ? ` from ${from}` : ""}`,
     deletedEntry: (who: string, noun: string) => `${who} deleted this ${noun}`,
@@ -1329,46 +1039,32 @@ export const copy = {
     toIncome: (who: string) => `${who} turned this into an income`,
     toExpense: (who: string) => `${who} turned this back into an expense`,
     changedInvolved: (who: string) => `${who} changed who’s involved`,
-    /** The same people, a different share each. */
     changedShares: (who: string) => `${who} changed how it’s split`,
-    /** The same people, in a mode it wasn't in: "Theo split it by items". */
     splitAs: (who: string, mode: string) => `${who} split it ${mode}`,
-    /** People and what they are down for, on a line: "Han, Luke 20.00". */
     shareOf: (name: string, value: string) => `${name} ${value}`,
-    /** The whole group as it was, said once rather than name by name. */
     everyone: "Everyone",
     everyoneBut: (names: string) => `Everyone but ${names}`,
-    /** The same, inside a phrase: "€30.00 · for everyone but Cy". */
     everyoneIn: "everyone",
     everyoneButIn: (names: string) => `everyone but ${names}`,
-    /** A printed bill's line with a count: "2× 24.00". */
     quantity: (n: number, amount: string) => `${n}× ${amount}`,
-    /** A bill line, and what happened to it: "Blue milk: Ben → Chewie". */
     onLine: (line: string, what: string) => `${line}: ${what}`,
     handedOver: (was: string, now: string) => `${was} → ${now}`,
     joinedLine: (came: string, stayed: string) => `${came} joined ${stayed}`,
     leftLine: (gone: string) => `${gone} dropped out`,
-    /** A bill line left with nobody on it. */
     nobody: "nobody",
-    /** The grid's people marked present, on a row of their own. */
     atTheTable: "At the table",
-    /** A new entry: its amount, and who it was spent on. */
     forPeople: (amount: string, names: string) => `${amount} · for ${names}`,
-    /** Only worth a line because the entry screen prints the mode. */
     rewroteSplit: (who: string) => `${who} changed how the split is written`,
     addedReceipt: (who: string) => `${who} added a receipt`,
     changedReceipt: (who: string) => `${who} changed the receipt`,
     removedReceipt: (who: string) => `${who} removed the receipt`,
-    /** The typed bill reworded, and read back to the same lines. */
     retypedBill: (who: string) => `${who} retyped the bill`,
     changedWhoHadWhat: (who: string) => `${who} changed who had what`,
-    /** The translate toggle, saved with the bill (`receiptEnglish`). */
     readBill: (who: string, english: boolean) =>
       english ? `${who} showed the bill in English` : `${who} showed the bill as printed`,
     changedAmount: (who: string) => `${who} changed the amount`,
     changedCurrency: (who: string) => `${who} changed the currency`,
     changedRate: (who: string) => `${who} changed the rate`,
-    /** Who paid in, then how much — the other way round on an income (`entryKind.payer`). */
     payerWho: {
       expense: (who: string) => `${who} changed who paid`,
       income: (who: string) => `${who} changed who received it`,
@@ -1383,7 +1079,6 @@ export const copy = {
     changedPhotos: (who: string, added: boolean, photos: string) =>
       `${who} ${added ? "added" : "removed"} ${photos}`,
     newDevice: (who: string) => `${who} started editing from a new device`,
-    /** A phone changing hands reads as a change of person. */
     became: (was: string, now: string) => `${was} became ${now}`,
     recordedTransfer: (who: string) => `${who} recorded a transfer`,
     importedTransfer: (who: string, from?: string) =>
@@ -1396,12 +1091,9 @@ export const copy = {
     joined: (them: string) => `${them} joined the group`,
     added: (who: string, them: string) => `${who} added ${them}`,
     removed: (who: string, them: string) => `${who} removed ${them}`,
-    /** A healer's repair: names the cause, not an actor. */
     readded: (them: string) => `${them} was removed, but an entry still names them: added back`,
-    /** A repair older builds wrote, when rates were the group's. Names the cause, not the actor. */
     restoredRate: (code: string) =>
       `The ${code} rate was cleared, but entries still use it: put back`,
-    /** Rates moving onto each entry: the group's old one written on, so nothing moved. */
     rateMovedOnto: (code: string) => `The group’s ${code} rate was written onto this entry, as each now keeps its own`,
     renamedSelf: (who: string) => `${who} changed their name`,
     renamed: (who: string, was: string) => `${who} renamed ${was}`,
@@ -1409,7 +1101,6 @@ export const copy = {
     updatedSelf: (who: string) => `${who} updated their own details`,
     createdGroup: (who: string) => `${who} created the group`,
     importedGroup: (who: string, from: string) => `${who} imported the group from ${from}`,
-    /** What an import read, after "from". */
     importSource: { tricount: "Tricount", file: "a file" } as Record<ImportSource, string>,
     renamedGroup: (who: string) => `${who} renamed the group`,
     archivedGroup: (who: string) => `${who} archived the group`,
@@ -1418,7 +1109,6 @@ export const copy = {
     setRate: (who: string, code: string) => `${who} set the ${code} rate`,
     changedRateFor: (who: string, code: string) => `${who} changed the ${code} rate`,
     removedRate: (who: string, code: string) => `${who} removed the ${code} rate`,
-    /** A rate's diff reads as the sentence the dialog shows: 1 MAD = 0.0921 EUR. */
     ratePair: (code: string, rate: string, base: string) => `1 ${code} = ${rate} ${base}`,
   },
 
@@ -1433,20 +1123,14 @@ export const copy = {
   // ------------------------------------------------------ exchange rates
 
   rates: {
-    /** The dialog: one entry's rate. Both directions of the same number, and they move together. */
     editTitle: (code: string) => `${code} rate`,
-    /** "1 PLN =" — the label before each of the two fields. */
     oneOf: (code: string) => `1 ${code} =`,
-    /** Where the number on screen came from, said under the fields. */
     from: {
       fetched: (date: string) => `looked up: the rate on ${date}`,
       fetchedUndated: "looked up",
       typed: "yours",
-      /** The feed failed, so the entry took the group's most recent one in this currency. */
       copied: "couldn’t look it up: the group’s last rate",
-      /** Read off the ledger the group was imported from. */
       imported: "the rate it was imported with",
-      /** Written while rates were the group's: what the group said then. */
       group: "the group’s rate when this was written",
       loading: "looking it up…",
       offline: "offline: type it",
@@ -1454,9 +1138,7 @@ export const copy = {
     },
     refetch: "Look it up",
     failed: (why: string) => `Couldn’t save the rate: ${why}`,
-    /** Before a rate on its chip, the way to the rate dialog: "@ 4.3731". */
     at: "@",
-    /** The row is a button that opens something other than its fields. */
     openFor: (code: string) => `Set the ${code} rate`,
   },
 } as const;

@@ -1,8 +1,6 @@
 /* ============================================================
-   THE FACE — JetBrains Mono, a variable font, from public/fonts/ (OFL.txt
-   there). Committed rather than fetched by `next/font/google` at build time,
-   which failed builds whenever Google answered oddly. Google's subsets, so a
-   screen of Latin loads 31kB and a Cyrillic group name pulls its own file.
+   THE FACE — JetBrains Mono, variable, committed in public/fonts/ (OFL.txt
+   there): `next/font/google` failed builds whenever Google answered oddly.
    ============================================================ */
 @font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 400 700; font-display: swap;
   src: url(/fonts/jetbrains-mono-cyrillic-ext.woff2) format("woff2");
@@ -22,12 +20,8 @@
 @font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 400 700; font-display: swap;
   src: url(/fonts/jetbrains-mono-latin.woff2) format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD }
-/* Google's latin subset has ↑ and ↓ but not →, which a transfer's title and
-   the history's lines are drawn with. This file is the face's own "->"
-   ligature, moved onto → and two cells wide: the font's → is a small
-   chevron, and the text stays a real arrow for a screen reader and for a
-   notification, which shows it in the phone's font. 2.211 like the rest,
-   from Google with `&text=->`, then the glyph copied in fontTools. */
+/* Google's latin subset has no →. This is the face's "->" ligature moved onto →,
+   so the text stays a real arrow for screen readers and notifications. */
 @font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 400 700; font-display: swap;
   src: url(/fonts/jetbrains-mono-arrows.woff2) format("woff2");
   unicode-range: U+2192 }
@@ -52,7 +46,6 @@ html {
   -webkit-text-size-adjust: 100%;
   /* A tap is answered by `--press` on the control itself. */
   -webkit-tap-highlight-color: transparent;
-  /* /diag and /g/export. */
   tab-size: 4;
 }
 
@@ -130,7 +123,6 @@ textarea { resize: vertical }
   --press-i:rgba(251,251,250,.17);
   /* The scan screen's picture: at palette values it went to mush in dark. */
   --draw-bg:var(--card-2); --draw-rule:var(--rule); --draw-ink:var(--muted);
-  /* The torn bill has only its fill. Darker in light: white paper vanishes. */
   --draw-paper:var(--card-3);
   /* A segmented control's chosen tab: raised means lighter than its track,
      which in dark is no longer `--card`. */
@@ -138,8 +130,6 @@ textarea { resize: vertical }
   /* A hairline ring: nothing in this design floats. */
   --shadow-s:0 0 0 1px rgba(22,23,26,.09);
   --r-s:2px; --r-m:3px; --r-l:4px;
-  /* What the keyboard covers (components/viewport.tsx). */
-  /* The field label column (`.fieldlabel`). */
   --label-w: 64px;
   --kb: 0px;
   --kb-gap: 0px;
@@ -235,7 +225,6 @@ input, textarea, .selectable {
   user-select: text;
 }
 
-/* Tabular, so a column of amounts can be eyeballed without being read. */
 .num {
   font-family: var(--f-mono);
   font-variant-numeric: tabular-nums;
@@ -251,8 +240,7 @@ input, textarea, .selectable {
   font-weight: 500;
 }
 
-/* Yours: a wash plus an edge bar, so it survives colour-blindness. In the
-   split and payer editors the wash marks who is in, and "(you)" marks you. */
+/* Yours: a wash plus an edge bar, so it survives colour-blindness. */
 .mine, .inrow {
   background: var(--hl);
 }
@@ -343,12 +331,10 @@ html[data-banner="manual"] .ghost-manual { display: block }
   flex: none; position: relative }
 .topbar h3 { font-size: 17px; letter-spacing: -.03em; line-height: 1.15 }
 .topbar-title { min-width: 0 }
-/* At most two lines of title, one of sub-line; longer belongs in the screen. */
 .topbar h3, .topbar .sub { display: -webkit-box; -webkit-box-orient: vertical;
   overflow: hidden; overflow-wrap: anywhere }
 .topbar h3 { -webkit-line-clamp: 2 }
 .topbar .sub { -webkit-line-clamp: 1 }
-/* Ends before a centred `mid` control, elided rather than wrapped. */
 .topbar-title.capped { max-width: calc(50% - 52px) }
 .topbar-title.capped h3, .topbar-title.capped .sub {
   display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
@@ -356,55 +342,39 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .topbar-mid { position: absolute; inset: max(10px, env(safe-area-inset-top)) 0 12px;
   display: flex; align-items: center; justify-content: center; pointer-events: none }
 .topbar-mid > * { pointer-events: auto }
-/* No sub-line, so its height goes to the name and the air around it. */
 .brand { display: flex; align-items: center; font-size: 21px; padding: 4px 0 }
 .topbar .sub { font-size: 10.5px; color: var(--muted); font-family: var(--f-mono); letter-spacing: .02em;
   text-transform: uppercase }
 .iconbtn { width: 32px; height: 32px; border-radius: var(--r-s); display: grid; place-items: center;
   background: var(--card-2); border: 1px solid var(--rule-soft); color: var(--ink-2); flex: none }
-/* Says so before it is pressed rather than by ignoring the press. */
 .iconbtn:disabled { background: transparent; border-color: transparent; color: var(--muted) }
-/* A switch, lit while on, in the same highlight as everywhere "on" appears. */
 .iconbtn.lit { background: var(--hl); border-color: var(--hl-edge); color: var(--hl-ink) }
-/* Destinations pressed by a thumb reaching across the phone: bigger. */
 .topbar .iconbtn { width: 37px; height: 37px }
-/* On every screen, so it needs no box: a bare glyph, the square still the target. */
 .iconbtn.back { background: transparent; border-color: transparent; margin-inline: -9px -6px }
 /* The ledger's search (components/ledger-search.tsx). Idle, the dock has no
-   height and the bar lies over the head of the list, so sliding in moves no
-   row; the clip is what it slides out from under, the top bar having no ground
-   of its own. Holding a query it stands in the column instead. `--shown` is
-   how far out the scroll has brought it, 0 to 1, written a frame at a time:
-   no transition follows it, or a slow scroll would lag. */
+   height and the bar lies over the list, so sliding in moves no row. `--shown` is
+   written a frame at a time: a transition would lag a slow scroll. */
 .appbody > .searchdock { flex: none; position: relative; height: 0; z-index: 2 }
 .searchclip { position: absolute; inset: 0 0 auto; overflow: hidden; pointer-events: none }
 .searchdock[data-searching] { height: auto }
 .searchdock[data-searching] .searchclip { position: static }
 .searchbar { height: var(--search-h); padding: 0 16px 10px; background: var(--card); border-bottom: 1px solid var(--rule-soft);
   transform: translateY(calc((var(--shown, 0) - 1) * 100%)) }
-/* Away, it is not drawn at all: slid up by its own height its bottom rule
-   still landed on the clip's first pixel row on some screens, a line across
-   the head of the list. Held counts as out: `data-on` is the next frame's to
-   write, and the menu's caret goes in within the tap. */
+/* Away, not drawn at all: slid up, its bottom rule still landed on the clip's
+   first pixel row on some screens. */
 .searchdock:not([data-on], [data-held]) .searchbar { visibility: hidden }
 .searchdock:is([data-on], [data-held]) .searchbar { pointer-events: auto }
-/* Held, it is out whole — by the same transform, so handing it back to the
-   scroll is a change of number and not of how the bar is drawn. Taken from
-   the scroll it has a distance to cover that no finger is moving it through,
-   so that one move is eased; handed back, it is the scroll's at once. */
+/* Held, it is out by the same transform, eased only when taken from the scroll. */
 .searchdock[data-held] .searchbar { --shown: 1; transition: transform .26s cubic-bezier(.2, .8, .2, 1) }
 .searchbar .field { height: 100%; padding-block: 0 }
-/* Once the bar is out over the whole ledger, the rows' box fills the screen
-   under it, so a list too short to scroll can still be brought to the search's
-   base state (`searchBase`). `data-room` outlasts the bar until the list is
-   back at its head. */
+/* The rows' box fills the screen under the bar, so a list too short to scroll
+   still reaches the search's base state. */
 .searchdock:is([data-room], [data-held]):not([data-searching]) + .scroll > .searchroom { min-height: calc(100% - var(--search-h)) }
 .searchclear { flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin: -6px -8px -6px 0;
   color: var(--ink-2); border-radius: var(--r-s) }
 .searchclear:active { background: var(--press) }
 .spacer { margin-left: auto }
 .muted { color: var(--muted) }
-/* The build number on `/about`: a stamp, not a control. */
 .topbarver { font-family: var(--f-mono); font-size: 11px; letter-spacing: .02em;
   color: var(--muted) }
 
@@ -414,45 +384,34 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .row { display: flex; gap: 12px; align-items: center; padding: 11px 16px;
   border-bottom: 1px solid var(--rule-soft); position: relative; width: 100% }
 .row:last-child { border-bottom: 0 }
-/* Slim: a date heads a run of entries, and at a row's height it read as one.
-   Caps only, so the padding is uneven: 7/6 puts the ink 9px from each edge. */
+/* Caps only, so the padding is uneven: 7/6 puts the ink 9px from each edge. */
 .daylabel { font-family: var(--f-mono); font-size: 10px; line-height: 13px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--muted); padding: 7px 16px 6px; background: var(--card-2);
   border-bottom: 1px solid var(--rule-soft); font-weight: 500 }
 .avatar { width: 34px; height: 34px; border-radius: var(--r-s); display: grid; place-items: center;
   font-size: 12px; font-weight: 600; letter-spacing: -.02em; flex: none;
   background: var(--card-2); color: var(--ink-2); border: 1px solid var(--rule) }
-/* A group's: the square gives way to a slip of paper (`Avatar`). The slip is
-   drawn, so its torn edges can carry the border the square's box would. */
 .avatar.receipt { background: none; border: 0; color: var(--slip-ink); position: relative; display: block }
 .avatar.receipt svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible }
 .avatar.receipt .slip { fill: var(--slip); stroke: var(--slip-edge); stroke-width: 1; stroke-linejoin: round }
 .avatar.receipt .rinit { position: absolute; inset: 0; display: grid; place-items: center;
   font-family: var(--f-mono) }
 
-/* Two jobs, so two squares echoing the ledger's FABs. Outside `.scroll`, or
-   iOS's rubber-band would carry them. */
+/* Outside `.scroll`, or iOS's rubber-band would carry them. */
 .homepair { flex: none; padding: 16px 16px max(28px, calc(env(safe-area-inset-bottom) + 12px)) }
-/* Centred: a half-screen square would outweigh the list. */
 .starttiles { display: flex; justify-content: center; gap: 20px }
 .starttile { flex: 1; max-width: 100px; aspect-ratio: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 9px; border-radius: var(--r-s);
   font-weight: 600; font-size: 12px; letter-spacing: -.01em; text-align: center }
-/* The "+" at this size: the one inversion, on the right where the thumb is. */
 .start-p { background: var(--brand); color: var(--brand-ink) }
 .start-p:active { background-image: linear-gradient(var(--press-i), var(--press-i)) }
-/* Outlined like `.fab-2`: the same destination, half the voice. */
 .start-s { background: var(--card); color: var(--ink); border: 1.5px solid var(--ink) }
 
-/* The install card's title is its disclosure, with the bill's chevron: one
-   idiom for "this folds". */
 .nudgehead { display: flex; align-items: center; justify-content: space-between;
   gap: 10px; width: 100%; text-align: left; font-size: 14px; font-weight: 600;
   color: var(--ink) }
-/* Centred on the you-owe card's larger chevron below. */
 .nudgehead .kvchev { margin-right: 4.5px }
 
-/* `/about` and `/settings`: prose in a measured column, no cards. */
 .about { display: flex; flex-direction: column; gap: 22px;
   max-width: 34em; margin-inline: auto; padding-top: 6px; padding-bottom: 34px }
 .aboutsect h4 { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .12em;
@@ -463,13 +422,11 @@ html[data-banner="manual"] .ghost-manual { display: block }
 /* The section's paragraph rule outweighs `.failure`. */
 .aboutsect p.failure { font-size: 12px; color: var(--debit) }
 .aboutsect p strong { color: var(--ink); font-weight: 600 }
-/* Mid-sentence, only the underline tells a link apart. */
 .aboutsect p a, .warnlist li a { text-decoration: underline; text-underline-offset: 2px;
   text-decoration-color: var(--rule) }
 .installfold > button { display: flex; align-items: center; gap: 6px;
   font-size: 12px; color: var(--muted); text-align: left }
 .aboutsect .installfold p { font-size: 12px; margin-top: 6px; padding-left: 16px }
-/* `/delete-my-data`'s warnings: a list, read in the half second before a decision. */
 .warnlist { display: flex; flex-direction: column; gap: 9px; margin: 10px 0 0;
   padding: 0; list-style: none }
 /* A sentence with a link must be one element, or the link drops to its own row. */
@@ -484,20 +441,15 @@ html[data-banner="manual"] .ghost-manual { display: block }
   gap: 8px; font-size: 13px; line-height: 1.5; color: var(--ink-2) }
 .installsteps li::before { counter-increment: step; content: counter(step) ".";
   font-family: var(--f-mono); font-size: 12px; color: var(--muted) }
-/* The glyph iOS draws on the button the step names. */
 .installsteps .stepicon { color: var(--ink-2) }
 .installclip { display: block; width: 220px; height: auto; margin: 4px auto 12px;
   border: 1px solid var(--rule); border-radius: var(--r-l) }
-/* The act under a list of people. Outside `.scroll`, or it rides iOS's
-   rubber-band; the scroller is only as tall as its content, so the dock sits
-   under the last name until the list fills the screen. Pays `--kb` for both. */
+/* Outside `.scroll`, or it rides iOS's rubber-band. Pays `--kb`. */
 .appbody > .whodock { flex: none; background: var(--card);
   padding-bottom: calc(var(--kb) + max(12px, env(safe-area-inset-bottom))) }
-/* On `/g/claim` the "Have the app?" card is under it and owns the edge. */
 .appbody > .whodock:has(+ .inappdock) { padding-bottom: calc(var(--kb) + 14px) }
 .scroll:has(+ .whodock) { flex: 0 1 auto; padding-bottom: 0; scroll-padding-bottom: 0 }
 .itemscroll:has(+ .whodock) { flex: 0 1 auto }
-/* Hidden while a name is typed: the keyboard leaves room for the field or the card. */
 .inappdock { flex: none; padding: 10px 16px max(12px, env(safe-area-inset-bottom)) }
 :root[data-kb] .inappdock { display: none }
 .inapptitle { font-size: 13px; font-weight: 600; color: var(--ink); text-wrap: pretty }
@@ -516,7 +468,6 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .linkbox.on { border-color: var(--ink-2) }
 .linkbox.on .linkboxstate { color: var(--ink) }
 .linkbox:active { transform: scale(.99) }
-/* One stored row, as evidence for the claim above it: an exhibit, so centred. */
 .aboutrow { margin: 13px auto 0; border-collapse: separate; border-spacing: 0;
   background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-m);
   font-size: 11.5px; line-height: 1.5; overflow: hidden }
@@ -524,23 +475,17 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .aboutrow th { color: var(--muted); border-bottom: 1px solid var(--rule-soft) }
 .aboutrow td { color: var(--ink); overflow-wrap: anywhere }
 .aboutrow + p { margin-top: 13px }
-/* `/settings` borrows /about's column, eyebrows and all, and the add-a-name
-   row. A group of settings is titled large, each setting under an eyebrow. */
 .settings .aboutsect h3 { font-size: 16px; font-weight: 650; letter-spacing: -.02em;
   color: var(--ink); margin-bottom: 8px }
 /* Outweighs `.addrow.editing`'s margins by a class: here the row is the column's width. */
 .settings .addrow.keyrow { margin: 16px 0 0; width: 100% }
-/* Set down from the lede, or the fold reads as that paragraph's last line. */
 .settings .installfold { margin-top: 16px }
-/* Settings' way on to Advanced: a row, out to the column's edges so its press
-   wash has room, and quieter than the settings above it — the chevron says it
-   is a screen, not a section. */
 .setlink { display: flex; align-items: center; justify-content: space-between; gap: 12px;
   margin-inline: -16px; padding: 13px 16px; border-top: 1px solid var(--rule-soft);
   font-size: 14px; font-weight: 500; color: var(--ink-2) }
 .setlink svg { color: var(--muted) }
-/* As wide as its words, not the column: a choice of two or three, not a tab
-   bar. Equal columns, so the chosen one's weight moves nothing. */
+/* As wide as its words, not a tab bar. Equal columns, so the chosen one's weight
+   moves nothing. */
 .settings .seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin-top: 2px }
 .settings .seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   padding: 7px 16px; font-size: 12.5px }
@@ -551,10 +496,8 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .notwho p { font-size: 12px; line-height: 1.55; color: var(--ink-2); margin-top: 6px; padding-left: 16px }
 .notwho p strong { color: var(--ink); font-weight: 600 }
 .keyinput { font-family: var(--f-mono); font-size: 12.5px; font-weight: 500 }
-/* Locked: muted ground, so the row reads as filled in rather than waiting. */
 .keyrow.locked { background: var(--card-2); border-color: var(--rule-soft) }
 .keyrow.locked .keyinput { color: var(--ink-2); -webkit-text-fill-color: var(--ink-2); opacity: 1 }
-/* The build number, and beside it the Reload when a newer one is waiting. */
 .verrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px }
 .vernum { font-family: var(--f-mono); font-size: 13px; color: var(--ink) }
 .vernote { font-size: 12px; line-height: 1.5; color: var(--muted); margin-top: 2px }
@@ -562,7 +505,6 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .keynote { font-size: 12px; line-height: 1.5; color: var(--muted); margin: 9px 2px 0 }
 
 .aboutcontact { display: flex; align-items: center; gap: 22px }
-/* Underlined because they leave the app. */
 .aboutlinks { display: flex; flex-direction: column; align-items: flex-start; gap: 9px;
   margin-top: 13px }
 .aboutlink { display: inline-flex; align-items: center; gap: 8px; min-height: 32px;
@@ -571,7 +513,6 @@ html[data-banner="manual"] .ghost-manual { display: block }
   text-decoration-color: var(--rule) }
 .aboutlink:active { opacity: .6 }
 .aboutlink svg { color: var(--muted); flex: none }
-/* The field that adds a person is built like the row it becomes. */
 .addrow { padding-top: 16px }
 .addname { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font-size: 13.5px; font-weight: 600; color: var(--ink); padding: 0 }
@@ -579,7 +520,6 @@ html[data-banner="manual"] .ghost-manual { display: block }
 /* The 32px plus borrows the row's padding to make a thumb-sized target. */
 .addrow .iconbtn { position: relative }
 .addrow .iconbtn::before { content: ""; position: absolute; inset: -8px }
-/* A typed name is not on the list until the plus files it, so it is boxed. */
 .addrow.editing { margin: 6px 16px 10px; padding: 10px 11px; width: auto;
   background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-s) }
 /* In a list the box is always there, transparent, and margin + border +
@@ -590,7 +530,6 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .addrow.editing:has(+ .addwarn) { margin-bottom: 0 }
 .addwarn { margin: 0; padding: 0 16px 13px 16px }
 
-/* Where a row's button would be, so the list keeps one right-hand column. */
 .rmark { width: 32px; height: 32px; display: grid; place-items: center; flex: none }
 
 .rmain { min-width: 0; flex: 1 }
@@ -605,9 +544,8 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .rmain.solo > .rtitle { align-self: center }
 .sologhost { visibility: hidden }
 .sologhost > * { display: block }
-/* An expense's line (`ExpenseMeta`): one line tall, so the head count falls
-   out of sight when the name leaves it no room. The name shrinks into its
-   ellipsis; the "+1" beside it and an income's tag never go. */
+/* One line tall, so the head count drops out of sight when the name leaves it no
+   room. */
 .rmeta.paidby { display: flex; height: 1.5em; line-height: 1.5em }
 .paidby .who { display: flex; min-width: 0; flex: 0 1 auto }
 .paidby .name { min-width: 0; overflow: hidden; text-overflow: ellipsis }
@@ -617,11 +555,8 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .paidby .waysbox { display: flex; flex-wrap: wrap; flex: 0 1000 auto; min-width: 0; height: 1.5em; overflow: hidden }
 .paidby .ways { flex: none; display: flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums }
 .paidby .sep { padding: 0 .6ch }
-/* An income's tag, last on the line and never pushed off it: the wash sets it
-   apart, as "from receipt" on the form. */
 .paidby .incometag { flex: none; align-self: center; margin-left: 1.2ch; font-size: 10.5px; line-height: 13px;
   color: var(--hl-ink); background: var(--hl); padding: 1px 6px; border-radius: 2px }
-/* For a screen reader only: the icon says it to the eye. */
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
 /* Ink: green and red are money's. */
 .rmeta .rnew { color: var(--ink); font-weight: 600 }
@@ -663,7 +598,6 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .credit { color: var(--credit) } .debit { color: var(--debit) }
 
 /* ---- your own money, pulled out of the group's ---- */
-/* Nearly every entry is yours, so no wash: what is not yours is dimmed. */
 .share { display: block; font-weight: 700; color: var(--muted) }
 .share.credit { color: var(--credit) }
 .share.debit { color: var(--debit) }
@@ -675,12 +609,10 @@ html[data-banner="manual"] .ghost-manual { display: block }
 /* The mono face advances .6em a glyph, so `--chars` sizes the figure to the
    room left with no measuring; 60px is the padding, border, gap and chevron. */
 .mysummary { container-type: inline-size; --mysum-max: 26px }
-/* With the bar's 12px foot, the gutter's 16. */
 .mysummary:first-child { padding-top: 4px }
 .mysum { display: flex; align-items: center; justify-content: space-between; gap: 12px;
   color: inherit; white-space: nowrap }
 .mysum.credit { color: var(--credit) } .mysum.debit { color: var(--debit) }
-/* The colour follows over the figure's roll. */
 a.mysum { transition: background-image .2s ease, color .8s ease }
 .mysumtext { display: flex; flex-direction: column; gap: 2px; min-width: 0 }
 .mysum .eyebrow { font-size: 13px; color: inherit; transition: color .8s ease }
@@ -693,7 +625,6 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
    A changed cell slides a strip of old over new, up for a bigger figure. */
 .rolling { display: inline-flex; vertical-align: bottom }
 .rolling.held :is(.rollstrip, .rollcell) { animation-play-state: paused }
-/* The settled figure for a screen reader. */
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
 .rollcell { display: inline-block; width: .57em; height: 1.1em; overflow: hidden;
   letter-spacing: 0; text-align: center; white-space: pre }
@@ -709,13 +640,10 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 @keyframes roll-open { from { width: 0 } }
 @keyframes roll-close { to { width: 0 } }
 
-/* The ledger's clock, dotted while other phones' changes wait unseen: ink,
-   since colour is spent on balances, ringed in card so it reads on the box. */
+/* Ink, since colour is spent on balances. */
 .histbtn { position: relative }
 .histdot { position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; border-radius: 50%;
   background: var(--ink); box-shadow: 0 0 0 2px var(--card-2) }
-/* History's line under what is new: torn paper across the rail, the word on
-   its right where it sits clear of the dots. */
 .torn { position: relative; display: flex; align-items: center; justify-content: flex-end;
   height: 13px; margin: -5px 0 10px -26px }
 .torn::before { content: ""; position: absolute; inset: 3px 0; background: var(--ink-2);
@@ -724,8 +652,6 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .torn span { position: relative; padding-left: 8px; background: var(--card); font-family: var(--f-mono);
   font-size: 10px; line-height: 13px; letter-spacing: .12em; text-transform: uppercase;
   color: var(--ink-2); font-weight: 500 }
-/* Read as one more point: the clock centred on the dots' rail (9px in, less
-   the 6px press padding), the words in the revisions' column at 26px. */
 .tlink.entrygroup { margin: 2px 0 0 -3.5px; gap: 10.5px }
 .tlink.entrygroup svg:last-child { margin-left: -7.5px }
 
@@ -734,12 +660,9 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   border-radius: var(--r-s); border: 1px solid var(--rule); color: var(--ink-2); background: var(--card-2);
   font-weight: 500; white-space: nowrap }
 .chip.hl { border-color: var(--hl-edge); color: var(--hl-ink); background: var(--hl) }
-/* A size up and inked: the only control on its bar besides the arrow, and the
-   one choice the rest of the form is shaped by. */
 .chip.kindchip { font-size: 12px; line-height: 1.3; padding: 4px 9px;
   background: var(--brand); color: var(--brand-ink); border-color: var(--brand) }
 button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), var(--press-i)) }
-/* The picker's mark, a step quieter than the word: it says how the chip opens. */
 .kindchip .kindmark { opacity: .65; margin-right: -2px }
 .chip.pend { border-color: var(--hl-edge); color: var(--hl-ink); background: transparent }
 .dot { width: 6px; height: 6px; border-radius: 1px; background: var(--ink-2); flex: none;
@@ -787,14 +710,12 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .itemtable .itemlabel { text-align: left; position: sticky; left: 0; z-index: 1;
   background: var(--card); padding-left: 12px; padding-right: 8px }
 .itemrow { display: flex; align-items: center; justify-content: space-between; gap: 8px }
-/* A tap on the line is "everybody had this" / "nobody did". */
 .itemtext { min-width: 0; flex: 1; overflow-wrap: anywhere; border-radius: var(--r-s);
   margin: -3px -4px; padding: 3px 4px }
 .itemtext:active { background-image: linear-gradient(var(--press), var(--press)) }
 .itemname { display: block; font-weight: 500 }
 .itemqty { font-weight: 400; color: var(--muted) }
 .itemamount { display: block; font-family: var(--f-mono); font-size: 11px; color: var(--muted); margin-top: 1px }
-/* Unfold / merge: it changes the bill's shape, so it gets its own column. */
 .itemfold { display: inline-flex; align-items: center; gap: 2px; flex: none; min-height: 25px;
   padding: 3px 5px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card);
   font-family: var(--f-mono); font-size: 11px; font-weight: 500; color: var(--ink-2) }
@@ -804,14 +725,12 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 /* Outside the table: a `colSpan` cell wraps at the table's width, not the screen's. */
 .itemnote { font-size: 11px; line-height: 1.35; color: var(--muted);
   padding: 9px 16px 0 12px }
-/* Portions of one printed line read as one dish shared out. */
 .itemtable tr.part td { background: var(--hl-row) }
 /* The sticky column needs an opaque ground, so the band is laid over the card. */
 .itemtable tr.part .itemlabel { padding-left: 15px; box-shadow: inset 3px 0 0 var(--hl-edge);
   background-color: var(--card);
   background-image: linear-gradient(var(--hl-row), var(--hl-row)) }
 .itemtable tr.part .itemname { font-weight: 400 }
-/* Typed, not read: in the printed amounts' mono nobody tried tapping it. */
 .tipfield { display: flex; align-items: center; gap: 5px; margin-top: 3px }
 .itemamountin { width: 72px; font-family: var(--f-mono); font-size: 11px; color: var(--ink);
   background: var(--card-2); border: 1px solid var(--rule); border-radius: var(--r-s);
@@ -830,16 +749,13 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .itemwho > .itemcell:active::before { opacity: 1; transition-duration: 0s }
 .itemwho > .itemcell .dot { position: relative }
 .itemcell .dot { width: 10px; height: 10px; border-radius: 0 }
-/* Rows nobody ordered: everyone carries a share, but a pip is no target. */
 .itemcell.ghost .dot { width: 4px; height: 4px; background: var(--rule) }
-/* A run handed out unevenly; a dot would say "all of it". */
 .itemcell .dot.some { background: none; position: relative }
 .itemcell .dot.some::before, .itemcell .dot.some::after {
   content: ""; position: absolute; width: 6.5px; height: 6.5px;
   background: var(--ink-2) }
 .itemcell .dot.some::before { top: 0; left: 0 }
 .itemcell .dot.some::after { bottom: 0; right: 0; box-shadow: -1px -1px 0 var(--card) }
-/* Pale squares read as disabled ones. */
 .itemcell .dot.off { background: transparent }
 
 /* Pointing at where an answer could go in a run just opened. A state, not an
@@ -869,8 +785,7 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .card { background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   padding: 13px 14px }
 .hairline { height: 1px; background: var(--rule-soft); margin: 12px 0 }
-/* Not in the top bar, which a sentence would wrap to six lines. `FitTitle`
-   sizes it; `anywhere`, because a pasted URL is one word. */
+/* `anywhere`, because a pasted URL is one word. */
 .entrytitle { letter-spacing: -.03em; line-height: 1.3; padding-top: 4px;
   overflow-wrap: anywhere; text-wrap: pretty }
 .entryhead { container-type: inline-size }
@@ -879,29 +794,21 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .entryamt { display: flex; align-items: baseline; gap: 8px }
 .entryspent { display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
 .entryspent .num { font-size: 13px; color: var(--muted) }
-/* The digits that matter carry the weight. 44px until `--chars` at .555em a
-   glyph, plus an em each for fraction and code, no longer fits. */
+/* 44px until `--chars` at .555em a glyph, plus an em each for fraction and code,
+   no longer fits. */
 .entryamt { line-height: 1; font-weight: 600; letter-spacing: -.045em;
   font-size: clamp(28px, calc((100cqi - 8px) / (var(--chars) * .555 + 2)), 44px) }
 .entryamt .ccy { font-size: .55em; font-weight: 500; letter-spacing: 0; color: var(--muted) }
-/* At a code's size "€" reads smaller than "PLN", and a quiet glyph as a
-   smudge: full size and ink, written against its digits as "£6.87". */
 .entryamt .ccy.sym { font-size: 1em; margin-right: -.12em; color: inherit }
 .entryspent .sym { margin-right: -5px }
 .entryamt .frac { font-size: .55em; font-weight: 500; letter-spacing: -.03em; color: var(--muted) }
 .entryby { font-size: 13px; color: var(--muted) }
-/* "Paid by 2 people": the count is the phrase's object, as the name is above. */
 .entryhead .eyebrow b { color: var(--ink-2); font-weight: 600 }
-/* The entry's ÷ between the head card and the split: 13px each side, as on
-   the form. */
 .splitrule.entrysplit { margin: 13px 0 }
-/* On the screen's ground, inset to the cards' rows (padding plus border). */
 .balline { margin-top: 10px; padding-inline: 15px }
 .entryby b { color: var(--ink); font-weight: 600 }
-/* Read more often than pressed, so quiet text a thumb tall. `--ink-2`: at
-   12px `--muted` is under 4.5:1. The line stays full width for `FitLine` to
-   measure; the link is the inline body, so the press washes the words and the
-   rest of the line presses nothing. `::after` gives it back a thumb's height. */
+/* `--ink-2`: at 12px `--muted` is under 4.5:1. `::after` gives the link back a
+   thumb's height. */
 .entryhist { display: block; padding: 0 2px; font-size: 12px; color: var(--ink-2) }
 .entryhistline { line-height: 44px; margin: 0 -6px; padding: 0 6px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
@@ -912,7 +819,6 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
   transition-duration: 0s }
 .fiticon { display: inline-flex; vertical-align: middle; margin-right: 5px; color: var(--muted) }
 .fittrail { display: inline-flex; vertical-align: middle; margin-left: 3px; color: var(--muted) }
-/* Inverted, so a deletion is read before the figure, which no longer counts. */
 .deletedband { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px;
   background: var(--ink); color: var(--paper); border-radius: var(--r-m) }
 .deletedband p { flex: 1; min-width: 0; line-height: 1.4 }
@@ -927,25 +833,18 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px;
   padding: 5px 0 }
 .kv .k { color: var(--muted) }
-/* A row that names a person: the name is what the row is about, so it is as
-   loud as its amount. A label ("Entries") stays quiet. */
 .kv.who .k { color: var(--ink) }
 .kv .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 13px }
 .youtag { color: var(--muted); opacity: .7; font-weight: 400; font-size: .85em }
 .kv.yourbal .v { white-space: nowrap }
-/* Folded, a row that presses edge to edge of the screen's gutter. */
 .yourbal > button.kv { width: calc(100% + 30px); margin: 0 -15px; padding: 5px 15px;
   border-radius: var(--r-s) }
-/* Unfolded, written out as at school: what each figure is, the figures one
-   under the other, the result under a rule. */
 .sumrows { display: grid; grid-template-columns: 1fr auto auto; row-gap: 3px; padding: 2px 0 6px;
   font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right;
   animation: billopen .13s ease-out }
 @media (prefers-reduced-motion: reduce) { .sumrows { animation: none } }
 .sumrows .w { text-align: left; font-size: 12px; color: var(--muted) }
 .sumrows .eq { border-top: 1px solid var(--ink-2); padding-top: 4px; margin-top: 3px }
-/* A foreign entry's row (`TwoCurrencies`): the base figure a touch under the
-   name's size, the entry's own one under it, and the name centred on both. */
 .kv:has(> .v > .twoccy) { align-items: center; padding-block: 6px }
 .kv:has(> .v > .twoccy) > .k { line-height: 1.3 }
 .twoccy { display: flex; flex-direction: column; align-items: flex-end; font-size: 12px; line-height: 1.35 }
@@ -957,8 +856,6 @@ button.kv:active { background: var(--press) }
 button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 .kvchev { color: var(--muted); flex: none; transition: transform .12s ease }
 .kvchev.on { transform: rotate(90deg) }
-/* No rules or wash: with every row open (quick split) a wash picks nobody
-   out. Bleeds to the card's edges so a press fills the row. */
 .billgroup { margin: 0 -14px; padding: 0 14px }
 .billgroup > button.kv { width: calc(100% + 28px); margin: 0 -14px;
   padding: 5px 14px; border-radius: var(--r-s) }
@@ -968,7 +865,6 @@ button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 .billline { display: flex; align-items: baseline; gap: 6px; padding: 2px 0;
   font-size: 12px; color: var(--ink-2) }
 .billline .lbl { min-width: 0; overflow-wrap: anywhere }
-/* A printed bill's dotted leader. */
 .billline .lead { flex: 1; min-width: 10px; align-self: center;
   border-bottom: 1px dotted var(--rule) }
 .billline .amt { font-family: var(--f-mono); font-variant-numeric: tabular-nums;
@@ -978,12 +874,10 @@ button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 .billline.billextra + .billline.billextra { margin-top: 0 }
 .billline.billextra .amt { color: var(--muted) }
 .billline.billextra .lead { border-bottom-color: transparent }
-/* A token, since "1/2" after a dish is not part of its name. */
 .billqty { margin-left: 5px; padding: 1px 4px; border-radius: var(--r-s);
   background: var(--card-3); color: var(--muted); font-size: 10.5px;
   font-variant-numeric: tabular-nums; white-space: nowrap }
 
-/* Tapping the arrow reverses the sides: a backwards transfer is the mistake to make cheap. */
 .transfer { display: flex; align-items: stretch; padding: 0; overflow: hidden }
 .tside { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;
   gap: 5px; padding: 13px 8px; position: relative }
@@ -991,7 +885,6 @@ button.tside:active { background: var(--press) }
 .tside .who { font-size: 13px; font-weight: 600; max-width: 100%; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap }
 .tside .eyebrow { font-size: 9.5px; margin-bottom: 2px }
-/* Reads "these traded places", not "this text changed". Two names to replay (lib/refusal.ts). */
 .tside .who.swap-a { animation: swapdip .22s ease-in }
 .tside .who.swap-b { animation: swapdip2 .22s ease-in }
 @keyframes swapdip { 0% { opacity: 1; transform: translateY(0) }
@@ -1009,10 +902,8 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .tip { display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 22px; min-height: 100%; padding-top: 24px; padding-bottom: 76px; text-align: center }
 .tiplede { margin: 0; font-size: 14px; line-height: 1.5; text-wrap: balance }
-/* Smaller, it read as a disclaimer. */
 .tipwhy { margin: -12px 0 0; font-size: 14px; line-height: 1.5; color: var(--muted);
   text-wrap: balance }
-/* Ink, not a hue: a price, not a position. */
 .tiprate { font-family: var(--f-mono); font-size: 20px; font-weight: 700;
   letter-spacing: -.03em; line-height: 1.25 }
 .tipeach { margin: -8px 0 0; font-size: 14px; line-height: 1.5; color: var(--muted) }
@@ -1020,28 +911,22 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 
 /* ---- nav, fab, buttons ---- */
 :root { --fab-foot: max(20px, calc(env(safe-area-inset-bottom) + 8px)); --fab: 60px }
-/* The one inversion on the screen, signal enough without a shadow. */
 .fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: var(--fab-foot); width: var(--fab); height: var(--fab);
   border-radius: var(--r-s); background: var(--brand); color: var(--brand-ink); display: grid;
   place-items: center; z-index: 4 }
-/* Outlined: the same destination, half the voice. */
 .fab-2 { right: calc(max(16px, 50vw - 264px) + var(--fab) + 10px); background: var(--card); color: var(--ink);
   border: 1.5px solid var(--ink) }
-/* Takes the "+"'s `right`: every floating button ends on the same edge. */
 .fab-w { width: auto; gap: 7px; padding: 0 14px; grid-auto-flow: column;
   right: max(16px, calc(50vw - 264px));
   font-size: 12.5px; font-weight: 600; letter-spacing: -.01em }
-/* Scrolls the last row clear of the FAB. */
 .fabclear { height: calc(var(--fab-foot) + var(--fab) + 16px) }
 .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-s);
   padding: 12px; font-weight: 600; font-size: 13.5px; letter-spacing: -.01em; width: 100%;
-  /* A refused Save greys for the flash and comes back eased. */
   transition: background-image .2s ease, opacity .3s ease }
 .btn-p { background: var(--brand); color: var(--brand-ink) }
 /* After the shared `:active` rule, so it wins. `.fab-2` is on paper. */
 .btn-p:active:not(:disabled), .fab:not(.fab-2):active { background-image: linear-gradient(var(--press-i), var(--press-i)) }
 .btn-s { background: var(--card-2); color: var(--ink); border: 1px solid var(--rule) }
-/* The one hue not spent on money: destructive is worth a signal. */
 .btn-d { background: transparent; color: var(--debit); border: 1px solid var(--debit) }
 .btn-lg { padding: 16px; font-size: 15px; font-weight: 700; letter-spacing: -.02em }
 .btn:disabled { opacity: .45; transition-duration: 0s }
@@ -1066,8 +951,6 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
   border-top-color: transparent; opacity: .6; animation: spin .7s linear infinite; flex: none }
 @keyframes spin { to { transform: rotate(360deg) } }
-/* The wash fills over a scan's usual two seconds; the spinner only if slower.
-   Clamped by reduced motion, it goes straight to the spinner. */
 .pair-busy { position: relative }
 .pair-busy .btn { position: relative }
 .scanbar { position: absolute; inset: 0; transform-origin: left; transform: scaleX(0);
@@ -1089,7 +972,6 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
   padding-top: 22px; padding-bottom: 34px }
 .scanlede { margin: 0; text-align: center; text-wrap: balance;
   font-size: 13px; line-height: 1.45; color: var(--ink-2) }
-/* A bill, and the expense it comes back as, each half the control's width. */
 .scandiagram { display: flex; align-items: stretch; gap: 10px }
 .scanpaper, .scanform { flex: 1; min-width: 0; padding: 11px; font-size: 9.5px;
   line-height: 1.25; color: var(--draw-ink); background: var(--draw-bg);
@@ -1111,7 +993,6 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .scanpaper i, .scanform i { font-style: normal; font-variant-numeric: tabular-nums }
 .scanform .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .scanpaper hr, .scanform hr { border: 0; border-top: 1px solid var(--draw-rule); margin: 1px 0 }
-/* The total reappears on the right, so both ends are in ink. */
 .scanpaper .tot, .scanform .t { color: var(--ink-2) }
 .scanform .t { font-size: 10px }
 .scanform .a { font-size: 15px; color: var(--ink); align-self: flex-start }
@@ -1140,7 +1021,6 @@ dialog.scrim::backdrop { background: transparent }
 .dbody p { margin: 0 0 7px }
 .dbody p:last-child { margin-bottom: 0 }
 .dbody b { color: var(--ink); font-weight: 600 }
-/* The invite link, when the clipboard refused it. */
 .invitelink { font-family: var(--f-mono); font-size: 12px; color: var(--ink);
   background: var(--card-2); border: 1px solid var(--rule); border-radius: var(--r-s);
   padding: 9px 10px; margin-top: 10px; overflow-wrap: anywhere }
@@ -1165,7 +1045,6 @@ dialog.scrim::backdrop { background: transparent }
   gap: 8px; margin-top: 14px }
 /* The busy box's border must not grow the row either. */
 .drow > .btn-pair .btn { padding-top: 11px; padding-bottom: 11px }
-/* The app's own rows, edge to edge: an avatar and a sentence where a <select> shows a word. */
 .dlist { margin: 11px -15px -13px; max-height: 52dvh; overflow-y: auto }
 .drow-pick { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
   padding: 11px 15px; border-top: 1px solid var(--rule-soft) }
@@ -1187,7 +1066,6 @@ dialog.scrim::backdrop { background: transparent }
 .rowmenu-item + .rowmenu-item { border-top: 1px solid var(--rule-soft) }
 /* `.rowmenu-hot`: a finger slid on from the hold, whose `:active` belongs to the row. */
 .rowmenu-item:active, .rowmenu-item.rowmenu-hot { background: var(--press) }
-/* A hold's wash builds over `HOLD_MS`: a hold is seen coming. */
 .row::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: var(--press); opacity: 0; transition: opacity .12s ease-out }
 .row[data-holding]::after { opacity: 1; transition: opacity .5s cubic-bezier(.4, 0, .6, 1) }
@@ -1222,8 +1100,6 @@ dialog.scrim::backdrop { background: transparent }
 @media (prefers-reduced-motion: reduce) {
   .lslot.saved.released::after { animation-duration: .9s !important } }
 
-/* A link with no password in it, and a drawing of where the working one is,
-   built from the menu's own classes. */
 .keyless { display: flex; flex-direction: column; align-items: center; text-align: center;
   padding-block: 34px 28px }
 .keyless-badge { width: 46px; height: 46px; border-radius: var(--r-s); display: grid; place-items: center;
@@ -1233,9 +1109,7 @@ dialog.scrim::backdrop { background: transparent }
 /* Centred prose strands its last word without help. */
 .keyless p { margin-top: 8px; max-width: 30em; font-size: 13px; line-height: 1.55; color: var(--muted);
   text-wrap: pretty }
-/* The way out of an in-app browser (components/embedded.tsx). */
 .escapelink { width: 100%; max-width: 30em; margin-top: 18px }
-/* The line to act on, in ink. */
 .keyless p.escapehow { margin-top: 14px; color: var(--ink); font-weight: 600; text-wrap: balance }
 .keyless p.escapepaste { margin-top: 10px; font-size: 12px; text-wrap: balance }
 /* iOS draws this menu as an ellipsis. */
@@ -1266,7 +1140,6 @@ dialog.scrim::backdrop { background: transparent }
   background: var(--card); border-bottom: 1px solid var(--rule) }
 .diag-act .hint:first-child { margin-top: 0; margin-bottom: 9px }
 
-/* A `.btn`, not a checkbox, which would be the app's only one. */
 .diag-stas { display: flex; align-items: center; justify-content: space-between; gap: 12px;
   margin-top: 10px }
 .diag-stas .btn { width: auto; flex: none; padding: 7px 16px; font-size: 12.5px }
@@ -1274,7 +1147,6 @@ dialog.scrim::backdrop { background: transparent }
 .diag-stas-note { font-size: 11.5px; color: var(--ink-2); margin-top: 1px }
 .diag-link { margin-top: 10px }
 
-/* /diag/crop */
 .cropcheck-model { font-size: 12px; color: var(--ink-2); margin: 8px 0 0 }
 .cropcheck { padding: 12px 16px; border-bottom: 1px solid var(--rule) }
 .cropcheck-pair { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px }
@@ -1282,7 +1154,6 @@ dialog.scrim::backdrop { background: transparent }
 .cropcheck-src { position: relative }
 .cropcheck-src img, .cropcheck-out { display: block; width: 100%; height: auto }
 .cropcheck-src svg { position: absolute; inset: 0; width: 100%; height: 100% }
-/* The model's quad dashed, the box the scan keeps solid. */
 .cropcheck-src svg * { fill: none; stroke-width: 2px; vector-effect: non-scaling-stroke }
 .cropcheck-quad { stroke: var(--credit); stroke-dasharray: 6 4 }
 .cropcheck-box { stroke: var(--brand) }
@@ -1297,13 +1168,11 @@ dialog.scrim::backdrop { background: transparent }
   width: 44px; height: 44px; border: 0; border-radius: 22px; font-size: 26px; line-height: 1;
   color: #fff; background: rgb(0 0 0 / 55%) }
 
-/* A log or a spreadsheet to paste elsewhere, scrolling sideways on its own. */
 .diag { font-family: var(--f-mono); font-size: 10.5px; line-height: 1.55; white-space: pre;
   overflow-x: auto; padding: 12px 16px; color: var(--ink) }
 
 .banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: 12.5px; flex: none;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge); font-weight: 500 }
-/* Above the screen's head, so it doesn't look like part of the skeleton. */
 .stall { display: flex; align-items: center; gap: 9px; padding: 9px 16px; flex: none;
   font-size: 12.5px; font-weight: 500;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge) }
@@ -1350,11 +1219,8 @@ dialog.scrim::backdrop { background: transparent }
 .seg button.on { background: var(--seg-on); color: var(--ink); box-shadow: var(--shadow-s); font-weight: 600 }
 
 /* ---- the split editor, inline on the expense form ---- */
-/* In a card: between two fields a full-width list reads as another screen.
-   The tabs are the lid of the list they govern. */
-/* What parts the split from the fields: a lone ÷, drawn rather than typed so
-   it is the logo's, square dots and all. 13px each side, as on the entry: the
-   form's column gap (9px) is the rest of the top. */
+/* Drawn rather than typed, so the ÷ is the logo's. 13px each side, as on the
+   entry. */
 .splitrule { display: flex; justify-content: center; margin: 4px 0 13px;
   color: color-mix(in srgb, var(--muted) 50%, transparent) }
 .splitrule > span { position: relative; flex: none; width: 13px; height: 15px;
@@ -1367,8 +1233,7 @@ dialog.scrim::backdrop { background: transparent }
    everyone row would stick to it instead of to `.scroll`. */
 .splitbox { background: var(--card-2); border: 1px solid var(--rule-soft);
   border-radius: var(--r-s); overflow: hidden; overflow: clip }
-/* Sticky, over the rows, whose washes are positioned. The head
-   card's grey, not the track's own `--card-3`: one shade fewer on the form. */
+/* Sticky, over the rows, whose washes are positioned. */
 .splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft);
   position: sticky; top: 0; z-index: 2; background: var(--card-2) }
 .splitlist { padding: 0; overflow: hidden }
@@ -1382,11 +1247,8 @@ dialog.scrim::backdrop { background: transparent }
 .splitrow input { scroll-margin-block: 44px }
 /* The shorthand above would undo `.inrow`'s stronger divider. */
 .splitrow.inrow, .splitrow:has(+ .inrow) { border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent) }
-/* The foot box: toggles everyone. No wash, so it is never read as a person;
-   right-aligned, so the box foots the column above it (`.allmark` is the
-   rows' 16px mark column). Only the box is the button: its 36px tap spills
-   past the 16px column invisibly, and the press darkens the box alone.
-   Sticky to the foot of `.scroll`, which lets it rest under the last row. */
+/* Only the box is the button: its 36px tap spills past the 16px column invisibly.
+   Sticky to the foot of `.scroll`. */
 .splithead { display: flex; align-items: center; justify-content: flex-end; gap: 10px; width: 100%;
   min-height: 36px; padding: 0 12px; border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
   position: sticky; bottom: 0; z-index: 2; background: var(--card-2); margin-top: -1px }
@@ -1404,10 +1266,7 @@ dialog.scrim::backdrop { background: transparent }
 .splitin { width: 82px; text-align: right; background: transparent; border: 0;
   font: inherit; font-size: 14px; color: var(--ink);
   outline: none; font-variant-numeric: tabular-nums }
-/* As parts: the figure keeps the weight it had before it could be typed; the
-   signs are small grey marks with a full-size tap each, quiet but easy to hit. */
 .partsend { display: flex; align-items: center; margin-right: -10px }
-/* No press wash: the figure changing between them is the feedback. */
 /* The 36px tap spills into the row's padding rather than heightening it: a
    parts row is the same height as every other tab's (the name sets it). */
 .partsstep { width: 36px; height: 36px; margin-block: -8px; display: grid; place-items: center; color: var(--ink-2) }
@@ -1417,10 +1276,8 @@ dialog.scrim::backdrop { background: transparent }
   font: inherit; font-size: 15px; font-weight: 500; color: var(--ink);
   outline: none; font-variant-numeric: tabular-nums }
 .splitrow:not(.inrow) .partsin { color: var(--muted) }
-/* As amounts' rest: in, with no figure typed. Its share is the placeholder,
-   in grey on a faint rule — worked out, not typed — and a "?" in red when
-   there is none to give. An out row's zero is as faint: only a typed figure
-   gets the full rule, until a tap gives any field its focus. */
+/* As amounts' rest: its share is the placeholder, worked out, not typed, and a
+   red "?" when there is none. */
 .splitrow:is(.rest, :not(.inrow)) .amountfield:has(.splitin):not(:focus-within) {
   border-bottom-color: color-mix(in srgb, var(--ink) 15%, transparent) }
 .splitrow.rest .splitin::placeholder { color: var(--muted); font-weight: 400 }
@@ -1430,7 +1287,6 @@ dialog.scrim::backdrop { background: transparent }
   font-weight: 600; border-top: 1px solid var(--rule-soft) }
 .splitfoot.ok { background: var(--credit-bg); color: var(--credit) }
 .splitfoot.bad { background: var(--debit-bg); color: var(--debit) }
-/* The same verdict on /g/payers, standing alone. */
 .splitfoot.alone { border-top: 0; border-radius: var(--r-m) }
 
 /* ---- money fields ----
@@ -1447,7 +1303,6 @@ dialog.scrim::backdrop { background: transparent }
    digits badly. A too-wide number scrolls instead of overflowing. */
 .amountfield.autosize { display: inline-grid; grid-template-columns: minmax(0, max-content); min-width: 0 }
 .amountfield.autosize > * { grid-area: 1 / 1 }
-/* Caret room, on the mirror too. */
 .amountfield.autosize > .amount { padding-right: 2px }
 /* No width of its own, or the column sizes to an <input>'s default 20 characters. */
 .amountfield.autosize > input.amount { width: 100%; min-width: 0 }
@@ -1457,11 +1312,9 @@ dialog.scrim::backdrop { background: transparent }
 .field .amountfield { flex: 1 }
 .rateinput { width: 78px; background: transparent; border: 0; font: inherit; color: inherit;
   outline: none }
-/* Room for a long reciprocal. */
 .rateinput.wide { width: 100%; font-size: 15px; font-weight: 600; text-align: right }
 
-/* ---- the rate dialog ----
-   The same number both ways round, the fields lined up in one column. */
+/* ---- the rate dialog ---- */
 .ratepair { display: flex; flex-direction: column; gap: 9px; margin-top: 13px }
 .rateside { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline;
   gap: 8px; font-family: var(--f-mono); font-size: 13px }
@@ -1470,23 +1323,16 @@ dialog.scrim::backdrop { background: transparent }
 .ratefrom { display: flex; align-items: center; justify-content: space-between; gap: 10px;
   margin-top: 10px; font-size: 12px; color: var(--muted) }
 .ratefrom .chip { flex: none }
-/* A grid, so both amounts share a right edge and both controls a left one. */
 .amtgrid { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, max-content);
   justify-content: center; align-items: center; column-gap: 7px; row-gap: 4px }
 .amtgrid > :nth-child(odd) { justify-self: end }
 .amtgrid > :nth-child(even) { justify-self: start }
-/* Padded to the big amount's inset so the last digits line up. */
 .ratelink { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted);
   border: 0; background: none; padding: 0 11px 0 0 }
 .ratelink .bad { color: var(--debit) }
-/* With the badge the block keeps its height but is laid out again, balanced
-   by the glyphs' edges rather than the boxes': top and bottom margins alike,
-   and the lines between closer than either. The rows close up (gap 4px → 0),
-   the figure drops into the slack its hidden underline leaves, the badge
-   stands off the rate line, the padding moves from top to bottom, and the
-   figure's cell pays for all of it — 56 + 4 + 0 = 38.5 + 5.5 + 16 alone, and
-   44.5 + 3.5 + 16 with the rate row's 4px gap too. Every part moves on one
-   curve, so the sum holds mid-flight as well. */
+/* With the badge the block keeps its height but is laid out again: the figure's
+   cell pays for the rest (56 + 4 + 0 = 38.5 + 5.5 + 16), and every part moves on
+   one curve so the sum holds mid-flight. */
 .amtpad { text-align: center; padding-top: 16px; padding-bottom: 10px; transition: padding .2s ease }
 .amtpad.noted { padding-top: 9.5px; padding-bottom: 16.5px }
 .amtpad.noted.foreign { padding-top: 7.75px; padding-bottom: 18.25px }
@@ -1498,9 +1344,7 @@ dialog.scrim::backdrop { background: transparent }
 .amtpad.noted.foreign .amtstack { height: 44.5px }
 .amtstack .amountfield { transition: margin-bottom .2s ease }
 .amtpad.noted .amtstack .amountfield { margin-bottom: -4.5px }
-/* The rate line reads tight under the big digits at an equal gap: a touch more. */
 .amtpad.noted.foreign .amtstack .amountfield { margin-bottom: -2px }
-/* The currency chip follows the figure's middle, which the row's no longer is. */
 .amtstack + .chip { position: relative; top: 0; transition: top .2s ease }
 .amtpad.noted .amtstack + .chip { top: 1px }
 .amtpad.noted.foreign .amtstack + .chip { top: 1.5px }
@@ -1508,7 +1352,6 @@ dialog.scrim::backdrop { background: transparent }
    font's normal line height, ~1.3em, past what the cell has. */
 .amtstack .amount { height: 1.1em; transition: font-size .2s ease, line-height .2s ease, height .2s ease }
 .amtpad.noted .amtstack .amount { font-size: 38px; line-height: 1; height: 1em }
-/* The scan that typed the amount, ending on its last digit like `.ratelink`. */
 .amtnotes { display: flex; justify-content: flex-end; padding-right: 11px; overflow: hidden;
   height: 0; opacity: 0; visibility: hidden;
   transition: height .2s ease, margin-top .2s ease, opacity .2s ease, visibility .2s }
@@ -1517,7 +1360,6 @@ dialog.scrim::backdrop { background: transparent }
 .amtpad.noted.foreign .amtnotes { margin-top: 3.5px }
 .amtnote { font-size: 10.5px; line-height: 14px; color: var(--hl-ink); background: var(--hl);
   padding: 1px 6px; border-radius: 2px }
-/* "@ 4.3731", the currency chip's twin. The figure leads; no rate is a red "?". */
 .ratechip { font-variant-numeric: tabular-nums }
 .ratechip .at { color: var(--muted) }
 .ratechip .bad { color: var(--debit); font-weight: 600 }
@@ -1526,8 +1368,7 @@ dialog.scrim::backdrop { background: transparent }
 /* ---- inputs ---- */
 .field { display: flex; align-items: center; gap: 10px; background: var(--card-2);
   border: 1px solid var(--rule-soft); border-radius: var(--r-s); padding: 10px 12px }
-/* One label column, so every field's value starts on the same line. Fits
-   "Paid by" and "Currency"; a label is a word or two, never a sentence. */
+/* One label column, so every field's value starts on the same line. */
 .field label, .fieldlabel {
   font-size: 13px; color: var(--muted); width: var(--label-w); flex: none; white-space: nowrap }
 .field input, .field .pick { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
@@ -1539,22 +1380,14 @@ dialog.scrim::backdrop { background: transparent }
 .field .pick { display: flex; align-items: center; gap: 8px; text-align: left }
 .field > .pick::after { content: ""; position: absolute; inset: 0; border-radius: inherit }
 .field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-/* Weighed against the date field's calendar, the browser's own and drawn in ink. */
 .field .pick .pchev { color: var(--ink); flex: none }
-/* The form's head card (an expense or income): the figure on top, the fields
-   under it as rows of one card, ruled as the split's rows are, rather than
-   three cards of their own. */
 .formhead { padding: 0; overflow: hidden; overflow: clip }
 .formhead :is(.field, .card) { background: transparent; border: 0; border-radius: 0;
   border-top: 1px solid var(--rule-soft) }
 .formhead .field { padding: 11px 12px }
-/* Several payers: a line each in the value column, and the whole row the door
-   to /g/payers. The chevron is centred on the lines, so it reads as all of
-   theirs, and stands where the calendar does below, at its weight. */
 .payersfield { align-items: flex-start; color: var(--ink) }
 .payersfield .fieldlabel { line-height: 20px }
 .payersfield .payerlines { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px }
-/* Set as the item split's summary rows are, so the two lists of people read alike. */
 .payersfield .payerline { display: flex; align-items: baseline; gap: 10px; font-size: 13.5px; line-height: 20px }
 .payersfield .payerline > :first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .payersfield .pchev { align-self: center; flex: none; --chev-w: 1.5 }
@@ -1592,12 +1425,9 @@ dialog.scrim::backdrop { background: transparent }
 /* Controls fill: 15px of glyph is too little ink for a colour change to carry it. */
 .btn-pair.flash-a, .btn.flash-a, .chip.flash-a, .iconbtn.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .btn-pair.flash-b, .btn.flash-b, .chip.flash-b, .iconbtn.flash-b { animation: refuse-fill-b .6s ease-in-out }
-/* The split's sentence over Save: already a wash, so only a fill is a change. */
 .splitfoot.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .splitfoot.flash-b { animation: refuse-fill-b .6s ease-in-out }
 
-/* A name field that is empty or taken: the row washes and the plus fills,
-   pointing at the press that answers it. */
 @keyframes refuse-wash-a { 15%, 45% { background-color: var(--debit-wash); border-color: var(--debit) } }
 @keyframes refuse-wash-b { 15%, 45% { background-color: var(--debit-wash); border-color: var(--debit) } }
 .addrow.flash-a { animation: refuse-wash-a .6s ease-in-out }
@@ -1613,9 +1443,8 @@ dialog.scrim::backdrop { background: transparent }
 .addrow.flash-a .addname::placeholder, .addrow.flash-b .addname::placeholder {
   color: color-mix(in srgb, currentColor 47%, transparent) }
 
-/* A refused Done blooms every line nobody has been given: the row washes, its
-   words go red and each empty cell flashes the dot a tap there would draw. All
-   three text parts are named: two carry their own `--muted`. */
+/* A refused Done blooms every line nobody has been given. All three text parts
+   are named: two carry their own `--muted`. */
 .itemtable tr.flash-a .itemname, .itemtable tr.flash-a .itemamount,
 .itemtable tr.flash-a .itemqty { animation: refuse-text-a .6s ease-in-out }
 .itemtable tr.flash-b .itemname, .itemtable tr.flash-b .itemamount,
@@ -1657,8 +1486,7 @@ dialog.scrim::backdrop { background: transparent }
   grid-template-columns: 1fr auto; grid-template-columns: subgrid; gap: 11px;
   align-items: center; padding: 9px 16px }
 .balrow > * { min-width: 0 }
-/* Right-aligned: in a mono face the digits then stand in columns, so a balance's
-   size reads as its length and the shared code is what goes ragged. */
+/* Right-aligned: in a mono face a balance's size then reads as its length. */
 .balfig { text-align: right }
 .balname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .balgone { margin-left: 6px; font-size: 11px; font-weight: 500; color: var(--ink-2) }
@@ -1685,14 +1513,11 @@ dialog.scrim::backdrop { background: transparent }
   flex-direction: column; gap: 2px }
 .was { color: var(--debit); text-decoration: line-through; text-decoration-thickness: 1px; opacity: .8 }
 .now2 { color: var(--credit) }
-/* A revision often moves several fields; a moved amount must never go missing. */
 .also { margin-top: 5px; display: flex; flex-direction: column; gap: 2px }
 .alsoi { font-family: var(--f-mono); font-size: 11px; display: flex; flex-wrap: wrap;
   align-items: baseline; gap: 6px }
 .alsoi .lbl { font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase;
   color: var(--muted) }
-/* What moved, a row each. The mark and the arrow carry the meaning, so the
-   figures stay bare; a bill's lines are quieter than its people. */
 .hrows { margin-top: 5px; display: flex; flex-direction: column; gap: 2px; flex-basis: 100% }
 .alsoi .hrows { margin-top: 0 }
 .hrow { font-family: var(--f-mono); font-size: 11.5px; display: flex; flex-wrap: wrap;
@@ -1709,7 +1534,6 @@ dialog.scrim::backdrop { background: transparent }
 .hmore summary::-webkit-details-marker { display: none }
 .hmore[open] summary { display: none }
 .note { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px }
-/* Padded for the press wash and pulled back so the words stay in line. */
 .tlink { display: flex; width: fit-content; align-items: center; gap: 3px;
   margin: 1px -6px -3px; padding: 3px 6px; border-radius: var(--r-s);
   font-size: 12.5px; font-weight: 600; color: var(--ink);
@@ -1718,8 +1542,7 @@ dialog.scrim::backdrop { background: transparent }
 
 .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 8px 2px 0 }
 
-/* ---- the demo's mark ----
-   Never folds: every demo screen works, so "this is not yours" stays put. */
+/* ---- the demo's mark ---- */
 .demomark { border-left: 2px solid var(--muted); border-radius: var(--r-s) }
 .demomarkhead { display: flex; align-items: center; gap: 6px; color: var(--ink) }
 
@@ -1729,14 +1552,12 @@ dialog.scrim::backdrop { background: transparent }
   animation: skelpulse 1.4s ease-in-out infinite; animation-delay: var(--d, 0s) }
 @keyframes skelpulse { 0%, 100% { opacity: 1 } 50% { opacity: .42 } }
 .skelrow { pointer-events: none }
-/* Something always follows a skeleton. */
 .skelrow:last-child { border-bottom: 1px solid var(--rule) }
 .skelrow .rmain { display: flex; flex-direction: column; gap: 6px }
 .skelrow .ramt { display: flex; flex-direction: column; gap: 5px; align-items: flex-end }
 .skeltext { display: inline-block; height: .72em; vertical-align: middle; max-width: 100% }
 .skelsum, .skelday { pointer-events: none }
 .skelsum .mysumchev { color: var(--card-3) }
-/* Under the FABs, which both frames share. */
 .skelveil { position: absolute; inset: 0; z-index: 3; background: var(--card);
   display: flex; flex-direction: column; pointer-events: none;
   animation: skelveil .12s ease-out forwards }
@@ -1764,8 +1585,7 @@ dialog.scrim::backdrop { background: transparent }
 .suggestrow { display: flex; align-items: center; gap: 9px; padding: 11px 8px 11px 12px;
   position: relative; width: 100%; text-align: left }
 .suggestchev { color: var(--ink); flex: none; margin-left: 2px }
-/* Cut, not wrapped: two long names on two lines each made the row twice as tall
-   as its neighbours. Only the names give way — the figure is never cut. */
+/* Cut, not wrapped: only the names give way, never the figure. */
 .suggestname { font-size: 13px; font-weight: 600; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .suggestrow > :not(.suggestname) { flex: none }

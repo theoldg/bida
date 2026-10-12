@@ -4,49 +4,37 @@
  * can account for. Android shrinks the page instead and is never measured.
  */
 
-/** One look at the two viewports, and who has the caret. */
 interface ViewportReading {
-  /** The layout viewport — the height `100dvh` is laid out against. */
+  /** The height `100dvh` is laid out against. */
   inner: number;
-  /** The visible viewport: what is on screen right now. */
   visible: number;
-  /** How far the visible viewport has been panned down the layout one. */
   offset: number;
   /** 1 unless the page is pinch-zoomed. */
   scale: number;
-  /** Whether something that opens a keyboard has the caret. */
   typing: boolean;
   /** The tallest the layout viewport has been at this width, keys down. */
   tallest: number;
 }
 
-/** What the difference between the two viewports means. */
 interface ViewportGap {
-  /** What the keyboard covers, in pixels. Zero unless something is focused. */
+  /** What the keyboard covers. Zero unless something is focused. */
   kb: number;
   /** The same gap with nothing focused, which no keyboard explains. */
   unexplained: number;
-  /** Whether keys are up — paid as `kb`, or taken off the page by Android. */
+  /** Keys up — paid as `kb`, or taken off the page by Android. */
   up: boolean;
 }
 
-/**
- * A pixel or two is the mobile toolbar settling, not a keyboard, and paying it
- * as padding would twitch the end of every list.
- */
+/** The mobile toolbar settling, not a keyboard. */
 const NOISE = 4;
 
-/**
- * A layout viewport shorter than its tallest by more than this has a keyboard
- * taken off it. Chrome's URL bar showing again is ~56px; no keyboard is short
- * of 150.
- */
+/** Chrome's URL bar returning is ~56px; no keyboard is short of 150. */
 const SHRUNK_BY_KEYS = 120;
 
 export function gapOf(v: ViewportReading): ViewportGap {
   const none = { kb: 0, unexplained: 0, up: false };
-  // A magnified page has a smaller visible viewport by definition, and the
-  // difference is the magnification, not something sitting on the screen.
+  // A magnified page's smaller visible viewport is the magnification, not a
+  // keyboard.
   if (Math.abs(v.scale - 1) > 0.01) return none;
   const gap = Math.round(v.inner - v.visible - v.offset);
   if (!v.typing) return gap > NOISE ? { ...none, unexplained: gap } : none;
@@ -55,16 +43,9 @@ export function gapOf(v: ViewportReading): ViewportGap {
 }
 
 /**
- * What a press on a control beside a field does about the caret (`HoldCaret`,
- * components/viewport.tsx):
- *
- * - **hold** — a keyboard is up, so don't blur: the keyboard would retract,
- *   the page reflow, and the `click` miss the button.
- * - **blur** — no keyboard, but a field has the caret: Android's back button
- *   closes the keyboard without taking focus, and a press holding that focus
- *   reopens it. So the field is blurred by hand — whether `mousedown` moves
- *   focus varies by browser and target.
- * - **free** — nothing has the caret.
+ * What a press beside a field does about the caret (`HoldCaret`): **hold** it
+ * while keys are up, or the reflow makes the click miss; **blur** it with none,
+ * since Android's back hides the keys without taking focus.
  */
 type CaretAction = "hold" | "blur" | "free";
 
@@ -73,10 +54,7 @@ export function caretOnPress(keyboardUp: boolean, typing: boolean): CaretAction 
   return keyboardUp ? "hold" : "blur";
 }
 
-/**
- * Whether a keyboard opens for this element. Buttons and checkboxes are inputs
- * too, so types are named rather than the tag alone.
- */
+/** Buttons and checkboxes are inputs too, so types are named. */
 const NO_KEYBOARD = new Set([
   "button", "checkbox", "color", "file", "hidden", "image", "radio", "range", "reset", "submit",
 ]);
@@ -89,21 +67,14 @@ export function isTyping(el: Element | null): boolean {
 }
 
 /**
- * **What the confirm key does to the field it was pressed in**: hand the caret
- * to the next field, or fold the keyboard.
- *
- * The key wears whatever `enterKeyHint` says, and that word is a promise: a
- * field drawn with "next" must move the caret on. Every other field ends its
- * chain and folds the keyboard, so a column of figures doesn't spill into the
- * next field drawn.
- *
- * A chord, and the Enter that picks an IME candidate, mean something else.
+ * What the confirm key does: "next" in `enterKeyHint` is a promise to move the
+ * caret on; every other field folds the keyboard. A chord, or Enter picking an
+ * IME candidate, is something else.
  */
 export type ConfirmAct = "next" | "fold" | "none";
 
 export function confirmAct(e: {
   key: string;
-  /** The field's `enterKeyHint`; "" where it was drawn without one. */
   hint: string;
   isComposing: boolean;
   altKey: boolean; ctrlKey: boolean; metaKey: boolean; shiftKey: boolean;
@@ -113,17 +84,11 @@ export function confirmAct(e: {
   return e.hint === "next" ? "next" : "fold";
 }
 
-/**
- * Types whose keyboard has no confirm key to press: a date is a spinner, and
- * the browser owns every key in it.
- */
+/** A date is a spinner; the browser owns every key in it. */
 const NO_CONFIRM = new Set(["date", "datetime-local", "month", "time", "week"]);
 
-/** One look at a field the confirm key is considering landing the caret in. */
 interface FieldReading {
-  /** `isTyping` — a keyboard opens for it at all. */
   typing: boolean;
-  /** An input's `type`; "textarea" for the other kind. */
   type: string;
   disabled: boolean;
   readOnly: boolean;
@@ -131,7 +96,6 @@ interface FieldReading {
   drawn: boolean;
 }
 
-/** Whether the caret can be put here. */
 export function landsOn(f: FieldReading): boolean {
   return f.typing && f.drawn && !f.disabled && !f.readOnly && !NO_CONFIRM.has(f.type);
 }

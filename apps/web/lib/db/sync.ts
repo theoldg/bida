@@ -16,21 +16,16 @@ import { whenVisible } from "./visible";
 import { leaveCursor, stashKey, stashes } from "./stash";
 
 /**
- * The sync engine (docs/sync.md). A single-flight push+pull per group over
- * `/api/groups/:id/ops`, triggered by local writes, visibility, connectivity
- * and a slow foreground interval. Never blocks the UI — writes already land
- * in Dexie via commands.ts.
+ * The sync engine (docs/sync.md): single-flight push+pull per group.
  *
- * **This is the boundary the plaintext stops at** (ADR-0036). Anything that
- * adds a second path to the server has to come through here, or the about
- * screen's guarantee stops being true. The worker's pull ahead is one: it
- * carries only sealed bytes and the bearer, and is opened here (`applyStash`).
+ * **This is the boundary the plaintext stops at** (ADR-0036): a second path to
+ * the server comes through here, or the about screen's guarantee stops being
+ * true.
  */
 
 /**
- * A sync attempt that reached the server and was refused. Carries the status
- * because 403 (this device's secret doesn't match the group's) is the one
- * failure retrying will never fix — it needs a fresh invite link.
+ * A refused sync. 403 — the secret doesn't match — is the one failure retrying
+ * never fixes.
  */
 export class SyncHttpError extends Error {
   constructor(readonly status: number, body: string) {
@@ -41,7 +36,6 @@ export class SyncHttpError extends Error {
 
 interface PushPullResponse {
   assigned: Record<string, number>;
-  /** Sealed: the server has never seen one of these open. */
   ops: SealedOp[];
   latestSeq: number;
 }
@@ -49,23 +43,19 @@ interface PushPullResponse {
 interface PushPullResult {
   response: PushPullResponse;
   pulled: Op[];
-  /** Seqs of the ops held back: unreadable to this build, or stamped too far ahead. */
+  /** Seqs held back: unreadable to this build, or stamped too far ahead. */
   unreadable: number[];
-  /** When the earliest op held back for its stamp stops being too far ahead. */
   retryAt?: number;
 }
 
 /**
- * Push this group's unsynced ops and pull what's new, sealed both ways. The
- * bearer is the derived token, never the link secret — that would let the
- * server derive the key to everything it stores.
+ * The bearer is the derived token, never the link secret, which would let the
+ * server derive the key.
  */
 /**
- * How long a sync request may take. A request the app went to the background
- * on can stay pending after its connection is gone, and the run waiting on it
- * holds every run queued behind it (`syncGroup`). The timer counts only while
- * the page runs, so a resume ends a dead one within this. A push that did land
- * is pushed again harmlessly: the op id is the idempotency key.
+ * A request the app went to the background on can stay pending with its
+ * connection gone, holding every run queued behind it. A repeated push is
+ * harmless: the op id is the idempotency key.
  */
 const SYNC_PATIENCE_MS = 30_000;
 
@@ -104,15 +94,10 @@ async function pushPullGroup(
 }
 
 /**
- * Open what the server handed back, before anything is stored, so a
- * half-applied pull can't happen. A *wrong key* never gets here (its token
- * would be a 403), so a `SealError` is one row this build can't read — a newer
- * build's kind or seal format, or an impossible stamp a peer can mint on
- * purpose. **Skip it and keep the rest**: failing the pull would refetch it
- * forever and sync would never succeed.
- *
- * A stamp more than a day ahead is held back the same way (`isAhead`): a fast
- * clock's op is late, not lost, and `retryAt` is when the cursor winds back.
+ * Open the pull before storing any of it. A `SealError` is one row this build
+ * can't read (a wrong key would have been a 403): **skip it and keep the rest**,
+ * or the pull refetches it forever. A stamp over a day ahead is held back the
+ * same way, late rather than lost.
  */
 async function openPulled(
   crypto: GroupCrypto, sealed: readonly SealedOp[],
@@ -142,14 +127,9 @@ async function openPulled(
 }
 
 /**
- * Everything the server holds for one group, opened and returned without
- * storing a byte — what `/delete-my-data` shows before it deletes. Read-only;
- * may be a group this phone never held.
- *
- * **Keep every key derivation in this file**, so the plaintext boundary stays
- * one thing you can check.
- *
- * Rejects with `SyncHttpError`: 404 never had it, 410 deleted, 403 wrong secret.
+ * Everything the server holds for one group, opened and never stored — what
+ * `/delete-my-data` shows. **Keep every key derivation in this file.** Rejects:
+ * 404 never had it, 410 deleted, 403 wrong secret.
  */
 export async function pullWholeGroup(groupId: string, secret: string): Promise<Op[]> {
   const crypto = await groupCrypto(groupId, secret);
@@ -161,12 +141,7 @@ export async function pullWholeGroup(groupId: string, secret: string): Promise<O
   return Promise.all(body.ops.map((op) => openOp(crypto, op)));
 }
 
-/**
- * Delete a group from the server: every op and the id
- * (`DELETE /api/groups/:id`, docs/sync.md#deleting-a-group). Authenticated by
- * the derived token like every request (ADR-0003). Leaves this phone's copy
- * alone — that is `eraseGroupLocally`; `/delete-my-data` asks for both.
- */
+/** Leaves this phone's copy alone — that is `eraseGroupLocally`. */
 export async function deleteGroupOnServer(groupId: string, secret: string): Promise<void> {
   const crypto = await groupCrypto(groupId, secret);
   const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}`, {
@@ -182,9 +157,8 @@ interface SyncOutcome {
 }
 
 /**
- * Remember that an attempt failed, so a screen can say so. Every caller of
- * `syncGroup` swallows the rejection somewhere, and a phone whose changes are
- * going nowhere otherwise looks identical to one that is up to date.
+ * Every caller swallows the rejection, and a phone whose changes go nowhere
+ * otherwise looks up to date.
  */
 async function recordFailure(groupId: string, err: unknown): Promise<void> {
   const d = db();
@@ -201,10 +175,8 @@ async function recordFailure(groupId: string, err: unknown): Promise<void> {
 }
 
 /**
- * Fold what this round skipped into earlier rounds' record. The count
- * accumulates and `fromSeq` only goes down: the earliest skipped op is where
- * a later build must wind back to. A round that skipped nothing leaves the
- * record alone — those ops are still unread.
+ * `fromSeq` only goes down: the earliest skipped op is where a later build winds
+ * back to.
  */
 function skipped(
   before: Unreadable | undefined, seqs: readonly number[], retryAt: number | undefined,
@@ -220,23 +192,15 @@ function skipped(
   };
 }
 
-/**
- * Whether the ops a record holds back may read differently now: to a build
- * other than the one that skipped them, or — for one held back for its stamp —
- * once the wall has caught up with it.
- */
 function worthAnotherLook(record: Unreadable | undefined, now: number): record is Unreadable {
   if (!record) return false;
   return record.build !== VERSION || (record.retryAt !== undefined && now >= record.retryAt);
 }
 
 /**
- * Store ops the server handed back, inside the caller's transaction over
- * `ops` and `device`. Adopts every stamp stored, so this device's next op
- * sorts after them. Otherwise correcting a fast-clocked peer's expense stamps
- * the correction *before* the create and the fold discards it — the amount
- * snaps back. Same transaction as the ops, like `appendOps`: a tab dying here
- * must not leave the clock behind the log.
+ * Adopts every stamp stored, so this device's next op sorts after them — or a
+ * correction to a fast-clocked peer's expense folds before its create, and the
+ * amount snaps back. Same transaction as the ops.
  */
 async function storePulled(pulled: readonly Op[]): Promise<void> {
   const d = db();
@@ -250,34 +214,24 @@ async function storePulled(pulled: readonly Op[]): Promise<void> {
   });
 }
 
-/** One run per group at a time — see `syncGroup`. */
 const inFlight = new Map<string, Promise<SyncOutcome | undefined>>();
 
 /**
- * How many queued ops one push carries. Not what keeps the request legal (the
- * server's `413` ceilings are far above this, `apps/api/src/push-limits.ts`) —
- * what keeps it *small*: a phone back from a fortnight offline shouldn't bet
- * it all on one request surviving a tunnel. In rounds, what got through stays.
+ * Not the server's ceiling, which is far above: a phone back from a fortnight
+ * offline shouldn't bet everything on one request. In rounds, what got through
+ * stays.
  */
 const PUSH_CHUNK = 50;
 
 /**
- * Push this device's unsynced ops for one group and pull what it hasn't seen.
- * Returns `undefined` if this device doesn't hold the group's secret.
- *
- * Rejects on failure, having recorded it on the group's key first — callers
- * may ignore the rejection; the UI reads the record.
- *
- * Single-flight per group: opening a group calls this directly
- * (app/g/page.tsx) and would otherwise race `syncAll` — every op pushed and
- * pulled twice, and two `rebuild()`s holding the write lock as the screen
- * waits to read.
+ * Resolves `undefined` without the group's secret; rejects having recorded the
+ * failure, which the UI reads. Single-flight per group, or opening a group races
+ * `syncAll`: every op twice, two `rebuild()`s holding the write lock.
  */
 export function syncGroup(groupId: string): Promise<SyncOutcome | undefined> {
   const already = inFlight.get(groupId);
   if (already && !stale.has(already)) return already;
-  // One from before the app went away pulled too early to count: run again
-  // behind it rather than beside it, so it stays one run at a time.
+  // One from before the app went away pulled too early to count: run behind it.
   const run: Promise<SyncOutcome | undefined> = (already
     ? already.catch(() => undefined).then(() => syncGroupOnce(groupId))
     : syncGroupOnce(groupId)
@@ -287,9 +241,8 @@ export function syncGroup(groupId: string): Promise<SyncOutcome | undefined> {
 }
 
 /**
- * Runs that were in flight when the app last came back to the front. None
- * starts while hidden, so each began before the app went away — its pull is
- * from then, and joining it would leave that group's news for the next sweep.
+ * Runs in flight when the app last came to the front; each began before it went
+ * away.
  */
 const stale = new WeakSet<Promise<unknown>>();
 
@@ -304,13 +257,10 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   if (!key) return undefined;
 
   const queued = await d.ops.where("groupId").equals(groupId).and((op) => op.pending === 1).toArray();
-  // One round with nothing to push is the plain pull — the case where this
-  // phone has written nothing since it last synced, which is most of them.
   const rounds = queued.length > 0 ? chunk(queued, PUSH_CHUNK) : [[] as StoredOp[]];
-  // Skipping is only safe because the op is still on the server. The first run
-  // of a different build — or once a held-back stamp stops being ahead — pulls
-  // again from the earliest skipped op and starts the record afresh. Not every
-  // run: an unreadable row costs one re-pull per deploy, not one a minute.
+  // Skipping is safe only because the op is still on the server. A different
+  // build, or a held-back stamp no longer ahead, re-pulls from the earliest
+  // skipped op: once per deploy, not once a minute.
   let rewinding = worthAnotherLook(key.unreadable, Date.now());
   let since = rewinding
     ? Math.max(0, Math.min(key.lastSeq, key.unreadable!.fromSeq - 1))
@@ -320,18 +270,13 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
 
   for (const pending of rounds) {
     let sealed: PushPullResult;
-    // The one step here that waits on a network rather than on this phone.
     const sent = started("sync.pushpull");
     try {
       sealed = await pushPullGroup(groupId, key.secret, since, pending);
     } catch (err) {
       sent("failed");
-      // Both answers below write, and a failure lands off the same slow network
-      // a success does — so it waits for the front like the commit does.
       await whenVisible("sync.failed");
-      // 410: somebody deleted this group (docs/sync.md#deleting-a-group). Nothing
-      // to retry, ever, so this phone's copy goes too — that is what "deleted for
-      // everybody" means.
+      // 410: deleted for everybody, so this phone's copy goes too.
       if (err instanceof SyncHttpError && err.status === 410) {
         await eraseGroupLocally(groupId);
         return undefined;
@@ -343,14 +288,12 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     sent(`${pending.length} up, ${pulled.length} down`
       + (unreadable.length > 0 ? `, ${unreadable.length} unreadable` : ""));
 
-    // The answer can land after the app has gone to the background. The response
-    // is held here, and a run killed while parked is pulled again. See
-    // ./visible.ts for why it waits.
+    // The answer can land after the app went to the background (./visible.ts).
     await whenVisible("sync.commit");
     const committed = started("sync.commit");
     const kept = await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
-      // Forgotten and erased while the request was out (`dropForgotten`):
-      // storing the answer would put back half a group with its key.
+      // Forgotten and erased while the request was out: storing would put back
+      // half a group.
       const current = await d.groupKeys.get(groupId);
       if (!current) return false;
       for (const op of pending) {
@@ -365,8 +308,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
         groupId,
         secret: key.secret,
         lastSeq: Math.max(latestSeq, current.lastSeq),
-        // A group this phone never showed edits for starts with none to show:
-        // what it pulls on joining is the group's past, not news.
+        // What a phone pulls on joining is the group's past, not news.
         seenSeq: current.seenSeq ?? Math.max(latestSeq, current.lastSeq),
         lastSyncedAt: Date.now(),
         failure: undefined,
@@ -388,29 +330,23 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   await leaveCursor(groupId, key.secret, since).catch((err: unknown) => keepNote("stash", errorText(err)));
 
   // Only now: a notification about an op still on this phone would open to
-  // nothing on the phone it reaches. Its own failures are its own.
+  // nothing.
   await sendNotices(groupId, key.secret).catch((err: unknown) => keepNote("notify", errorText(err)));
 
-  // A forgotten group stays only until its last ops are out, and this run
-  // sent them. Nothing left to fold or heal.
   if ((await getDevice()).leftGroups?.includes(groupId) && await dropForgotten(groupId)) {
     return { pushed, pulled: pulledCount };
   }
 
-  // A pulled op can slot in before ops already folded — refold the whole group
-  // rather than apply out of HLC order (docs/sync.md#folding). Once per run, not
-  // per round: it folds the whole log.
+  // A pulled op can sort before folded ones, so refold the group
+  // (docs/sync.md#folding), once per run.
   if (pulledCount > 0) await rebuild(groupId);
-  // Healing also runs on a group's first sync of the session, pulled or not: a
-  // repair can be owed by what an older build wrote (`entriesCarryTheirOwnRate`).
+  // Also on a group's first sync of the session: an older build's writes can owe
+  // a repair.
   if (pulledCount > 0 || !healedThisSession.has(groupId)) {
     healedThisSession.add(groupId);
-    // A merge, or an older build, is the only thing that can produce an illegal
-    // state (local writes are refused first), so healing belongs here. It writes ops the next run
-    // pushes. Imported lazily: the command layer imports this file, and a static
-    // import would close the cycle.
+    // Only a merge or an older build produces an illegal state, so healing lives
+    // here. Imported lazily to break the cycle with the command layer.
     const { healGroup } = await import("./commands/groups");
-    // Up to eight passes, each folding the whole log — worth its own line.
     const healed = started("heal");
     await healGroup(groupId).then((n) => healed(`${n} ops`), () => healed("failed"));
   }
@@ -419,16 +355,14 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
 }
 
 
-/** Groups healed since this page loaded. In memory: a reload heals again, which costs one fold. */
+/** In memory: a reload heals again, which costs one fold. */
 const healedThisSession = new Set<string>();
 
-/** One apply per group at a time: every screen of the group asks on mounting. */
 const applying = new Map<string, Promise<void>>();
 
 /**
- * Store what the worker pulled ahead for a group, and fold it, so the screen
- * about to draw the group draws it current rather than animating the pull in.
- * Never fails and never throws: the ordinary pull is right behind it.
+ * Store and fold what the worker pulled ahead, so the screen draws the group
+ * current. Never throws: the ordinary pull is right behind it.
  */
 export function applyStash(groupId: string): Promise<void> {
   let run = applying.get(groupId);
@@ -445,8 +379,7 @@ async function applyStashOnce(groupId: string): Promise<void> {
   const cache = await stashes();
   const res = await cache?.match(stashKey(groupId));
   if (!cache || !res) return;
-  // Deleted first: a stash that fails to apply would fail again on every open.
-  // One the worker writes in between is lost, and the ordinary pull fetches it.
+  // Deleted first: a stash that fails to apply would fail on every open.
   await cache.delete(stashKey(groupId));
   const d = db();
   const key = await d.groupKeys.get(groupId);
@@ -460,7 +393,6 @@ async function applyStashOnce(groupId: string): Promise<void> {
   await whenVisible("stash.commit");
   const done = started("stash", `${fresh.length} ops`);
   const stored = await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
-    // Forgotten and erased since: storing would put back half a group.
     if (!(await d.groupKeys.get(groupId))) return false;
     await storePulled(fresh);
     return true;
@@ -469,23 +401,17 @@ async function applyStashOnce(groupId: string): Promise<void> {
   done(stored ? undefined : "gone");
 }
 
-/** `/notify`'s cap per request — the Worker's `MAX_NOTIFY_PER_BATCH`. */
+/** The Worker's `MAX_NOTIFY_PER_BATCH`. */
 const NOTIFY_BATCH = 40;
 
-/** A push service's verdict that a subscription is gone for good (RFC 8030). */
+/** RFC 8030: the subscription is gone for good. */
 const DEAD = new Set([404, 410]);
 
 /**
- * Send what this phone's commands owe the group, once their ops are on the
- * server (docs/notifications.md): each device's notification encrypted to its
- * own subscription (RFC 8291), so the Worker relays ciphertext it cannot read,
- * in batches it can fit under its subrequest cap.
- *
- * Never fails the sync — the ops are in. The notices are dropped once every
- * batch is answered; a network error or a 5xx keeps them for the next run, at
- * the cost of a repeat on the batches that did go, which the group's `tag`
- * folds into one notification. A device whose push service says it is gone
- * gets `push: null`, written by this phone for it.
+ * Each device's notification encrypted to its own subscription (RFC 8291), so the
+ * Worker relays ciphertext. Never fails the sync. A network error or 5xx keeps
+ * the notices for the next run; the group's `tag` folds a repeat into one
+ * notification.
  */
 async function sendNotices(groupId: string, secret: string): Promise<void> {
   const d = db();
@@ -507,7 +433,6 @@ async function sendNotices(groupId: string, secret: string): Promise<void> {
       const body = await encryptPush(m.push, utf8.encode(JSON.stringify(m.payload)));
       return { message: m, endpoint: m.push.endpoint, body: toBase64(body) };
     } catch {
-      // Anyone with the link can write a subscription; a broken one is skipped.
       return undefined;
     }
   }))).filter((s) => s !== undefined);
@@ -530,13 +455,12 @@ async function sendNotices(groupId: string, secret: string): Promise<void> {
       answered = false;
     }
   }
-  // Everything from here writes, and the answers came off the network.
   await whenVisible("notify.commit");
   if (answered) await d.notices.bulkDelete(ready.map((r) => r.id));
   done(`${sealed.length} sent${answered ? "" : ", kept"}`);
 
-  // Only a subscription the log still holds: a phone that re-subscribed since
-  // has a new endpoint, which this must not wipe.
+  // A phone that re-subscribed since has a new endpoint, which this must not
+  // wipe.
   const me = device.meByGroup[groupId];
   const dead = sealed.filter((s) => DEAD.has(statuses[s.endpoint] ?? 0)
     && state.identities[s.message.identity.id]?.push?.endpoint === s.endpoint);
@@ -556,17 +480,12 @@ let backoffMs = 2000;
 const BACKOFF_MAX_MS = 60000;
 
 /**
- * Runs every group's sync once, all at once. **Single-flight across the whole
- * run, not per group**: an overlapping call joins the run in flight. Per group,
- * a second caller would find everything in flight, attempt nothing, and reset
- * the backoff to 2s — against a dead server it would never grow.
- *
- * A run the app went to the background during is stale (`markInFlightStale`):
- * the next call queues a fresh pass behind it instead of joining it.
+ * **Single-flight across the whole run, not per group**: per group, a second
+ * caller would attempt nothing and reset the backoff, which against a dead server
+ * would never grow. A run the app went to the background during is stale, and
+ * queues a fresh pass instead.
  */
 export function syncAll(): Promise<void> {
-  // Not while hidden (see `whenVisible`). Coming to the front runs a sync anyway
-  // (`startSyncLoop`), so this only moves the attempt to when it is safe.
   if (typeof document !== "undefined" && document.visibilityState === "hidden") {
     return running ?? Promise.resolve();
   }
@@ -580,15 +499,11 @@ export function syncAll(): Promise<void> {
 
 async function runSyncAll(): Promise<void> {
   const keys = await byRecency(await db().groupKeys.toArray());
-  // A forgotten group still here has ops to push — the `push: null` that stops
-  // it buzzing this phone, or an edit made offline — and `syncGroup` erases it
-  // once they are out. One with none left is erased without asking the server:
-  // the one a phone forgot before erasing was what forgetting did.
+  // A forgotten group still here has ops to push; one with none left is erased
+  // without asking the server.
   const left = new Set((await getDevice()).leftGroups ?? []);
-  // All at once: each group is a round trip, and in turn six of them were the
-  // seconds a reopened app took to show news in the fifth. Started newest
-  // first, so a cap, if one is ever wanted, keeps the groups most likely to
-  // have moved. The commits still queue on the database, a few ms each.
+  // All at once: in turn, six groups were the seconds a reopened app took to show
+  // news in the fifth.
   const results = await Promise.allSettled(keys.map(async (key) => {
     if (left.has(key.groupId) && !(await hasPending(key.groupId))) {
       await dropForgotten(key.groupId);
@@ -611,7 +526,6 @@ async function runSyncAll(): Promise<void> {
   }
 }
 
-/** Newest change first, as the groups list orders them: one indexed read each. */
 async function byRecency<T extends { groupId: string }>(keys: T[]): Promise<T[]> {
   const ops = db().ops;
   const newest = await Promise.all(keys.map(async (key) =>
@@ -623,10 +537,8 @@ async function byRecency<T extends { groupId: string }>(keys: T[]): Promise<T[]>
 }
 
 /**
- * Every group's pull ahead, for a page starting or coming back to the front.
- * A screen applies its own group's on mounting (`useGroupData`), but one
- * already open — or the groups list, which mounts none — would otherwise leave
- * what a notification pulled sitting there while the ordinary pull redoes it.
+ * A screen applies its own group's stash on mounting; this covers one already
+ * open, and the groups list.
  */
 export async function applyStashes(): Promise<void> {
   const keys = await db().groupKeys.toArray().catch(() => []);
@@ -637,14 +549,11 @@ async function hasPending(groupId: string): Promise<boolean> {
   return (await db().ops.where("groupId").equals(groupId).and((op) => op.pending === 1).count()) > 0;
 }
 
-/** Groups written to since the debounce last fired. */
 const written = new Set<string>();
 
 /**
- * Debounced trigger for "a local write just happened" (~1s, docs/sync.md) —
- * **for that group only**: the others have nothing to push, and each is a
- * request. A failure hands over to `syncAll`, whose backoff retries it. While
- * hidden it does nothing; coming back runs `syncAll`, which pushes the queue.
+ * Debounced, **for that group only**: the others have nothing to push. A failure
+ * hands over to `syncAll`'s backoff.
  */
 export function scheduleSync(groupId: string): void {
   if (typeof window === "undefined") return;
@@ -659,17 +568,13 @@ export function scheduleSync(groupId: string): void {
 }
 
 export const TICK_MS = 60_000;
-/** How often the timer sweeps every group, rather than the one on screen. */
 export const SWEEP_MS = 5 * 60_000;
-/** No tap or key for this long and the timer stops asking. */
 export const IDLE_MS = 5 * 60_000;
 
 /**
- * What one foreground tick fetches. Each group is a request, and a phone holds
- * several, so polling them all every minute is what made one person's day
- * cost a thousand requests. The group on screen stays a minute fresh; the rest
- * wait for the sweep, a resume or a write. Idle — a tab left open on a desk —
- * polls nothing, and the first touch after sweeps at once (`startSyncLoop`).
+ * Polling every group every minute made one person's day cost a thousand
+ * requests. The group on screen stays a minute fresh; the rest wait for the
+ * sweep, a resume or a write; idle polls nothing.
  */
 export function planTick(
   now: number, lastInput: number, lastSweep: number, onScreen: string | null,
@@ -679,7 +584,6 @@ export function planTick(
   return onScreen ? { groupId: onScreen } : null;
 }
 
-/** The group every `/g` screen names in `?id=`, or null off them. */
 export function groupOnScreen(location: { pathname: string; search: string }): string | null {
   return /^\/g(\/|$)/.test(location.pathname)
     ? new URLSearchParams(location.search).get("id")
@@ -687,9 +591,7 @@ export function groupOnScreen(location: { pathname: string; search: string }): s
 }
 
 /**
- * Wires the background triggers: becoming visible, coming online, the first
- * touch after idling, and the tick (`planTick`). Call once from a client-only
- * root component; returns a cleanup function. No-ops on the server.
+ * Visible, online, the first touch after idling, and the tick. Returns a cleanup.
  */
 export function startSyncLoop(): () => void {
   if (typeof window === "undefined") return () => {};
@@ -704,8 +606,7 @@ export function startSyncLoop(): () => void {
     if (document.visibilityState !== "visible") return;
     lastInput = Date.now();
     markInFlightStale();
-    // Alongside, not before: neither moves the other's cursor, so whichever
-    // lands an op first, the other stores nothing twice.
+    // Alongside, not before: neither moves the other's cursor.
     void applyStashes();
     sweep();
   };
