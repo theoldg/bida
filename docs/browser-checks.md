@@ -39,8 +39,7 @@ phone's IndexedDB directly, for what no screen shows; wait on an app write with
 
 Every context `newPhone` makes waits `PATIENCE` — 30s — rather than
 playwright's default, and it is the ceiling these checks give their own waits
-too: `pnpm verify` runs ten browsers at once, so the machine is never the one
-a smaller number was written on. Nothing reaches that ceiling on a machine that
+too: a loaded machine is never the one a smaller number was written on. Nothing reaches that ceiling on a machine that
 is keeping up. `settle(page, ms)` is the other half — a pause the *page* keeps,
 for the few places that have to out-wait one of the app's own timers.
 

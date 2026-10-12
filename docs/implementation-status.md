@@ -55,8 +55,7 @@ a line in the push that fixes it.
   `search.mjs:150` hard-codes half of `--search-h`. A check that reports
   nothing passes (`verify.mjs:83`). The pre-push hook drops `BUSY` before the
   push has succeeded.
-- **Docs.** browser-checks.md: "ten browsers at once" (CI runs one), nav's
-  "Seven" sections (ten), no `offline` section; testing.md:62 "seven" checks
+- **Docs.** browser-checks.md: nav's "Seven" sections (ten), no `offline` section; testing.md:62 "seven" checks
   (eight); shots.md:29's count. `copy.settings.notify.means.all` says "Every
   edit" where only money-moving edits notify. design-review.md:27 names
   "Advanced" in the wrong shot. CLAUDE.md's core list omits rates. README.md:97

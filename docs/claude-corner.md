@@ -27,6 +27,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "Are the docs too long?", then "do all 4", then "push
+  frequently, another session is working". A split moves text away from
+  whoever is reading it: commit each step and run every moved link through
+  docs-check before pushing, or the other session rebases onto wreckage.
+
 - *2026-10-11* — "Scan the latest ~100 commits for … anything falling apart",
   then mid-scan "push whatever you have … this machine might be dropped". An
   audit's findings are work product: commit them as a list in the docs as
@@ -79,8 +84,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the query was kept like the position, but only the position was forgotten
   on a fresh visit. The check stopped one step short of the repro. Answer
   the how; it was the question.
-
-- *2026-10-10* — "Audit the split tabs", then "explain and wait for my
-  approval", then "percent splits … are safe to delete". The legacy case I'd
-  been tiptoeing round was the tangle; ask whether old data is real before
-  building around it.
