@@ -1,10 +1,10 @@
 // Doc: docs/import-export.md#the-clipboard
+// Checks that the clipboard works, and that there is one at all.
 
 export function hasClipboard(): boolean {
   return typeof navigator !== "undefined" && navigator.clipboard != null;
 }
 
-/** Rejects, never throws, when the write fails or there is no clipboard at all. */
 export function writeClipboardText(text: string): Promise<void> {
   return hasClipboard()
     ? navigator.clipboard.writeText(text)

@@ -104,8 +104,11 @@ pnpm drive do "shot split" "theme dark" "shot split-dark"
 `/demo` is a real group — four people, every kind of entry, a split off a
 bill ([product.md](product.md)) — so most screens are two or three commands
 from it; `/new` or `/quick` start from nothing. The PNGs land in
-`.drive/shots/`. `start` builds when the source has moved; restart the
-session after any other rebuild (Gotchas).
+`.drive/shots/`. `start` builds when the source has moved. **After any other
+build, `stop` and `start` again**: a build under a running session leaves its
+Worker serving 404s, and a reload keeps what the service worker precached —
+`forget` is not enough. If a `start` hangs, look in `ps` for a `workerd`
+an earlier session left behind.
 
 ## What the reader shows you
 
@@ -170,17 +173,3 @@ nothing in ARIA is read as `nothing marked as chosen` rather than guessed at.
   app, not before, or you are testing a blank tab rather than the offline app.
 - **`html` is the one deliberate cheat.** It is for building the reader, not for
   using it; reading it during a blind run defeats the point.
-- **Don't build while a session is open** — `pnpm run build`, or a browser
-  check finding the build stale. It rebuilds `apps/web/out` under the running
-  Worker, which then serves 404 for every path — including the app shell, so
-  the next `goto` fails with an HTTP error that looks like a bug in the app.
-  Restart the daemon after any build.
-- **A reload does not pick up a rebuild.** The phone has the service worker,
-  which is cache-first: the CSS and JS it already precached are what it keeps
-  serving, so a fix you just built shows up as the bug you just fixed. Restart
-  the session — `forget` is not enough, the caches are the context's.
-- **The daemon holds a browser and a Worker**, and `stop` takes both with it:
-  `serveWorker` spawns `wrangler` detached and signals the process group, so the
-  `workerd` underneath it goes too. Surviving `workerd`s exhaust memory, and a
-  fresh `start` then hangs before it writes `.drive/ready.json` — if a start
-  hangs, check `ps` first.
