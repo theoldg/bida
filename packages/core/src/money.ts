@@ -29,7 +29,6 @@ export function exponentOf(currency: CurrencyCode): number {
   return EXPONENT_OVERRIDES[currency.toUpperCase()] ?? 2;
 }
 
-/** 10^n as a bigint. */
 function pow10(n: number): bigint {
   return 10n ** BigInt(n);
 }
@@ -81,11 +80,8 @@ export function minorToDecimalString(minor: number, currency: CurrencyCode): str
 }
 
 interface FormatOptions {
-  /** BCP-47 locale. Defaults to the runtime's. */
   locale?: string;
-  /** Show the currency symbol/code. Default true. */
   showCurrency?: boolean;
-  /** Force a leading + on positive, non-zero amounts. */
   signDisplay?: "auto" | "always" | "never";
 }
 
@@ -102,9 +98,8 @@ export function formatMinor(
 }
 
 /**
- * The same string as `formatMinor`, cut into `Intl`'s typed pieces — for a
- * screen that sets the currency, the whole part and the fraction at different
- * sizes. Joining every part's `value` gives `formatMinor` back exactly.
+ * For a screen that sizes the parts differently; joined, they give `formatMinor`
+ * back exactly.
  */
 export function formatMinorParts(
   minor: number,
@@ -114,8 +109,7 @@ export function formatMinorParts(
   return minorFormatter(currency, options).formatToParts(minorValue(minor, currency));
 }
 
-// Intl takes a Number; we hand it an exactly-representable decimal built from
-// the integer, so no precision is invented along the way.
+// An exactly-representable decimal built from the integer: no precision invented.
 const minorValue = (minor: number, currency: CurrencyCode) =>
   Number(minorToDecimalString(minor, currency));
 
@@ -177,7 +171,6 @@ export function convertMinor(
   return out;
 }
 
-/** Sum minor amounts safely. */
 export function sumMinor(values: Iterable<number>): number {
   let total = 0;
   for (const v of values) total += v;
@@ -191,7 +184,7 @@ export function sumMinor(values: Iterable<number>): number {
  */
 export const RATE_DIGITS = 12;
 
-/** Significant digits a rate is *shown* with. Six is where a human stops reading. */
+/** Six is where a human stops reading. */
 export const RATE_SHOWN_DIGITS = 6;
 
 /** "1.0834e-5" -> "0.000010834". `isValidRate` rejects exponent notation. */
@@ -201,14 +194,12 @@ function expandExponent(text: string): string {
   const exponent = Number(text.slice(e + 1));
   const [whole = "0", frac = ""] = text.slice(0, e).split(".");
   const digits = whole + frac;
-  // Where the point sits once the exponent is spent, counted from the left.
   const point = whole.length + exponent;
   if (point <= 0) return `0.${"0".repeat(-point)}${digits}`;
   if (point >= digits.length) return digits + "0".repeat(point - digits.length);
   return `${digits.slice(0, point)}.${digits.slice(point)}`;
 }
 
-/** Drop the zeros a fixed-digit rounding left on the end. "4.500" -> "4.5". */
 function trimRate(text: string): string {
   if (!text.includes(".")) return text;
   const trimmed = text.replace(/0+$/, "").replace(/\.$/, "");
@@ -228,18 +219,14 @@ export function rateFromNumber(value: number, significantDigits = RATE_DIGITS): 
   return rate;
 }
 
-/**
- * Round a positive decimal string to `significantDigits`, half-away-from-zero,
- * on the digits themselves: the input may hold more precision than a double.
- */
+/** On the digits themselves: the input may hold more precision than a double. */
 function toSignificant(whole: string, frac: string, significantDigits: number): string {
   const digits = whole + frac;
   const lead = digits.search(/[1-9]/);
   if (lead === -1) return "0";
   const keep = lead + significantDigits;
   if (keep >= digits.length) return trimRate(`${whole}.${frac}`);
-  // Round the kept prefix as an integer; a carry past the front ("999" -> "1000")
-  // adds a digit, moving the point right as it should.
+  // A carry past the front ("999" -> "1000") adds a digit.
   const roundUp = Number(digits[keep]) >= 5;
   const kept = (BigInt(digits.slice(0, keep)) + (roundUp ? 1n : 0n)).toString()
     .padStart(keep, "0");
@@ -257,15 +244,13 @@ function toSignificant(whole: string, frac: string, significantDigits: number): 
  */
 export function invertRate(rate: Rate, significantDigits = RATE_DIGITS): Rate {
   const { num, scale } = parseRate(rate);
-  // 1 / (num / 10^scale) = 10^scale / num, taken to enough places that
-  // `toSignificant` has a digit to round on however small the result is.
+  // Enough places that `toSignificant` has a digit to round on.
   const places = significantDigits + num.toString().length + 1;
   const scaled = divRound(pow10(scale + places), num).toString().padStart(places + 1, "0");
   const cut = scaled.length - places;
   return toSignificant(scaled.slice(0, cut), scaled.slice(cut), significantDigits);
 }
 
-/** A rate as a person reads it — the stored precision is for arithmetic, not eyes. */
 export function formatRate(rate: Rate, significantDigits = RATE_SHOWN_DIGITS): string {
   const { num, scale } = parseRate(rate);
   const text = num.toString().padStart(scale + 1, "0");

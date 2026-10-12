@@ -1,8 +1,7 @@
 /**
- * This phone's Web Push subscription, and keeping every held group's identity
- * in step with it (docs/notifications.md, plan step 5). The subscription lives
- * on the log as `identity.push`, so the phone that causes a change knows whom
- * to tell; the server keeps nothing.
+ * This phone's Web Push subscription, kept in step on every held group's identity
+ * (docs/notifications.md): the phone that causes a change knows whom to tell, and
+ * the server keeps nothing.
  */
 
 import { fromBase64Url, isDemo, type DevicePush, type Identity, type NotifyScope } from "@bida/core";
@@ -11,13 +10,9 @@ import { db, type NotifyLevel } from "./db/dexie";
 import { getDevice, updateDevice } from "./db/device";
 import { keepNote } from "./diag";
 
-/**
- * Where this phone stands. Only `"ask"` draws the offer: `"denied"` can't be
- * asked again (the person undoes it in settings), `"on"` needs nothing.
- */
+/** Only `"ask"` draws the offer: `"denied"` can't be asked again. */
 export type PushState = "unsupported" | "ask" | "denied" | "on";
 
-/** Pure, for the tests: the browser's three facts to one state. */
 export function pushStateFrom(
   { supported, permission }: { supported: boolean; permission: NotificationPermission | undefined },
 ): PushState {
@@ -40,9 +35,8 @@ export function subscribePushState(listener: () => void): () => void {
 }
 
 /**
- * What the phone allows, as Settings shows it: a prompt dismissed is still
- * "ask", and can be asked again. A string, so `useSyncExternalStore` compares
- * it by value.
+ * A prompt dismissed is still "ask". A string, so `useSyncExternalStore` compares
+ * by value.
  */
 export function pushPermission(): PushState {
   return pushStateFrom({
@@ -51,15 +45,12 @@ export function pushPermission(): PushState {
   });
 }
 
-/** The offer's reading of `pushPermission`. */
 export function pushState(): PushState {
   const state = pushPermission();
-  // Answered "not now" in the prompt leaves the permission at "default"; the
-  // offer goes for this launch rather than standing there as if unasked.
+  // "Not now" leaves the permission at "default"; the offer goes for this launch.
   return state === "ask" && asked ? "denied" : state;
 }
 
-/** What goes on the log: the three things a sender encrypts and addresses with. */
 export function pushFromSubscription(json: PushSubscriptionJSON): DevicePush | null {
   const { endpoint, keys } = json;
   if (!endpoint || !keys?.p256dh || !keys.auth) return null;
@@ -73,26 +64,21 @@ function samePush(a: DevicePush | null | undefined, b: DevicePush | null): boole
 }
 
 /**
- * What the log should say for this subscription at this level. "own" leaves
- * `scope` out, as every subscription written before the choice existed did,
- * so choosing it rewrites nothing.
+ * "own" leaves `scope` out, as older subscriptions did, so choosing it rewrites
+ * nothing.
  */
 export function pushAt(json: PushSubscriptionJSON | null, level: NotifyLevel): DevicePush | null {
   const push = json && level !== "off" ? pushFromSubscription(json) : null;
   return push && level === "all" ? { ...push, scope: "all" } : push;
 }
 
-/** Where Settings stands: off without permission, else the level chosen, "own" if none was. */
 export function notifyLevel(state: PushState, chosen: NotifyLevel | undefined): NotifyLevel {
   return state === "on" ? chosen ?? "own" : "off";
 }
 
 /**
- * Which groups need an identity op to say `want`: every group this phone holds
- * and has claimed a member in, bar the demo and the ones it left, whose
- * identity says otherwise. A group with no claim has no identity to carry it;
- * `claimIdentity` catches it up. Absent and `null` agree when `want` is null,
- * so a phone that never subscribed writes nothing.
+ * A group with no claim has no identity to carry it; `claimIdentity` catches it
+ * up.
  */
 export function pushWrites(
   { held, left, identities, want }: {
@@ -110,7 +96,7 @@ export function pushWrites(
     && !samePush(identity.push, want));
 }
 
-/** The Worker's public key; asked each time, since one build serves two Workers. */
+/** Asked each time, since one build serves two Workers. */
 async function serverKey(): Promise<Uint8Array | null> {
   try {
     // Bounded: everything that changes push state waits its turn behind this.
@@ -130,14 +116,9 @@ function sameBytes(a: ArrayBuffer | null, b: Uint8Array): boolean {
 }
 
 /**
- * The subscription this phone should hold: its current one, unless that was
- * made with another key (a rotation), in which case a fresh one. Needs the
- * permission already granted, so no tap is needed here.
- *
- * **Without the key — offline — the current one stands**, so a start with no
- * network never writes a live subscription off the log. A browser that won't
- * say which key it subscribed with keeps its subscription too, or every start
- * would churn a new one and an op per group.
+ * A fresh one only when made with another key. **Offline, the current one
+ * stands**, and so does one whose browser won't say its key, or every start would
+ * churn an op per group.
  */
 async function subscription(reg: ServiceWorkerRegistration): Promise<PushSubscription | null> {
   const current = await reg.pushManager.getSubscription();
@@ -153,10 +134,8 @@ async function subscription(reg: ServiceWorkerRegistration): Promise<PushSubscri
 }
 
 /**
- * One change to this phone's push state at a time, in the order asked. Each
- * reads the level, waits on the network, then writes: a start's reconcile run
- * beside a Settings tap would otherwise write the level it read over the one
- * just chosen.
+ * One change at a time, in the order asked: a start's reconcile beside a Settings
+ * tap would write the level it read over the one just chosen.
  */
 let turn: Promise<unknown> = Promise.resolve();
 function inTurn(task: () => Promise<void>): Promise<void> {
@@ -165,7 +144,6 @@ function inTurn(task: () => Promise<void>): Promise<void> {
   return run;
 }
 
-/** Write `want` onto every identity that says otherwise. */
 async function publish(want: DevicePush | null, now = Date.now()): Promise<void> {
   const device = await getDevice();
   const [held, identities] = await Promise.all([
@@ -184,9 +162,8 @@ async function publish(want: DevicePush | null, now = Date.now()): Promise<void>
 }
 
 /**
- * From the offer's tap or Settings'. **`requestPermission` comes first, before
- * any await**: iOS shows the prompt only inside the tap's own turn, and
- * anything awaited ahead of it spends that.
+ * **`requestPermission` comes first, before any await**: iOS shows the prompt
+ * only inside the tap's own turn.
  */
 export async function turnOnNotifications(level: NotifyScope = "own"): Promise<void> {
   if (!supported()) return;
@@ -208,9 +185,8 @@ export async function turnOnNotifications(level: NotifyScope = "own"): Promise<v
 }
 
 /**
- * Settings' control. Off keeps the browser's subscription and writes `null`
- * to the log, so turning back on asks nothing. **Without permission, the tap
- * goes straight to the prompt** — nothing may be awaited ahead of it.
+ * Off keeps the browser's subscription and writes `null`, so turning back on asks
+ * nothing. Without permission, nothing may be awaited ahead of the prompt.
  */
 export async function setNotifyLevel(level: NotifyLevel): Promise<void> {
   if (!supported()) return;
@@ -230,10 +206,8 @@ export async function setNotifyLevel(level: NotifyLevel): Promise<void> {
 }
 
 /**
- * Every start, and after a claim: bring the log in line with the browser.
- * Safari rotates a subscription without saying, a new VAPID key needs a fresh
- * one, a revoked permission means `null`, and a new claim has none yet. Quiet
- * when nothing moved.
+ * Every start, and after a claim: Safari rotates a subscription without saying, a
+ * new VAPID key needs a fresh one, a revoked permission means `null`.
  */
 export async function reconcilePush(): Promise<void> {
   if (!supported()) return;
@@ -241,7 +215,6 @@ export async function reconcilePush(): Promise<void> {
     try {
       const reg = await navigator.serviceWorker.getRegistration();
       if (!reg) return;
-      // A permission taken back leaves the subscription dead, not gone: null.
       // And Settings' "off" is kept off however the browser stands.
       const level = (await getDevice()).notify ?? "own";
       const sub = Notification.permission === "granted" && level !== "off" ? await subscription(reg) : null;
