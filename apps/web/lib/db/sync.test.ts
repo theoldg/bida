@@ -728,6 +728,10 @@ describe("syncAll", () => {
 
   it("asks for every group at once, the most recently changed first", async () => {
     const older = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    // A later millisecond: two groups made in one tie on the wall clock, and
+    // the tie falls to their random node ids.
+    const made = Date.now();
+    while (Date.now() <= made) await new Promise((r) => setTimeout(r, 1));
     const newer = await createGroup({ name: "Lisbon", baseCurrency: "EUR", myName: "Theo" });
     await db().ops.toCollection().modify({ pending: 0 });
     const asked: string[] = [];
