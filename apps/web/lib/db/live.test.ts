@@ -2,7 +2,7 @@ import Dexie, { liveQuery } from "dexie";
 import { beforeEach, describe, expect, it } from "vitest";
 import { forget, timeline } from "../diag";
 import { db } from "./dexie";
-import { keepWarm, testing } from "./live";
+import { keepWarm, sameData, testing } from "./live";
 
 const settle = () => new Promise((r) => setTimeout(r, 60));
 
@@ -297,10 +297,70 @@ describe("a read kept warm", () => {
     expect(testing.remembered.get('count ["b"]')).toBe(1);
   });
 
-  it("keeps only the newest dozen", () => {
-    for (let i = 0; i < 13; i++) keepWarm("count", count, [i]);
-    expect(testing.warm.size).toBe(12);
+  it("keeps only the newest few", () => {
+    for (let i = 0; i <= testing.WARM; i++) keepWarm("count", count, [i]);
+    expect(testing.warm.size).toBe(testing.WARM);
     expect(testing.warm.has("count [0]")).toBe(false);
-    expect(testing.warm.has("count [12]")).toBe(true);
+    expect(testing.warm.has(`count [${testing.WARM}]`)).toBe(true);
+  });
+
+  it("keeps the object it had when answered again with the same rows", async () => {
+    await db().groups.put({ id: "g3", name: "Riad" } as never);
+    keepWarm("rows", () => db().groups.toArray(), ["c"]);
+    await warmed();
+    const first = testing.remembered.get('rows ["c"]');
+    expect(first).toEqual([{ id: "g3", name: "Riad" }]);
+
+    // A write that changes nothing still re-runs the read.
+    await db().groups.put({ id: "g3", name: "Riad" } as never);
+    await settle();
+    expect(testing.remembered.get('rows ["c"]')).toBe(first);
+
+    await db().groups.put({ id: "g3", name: "Tagine" } as never);
+    await settle();
+    expect(testing.remembered.get('rows ["c"]')).toEqual([{ id: "g3", name: "Tagine" }]);
+  });
+});
+
+describe("sameData", () => {
+  it("compares records and arrays by what they hold", () => {
+    expect(sameData({ a: [1, { b: "x" }], c: null }, { a: [1, { b: "x" }], c: null })).toBe(true);
+    expect(sameData([{ a: 1 }], [{ a: 2 }])).toBe(false);
+    expect(sameData([1, 2], [1, 2, 3])).toBe(false);
+    expect(sameData({ a: 1 }, { a: 1, b: undefined })).toBe(false);
+    expect(sameData({ a: 1 }, [1])).toBe(false);
+    expect(sameData(undefined, null)).toBe(false);
+    expect(sameData(0, 0)).toBe(true);
+  });
+
+  it("compares anything that is not a plain record by identity", () => {
+    expect(sameData(new Map([[1, 2]]), new Map([[1, 2]]))).toBe(false);
+    const map = new Map();
+    expect(sameData({ m: map }, { m: map })).toBe(true);
+  });
+});
+
+/**
+ * Pins what `groupRows`' unsynced count (lib/hooks.ts) leans on: an op leaving
+ * the `pending` index wakes a read of that index, not only one entering it.
+ */
+describe("a live read of an index range", () => {
+  it("is woken by a row leaving the range", async () => {
+    const local = new Dexie("live-range");
+    local.version(1).stores({ ops: "id, pending" });
+    await local.open();
+    await local.table("ops").put({ id: "a", pending: 1, groupId: "g" });
+
+    const counts: number[] = [];
+    const sub = liveQuery(() => local.table("ops").where("pending").equals(1)
+      .filter((o: { groupId: string }) => o.groupId === "g").count())
+      .subscribe((n) => counts.push(n), () => {});
+    await settle();
+    await local.table("ops").put({ id: "a", pending: 0, groupId: "g" });
+    await settle();
+    expect(counts).toEqual([1, 0]);
+
+    sub.unsubscribe();
+    local.close();
   });
 });

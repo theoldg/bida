@@ -41,9 +41,9 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   make the check fail the way the phone did before trusting the fix.
 
 - *2026-10-12* — "Could switching screens be even snappier with like
-  prefetches?" The ask named a fix; a frame-by-frame probe at 4× CPU named
-  the cause, a wait on every mount that prefetching would never touch. Record
-  what each screen paints before building the remedy offered.
+  prefetches?" The ask named a fix; a frame-by-frame probe named the cause, a
+  wait no prefetch touches. Measure before building the remedy offered, and
+  at size: 600 entries slowed every screen, which no small group showed.
 
 - *2026-10-12* — "ship the flags that speed up the trace": flags from a
   conversation I wasn't in. I measured my way toward them until they pasted

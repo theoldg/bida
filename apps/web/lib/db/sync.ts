@@ -510,9 +510,10 @@ async function byRecency<T extends { groupId: string }>(keys: T[]): Promise<T[]>
     .map(({ key }) => key);
 }
 
+/** Every group, not every key: one with none (the demo) is settled too, or its screens wait. */
 export async function applyStashes(): Promise<void> {
-  const keys = await db().groupKeys.toArray().catch(() => []);
-  await Promise.all(keys.map((key) => applyStash(key.groupId)));
+  const ids = await db().groups.toCollection().primaryKeys().catch(() => []);
+  await Promise.all(ids.map((id) => applyStash(id)));
 }
 
 async function hasPending(groupId: string): Promise<boolean> {

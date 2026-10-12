@@ -72,14 +72,21 @@ own. `/diag`'s `copies:` line names every copy the service worker can see, and
 whether it is hidden.
 
 **A read outlives its screen.** When the last screen holding one closes,
-`useLive` keeps it subscribed (`keepWarm`, the newest twelve), so `remembered`
+`useLive` keeps it subscribed (`keepWarm`, the newest two dozen), so `remembered`
 follows every write made elsewhere and a screen comes back as the database is
 now — the groups list, back from an edit, already in its new order rather than
 gliding into it. Screens also ready the ones a tap is likeliest to open: the
-list its first three groups, the ledger history and the list (`warmGroup`,
+list its first ten groups, the ledger history and the list (`warmGroup`,
 `warmGroupsList`). A warm read subscribes 400ms late, clear of the next
 screen's own first read, obeys the hidden gate, and is subscribed again with
-the rest.
+the rest. It costs nothing until what it reads changes, so **a group's read
+leaves out the device row**, which every save and pull rewrites — who you are
+is `useDevice`'s.
+
+**An answer that says what the last one said is the last one** (`sameData`):
+the same object, so a screen opened onto a remembered answer doesn't draw
+everything again when its own read lands, and a group's balances are worked
+out once per answer for every screen of it (`derive`, `lib/hooks.ts`).
 
 `ReadErrorBoundary` (app/layout.tsx) catches the rest. `dexie-react-hooks`
 reports a failed read by throwing during render; without a boundary every error

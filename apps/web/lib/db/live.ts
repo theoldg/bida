@@ -46,9 +46,9 @@ const remembered = new Map<string, unknown>();
 /**
  * A screen's reads stay subscribed for a while after it closes, keeping
  * `remembered` current: the screen comes back as it is now, rather than as it
- * was left and then moving into place. A handful, newest kept.
+ * was left and then moving into place. A couple of dozen, newest kept.
  */
-const WARM = 12;
+const WARM = 24;
 /** Clear of the next screen's own first read. */
 const WARM_AFTER_MS = 400;
 
@@ -64,11 +64,49 @@ function guarded<T>(memo: string, querier: () => Promise<T>): () => Promise<T | 
   return async () => isHidden() ? remembered.get(memo) as T | undefined : querier();
 }
 
+/**
+ * A read answered again with what it already had keeps the object it had, so a
+ * screen opened onto a remembered answer doesn't draw everything a second time
+ * when its own read lands, and what is worked out from an answer is worked out
+ * once (`derive`, lib/hooks.ts).
+ */
+export function sameData(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
+  if (Array.isArray(a)) {
+    return Array.isArray(b) && a.length === b.length && a.every((x, i) => sameData(x, b[i]));
+  }
+  if (Array.isArray(b) || Object.getPrototypeOf(a) !== Object.getPrototypeOf(b)) return false;
+  // Rows are plain records; anything else is compared by identity.
+  if (Object.getPrototypeOf(a) !== Object.prototype && Object.getPrototypeOf(a) !== null) return false;
+  const ka = Object.keys(a);
+  if (ka.length !== Object.keys(b).length) return false;
+  return ka.every((k) => k in b && sameData((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+}
+
+/** Each fresh answer, to what is drawn in its place: compared once, not every render. */
+const settledAs = new WeakMap<object, unknown>();
+
+function answer(memo: string, value: unknown): unknown {
+  if (value === undefined) return remembered.get(memo);
+  if (typeof value === "object" && value !== null) {
+    const known = settledAs.get(value);
+    if (known !== undefined) return known;
+    const prior = remembered.get(memo);
+    const kept = prior !== undefined && sameData(value, prior) ? prior : value;
+    settledAs.set(value, kept);
+    remembered.set(memo, kept);
+    return kept;
+  }
+  remembered.set(memo, value);
+  return value;
+}
+
 function subscribeWarm(memo: string, w: Warm): void {
   clearTimeout(w.timer);
   w.sub?.unsubscribe();
   w.sub = liveQuery(w.querier).subscribe({
-    next: (value) => { if (value !== undefined) remembered.set(memo, value); },
+    next: (value) => { answer(memo, value); },
     error: () => coolDown(memo),
   });
 }
@@ -213,7 +251,7 @@ export function useLive<T>(
 
   const value = useLiveQuery(timedQuerier, [key, epoch, n]);
   const waiting = value === undefined;
-  if (!waiting) remembered.set(memo, value);
+  const shown = answer(memo, value) as T | undefined;
 
   useEffect(() => {
     if (!waiting || hidden || n >= PROBES) return;
@@ -232,7 +270,7 @@ export function useLive<T>(
     return addStall();
   }, [stalled, name]);
 
-  return waiting ? remembered.get(memo) as T | undefined : value;
+  return shown;
 }
 
 export function useStalled(): { stalled: boolean; blocked: boolean } {
@@ -254,6 +292,7 @@ export const testing = {
   reopen,
   remembered,
   warm,
+  WARM,
   subscribe,
   addStall,
   reset(): void {

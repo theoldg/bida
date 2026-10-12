@@ -158,6 +158,13 @@ describe("applying what the worker pulled ahead", () => {
     expect(stashSettled(groupId)).toBe(false);
   });
 
+  it("settles a group with no key, which never has a stash to wait for", async () => {
+    const { groupId } = await heldGroup();
+    await db().groupKeys.delete(groupId);
+    await applyStashes();
+    expect(stashSettled(groupId)).toBe(true);
+  });
+
   it("never fails the screen waiting on it", async () => {
     const { groupId } = await heldGroup();
     entries.set(`/pull/${groupId}/ops`, "not json");

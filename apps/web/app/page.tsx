@@ -42,7 +42,8 @@ export default function GroupsPage() {
     [resuming, summaries]);
   // The first an icon would actually carry: the demo has no key.
   const lead = groups?.find((g) => !isDemo(g.group.id));
-  // The groups a tap is likeliest to open, read before it lands.
+  // Each group's screens, read before the tap lands. A warm read costs nothing
+  // until its own group changes.
   useEffect(() => {
     for (const summary of groups?.slice(0, WARM_GROUPS) ?? []) warmGroup(summary.group.id);
   }, [groups]);
@@ -81,7 +82,8 @@ export default function GroupsPage() {
 
 const never = () => () => {};
 
-const WARM_GROUPS = 3;
+/** Past this, the list is scrolled through more than tapped from the top. */
+const WARM_GROUPS = 10;
 
 function GroupRow({ summary }: { summary: GroupSummary }) {
   const { group, memberCount, entryCount, netMinor, lastActivity, newCount } = summary;

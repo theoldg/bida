@@ -169,17 +169,66 @@ function groupRows(groupId: string | undefined) {
   return async () => {
     if (!groupId) return undefined;
     const d = db();
-    const [group, members, expenses, settlements, pending, device, rates] = await Promise.all([
+    // Not the device row: every save and every pull writes it, and each would
+    // read every group kept warm again. Who you are comes from `useDevice`.
+    const [group, members, expenses, settlements, pending, rates] = await Promise.all([
       d.groups.get(groupId),
       d.members.where("groupId").equals(groupId).toArray(),
       d.expenses.where("groupId").equals(groupId).toArray(),
       d.settlements.where("groupId").equals(groupId).toArray(),
-      d.ops.where("[groupId+hlc]").between([groupId, ""], [groupId, "￿"]).filter((o) => o.pending === 1).count(),
-      d.device.get("device"),
+      // By the index: the few waiting, not the whole log.
+      d.ops.where("pending").equals(1).filter((o) => o.groupId === groupId).count(),
       d.rates.where("groupId").equals(groupId).toArray(),
     ]);
-    return { group, members, expenses, settlements, rates, pending, device };
+    return { group, members, expenses, settlements, rates, pending };
   };
+}
+
+type GroupRows = NonNullable<Awaited<ReturnType<ReturnType<typeof groupRows>>>>;
+type Derived = Omit<GroupData, "me" | "loading">;
+
+/**
+ * By the rows read, not per screen: every screen of a group is handed the same
+ * answer (lib/db/live.ts keeps it the same object), so the balances are worked
+ * out once rather than again on every screen opened.
+ */
+const derived = new WeakMap<GroupRows, Derived>();
+
+function derive(rows: GroupRows): Derived {
+  const known = derived.get(rows);
+  if (known) return known;
+  const members = living(rows.members).sort((a, b) => a.name.localeCompare(b.name));
+  const sortedExpenses = living(rows.expenses).sort(byWhen);
+  const sortedSettlements = living(rows.settlements).sort(byWhen);
+  const state = stateOf(
+    rows.group, members, sortedExpenses, sortedSettlements, living(rows.rates),
+  );
+  // `stateOf` keys them and loses the sort.
+  const bySortOrder = <T extends { id: string }>(rows: T[], keyed: Record<string, T>) =>
+    rows.map((row) => keyed[row.id] ?? row);
+  const balances = computeBalances(state);
+  const memberById = new Map((rows.members ?? []).map((m) => [m.id, m]));
+  // Detection needs the tombstones: a removed member on a live entry is the
+  // point.
+  const withTombstones = stateFromRows(rows);
+  const out: Derived = {
+    group: rows.group,
+    members,
+    memberById,
+    nameOf: (id) => memberById.get(id)?.name ?? copy.unknown,
+    hasLeft: (id) => !!memberById.get(id)?.deletedAt,
+    expenses: bySortOrder(sortedExpenses, state.expenses),
+    settlements: bySortOrder(sortedSettlements, state.settlements),
+    rates: state.rates,
+    currencies: currenciesInUse(state),
+    balances,
+    transfers: settleUp(balances.byMember),
+    guard: (draft) => wouldViolate(withTombstones, draft),
+    withTombstones,
+    pendingOps: rows.pending,
+  };
+  derived.set(rows, out);
+  return out;
 }
 
 /** Kept apart from `groupRows`, so a screen that never opens history doesn't read every op. */
@@ -207,8 +256,12 @@ export function useGroupData(groupId: string | undefined): GroupData {
   const stashed = useStashApplied(groupId);
   const rows = useLive("groupData", groupRows(groupId), [groupId]);
 
+  const device = useDevice();
+  const me = groupId ? device?.meByGroup[groupId] : undefined;
+  const answered = device !== undefined;
+
   return useMemo(() => {
-    if (!rows || !stashed) {
+    if (!rows || !stashed || !answered) {
       return {
         group: undefined, members: [], memberById: new Map(),
         nameOf: () => copy.unknown, hasLeft: () => false,
@@ -217,42 +270,8 @@ export function useGroupData(groupId: string | undefined): GroupData {
         guard: () => undefined, withTombstones: emptyGroupState(), pendingOps: 0, loading: true,
       };
     }
-    const members = living(rows.members).sort((a, b) => a.name.localeCompare(b.name));
-    const sortedExpenses = living(rows.expenses).sort(byWhen);
-    const sortedSettlements = living(rows.settlements).sort(byWhen);
-    const state = stateOf(
-      rows.group, members, sortedExpenses, sortedSettlements, living(rows.rates),
-    );
-    // `stateOf` keys them and loses the sort.
-    const bySortOrder = <T extends { id: string }>(rows: T[], keyed: Record<string, T>) =>
-      rows.map((row) => keyed[row.id] ?? row);
-    const expenses = bySortOrder(sortedExpenses, state.expenses);
-    const settlements = bySortOrder(sortedSettlements, state.settlements);
-
-    const balances = computeBalances(state);
-    const memberById = new Map((rows.members ?? []).map((m) => [m.id, m]));
-    // Detection needs the tombstones: a removed member on a live entry is the
-    // point.
-    const withTombstones = stateFromRows(rows);
-    return {
-      group: rows.group,
-      members,
-      memberById,
-      nameOf: (id) => memberById.get(id)?.name ?? copy.unknown,
-      hasLeft: (id) => !!memberById.get(id)?.deletedAt,
-      expenses,
-      settlements,
-      rates: state.rates,
-      currencies: currenciesInUse(state),
-      balances,
-      transfers: settleUp(balances.byMember),
-      me: groupId ? rows.device?.meByGroup[groupId] : undefined,
-      guard: (draft) => wouldViolate(withTombstones, draft),
-      withTombstones,
-      pendingOps: rows.pending,
-      loading: false,
-    };
-  }, [rows, stashed, groupId]);
+    return { ...derive(rows), me, loading: false };
+  }, [rows, stashed, answered, me]);
 }
 
 /**
