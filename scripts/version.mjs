@@ -15,7 +15,7 @@
  * build reads it (`apps/web/next.config.mjs`); `/about` shows it and `/diag`
  * prints it first, so a pasted report names its build.
  *
- * `--check` is a stage of `pnpm check` (scripts/check.mjs): a tree that
+ * `--check` is a stage of `pnpm check --push` (scripts/check.mjs): a tree that
  * differs from what `dev` serves under the same number fails the gate.
  */
 import { execFileSync } from "node:child_process";

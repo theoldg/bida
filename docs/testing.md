@@ -5,7 +5,7 @@ says which of the testing docs your task needs.*
 
 ```bash
 pnpm push         # bump, push to dev, watch the run until green or red — how a session ships
-pnpm check        # links · rules · version · typecheck · tests — pre-push, ~25s
+pnpm check        # links · rules · typecheck · tests (+ version, pre-push) — ~25s
 pnpm verify       # every browser check against a real build — on GitHub, at every push
 pnpm verify nav   # one of them (or several, named) — each is a file in scripts/checks/, [browser-checks.md](browser-checks.md) says what it holds
 pnpm shots        # PNGs into shots/ (gitignored)
@@ -29,7 +29,7 @@ pnpm bump         # the number this deploy will show; `push` does it for you —
 | | Where | Gates |
 |---|---|---|
 | `pnpm check` | `pre-push`, on your machine; again on GitHub (`--ci`) | the push, then the deploy |
-| the build | GitHub, in the deploy job | the deploy: a red build ships nothing |
+| the build | GitHub, a stage of `check --ci` | the deploy: a red build ships nothing |
 | `pnpm verify` | GitHub, beside the deploy, every push to `dev` | the release — `pnpm push` waits on it; a newer push cancels it |
 | the whole run | — | the release: `main` gets only a commit whose `dev` run is green ([hosting.md](hosting.md#dev-and-production)) |
 
@@ -64,8 +64,8 @@ together: each serves the export on its own port 0, and the build is the one
 thing they would race on, started at once.
 
 **What gates, and why.** The build, because `next build` catches what `tsc`
-cannot (a prerender touching `window`, a client-boundary mistake, a
-`precache.mjs` that throws). `pnpm run rules`, because a decision in an ADR is one careless import away
+cannot (in CI it skips its own `tsc`, which runs beside it): a prerender touching `window`, a client-boundary mistake, a
+`precache.mjs` that throws. `pnpm run rules`, because a decision in an ADR is one careless import away
 from being reversed by someone who never read it — an import or a
 `Date.now()` in `packages/core`, a browser dialog in `apps/web`
 ([ADR-0008](decisions/0008-hand-rolled-interface.md)), a live read without its
@@ -74,9 +74,9 @@ for another is in the script: written down as a decision, reversible in one
 line, invisible to every test. Style isn't on the list — there is no linter here
 on purpose. And the version, because a push to `dev` deploys and a deploy has to
 show a new number: the stage fails a tree that differs from what `dev` is serving
-and still calls itself the same thing ([hosting.md](hosting.md#versions)). It
-is the one stage GitHub skips — it clones shallow, with no `dev` to compare
-against.
+and still calls itself the same thing ([hosting.md](hosting.md#versions)). Only
+`pre-push` runs it (`check --push`): before then `pnpm push` hasn't bumped yet,
+and GitHub clones shallow, with no `dev` to compare against.
 
 **A pass is stamped and not repeated.** The stamp is a hash of every file git
 tracks or would track, plus the env files it ignores

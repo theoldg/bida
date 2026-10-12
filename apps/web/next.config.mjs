@@ -21,6 +21,9 @@ const nextConfig = {
   output: "export",
   reactStrictMode: true,
   images: { unoptimized: true },
+  // Only when `pnpm check --ci` runs the build beside its own typecheck, which
+  // fails the same step: checking again here was a third of the build's time.
+  typescript: { ignoreBuildErrors: process.env.BIDA_TYPECHECKED_BESIDE === "1" },
   transpilePackages: ["@bida/core"],
   webpack(config) {
     // packages/core imports its siblings as "./hlc.js" etc — valid under

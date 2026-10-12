@@ -10,4 +10,4 @@
 # Wired up by the root postinstall (`git config core.hooksPath .githooks`),
 # so `pnpm install` is all a fresh clone needs.
 set -e
-pnpm check
+pnpm check --push

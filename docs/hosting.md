@@ -78,7 +78,7 @@ export matters more than it looks.
 
 **Automatic:** every push runs
 [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) — `pnpm check
---ci`, build the web export, then `wrangler deploy` at the branch's environment
+--ci`, which builds the web export beside its other stages, then `wrangler deploy` at the branch's environment
 — using the `CLOUDFLARE_API_TOKEN` repo secret (Settings → Secrets and variables →
 Actions). Any step failing deploys nothing, so a push that skipped the hook
 still cannot ship a broken build; on `dev` the browser checks run beside it
@@ -182,7 +182,7 @@ moves it to one past what `dev` is serving and is a no-op if it already is.
 | **semi** | Whoever is working, on their own judgement | The app is meaningfully a different thing than it was: a screen that wasn't there, a rule that changed. `pnpm bump semi`, and say so in the summary |
 | **major** | **The owner, in words, in a session** | Never on anybody else's judgement. `pnpm bump major` refuses |
 
-Nobody has to remember the first row: `pnpm check` fails a tree that differs
+Nobody has to remember the first row: `pre-push` (`pnpm check --push`) fails a tree that differs
 from what `dev` is serving and still calls itself the same number
 ([testing.md](testing.md)). It is the last place that can catch it, since CI
 clones shallow and has no `dev` to compare against.

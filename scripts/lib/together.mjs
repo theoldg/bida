@@ -7,7 +7,8 @@
  * - **Keeps the output**: a pass prints a line and a digest per job; only
  *   failed jobs spill.
  *
- * A job is `{ name, run: [cmd, ...args], rerun, digest }`. `digest(output)`
+ * A job is `{ name, run: [cmd, ...args], env, rerun, digest }`, `env` added to
+ * the runner's own. `digest(output)`
  * returns the lines worth printing on a pass — keep it to what a reader would
  * have scrolled to find, and prefer something *absent* when the job did
  * nothing, since a silent no-op is the failure neither gate otherwise sees.
@@ -48,7 +49,7 @@ export function annotation(level, title, text) {
 
 const runJob = (job) => new Promise((done) => {
   const at = Date.now();
-  const child = spawn(job.run[0], job.run.slice(1), { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] });
+  const child = spawn(job.run[0], job.run.slice(1), { cwd: ROOT, env: { ...process.env, ...job.env }, stdio: ["ignore", "pipe", "pipe"] });
   let output = "";
   child.stdout.on("data", (b) => { output += b; });
   child.stderr.on("data", (b) => { output += b; });

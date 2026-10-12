@@ -7,7 +7,7 @@ name: Deploy
 # button has to ask for the deploy rather than let the push cause one.
 #
 # Two jobs, side by side (docs/testing.md#where-each-check-runs):
-# - `deploy` is the gate: the fast checks and the build, then the deploy. Any
+# - `deploy` is the gate: the fast checks and the build at once, then the deploy. Any
 #   of them failing ships nothing, and the Worker keeps the last good build.
 # - `verify` drives every browser check against its own build, on a push to
 #   `dev` only, while the owner is already trying the deploy. It gates nothing;
@@ -47,9 +47,10 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # What `pre-push` ran, again, for a push that skipped it (an edit on
-      # github.com, a clone without `pnpm session`). All but the version, which
-      # a shallow clone cannot compare (scripts/check.mjs).
-      - run: pnpm check --ci
+      # github.com, a clone without `pnpm session`) — all but the version, which
+      # a shallow clone cannot compare — and the build beside it, so the deploy
+      # waits for the slower of the two, not both (scripts/check.mjs).
+      #
       # Not a secret: a Turnstile *site* key identifies the widget in the page
       # source, and this one only works on the domains the widget names — both
       # hostnames are on that list, so one build serves either Worker. Here
@@ -59,7 +60,7 @@ jobs:
       # that ships no token to a Worker demanding one, which refuses every
       # scan. A fork changes it here, or exports the var to override it.
       # docs/scan-worker.md#what-the-scan-costs.
-      - run: pnpm --filter @bida/web build
+      - run: pnpm check --ci
         env:
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: 0x4AAAAAAEz1vIlldxKNntfQ
       - if: env.TARGET == 'dev'

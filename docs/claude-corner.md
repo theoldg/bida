@@ -29,6 +29,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "Should the deploy take so long?", then "Ok do your version.
+  Why does the build take 30 seconds though?" Time each phase before
+  answering a why; the numbers were the answer, and a fix touching a gate
+  went to them as a question rather than into the push.
+
 - *2026-10-12* — "Should we special case the wording…?" I answered with a
   pick and asked; their reply was a better design ("a single row … for Y").
   A question can be the owner thinking aloud: answer briefly, then build what
@@ -83,7 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   ending in wdyt wants a pick with its one reason, then the build, not a
   survey. And when the owner pastes another session's proposal, that paste is
   the whole brief.
-
-- *2026-10-11* — "Rename "by name" to "by title" in search results".
-  One string in copy.ts; grep the docs and checks for it anyway, then ship
-  without ceremony. A one-word ask wants a one-word diff.
