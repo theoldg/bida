@@ -28,12 +28,11 @@ type Env = {
     ASSETS: Fetcher;
     DB: D1Database;
     GEMINI_API_KEY: string;
-    /** Both optional; without them scans are unlimited — docs/scan-worker.md#what-the-scan-costs, SELFHOSTING.md. */
+    /** Both optional; without them scans are unlimited. */
     TURNSTILE_SECRET_KEY?: string;
     SCAN_IP_SALT?: string;
-    /** `"dev"` on the dev Worker only (wrangler.toml) — see dev-env.ts. */
     BIDA_ENV?: string;
-    /** wrangler.toml; the private half is a secret. Without it nothing is relayed — docs/hosting.md#deploying. */
+    /** The private half is a secret. Without it nothing is relayed. */
     VAPID_PUBLIC_KEY?: string;
     VAPID_PRIVATE_KEY?: string;
   };
@@ -44,9 +43,8 @@ const app = new Hono<Env>();
 app.get("/api/health", (c) => c.json({ ok: true }));
 
 /**
- * The VAPID public key a phone subscribes with. Asked at runtime, not built in:
- * one static build serves both Workers, and each has its own pair
- * (docs/hosting.md#deploying). 404 on a Worker with none, which hides the offer.
+ * Asked at runtime, not built in: one static build serves both Workers, each with
+ * its own pair. 404 hides the offer.
  */
 app.get("/api/push/key", (c) => {
   if (!c.env.VAPID_PUBLIC_KEY) return c.json({ error: "no push on this server" }, 404);
@@ -54,16 +52,12 @@ app.get("/api/push/key", (c) => {
 });
 
 /**
- * 410 for a group deleted on request (`/delete-my-data`), checked *before* the
- * token: the tombstone keeps none, and a 403 would send somebody hunting for a
- * new invite. `scope` lets the phone say "deleted" rather than "sync failing".
+ * Checked *before* the token: the tombstone keeps none, and a 403 would send
+ * somebody hunting for a new invite.
  */
 const GONE = { error: "this group was deleted", scope: "deleted" } as const;
 
-/**
- * The group a bearer may act on, or the refusal to send. For every route but
- * `POST /ops`, which registers an unknown group rather than refusing it.
- */
+/** Every route but `POST /ops`, which registers an unknown group. */
 async function authorizedGroup(c: Context<Env>, groupId: string): Promise<GroupRow | Response> {
   const token = bearerToken(c.req.header("Authorization") ?? null);
   if (!token) return c.json({ error: "missing bearer token" }, 401);
@@ -75,7 +69,6 @@ async function authorizedGroup(c: Context<Env>, groupId: string): Promise<GroupR
   return group;
 }
 
-/** The request's JSON body, or the 400 to send. */
 async function jsonBody<T extends object>(c: Context<Env>): Promise<T | Response> {
   try {
     return await c.req.json<T>();
@@ -85,20 +78,10 @@ async function jsonBody<T extends object>(c: Context<Env>): Promise<T | Response
 }
 
 /**
- * One currency pair's rate, for an entry: today's, or with `?date=YYYY-MM-DD`
- * the day the entry happened (ADR-0005).
- *
- * `@fawazahmed0/currency-api`: CC0, keyless, ~340 currencies (including MAD
- * and UZS, which ECB feeds lack), daily. jsDelivr first, the project's Pages
- * as fallback — a CDN 404ing a path is this feed's actual failure mode.
- *
- * Fetched **by the entry's currency** (`currencies/mad.json` has `.eur`), so no
- * reciprocal is taken. Proxied for one shared cache, no CORS fight, and one
- * place to swap feeds. Unauthenticated: public data, costs nothing.
- *
- * **A past day is the feed's dated release**, tried before the latest one: a
- * day the feed has no release for (before its history starts, or one it
- * skipped) gets the latest rate rather than none.
+ * A rate for the entry's day (ADR-0005), from `@fawazahmed0/currency-api`: CC0,
+ * keyless, ~340 currencies including MAD and UZS. jsDelivr first, Pages as
+ * fallback — a CDN 404ing a path is this feed's actual failure mode. A day with
+ * no dated release gets the latest rate rather than none.
  */
 function rateHosts(date: string | null): { host: string; dated: boolean }[] {
   const latest = [
@@ -125,9 +108,7 @@ app.get("/api/rates/:from/:to", async (c) => {
   for (const { host, dated } of rateHosts(date)) {
     let payload: { date?: unknown; [key: string]: unknown };
     try {
-      // The edge cache is the shared cache, keyed by URL. Six hours on a daily
-      // feed; a past day's release never changes — but the latest one a dated
-      // miss falls through to is today's too, so it keeps the six hours.
+      // Six hours: a dated miss falls through to today's, which moves.
       const upstream = await fetch(`${host}/currencies/${from.toLowerCase()}.json`, {
         cf: { cacheTtl: dated ? 604800 : 21600, cacheEverything: true },
       });
@@ -157,10 +138,8 @@ app.get("/api/rates/:from/:to", async (c) => {
 });
 
 /**
- * Read a bill: the body is the bill in base64 — a photo, or typed text with
- * `X-Input: text`. The prompt and schema are ours (`scan-body.ts`); a caller
- * picks only the bill and one of four envelopes. The bill is streamed, never
- * parsed or held; see `wrapPayload`.
+ * The prompt and schema are ours (`scan-body.ts`); a caller picks only the bill
+ * and one of four envelopes. The bill is streamed, never parsed or held.
  */
 app.post("/api/groups/:id/scan", async (c) => {
   const groupId = c.req.param("id");
@@ -169,7 +148,7 @@ app.post("/api/groups/:id/scan", async (c) => {
 
   const ip = c.req.header("cf-connecting-ip") ?? "";
 
-  // First, before any D1 round trip: the one check a script can't opt out of.
+  // First: the one check a script can't opt out of.
   if (c.env.TURNSTILE_SECRET_KEY) {
     const verified = await turnstileOk(
       c.env.TURNSTILE_SECRET_KEY, c.req.header("x-turnstile-token") ?? null, ip,
@@ -177,19 +156,16 @@ app.post("/api/groups/:id/scan", async (c) => {
     if (!verified) return c.json({ error: "unverified browser", scope: "turnstile" }, 403);
   }
 
-  // Counted, booked, then spent, so a hung call or a refused photo is still paid
-  // for. `scope` separates our 429 from Gemini's.
+  // Counted, booked, then spent, so a hung call is still paid for.
   const now = Date.now();
   const client = c.env.SCAN_IP_SALT ? await clientKey(ip, c.env.SCAN_IP_SALT) : null;
   const full = overLimit(await countScans(c.env.DB, groupId, client, now));
   if (full) return c.json({ error: `${full} scan limit reached`, scope: full }, 429);
   await recordScan(c.env.DB, groupId, client, now);
 
-  // Same act and budget; only the envelope and size cap differ.
   const medium: ScanMedium = c.req.header("x-input") === "text" ? "text" : "photo";
 
-  // The free check, and the only one that can refuse before streaming.
-  // `wrapPayload` counts bytes too, for a lying header.
+  // The only check that can refuse before streaming; `wrapPayload` counts too.
   const declared = Number(c.req.header("content-length") ?? NaN);
   if (!Number.isFinite(declared)) return c.json({ error: "content-length required" }, 411);
   if (declared > MAX_BYTES[medium]) return c.json({ error: "bill too large" }, 413);
@@ -197,14 +173,10 @@ app.post("/api/groups/:id/scan", async (c) => {
   const bill = c.req.raw.body;
   if (!bill) return c.json({ error: "no bill" }, 400);
 
-  // Staś mode picks the meaner refusal paragraph — one of our envelopes, never
-  // caller words.
   const tone: ScanTone = c.req.header("x-stas") === "1" ? "stas" : "kind";
 
-  // Non-base64 is found mid-stream, after the Gemini request is open; refusing
-  // truncates it, so upstream gets broken JSON, never the caller's bytes. But
-  // `fetch` resolves once response headers arrive, so the error may not reject —
-  // hence `refusal`, set before the truncating throw and checked on both paths.
+  // Non-base64 is found mid-stream and truncates the request, but `fetch` may
+  // already have resolved — hence `refusal`, checked on both paths.
   const refusal: { err: NotBase64Error | null } = { err: null };
   let upstream: Response;
   try {
@@ -226,14 +198,10 @@ app.post("/api/groups/:id/scan", async (c) => {
 });
 
 /**
- * The JSON behind a tricount link, for **Import a group**
- * (docs/import-export.md#reading-a-tricount-back). Proxied because bunq's API sends
- * no CORS header; the handshake is in `tricount.ts`. Unauthenticated like
- * `/api/rates`: it spends no key of ours. Not a general proxy — both fields are
- * shape-checked and the host is compiled in.
- *
- * **A POST so the tricount's secret is never in a URL**, which everything logs.
- * The ledger is streamed back unread.
+ * Proxied because bunq sends no CORS header
+ * (docs/import-export.md#reading-a-tricount-back). Not a general proxy: both
+ * fields shape-checked, the host compiled in. **A POST so the tricount's secret
+ * is never in a URL.**
  */
 app.post("/api/tricount", async (c) => {
   const body = await jsonBody<{ key?: unknown; clientKey?: unknown }>(c);
@@ -248,8 +216,7 @@ app.post("/api/tricount", async (c) => {
   } catch {
     session = null;
   }
-  // No session means bunq refused us (an undocumented API's failure mode),
-  // distinct from "no such tricount", which is the person's link to fix.
+  // Distinct from "no such tricount", which is the person's link to fix.
   if (!session) return c.json({ error: "tricount would not open a session", scope: "down" }, 502);
 
   let upstream: Response;
@@ -258,7 +225,6 @@ app.post("/api/tricount", async (c) => {
   } catch {
     return c.json({ error: "tricount did not answer", scope: "down" }, 502);
   }
-  // Our own shape, so the phone never reads bunq's wording.
   if (!upstream.ok) return c.json({ error: "no tricount for that link", scope: "unknown" }, 404);
 
   const declared = Number(upstream.headers.get("content-length") ?? NaN);
@@ -279,12 +245,11 @@ app.post("/api/groups/:id/ops", async (c) => {
   const now = Date.now();
   const tokenHash = await sha256Hex(token);
   const group = await ensureGroup(c.env.DB, groupId, tokenHash, now);
-  // Without this a phone still holding the link would re-register the id and
-  // re-upload the group (store.ts).
+  // A phone still holding the link would re-register the id and re-upload.
   if (isDeleted(group)) return c.json(GONE, 410);
   if (group.token_hash !== tokenHash) return c.json({ error: "wrong token" }, 403);
 
-  // Free, so first. Abuse ceilings, not protocol limits (push-limits.ts).
+  // Free, so first. Abuse ceilings, not protocol limits.
   const oversized = declaredTooLarge(c.req.header("content-length") ?? null);
   if (oversized) return c.json({ error: oversized.error }, oversized.status);
 
@@ -293,7 +258,6 @@ app.post("/api/groups/:id/ops", async (c) => {
   if (!Array.isArray(body.ops)) return c.json({ error: "ops must be an array" }, 400);
   const since = typeof body.since === "number" ? body.since : 0;
 
-  // Only the envelope can be checked; the content is sealed.
   let incoming: SealedOp[];
   try {
     incoming = body.ops.map((o) => {
@@ -306,7 +270,6 @@ app.post("/api/groups/:id/ops", async (c) => {
     throw err;
   }
 
-  // `content-length` is the caller's claim; this is the count.
   const tooLarge = pushTooLarge(incoming);
   if (tooLarge) return c.json({ error: tooLarge.error }, tooLarge.status);
 
@@ -318,11 +281,8 @@ app.post("/api/groups/:id/ops", async (c) => {
 });
 
 /**
- * Relay notifications the sending phone encrypted to other phones
- * (docs/notifications.md, `relay.ts`). Its own route so a group of any size is
- * batches of `MAX_NOTIFY_PER_BATCH`, each with its own subrequest budget. Sent
- * after the push that caused them has landed, so none announces an op the log
- * lacks. **Never registers a group**, unlike `POST /ops`: an unknown one is 404.
+ * Sent after the push that caused them has landed (docs/notifications.md).
+ * **Never registers a group**, unlike `POST /ops`.
  */
 app.post("/api/groups/:id/notify", async (c) => {
   const groupId = c.req.param("id");
@@ -340,7 +300,7 @@ app.post("/api/groups/:id/notify", async (c) => {
   const vapid = c.env.VAPID_PUBLIC_KEY && c.env.VAPID_PRIVATE_KEY
     ? { publicKey: c.env.VAPID_PUBLIC_KEY, privateKey: c.env.VAPID_PRIVATE_KEY }
     : null;
-  // Awaited rather than `waitUntil`: the sender needs the statuses.
+  // Awaited: the sender needs the statuses.
   const notified = await relay(notifications, vapid, new URL(c.req.url).origin, Date.now());
   return c.json({ notified });
 });
@@ -356,10 +316,8 @@ app.get("/api/groups/:id/ops", async (c) => {
 });
 
 /**
- * Delete a group: every sealed op, and the group to a tombstone. Reached from
- * `/delete-my-data` (docs/import-export.md#deleting-a-group); the link is the
- * authority, so the phone holding it does it with its usual bearer. Not soft:
- * the ops are gone when this returns and the id can never be written again.
+ * Not soft: the ops are gone when this returns and the id can never be written
+ * again (docs/import-export.md#deleting-a-group).
  */
 app.delete("/api/groups/:id", async (c) => {
   const groupId = c.req.param("id");
@@ -371,9 +329,8 @@ app.delete("/api/groups/:id", async (c) => {
 });
 
 app.all("*", (c) => {
-  // Before the asset: a phone handed an RSC payload URL as a page gets the page,
-  // not `1:"$Sreact.fragment"` — the service worker's rule, for phones without
-  // one yet (payload.ts).
+  // A payload URL loaded as a page gets the page — the service worker's rule, for
+  // phones without one yet.
   const page = pageForPayload(c.req.raw);
   if (page) return c.redirect(page, 302);
   return c.env.BIDA_ENV === "dev" ? devAsset(c.env.ASSETS, c.req.raw) : c.env.ASSETS.fetch(c.req.raw);
