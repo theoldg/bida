@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
-  awaitRoll, clearSaved, foldFrame, letRoll, foldTotal, markSaved, peekSaved, presence, runs, standard,
+  awaitRoll, clearDeleted, clearSaved, foldFrame, letRoll, foldTotal, markDeleted, markSaved, peekDeleted, peekSaved, presence, runs, standard,
   type LedgerItem, type Shown,
 } from "./ledger-motion";
 
@@ -118,5 +118,28 @@ describe("the saved row", () => {
   it("expires, so a ledger opened much later flashes nothing", () => {
     markSaved("g", "e1", 1000);
     expect(peekSaved("g", 1000 + 11_000)).toBeNull();
+  });
+});
+
+describe("the deleted row", () => {
+  afterEach(clearDeleted);
+
+  it("is handed to the same group's ledger until cleared, and expires", () => {
+    markDeleted("g", "e1", 1000);
+    expect(peekDeleted("other", 1000)).toBeNull();
+    expect(peekDeleted("g", 2000)).toBe("e1");
+    expect(peekDeleted("g", 1000 + 11_000)).toBeNull();
+    clearDeleted();
+    expect(peekDeleted("g", 2000)).toBeNull();
+  });
+
+  it("holds the summary's roll like a save", () => {
+    letRoll("g");
+    markDeleted("g", "e1");
+    let went = 0;
+    awaitRoll("g", () => went++);
+    expect(went).toBe(0);
+    letRoll("g");
+    expect(went).toBe(1);
   });
 });

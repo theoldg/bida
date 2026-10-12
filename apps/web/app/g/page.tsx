@@ -32,8 +32,8 @@ import { syncGroup } from "@/lib/db/sync";
 import { dayLabel, money, plural } from "@/lib/format";
 import { ledgerItems, searchLedger, type LedgerRow } from "@/lib/ledger";
 import { route } from "@/lib/group-link";
-import { useLedgerPosition } from "@/lib/ledger-position";
-import { awaitRoll, peekSaved } from "@/lib/ledger-motion";
+import { useLedgerPosition, yieldPosition } from "@/lib/ledger-position";
+import { awaitRoll, clearDeleted, letRoll, peekDeleted, peekSaved, SAVED_BEAT } from "@/lib/ledger-motion";
 import { keepShown, ROLL_BEAT, shownBefore } from "@/lib/roll";
 import { transferMeta } from "@/lib/row-meta";
 import { useClaimGate, useDevice, useGroupData, warmGroup, warmGroupsList } from "@/lib/hooks";
@@ -123,11 +123,25 @@ function GroupScreen() {
 // ------------------------------------------------------------- expenses
 
 function Ledger({ data }: { data: GroupData }) {
-  const { group, expenses, settlements, memberById, me, balances } = data;
-  const items = useMemo(() => ledgerItems(expenses, settlements, dayLabel), [expenses, settlements]);
+  const { group, expenses, settlements, memberById, me, balances, withTombstones } = data;
+  // An entry deleted from its own screen is drawn where it was, so the position
+  // comes back to it, and goes a beat later, on screen, with the roll.
+  const groupId = group?.id ?? "";
+  const [ghost, setGhost] = useState(() => peekDeleted(groupId));
+  useEffect(() => {
+    if (!ghost) return;
+    clearDeleted();
+    const t = setTimeout(() => { yieldPosition(); letRoll(groupId); setGhost(null); }, SAVED_BEAT);
+    return () => clearTimeout(t);
+  }, [ghost, groupId]);
+  const items = useMemo(() => {
+    const keep = <T extends { id: string }>(live: T[], all: Record<string, T>) =>
+      !ghost || !all[ghost] || live.some((e) => e.id === ghost) ? live : [...live, all[ghost]];
+    return ledgerItems(keep(expenses, withTombstones.expenses), keep(settlements, withTombstones.settlements), dayLabel);
+  }, [expenses, settlements, withTombstones, ghost]);
   const scroll = useRef<HTMLDivElement>(null);
-  useLedgerPosition(scroll, group?.id ?? "");
-  const [query, setQuery] = useLedgerQuery(group?.id ?? "");
+  useLedgerPosition(scroll, groupId);
+  const [query, setQuery] = useLedgerQuery(groupId);
   const found = useMemo(
     () => searchLedger(items, query, {
       nameOf: (id) => memberById.get(id)?.name,
@@ -186,7 +200,7 @@ function MySummary({ net, base, gid }: { net: number; base: string; gid: string 
   // A figure that moved while it was away rolls from what it drew last
   // (lib/roll.ts).
   const [before] = useState(() => shownBefore(gid, base));
-  const [hold] = useState(() => peekSaved(gid) === null ? undefined
+  const [hold] = useState(() => peekSaved(gid) === null && peekDeleted(gid) === null ? undefined
     : (go: () => void) => awaitRoll(gid, go));
   useEffect(() => keepShown(gid, net, base), [gid, net, base]);
   // The sign trails `net` until the figure sets off, so a settle-up fades from

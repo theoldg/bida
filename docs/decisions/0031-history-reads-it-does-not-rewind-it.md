@@ -40,7 +40,8 @@ phone silently undo somebody else's edit two revisions deep.
 ## Consequences
 
 - The delete dialog says the entry can be restored from the history. Deleting
-  still leaves for the ledger; the way back is the feed's "· deleted" line.
+  still leaves, for the screen that opened it; the way back is the feed's
+  "· deleted" line.
 - A per-field "as it was" reading of an old revision is gone. The diff on each
   revision still says what changed, which is what the feed was read for.
 
@@ -53,4 +54,5 @@ phone silently undo somebody else's edit two revisions deep.
 - **A trash screen, or an undo toast after deleting** — the feed already lists
   what was deleted, and a toast would only cover the entry screen's delete, not
   the ledger's. Nor does deleting stay on the screen to offer Restore: it goes
-  back to the ledger (owner, 2026-09-25).
+  back to the ledger, or to history when opened from there (owner, 2026-09-25,
+  2026-10-12).

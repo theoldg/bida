@@ -82,7 +82,11 @@ export const SAVED_DWELL = 600;
  * so a save landing elsewhere can't flash a ledger opened later.
  */
 const SAVED_FOR_MS = 10_000;
-let saved: { groupId: string; entryId: string; at: number } | null = null;
+type Mark = { groupId: string; entryId: string; at: number } | null;
+let saved: Mark = null;
+
+const fresh = (mark: Mark, groupId: string, now: number) =>
+  !mark || mark.groupId !== groupId || now - mark.at > SAVED_FOR_MS ? null : mark.entryId;
 
 export function markSaved(groupId: string, entryId: string, now = Date.now()): void {
   saved = { groupId, entryId, at: now };
@@ -90,12 +94,33 @@ export function markSaved(groupId: string, entryId: string, now = Date.now()): v
 }
 
 export function peekSaved(groupId: string, now = Date.now()): string | null {
-  if (!saved || saved.groupId !== groupId || now - saved.at > SAVED_FOR_MS) return null;
-  return saved.entryId;
+  return fresh(saved, groupId, now);
 }
 
 export function clearSaved(): void {
   saved = null;
+}
+
+// ------------------------------------------------------------- the deleted row
+
+/**
+ * Deleted from its own screen, the entry is gone from the live read before the
+ * ledger is back. So the ledger draws it where it was and lets it go a beat
+ * later, on screen, with the roll.
+ */
+let deleted: Mark = null;
+
+export function markDeleted(groupId: string, entryId: string, now = Date.now()): void {
+  deleted = { groupId, entryId, at: now };
+  rollLet.delete(groupId);
+}
+
+export function peekDeleted(groupId: string, now = Date.now()): string | null {
+  return fresh(deleted, groupId, now);
+}
+
+export function clearDeleted(): void {
+  deleted = null;
 }
 
 /**

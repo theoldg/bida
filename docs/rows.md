@@ -97,6 +97,11 @@ line, whose band is its own edge, and under the last row.
   left with no rows folds in the same motion, after the row's blank space:
   it reads whole for as long as there is room for it. The last row takes no
   motion: it is gone and the empty state is up at once — too rare to earn one.
+  **Deleted on its own screen**, the entry is gone from the live read before
+  the ledger is back, so the ledger draws it where it was (`markDeleted`, off
+  `withTombstones`), puts the list back as it was left — never scrolling, the
+  row was in view to be tapped — and after `SAVED_BEAT` lets it go, with the
+  figure's roll held until then.
 - **A row that arrives** from another phone opens a gap (220ms) and fades in
   (180ms), at the slot's opacity so a dimmed row fades to its own 58% and not
   past it. No flash: the history clock's dot already says it came. **Above what

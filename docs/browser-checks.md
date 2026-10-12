@@ -25,24 +25,24 @@ await browser.close(); close(); finish();
 ```
 
 `serveExport({ intercept })` gets first refusal on every request — that is how
-checks/offline drops an asset and forges a service-worker revision, which is what
-lets one run cover both a deploy that must fail to install and a good one taken
-from the groups list with a second tab still open on the old worker.
+checks/offline drops an asset and forges a service-worker revision, which is
+what lets one run cover both a deploy that must fail to install and a good one
+taken from the groups list with a second tab still open on the old worker.
 `serveWorker()` is the other server: `wrangler dev` with a throwaway D1, so the
 static export and the sync API answer on one origin the way production does. It
 costs ~10s of boot, so reach for it only when a check needs two phones to
-actually sync.  `pick(page,
-opener, row)` opens one of the app's own dialogs and takes a row out of it;
-every picker in the app is one ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
-`readStore`, `readDevice`, `putDevice` and `untilDevice` read and write the
-phone's IndexedDB directly, for what no screen shows; wait on an app write with
-`untilDevice`, never a pause.
+actually sync. `pick(page, opener, row)` opens one of the app's own dialogs and
+takes a row out of it; every picker in the app is one
+([ADR-0008](decisions/0008-hand-rolled-interface.md)). `readStore`,
+`readDevice`, `putDevice` and `untilDevice` read and write the phone's IndexedDB
+directly, for what no screen shows; wait on an app write with `untilDevice`,
+never a pause.
 
-Every context `newPhone` makes waits `PATIENCE` — 30s — rather than
-playwright's default, and it is the ceiling these checks give their own waits
-too: a loaded machine is never the one a smaller number was written on. Nothing reaches that ceiling on a machine that
-is keeping up. `settle(page, ms)` is the other half — a pause the *page* keeps,
-for the few places that have to out-wait one of the app's own timers.
+Every context `newPhone` makes waits `PATIENCE` — 30s — rather than playwright's
+default, and it is the ceiling these checks give their own waits too: a loaded
+machine is never the one a smaller number was written on. `settle(page, ms)` is
+the other half — a pause the *page* keeps, for the few places that have to
+out-wait one of the app's own timers.
 
 ## `pnpm verify entries` — the form is wired to the commands
 
@@ -271,27 +271,27 @@ back button reads on the next press. Every assertion
 here reads `navigation.entries()` rather than `location`
 ([ADR-0007](decisions/0007-a-screen-is-a-route.md), `lib/nav.ts`).
 
-Each section is a move a thumb makes: the walk in from the list, where every
-door into a group is pushed from `/` so the list stays underneath the ledger;
-the balance card, which pushes balances over the ledger, and the arrow on
-balances that goes back to it; an entry opened off the ledger, and the Save that
-returns to it; the tip jar, whose form has to unwind past the tip screen as
-well as itself; the quick split, pushed onto the list; a cold load with nothing behind it, where the arrow puts the
-parent in this screen's place — the degradation, and the ordinary case of it;
-the press guard on a half-typed form, cancelled outright with the dialog as
-the whole of the answer; the dialog the platform shuts with no `cancel`, and
-the taps it was given as `/diag` records them; a `history.go` that never
-moves, after which the card still comes down and the act still happens;
-Discard one entry above a cold ledger; and the ledger's position, left with a row cut by the
-top edge and required back to the pixel after the arrow, the device's back and
-a Save that lands a row above it — watched from inside the page on the frame
-the saved row is drawn, since it then glides to that row (today's, so up to the top, under the banner, whose figure rolls only then) — while a tap in
-from the list opens at the top. That section alone reads the scroller, not the history. Beside the cold load, the press no traversal can
-carry: a launch's reopened ledger and a cold one each climb to the list on a
-close request with no tap first, and a screen above them doesn't. **Escape
-stands in for Android's button** there, being a close request too. Last, a back
-press the instant an entry opens on a CPU throttled sixfold, which a handler
-registered in a passive effect sends past the ledger to the list.
+Each section is a move a thumb makes: the walk in, every door into a group
+pushed from `/` so the list stays under the ledger; the balance card and the
+arrow back off balances; an entry opened off the ledger, and the Save that
+returns to it; the tip jar's form, unwinding past the tip screen too; the quick
+split, pushed onto the list; a cold load with nothing behind it, where the arrow
+puts the parent in this screen's place; the press guard on a half-typed form,
+cancelled outright, the dialog its whole answer; the dialog the platform shuts
+with no `cancel`, and the taps it was given as `/diag` records them; a
+`history.go` that never moves, the card coming down and the act happening
+anyway; Discard one entry above a cold ledger; and the ledger's position, left
+with a row cut by the top edge and required back to the pixel after the arrow,
+the device's back and a Save that lands a row above it — watched from the frame
+the saved row is drawn, since it then glides to it, and the figure rolls only
+then — while a tap in from the list opens at the top. Beside the cold load, the
+press no traversal can carry: a launch's reopened ledger and a cold one each
+climb to the list on a close request with no tap first, and a screen above them
+doesn't. **Escape stands in for Android's button** there, being a close request
+too. Then a back press the instant an entry opens on a CPU throttled sixfold,
+which a handler in a passive effect sends past the ledger to the list. Last,
+Delete on an entry: up to history, or to a ledger folding its row out though the
+read came first (traversal held 80ms).
 
 **A device back press is `page.goBack()`**, which Chromium reports
 `userInitiated` and `cancelable` — the pair the guard reads. A keyboard

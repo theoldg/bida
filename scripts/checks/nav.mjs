@@ -494,6 +494,62 @@ async function onLedger() {
   await slow.close();
 }
 
+// ---- 12. Delete on an entry's own screen -----------------------------------
+// It goes up to whoever linked in. Back on the ledger, the row is drawn where it
+// was and folds out on screen with the roll, from the place it was left.
+{
+  const short = await newPhone(browser, { viewport: { width: 390, height: 520 } });
+  await short.addInitScript(SHAPE);
+  const page = await short.newPage();
+  await openDemo(page, base);
+  await page.waitForSelector(".rows a.row");
+  const remove = async () => {
+    await page.waitForURL(/\/g\/entry\?/);
+    await page.locator(".topbar button[aria-label='Delete']").click();
+    await page.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
+  };
+  // Luke's income: it moves his figure.
+  const row = page.locator(".rows a.row").filter({ hasText: "landspeeder" });
+  const id = await row.getAttribute("data-entry");
+  await page.evaluate(() => { document.querySelector(".scroll").scrollTop = 120; });
+  await settle(page, 100);
+  const left = await page.evaluate(() => document.querySelector(".scroll").scrollTop);
+  await row.click();
+  await page.evaluate((entry) => {
+    window.__del = { first: null, leaving: false, rolled: false, tops: new Set() };
+    const look = () => {
+      const box = document.querySelector(".scroll");
+      if (location.pathname === "/g" && document.querySelector(".rows a.row")) {
+        window.__del.first ??= !!box.querySelector(`[data-entry="${entry}"]`);
+        if (box.querySelector(".lslot[data-leaving]")) window.__del.leaving = true;
+        if (document.querySelector(".rolling:not(.held)")) window.__del.rolled = true;
+        window.__del.tops.add(box.scrollTop);
+      }
+      requestAnimationFrame(look);
+    };
+    requestAnimationFrame(look);
+    // As on a phone, the delete's live read lands before the traversal does,
+    // so the ledger opens on a read without the row. Inside `SWALLOWED_MS`.
+    const go = history.go.bind(history);
+    history.go = (n) => { setTimeout(() => go(n), 80); };
+  }, id);
+  await remove();
+  await page.waitForFunction(() => window.__del.leaving && window.__del.rolled).catch(() => {});
+  const seen = await page.evaluate(() => ({ ...window.__del, tops: [...window.__del.tops] }));
+  report(seen.first && seen.leaving, "Delete on an entry opened off the ledger folds its row out there", JSON.stringify(seen));
+  report(seen.rolled, "and rolls the figure");
+  report(seen.tops.length === 1 && seen.tops[0] === left, "without moving the list", `left ${left} got ${seen.tops}`);
+  await is(page, "and goes back to the ledger, not over it", { i: 0, urls: ["/g?id=G", "/g/entry?id=G&e=E"] });
+
+  await page.locator(".topbar a[href*='/g/history']").first().click();
+  await page.waitForURL(/\/g\/history/);
+  await page.locator("a[href*='/g/entry']").filter({ hasText: "cantina" }).first().click();
+  await remove();
+  await is(page, "and on one opened off history, back to history",
+    { i: 1, urls: ["/g?id=G", "/g/history?id=G", "/g/entry?id=G&e=E&via=history"] });
+  await short.close();
+}
+
 await browser.close();
 close();
 finish();

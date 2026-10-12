@@ -27,7 +27,8 @@ import { bare, money, moneyParts, plural, whenLabel } from "@/lib/format";
 import { savedBill } from "@/lib/draft";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
 import { slidingDock, useFold } from "@/lib/fold";
-import { markReturn } from "@/lib/nav";
+import { markDeleted } from "@/lib/ledger-motion";
+import { goUp, sameScreen } from "@/lib/nav";
 import { historyMeta } from "@/lib/row-meta";
 import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 
@@ -97,7 +98,12 @@ function EntryScreen() {
   const del = useDeleteEntry({
     groupId, me: data.me, kind: expense ? kindOf(expense) : "transfer", entryId: row?.id ?? "",
     before: () => { going.current = true; },
-    then: () => { if (groupId) { markReturn(route.group(groupId)); router.replace(route.group(groupId)); } },
+    // Up to whoever linked in, as back would; the ledger folds the row out.
+    then: () => {
+      if (!groupId || !row) return;
+      if (sameScreen(parent, route.group(groupId))) markDeleted(groupId, row.id);
+      goUp(parent, (to) => router.replace(to));
+    },
   });
   const [restoring, setRestoring] = useState(false);
   const [askRate, setAskRate] = useState(false);

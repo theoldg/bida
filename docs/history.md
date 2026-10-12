@@ -87,7 +87,9 @@ and an inverted band above the title says "Deleted by {name}", and holds
 **Restore** — which asks nothing and turns the screen back into the live entry
 in place. The trash and Edit are gone. What else it brings back, a removed
 person, is named under the band before the press (`restoreEntryDrafts`).
-Deleting still leaves for the ledger, and the screen never turns into its
+Deleting goes up to whichever screen linked in, as back would — the ledger,
+where the row folds out ([rows.md](rows.md#the-ledger-moves)), or history,
+where the delete is the newest line — and the screen never turns into its
 deleted self on the way: the live read lands before the navigation does on a
 phone, so from the answer on it keeps drawing the entry as it was. "Gone" is
 only an id this phone has never had.

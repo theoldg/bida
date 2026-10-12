@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "Show the delete animation and number roll … Any
+  questions?" Headless looked fine, so the owner's phone was the evidence:
+  make the check fail the way the phone did before trusting the fix.
+
 - *2026-10-12* — "Could switching screens be even snappier with like
   prefetches?" The ask named a fix; a frame-by-frame probe at 4× CPU named
   the cause, a wait on every mount that prefetching would never touch. Record
@@ -85,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   frequently, another session is working". A split moves text away from
   whoever is reading it: commit each step and run every moved link through
   docs-check before pushing, or the other session rebases onto wreckage.
-
-- *2026-10-11* — "Scan the latest ~100 commits for … anything falling apart",
-  then mid-scan "push whatever you have … this machine might be dropped". An
-  audit's findings are work product: commit them as a list in the docs as
-  they land, not only in chat.
