@@ -8,7 +8,7 @@ import {
 } from "@/lib/ledger-motion";
 import { restoreAnchor, yieldPosition } from "@/lib/ledger-position";
 import {
-  FILL_DELAY_MS, indexAt, isGap, KEEP_ROWS, landingOf, overCap, offsetsOf, rangeOf, segmentsOf, speedOf, WINDOW_ROWS,
+  indexAt, isGap, KEEP_ROWS, landingOf, overCap, offsetsOf, rangeOf, segmentsOf, speedOf, WINDOW_ROWS,
   windowAround, type Heights,
 } from "@/lib/ledger-window";
 import { SkeletonRow } from "./chrome";
@@ -178,8 +178,8 @@ const SAMPLE_MS = 100;
 
 interface Window {
   offsets: number[];
-  /** Drawn at all: on screen, or filled. */
-  drawn: (i: number) => boolean;
+  /** Drawn at all — on screen, or filled — ascending. */
+  drawn: number[];
   /** Drawn as itself rather than a skeleton. */
   filled: (i: number) => boolean;
   /** The rows' top inside the scroller's content. */
@@ -192,11 +192,9 @@ interface Window {
 
 /**
  * Which slots are drawn. On screen always — as a skeleton until filled, and a
- * screen either side as skeletons too — and
- * filled: the `WINDOW_ROWS` around the screen, or around where a fling will
- * land rather than the rows rushing past, kept once filled. A scroll the hand
- * drives waits `FILL_DELAY_MS` for its rows; opening, coming back and a glide
- * don't.
+ * screen either side as skeletons too — and filled: the `WINDOW_ROWS` around
+ * the screen, or around where a fling will land rather than the rows rushing
+ * past, kept once filled.
  */
 function useWindow<T>(
   on: boolean, items: Shown<T>[], root: { current: HTMLDivElement | null },
@@ -208,12 +206,11 @@ function useWindow<T>(
   const offsets = useMemo(() => offsetsOf(items, heights), [items, measured]);
   const indexOf = useMemo(() => new Map(items.map((item, i) => [item.key, i])), [items]);
   const state = useRef<{
-    top: number; bottom: number; wanted: Map<string, number>; pinned: number | null;
+    top: number; bottom: number; filled: Set<string>; pinned: number | null;
     samples: { t: number; y: number }[]; touching: boolean; lastHand: number;
     held: string | null;
     /** False while a way back has yet to put the scroller where it was. */
     placed: boolean;
-    timer?: ReturnType<typeof setTimeout>;
   } | null>(null);
 
   if (on && !state.current) {
@@ -225,7 +222,7 @@ function useWindow<T>(
     const [a, b] = windowAround(items, center, WINDOW_ROWS);
     state.current = {
       top: offsets[a] ?? 0, bottom: offsets[b] ?? 0, pinned: null, samples: [], touching: false, lastHand: 0,
-      wanted: new Map(items.slice(a, b).map((i) => [i.key, 0])), held: null, placed: back === null,
+      filled: new Set(items.slice(a, b).map((i) => i.key)), held: null, placed: back === null,
     };
   }
 
@@ -257,32 +254,26 @@ function useWindow<T>(
     const center = indexAt(offsets, (landing ?? box.scrollTop) - base + box.clientHeight / 2);
     const [a, b] = windowAround(items, center, WINDOW_ROWS);
     let changed = false;
-    const keep = new Set<string>();
     for (let i = a; i < b; i++) {
       const key = items[i]!.key;
-      keep.add(key);
-      if (!w.wanted.has(key)) { w.wanted.set(key, hand && w.pinned === null ? now : 0); changed = true; }
+      if (!w.filled.has(key)) { w.filled.add(key); changed = true; }
     }
-    // A row once filled stays for the visit (the owner, 2026-10-12); one still
-    // waiting is let go, or a fling would fill its whole path behind it.
-    const kept = new Map<string, number>();
-    for (const [key, since] of [...w.wanted]) {
-      if (keep.has(key)) continue;
-      if (since === 0 || now - since >= FILL_DELAY_MS) kept.set(key, indexOf.get(key) ?? 0);
-      else { w.wanted.delete(key); changed = true; }
+    // A row once filled stays for the visit (the owner, 2026-10-12), up to the cap.
+    if (w.filled.size > b - a + KEEP_ROWS) {
+      const kept = new Map<string, number>();
+      for (const key of w.filled) {
+        const i = indexOf.get(key);
+        if (i === undefined) w.filled.delete(key);
+        else if (i < a || i >= b) kept.set(key, i);
+      }
+      for (const key of overCap(kept, center, KEEP_ROWS)) { w.filled.delete(key); changed = true; }
     }
-    for (const key of overCap(kept, center, KEEP_ROWS)) { w.wanted.delete(key); changed = true; }
     const top = box.scrollTop - base;
     const was = rangeOf(offsets, w.top, w.bottom);
     const is = rangeOf(offsets, top, top + box.clientHeight);
     w.top = top;
     w.bottom = top + box.clientHeight;
     if (was[0] !== is[0] || was[1] !== is[1]) changed = true;
-    // One timer, for the next row whose wait is up.
-    clearTimeout(w.timer);
-    let next = Infinity;
-    for (const since of w.wanted.values()) if (since > 0) next = Math.min(next, since + FILL_DELAY_MS - now);
-    if (next < Infinity) w.timer = setTimeout(redraw, Math.max(0, next) + 1);
     if (changed) redraw();
   };
   const latest = useRef(compute);
@@ -331,7 +322,6 @@ function useWindow<T>(
     sizes.observe(box);
     return () => {
       if (frame) cancelAnimationFrame(frame);
-      clearTimeout(w.timer);
       clearTimeout(settle);
       sizes.disconnect();
       box.removeEventListener("scroll", onScroll);
@@ -346,21 +336,24 @@ function useWindow<T>(
 
   const w = state.current;
   if (!on || !w) return null;
-  const now = performance.now();
   // A screen of skeletons past each edge: the scroller moves a frame before
   // this hears of it, and a bare edge would show for that frame.
   const screen = w.bottom - w.top;
   const [v0, v1] = rangeOf(offsets, w.top - screen, w.bottom + screen);
-  const ready = (i: number) => {
-    const since = w.wanted.get(items[i]!.key);
-    return since !== undefined && (since === 0 || now - since >= FILL_DELAY_MS);
-  };
   // Drawn before the flash finds it, and kept until the flash lets it go.
   const kept = w.held ?? (groupId ? peekSaved(groupId) : null);
-  const filled = (i: number) => items[i]!.kind === "day" || items[i]!.key === kept || ready(i);
+  // From the few drawn, never a pass over all 10,000 slots on a fling's frame.
+  const drawn: number[] = [];
+  for (let i = v0; i < v1; i++) drawn.push(i);
+  for (const key of kept === null ? w.filled : [...w.filled, kept]) {
+    const i = indexOf.get(key);
+    if (i !== undefined && (i < v0 || i >= v1)) drawn.push(i);
+  }
+  drawn.sort((x, y) => x - y);
+  const filled = (i: number) => items[i]!.kind === "day" || items[i]!.key === kept || w.filled.has(items[i]!.key);
   return {
     offsets,
-    drawn: (i) => (i >= v0 && i < v1) || filled(i) && (items[i]!.kind !== "day" || w.wanted.has(items[i]!.key)),
+    drawn,
     filled,
     listTop,
     pin: (top) => { w.pinned = top; latest.current(); },

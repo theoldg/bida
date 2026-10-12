@@ -17,7 +17,7 @@ import { getDevice, getMe } from "./db/device";
 import { applyStash, stashSettled } from "./db/sync";
 import { writeClipboardText } from "./clipboard";
 import { copy } from "./copy";
-import { byWhen } from "./format";
+import { sortedByWhen } from "./format";
 import { tick } from "./haptics";
 import { formatJoinLink, route } from "./group-link";
 
@@ -198,8 +198,8 @@ function derive(rows: GroupRows): Derived {
   const known = derived.get(rows);
   if (known) return known;
   const members = living(rows.members).sort((a, b) => a.name.localeCompare(b.name));
-  const sortedExpenses = living(rows.expenses).sort(byWhen);
-  const sortedSettlements = living(rows.settlements).sort(byWhen);
+  const sortedExpenses = sortedByWhen(living(rows.expenses));
+  const sortedSettlements = sortedByWhen(living(rows.settlements));
   const state = stateOf(
     rows.group, members, sortedExpenses, sortedSettlements, living(rows.rates),
   );

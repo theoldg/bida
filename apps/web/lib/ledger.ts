@@ -88,7 +88,23 @@ interface Searched {
   figures: [string, string];
 }
 
-function searched(row: LedgerRow, { nameOf, kindWord, base }: SearchContext): Searched {
+/**
+ * By the entry and the context, so a keystroke in a 10,000-entry ledger reads
+ * what the last one worked out rather than normalising every row's text again:
+ * pass the same context while the names and the currency stand.
+ */
+const searchedCache = new WeakMap<Expense | Settlement, { context: SearchContext; row: Searched }>();
+
+function searched(row: LedgerRow, context: SearchContext): Searched {
+  const entry = entryOf(row);
+  const known = searchedCache.get(entry);
+  if (known?.context === context) return known.row;
+  const out = searchedFresh(row, context);
+  searchedCache.set(entry, { context, row: out });
+  return out;
+}
+
+function searchedFresh(row: LedgerRow, { nameOf, kindWord, base }: SearchContext): Searched {
   const entry = entryOf(row);
   const names = (ids: string[]) => plain(ids.map(nameOf).filter(Boolean).join("\n"));
   return {

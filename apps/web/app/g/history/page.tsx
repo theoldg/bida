@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { activityFeed, entityHistory, type Revision } from "@bida/core";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { Icon } from "@/components/icons";
@@ -35,19 +35,20 @@ function HistoryScreen() {
   const [shown, setShown] = useState(PAGE);
 
   const reads = historyReads(groupId);
-  const allMembers = useLive("historyMembers", reads.historyMembers, [groupId]) ?? [];
-  const memberById = new Map(allMembers.map((m) => [m.id, m]));
+  const allMembers = useLive("historyMembers", reads.historyMembers, [groupId]);
+  // Once per answer, not per render: a 10,000-entry group's feed is a tenth of a
+  // second on a slow phone.
+  const memberById = useMemo(() => new Map((allMembers ?? []).map((m) => [m.id, m])), [allMembers]);
 
   const loaded = useLive("historyOps", reads.historyOps, [groupId]);
-  const ops = loaded ?? [];
   // The group's feed is where what's new gets seen; one entry's history isn't.
   const fresh = useCatchUp(entryId ? undefined : groupId, loaded) ?? new Set<string>();
 
-  const allExpenses = useLive("historyExpenses", reads.historyExpenses, [groupId]) ?? [];
-  const expenseById = new Map(allExpenses.map((e) => [e.id, e]));
+  const allExpenses = useLive("historyExpenses", reads.historyExpenses, [groupId]);
+  const expenseById = useMemo(() => new Map((allExpenses ?? []).map((e) => [e.id, e])), [allExpenses]);
 
-  const allSettlements = useLive("historySettlements", reads.historySettlements, [groupId]) ?? [];
-  const settlementById = new Map(allSettlements.map((s) => [s.id, s]));
+  const allSettlements = useLive("historySettlements", reads.historySettlements, [groupId]);
+  const settlementById = useMemo(() => new Map((allSettlements ?? []).map((s) => [s.id, s])), [allSettlements]);
 
   // One id, both tables (ADR-0010). **Looked up in the maps that keep the
   // deleted ones** — the alive-only lists would title every deleted entry
@@ -63,7 +64,8 @@ function HistoryScreen() {
       ? (subject.description?.trim() || copy.history.untitled) : copy.group.transfer;
   // **Rendering is paged, never the list**: slicing it would make the count
   // report the slice size as the group's revision total.
-  const feed = !groupId ? [] : entryId ? entityHistory(ops, entryId) : activityFeed(ops);
+  const feed = useMemo(() => !groupId || !loaded ? [] : entryId ? entityHistory(loaded, entryId) : activityFeed(loaded),
+    [groupId, entryId, loaded]);
   // **What the ledger's dot meant goes above a jagged line**, the rest under
   // it. Pulled up rather than marked in place: a phone that was offline lands
   // changes stamped days back, and above the line has to mean exactly new.

@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   entryEffect, payerList, resolvePayers, splitParticipants,
   type Expense, type Member, type Settlement,
@@ -30,7 +30,7 @@ import { useDeleteEntry } from "@/components/delete-entry";
 import { setLastOpenedGroup } from "@/lib/db/device";
 import { syncGroup } from "@/lib/db/sync";
 import { dayLabel, money, plural } from "@/lib/format";
-import { ledgerItems, searchLedger, type LedgerRow } from "@/lib/ledger";
+import { ledgerItems, searchLedger, type LedgerRow, type SearchContext } from "@/lib/ledger";
 import { route } from "@/lib/group-link";
 import { useLedgerPosition, yieldPosition } from "@/lib/ledger-position";
 import { awaitRoll, clearDeleted, letRoll, peekDeleted, peekSaved, type LedgerItem } from "@/lib/ledger-motion";
@@ -159,15 +159,15 @@ function Ledger({ data }: { data: GroupData }) {
   const scroll = useRef<HTMLDivElement>(null);
   useLedgerPosition(scroll, groupId);
   const [query, setQuery] = useLedgerQuery(groupId);
-  const found = useMemo(
-    () => searchLedger(items, query, {
-      nameOf: (id) => memberById.get(id)?.name,
-      kindWord: (kind) => copy.entryKind.label[kind],
-      tierLabel: (tier) => copy.group.search.by[tier],
-      base: group?.baseCurrency ?? "",
-    }),
-    [items, query, memberById, group?.baseCurrency],
-  );
+  // One context while the names and currency stand: searchLedger keeps each
+  // row's searched text by it.
+  const searchContext = useMemo((): SearchContext => ({
+    nameOf: (id) => memberById.get(id)?.name,
+    kindWord: (kind) => copy.entryKind.label[kind],
+    tierLabel: (tier) => copy.group.search.by[tier],
+    base: group?.baseCurrency ?? "",
+  }), [memberById, group?.baseCurrency]);
+  const found = useMemo(() => searchLedger(items, query, searchContext), [items, query, searchContext]);
   if (!group) return null;
   // A space alone included: the bar stands in the column on the same test.
   const searching = query !== "";
@@ -248,9 +248,11 @@ function MySummary({ net, base, gid }: { net: number; base: string; gid: string 
 
 /**
  * **Hoisted out of `Ledger`, never nested inside it**: a nested component is a
- * new identity every render, discarding an open delete confirmation.
+ * new identity every render, discarding an open delete confirmation. Memoised:
+ * the ledger redraws as it scrolls, and a row whose entry hasn't changed has
+ * nothing new to say.
  */
-function ExpenseRow({ expense, gid, base, me, memberById }: {
+const ExpenseRow = memo(function ExpenseRow({ expense, gid, base, me, memberById }: {
   expense: Expense; gid: string; base: string; me: string | undefined; memberById: Map<string, Member>;
 }) {
   const kind = kindOf(expense);
@@ -290,7 +292,7 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
       {menu}
     </>
   );
-}
+});
 
 /**
  * The name is never dropped and takes the ellipsis; the head count is the one
@@ -328,7 +330,7 @@ function useEntryMenu(gid: string, me: string | undefined, kind: EntryKind, entr
   return { hold, menu: <>{menu}{del.dialog}</> };
 }
 
-function SettlementRow({ settlement, gid, base, me, memberById }: {
+const SettlementRow = memo(function SettlementRow({ settlement, gid, base, me, memberById }: {
   settlement: Settlement; gid: string; base: string; me: string | undefined;
   memberById: Map<string, Member>;
 }) {
@@ -358,4 +360,4 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
       {menu}
     </>
   );
-}
+});

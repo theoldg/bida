@@ -253,11 +253,23 @@ interface Whenever {
  * early), then latest first, ties broken by `createdAt`.
  */
 export function byWhen(a: Whenever, b: Whenever): number {
-  const day = startOfLocalDay(b.occurredAt) - startOfLocalDay(a.occurredAt);
-  if (day !== 0) return day;
+  return startOfLocalDay(b.occurredAt) - startOfLocalDay(a.occurredAt) || withinDay(a, b);
+}
+
+function withinDay(a: Whenever, b: Whenever): number {
   if (!a.dateOnly !== !b.dateOnly) return a.dateOnly ? -1 : 1;
   const time = a.dateOnly ? 0 : b.occurredAt - a.occurredAt;
   return time || ((b.createdAt ?? b.occurredAt) - (a.createdAt ?? a.occurredAt));
+}
+
+/**
+ * A copy of `rows` in `byWhen` order, each one's day worked out once rather
+ * than at every comparison: sorting 10,000 entries is 130,000 comparisons.
+ */
+export function sortedByWhen<T extends Whenever>(rows: readonly T[]): T[] {
+  const keyed = rows.map((row) => ({ row, day: startOfLocalDay(row.occurredAt) }));
+  keyed.sort((a, b) => b.day - a.day || withinDay(a.row, b.row));
+  return keyed.map((k) => k.row);
 }
 
 /** "FRI 4 APRIL · 18:22", or "TODAY · …" as the ledger says it. */

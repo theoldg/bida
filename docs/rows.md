@@ -127,17 +127,15 @@ frame. On screen and a screen either side, a row not yet filled is a skeleton;
 date lines are always drawn. `WINDOW_ROWS` rows are filled around the screen —
 or, once a fling will coast more than a screen, around where it will land
 (`landingOf`: speed × 500ms, iOS's deceleration), so the rows rushing past stay
-skeletons. A row once filled stays drawn for the visit, up to `KEEP_ROWS` past
-the window, the furthest let go first; one still waiting when the window moves
-on is let go, or a fling would fill its whole path. A save's glide fills its landing before it flies, the saved row stays
-drawn until its wash lets go, and a way back draws the row it restores to before
+skeletons. Thirty-six is the screen and most of one either side: a flick lands
+on rows already there, and a fling's landing — paid in one go — stays a few
+frames on a slow phone. A row once filled stays drawn for the visit, up to
+`KEEP_ROWS` past the window, the furthest let go first. Rows are memoised, so a
+scroll's redraw renders only the rows it adds, and which slots are drawn is
+worked out from the few drawn, never a pass over every slot. A save's glide
+fills its landing before it flies, the saved row stays drawn until its wash lets go, and a way back draws the row it restores to before
 it scrolls there. A row arriving or leaving where nothing is drawn moves only
 the sums — above the screen, by scrolling as much.
-
-**An experiment is on** (the owner, 2026-10-12): twelve rows, and a scroll the
-hand drives waits 400ms for them (`FILL_DELAY_MS`), so a slow phone's worst
-case can be tried by hand. [implementation-status](implementation-status.md#what-is-open)
-says what replaces it.
 
 ## A row says less rather than being cut off
 

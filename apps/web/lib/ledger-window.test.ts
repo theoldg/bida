@@ -92,15 +92,20 @@ describe("what is drawn and what is left as height", () => {
   it("folds each undrawn run into one gap of its own height", () => {
     const offsets = offsetsOf(ledger(2, 3), H);
     const drawn = new Set([2, 3, 7]);
-    expect(segmentsOf(offsets, (i) => drawn.has(i))).toEqual([
+    expect(segmentsOf(offsets, [...drawn].sort((a, b) => a - b))).toEqual([
       { gap: 99, first: 0 }, { at: 2 }, { at: 3 }, { gap: 168, first: 4 }, { at: 7 },
     ]);
   });
 
   it("is all slots or one gap at the extremes", () => {
     const offsets = offsetsOf(ledger(1, 2), H);
-    expect(segmentsOf(offsets, () => true)).toEqual([{ at: 0 }, { at: 1 }, { at: 2 }]);
-    expect(segmentsOf(offsets, () => false)).toEqual([{ gap: 168, first: 0 }]);
+    expect(segmentsOf(offsets, [0, 1, 2])).toEqual([{ at: 0 }, { at: 1 }, { at: 2 }]);
+    expect(segmentsOf(offsets, [])).toEqual([{ gap: 168, first: 0 }]);
+  });
+
+  it("draws a slot named twice once", () => {
+    const offsets = offsetsOf(ledger(1, 2), H);
+    expect(segmentsOf(offsets, [1, 1, 2])).toEqual([{ gap: 30, first: 0 }, { at: 1 }, { at: 2 }]);
   });
 });
 

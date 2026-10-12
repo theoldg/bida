@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import {
-  ago, bare, byWhen, figure, moneyParts, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
+  ago, bare, byWhen, sortedByWhen, figure, moneyParts, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
   initials, priced, rateText, splitFooter, stamp, usd, whenLabel,
 } from "./format";
 
@@ -363,6 +363,13 @@ describe("byWhen", () => {
       { id: "b", occurredAt: day(4, 9), createdAt: day(4, 10) },
     ];
     expect(ids([...rows].sort(byWhen))).toEqual(["b", "a"]);
+  });
+
+  it("is the order sortedByWhen gives, ties kept as they came", () => {
+    const rows = Array.from({ length: 200 }, (_, i) => ({
+      id: String(i), occurredAt: day(1 + (i * 7) % 5, (i * 5) % 24), dateOnly: i % 3 === 0, createdAt: i % 4 ? day(9, i % 2) : undefined,
+    }));
+    expect(ids(sortedByWhen(rows))).toEqual(ids([...rows].sort(byWhen)));
   });
 });
 

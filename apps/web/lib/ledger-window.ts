@@ -9,12 +9,12 @@ import type { LedgerItem } from "./ledger-motion";
  */
 
 /**
- * **An experiment, hard-coded on (the owner, 2026-10-12)**: twelve rows drawn
- * at a time, filled 400ms after a scroll asks for them, to try a slow phone's
- * worst case by hand. Not for a release: see docs/implementation-status.md.
+ * Rows filled at once: a phone's screen holds about eleven, so this is the
+ * screen and most of one either side — a flick of the thumb lands on rows
+ * already drawn. Each costs about 1.5ms to mount on a slow phone (4× CPU), so
+ * a fill, which a fling's landing pays all of in one go, stays a few frames.
  */
-export const WINDOW_ROWS = 12;
-export const FILL_DELAY_MS = 400;
+export const WINDOW_ROWS = 36;
 
 /**
  * Rows kept drawn past the window, the furthest let go first: enough to scroll
@@ -123,18 +123,17 @@ export function isGap(seg: Segment): seg is Gap {
   return "gap" in seg;
 }
 
-export function segmentsOf(offsets: readonly number[], drawn: (i: number) => boolean): Segment[] {
+/** Runs of `drawn` (ascending, repeats allowed) and the gaps between them. */
+export function segmentsOf(offsets: readonly number[], drawn: readonly number[]): Segment[] {
   const out: Segment[] = [];
   const n = offsets.length - 1;
-  let gapFrom = -1;
-  for (let i = 0; i <= n; i++) {
-    const draw = i < n && drawn(i);
-    if (!draw && i < n) { if (gapFrom < 0) gapFrom = i; continue; }
-    if (gapFrom >= 0) {
-      out.push({ gap: offsets[i]! - offsets[gapFrom]!, first: gapFrom });
-      gapFrom = -1;
-    }
-    if (draw) out.push({ at: i });
+  let next = 0;
+  for (const i of drawn) {
+    if (i < next || i >= n) continue;
+    if (i > next) out.push({ gap: offsets[i]! - offsets[next]!, first: next });
+    out.push({ at: i });
+    next = i + 1;
   }
+  if (next < n) out.push({ gap: offsets[n]! - offsets[next]!, first: next });
   return out;
 }
