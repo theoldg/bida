@@ -1489,12 +1489,12 @@ dialog.scrim::backdrop { background: transparent }
 /* Right-aligned: in a mono face a balance's size then reads as its length. */
 .balfig { text-align: right }
 .balname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.balgone { margin-left: 6px; font-size: 11px; font-weight: 500; color: var(--ink-2) }
+.baltag { margin-left: 4px; font-size: 11px; font-weight: 500; color: var(--ink-2) }
 .bar { height: 7px; border-radius: 0; background: var(--card-3); position: relative; overflow: hidden }
 .bar i { position: absolute; top: 0; bottom: 0 }
 .bar i.c { background: var(--credit); left: 50% }
 .bar i.d { background: var(--debit); right: 50% }
-.axis { height: 100%; width: 1px; background: var(--rule); position: absolute; left: 50%; top: 0 }
+.axis { height: 100%; width: 2px; margin-left: -1px; background: var(--rule); position: absolute; left: 50%; top: 0 }
 
 /* ---- version-history timeline ---- */
 /* Drawn dot to dot, so the rail ends where the history begins. */

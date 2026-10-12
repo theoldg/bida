@@ -603,6 +603,7 @@ export const copy = {
     unreachablePending: (waiting: string) => `Can’t reach the server: ${waiting} stuck on this phone.`,
 
     hasLeft: "removed",
+    youTag: "(you)",
 
     balances: "Balances",
     history: "History",

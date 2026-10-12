@@ -94,11 +94,12 @@ function Balances({ data }: { data: GroupData }) {
           const net = balances.byMember[m.id] ?? 0;
           const width = `${(Math.abs(net) / widest) * 50}%`;
           return (
-            <div key={m.id} className={`balrow${m.id === me ? " mine" : ""}`}>
+            <div key={m.id} className="balrow">
               <div>
                 <div className="balname" style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>
                   {m.name}
-                  {m.gone ? <span className="balgone">{copy.group.hasLeft}</span> : null}
+                  {m.id === me ? <>{" "}<span className="baltag">{copy.group.youTag}</span></> : null}
+                  {m.gone ? <span className="baltag">{copy.group.hasLeft}</span> : null}
                 </div>
                 <div className="bar">
                   {net === 0 ? null : net > 0
