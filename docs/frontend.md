@@ -13,8 +13,10 @@ API is reached with `fetch`.
 
 | Read | When you are |
 |---|---|
-| **This file** | Writing a form, a list or a picker: state, drafts, copy, money fields, rows |
-| [navigation.md](navigation.md) | Adding a route, a link, a back arrow, or anything that leaves a screen |
+| **This file** | Writing a list or a picker: state, copy, money fields, names, search |
+| [entry.md](entry.md) | Touching the entry form or the entry screen: the draft, the split editor, Save, the keyboard's chain |
+| [history.md](history.md) | Touching what history says, the clock's dot, or a deleted entry's screen |
+| [navigation.md](navigation.md) | Adding a route, a link, a back arrow, anything that leaves a screen, or what a launch opens |
 | [touch-and-viewport.md](touch-and-viewport.md) | Handling a press, a hold, a dialog, the keyboard, or the height of the screen |
 | [live-reads.md](live-reads.md) | Reading from Dexie, or chasing a screen stuck on its skeleton |
 | [pwa.md](pwa.md) | Touching the manifest, the service worker, updates or installing |
@@ -37,189 +39,15 @@ API is reached with `fetch`.
 - Device-local, never-synced state (who "you" are, theme, whether the install
   nudge is folded, the last group opened, and the scan credential a quick split
   photographs with — [ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md))
-  is in the `device` store. Two screens read
-  `lastOpenedGroupId`, which `/g` sets on every visit (`setLastOpenedGroup`):
-  `/new` defaults a fresh group's currency to that group's rather than always
-  EUR, and `/` reopens the group itself on a launch (`lib/launch.ts`) — nearly
-  everyone is in one group at a time. A *launch* and not every arrival: the back arrow out of a
-  group must not be turned around, so the resume happens once per running copy
-  of the app (a module flag), only on a fresh `navigate` — never on a reload or
-  a back/forward traversal — and only where the document itself loaded on `/`
-  (`startedOnList`): one that loaded on a link has spent its launch on the link,
-  and the first press of Back onto the list is a press, not a launch. A group forgotten, archived or gone stays on the
-  list, and so does one you backed out of: `/` records itself as this phone's
-  place (`leftOnList`, cleared by the next `setLastOpenedGroup`), so a launch
-  reopens whichever of list and group was last. `resumeGroupId` is that
-  decision, pure and tested. A replace that
-  doesn't take releases the list after two seconds rather than leaving the app
-  on a skeleton nothing will fill. **A launch paints the frame it is heading
-  for, from the first** (`lib/first-frame.ts`). Its route's export is the
-  wrong picture — `/` is the list, though a launch may reopen a group;
-  `/install`, the iOS icon's `start_url`, is the tutorial — and the real
-  decisions read IndexedDB after first paint. So one pure function,
-  `firstFrame`, is serialised into a script before the body and marks
-  `<html data-frame>` ledger, list or join, from localStorage mirrors of the
-  group to reopen and of whether the icon was ever launched. It is tested
-  against `isLaunchFrom` and `launchPlan`, the code that decides for real.
-  `/` and `/install` draw `FirstFrames` — the ledger's skeleton, the list's
-  own `HomeFrame` empty, and `JoiningFrame` — hidden, CSS shows the one the
-  mark names in place of the route's own (`.ownframe`), and all of them are
-  `inert`: a tap on a skeleton races the decision it stands in for. **A
-  ledger's skeleton wears every card it can know without the database**: the
-  demo's mark and the folded install or notifications offer (`data-banner`,
-  `SkeletonBanner`), so the rows never drop when it lands; Chrome's one-tap
-  offer waits on an event and still arrives late, as do the sync banner and
-  the history dot, which are data. The frames go once the launch decides,
-  and the mark with them (`clearFirstFrame`): hidden is not gone, and each
-  bar's arrow would stay registered with the back button.
+  is in the `device` store. `/new` defaults a fresh group's currency to the
+  last-opened group's, and a launch reopens that group
+  ([navigation.md](navigation.md#a-launch-reopens-where-you-were)).
   *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
   ([ADR-0003](decisions/0003-link-only-access.md)). `setMe` is the
   device-local half; nothing outside `lib/db/device.ts` should call it.
-- **The entry draft is never stored** (`lib/draft.ts`): an in-memory store
-  shared by the entry screens, so bouncing to the payers/items routes keeps
-  what's typed, and nothing else does. One draft covers all three kinds, which
-  is what lets the kind chip change your mind without losing the amount you
-  already typed. Leaving asks before discarding, and a reload gets the
-  browser's own warning — `seedDraft` records the baseline `isDraftDirty`
-  compares against. The payers route asks too, and puts back only the payer
-  side: the rest of the draft is not its to throw away. So does who-had-what,
-  which has to write a split or merged line through as it happens — its rows
-  and the bill's lines are one list — and restores the bill it opened with.
-  A **quick split** is this same store, keyed by the phone's scan credential
-  rather than by a group, which is what makes the whole of it — bill, grid and
-  answer — something leaving throws away
-  ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
-  **What the entry is worth is `draftAmountMinor` and nowhere else** — a
-  scanned bill is worth what its lines add up to, whatever `amountText` says. With no
-  amount at all the door onto that screen doesn't open: there is nothing to
-  divide between payers, so the tap reddens the amount field instead — the
-  same red Save gives it, held until something asks for it.
-- **A draft carries the id its entry will be written under** (`newEntryId`,
-  read through `splitSeed`). The leftover minor unit goes by `tiebreakSeed`,
-  which is the entry's id — so a form pricing its rows under a placeholder id
-  shows the cent on one row and writes it to another. `addExpense`
-  takes the id rather than minting one. `pnpm verify entries` holds it.
-- **Each split tab is its own input** (`SplitInputs`, ADR-0010): the editor
-  draws and edits the tab showing, `changeSplitTab` is the one way the tab
-  moves (handing a newly opened tab its start through `openSplitTab`), and
-  `activeSplit` says which spec a save writes — the receipt's, on its tab,
-  read off the bill. Which tab is lit is `splitTab` alone, never the spec. What a first-time
-  tab is handed is who `arithmeticSplit` has in, never the receipt: a scan is an answer of
-  its own, in a mode of its own, and does not fill in As parts (ADR-0016).
-  Items opens the Evenly under it the same way, so that is never nobody.
-  Which tab is showing lives on the draft alone; a saved entry carries its
-  mode, and that is what reopens it.
-- **Whether the entry may be saved is `checkEntry` (`lib/entry-check.ts`)**,
-  not the form. It answers the amount, the base figure, the split in force and
-  why the entry isn't ready — from a draft and its own rate, with no React
-  in it, so the arithmetic behind that button is a test suite rather than a
-  screen to mount. The form reads its answers and writes none of them.
-- **Save is the last row of the form, and the kind is the top of it.** One
-  full-width `.btn-lg` ([design-system.md](design-system.md)), because the
-  screen has exactly one act; a save failure is said above it. The kind chip sits
-  at the top bar's right, inked — the form's second ink block after Save, spent on
-  the one choice that reshapes everything under it, with the picker's ⇕ in it
-  ([design-system.md](design-system.md)).
-- **Every field's value starts on one column** (`--label-w`), so a label is a
-  word or two: an income's payer is "Paid to", since "Received by" won't fit.
-  Several payers are the payer picker's first row, "Multiple people ›"; with
-  no amount it is greyed, "set the amount first" under it, rather than open a
-  screen that divides zero. Once set, the form shows them as chips, largest
-  amount first.
-- **Save is never disabled, and nothing is red for being empty before a tap.**
-  A grey button gives no reason, and an untouched field is not a mistake.
-  Tapping Save while `!checkEntry(...).ready` refuses instead of saving: what is
-  *missing* blooms, so a fresh screen shows no red. `amountMissing`/`titleMissing` *flash* their field red rather
-  than adding a caption — a word doesn't fit next to the hero figure and reads
-  oddly in a number field — counted per field so a repeat refusal replays
-  ([design-system.md](design-system.md#a-dialog-is-ours-and-its-button-says-the-act)).
-  That flash is the only thing that reports a missing amount — `splitFooter`
-  returns `null` for a zero total. What is *wrong* is said in words, live, in
-  the Save dock over the button, where no scroll hides it: `blocker` (a removed
-  member, payers that no longer add up to the amount) and `splitProblem` (the
-  split now showing, following its tab). A refused Save flashes them and spends
-  the button like any bloom. Typed amounts that do add up are ticked there too
-  (`splitTick`), but only while nothing is wrong: the dock holds one line. The dock keeps 9px of its own above its first line, so a
-  half-scrolled form never runs into it. An Items tab short of
-  its split says nothing in words — its step blooms.
-- **A press already spending the draft is the form's own `saving` flag.**
-  `checkEntry` answers whether the entry *may* be saved, which is a question
-  about the form, not whether a save is in flight; without the flag a double
-  tap before `router.replace` records the entry twice. `pnpm verify entries` presses
-  Save twice.
-- **The invite link is `components/invite.tsx`** (`useCopyLink`), written once for the People
-  screen's top bar, the groups list's row menu and the group's own menu. `navigator.clipboard.writeText` rejects on an insecure
-  context or a denied permission; a refusal puts the
-  link on screen to be read (`InviteFallback`,
-  [ADR-0003](decisions/0003-link-only-access.md)). A copy that works says so
-  where it was asked for, and **all three places run the same flip**: the thing
-  that was there **turns away on its X axis and the check comes up behind it**,
-  the transfer arrow's "these traded places" read applied to one cell. On the
-  groups list — where the menu card has closed and there is no bar to put a
-  glyph in — that cell is the row's own figure (`.grouprow .ramt.copied`); on
-  the group's kebab (`MenuButton`'s `confirmed`) and People's top bar
-  (`InviteButton`) it is the 18px glyph itself, same timings at a shallower
-  perspective (`FlipCheck`, `.flipcheck`). A quick split's hand-over is not a
-  link but it is a copy, so it answers the same way from its own button: the
-  label turns and the check comes up beside the word behind it, the same flip
-  across a whole line (`FlipLabel`, `.flipcheck.line`). A transition and not
-  the swap's keyframes, because this reverses itself a second and a half later when
-  `invite.copied` lapses and a class going away replays no animation — which is
-  also why both faces stay drawn.
-- **The confirm key hands the caret on, or folds the keyboard.** A phone
-  keyboard's bottom-right key is whatever `enterKeyHint` names it, and the word
-  it wears is a promise — so `"next"` is both the opt-in and the instruction,
-  and **every other field is the end of its chain and puts the keyboard away**
-  (`confirmAct`, `lib/viewport.ts`). That is what makes each column of figures
-  a chain of its own rather than a stretch of one long one: the entry form runs
-  amount → note → fold, and the split editor's "as amounts" and "as parts" each run first person →
-  … → last person → fold, started by a tap on a field. A count of parts is
-  typed with the money field's caret and Backspace (`PartsInput`), between − and
-  + drawn small and grey; having parts puts you in, none
-  takes you out, and a tap on the name toggles. **An "as amounts" row is typed, sharing or
-  out**: a figure typed, in with none (the rest — what the typed figures leave,
-  divided evenly, its share the field's grey placeholder on a faint rule), or
-  not in the split (a zero, as faint). A tap on the name never types: typed and sharing go out, out
-  comes back sharing, under the mark that says so — a grey × or + for what the
-  tap does, Evenly's ink tick for a row that shares. Typing makes any row
-  typed; clearing a typed figure leaves it sharing. Over the total, or with
-  nothing left, the sharing rows read a red "?" and the dock names them. On
-  `/g/payers` a tap on a name is not a focus either: it clears a figure, hands an
-  empty row what is left, and types only when the column is already full or
-  over (`tapAmount`, marked by `TapMark`), since a payer has no rest to share.
-  The tabs stick to the top of `.scroll` and the everyone box, under the last
-  row, to its foot, so a long list keeps both in reach.
-  **The everyone box toggles the whole list** (`toggleEveryone`), in every tab but
-  Items and only from three people up: everyone in takes everyone out, else it
-  brings in whoever is out and leaves the rest — a 2 in parts stays 2, a typed
-  amount stays, and in amounts whoever was out joins the rest. `walkFields`
-  (`components/viewport.tsx`) is the whole of it, hung on `.scroll` because the
-  next field is rarely a sibling; it walks that screen's fields in the order
-  they are laid out and puts the caret at the *end* of what is already in one
-  (entered at character nought, a typed "5" turns "12.00" into "512.00"). It
-  steps over what has no caret to take — a date spinner, an amount a scanned
-  bill owns, a tab's fields not drawn (`landsOn`) — and an IME's Enter is a
-  candidate being picked, never a field being finished. **A field inside a
-  `<form>` is left alone**, because its Enter is already spoken for and is a
-  better answer than either of these: the add row files the name and hands the
-  caret back, a dialog submits its card. What asks for `"next"`: the entry
-  form's amount, `/new`'s group name, and each row but the last of a column of
-  figures — the split editor's "as amounts" and "as parts", and `/g/payers`;
-  `pnpm verify keyboard` walks each column ([browser-checks.md](browser-checks.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)).
-- **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**
-  — `ConfirmDialog`, `PromptDialog`, `NoticeDialog` (read, then Close) and
-  `ChoiceDialog`, which is every picker in
-  the app, behind a `.field > .pick` button or a chip. `<input type="date">` is
-  the one native control left
-  ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
-- **The currency picker offers the group's own currencies first** — the base
-  one, then whatever the ledger is written in, most spent-in first, then the
-  short common list (`lib/currencies.ts`, `currencyChoices`), then "Other…" for
-  any code — one `CurrencyPicker` in /new and the entry form. A trip spends in
-  two or three, and scrolling past seventeen to reach one of them is the whole
-  of the annoyance. Names come from `Intl.DisplayNames`, with a small fallback
-  map for the codes a trimmed locale build answers bare (ISK, UZS).
+## Names
+
 - **Adding people is not a dialog.** `components/name-adder.tsx` is the last row
   of a list of names, built like the rows above it — name on the left, one
   control on the right — because that is what it becomes. **A name is filed by
@@ -236,25 +64,17 @@ API is reached with `fetch`.
   editing it is the fix — **one name, one person** (`core/names.ts`), said
   under the row in words as it is typed and pointed at by the refusal, on every
   list including the one you are picking yourself out of, where the name you
-  typed is a row one tap above. **A screen's refusal blooms whatever has to
-  change**, so Create over an unfiled name points at the plus that would file
-  it and Create over a list too short to go on with washes the whole row red,
-  placeholder and plus included. **A keystroke ends any flash on the
-  row** rather than letting it run out — typing is the fix landing, and a
-  placeholder just typed over cannot carry a refusal — and it tells whoever
-  owns that flash, so Create un-greys with it (`lib/refusal.ts`; a flash cut
-  short fires no `animationend`). The plus is never spent by a flash the way
-  Create is: the next press of it has to file.
+  typed is a row one tap above. How that row blooms, and why a keystroke ends
+  its flash, is [refusals.md](refusals.md#a-refused-action-points-first). The
+  plus is never spent by a flash the way Create is: the next press of it has
+  to file.
   A screen's own button never *files* what is in the field — an unfiled name is
   unfiled, whatever else is pressed — but the two that leave the screen with
   the list behind them **refuse** rather than going on without the name:
   `/new`'s Create, which writes the group in one go, and the quick split's scan
   pair, whose photograph opens a grid of the people on the list and nobody
-  else. Both bloom the plus and are spent for the length of that flash, the
-  entry form's refusal exactly (`lib/refusal.ts`). Create is never grey either:
-  a blank group name is the entry form's blank title over again, so it blooms
-  the Name field the same way instead of holding the button dead, and a press
-  missing both blooms both at once. The picker's Continue is the
+  else. Both bloom the plus, the entry form's refusal exactly; a blank group
+  name blooms the Name field as a blank title does. The picker's Continue is the
   exception that stays: filing a name there *is* picking it, so a name that has
   only been typed is a question it simply does not read. The row also
   **follows the list down**, as a browser scrolls to a field only as it takes
@@ -281,35 +101,9 @@ API is reached with `fetch`.
   as the next step after the tap that lit it up, and at the foot of the screen
   once it doesn't — a group of twenty scrolls above it, and on `/g/claim` the
   "Have the app?" dock follows it.
-- History wording is assembled once, in `lib/history-copy.ts` (`describe`),
-  from `copy.history`. One revision usually moved several fields — an entry is
-  saved whole — and then it returns no sentence about any one of them, but a
-  labelled was/now line for each; it reads the fold either side of the revision,
-  not just the fields that moved, and where a list moved it says so as rows
-  (`lib/history-rows.ts`, drawn by `components/revision.tsx`, the sixth and
-  later folded behind "Show N more") — [sync.md](sync.md#history-ui). It must
-  be **total** — it runs inside a render over every patch the log holds, so one
-  throw is a white screen, not a missing line. People are listed **by name**,
-  not in the order they are stored: an id is a hash of the name (ADR-0034), so
-  sorting by it puts a was/now pair in two unrelated orders.
-- **The history screen reads the deleted entries too.** Both its subject links
-  and its title come from maps built over every entry the group has ever had —
-  half the reason to open it is one that is gone. A deleted entry's line ("Dinner
-  · deleted") opens the entry itself, and its own history backs up to it. Its
-  line is `components/revision.tsx`, shared with the ledger.
-- **A deleted entry keeps its screen** (ADR-0031): drawn as it was, at the rates
-  it was saved at, from `useGroupData`'s `withTombstones`. Drawn as it was, it
-  read as live, so the state leads: the bar says "Deleted expense", and an
-  inverted band above the title says "Deleted by {name}", and holds
-  **Restore** — which asks nothing and turns the screen back into the live
-  entry in place. The trash and Edit are gone. What else it brings back, a
-  removed person, is named under the band before the press
-  (`restoreEntryDrafts`). Deleting still leaves for the ledger, and the screen
-  never turns into its deleted self on the way: the live read lands before the
-  navigation does on a phone, so from the answer on it keeps drawing the entry
-  as it was. "Gone" is only
-  an id this phone has never had.
-- **The ledger's search** (`components/ledger-search.tsx`) is a bar under the
+## The ledger's search
+
+`components/ledger-search.tsx` is a bar under the
   top bar, placed by one rule: held — the caret in it, or a query typed — it
   is out whole, and otherwise it is where the scroll puts it (`shownAt`,
   lib/ledger-search.ts). One door brings it out: the scroll, a pixel of it for each
@@ -329,26 +123,6 @@ API is reached with `fetch`.
   back from a result and forgotten by any other arrival, like the ledger's
   position (`openingQuery`), and a way back draws the bar
   where the list is put from its first frame, lending the room first.
-- **The ledger's history clock** (`components/history-button.tsx`) stands in
-  the top bar beside the menu, wearing an ink dot while there is something new.
-  History pulls those revisions above a torn line labelled "↑ New" (`.torn`) —
-  pulled up rather than marked in place, since a phone that was offline lands
-  changes stamped days back. New is `unseenRevisions`
-  (`core/history.ts`): an op numbered past `groupKeys.seenSeq` whose stamp is
-  another phone's, your own laptop included, less a device claiming a name.
-  **Opening history is seeing it** (`useCatchUp`, `lib/catch-up.ts`): the dot
-  stays, across visits, until the group's history is opened, which moves the
-  mark past everything there and everything landing while it is open. The
-  mark from before is held in memory for that look, so the line survives a
-  trip into an entry and back; the ledger or the groups list ends the look.
-  What waits on a group nobody opens ages out after a week (`CATCH_UP_MS`)
-  rather than sitting on the groups list forever. The groups list is ordered
-  by when each group last changed — its newest op, an edit or a delete as much
-  as a new entry — never by its latest entry's date. It leads
-  a row's meta with the same count, reading the log only for a group whose
-  cursor is past its mark. The first pull sets the mark at the cursor, so a
-  joined group opens with nothing new, and the mark is device-local, never an
-  op.
 
 ## Every word, in `lib/copy.ts`
 
@@ -411,46 +185,6 @@ Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and
 Never print core's `message` for an amount problem — it is deliberately
 figure-free.
 
-## A row would rather say less than be cut off
-
-`FitLine` (`components/fit-line.tsx`) takes several wordings of one line,
-longest first, and renders the longest that fits its own box — measured on a
-canvas in a layout effect, so it is picked before paint and there is no
-feedback loop between the text and the box deciding it. `lib/fit.ts` is the
-measuring (`fitIndex` is pure and tested); `lib/row-meta.ts` is the editorial
-order, which is the part worth arguing about
-([design-system.md](design-system.md#a-row-says-less-rather-than-being-cut-off)).
-It renders the longest rung when it cannot measure — no canvas, no layout yet —
-so the static export ships the full line and the browser narrows it. A `lead`
-(the group list's bold "N new changes") rides ahead of every rung, and the
-rungs fit in the width it leaves. Every fit re-measures on resize and when the
-web font lands, through one `useRefit`.
-
-## Your own money, pulled out of the group's
-
-Always on, not a setting ([ADR-0007](decisions/0007-a-screen-is-a-route.md)),
-and it changes rendering only — never data or what syncs. Every row carries a
-signed, coloured effect: what you put in for that entry minus what you owe for
-it (`myEffect` in `lib/entry-kind.ts`, one subtraction for all three kinds).
-The column adds up to the net printed above the list, on the balance card —
-words over figure, the figure sized to its own length in CSS alone (`.mysum`
-in `globals.css`), so a seven-digit sum shrinks rather than runs under the
-chevron. **A changed figure rolls** (`components/rolling-figure.tsx`): each
-digit that changed slides one line, up for a bigger figure and down for a
-smaller, 800ms apiece and 100ms apart from the left; the rest never move. One
-trigger covers a save, a sync and a reopen — the card keeps the net it last
-drew per group in localStorage (`lib/roll.ts`, erased with the group) and rolls
-from it, a beat after mounting; a group's first view, and reduced motion, just
-show the figure. The card's words and colour keep the old sign until the
-figure sets off, then fade over the roll, so a settle-up greys as it rolls to
-zero. Rows involving neither
-your money nor your share drop to `opacity: .58`; the rest are plain rows, with
-no wash or coloured edge. An expense or income on the entry screen repeats its row's figure under
-the split card, "Your balance", which unfolds to `effectSum` (the same
-subtraction) when you both paid and had a share, and marks your name with a
-faint `(you)`; a transfer shows neither. What it looks like and why:
-[design-system.md](design-system.md#your-own-rows-are-highlighted).
-
 ## Gotchas
 
 - **The theme is a hydration mismatch on purpose.** `<ThemeScript />` sets
@@ -461,12 +195,6 @@ faint `(you)`; a transfer shows neither. What it looks like and why:
   on every dark-mode launch.
 - `output: 'export'` disallows route handlers, `next/image` optimisation, ISR,
   middleware and dynamic params. Needing one is a change to ADR-0004.
-- **A revision's `changes` are only the fields that actually differed.** Saving
-  an expense in a new currency at the same rate writes `currency` and no amount
-  field at all, so history copy must never read one field because a sibling
-  changed.
-- **A controlled input that reformats on every keystroke eats the caret.** If a
-  field must reformat as you type, it has to restore the selection itself.
 - **An input's `size` attribute is not a character count**, it is characters
   times the font's average advance. A field that hugs its own text sizes from a
   hidden mirror (`.amountsizer`), and the input must then be `width: 100%` or
@@ -475,23 +203,9 @@ faint `(you)`; a transfer shows neither. What it looks like and why:
   drop the symbol, but `bare` is `Intl`-grouped, so feeding it to an
   `AmountInput`'s `value` or a draft's `amountText` loses money: `parseMinor`
   throws on "1,234.50" (amount silently 0) and reads JPY "25,000" as **25**.
-- **`patch()` on the expense draft must merge against the latest saved draft,
-  not the `draft` the current render closed over.** Two `patch()` calls in one
-  handler otherwise both merge onto the same stale closure and the second
-  silently undoes the first. `patch()` reads `getDraft(groupId)` itself, so a handler may.
-- **A `::placeholder` is not rendered while its field has text**, so it is
-  *created* when the field goes empty — and a freshly created pseudo-element
-  starts any animation still declared on it. Leaving a one-shot animation class
-  on a settled field replays it every time the field is emptied. Take the class
-  off on `animationend`; `e.pseudoElement` says whether the event came from the
-  element or its placeholder.
 - **What a frame must draw can't be React state set from an effect.** A
   passive effect runs after the paint and its `setState` commits a frame
   later, so the search bar went missing for two frames on a way back. Write
   it to the DOM in a layout effect or a frame callback. A layout effect runs
   before its parent's and before a later sibling's ref is attached, so one
   reading either waits for the frame callback or finds the element in the DOM.
-- **Back from a save, the ledger draws the old net for a frame** — its live
-  query answers before the write lands. So a save's roll is usually a change
-  arriving while the card is mounted, not one read from `bida.shown`; a check
-  waiting for `.rolling` must wait for it, not look once.

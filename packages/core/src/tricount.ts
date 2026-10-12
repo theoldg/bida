@@ -8,7 +8,7 @@ import { exponentOf, isCurrencyCode, minorToDecimalString, type CurrencyCode } f
  * A tricount read into the same **plan** `import.ts` returns from a CSV.
  * Nothing here writes or fetches: the JSON comes from
  * `apps/web/lib/import/tricount.ts` via the Worker
- * (docs/data-model.md#reading-a-tricount-back).
+ * (docs/import-export.md#reading-a-tricount-back).
  *
  * A group is a `Registry` of `memberships` and `all_registry_entry`, each entry
  * with an `amount`, the membership that `owned` it (who paid) and `allocations`

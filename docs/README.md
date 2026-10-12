@@ -13,13 +13,15 @@ them tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 | [product.md](product.md) | Deciding whether something is in scope |
 | [architecture.md](architecture.md) | Touching the shape of the system |
 | [data-model.md](data-model.md) | Touching entities, money, splits, or the D1 schema |
-| [sync.md](sync.md) | Touching the op log, offline behaviour, or history |
-| [frontend.md](frontend.md) | Writing UI: forms, drafts, copy, money fields — then one of: |
+| [sync.md](sync.md) | Touching the op log or offline behaviour |
+| [frontend.md](frontend.md) | Writing UI: lists, pickers, copy, money fields — then one of: |
+| ↳ [entry.md](entry.md) | The entry form and screen: the draft, the split editor, Save, the keyboard's chain |
+| ↳ [history.md](history.md) | What history says, the clock's dot, a deleted entry's screen |
 | ↳ [navigation.md](navigation.md) | Routes, links, and the back button |
 | ↳ [touch-and-viewport.md](touch-and-viewport.md) | Presses, holds, dialogs, the keyboard, the height of the screen |
 | ↳ [live-reads.md](live-reads.md) | Reading from Dexie, or a screen stuck on its skeleton |
 | ↳ [pwa.md](pwa.md) | The manifest, the service worker, updates, installing |
-| ↳ [import-export.md](import-export.md) | Import, export, deleting a group, the clipboard |
+| ↳ [import-export.md](import-export.md) | Import, export and their file formats, deleting a group, the clipboard |
 | ↳ [diag.md](diag.md) | `/diag`, the flight recorder |
 | [ios.md](ios.md) | Touching joining, installing or storage on iPhone |
 | [notifications.md](notifications.md) | Push notifications: what is said, and how it is kept, sent and shown |
@@ -28,6 +30,8 @@ them tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 | ↳ [who-had-what.md](who-had-what.md) | The grid a bill is divided on; tip, tax and discounts |
 | ↳ [scan-worker.md](scan-worker.md) | The shared key, the envelope, the budget, Turnstile, trust |
 | [design-system.md](design-system.md) | Writing anything a person will look at — then: |
+| ↳ [rows.md](rows.md) | Drawing a row: yours, the ledger's motion, a line that says less |
+| ↳ [refusals.md](refusals.md) | A dialog, a picker, or a button that can say no |
 | ↳ [design-review.md](design-review.md) | Polishing a screen: open findings, and those ruled intended |
 | [hosting.md](hosting.md) | Deploying, or worrying about cost |
 | [testing.md](testing.md) | Running the gate or writing a unit test — then one of: |

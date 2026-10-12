@@ -36,7 +36,7 @@ const ALL = readdirSync(join(ROOT, "scripts/checks"))
 /**
  * How many chromiums at once. Each check wants about a core; ten on a
  * four-core cloud container starve the pages past the app's own timers, which
- * is where this suite's flakes came from (docs/browser-checks.md#gotchas). A laptop
+ * is where this suite's flakes came from (docs/browser-checks.md#writing-a-check-that-holds). A laptop
  * with the cores runs them all together, as before. `VERIFY_JOBS` overrides.
  */
 const LIMIT = Number(process.env.VERIFY_JOBS) || Math.max(2, availableParallelism());
@@ -44,7 +44,7 @@ const LIMIT = Number(process.env.VERIFY_JOBS) || Math.max(2, availableParallelis
 /**
  * `--retry` (the deploy workflow's): a check that fails runs once more, alone.
  * Failing alone is a real failure and fails the run; passing alone is a check
- * that bets on the machine's speed — still a bug (docs/browser-checks.md#gotchas),
+ * that bets on the machine's speed — still a bug (docs/browser-checks.md#writing-a-check-that-holds),
  * but not the pusher's to chase mid-task, so it is pinned to the run as a
  * warning, which `pnpm push` prints, and the run stays green.
  */

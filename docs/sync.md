@@ -1,7 +1,7 @@
-# Sync, offline, and version history
+# Sync and offline
 
-*For: anyone touching the op log, the sync engine, or history UI.* These are one
-subject: the log that syncs is the log that renders history.
+*For: anyone touching the op log or the sync engine. The log that syncs is the
+log that renders history, which [history.md](history.md) reads.*
 
 ## The operation
 
@@ -107,7 +107,8 @@ in production hold them.
 
 The fold is pure and total: any subset of ops produces *some* valid state. An
 `update` arriving before its `create` yields a partial entity that completes
-later. Don't throw on out-of-order ops.
+later. Don't throw on out-of-order ops — and since a pulled op can slot in before
+ones already folded, a run that pulled anything refolds the whole group.
 [ADR-0002](decisions/0002-append-only-op-log.md) for why LWW and not a CRDT.
 
 ## The protocol
@@ -345,66 +346,6 @@ visually noisy). It's there if a future screen wants it.
 We never present a conflict-resolution dialog. For an expense splitter that
 would be worse than being briefly wrong — the group can see the history and fix
 it in one tap.
-
-## History UI
-
-Falls out of the log with no extra storage. **Per expense**: `ops` filtered by
-`entityId`, newest first, each revision being the **difference between the fold
-before the op and the fold after it** — never a reading of the patch's keys, or
-a whole-entity write would read as "changed everything". **Group feed**: all ops, same renderer. Both are read
-only: there is no restore-to-version, and undoing an edit is editing it. A
-deleted entry comes back whole, from its own screen, as `update { deletedAt:
-null }` ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).
-
-The sentence for a revision lives in `apps/web/lib/history-copy.ts` — it is the
-app's vocabulary for the log, and it names the member a membership revision is
-*about* rather than the actor, or adding three people reads as one person
-joining three times.
-
-**Under the sentence goes what moved, never both whole states.** Where a
-revision moved a list — people in a split, payers, lines of a bill, who had
-which line — it gets **rows** (`lib/history-rows.ts`), one per *kind* of move:
-"+ Chewie 20.00", "− Cy ~~25.00~~", and the people who moved alike on one row,
-"Everyone but Cy 25.00 → 33.33". Taking one of ten out of a split is two rows,
-not two lists of ten for the reader to compare. A **split** is read as what each
-person owes, in money — the one reading that survives a change of mode and the
-only one that says anything about a split by items — so "changed who's
-involved" and "changed how it's split" both answer with figures, and a new mode
-is said ("Theo split it by items"). Where nobody's proportion moved it says
-nothing and the next field speaks (a new amount moves every share, and its own
-line says so) — except where a rewrite is the whole of the save, which gets the
-mode ("Evenly" → "By items") as a last resort. The **payer** side is the same
-rows over what each put in, in the entry's own currency; one payer for another
-is just the two names. A **bill** reads line by line, paired by what a line
-says, so a reorder is no news and a reprice is a move; a **who-had-what** change
-says in words what happened to each line ("Blue milk: Ben → Chewie", "Jawa
-juice: Chewie joined Han, Luke"), then one line of who now owes more and who
-less ("Chewie +17.00 · Ben −9.00 · Han, Luke −4.00"). A **new entry** is one
-line, the amount and who it was for ("CRD 81.00 · for everyone"): who paid and
-each share are a tap away, and three lines per entry drowned the feed.
-
-**"Everyone" is about the group as it was.** Each revision carries its
-`roster` — who was in the group as its op landed (`rosterOf`) — so a later
-joiner never turns last month's "Everyone" into "Everyone but Zoe". An even
-split's spare cent is laid flat, so "33.34, 33.33, 33.33" doesn't read as three
-shares. Figures in the group's currency go bare, the amount above them carrying
-the symbol; anything else keeps its code.
-
-A revision therefore carries the **whole entity either side of it**
-(`Revision.before` / `after`), not only the fields that moved: a co-payer added
-beside the largest contributor moves `payers` alone, and the name they join is
-on the entity rather than in the change. The same reading is what makes the
-noun exact — an income is called one on every later edit of it, not only on the
-revision that crossed — and what prices each figure in its own currency.
-
-A revision is regularly **several** fields, since an entry is saved whole: a
-merge can revert somebody's amount in the same op that changes the description.
-So the sentences above are for a revision that moved exactly one field. Where
-more than one moved, **no field outranks another**: the line says only that the
-entry was edited, and each field that moved gets a labelled was/now line under
-it. Ranking them would caption a revision "changed who's involved" and hide
-that the amount had gone back — the one thing an audit trail exists to answer.
-A labelled line carries its rows like a sentence does.
 
 ## Gotchas
 

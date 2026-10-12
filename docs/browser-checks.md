@@ -3,8 +3,8 @@
 *For: anyone writing, fixing or reading a browser check. Part of the
 [testing](testing.md) docs, which say how `pnpm verify` runs them on GitHub at
 every push, and why nothing waits on them but the pusher. What each check is
-*for* is its own section; the Gotchas
-are what every one of them has had to learn.*
+*for* is its own section; [Writing a check that holds](#writing-a-check-that-holds)
+is what every one of them has had to learn.*
 
 ## `scripts/lib/harness.mjs` — what the browser checks share
 
@@ -110,7 +110,7 @@ one once, and the last of them folding the keyboard rather than wrapping round
 to the top. The two assertions that keep the chains apart are the other ones
 worth having — the entry form's note folds rather than diving into the column
 underneath, and the add row, which is a `<form>`, still files the name and
-hands the caret back ([frontend.md](frontend.md#state)).
+hands the caret back ([entry.md](entry.md#the-keyboards-chain)).
 
 ## `pnpm verify stall` — a read of this phone's database that dies
 
@@ -297,7 +297,7 @@ other section stands on it.
 What a search finds is unit-tested (`lib/ledger.test.ts`), and so is how much
 of the bar a scroll brings out (`lib/ledger-search.test.ts`). This holds what
 neither reaches, the bar's every state on a real screen
-([frontend.md](frontend.md#state)): away at the head and half out half a bar
+([frontend.md](frontend.md#the-ledgers-search)): away at the head and half out half a bar
 short of the base state; in the column over results; back at the base state when cleared; home
 again when let go of empty, but not when a drag is what let go; kept for the
 way back from a result and blank on a tap in; drawn where the list is put
@@ -307,121 +307,73 @@ fling must draw the bar part-way, a cleared search must never — since each is
 over in a dozen frames. With the rate limit taken out, both fling assertions
 fail.
 
+## Writing a check that holds
+
+What every check has had to learn. `pnpm check` doesn't run these, so a screen
+change that moves a control goes in green and is found here on GitHub: when you
+move a control, change its role, or change where a save lands, grep these
+scripts for it in the same commit.
+
+**Find a control by what it is, not what it says.** Copy is settled by ear, one
+word at a time, so a selector naming the words has an expiry date: name the
+icon, the class, the role, and leave the wording to `copy.ts`. Where a name is
+unavoidable — `getByLabel` on `/new` is "Name", the placeholder "Group name" —
+remember a role's `name` is a substring match (`{ name: "Edit" }` also finds
+"Edited once · by Luke"; take `exact: true`), and that `copy.ts` types its
+apostrophes (`/Marie.s amount/`, not `"Marie's amount"`). A strict-mode
+violation is the driver saying what a screen reader would find: two controls
+with one accessible name, which is a bug in the screen. Scope a row's click to
+the row (`.rows .row` filtered by the member's name), or `.first()` seeds a
+"co-sponsored" expense that quietly has one payer and still looks plausible. A
+skeleton row is `.rows .row` too, outliving the ledger's arrival by 120ms in
+`SkeletonVeil`: count `.rows .row:not(.skelrow)`; and `/` holds hidden resume
+frames, so a locator there wants `:visible`.
+
+**Wait for the thing, never a pause.** `waitForTimeout(400)` is a bet placed on
+a machine running one check. Wait for the address after a tap, the row in
+`device` the screen writes, the class a flash takes — `PATIENCE` as the ceiling
+— and for the state the assertions expect, not for two samples agreeing, which
+is quiescence and not the answer. `waitForSelector` waits for *visible*, which a
+`<link>` never is: anything in the head wants `{ state: "attached" }`, after a
+wait for the page to have parsed it. The router draws the next screen before it
+commits the URL, so a step that reads the stack or presses Back waits for the
+URL too. The rate dialog opens a moment after the currency pick, once the
+look-up behind it fails. The one honest pause is the window for proving that
+*nothing* happened.
+
+**The app has its own clock, and a starved machine can overrun it.**
+`SWALLOWED_MS` ([navigation.md](navigation.md#keeping-the-devices-back-honest))
+costs at worst a duplicate entry, never a wrong screen — so a check asserting
+where a repair *landed* is safe, and one asserting the **shape of the stack**
+across a repair can go red on a busy machine and green alone; say which you are
+writing. Don't tap on straight after a Back that traverses: wait for
+`navigation.currentEntry.index` to drop, as `pnpm verify offline` does. Don't
+sample the "still stuck" moment either — **record it**: §10 of `pnpm verify
+nav` hangs a `MutationObserver` before the tap and reads it afterwards.
+
+**Drive the app as a person would.** The app never reloads in normal use, so
+anything it keeps in memory (a draft, `lib/draft.ts`) is gone at a `page.goto`:
+`goto` is for arriving, and from there, click. Playwright scrolls a row into
+view before clicking it, which moves the ledger's remembered position — click a
+row wholly in view to leave it intact. A headless browser has no keyboard, so a
+press on a button drops the caret (`HoldCaret`): a check wanting it kept fakes
+the keyboard as `pnpm verify keyboard` does. The installed app is
+`asInstalledApp(page)`, since neither playwright nor CDP can set
+`display-mode: standalone`.
+
+**`setOffline` is the page's network, not the browser's.** The `sw.js` update
+check goes out anyway, so a lever `checks/offline` holds (a forged revision, a
+blocked asset) is read by an install nobody asked for. Put it back before the
+navigation that could ask, and serve a forged revision once (`swOnce`).
+
 ## Gotchas
 
-- **A headless browser has no keyboard, so a press on a button drops the
-  caret.** `HoldCaret` (components/viewport.tsx) keeps a field's focus through
-  a press only while the keys are up, and blurs it otherwise. A check that
-  wants the caret kept has to fake the keyboard as `pnpm verify keyboard` does.
-- **The router draws the next screen before it commits the URL.** A selector
-  the new screen carries can match while the stack still says the old one, so
-  a step that reads the stack or presses Back next waits for the URL too.
-
-- **The rate dialog opens a moment after the currency pick**, once the
-  look-up behind it fails (the static export has no feed). Wait for the
-  dialog; counting it straight after the pick finds none.
-
-- **A browser check that asks for a sentence will be rearranged under.** Copy
-  is settled by ear here, one word at a time, so a selector naming the words is
-  a selector with an expiry date. Name what a control
-  *is* — its icon, its class, its role — and leave the wording to `copy.ts`.
-- **`/g` is both a file and a directory** in the export, so the static server
-  must `statSync(p).isFile()` before serving and only then fall through to
-  `${file}.html`. Serving the directory hit is an `EISDIR` crash. The harness
-  handles it — don't hand-roll another server.
-- **A check that needs the installed app has to say so.** The update offer is
-  drawn only when `display-mode: standalone` matches, and neither playwright nor
-  CDP's media emulation can set that — `asInstalledApp(page)` answers the query
-  instead, before the navigation that should see it.
-- **Locate by role and id, not by guessed label text.** On `/new` the label is
-  "Name"; "Group name" is only the placeholder, so `getByLabel` hangs.
-- **Two things must never answer to one accessible name.** A strict-mode
-  violation from `getByLabel` is the driver saying what a screen reader would
-  find: the same name twice. The add row's button says "Add", so the field
-  keeps its own name and the button is reachable by role.
-- **A role's `name` is a substring match.** `{ name: "Edit" }` also finds the
-  entry's history link, "Edited once · by Luke". A one-word name takes
-  `exact: true`.
-- **Scope row-level clicks to the row.** `getByRole("button", { name: /the
-  rest$/i }).first()` hits whichever row is first — filter `.rows .row` by the
-  member's name. Getting this wrong seeds a "co-sponsored" expense that quietly
-  has one payer, and the shot looks plausible.
-- **Nothing gates these, so they rot quietly.** `pnpm check` doesn't run them,
-  so a screen change that moves a control or a landing goes in green and is
-  found here weeks later. When you move a control, change its role, or change
-  where a save lands, grep these scripts for it in the same commit.
-- **`page.goto` between screens is a different app.** The app never reloads in
-  normal use — every move is one document, back included — so anything the
-  app keeps in memory (a draft, `lib/draft.ts`) is gone the moment a check
-  navigates with `goto`
-  instead of pressing what a person would press. A `goto` is for arriving; from
-  there, click.
-- **Playwright scrolls a row into view before clicking it.** A row cut by the
-  scroller's edge moves first, and the ledger records where that left it
-  (`lib/ledger-position.ts`). To leave a position intact, click a row wholly in
-  view.
-- **A skeleton row is `.rows .row` too**, and outlives the ledger's arrival by
-  120ms in the veil that dissolves it (`SkeletonVeil`) when it was up 100ms. Count or wait for
-  `.rows .row:not(.skelrow)`, or a count lands six rows high. And `/` holds
-  a hidden resume frame, stall notice and all, until the launch decides — a
-  wedged read never does — so a locator there wants `:visible`.
-- **`waitForSelector` waits for *visible*, and a `<link>` never is.** Anything
-  in the head — the manifest the head's script writes — needs
-  `{ state: "attached" }`, or the wait times out and the check reports the app
-  broken. Wait at all: `waitForURL` can return before the new page has parsed
-  its head, so a manifest read off the landing is a coin toss.
-- **A pause is not a wait.** `waitForTimeout(400)` is a bet on how fast the
-  machine is, and it was placed on a machine running one check with nothing
-  else on it. Wait for the thing itself — the address after a tap, the row in
-  `device` the screen writes, the class a flash takes with it — with `PATIENCE`
-  as the ceiling. Where what is being out-waited is one of the app's own
-  timers, `settle(page, ms)` puts both clocks in the same starved page. The one
-  honest pause is the window for proving that *nothing* happened, which has no
-  condition to wait for.
-- **The app has its own clock, and a starved machine can overrun it.**
-  `SWALLOWED_MS` (150ms, `lib/nav.ts`) is how long a going waits before
-  deciding its traversal was swallowed and putting the destination in this
-  screen's place. On a starved box a traversal that is merely late can land
-  after that, and the repair has already replaced: the cost is **one duplicate
-  entry, never a wrong screen** — which is why the clock is allowed at all. So
-  a check asserting where a repair *landed* is safe, and one asserting the
-  **shape of the stack** across a repair is the one that can go red on a busy
-  machine and green alone. Say which you are writing. **Nor tap on straight
-  away**: a check, unlike a thumb, can push the next screen before the late
-  traversal lands, and then it lands on top of that push, taking the page back.
-  After a Back that traverses, wait for `navigation.currentEntry.index` to
-  drop, as `pnpm verify offline` does.
-- **And a check must not bet on that window either** — a pause sampling the
-  "still stuck" moment breaks whenever `SWALLOWED_MS` changes. The stuck moment
-  is not worth asserting anyway — in `pnpm verify nav` §9 `history.go` is stubbed to a no-op, so a traversal
-  cannot be what moved the screen, and landing at the destination at all is
-  already proof the repair did it. Where the intermediate state genuinely is
-  the assertion, **record it instead of sampling it**: §10 hangs a
-  `MutationObserver` before the tap and reads the flag afterwards, because the
-  repair is quicker than a round trip to ask.
-- **A check that hangs fails after five minutes** (`HUNG_MS`, the harness's
-  reporter), naming the last thing it reported. Playwright's `close` and
-  `bringToFront` take no timeout, and `pnpm verify offline` under load has hung in its
-  teardown for good — before the watchdog, that stalled `pnpm verify` with it.
-- **One flake is still open**, rare (none in the last dozen `pnpm verify`s on a
-  four-core container), green alone: `pnpm verify offline` "tap a suggested
-  transfer" — the page reaches balances, then is found back on the ledger. Not
-  a late Back (the check waits for that now); its failure prints the history
-  stack, which is the next clue.
-- **Don't edit `apps/web` while `pnpm verify` runs.** Each check calls
-  `ensureBuild()` itself, so the ones still queued see stale sources and
-  rebuild `out/` under the ones running: a run of red that is none of theirs.
-- **Quiet is not done.** A loop that stops when two samples agree has waited
-  for quiescence, not the answer: `pnpm verify offline` read the shell caches that
-  way and, on a loaded box, stopped before `activate` had deleted the old one.
-  Poll for the state the assertions expect, `PATIENCE` as the ceiling.
-- **`setOffline` is the page's network, not the browser's.** The update check
-  for `sw.js` goes out anyway — so a lever `checks/offline` holds up for one
-  section (a forged revision, a blocked asset) is read by an install nobody
-  asked for, which then finishes against the server as it is *later*. Put the
-  lever back before the navigation that could ask, not when the section reads
-  as over — and a forged revision is served once (`swOnce`), since the page's
-  own update checks ask too, and under load one lands mid-section.
-- **`copy.ts` types its apostrophes.** `getByLabel("Marie's amount")` matches
-  nothing against `Marie’s amount` and hangs until the check times out; match
-  with a regex (`/Marie.s amount/`) or paste the real character.
+- **`/g` is both a file and a directory** in the export, which crashes a naive
+  static server with `EISDIR`. The harness handles it — don't hand-roll another.
+- **A check that hangs fails after five minutes** (`HUNG_MS`), naming the last
+  thing it reported: Playwright's `close` and `bringToFront` take no timeout.
+- **Don't edit `apps/web` while a check runs.** Each calls `ensureBuild()`, so
+  a queued one rebuilds `out/` under the running ones.
+- **One flake is still open**, rare and green alone: `pnpm verify offline` "tap
+  a suggested transfer" — the page reaches balances, then is found back on the
+  ledger. Not a late Back; its failure prints the history stack, the next clue.

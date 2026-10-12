@@ -24,7 +24,7 @@ import {
  *
  * **Two sources, one readout.** A file or a Tricount link both become an
  * `ImportPlan`, and past that the app can't tell which it was
- * (docs/data-model.md#reading-a-tricount-back).
+ * (docs/import-export.md#reading-a-tricount-back).
  *
  * **Refused whole, or not at all.** A ledger missing one entry balances to
  * something nobody can account for, so a refusal names what to change

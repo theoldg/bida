@@ -27,7 +27,7 @@ wheel in the OS's typeface that can show a name and nothing else.
 - **It is a real `<dialog>` opened with `showModal()`.** Focus, Escape and the
   inertness of the screen behind are the platform's; ours is the scrim, the
   hairline card and the buttons. What they look like and how their rows read is
-  [design-system.md](../design-system.md#a-dialog-is-ours-and-its-button-says-the-act).
+  [design-system.md](../refusals.md#a-dialog-is-ours-and-its-button-says-the-act).
 - **A dialog is for a decision whose entire content is a sentence.** Where the
   decision needs the ledger on it, it stays a screen.
 

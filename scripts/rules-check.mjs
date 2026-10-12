@@ -147,7 +147,7 @@ for (const file of sources(join(ROOT, "apps/web/app/g"))) {
 //
 // `goBack` takes the replace as well as the back: a traversal Android
 // swallows is repaired by putting the destination in this screen's place,
-// which needs that replace (docs/navigation.md#gotchas).
+// which needs that replace (docs/navigation.md#keeping-the-devices-back-honest).
 for (const file of sources(join(ROOT, "apps/web"))) {
   if (file.endsWith(join("lib", "nav.ts"))) continue;
   const src = code(readFileSync(file, "utf8"))

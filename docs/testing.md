@@ -46,8 +46,8 @@ owe a fix.
 **A browser check that fails on GitHub runs once more, alone** (`verify
 --retry`). Failing alone is a real failure. Passing alone is a flake: the run
 stays green and `pnpm push` prints it. It is still a bug — a check that only
-fails under load is betting on the machine's speed (*A pause is not a wait*, in
-[browser-checks.md](browser-checks.md#gotchas)) — but not yours to chase
+fails under load is betting on the machine's speed (*Wait for the thing, never a pause*, in
+[browser-checks.md](browser-checks.md#writing-a-check-that-holds)) — but not yours to chase
 mid-task unless you touched what it drives.
 
 **Don't run the whole `pnpm verify` yourself.** Run the one check you are

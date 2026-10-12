@@ -6,7 +6,7 @@ import type { ImportSource } from "./types.js";
  * A Splitwise CSV read back into a group — `export.ts` in reverse. Takes parsed
  * rows (the dialect is `apps/web/lib/import/csv.ts`) and returns a **plan**;
  * nothing here writes. Liberal in what it reads (CRLF, BOM, case), but refuses
- * anything that needs a guess. docs/data-model.md#the-group-as-a-spreadsheet.
+ * anything that needs a guess. docs/import-export.md#the-group-as-a-spreadsheet.
  *
  * **A member's cell is `paid − owed`**, which does not invert. One positive
  * column (every file Splitwise writes) is lossless: that member paid, split

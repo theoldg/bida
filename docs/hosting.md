@@ -308,57 +308,31 @@ Recognise these if you ever propose one:
 
 ## Gotchas
 
-- **`actions/setup-node@v5` caches by itself.** Seeing `packageManager` in
-  `package.json`, it runs pnpm to find the cache, so a job that never installs
-  pnpm (the release `gate`) fails there unless it says `package-manager-cache: false`.
-- **A Google Cloud budget does not stop spend.** It emails while the meter
-  runs; capping for real needs a billing-export → Pub/Sub → function that
-  disables the billing account. `SCAN_LIMITS.global` is the only hard brake we
-  have, and it is the better one — it fails as a refusal with a sentence
-  rather than as a dead key. The owner runs alerts on the account beside it
-  and takes the residual risk knowingly.
-- **A key that validates is not a key that works.** `checkGeminiKey`
-  (`web/lib/scan/key.ts`) asks Google's free `models` list, which answers 200
-  for a key with no credit and no permission — exactly what a funded-looking
-  key with an empty prepay balance does before refusing every scan. The list
-  proves the key is a key and that this browser can reach Google, and nothing
-  about whether a scan will be paid for.
-- **A Turnstile widget's secret is readable back**, at `GET
-  /accounts/:id/challenges/widgets/:sitekey` — it is in the response beside the
-  domains. So a second Worker reuses the widget without rotating anything, and
-  rotating (which would break production until its secret is replaced too) is
-  never the way to get a key you already own. Editing one is `PUT`, sending the
-  whole widget back — `PATCH` answers 10405 on an account token.
-- **A push made with the built-in `GITHUB_TOKEN` triggers no workflow.** This
-  is deliberate on GitHub's part (it stops a loop), and it is why
-  `release.yml` calls `deploy.yml` itself instead of pushing `main` and
-  trusting the push trigger to notice.
+- **`actions/setup-node@v5` caches by itself**, running pnpm to find the cache,
+  so a job that never installs pnpm (the release `gate`) says
+  `package-manager-cache: false`.
+- **A Google Cloud budget does not stop spend**; it emails. `SCAN_LIMITS.global`
+  is the only hard brake ([Cost tripwires](#cost-tripwires)).
+- **A Turnstile widget's secret is readable back** (`GET
+  /accounts/:id/challenges/widgets/:sitekey`), so a second Worker reuses the
+  widget without rotating. Editing one is `PUT` with the whole widget; `PATCH`
+  answers 10405 on an account token.
+- **A push made with the built-in `GITHUB_TOKEN` triggers no workflow**, which
+  is why `release.yml` calls `deploy.yml` itself.
 - **Wrangler environments inherit nothing.** `[env.dev]` restates `[assets]`
-  and the D1 binding in full; a block left out is simply absent from that
-  Worker, with no warning at deploy time.
-- **`run_worker_first` as a list names everything the Worker handles.** Unset,
-  anything without a matching asset falls through to the Worker; the moment it
-  is a list, everything unnamed is the asset worker's, and with
-  `not_found_handling = "404-page"` that means the 404 page. Adding `/*.txt`
-  without `/api/*` beside it 404s the entire sync API — and neither `wrangler
-  deploy` nor a build says a word. `wrangler dev` and one `curl /api/health`
-  does.
-- **`wrangler deploy --dry-run` succeeds with a bogus `database_id`** — it does
-  not validate the id against the account. Only a real deploy (or `wrangler d1
-  list`) catches a wrong one.
-- **`wrangler d1 execute --file` prints a summary, not rows.** It reports
-  queries executed and rows read and swallows the `SELECT` output, `--json` or
-  not. To actually read something back, pass the SQL as `--command`.
-- **A Cloudflare token scoped for Workers only fails D1 calls** with a generic
-  `Authentication error [code: 10000]`. `wrangler whoami` succeeding proves
-  nothing; the token needs "D1 - Edit" specifically.
-- **`pnpm --filter @bida/api deploy` does not run the package's `deploy`
-  script** — `deploy` is one of pnpm's own commands. Say `run deploy`.
-- Cloudflare env vars are runtime-only; anything needed during `next build`
-  must come from the build environment, not Worker secrets.
-- **`packages/core` imports siblings with a `.js` extension**, which is correct
-  under `moduleResolution: "bundler"` and works in `tsc` and `next dev`, but
-  Next's production webpack build fails with `Can't resolve './hlc.js'` unless
-  `apps/web/next.config.mjs` sets `config.resolve.extensionAlias = { ".js":
-  [".ts", ".tsx", ".js"] }`. **Run a real production build before assuming
-  anything deploys** — `next dev` won't catch this.
+  and the D1 binding in full; a block left out is silently absent.
+- **`run_worker_first` as a list names everything the Worker handles**:
+  everything unnamed goes to the 404 page. Adding `/*.txt` without `/api/*`
+  beside it 404s the whole sync API, silently; `wrangler dev` and one
+  `curl /api/health` catches it.
+- `wrangler deploy --dry-run` accepts a bogus `database_id`;
+  `wrangler d1 execute --file` swallows `SELECT` output (use `--command`); a
+  Workers-only token fails D1 with a generic `code: 10000` — it needs "D1 -
+  Edit".
+- **`pnpm --filter @bida/api deploy` is pnpm's own command**, not the script.
+  Say `run deploy`.
+- Cloudflare env vars are runtime-only; `next build` reads the build
+  environment, not Worker secrets.
+- **`packages/core` imports siblings with `.js`**, which Next's production
+  webpack resolves only through `extensionAlias` in `next.config.mjs`;
+  `next dev` won't show the failure, the CI build will.

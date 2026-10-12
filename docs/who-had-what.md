@@ -22,7 +22,14 @@ end, so freezing either costs the grid height it needs more (at eight people
 on a 360×640 phone, over half the screen). Only Done stays put, being the way
 out: docked (`.whodock`), under the totals while the bill fits and at the foot
 once it scrolls. Column widths are declared in a `<colgroup>` under `table-layout: fixed`,
-never measured from the cells, or every dot moves each time a run is opened.
+never measured from the cells, or every dot moves each time a run is opened;
+the table carries a `min-width`, or the columns are squashed below their
+content rather than overflowing the scroller. The frozen name column needs an
+opaque background restated wherever a row state sets one (`tr.part td` outranks
+`.itemlabel`), or a translucent band paints twice down the names. Prose sharing
+the scroller is `width: 100%` plus `position: sticky; left: 0` — inside a
+scroller that is the *visible* width, so it is one screenful, pinned; a sentence
+in a `colSpan` cell would wrap at the table's width instead.
 The last chip still lit is disabled: somebody is always there.
 Everyone starts at the table and **nothing starts assigned**: ticking what you
 had is the work, so the grid asks for it rather than handing you a bill already
@@ -40,7 +47,7 @@ amount bloom, the grid scrolling to the nearest of them first unless one is
 already wholly in view, the button is spent for that travel and the flash — and
 the sentence saying why appears in the dock over Done, a red band like the entry
 form's, flashing with the lines, until the last line has somebody
-([design-system.md](design-system.md)). It waits for that press because on
+([refusals.md](refusals.md#a-refused-action-points-first)). It waits for that press because on
 arrival nothing is assigned yet, and a red line printed then scolds a grid for
 being untouched.
 
@@ -94,7 +101,9 @@ full price for a promotion their order created. Pro rata (5.56 / 4.44) is the
 same rule a whole-bill loyalty deduction follows, scoped to what it came off,
 which is why the code has one rule and not two. A whole-bill discount, pooled
 this way, leaves every ratio between people exactly where the items put them —
-it is only the total that moves.
+it is only the total that moves. The grid has no way to say whose a particular credit
+is; if per-item scope is ever wanted, the seam is `readBill`: stop pooling, and
+give a deduction the lines it came off.
 
 `quantity` never multiplies anything — `amount` is already the line's printed
 total. It says how many portions that line is **unfolded** into, and — with
@@ -119,12 +128,6 @@ under it cannot disagree.
 - **`receiptItems.length` is not how many items the bill has.** A line of
   several is kept as portions, so "Salad ×2" is two rows; say a count with
   `printedCount` (or `printedBill`), never the array's length.
-- **A discount is spread across everybody, and that is a decision, not a
-  fallback.** The grid has no way to say who a particular credit belongs to, so
-  there is no "this voucher was on my dish" to honour — and pro rata is the
-  answer with the best argument anyway (see above, and ADR-0016). If per-item
-  scope is ever wanted, the seam is `readBill`: stop pooling, and give a
-  deduction the lines it came off.
 - **What a bill is worth is asked of `receiptBill` (lib/draft.ts), never of
   `weightsFromItems` under it.** Dividing a line leaves a remainder cent, and
   only `tiebreakSeed` says whose it is, and a screen choosing its own seed

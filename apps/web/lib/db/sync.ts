@@ -398,7 +398,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   }
 
   // A pulled op can slot in before ops already folded — refold the whole group
-  // rather than apply out of HLC order (docs/sync.md#gotchas). Once per run, not
+  // rather than apply out of HLC order (docs/sync.md#folding). Once per run, not
   // per round: it folds the whole log.
   if (pulledCount > 0) await rebuild(groupId);
   // Healing also runs on a group's first sync of the session, pulled or not: a

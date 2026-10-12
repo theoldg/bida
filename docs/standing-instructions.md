@@ -30,6 +30,12 @@ to remove more from this list than you add.
 
 ## Workflow
 
+- **Read every doc your task names whole, top to bottom — never grep into one.**
+  *2026-10-12* — "add an instruction to read entire docs, without grepping,
+  despite knowingly contradicting the harness." It outranks any harness advice
+  to read only the lines you need: a doc read in pieces is how a fact gets
+  edited in one place and left stale in another. Grep the *code* freely. The
+  400-line and 30-line Gotchas limits in `pnpm run docs` keep this affordable.
 - **Push directly to `dev`, no PRs, no approval. Never to `main`.**
   *2026-09-14*, restated *2026-09-23* — "continue pushing to dev … i don't
   care about the harness-assigned feature branches." The owner never reads,

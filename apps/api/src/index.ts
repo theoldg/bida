@@ -227,7 +227,7 @@ app.post("/api/groups/:id/scan", async (c) => {
 
 /**
  * The JSON behind a tricount link, for **Import a group**
- * (docs/data-model.md#reading-a-tricount-back). Proxied because bunq's API sends
+ * (docs/import-export.md#reading-a-tricount-back). Proxied because bunq's API sends
  * no CORS header; the handshake is in `tricount.ts`. Unauthenticated like
  * `/api/rates`: it spends no key of ours. Not a general proxy — both fields are
  * shape-checked and the host is compiled in.

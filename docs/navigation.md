@@ -6,8 +6,8 @@
 ([browser-checks.md](browser-checks.md#pnpm-verify-nav--where-the-back-arrow-goes-and-what-it-leaves-behind))
 holds what this doc promises.*
 
-Every route, then the rules every screen keeps, then how the device's back
-button is kept honest — the part most of the Gotchas are about.
+Every route, then the rules every screen keeps, what a launch opens, and how
+the device's back button is kept honest.
 
 ## Routing
 
@@ -21,7 +21,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/` · `/new` | Groups list, unless a **launch** reopens the group you were last in (`lib/launch.ts`, whose `arrival` is the one answer to what brought you here) — the app's name, a kebab holding Import, Settings and About ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
 | `/g?id=` | The group: its ledger, the only screen that leaves it. History is a clock in the top bar, dotted when other phones changed something (`components/history-button.tsx`); the invite link, People, Export, Settings and "Forget group" are one top-bar menu beside it (`components/group-menu.tsx`). A row's long press offers Edit and Delete; Edit opens the form with `via=ledger`, so saving lands back on the ledger rather than on the entry |
 | `/g/balances?id=` | Who is up, who is down, and settling, pushed over the ledger by the balance card at its head, so back is the ledger. Figures share one column as wide as the longest (a subgrid), so every bar ends in the same place. The suggested reimbursements you are in come first, each a one-line card with the balance card's chevron, a long name cut with an ellipsis, and those you are not in faded as on the ledger; and under them, unless you are square, a folded "How are these worked out?" answers the one thing about settle-up a first-timer reads as a bug (`NotWho`). A suggested payment opens a card, not a form — two names, the arrow, the figure, `Cancel`/`Record` — because every figure on it is the app's (`SettleDialog`) |
-| `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). The bar carries the kind and the date; under it the entry's own title, sized to the largest step that says it in one line (`FitTitle`), and the figure ([design-system.md](design-system.md#the-bar-is-furniture)), so the kind needs no chip of its own. `via=history\|members\|balances` is the screen that linked in from beside it, and is where back goes. The split card lists only the people in the split — an outsider's absence is the whole message. Deleted, it is the same screen under a band that says so and holds Restore ([frontend.md](frontend.md#state)). On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
+| `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). The bar carries the kind and the date; under it the entry's own title, sized to the largest step that says it in one line (`FitTitle`), and the figure ([entry.md](entry.md#the-entry-on-screen)), so the kind needs no chip of its own. `via=history\|members\|balances` is the screen that linked in from beside it, and is where back goes. The split card lists only the people in the split — an outsider's absence is the whole message. Deleted, it is the same screen under a band that says so and holds Restore ([history.md](history.md#a-deleted-entry-keeps-its-screen)). On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
 | `/g/entry/edit?id=[&e=][&kind=][&via=][&from=&to=&amount=&title=]` | Add or edit any of the three: one form, a kind chip, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up is the only caller that sends `title` — "Reimbursement" — so a blank transfer stays untitled. Saving unwinds to `formParent`: the entry it was editing, or the screen `via` names — `via=ledger` skips the entry for the ledger |
 | `/g/scan?id=` | Scan first, decide after: a drawing of what a photo becomes, and the control that takes one, reached from the camera above the ledger's "+". Fills a blank expense draft and hands it to `/g/entry/edit` with `replace`, so back from the form is the ledger ([receipt-scanning.md](receipt-scanning.md)) |
 | `/g/entry/items?id=[&e=]` | The who-had-what grid: who was there across the top, the bill's lines down the side, running totals below. Writes a `receipt` split ([ADR-0016](decisions/0016-receipts.md)), and is reached from the form's Items tab — never navigated to by a scan ([receipt-scanning.md](receipt-scanning.md)) |
@@ -87,7 +87,7 @@ free**: it spends the document's history-action activation, which is also what
 lets the dialog it opens refuse the *next* close request, and what the browser
 requires before it will mark a traversal cancelable at all. So a run of back
 presses with no tap between them degrades — the dialog is shut by a press the
-app cannot hear about without `Dialog`'s `close` listener (Gotchas), and
+app cannot hear about without `Dialog`'s `close` listener ([below](#keeping-the-devices-back-honest)), and
 eventually a press arrives uncancelable and leaves for good. That last one is
 the degradation ADR-0007 names, and it is **accepted behaviour, not a bug to
 fix**: on `/new` and `/quick` it costs what was typed, and a page that could
@@ -112,6 +112,43 @@ from (`formParent`) rather than dropping everyone on the ledger. A
 server ([ADR-0004](decisions/0004-static-export-and-offline.md)). Never move
 it into a path or query string "for convenience". The id alone is fine — it
 confers nothing without the secret.
+
+## A launch reopens where you were
+
+`/g` records the group on every visit (`setLastOpenedGroup`, `lastOpenedGroupId`),
+and `/` reopens it on a launch (`lib/launch.ts`) — nearly everyone is in one
+group at a time. A *launch* and not every arrival: the back arrow out of a group
+must not be turned around, so the resume happens once per running copy of the
+app (a module flag), only on a fresh `navigate` — never on a reload or a
+back/forward traversal — and only where the document itself loaded on `/`
+(`startedOnList`): one that loaded on a link has spent its launch on the link,
+and the first press of Back onto the list is a press, not a launch. A group
+forgotten, archived or gone stays on the list, and so does one you backed out
+of: `/` records itself as this phone's place (`leftOnList`, cleared by the next
+`setLastOpenedGroup`), so a launch reopens whichever of list and group was last.
+`resumeGroupId` is that decision, pure and tested. A replace that doesn't take
+releases the list after two seconds rather than leaving the app on a skeleton
+nothing will fill.
+
+**A launch paints the frame it is heading for, from the first**
+(`lib/first-frame.ts`). Its route's export is the wrong picture — `/` is the
+list, though a launch may reopen a group; `/install`, the iOS icon's
+`start_url`, is the tutorial — and the real decisions read IndexedDB after first
+paint. So one pure function, `firstFrame`, is serialised into a script before
+the body and marks `<html data-frame>` ledger, list or join, from localStorage
+mirrors of the group to reopen and of whether the icon was ever launched. It is
+tested against `isLaunchFrom` and `launchPlan`, the code that decides for real.
+`/` and `/install` draw `FirstFrames` — the ledger's skeleton, the list's own
+`HomeFrame` empty, and `JoiningFrame` — hidden, CSS shows the one the mark names
+in place of the route's own (`.ownframe`), and all of them are `inert`: a tap on
+a skeleton races the decision it stands in for. **A ledger's skeleton wears
+every card it can know without the database**: the demo's mark and the folded
+install or notifications offer (`data-banner`, `SkeletonBanner`), so the rows
+never drop when it lands; Chrome's one-tap offer waits on an event and still
+arrives late, as do the sync banner and the history dot, which are data. The
+frames go once the launch decides, and the mark with them (`clearFirstFrame`):
+hidden is not gone, and each bar's arrow would stay registered with the back
+button.
 
 ## One navigation
 
@@ -149,8 +186,60 @@ above it, and an offset would come back a row off. In the head of the list,
 where no row reaches the edge, it is the plain offset. It follows the cards
 above the rows for 1.2s as they arrive, and a finger ends that at once — as
 does a saved row, which glides into view from the restored place
-([design-system.md](design-system.md#the-ledger-moves)), and the search bar
+([design-system.md](rows.md#the-ledger-moves)), and the search bar
 gliding the list (`yieldPosition`).
+
+## Keeping the device's Back honest
+
+Each rule here is a browser behaviour that cost a lost draft or a dead button
+on a real phone; `pnpm verify nav` drives each one it can.
+
+- **A `<dialog>` can be shut by the platform without a word.** `showModal()`
+  registers a close watcher, and without history-action activation no `cancel`
+  fires: the element simply closes. The back press that opened a discard dialog
+  has just spent that activation, so on Android the next press shuts the dialog
+  silently. `Dialog` listens for `close` as well as `cancel`, or the screen
+  goes on believing its dialog is up and every further press is answered with
+  nothing.
+- **A cancelled back press leaves the browser counting from the entry the press
+  was heading for**, so `history.go(-1)` moves *two*, or off the start, where
+  it is dropped. Don't cancel a press the browser is already getting right; where
+  you must, take no count — put the parent in this screen's place (`swap`,
+  `back-button.ts`). Defer that to a macrotask too: a navigation started while
+  the cancellation unwinds is refused.
+- **Safari's `userInitiated` is true for any navigation begun while a tap is
+  handled**, so the app's own `router.back()` looks like the device button
+  (hence `goBack`, enforced by `rules-check`). Which traversal is the app's own
+  is said with a **latch**, spent by the one `navigate` it explains — never a
+  window of time. It is armed only where a traversal is coming, and **also spent
+  by the next press or keystroke anywhere**: a hand that has moved is proof the
+  traversal is not coming. Dropped early it costs a needless "discard?"; held
+  too long it would cost the work.
+- **`history.go` can be called and simply not move.** From an act tapped inside
+  a modal `<dialog>` on Android no `navigate` arrives at all — and the latch
+  above, never spent, would wave the next real press through unguarded. Leaving
+  closes any open dialog **before** the going (`closeDialogs`, `lib/nav.ts`).
+- **A *refused* press swallows the next traversal too**, when the target is
+  index 0 — which is what a phone that resumed into a group gives the form
+  pushed onto its ledger. So the going *checks*: still on the entry it asked
+  from `SWALLOWED_MS` (150ms) later — the entry, not its index — means it was
+  swallowed, and the destination is pushed in this screen's place. The one
+  clock the file allows, because it fails cheap: a merely late traversal lands
+  on an entry that is already the destination, costing a duplicate entry and
+  never a wrong screen.
+- **So every exit names somewhere to land.** `goUp` has a parent; `goBack`
+  reads the entry behind off `navigation.entries()`; `rules-check` spells out
+  the two-argument shape so an exit the repair cannot reach fails the gate.
+- **Don't clear the work before the going**, or a swallowed navigation looks
+  like a fresh blank form. The draft goes in the unmount, behind a `leaving`
+  ref — which every screen that asks puts down first, since `mayLeave` is read
+  again on the way out and would answer the app's own leaving with a second
+  "discard?".
+- **Don't reach for `traverseTo`.** WebKit folds it into one still pending for
+  the same key and never settles one it dropped, so telling late from lost
+  takes a timeout a slow phone overruns. `goUp` reads the entries and calls
+  `history.go` in one tick, outside any event
+  ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 ## Gotchas
 
@@ -174,82 +263,3 @@ gliding the list (`yieldPosition`).
   cannot: `router.replace` then `router.push` leaves only the push, whatever it
   is deferred by. It takes two screens, one commit each — which is why `/join`
   replaces itself with the list and the list does the pushing.
-- **A `<dialog>` can be shut by the platform without a word.** `showModal()`
-  registers a close watcher, and only a document holding history-action
-  activation may refuse a close request: without it no `cancel` fires at all and
-  the element simply closes. The back press that opens a discard dialog has just
-  spent that activation on cancelling itself, so on Android the very next press
-  shuts the dialog silently. `Dialog` therefore listens for `close` as well as
-  `cancel` — otherwise the element stays mounted and shut, the screen goes on
-  believing its dialog is up, and on `/new` that belief is what every further
-  press is answered with: `ask` is already `"discard"`, so setting it renders
-  nothing, and the back button and the arrow both go dead with nothing on
-  screen. `pnpm verify nav` drives it.
-- **A cancelled back press leaves the browser counting from the entry the
-  press was heading for**, not from the screen still on show — for the rest of
-  that task, and on a real phone for longer than that. So `history.go(-1)`
-  moves *two* — or off the start of the history, where the traversal is
-  silently dropped. Hence: don't cancel a press the browser is already getting right, and where
-  you must, take no count at all — put the parent in this screen's place
-  (`swap`, `back-button.ts`), which is the only right move there anyway, since
-  a press is taken over only where going back would land somewhere else.
-  Deferring to a macrotask is not enough on its own, though it is still needed
-  — a navigation started while the cancellation unwinds is refused outright.
-- **Safari's Navigation API is not Chrome's.** `userInitiated` is true for any
-  navigation begun while a tap is handled, so the app's own `router.back()`
-  looks like the device button (hence `goBack`, enforced by `rules-check`).
-  Which traversal is the app's own is said with a **latch**, spent by the one
-  `navigate` it explains — never a window of time, which a slow phone
-  overruns. A
-  latch is armed only where a traversal is actually coming, since one left
-  armed answers the next *real* press as the app's own — **and it is also spent
-  by the next press or keystroke anywhere**, because "actually coming" is not
-  something the arming code can know (see the next Gotcha). The app's traversal
-  arrives long before a hand can move again, so a hand that has moved is proof
-  it is not coming. That fails the safe way round: a latch dropped early costs
-  a "discard?" nobody needed, one held too long costs the work.
-- **`history.go` can be called and simply not move.** From an act tapped inside
-  a modal `<dialog>` on Android the traversal is never delivered: no `navigate`
-  arrives, nothing changes, and the button looks dead. Worse, each such tap
-  arms the latch above, nothing spends it, and the next *real* back press is
-  waved through with no guard, losing typed work. Leaving closes any open
-  dialog **before** the going rather than with the screen (`closeDialogs`,
-  `lib/nav.ts`), which is also what the card being answered deserves. `pnpm
-  nav` drives it with `history.go` stubbed to a no-op, which is the whole of
-  what the phone does.
-- **A *refused* press swallows the next traversal too.** A press this app
-  cancels (a dialog opened by the device's back button) leaves Android holding a
-  traversal it will not deliver again, so the `history.go` that follows returns
-  with nothing moved and no `navigate` to say so. What decides whether it bites
-  is **where the screen sits**, not which screen it is: the target has to be
-  index 0, which is what a phone that resumed into a group gives the form
-  pushed onto its ledger. So the going *checks*: still on the entry it asked
-  from 150ms later — the entry, not its index, which a tap pushing straight on
-  refills — is a traversal that was swallowed, and the destination takes
-  this screen's place instead — a push, which is not the queue that is stuck.
-  This is the one clock the file allows, because here it fails the cheap way: a
-  traversal that was merely late lands on an entry that is already the
-  destination, so overrunning the window costs a duplicate entry and never a
-  wrong screen.
-- **So every exit has to name somewhere to land, or no check can rescue it.**
-  `goUp` has a parent to put in this screen's place; `goBack` reads the entry
-  behind off `navigation.entries()` and hands it to the same repair. `rules-check` spells
-  out the two-argument shape, so an exit the repair cannot reach fails the gate
-  rather than waiting for a phone to find it.
-- **Don't clear the work before the going.** The entry form renders from the
-  draft, so clearing it first makes a swallowed navigation look like a fresh
-  blank entry instead of a screen that did not move. The draft goes when the
-  screen does, in the unmount, behind the `leaving` ref below.
-- **A screen that asks has to stop asking before it goes.** `mayLeave` is read
-  again on the way out, so a guard still saying no answers the app's own
-  leaving with a second "discard?". Every screen that leaves this way puts a
-  `leaving` ref down first — the entry form included, which must not rely on
-  clearing the draft, per the Gotcha above.
-- **Don't reach for `traverseTo`.** Naming a history entry by key instead of
-  counting back to it is the same move with a worse failure: WebKit folds a
-  `traverseTo` into one still pending for the same key and never settles one it
-  dropped, so telling a late traversal from a lost one takes a timeout — and a
-  slow phone makes that timeout fire on a late one, replacing the entry
-  underneath a traversal that then lands. `goUp` reads the entries and calls
-  `history.go`, both in one tick and outside any event, where the browser's
-  idea of *here* is this screen ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).

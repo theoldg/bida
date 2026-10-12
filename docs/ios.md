@@ -298,46 +298,25 @@ is rightly let through: it is Chrome, storage and menus and all.
 
 ## Gotchas
 
-- **`position: sticky` doesn't exempt anything from the rubber-band**: an act
-  stuck to a scroller's foot bounces with it. A button that must hold still is
-  a sibling of `.scroll`, not a row in it (`.whodock`, `.homepair`).
 - `looksIos` has to catch iPadOS, which calls itself a Mac
-  ([lib/install.ts](../apps/web/lib/install.ts)).
-- **An iOS home-screen app drops the `Safari/` token exactly as a webview
-  does.** So `looksEmbedded` checks `standalone` first, or the app would lock
-  itself out of the one place this whole doc is about getting people to.
-- The Add sheet's **Open as Web App** toggle is what makes an icon a web app
-  rather than a bookmark. Off, it opens Safari — shared storage, no `persist()`,
-  and the install bought nothing. It defaults on, and nothing can read it:
-  `isStandalone()` stays false, so the banner rightly keeps warning.
-- `navigator.clipboard.readText()` on iOS draws its own Paste bubble even after
-  a tap — a paste is always two taps — and **the read that drew the bubble can
-  be the one that comes back empty**: access is granted for the pasteboard's
-  change count, and the granting read is still served from the pre-grant
-  snapshot. A resume is the same shape, the pasteboard not being back yet.
-  **Re-reading is not the answer, because a second read is a second bubble.**
-  So one read decides, and an empty one goes straight to a box to paste into by
-  hand — never a screen saying the clipboard was empty
+  ([lib/install.ts](../apps/web/lib/install.ts)), and an iOS home-screen app
+  drops the `Safari/` token as a webview does — so `looksEmbedded` checks
+  `standalone` first.
+- The Add sheet's **Open as Web App** toggle is what makes an icon a web app.
+  Off, it opens Safari and the install bought nothing; nothing can read it, so
+  `isStandalone()` stays false and the banner rightly keeps warning.
+- **`clipboard.readText()` draws its own Paste bubble, and the read that drew
+  it can come back empty** (served from the pre-grant snapshot; a resume is the
+  same). A second read is a second bubble, so one read decides and an empty one
+  opens a box to paste into by hand
   ([lib/paste.ts](../apps/web/lib/paste.ts), `usePasteLink`).
-- A pasted join link is opened with `location.replace`, not `router.push`. When
-  Next's router gives up and loads the page itself — say the build it fetched
-  isn't the one on screen, which is easy on a freshly installed app — it
-  uses the fetch's URL, and that has no `#`, so the join says "Bad link".
-  **That URL also still ends in `.txt`**, so the same give-up on any other tap
-  lands the phone on the route's RSC payload, rendered as text — the whole
-  screen a page of `1:"$Sreact.fragment"`. The service worker and the Worker
-  both redirect it back to the route
-  ([pwa.md](pwa.md), `apps/api/src/payload.ts`); the Worker is
-  the half that covers a first visit, which has no service worker yet and is
-  most of the invites this doc is about.
-  Not `assign` either: the page it leaves goes into WebKit's page cache still
-  holding the database, `/join` waits on it, and the back arrow restores it to
-  wait on `/join` in turn — a hang of a minute. A group
-  already held skips the page load altogether.
-- **Safari reads the manifest at page load**, not when the share sheet opens,
-  whatever WebKit's source suggests. Changing the link later does nothing — so
-  the HTML carries none, a script at the top of the head writes it, and a page
-  whose carry changed since reloads — once the shell is cached, not before.
-- **Next re-inserts the manifest link that `metadata.manifest` renders** after
-  hydration, so taking it out doesn't work. Leave `manifest` out of the
-  metadata and write the link yourself.
+- **A pasted join link is opened with `location.replace`.** When Next's router
+  gives up and loads a page itself it uses the fetch's URL — no `#`, so "Bad
+  link", and still ending in `.txt`, so a screen of RSC payload; `sw.js` and
+  the Worker (`apps/api/src/payload.ts`) redirect that back to the route. Not
+  `assign`: the page left behind sits in WebKit's page cache holding the
+  database `/join` waits on.
+- **Safari reads the manifest at page load**, so the HTML carries no link: a
+  script at the head writes it, and a page whose carry changed reloads once the
+  shell is cached. Leave `manifest` out of Next's metadata, which re-inserts its
+  own link after hydration.

@@ -45,7 +45,7 @@ either one answers** — neither reply carries an `Access-Control-Allow-Origin`,
 which is a browser shielding its own user from the page in front of them and
 not a door anybody is being kept out of. A Worker is not a browser, so it
 needs no permission. `/tricount` is what **Import a group** fetches a Tricount
-link with ([data-model.md](data-model.md#reading-a-tricount-back)), and the
+link with ([import-export.md](import-export.md#reading-a-tricount-back)), and the
 10 ms is why the throwaway key that handshake wants is made on the phone.
 
 ## Layers, and what may import what

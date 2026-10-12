@@ -52,7 +52,9 @@ it, which answers two questions at once: whether the key works, and whether
 this browser can reach Google at all. The second has no other moment to be
 found in — a content blocker or a shield defeats the whole feature, however
 good the key is, and finding that out with the key in hand beats finding it out
-over a receipt. A key Google refuses is not stored.
+over a receipt. A key Google refuses is not stored. **A key that validates is
+not a key that works**, though: the list answers 200 for a key with no credit,
+so it proves nothing about whether a scan will be paid for (`checkGeminiKey`).
 
 **There is no fallback through the Worker**, on purpose. Sending the key to us
 when the direct call fails would make the promise this screen makes ("your key
@@ -378,20 +380,14 @@ payer. The photo is not stored at all
   on one phone is refused by the app itself with `copy.scan.limit.you`. That is
   correct and worth recognising before it reads as a broken driver; `forget`
   is a factory-fresh phone and a fresh budget.
-- **Our 429 and Gemini's mean opposite things.** "Come back in a minute" fixes
-  an overloaded model and does nothing about a spent budget, so the Worker adds
-  a `scope` field and the phone reads it — a 429 with no `scope` is Google's.
-- **`fetch` resolves when the response *headers* arrive, not when the request
-  body finishes.** A streamed request body that errors after that point
-  resolves the promise rather than rejecting it, so the `catch` around the
-  upstream call never runs and a refused image answers **200**. Whatever a
-  streaming body needs to report has to be read from a flag on both paths, not
-  caught — which is what `refusal` in the scan handler is.
-- **A refusal still opens the upstream connection.** The alphabet check happens
-  mid-stream, so by the time a bad body is found Gemini already has our prefix;
-  refusing truncates the request, and what upstream receives is an unterminated
-  JSON string and never the caller's bytes. Unavoidable while the image streams
-  rather than being read, and harmless — a truncated request is not a request.
+- **Our 429 and Gemini's mean opposite things**, so the Worker adds a `scope`
+  field — a 429 with no `scope` is Google's overload, not a spent budget.
+- **`fetch` resolves when the response *headers* arrive**, so a streamed
+  request body that errors after that resolves rather than rejects, and a
+  refused image answers **200**. What a streaming body reports is read from a
+  flag on both paths (`refusal` in the scan handler), never caught. The refusal
+  still truncates a request Gemini has begun — harmless: it receives an
+  unterminated JSON string, never the caller's bytes.
 - `gemini-2.5-flash` is **404 for new keys**, and Google's error names the
   replacement. If `3.1-flash-lite` ever goes the same way, try the current
   `-latest` alias before assuming the free tier is gone. A 503 on the same key

@@ -13,6 +13,14 @@ so its tokens and both themes are the app's to the pixel rather than copied by
 hand. Make it work, not just look right, and photograph the shipped screen
 beside it with `pnpm drive` ([drive.md](drive.md)).
 
+| Read | When you are |
+|---|---|
+| **This file** | Choosing a colour, a size, a face, a press or a wait; laying out a screen's one act |
+| [rows.md](rows.md) | Drawing a row: yours, the ledger's motion, a line that says less, an arrow |
+| [entry.md](entry.md) | Laying out the entry form or the entry screen |
+| [refusals.md](refusals.md) | Writing a dialog, a picker, or a button that can say no |
+| [design-review.md](design-review.md) | Polishing a screen: open findings, and those ruled intended |
+
 ## Direction
 
 A terminal: one monospace face, near-monochrome grounds, hairline rules, square
@@ -147,56 +155,15 @@ their hues — they're semantic and must not drift. Both dark blocks
 (`prefers-color-scheme` and `[data-theme="dark"]`) carry identical values.
 Change one, change the other.
 
-## Your own rows are highlighted
+## The bar is furniture
 
-Always, not as a mode ([ADR-0007](decisions/0007-a-screen-is-a-route.md)). A row
-that is about you takes a translucent neutral wash laid *over* the list, plus a
-left-edge bar so it survives colour-blindness; the same wash marks pending sync,
-both meaning "this is about you, not the shared record". Neutral rather than
-tinted, so a row's own green or red stays the only colour on the line — and the
-*only* way you are marked, since a member is always printed by name, never
-replaced by "You".
-
-**The split and the payers take the pair apart.** There the question on the
-screen is who is in, so the wash marks every row that is in the split or put
-money in (`.inrow`), and you are marked by "(you)" after your name (`You`, as on
-the entry), with no bar — as are the form's Paid by, its payer lines (no tint
-for yours) and the bill's per-person lines under Items.
-
-**The split's foot row is a count and a box, right-aligned** (`.splithead`):
-"**3** of 4" beside a drawn checkbox — ink with a tick for everyone, ink with
-a dash for some, an empty outline for nobody — sitting in the rows' 16px mark
-column, so it foots the ticks, the parts' plus and the figures above it. No
-wash and an empty left half, so it is never read as one more person — and only
-the box is tappable: a 36px target around it, with the press darkening the box alone.
-
-**The wash eats soft hairlines.** A `--rule-soft` line is invisible against it,
-so wherever a washed row abuts something — the row below it, or the split
-editor's mode tabs above it — that boundary is redrawn at 14% ink or it reads as
-one merged block.
-
-**Not on the ledger.** There nearly every entry is one of yours, so a wash on
-each would mark nothing: ledger rows are the plain rows of the groups list. What they did to your balance is said on the figure — `+€45,00`
-green, `−€14,28` red — and the exception is what the list marks: a row you are
-no part of drops to 58% opacity rather than disappearing. Balances' suggested
-reimbursements do the same, under rows that do wear the bar: a bar there
-would say "you" about a payment, and they end in the ledger card's chevron.
-
-**On an entry, your name carries "you" and the screen ends in your balance.** A
-small, faint `(you)` follows your name wherever the entry prints it: the one
-payer on the paid-by line, a payer row, a split row. A transfer gets neither;
-its two names and an arrow already say it. The rows themselves stay uncoloured. Under the split, unless you neither paid nor had
-a share, is the ledger row's figure, signed and coloured as it is there:
-`Your balance +CRD 40.00`. When two of the card's numbers made it, it opens
-folded to that figure, a chevron after the label as on your bill's row, and
-unfolds to the sum written out as at school: "you paid 50.00", "your share
-− 20.00", the result under a rule (`effectSum` — an income's share comes first,
-since it is what moved you up). Always one figure under the other, digits
-aligned whichever side the locale puts the code; the result moves down into
-the sum rather than being printed twice. Opened under the fold line, it glides up until
-all of it shows, and shut, glides back to where it was opened from — never a
-jump, the docked Edit sliding with the list's foot — as each bill on the split card and Balances' "How are these worked
-out?" do (`useFold`).
+Every top bar is the same height on every screen, whatever anyone typed into
+the app. A `.topbar` title clamps at two lines — what a 40-character group name
+takes at 17px — and its sub-line at one, because every sub-line in the app is a
+caption on the title above it (a name, a date, a figure) and a caption running
+to a second line is the thing it captions, in the wrong place. A `capped`
+title, which has a centred control to end before, stops at one too. A bar that
+grows leaves its own back arrow and bin floating in the middle of a paragraph.
 
 ## Nothing waits in silence
 
@@ -238,48 +205,6 @@ identical. Two states cover the gap, and neither is a spinner:
   without it, never the thing that says an action worked. Off under
   `prefers-reduced-motion`.
 
-## The ledger moves
-
-The ledger changes under somebody looking at it in three ways, and each has
-one motion (`components/ledger-rows.tsx`, the arithmetic in
-`lib/ledger-motion.ts`). The list is flat: a date line is an item of its own,
-not a heading riding on its day's first row, so it can stay while a row beside
-it comes or goes. Every row draws the line under it — transparent above a date
-line, whose band is its own edge, and under the last row.
-
-- **A save lands on its row.** The form hands the ledger the entry it wrote
-  (`markSaved`); the row wears a wash from its first frame — `--ink` at 13%, a
-  shade over `--press` — and after a beat longer than the you-owe card's
-  (`SAVED_BEAT`, 600ms), so the screen has plainly arrived first,
-  from wherever the ledger was put back to ([navigation.md](navigation.md)),
-  is brought whole into the strip above the floating buttons, date line
-  included when it heads its day, only as far as it has to and not at all if
-  it already shows — unless, with the list at its very top, the row would sit
-  in the top half of the screen: then the list goes to the top, so the banner
-  shows the change beside the row, and its figure holds its roll until the
-  list is there (`awaitRoll`). The wash lets go over 0.9s — at once if nothing
-  moved, and `SAVED_DWELL` (600ms) after landing if the list scrolled, since
-  the eye arrives with the scroll; a held roll waits with it. A colour
-  settling, so exempt from the motion clamp.
-- **A row that goes** fades (140ms), then its space folds (220ms). The divider
-  under it is the line above the row beneath, so it stays, rides up on that
-  row and lands on the line above — two lines closing into one. A date line
-  left with no rows folds in the same motion, after the row's blank space:
-  it reads whole for as long as there is room for it. The last row takes no
-  motion: it is gone and the empty state is up at once — too rare to earn one.
-- **A row that arrives** from another phone opens a gap (220ms) and fades in
-  (180ms), at the slot's opacity so a dimmed row fades to its own 58% and not
-  past it. No flash: the history clock's dot already says it came. **Above what
-  you are reading, it grows the list upward instead** — the view is held by
-  hand, nothing under your eye moves, and nothing animates. A list moving
-  under a finger or still gliding takes no change until 300ms after it stops.
-  Into an empty ledger (a first pull), rows just appear.
-
-Under reduced motion the movement is instant and only the wash still plays.
-The groups list is the same list: a forgotten group folds out like a deleted
-entry, the last one included in the no-motion rule; a group that turns up just
-appears.
-
 ## Type
 
 **One face: JetBrains Mono**, 400–700, a variable font committed under
@@ -312,228 +237,6 @@ groups the ones we print. **The field settles when you leave it**: it holds the
 text you typed while you are typing it — caret and half-finished "1." intact —
 and pads it to the currency's fraction on blur, so a finished "5" doesn't sit
 in a column of "12.00"s looking like a different kind of number.
-
-## A row says less rather than being cut off
-
-An expense row's second line is the payer and a head count, "Alice +1 · 👥5",
-plus an income's tag; the split mode is the entry's own screen's to say. The
-name is never dropped and takes the ellipsis; the "+1" for co-payers and the
-tag stay beside it, since leaving either out would be untrue; the head count is
-what a long name pushes out. That needs no measuring — the count's box shrinks
-first and wraps it onto a clipped second line. Lines with more than two facts use
-`FitLine`, which takes several wordings longest first and renders the longest
-that measures under the box (`lib/row-meta.ts` owns the order). A group list
-row's line is that ladder with a fixed bold lead: "N new changes" is never
-dropped, then people go, then entries, and the time is last standing — the lead and the time
-say whether to open the group, the counts only what is in it.
-
-A ledger row is always the same height, whether or not it carries a second
-figure — the sum as it was spent, before the group's currency. The row is held
-to the height of the three-figure case and its column is centred in it
-(`.entryrow`, and `.grouprow`/`.skelrow` with it, so a row is a row on every
-screen): a two-figure row takes the slack as air above and below. The amount
-column is leaded tight so that height stays close to a two-line row's.
-
-## The bar is furniture
-
-Every top bar is the same height on every screen, whatever anyone typed into
-the app. A `.topbar` title clamps at two lines — what a 40-character group name
-takes at 17px — and its sub-line at one, because every sub-line in the app is a
-caption on the title above it (a name, a date, a figure) and a caption running
-to a second line is the thing it captions, in the wrong place. A `capped`
-title, which has a centred control to end before, stops at one too. A bar that
-grows leaves its own back arrow and bin floating in the middle of a paragraph.
-
-Text with more to say than that says it **in the screen**. `/g/entry`'s head is
-the entry's own title, with the figure under it and the bar left holding only
-the kind and the date, both bounded. The title's size is measured rather than
-set (`FitTitle`, on `lib/fit.ts` like `.rmeta`'s wording ladder): it takes the
-largest step that says the words in one line and falls to the wrapping size
-when none does, so "Dinner" is a heading and a sentence is a paragraph. Nothing
-on that ladder reaches the amount — the money still leads, and it keeps
-the same left margin as the title, since a figure pushed to the other edge
-strands the short ones.
-
-The figure is set at two sizes (`.entryamt`, cut by `moneyParts`): the whole
-part 44px, the currency code and the fraction at 55% in `--muted` — "UZS
-150,779.27" read as one weight made the code and the cents as loud as the
-thousands. A lone symbol (`€`, `$`) is set at the whole part's size and ink: at a code's size one glyph
-read smaller than three letters, and muted it read as a smudge. It sits against its digits, as "£6.87" is written
-everywhere else — a gap made for a word stranded one glyph from its number. The code stays on whichever side the reader's locale
-puts it. A sum too long for the column shrinks to fit it (a container-query
-size off the whole part's length, never under 28px) rather than wrapping
-mid-number. The sum as spent, when it was spent in another currency, is a
-13px muted line under it, not beside it — beside, it read as a third part of
-the same figure — with the rate chip that made it the figure above at its end — a button, opening
-the entry's rate dialog as the entry form's twin chip does (`RateChip`: a quiet
-"@", the figure at one digit fewer than the dialog edits, a red "?" for no rate).
-It starts flush at the left margin, one run of text: sharing the figure's
-columns so the two sets of digits lined up broke on the edge cases (a symbol
-over a code, a code on the trailing side), and the margin is an edge every
-case has.
-
-**An expense or income is laid out as its form is**: a head card, the ÷
-(`.splitrule`), then the split in a card of its own. On the form the head card
-(`.formhead`) is the figure over What, Paid by and When as ruled rows, each
-washing under a press. Several payers are one row (`.payersfield`): a line
-each in the value column, name and figure with its currency set as the item
-split's summary rows are, and one › centred on the lines — it opens all of them, not the
-first — standing where the date's calendar does and drawn at its weight; on the
-entry it is the title, the figure and who paid, with your balance under the
-split, on the screen's ground. A transfer's form has no ÷, so no head card. Under a hairline the head card says who:
-one payer is a line — "paid by **Adaś**" — named nowhere else on the screen;
-several are rows carrying what each put in, under an eyebrow that counts them,
-"Paid by **2 people**". A transfer's head is no card: its card below is
-nothing but who. The cards' eyebrows read as phrases ("Split by items", "Paid
-by 2 people"), not a label, a dot and a value.
-
-**History is one quiet link, above Edit** (`.entryhist`) — never a top-bar
-icon as well, which was two ways to the same screen. A clock, then what is
-there — "Created by Luke", or "Edited 3 times · last by Han" — then a chevron
-right after the words, in grey, not underlined; only those words are the
-link, and a press washes them, as `.tlink`'s does, not the row. The name is the first
-thing to go when the line is short (`historyMeta`); "Created by" with no room
-for the name says "History". Both ride the dock under the card; a deleted
-entry keeps the line where Edit was.
-
-## An arrow points one way, and an income says so twice
-
-A settle row is a *thing to do* — "you pay Marie €12" — not a statement that two
-people are connected, so never a double-headed arrow. A transfer's row is
-titled the same way, "Marie → Bob", not "Marie paid Bob". `i-arrow` always points payer → payee, left to right, matching
-the names beside it; on the transfer form (`.transfer`) it sits between the two
-sides and *pressing it reverses them*, because backwards is the mistake that
-control exists to make cheap — so there it is an inked square, a control, and on
-the detail screen a bare glyph on the card. Each side is labelled above the name, so "From" is
-read before the person it qualifies.
-
-Which way an entry runs is the one distinction with no colour left to spend on
-it, so an income ends its row's second line with an **"income"** tag — the
-`--hl` wash of the form's "from receipt", no dot before it, the wash being
-separation enough — and prints a `−` on its ledger figure
-([ADR-0010](decisions/0010-what-an-entry-is.md)). Two signals, never one.
-
-## A dialog is ours, and its button says the act
-
-Asking is never `prompt()` or `confirm()`: those arrive in another app's
-typeface, announcing that the *site* is asking, with one line where a consequence
-needs a paragraph. `components/dialog.tsx` is a real `<dialog>` — `showModal()`,
-so focus and Escape are the platform's — filling the viewport and painting the
-scrim itself. Inside: a hairline card, `Cancel` beside an act that names itself
-("Forget group", never "OK"), `--debit` outlined when it destroys something.
-**A confirm's title is the question its act answers** ("Forget this group?");
-every other dialog's names what it holds ("Currency", "Invite link") or asks
-which one ("Which one are you?"). Never an imperative, which would compete with
-the button. A
-screen still wins where the decision needs the ledger on it — the payers editor,
-who-had-what ([ADR-0008](decisions/0008-hand-rolled-interface.md)). Nor is a `<select>` ours, and
-there are none left: `ChoiceDialog` picks from a short list in the app's own
-rows — a name, a check on the current one, and a `note` saying what an
-unobvious pick does; your own row says "(you)" on the name's line, so it is no
-taller than the others. A `lead` row may head it, with a chevron: not
-a choice but a door elsewhere, as "Multiple people ›" heads the payer picker.
-**Two marks say where a tap goes:** › goes to another screen, which Back
-returns from; ⇕ (`i-updown`) opens a picker over this one — a `.pick` field
-(Paid by, a new group's currency) and the entry form's kind chip. Not ⌄: a
-fold's chevron already turns down when it opens in place. The other chips
-carry no mark, since a chip that is a button always opens a dialog. A date is the exception, being a calendar and not a list
-([ADR-0008](decisions/0008-hand-rolled-interface.md)). A *failure* is not
-a dialog at all — there is nothing to decide — so it is said under whatever was
-attempted, in `--debit`: `Failure` / `.failure`. **A held action always says
-why**: Save greyed with nothing to read is a dead end, so the entry form keeps
-a single reason line beside the payer field rather than one per branch — but a
-line is not the only way to say it, and where the fix is a control on screen
-the control blooms and the sentence goes.
-
-A *refused* action points first: a Save that can't go through
-blooms whatever stopped it `--debit` and lets it settle back over ~600ms —
-**whole, ground included**. A missing figure blooms its field: the title's box
-fills like an ink block, its label and whatever is written in it riding along
-in `--brand-ink`, and the amount takes a red plate under its figure and the
-rule it is typed on. The label goes with the fill because it is the word that
-says *which* field was refused. A missing *step* blooms the whole control that takes it, edge, label,
-icons and any rule inside it: the scan pair and the door to the who-had-what
-grid, which is the Items tab's entire complaint. Both of those are ink blocks,
-so both fill (below). Words come only once a Save is refused, because "scan a
-receipt" is true of every untouched bill and said unasked reads as a scolding
-for arriving. **A flash alone can be missed, so the entry form's refusal also
-says one thing in words** — one red line over Save, never a stack. Everything
-missing still blooms; the line names the problem a bloom explains worst, least
-obvious first (`REFUSAL_ORDER`, `lib/entry-check.ts`): a rate, the payers, the
-split, the Items step, then the amount and the title, which an empty field
-going red already says. Fix it and the line moves to the next. The payers' and
-split's sentences stand on that line unasked; the rest leave once nothing is
-missing, so a field emptied later is not scolded. Where what is missing is spread over
-several rows, every one of them blooms: a Done on the who-had-what grid points
-at each line nobody has been given: the row washes `--debit-wash` from edge to
-edge, its words go `--debit`, and every empty cell flashes a solid `--debit`
-dot — the mark a tap there would draw — since an empty cell draws nothing at
-rest and the row would say what is missing but not where to tap. No press tile
-behind the dot: a column of them read as stuck buttons, not a line. This is how you find the line again in twenty rows
-of bill. **A refusal nobody can see whole is a press that
-did nothing**, so unless one of those rows is fully in view — a name with its
-amount cut off by the fold is not — the nearest is brought into the grid
-smoothly first and the flash runs when it lands (`lib/reveal.ts`, `lib/seek.ts`);
-one already wholly in view moves nothing, because a list that jumps under
-somebody looking at the answer is worse than one that sits still. The entry
-form does the same on its own scroll — with the keyboard up, Save and an empty
-amount are a screen apart — and blooms only what is still missing when it lands.
-With the rate, the amount or the title among what is missing it goes to the very
-top instead, where the three are read together.
-The button itself never goes red — it is the
-control that was pressed, not what is missing — it only greys for the length of
-the flash and any travel before it, like Save. A number that
-is not on the form at all blooms the way *to* it: a foreign entry whose currency
-the group has no rate for points at its rate chip, and the dock line says which
-rate. **A control fills whole**,
-ground and border together, rather than colouring its label: that chip, the two ink blocks — the who-had-what door and the scan pair — and
-a field: a red line around unchanged grey writing is the smallest signal in the
-app for the biggest thing it has to say. A label alone is smaller still, and a `--brand` or `--rule-soft`
-frame left around a red block reads as half a refusal. The
-add row's plus fills for the same reason — what Create and a quick split's scan
-pair point at over a name nobody has filed is 15px of glyph in a 32px box, far
-too little ink to be seen going red, so the ground goes instead. **A refusal
-blooms what has to change**, and on that row that is the plus only while a good
-name is waiting to be pressed in; when the field is the problem the whole row
-blooms instead — its box washes `--debit-wash` in a `--debit` edge, the writing
-goes red and the plus fills, pointing at the press that answers it: the
-placeholder when a screen refuses over a list too short to go on with, the
-typed name when the list already holds it. The box is always there with a
-transparent edge, so the wash moves nothing. A press of the plus on an empty row refuses nothing at
-all: it takes the caret, which is the whole answer. And a keystroke ends any
-flash there on the spot, rather than reddening writing that is being typed over
-(`name-adder.tsx`). A flash
-rather than a held red, and it replays on every refusal — the two identical
-`-a`/`-b` animations in `globals.css` are the restart mechanism. Save is spent
-for exactly as long as the flash — greyed instantly, eased back — which is the
-press saying it landed, and stops the same press arriving again over a form
-mid-way through saying no. The bloom is a jump in *contrast* and not only in
-hue (`--debit` is far darker than `--rule` on paper and far lighter in the
-dark), so it survives being unable to tell red from grey. It is the one thing
-exempt from the global reduced-motion clamp: a colour settling is what that
-guidance asks you to fall back *to*, and clamped it would be nothing at all.
-
-**Not every flash is a refusal.** Where a tap is answered by the screen
-rearranging itself — tapping a folded run of portions on the who-had-what grid
-opens it — the tapped column is faint from the first frame those rows are
-painted, holds that way while they are scrolled into view whole, and is
-released once they have stopped moving, each dot easing back to what it really
-is. **The column meets in the middle**: assigned and empty cells alike sit at
-one faint ink, so what an opened run shows first is the places an answer could
-go. The empty ones take the assigned ink while held, because their resting
-square is `--card-3` and would vanish at that strength; the assigned ones fade
-rather than darken because `--ink-2` has nowhere darker to go. **A pointer starts held, not
-animated** — rows painted at full strength and dimmed a beat later flicker, and
-nothing can ease into a row that did not exist a frame ago. Never `--debit`:
-nothing is wrong and nothing is being asked for.
-The same `-a`/`-b` pair restarts it, and it is exempt from the motion clamp on
-the same grounds. A cell that cannot be tapped like its neighbours doesn't look
-like them either — a run handed out unevenly wears the dot **broken into two
-overlapping squares** on everyone who had any of it, so no cell in that row
-reads as an ordinary assignment. **An empty cell draws nothing** — pale squares
-read as disabled ones — and a tap inks its square in. The rows nobody ordered (tip, tax,
-discounts) wear a 4px `--rule` **pip** instead: ink, since everyone does carry a
-share, but too small to be a target.
 
 ## Rules that are not negotiable
 
@@ -573,90 +276,27 @@ share, but too small to be a target.
    left alone.
 
 ## Gotchas
-
-- **A height moved frame by frame re-lays out every row under it.** On a
-  300-entry ledger at 4× CPU each frame of a fold cost ~85ms of layout, synced
-  delete or local. The sync run around it was not the cause: holding the
-  ledger until it finished changed nothing. `content-visibility: auto` on the
-  slots took it to one long frame, but off-screen rows then report a
-  placeholder height to the scroll compensation, so it is not on.
-
-- **In dark, `--card` is darker than `--card-3`.** A tab filled `--card` on a
-  `--card-3` track looked raised in light and sunk in dark; a raised thing
-  takes `--seg-on`, which is lighter than its track in both.
-- **`.row:last-child` sees wrappers, not lists.** The ledger once wrapped each
-  row in a div of its own, which made every row a last child: two rows on one
-  day had no line between them for months, and nothing noticed.
+- **In dark, `--card` is darker than `--card-3`.** A raised thing takes
+  `--seg-on`, which is lighter than its track in both themes.
 - Something wrong on "the app" rather than one screen is a shell bug: look at
   `.app` / `.appbody` / `.scroll` in `globals.css` first, and check the fix on a
   screen that overflows.
-- **A later `border-bottom` shorthand undoes a state's colour.** `.splitrow`
-  sits below `.inrow` in `globals.css`, so its shorthand reset the stronger
-  divider and rows in the split merged into one wash; `.splitrow.inrow` restates it.
-- **One class, one component.** `.linkbox` once named the import field too,
-  and that later rule's `display: block` undid the copy box's flex row: the link
-  ran off the screen and Copy fell below it. Grep a class before reusing it.
-- **Native controls follow `color-scheme`, not the tokens.** Without it on
-  the theme blocks the date field's calendar glyph stayed black on dark cards.
-- iOS Safari in a tab ignores `user-scalable=no` and lets `touch-action` stop
-  only double-tap; `preventDefault` on `gesturestart` is what holds the scale.
-- No shadcn/ui dependency exists, and no component library's variable names sit
-  between the tokens and the app.
-  [ADR-0008](decisions/0008-hand-rolled-interface.md). No CSS framework either:
-  the reset at the head of `globals.css` is every browser default the screens
-  were written against, so an element nothing renders yet — `<small>`,
-  `<summary>`, `<optgroup>` — arrives with its own defaults intact.
-- **`color-mix` is used unguarded** and nothing generates a fallback for it,
-  which puts the floor at Safari 16.2 and Chrome 111. Four values want it
-  (`--hl-row`, `.mine`, `.btn-pair`, the dialog scrim); a browser below that
-  draws each one flat, and the scrim opaque.
-- **`animationend` bubbles.** `.btn-pair` listens for the refusal flash on the
-  way up, so anything else that animates inside it — the scan's own sweep, the
-  who-had-what grid's pointer inside a bloomed row — has to stop the event, or
-  a flash that never ran reads as one that settled.
-- **A `::placeholder` cannot be animated.** Blink drops any animation declared
-  on one: the rule parses, the class lands, nothing happens, and no test sees
-  it — a `getComputedStyle(el, "::placeholder")` mid-flash is what says so. What works
-  is animating the *input* and mixing the placeholder from `currentColor`, so
-  the faint word rides the ink that can move (`globals.css`, "save refusal").
-- **An animation taken off mid-flight reports nothing.** The refusal class is
-  conditional on what is wrong, so fixing it *during* the flash removes the
-  class and no `animationend` ever fires — and a control spent for the length
-  of one stays spent for good. Whatever put the flash there has to notice the
-  fix arriving early and end the refusal by hand (`refusal.onFlashEnd()` with
-  no event, `lib/refusal.ts`).
-- **Two flex children that both claim the full width are not equal halves.**
-  The overflow is shared out in proportion to what is *inside* each one, so a
-  child with different padding or a border takes a different half, and a swap
-  inside one reads as the button resizing under the thumb. A row of equal halves is `.drow`'s
-  `grid-auto-columns: minmax(0, 1fr)`, which doesn't care what is in them.
-- **`table-layout: auto` makes every column a function of every cell.** The
-  browser measures the content and works backwards, so a table that grows a
-  suffix, swaps a button or indents one row re-measures the lot. A table whose shape changes under the reader declares its widths in a
-  `<colgroup>` and takes `table-layout: fixed`. It also has to carry a
-  `min-width`, or the columns are squashed below the size of what is inside
-  them rather than overflowing the scroller.
-- **A sticky cell needs an opaque background, and a row-state selector will
-  steal it.** `tr.part td` is more specific than the `.itemlabel` that sets the
-  card behind the frozen name column, so a translucent row band replaces it and
-  paints *twice* down the names. A cell that other cells scroll under has to
-  restate its background colour wherever a row state sets one.
-- **`width: 100%` inside a scroll container is the *visible* width**, not the
-  scrollWidth — a block child's containing block is the scroller's content box.
-  That is what lets prose share a scroller with a table wider than the screen:
-  `width: 100%` plus `position: sticky; left: 0` is one screenful, pinned,
-  costing the horizontal scroll nothing. A sentence in a `colSpan` cell gets no
-  such thing, and wraps at the table's width with half of itself off to the
-  right.
-- **One global stylesheet means a bare class name lands everywhere it is
-  spelled.** A compound like `.billline.tip` still takes every property of the
-  tip jar's `.tip` that it doesn't set itself.
-  Prefix a modifier with its block (`billextra`) rather than naming it after
-  what it holds.
+- **One global stylesheet: a bare class name lands everywhere it is spelled.**
+  `.linkbox` once named the import field too, and its `display: block` broke
+  the copy box; `.billline.tip` takes every property of the tip jar's `.tip`.
+  Grep a class before reusing it, and prefix a modifier with its block
+  (`billextra`).
+- **Native controls follow `color-scheme`, not the tokens.** Without it on the
+  theme blocks the date field's calendar glyph stayed black on dark cards.
+- iOS Safari in a tab ignores `user-scalable=no`; `preventDefault` on
+  `gesturestart` is what holds the scale.
+- **`color-mix` is used unguarded**, which puts the floor at Safari 16.2 and
+  Chrome 111; below it `--hl-row`, `.mine`, `.btn-pair` draw flat and the
+  dialog scrim opaque.
+- **Two flex children that both claim the full width are not equal halves**:
+  the overflow is shared by what is inside each. Equal halves are `.drow`'s
+  `grid-auto-columns: minmax(0, 1fr)`.
 - **A grid row holds as many items as it has children, and text counts once.**
-  `.warnlist li` is `auto 1fr` — icon, sentence — so a sentence with a link in
-  it becomes three items and wraps onto a second row. Text with an inline
-  element in it goes into the row as one `<span>`.
-- **`money()` is locale-dependent, so a hand-written symbol beside it drifts.**
-  `Intl` renders USD as "US$1.25" anywhere but en-US. Dollars quoted in copy get `usd()`
-  (`lib/format.ts`), pinned to en-US; the group's own money stays the reader's.
+  A sentence with a link in it becomes three items; wrap it in one `<span>`.
+- **`money()` is locale-dependent**: `Intl` renders USD as "US$1.25" outside
+  en-US. Dollars quoted in copy get `usd()` (`lib/format.ts`).

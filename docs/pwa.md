@@ -142,53 +142,27 @@ deploy: untouched, in use, and on a group through a quick and a long absence.
 
 ## Gotchas
 
-- **A cached response's URL is its cache key, not the one that was asked for.**
-  Next reads `res.url` off every payload whose build id isn't its own and
-  navigates there, so a payload served from the precache — keyed by path —
-  sends a phone to a `/g` screen with no group on it. Whatever must
-  survive such a hand-off has to ride on the request, not the response — so
-  every payload goes out as a constructed response (`asAsked`), which has no
-  URL and so reads as the request's. That is the backstop for `activate`
-  guessing a page's build wrong: a window still loading as it runs, or a
-  half-installed build's cache standing newest.
-- **A waiting service worker waits on the whole origin, not on your app.** One
-  forgotten tab on the same domain pins the old build for as long as it lives,
-  and on iOS Safari even killing the browser rarely clears it — while an
-  incognito window shows the new build and makes it look like a deploy problem.
-  That is why the worker does not wait (see [PWA](#pwa)).
-- **`caches.match` searches every cache in the origin, not yours.** And there
-  is always another one to find: `controllerchange` fires *before* the new
-  worker's `activate` handler runs, so a page reloading onto the new build is
-  answered while the previous build's cache is still there. Unscoped, the new
-  worker can serve that reload an old shell or an old `/g.txt` naming chunks
-  this build doesn't have — a screen with pieces missing until relaunch, since
-  the router keeps the payload it was handed. Every read goes through `lookup()`, which opens `CACHE_NAME` — or,
-  for a page still running the previous build, that build's cache; `checks/offline` plants a cache the precache never heard of and fails
-  on anything but a 404.
-- **A page left on the old build breaks on its next tap.** It fetches the new
-  build's `/g.txt`, Next refuses a payload from a build it didn't boot with and
-  navigates to the bare route, dropping the query string — where the group id
-  lives. The screen lands on "No group". So `sw.js` serves
-  such a page its own build's cache until it reloads (`previousFor`), and
-  `checks/offline` taps through a group on one across a deploy.
-- **An installed Android app's status bar is the manifest's `theme_color`, and
-  nothing can change it after install.** It is compiled into the app when the
-  browser builds it, so it cannot be media-scoped and no meta tag reaches it —
-  but `<meta name="theme-color">` *is* still read, for one thing: whether the
-  icons drawn on that bar are light or dark. Adaptive theme-color tags
-  therefore flip the icons over a bar that cannot follow, and dark mode ends as
-  white icons on a paper bar. Hence one colour in both places, ink. To tell
-  which layer paints what, give each colour a value nothing else uses,
-  reinstall, and read the screen — splash is `background_color`, status bar is
-  `theme_color`.
-- **Never `black-translucent` on iOS 26.** The home-screen app is drawn from
-  the top of the screen but laid out a status bar shorter (WebKit bug 301108):
-  a strip at the bottom no CSS or JS reaches, and a system blur over the top
-  bar. `"default"` puts the page below the bar and avoids both.
-- **iOS 26 dims the top of the page under the status bar, and nothing turns it
-  off.** A scrim for the clock's sake, drawn over the first strip of content
-  whatever `statusBarStyle` says — `black-translucent` only gives it more to
-  cover. What *is* ours is what it falls on: the strip above the page is body's
-  background, so where that differs from the bar under it the scrim has an edge
-  to reveal and reads as a band rather than a vignette. Matching the two at
-  phone width is the whole fix (`.app`, globals.css).
+- **A cached response's URL is its cache key, not what was asked for.** Next
+  reads `res.url` off a payload from another build and navigates there, so a
+  precached payload sends a phone to a `/g` with no group. Every payload goes
+  out as a constructed response (`asAsked`), which reads as the request's URL.
+- **A waiting service worker waits on the whole origin.** One forgotten tab
+  pins the old build — on iOS even past killing the browser — while incognito
+  shows the new one. That is why the worker does not wait.
+- **`caches.match` searches every cache in the origin**, and `controllerchange`
+  fires before the new worker's `activate` deletes the old one, so an unscoped
+  read serves the reload an old shell. Every read goes through `lookup()`;
+  `checks/offline` plants a stray cache and fails on anything but a 404.
+- **A page left on the old build breaks on its next tap**: Next refuses the new
+  build's `/g.txt` and navigates to the bare route, dropping the group id.
+  `sw.js` serves such a page its own build's cache until it reloads
+  (`previousFor`).
+- **An installed Android app's status bar is the manifest's `theme_color`,
+  fixed at install**; `<meta name="theme-color">` only picks the icons' contrast
+  over it. Adaptive tags give white icons on a paper bar, hence one colour, ink,
+  in both. To tell layers apart, give each a unique colour and reinstall.
+- **Never `black-translucent` on iOS 26** (WebKit bug 301108): an unreachable
+  strip at the foot and a blur over the top bar. `"default"` avoids both.
+- **iOS 26 dims the top of the page under the status bar, always.** What is
+  ours is what it falls on: match body's background to the bar at phone width
+  (`.app`), or the scrim reads as a band.

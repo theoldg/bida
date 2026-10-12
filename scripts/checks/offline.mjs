@@ -111,7 +111,7 @@ await tap("tap an entry", async () => {
 // Waits for the traversal itself, not just the ledger: one later than
 // `SWALLOWED_MS` is repaired by a replace that draws `.daylabel` first, and if
 // the next tap pushes before the late traversal lands, that traversal takes
-// the page back off the screen it pushed (docs/browser-checks.md#gotchas).
+// the page back off the screen it pushed (docs/browser-checks.md#writing-a-check-that-holds).
 await tap("in-app Back to the group", async () => {
   const from = await page.evaluate(() => navigation.currentEntry.index);
   await page.locator(".iconbtn[aria-label='Back']").first().click();

@@ -28,6 +28,10 @@ hosted for free. Read this, then the doc your task points at.
 5. **Never mutate an entity in place.** Every change is an appended op — that
    one rule buys sync, offline and history. [docs/sync.md](docs/sync.md).
 
+6. **Read the docs your task needs whole, without grepping them** — the owner
+   asks it knowing it contradicts your harness's advice to read only what you
+   need ([standing-instructions](docs/standing-instructions.md#workflow)).
+
 The owner's standing preferences: [docs/standing-instructions.md](docs/standing-instructions.md).
 Obey them; adding one is rare and has a bar at the head of that file.
 

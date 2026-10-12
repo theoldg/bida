@@ -11,7 +11,7 @@ import { calmly, glide } from "@/lib/seek";
 
 /**
  * The ledger's rows, and how they move when the list changes under somebody
- * looking at it (docs/design-system.md#the-ledger-moves):
+ * looking at it (docs/rows.md#the-ledger-moves):
  *
  * - **A row this phone just saved** is brought into view whole — only as far
  *   as it has to, and only if it isn't already, or to the very top when it is

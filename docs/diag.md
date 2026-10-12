@@ -4,7 +4,7 @@
 the [frontend](frontend.md) docs. What it records is explained where it
 happens: stuck reads in [live-reads.md](live-reads.md), presses and the
 keyboard in [touch-and-viewport.md](touch-and-viewport.md), back presses in
-[navigation.md](navigation.md#gotchas), the home-screen hand-off in
+[navigation.md](navigation.md#keeping-the-devices-back-honest), the home-screen hand-off in
 [ios.md](ios.md#a-in-detail).*
 
 `lib/diag.ts` records what the app spends its time on, always, into a bounded
@@ -39,7 +39,7 @@ screen. One `back.press` line per traversal names what was done with it
 (`ours`, `ASKED`, `let through`, `swap`) beside the event's own `cancelable`
 and `active`; `dialog.open` and `dialog.gone` bracket each dialog, and
 `dialog.gone` says whether it was `dismissed` or `SHUT BY THE PLATFORM`
-(see [navigation.md](navigation.md#gotchas)). What a thumb did to the card between those two is
+(see [navigation.md](navigation.md#keeping-the-devices-back-honest)). What a thumb did to the card between those two is
 the `menus and dialogs` block below.
 
 Its Copy button sticks to the top of the scroll rather than sitting in a

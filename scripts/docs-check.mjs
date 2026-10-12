@@ -9,12 +9,12 @@
  * Checked: every relative markdown link resolves, and so does every
  * `docs/….md` a code comment names; every `#anchor` — a bare one included —
  * matches a heading by GitHub's slug rules (where they get clicked); the ADR index names
- * exactly the ADRs on disk; no doc states a test count; claude-corner.md
- * keeps to its own three limits.
+ * exactly the ADRs on disk; no doc states a test count; no doc runs past
+ * 400 lines, nor its Gotchas past 30; claude-corner.md keeps to its own three
+ * limits.
  *
- * Doc length, and whether something deserved an ADR or standing instruction,
- * are judgements (CLAUDE.md and those files' heads), not counted here. The
- * corner is the exception because it fixed its limits in writing.
+ * Whether something deserved an ADR or standing instruction is a judgement
+ * (those files' heads), not counted here.
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join, dirname, relative, normalize } from "node:path";
@@ -121,6 +121,32 @@ for (const f of listed) {
 for (const file of markdownFiles(ROOT)) {
   for (const [said] of readFileSync(file, "utf8").matchAll(/\b\d[\d,]*\s+tests\b/gi)) {
     problems.push(`${relative(ROOT, file)}\n        "${said}" — a test count goes stale; say what they cover`);
+  }
+}
+
+/**
+ * A doc nobody reads whole is one that drifts: an agent greps its way to one
+ * paragraph and edits that, and the copy three screens down goes stale. The
+ * owner asks that docs be read whole (standing-instructions.md#workflow), and
+ * these two limits keep that affordable. Past either, split the doc by subject
+ * or delete what the code now says for itself — a gotcha a check enforces is
+ * the first to go.
+ */
+const LIMIT = { lines: 400, gotchas: 30 };
+for (const file of markdownFiles(join(ROOT, "docs"))) {
+  const text = readFileSync(file, "utf8").replace(/\n$/, "");
+  const lines = text.split("\n").length;
+  const name = relative(ROOT, file);
+  if (lines > LIMIT.lines) {
+    problems.push(`${name}\n        ${lines} lines, over ${LIMIT.lines} — split it by subject, or cut`);
+  }
+  const gotchas = text.split(/^## Gotchas$/m)[1]?.split(/^## /m)[0].trim();
+  const gotchaLines = gotchas ? gotchas.split("\n").length : 0;
+  if (gotchaLines > LIMIT.gotchas) {
+    problems.push(
+      `${name}\n        Gotchas is ${gotchaLines} lines, over ${LIMIT.gotchas}` +
+        ` — delete what a check or the code now holds, or move one into the section it is about`,
+    );
   }
 }
 

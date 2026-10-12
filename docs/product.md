@@ -20,7 +20,7 @@ as parts, as amounts (whoever is in with no figure shares what is left) —
 remainders distributed deterministically and quietly.
 Balances, derived, never stored. Settle-up, which records a transfer. Invite by
 link. **A way out**: one CSV in Splitwise's export shape, which is what Tricount
-imports too ([data-model.md](data-model.md#the-group-as-a-spreadsheet)) — a
+imports too ([import-export.md](import-export.md#the-group-as-a-spreadsheet)) — a
 ledger you cannot take elsewhere is a ledger somebody else owns.
 
 **The three additions.**
