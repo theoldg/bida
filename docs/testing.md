@@ -171,3 +171,9 @@ total spend 963,14 · transfers theo→marie 105,62 · sam→marie 111,47 · ada
   in a sealed body; base64 is 64 symbols, so `"EUR"` turns up in a few hundred
   random characters about once in fifty runs. Probes are seven characters or
   longer, and the exact envelope key set is what actually pins the shape down.
+- **A unit test waits on the run, never a sleep.** The sync tests slept 50ms
+  for a run to park, or counted requests to call a sweep done; under load the
+  page came back before the run parked, which then hung, or a tick joined a
+  run still committing and asked nothing. Await the run itself — `syncAll()`
+  and `syncGroup()` are single-flight, so a second call joins the first — or
+  `stubPage().parked` (`lib/db/page.test-helper.ts`).

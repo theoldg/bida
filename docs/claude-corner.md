@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "Fix this flaky test", a phone shot of another session
+  calling one sync test a timing flake. Six suites at once failed it, and
+  four more with the same sleep; alone it never did. Load first, then read
+  what each wait was standing in for.
+
 - *2026-10-12* — "The animation feels a bit slow/janky". The six-row demo
   played smoothly at any throttle; four hundred rows at 4× played the fold in
   four frames. Jank is a size: seed a ledger as big as a real one before
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   something", then "Fix 1 and 2". Probing as a cold reader found a rule the
   code broke and a status file grown into a changelog; neither was visible
   from the docs alone. Ask the code if the rule holds.
-
-- *2026-10-12* — "Continue fixing the bugs from yesterday's list." Many
-  pushes in, after a compaction, they stopped me mid-command. A long unattended
-  run wants checkpoints the owner can see: what is done, what is next, then
-  carry on. A summary that only the next context reads is not one.

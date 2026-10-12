@@ -6,6 +6,7 @@ import { getDevice } from "./device";
 import { appendOps } from "./commands/append";
 import { groupState } from "./fold";
 import { syncGroup } from "./sync";
+import { stubPage } from "./page.test-helper";
 
 /**
  * Sending (docs/notifications.md, step 6): a command keeps what it owes, and
@@ -111,8 +112,7 @@ describe("sending notices", () => {
     await addExpense(groupId, theo, dinner(theo, bo));
     server(() => 410);
     // Gone to the back while `/notify` was out: the ops are in, the rest waits.
-    const page = Object.assign(new EventTarget(), { visibilityState: "visible" });
-    vi.stubGlobal("document", page);
+    const { page, parked, show } = stubPage();
     const fetchOps = fetch;
     vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => {
       if (url.endsWith("/notify")) page.visibilityState = "hidden";
@@ -121,12 +121,11 @@ describe("sending notices", () => {
 
     let finished = false;
     const run = syncGroup(groupId).then(() => { finished = true; });
-    await new Promise((r) => setTimeout(r, 50));
+    await parked;
     expect(finished).toBe(false);
     expect(await db().notices.count()).toBe(1);
 
-    page.visibilityState = "visible";
-    page.dispatchEvent(new Event("visibilitychange"));
+    show();
     await run;
     expect(await db().notices.count()).toBe(0);
     expect((await groupState(groupId)).identities["bo-phone"]?.push).toBeNull();

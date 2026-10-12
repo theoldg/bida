@@ -8,6 +8,7 @@ import {
   IDLE_MS, SWEEP_MS, TICK_MS, groupOnScreen, planTick, startSyncLoop, syncAll, syncGroup,
 } from "./sync";
 import { VERSION } from "../version";
+import { stubPage } from "./page.test-helper";
 
 /**
  * The sync engine: ship unsynced ops out, absorb what comes back, never lose
@@ -298,8 +299,7 @@ describe("syncGroup", () => {
     const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
 
     // The phone goes to the background between asking and hearing back.
-    const page = Object.assign(new EventTarget(), { visibilityState: "visible" });
-    vi.stubGlobal("document", page);
+    const { page, parked, show } = stubPage();
     vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
       const body = JSON.parse(init.body as string) as { ops: { id: string }[] };
       page.visibilityState = "hidden";
@@ -309,17 +309,16 @@ describe("syncGroup", () => {
 
     let finished = false;
     const run = syncGroup(groupId).then(() => { finished = true; });
-    await new Promise((r) => setTimeout(r, 50));
+    await parked;
     expect(finished).toBe(false);
-    const parked = await db().ops.where("groupId").equals(groupId).toArray();
-    expect(parked.every((op) => op.pending === 1)).toBe(true);
+    const held = await db().ops.where("groupId").equals(groupId).toArray();
+    expect(held.every((op) => op.pending === 1)).toBe(true);
     // And nothing new starts behind it while hidden.
     const fetches = (fetch as unknown as { mock: { calls: unknown[] } }).mock.calls.length;
     await syncAll();
     expect((fetch as unknown as { mock: { calls: unknown[] } }).mock.calls.length).toBe(fetches);
 
-    page.visibilityState = "visible";
-    page.dispatchEvent(new Event("visibilitychange"));
+    show();
     await run;
     const after = await db().ops.where("groupId").equals(groupId).toArray();
     expect(after.every((op) => op.pending === 0)).toBe(true);
@@ -329,8 +328,7 @@ describe("syncGroup", () => {
     const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
 
     // The 410 comes off the same slow network, after the phone went to the back.
-    const page = Object.assign(new EventTarget(), { visibilityState: "visible" });
-    vi.stubGlobal("document", page);
+    const { page, parked, show } = stubPage();
     vi.stubGlobal("fetch", vi.fn(async () => {
       page.visibilityState = "hidden";
       return new Response("gone", { status: 410 });
@@ -338,13 +336,12 @@ describe("syncGroup", () => {
 
     let finished = false;
     const run = syncGroup(groupId).then(() => { finished = true; });
-    await new Promise((r) => setTimeout(r, 50));
+    await parked;
     expect(finished).toBe(false);
     expect(await db().groups.get(groupId)).toBeDefined();
     expect(await db().groupKeys.get(groupId)).toBeDefined();
 
-    page.visibilityState = "visible";
-    page.dispatchEvent(new Event("visibilitychange"));
+    show();
     await run;
     expect(await db().groups.get(groupId)).toBeUndefined();
     expect((await getDevice()).deletedGroups).toContain(groupId);
@@ -353,8 +350,7 @@ describe("syncGroup", () => {
   it("holds a failure's record until the app is seen", async () => {
     const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
 
-    const page = Object.assign(new EventTarget(), { visibilityState: "visible" });
-    vi.stubGlobal("document", page);
+    const { page, parked, show } = stubPage();
     vi.stubGlobal("fetch", vi.fn(async () => {
       page.visibilityState = "hidden";
       return new Response("down", { status: 503 });
@@ -362,12 +358,11 @@ describe("syncGroup", () => {
 
     let settled = false;
     const run = syncGroup(groupId).catch(() => {}).then(() => { settled = true; });
-    await new Promise((r) => setTimeout(r, 50));
+    await parked;
     expect(settled).toBe(false);
     expect((await db().groupKeys.get(groupId))?.failure).toBeUndefined();
 
-    page.visibilityState = "visible";
-    page.dispatchEvent(new Event("visibilitychange"));
+    show();
     await run;
     expect((await db().groupKeys.get(groupId))?.failure).toMatchObject({ count: 1, status: 503 });
   });
@@ -924,7 +919,8 @@ describe("the sync loop's requests", () => {
 
     comeBack();
 
-    await vi.waitFor(() => expect([...asked].sort()).toEqual([a, b].sort()));
+    await syncAll(); // joins the sweep coming back started
+    expect([...asked].sort()).toEqual([a, b].sort());
     stop();
   });
 
@@ -932,8 +928,7 @@ describe("the sync loop's requests", () => {
     const { a, asked } = await twoGroups();
     onPage("/g", `?id=${a}`);
     const stop = startSyncLoop();
-    await vi.waitFor(() => expect(asked).toHaveLength(2));
-    await new Promise((r) => setTimeout(r, 20));
+    await syncAll(); // joins the start's sweep, or the next run would join it
     const comeBack = hideOnAnswer();
     void syncGroup(a);
     await vi.waitFor(() => expect(asked).toHaveLength(3));
@@ -942,7 +937,8 @@ describe("the sync loop's requests", () => {
 
     comeBack();
 
-    await vi.waitFor(() => expect(asked).toContain(a));
+    await syncAll();
+    expect(asked).toContain(a);
     stop();
   });
 
@@ -951,11 +947,15 @@ describe("the sync loop's requests", () => {
     const win = onPage("/g", `?id=${a}`);
     vi.useFakeTimers({ toFake: ["setInterval", "Date"] });
     const stop = startSyncLoop();
-    await vi.waitFor(() => expect(asked).toHaveLength(2)); // the start sweeps
+    // Awaited, not counted: a tick while the sweep's run for `a` is still
+    // committing joins that run and asks nothing.
+    await syncAll();
+    expect(asked).toHaveLength(2);
     asked.length = 0;
 
     vi.advanceTimersByTime(TICK_MS);
-    await vi.waitFor(() => expect(asked).toEqual([a]));
+    await syncGroup(a);
+    expect(asked).toEqual([a]);
 
     // Keep touching until the sweep comes round.
     asked.length = 0;
@@ -963,12 +963,13 @@ describe("the sync loop's requests", () => {
       win.dispatchEvent(new Event("pointerdown"));
       vi.advanceTimersByTime(TICK_MS);
     }
-    await vi.waitFor(() => expect(new Set(asked)).toEqual(new Set([a, expect.any(String)])));
+    await syncAll();
+    expect(new Set(asked)).toEqual(new Set([a, expect.any(String)]));
     expect(asked.filter((g) => g !== a).length).toBe(1);
 
     // Hands off: once idle, the ticks ask for nothing.
     vi.advanceTimersByTime(IDLE_MS);
-    await new Promise((r) => setTimeout(r, 50)); // the last active ticks' answers
+    await syncGroup(a); // the last active ticks' run
     asked.length = 0;
     vi.advanceTimersByTime(3 * TICK_MS);
     await new Promise((r) => setTimeout(r, 50));
@@ -976,7 +977,8 @@ describe("the sync loop's requests", () => {
 
     // And the first touch after catches everything up.
     win.dispatchEvent(new Event("pointerdown"));
-    await vi.waitFor(() => expect(asked).toHaveLength(2));
+    await syncAll();
+    expect(asked).toHaveLength(2);
     stop();
   });
 });
