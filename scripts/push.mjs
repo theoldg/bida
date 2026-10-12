@@ -8,8 +8,9 @@
  *    and **stops without pushing**: a rebase git calls clean can still be
  *    wrong (two changes that each hold alone and not together), so the agent
  *    reads what came in, checks its work against it and runs this again.
- *    A conflict is aborted and handed back the same way. The one conflict it
- *    settles itself is the version line, which every push moves.
+ *    A conflict is aborted and handed back the same way. The two it settles
+ *    itself are the ones every push meets: the version line, and two
+ *    sessions' postcards in docs/claude-corner.md.
  * 3. **The bump**, folded into the last commit — which is unpushed, or step 2
  *    would have stopped (docs/hosting.md#versions).
  * 4. **The push**, through `pre-push` (`pnpm check`). Refused because
@@ -28,6 +29,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { mergeCorner } from "./lib/corner.mjs";
 import { report, watch } from "./lib/runs.mjs";
 import { ROOT } from "./lib/together.mjs";
 
@@ -59,23 +61,41 @@ async function fetchUpstream() {
 }
 
 /**
- * A conflict that is the version line and nothing else: every push moves it,
- * so a session rebasing over another's push always meets one. `dev`'s number
- * is kept, and the bump after the rebase moves past it.
+ * A conflict in package.json that is the version line and nothing else: every
+ * push moves it, so a session rebasing over another's push always meets one.
+ * `dev`'s number is kept, and the bump after the rebase moves past it.
  */
-function onlyTheVersion() {
-  if (lines(git("diff", "--name-only", "--diff-filter=U")).join() !== "package.json") return false;
-  const file = join(ROOT, "package.json");
-  const text = readFileSync(file, "utf8");
+function settleVersion(path) {
+  const text = readFileSync(join(ROOT, path), "utf8");
   const hunk = /<<<<<<< [^\n]*\n([^\n]*)\n=======\n([^\n]*)\n>>>>>>> [^\n]*\n/g;
   const version = /^\s*"version":\s*"\d+\.\d+\.\d+",?$/;
   const hunks = [...text.matchAll(hunk)];
   const markers = (text.match(/^(<<<<<<<|=======|>>>>>>>)/gm) ?? []).length;
-  if (!hunks.length || markers !== hunks.length * 3) return false;
-  if (!hunks.every((h) => version.test(h[1]) && version.test(h[2]))) return false;
+  if (!hunks.length || markers !== hunks.length * 3) return null;
+  if (!hunks.every((h) => version.test(h[1]) && version.test(h[2]))) return null;
   // In a rebase the first side is the branch being rebased onto: `dev`'s.
-  writeFileSync(file, text.replace(hunk, "$1\n"));
-  return git("add", "package.json") !== null;
+  return text.replace(hunk, "$1\n");
+}
+
+/**
+ * Two sessions' postcards, which meet at both ends of the list every time
+ * (scripts/lib/corner.mjs). In a rebase stage 2 is `dev`, stage 3 this commit.
+ */
+function settleCorner(path) {
+  const [base, dev, mine] = [1, 2, 3].map((n) => git("show", `:${n}:${path}`));
+  return base === null || dev === null || mine === null ? null : mergeCorner(base, dev, mine);
+}
+
+const SETTLE = { "package.json": settleVersion, "docs/claude-corner.md": settleCorner };
+
+/** Settle the conflicts that every push meets, or answer false and touch nothing. */
+function settleRoutine() {
+  const conflicted = lines(git("diff", "--name-only", "--diff-filter=U"));
+  if (!conflicted.length || !conflicted.every((f) => f in SETTLE)) return false;
+  const settled = conflicted.map((f) => [f, SETTLE[f](f)]);
+  if (settled.some(([, text]) => text === null)) return false;
+  for (const [f, text] of settled) writeFileSync(join(ROOT, f), text);
+  return git("add", ...conflicted) !== null;
 }
 
 /** Rebase onto what `dev` became, say what came in, and never push after. */
@@ -86,7 +106,7 @@ function catchUp() {
   for (const c of incoming) say(`  ${c}`);
 
   let ok = git("-c", "merge.conflictStyle=merge", "rebase", UPSTREAM) !== null;
-  for (let i = 0; !ok && i < 100 && onlyTheVersion(); i++) {
+  for (let i = 0; !ok && i < 100 && settleRoutine(); i++) {
     ok = spawnSync("git", ["-c", "core.editor=true", "rebase", "--continue"],
       { cwd: ROOT, encoding: "utf8" }).status === 0;
   }

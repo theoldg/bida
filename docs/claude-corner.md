@@ -6,7 +6,7 @@ read, and what an agent tends to get wrong that no check will catch.*
 
 **House rules.** 100 lines, twelve postcards, 300 characters each — `pnpm
 check` fails on all three. Every session adds a postcard and evicts the oldest
-in the same edit. Nothing technical lives here: a fact about the code belongs
+in the same edit; `pnpm push` merges two sessions' cards. Nothing technical lives here: a fact about the code belongs
 in the Gotchas of the doc that owns it, a rule in
 [CLAUDE.md](../CLAUDE.md#doc-upkeep) or
 [standing-instructions](standing-instructions.md).

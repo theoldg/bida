@@ -19,7 +19,9 @@
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join, dirname, relative, normalize } from "node:path";
 
+import { CORNER, flat, parseCorner } from "./lib/corner.mjs";
 import { ROOT } from "./lib/together.mjs";
+
 const SKIP = new Set(["node_modules", ".next", "out", ".git", "shots", ".wrangler"]);
 
 function markdownFiles(dir) {
@@ -173,7 +175,6 @@ for (const file of markdownFiles(join(ROOT, "docs"))) {
  * grows past its stated limits. The numbers it states about itself are
  * enforced here; room is made by cutting in the same edit.
  */
-const CORNER = { lines: 100, postcards: 12, chars: 300 };
 const cornerFile = join(ROOT, "docs", "claude-corner.md");
 const corner = readFileSync(cornerFile, "utf8").replace(/\n$/, "");
 const cornerLines = corner.split("\n").length;
@@ -182,16 +183,11 @@ if (cornerLines > CORNER.lines) {
     `docs/claude-corner.md\n        ${cornerLines} lines, over ${CORNER.lines} — cut before you add`,
   );
 }
-const postcardSection = corner.split(/^## Postcards$/m)[1];
-if (postcardSection === undefined) {
+const parsedCorner = parseCorner(corner);
+if (parsedCorner === null) {
   problems.push(`docs/claude-corner.md\n        no "## Postcards" section to check`);
 } else {
-  const postcards = postcardSection
-    .split(/^## /m)[0]
-    .split(/\n(?=- )/)
-    .filter((entry) => entry.startsWith("- "))
-    // One postcard, however it happens to be wrapped.
-    .map((entry) => entry.trim().replace(/\s+/g, " "));
+  const postcards = parsedCorner.cards.map(flat);
   if (postcards.length > CORNER.postcards) {
     problems.push(
       `docs/claude-corner.md\n        ${postcards.length} postcards, over ${CORNER.postcards}` +
