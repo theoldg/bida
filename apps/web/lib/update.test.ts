@@ -46,6 +46,11 @@ describe("mayReloadOnReturn", () => {
     expect(mayReloadOnReturn("/g/balances/", AWAY_MS)).toBe(true);
   });
 
+  it("is nowhere while the screen holds something, however long away", () => {
+    expect(mayReloadOnReturn("/", 0, true)).toBe(false);
+    expect(mayReloadOnReturn("/g/members", AWAY_MS * 10, true)).toBe(false);
+  });
+
   it("is never a form or a flow, however long away", () => {
     for (const path of ["/g/entry/edit", "/new", "/join", "/g/claim", "/quick"]) {
       expect(mayReloadOnReturn(path, 24 * 3_600_000)).toBe(false);

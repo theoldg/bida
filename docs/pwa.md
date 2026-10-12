@@ -127,7 +127,9 @@ splash and all: after a quick app switch, on a ledger, it reads as a crash;
 after a minute it reads as having left. The list alone was too rare a door —
 launches resume the last group (`lib/launch.ts`). On the two forms a reload
 would throw away a draft that lives only in memory (`lib/draft.ts`), and on a
-flow drop a step, so never there. `reloadCostsNothing` is the one list of screens that hold
+flow drop a step, so never there; nor anywhere while the screen is holding
+something — an open dialog, a half-typed name, a search (`useHoldsWork`).
+`reloadCostsNothing` is the one list of screens that hold
 nothing only this page has, and the iOS carry reload — which cannot wait for a
 list a newcomer never passes — is its other caller ([ios.md](ios.md#a-in-detail)).
 `lib/update.ts` also re-checks `sw.js` on every resume (an installed app is

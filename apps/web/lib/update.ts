@@ -10,6 +10,7 @@
  * page in use is offered a Reload in Settings › Version (`components/update.tsx`).
  */
 
+import { useEffect } from "react";
 import { mark } from "./diag";
 import { signal } from "./signal";
 
@@ -32,6 +33,22 @@ const NOTHING_TO_LOSE = new Set(["/", "/g", "/g/balances", "/g/members", "/g/his
 
 export function reloadCostsNothing(pathname: string): boolean {
   return NOTHING_TO_LOSE.has(pathname.replace(/\/$/, "") || "/");
+}
+
+/**
+ * What the screen is holding that only this page's memory has: an open dialog,
+ * a half-typed name, a search. The list above names screens, not moments, and
+ * `mayReloadOnReturn` asks both.
+ */
+let holds = 0;
+
+/** While `holding`, no return to the front reloads this page. */
+export function useHoldsWork(holding: boolean): void {
+  useEffect(() => {
+    if (!holding) return;
+    holds++;
+    return () => { holds--; };
+  }, [holding]);
 }
 
 /** The app's front door: the one screen an update reloads on at once. */
@@ -64,10 +81,12 @@ function atFrontDoor(pathname: string): boolean {
  * looks like one, so always; on a ledger after a short switch it looks like a
  * crash, so only after `AWAY_MS` — launches resume the last group
  * (`lib/launch.ts`), so waiting for the list alone left most phones on an old
- * build for days; on a form or a flow it would lose work, so never. Waiting
- * costs a stale screen, never a broken one — `sw.js` keeps each window's cache.
+ * build for days; on a form or a flow it would lose work, so never — nor
+ * anywhere while something is `holding` (`useHoldsWork`). Waiting costs a
+ * stale screen, never a broken one — `sw.js` keeps each window's cache.
  */
-export function mayReloadOnReturn(pathname: string, awayMs: number): boolean {
+export function mayReloadOnReturn(pathname: string, awayMs: number, holding = false): boolean {
+  if (holding) return false;
   if (atFrontDoor(pathname)) return true;
   return awayMs >= AWAY_MS && reloadCostsNothing(pathname);
 }
@@ -136,7 +155,7 @@ function reloadWhenFree(): void {
     if (hiddenAt === null) return;
     const away = Date.now() - hiddenAt;
     hiddenAt = null;
-    if (mayReloadOnReturn(location.pathname, away)) window.location.reload();
+    if (mayReloadOnReturn(location.pathname, away, holds > 0)) window.location.reload();
   });
 }
 

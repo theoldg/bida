@@ -5,11 +5,14 @@ import { copy } from "@/lib/copy";
 import { yieldPosition } from "@/lib/ledger-position";
 import { keepQuery, openingQuery, shownAt } from "@/lib/ledger-search";
 import { returnTo } from "@/lib/nav";
+import { useHoldsWork } from "@/lib/update";
 import { calmly, glide } from "@/lib/seek";
 import { Icon } from "./icons";
 
 export function useLedgerQuery(groupId: string): [string, (query: string) => void] {
   const [query, setQuery] = useState(() => openingQuery(groupId, returnTo(location.href) !== null));
+  // Kept for a return from an entry, not for a reload.
+  useHoldsWork(query !== "");
   return [query, (next) => {
     keepQuery(groupId, next);
     setQuery(next);

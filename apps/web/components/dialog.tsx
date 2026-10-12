@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { mark } from "../lib/diag";
+import { useHoldsWork } from "../lib/update";
 import { note, tracePress } from "../lib/press-trace";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
@@ -24,6 +25,7 @@ export function Dialog({ title, onClose, children }: {
   // handler it has to call is a new closure on each one.
   const closed = useRef(onClose);
   closed.current = onClose;
+  useHoldsWork(true);
 
   useEffect(() => {
     const el = frame.current;

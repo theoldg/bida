@@ -5,6 +5,7 @@ import { Icon } from "./icons";
 import { bringIntoView } from "./viewport";
 import { copy } from "../lib/copy";
 import { useRefusal } from "../lib/refusal";
+import { useHoldsWork } from "../lib/update";
 import { nameTaken } from "@bida/core";
 
 /**
@@ -64,6 +65,7 @@ export function AddName({
 }) {
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
+  useHoldsWork(value.trim() !== "");
   const field = useRef<HTMLInputElement>(null);
   const already = nameTaken(value, taken);
   const ready = value.trim().length > 0 && !already && !busy;

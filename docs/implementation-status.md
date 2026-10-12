@@ -45,9 +45,6 @@ One thing: push notifications, built and unchecked on a phone. The visual review
 A read of the hundred commits to 1.3.65; each item names where to start. Delete
 a line in the push that fixes it.
 
-- **Reload on return** (`mayReloadOnReturn`, 076621a4) uses `NOTHING_TO_LOSE`,
-  which was drawn for the iOS carry: `/g/members` loses a half-typed name,
-  the ledger its search, balances and members an open confirm.
 - **Smaller.** Two folds closing within one glide leave padding under the list
   (`lib/fold.ts:52-61`). Sync fetches have no timeout, so a parked one holds
   the fresh run queued behind it (`lib/db/sync.ts`). `reconcilePush` can
