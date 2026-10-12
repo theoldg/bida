@@ -45,11 +45,6 @@ One thing: push notifications, built and unchecked on a phone. The visual review
 A read of the hundred commits to 1.3.65; each item names where to start. Delete
 a line in the push that fixes it.
 
-- **Checks.** Fixed waits against timers: `nav.mjs:518` (2000ms against
-  600+480+600), `nav.mjs:446`, `entries.mjs:756`, `homescreen.mjs:307,402`;
-  `search.mjs:150` hard-codes half of `--search-h`. A check that reports
-  nothing passes (`verify.mjs:83`). The pre-push hook drops `BUSY` before the
-  push has succeeded.
 - **Docs.** README.md:97 (the owner's) says self-host for your own Gemini
   key, which Advanced takes.
 

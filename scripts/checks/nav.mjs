@@ -362,6 +362,7 @@ async function onLedger() {
     await page.evaluate((to) => { document.querySelector(".scroll").scrollTop = to; }, y);
     await settle(page, 100);
   };
+  // Honest: `settle` ends a frame after the restore's window, on the page's clock.
   const back = async () => {
     await page.waitForURL(/\/g\?id=/);
     await page.waitForSelector(".rows a.row");
@@ -416,6 +417,12 @@ async function onLedger() {
       requestAnimationFrame(look);
     };
     requestAnimationFrame(look);
+    window.__released = false;
+    const release = () => {
+      if (document.querySelector(".lslot.saved.released")) window.__released = true;
+      else requestAnimationFrame(release);
+    };
+    requestAnimationFrame(release);
     window.__rolled = null;
     const roll = () => {
       const box = document.querySelector(".scroll");
@@ -429,7 +436,7 @@ async function onLedger() {
   report(got.entry === left.entry && got.offset === left.offset && got.top > left.top,
     "and Save, with a new row above it, keeps the same row rather than the same offset",
     `left ${JSON.stringify(left)} got ${JSON.stringify(got)}`);
-  await settle(page, 2000);
+  await page.waitForFunction(() => window.__released).catch(() => {});
   const shown = await page.evaluate(() => {
     const scroll = document.querySelector(".scroll");
     const box = scroll.getBoundingClientRect();

@@ -71,9 +71,8 @@ const job = (name) => ({
   name,
   run: ["node", file(name)],
   rerun: `pnpm verify ${name}`,
-  // What the harness's own reporter tallied. It prints the failures and not
-  // the passes, so count the passes here — a check that asserted nothing at
-  // all is the failure this would otherwise hide.
+  // What the harness's own reporter tallied; one that tallied nothing has
+  // already failed (`reporter`).
   digest: (out) => [`${(out.match(/^  ok  /gm) ?? []).length} assertions`],
 });
 

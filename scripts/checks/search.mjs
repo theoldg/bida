@@ -33,6 +33,8 @@ const read = (page) => page.evaluate(() => {
     top: Math.round(box.scrollTop),
     // The `scrollTop` that puts the first row at the bar's foot.
     base: Math.max(0, Math.round(box.scrollTop + rows.getBoundingClientRect().top - box.getBoundingClientRect().top - bar.offsetHeight)),
+    // The bar's own height, `--search-h`, so no figure here hard-codes it.
+    height: bar.offsetHeight,
     shown: visible ? Math.round(100 * Math.max(0, drawn.bottom - clip.top) / drawn.height) / 100 : 0,
     on: dock.hasAttribute("data-on"),
     room: dock.hasAttribute("data-room"),
@@ -147,7 +149,7 @@ await page.waitForSelector(".skelveil", { state: "detached" });
   const whole = now.base;
 
   // Half a bar short of the base state, half the bar: tied to the scroll.
-  await scrollTo(page, whole - 25);
+  await scrollTo(page, whole - now.height / 2);
   now = await until(page, (s) => s.shown === 0.5);
   report(now.shown === 0.5 && now.on, "half a bar short of the base state, half of it shows", say(now));
 

@@ -617,8 +617,16 @@ await settle(page, 120);
 const scrolledTo = await page.locator(".scroll").evaluate((el) => {
   el.scrollTop = el.scrollHeight; return el.scrollTop;
 });
+// The refusal travels, then flashes: recorded, so the wait is for both.
+await page.evaluate(() => {
+  window.__flashed = false;
+  new MutationObserver((_, watch) => {
+    if (document.querySelector(".flash-a, .flash-b")) { window.__flashed = true; watch.disconnect(); }
+  }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ["class"] });
+});
 await page.getByRole("button", { name: "Save" }).click();
-await settle(page, 1500);
+await page.waitForFunction(() => window.__flashed && !document.querySelector(".flash-a, .flash-b"),
+  null, { timeout: PATIENCE }).catch(() => {});
 const landed = await page.locator(".scroll").evaluate((el) => el.scrollTop);
 await page.setViewportSize(fullSize);
 await settle(page, 120);

@@ -9,7 +9,8 @@ is what every one of them has had to learn.*
 ## `scripts/lib/harness.mjs` — what the browser checks share
 
 A build, a server that speaks the static export's dialect, a phone-shaped
-browser, a pass/fail tally that owns the exit code, and a seeded group, so the
+browser, a pass/fail tally that owns the exit code — and fails a check that
+reported nothing — and a seeded group, so the
 next check costs a dozen lines:
 
 ```js

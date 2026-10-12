@@ -2,7 +2,7 @@
 # Point this session's branch at `dev`, wherever the harness dropped it.
 #
 # **The main clone is busy** while a session has claimed it (a `BUSY` file at
-# its root, removed by the pre-push hook), while it holds uncommitted changes
+# its root, removed by `pnpm push` once a push lands), while it holds uncommitted changes
 # (the owner edits there too), or while local `dev` has unpushed commits. Then
 # this exits 3 without touching anything: take a worktree and run it there.
 # Otherwise it claims the clone by writing `BUSY`. A claim over 30 minutes old

@@ -183,11 +183,16 @@ export async function newPhone(browser, opts = {}) {
 /** The slowest check takes ~90s; `close` and `bringToFront` have no timeout of their own. */
 const HUNG_MS = 5 * 60_000;
 
-/** Owns the exit code, and a watchdog that fails a hung check naming its last report. */
+/**
+ * Owns the exit code, and a watchdog that fails a hung check naming its last
+ * report. A check that reported nothing fails too: it asserted nothing.
+ */
 export function reporter(page) {
   let failures = 0;
+  let reports = 0;
   let last = "(nothing reported yet)";
   const report = (ok, label, detail) => {
+    reports++;
     if (!ok) failures++;
     last = label;
     console.log(`${ok ? "  ok  " : "FAIL  "}${label}${detail ? `\n        ${detail}` : ""}`);
@@ -200,6 +205,7 @@ export function reporter(page) {
   return {
     report,
     finish() {
+      if (!reports) report(false, "nothing reported", "a check that asserts nothing proves nothing");
       console.log(failures ? `\n${failures} failed` : "\nall checks passed");
       process.exit(failures ? 1 : 0);
     },

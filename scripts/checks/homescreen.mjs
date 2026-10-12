@@ -224,7 +224,8 @@ report(offered && boxed === `${base}/join#${flat}` && pinned,
 const android = await newPhone(browser);
 const androidPage = await android.newPage();
 await androidPage.goto(`${base}/install${fragment}`);
-await androidPage.waitForTimeout(400);
+// Written by the head's own inline script, so it is there once the head is.
+await androidPage.waitForSelector('link[rel="manifest"]', { state: "attached" });
 const androidManifest = await manifestOf(androidPage);
 report(androidManifest.href === "/manifest.webmanifest" && androidManifest.count === 1,
   "a browser that installs by itself gets the one static manifest, starting at /");
@@ -297,7 +298,8 @@ await joined(freshPage).waitFor({ timeout: PATIENCE });
 const visited = [];
 freshPage.on("framenavigated", (frame) => { if (!frame.parentFrame()) visited.push(frame.url()); });
 await freshPage.goto(`${base}/install${fragment}`);
-await freshPage.waitForTimeout(800);
+// Wherever the launch lands — a `/join` on the way there is in `visited`.
+await freshPage.waitForURL((url) => url.pathname === "/" || url.pathname === "/g", { timeout: PATIENCE }).catch(() => {});
 report(!visited.some((url) => new URL(url).pathname === "/join"),
   "a second launch does not re-open a join for a group this phone holds", visited.join(" "));
 report(new URL(freshPage.url()).pathname !== "/install",

@@ -13,7 +13,8 @@
  * 3. **The bump**, folded into the last commit — which is unpushed, or step 2
  *    would have stopped (docs/hosting.md#versions).
  * 4. **The push**, through `pre-push` (`pnpm check`). Refused because
- *    someone pushed in the same moment → back to step 2.
+ *    someone pushed in the same moment → back to step 2. Landed, it releases
+ *    the clone's `BUSY` claim.
  * 5. **The watch.** The deploy workflow runs the fast checks again, builds and
  *    deploys, and beside it drives every browser check
  *    (.github/workflows/deploy.yml). This prints each job as it moves and ends
@@ -24,7 +25,7 @@
  * (docs/testing.md#where-each-check-runs).
  */
 import { spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { report, watch } from "./lib/runs.mjs";
@@ -122,7 +123,12 @@ async function pushOnce() {
     const r = spawnSync("git", ["push", "origin", `HEAD:${TARGET}`],
       { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "inherit", "pipe"] });
     process.stderr.write(r.stderr);
-    if (r.status === 0) return "pushed";
+    if (r.status === 0) {
+      // Only a push that landed releases the clone's claim (scripts/on-dev.sh);
+      // a worktree has none to release.
+      rmSync(join(ROOT, "BUSY"), { force: true });
+      return "pushed";
+    }
     if (/\[rejected\]|non-fast-forward|fetch first/.test(r.stderr)) return "moved";
     // The hook's own verdict: a red `pnpm check` is not something to retry.
     if (/failed to push some refs/.test(r.stderr) && !/Could not resolve|unable to access|Connection|timed out|RPC failed|early EOF/i.test(r.stderr)) {
