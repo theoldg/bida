@@ -123,11 +123,12 @@ report(promise.includes(`Visit ${new URL(base).host}/demo to create a fresh one.
   "the clear dialog sends you to this server's own /demo", promise);
 await page.getByRole("button", { name: "Clear the demo" }).click();
 await page.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE });
-// Asserting an absence before the screen has read Dexie passes for the wrong
-// reason.
-await page.waitForFunction(() => !document.querySelector(".skelrow"), null, { timeout: PATIENCE });
-report(await page.getByText("Passage to Alderaan").count() === 0,
-  "clearing takes it off the phone, not merely off the list");
+// The list draws its kept answer at once and reads Dexie behind it, so the row
+// can still be there for a beat: wait for it to go, which it must.
+const gone = await page.waitForFunction(() => !document.querySelector(".skelrow")
+  && !document.body.innerText.includes("Passage to Alderaan"), null, { timeout: PATIENCE })
+  .then(() => true, () => false);
+report(gone, "clearing takes it off the phone, not merely off the list");
 
 // ---- a copied address is a door too ------------------------------------
 const friend = await (await newPhone(browser)).newPage();
