@@ -200,6 +200,28 @@ describe("entriesCarryTheirOwnRate", () => {
     expect(state.expenses["e-nomad"]!.rateToBase).toBe("0.093");
   });
 
+  it("heals again when its patch lands on an offline change of currency", () => {
+    const pln: Op = {
+      id: "op-set-pln", groupId: GROUP, entity: "rate", entityId: "PLN", kind: "create",
+      patch: { rate: "0.23", source: "typed", asOf: 1_743_600_000_000, deletedAt: null },
+      hlc: formatHlc(createHlcState("phonea", 1_743_700_000_001)),
+      actor: THEO, note: null, createdAt: 1_743_700_000_001, seq: null,
+    };
+    const before = [...ops(), pln];
+    // Saved offline, before the heal it never saw: the heal's patch wins the rate.
+    const moved: Op = {
+      id: "op-to-pln", groupId: GROUP, entity: "expense", entityId: "e-nomad", kind: "update",
+      patch: { currency: "PLN", amountMinor: 25_000, rateToBase: "0.2345", rateSource: "fetched" },
+      hlc: formatHlc(createHlcState("phoneb", 1_743_750_000_000)),
+      actor: MARIE, note: null, createdAt: 1_743_750_000_000, seq: null,
+    };
+    const merged = applyDrafts([...before, moved], healDrafts(foldOps(before)));
+    expect(foldOps(merged).expenses["e-nomad"]).toMatchObject({ currency: "PLN", rateToBase: "0.093" });
+    const healed = foldOps(applyDrafts(merged, healDrafts(foldOps(merged))));
+    expect(healed.expenses["e-nomad"]).toMatchObject({ currency: "PLN", rateToBase: "0.23", rateSource: "group" });
+    expect(entriesCarryTheirOwnRate.detect(healed)).toEqual([]);
+  });
+
   it("includes a deleted entry, so restoring it brings nothing along", () => {
     const deleted: Op = {
       id: "op-del-nomad", groupId: GROUP, entity: "expense", entityId: "e-nomad", kind: "delete",

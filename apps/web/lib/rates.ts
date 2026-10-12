@@ -12,7 +12,7 @@ import { isCurrencyCode, isValidRate, type Rate } from "@bida/core";
  * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)).
  */
 
-interface FetchedRate {
+export interface FetchedRate {
   rate: Rate;
   /** The feed's own date, "YYYY-MM-DD", or null when it didn't say. */
   asOf: string | null;

@@ -89,8 +89,10 @@ has no `rateSource` and is read at the old registry row, so the repair writes
 that very rate onto it and no balance moves. Not a race but a migration, so
 the sync runs the healers on a group's first sync of the session as well as
 after a pull; and an old phone's save, which drops `rateSource`, is picked
-back up the same way. Tombstoned entries too, so a restore brings nothing
-with it. A currency with no registry row needs nothing: each entry is already
+back up the same way. The repair's patch is per field, so merged over an
+offline save that changed the currency it leaves `group` on the old currency's
+rate; a `group` rate that is another currency's row is healed again. Tombstoned
+entries too, so a restore brings nothing with it. A currency with no registry row needs nothing: each entry is already
 read at its own rate.
 
 **Being on a receipt is being involved.** "Who was there" is a person saying

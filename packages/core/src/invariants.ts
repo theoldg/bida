@@ -101,11 +101,25 @@ interface RegistryValued {
 }
 
 /**
+ * "group" is the repair's mark, written beside the registry's rate for the
+ * entry's currency. Merged over an offline edit that changed the currency, the
+ * patch leaves the mark on another currency's rate — which is what this sees.
+ * Not any rate unlike the registry's: a registry row moved since prices
+ * nothing it already wrote.
+ */
+function staleGroupRate(state: GroupState, base: CurrencyCode, entry: Expense | Settlement, rate: Rate): boolean {
+  if (entry.rateSource !== "group" || entry.rateToBase === rate) return false;
+  return Object.keys(state.rates).some((other) =>
+    other !== entry.currency && rateFor(state.rates, base, other) === entry.rateToBase);
+}
+
+/**
  * A foreign entry carries its own rate. One written while rates were the
  * group's has none, and is read at the registry's; the repair writes that rate
  * onto it, so moving rates onto the entry moves no balance (ADR-0005). Every
  * entry, tombstones included, so a restore brings nothing with it. An old
  * phone's save drops `rateSource` again, and this picks it back up.
+ * A currency the registry has no rate for is out of its reach, stale or not.
  */
 export const entriesCarryTheirOwnRate = defineInvariant<RegistryValued>({
   name: "entriesCarryTheirOwnRate",
@@ -116,9 +130,12 @@ export const entriesCarryTheirOwnRate = defineInvariant<RegistryValued>({
     const found: RegistryValued[] = [];
     const scan = (entity: RegistryValued["entity"], rows: Record<Id, Expense | Settlement>) => {
       for (const entry of Object.values(rows)) {
-        if (entry.currency === base || entry.rateSource) continue;
+        if (entry.currency === base) continue;
         const rate = rateFor(state.rates, base, entry.currency);
-        if (rate !== undefined) found.push({ entity, entry, rate, base });
+        if (rate === undefined) continue;
+        if (!entry.rateSource || staleGroupRate(state, base, entry, rate)) {
+          found.push({ entity, entry, rate, base });
+        }
       }
     };
     scan("expense", state.expenses);

@@ -52,7 +52,22 @@ describe("settleRate", () => {
   const none = () => undefined;
 
   it("takes the feed's rate when there is one", () => {
-    expect(settleRate(priced(), "MAD", "0.093", none)).toEqual({ rate: "0.093", rateSource: "fetched" });
+    expect(settleRate(priced(), "MAD", { rate: "0.093", asOf: rateDayOf(DAY) }, none))
+      .toEqual({ rate: "0.093", rateSource: "fetched" });
+    // Today's release not out yet: the latest is the answer for today.
+    expect(settleRate(priced(), "MAD", { rate: "0.093", asOf: "2000-01-01" }, none))
+      .toEqual({ rate: "0.093", rateSource: "fetched" });
+  });
+
+  // The endpoint answers a day before the feed's history with its latest rate.
+  it("reads an answer dated after the day as a borrow, taken last", () => {
+    const later = { rate: "0.5", asOf: "2999-01-01" };
+    expect(settleRate(priced({ rateSource: "typed" }), "MAD", later, none))
+      .toEqual({ rate: "0.0921", rateSource: "typed" });
+    expect(settleRate(draft({ currency: "MAD" }), "MAD", later, () => "0.09"))
+      .toEqual({ rate: "0.09", rateSource: "copied" });
+    expect(settleRate(draft({ currency: "MAD" }), "MAD", later, none))
+      .toEqual({ rate: "0.5", rateSource: "copied" });
   });
 
   it("keeps the entry's own rate for the currency when the feed fails", () => {

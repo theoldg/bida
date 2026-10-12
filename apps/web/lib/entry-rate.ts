@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { isValidRate, type CurrencyCode, type EntryRateSource, type Rate } from "@bida/core";
 import { getDraft, saveDraft, type EntryDraft } from "./draft";
 import { dateInputValue } from "./format";
-import { fetchRate } from "./rates";
+import { fetchRate, type FetchedRate } from "./rates";
 
 /**
  * An entry's own rate, found while the form is open (ADR-0005): the feed's
@@ -51,19 +51,25 @@ export function savedRateBack(
   return { rate: s.rate, rateSource: s.source, rateCurrency: s.currency, rateDay: s.day };
 }
 
-/** What a look-up settled on, or null for "ask". */
+/**
+ * What a look-up settled on, or null for "ask". A past day the feed has no
+ * release for — before its history starts in March 2024 — is answered with its
+ * latest, dated later than the day asked: that is a borrow, and the last one
+ * taken. An answer dated earlier is today's not yet released, and stands.
+ */
 export function settleRate(
   latest: EntryDraft,
   currency: CurrencyCode,
-  fetched: Rate | null,
+  fetched: FetchedRate | null,
   borrow: (currency: CurrencyCode) => Rate | undefined,
 ): { rate: Rate; rateSource: EntryRateSource } | null {
-  if (fetched !== null) return { rate: fetched, rateSource: "fetched" };
+  const forTheDay = fetched !== null && (fetched.asOf === null || fetched.asOf <= rateDayOf(latest.occurredAt));
+  if (forTheDay) return { rate: fetched.rate, rateSource: "fetched" };
   // A rate the entry already holds for this currency beats somebody else's.
   if (latest.rateCurrency === currency && latest.rate !== undefined && isValidRate(latest.rate)) {
     return { rate: latest.rate, rateSource: latest.rateSource ?? "group" };
   }
-  const borrowed = borrow(currency);
+  const borrowed = borrow(currency) ?? fetched?.rate;
   return borrowed !== undefined ? { rate: borrowed, rateSource: "copied" } : null;
 }
 
@@ -100,7 +106,7 @@ export function useEntryRate(
     let live = true;
     setInFlight(want);
     void fetchRate(currency, base, wantedDay)
-      .then((got) => got.rate, () => null)
+      .then((got) => got, () => null)
       .then((fetched) => {
         if (!live) return;
         setInFlight(null);

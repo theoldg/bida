@@ -45,13 +45,6 @@ One thing: push notifications, built and unchecked on a phone. The visual review
 A read of the hundred commits to 1.3.65; each item names where to start. Delete
 a line in the push that fixes it.
 
-- **Money, silently.** The rate healer (`core/invariants.ts:110-146`) patches
-  only the rate fields for the currency it saw: merged with an offline edit
-  that changed the currency, the entry keeps the old currency's rate, and
-  `rateSource` set means it is never healed again. Narrow — legacy entries,
-  before a phone's first heal — and closing as groups heal. The entry form
-  takes a fallback answer (`asOf` ≠ the day asked; the feed starts March 2024)
-  as `fetched` (`settleRate`, `lib/entry-rate.ts`) — the import no longer does.
 - **Reload on return** (`mayReloadOnReturn`, 076621a4) uses `NOTHING_TO_LOSE`,
   which was drawn for the iOS carry: `/g/members` loses a half-typed name,
   the ledger its search, balances and members an open confirm.

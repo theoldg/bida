@@ -32,8 +32,10 @@ opened to edit, and a day change leaves a typed rate alone; an opened entry
 moved back to its own day and currency gets its saved rate back
 (`savedRateBack`). When the feed can't
 answer, the entry keeps the rate it already had for that currency, else borrows
-the group's most recent entry in it (`latestRate`). **Only a currency new to the
-group, with the feed out of reach, opens the rate dialog.** The rate rides on
+the group's most recent entry in it (`latestRate`). A past day the feed has no
+release for — before March 2024 — comes back as its latest rate, dated later;
+that is a borrow too, `copied` and taken last (`settleRate`). **Only a currency
+new to the group, with the feed out of reach, opens the rate dialog.** The rate rides on
 the entry, so nothing is written until Save.
 
 **A rate is edited in whichever direction you think in** — 1 EUR = 4.5 PLN or
