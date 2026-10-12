@@ -43,10 +43,10 @@ jobs:
             node scripts/verify.mjs > out.txt 2>&1 || true
             secs=$(( $(date +%s) - start ))
             cat out.txt
-            line=$(grep -E '^(  ok  |FAIL  )' out.txt | head -20 | sed -E 's/ +/ /g' | tr '\n' ';')
+            line=$(grep -E '^(  ok  |FAIL  )[^ ]+ +[0-9.]+s$' out.txt | sed -E 's/ +/ /g' | tr '\n' ';')
             summary="${summary}R${r} ${secs}s | ${line}%0A"
-            for f in $(grep -E '^FAIL  ' out.txt | head -20 | awk '{print $2}' | sort -u); do
-              detail=$(awk -v n="$f" '$0 ~ "^──── "n" " {p=1; next} /^──── / {p=0} p' out.txt | grep -E '^(FAIL|    )' | head -6 | cut -c1-300 | sed 's/%/%25/g' | tr '\n' '|')
+            for f in $(grep -E '^FAIL  [^ ]+ +[0-9.]+s$' out.txt | awk '{print $2}'); do
+              detail=$(awk -v n="$f" '$0 ~ "^──── "n" " {p=1; next} /^──── / {p=0} p' out.txt | grep -E -A1 '^FAIL  ' | grep -v '^--$' | head -8 | cut -c1-240 | sed 's/%/%25/g' | tr '\n' '|')
               summary="${summary}   ${f}: ${detail}%0A"
             done
           done
