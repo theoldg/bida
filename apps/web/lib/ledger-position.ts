@@ -2,6 +2,7 @@
 // Doc: docs/navigation.md#the-ledger-comes-back-where-you-left-it--on-the-way-back-only
 
 import { useLayoutEffect, type RefObject } from "react";
+import { route } from "./group-link";
 import { returnTo } from "./nav";
 
 /**
@@ -83,7 +84,8 @@ export function useLedgerPosition(ref: RefObject<HTMLDivElement | null>, groupId
   useLayoutEffect(() => {
     const box = ref.current;
     if (!box) return;
-    const arrival = returnTo(location.href);
+    // Its own address: see `returning` (components/ledger-search.tsx).
+    const arrival = returnTo(route.group(groupId));
     const saved = positions.get(groupId);
     // The same arrival seen twice is the effect run again (StrictMode, or the
     // group's id settling), with the scroller already where the first put it.

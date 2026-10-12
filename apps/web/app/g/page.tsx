@@ -148,7 +148,7 @@ function Ledger({ data }: { data: GroupData }) {
 
   return (
     <>
-    <LedgerSearch query={query} onQuery={setQuery} />
+    <LedgerSearch groupId={gid} query={query} onQuery={setQuery} />
     <Scroll ref={scroll}>
       {/* Hidden rather than dropped: the card keeps the figure it has drawn. */}
       <div className="lhead" hidden={searching}>

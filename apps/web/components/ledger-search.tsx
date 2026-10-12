@@ -5,13 +5,23 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { copy } from "@/lib/copy";
 import { yieldPosition } from "@/lib/ledger-position";
 import { keepQuery, openingQuery, shownAt } from "@/lib/ledger-search";
+import { route } from "@/lib/group-link";
 import { returnTo } from "@/lib/nav";
 import { useHoldsWork } from "@/lib/update";
 import { calmly, glide } from "@/lib/seek";
 import { Icon } from "./icons";
 
+/**
+ * The ledger's own address, not `location.href`: a screen mounted in its first
+ * frame renders before the router moves the URL, and would read the screen it
+ * is leaving — the list, freshly gone back to, as a way back here.
+ */
+function returning(groupId: string): boolean {
+  return returnTo(route.group(groupId)) !== null;
+}
+
 export function useLedgerQuery(groupId: string): [string, (query: string) => void] {
-  const [query, setQuery] = useState(() => openingQuery(groupId, returnTo(location.href) !== null));
+  const [query, setQuery] = useState(() => openingQuery(groupId, returning(groupId)));
   useHoldsWork(query !== "");
   return [query, (next) => {
     keepQuery(groupId, next);
@@ -27,7 +37,8 @@ const REVEAL_MS = 180;
 
 const PRESS_MS = 700;
 
-export function LedgerSearch({ query, onQuery }: {
+export function LedgerSearch({ groupId, query, onQuery }: {
+  groupId: string;
   query: string;
   onQuery: (query: string) => void;
 }) {
@@ -44,7 +55,7 @@ export function LedgerSearch({ query, onQuery }: {
   const held = focused || query !== "";
   // Not state: a render is a frame late, and a frame without the bar flickers.
   const shown = useRef<number | null>(null);
-  const lent = useRef(returnTo(location.href) !== null);
+  const lent = useRef(returning(groupId));
   const base = (box: HTMLElement) => searchBase(box, bar.current?.offsetHeight ?? 0);
 
   // A layout effect, so the room is there before the ledger restores its position
