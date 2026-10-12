@@ -182,7 +182,7 @@ function Ledger({ data }: { data: GroupData }) {
 
       {/* Keyed by the search, so a keystroke redraws at once: the rows' fold and
           fade are for an entry that came or went. */}
-      <LedgerRows key={searching ? query : ""} groupId={gid} items={found} row={(entry: LedgerRow) => entry.row === "expense"
+      <LedgerRows key={searching ? query : ""} groupId={gid} items={found} windowed row={(entry: LedgerRow) => entry.row === "expense"
         ? <ExpenseRow expense={entry.expense} gid={gid} base={base} me={me} memberById={memberById} />
         : <SettlementRow settlement={entry.settlement} gid={gid} base={base} me={me} memberById={memberById} />} />
       <div style={{ height: 88 }} />

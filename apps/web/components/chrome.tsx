@@ -144,18 +144,25 @@ export function SkeletonRows({ count = 5, days = false }: { count?: number; days
           {days && i % 3 === 0
             ? <div className="daylabel skelday"><SkelText width={i === 0 ? 44 : 76} /></div>
             : null}
-          <div className="row skelrow" style={{ ["--d" as string]: `${i * 0.09}s` }}>
-            <div className="rmain">
-              <div className="skel" style={{ height: 9, width: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
-              <div className="skel" style={{ height: 7, width: "34%" }} />
-            </div>
-            <div className="ramt">
-              <div className="skel" style={{ height: 10, width: 54 }} />
-              <div className="skel" style={{ height: 7, width: 32 }} />
-            </div>
-          </div>
+          <SkeletonRow i={i} />
         </Fragment>
       ))}
+    </div>
+  );
+}
+
+/** One of them, for a ledger slot not yet drawn (`entry` keeps it an anchor). */
+export function SkeletonRow({ i, entry }: { i: number; entry?: string }) {
+  return (
+    <div className="row skelrow" data-entry={entry} style={{ ["--d" as string]: `${i * 0.09}s` }}>
+      <div className="rmain">
+        <div className="skel" style={{ height: 9, width: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
+        <div className="skel" style={{ height: 7, width: "34%" }} />
+      </div>
+      <div className="ramt">
+        <div className="skel" style={{ height: 10, width: 54 }} />
+        <div className="skel" style={{ height: 7, width: 32 }} />
+      </div>
     </div>
   );
 }

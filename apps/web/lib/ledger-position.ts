@@ -68,6 +68,16 @@ let spent: number | null = null;
 /** Keep going while what is above the rows is still arriving (cards, banners). */
 const RESTORE_WINDOW_MS = 1200;
 
+/**
+ * The entry a way back is about to put at the top, for a ledger drawing only
+ * what is near the screen to draw there first (components/ledger-rows.tsx).
+ */
+export function restoreAnchor(groupId: string): string | null {
+  const arrival = returnTo(route.group(groupId));
+  if (arrival === null || arrival === spent) return null;
+  return positions.get(groupId)?.entry ?? null;
+}
+
 function rowsOf(box: HTMLElement): RowBox[] {
   return [...box.querySelectorAll<HTMLElement>("[data-entry]")].map((el) => {
     const r = el.getBoundingClientRect();

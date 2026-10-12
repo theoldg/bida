@@ -116,6 +116,27 @@ The groups list is the same list: a forgotten group folds out like a deleted
 entry, the last one included in the no-motion rule; a group that turns up just
 appears.
 
+## The ledger draws what is near the screen
+
+Only rows near the screen exist (`windowed` on `LedgerRows`, the arithmetic in
+`lib/ledger-window.ts`). A row is one height whatever it carries and a date
+line another, so every slot's place is a sum — the two heights measured off
+the first slots drawn — and an undrawn run is an empty box of its height: the
+scroller, and the browser's scroll bar, are the whole ledger from the first
+frame. On screen and a screen either side, a row not yet filled is a skeleton;
+date lines are always drawn. `WINDOW_ROWS` rows are filled around the screen —
+or, once a fling will coast more than a screen, around where it will land
+(`landingOf`: speed × 500ms, iOS's deceleration), so the rows rushing past stay
+skeletons. A save's glide fills its landing before it flies, the saved row stays
+drawn until its wash lets go, and a way back draws the row it restores to before
+it scrolls there. A row arriving or leaving where nothing is drawn moves only
+the sums — above the screen, by scrolling as much.
+
+**An experiment is on** (the owner, 2026-10-12): twelve rows, and a scroll the
+hand drives waits 400ms for them (`FILL_DELAY_MS`), so a slow phone's worst
+case can be tried by hand. [implementation-status](implementation-status.md#what-is-open)
+says what replaces it.
+
 ## A row says less rather than being cut off
 
 An expense row's second line is the payer and a head count, "Alice +1 · 👥5",

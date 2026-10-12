@@ -1,20 +1,31 @@
 "use client";
 // Doc: docs/rows.md#the-ledger-moves
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import {
   clearSaved, FADE_IN_MS, letRoll, FADE_OUT_MS, FOLD_MS, OPEN_MS, peekSaved,
   presence, runs, SAVED_BEAT, SAVED_DWELL, STILL_MS, type LedgerItem, type Shown,
 } from "@/lib/ledger-motion";
-import { yieldPosition } from "@/lib/ledger-position";
+import { restoreAnchor, yieldPosition } from "@/lib/ledger-position";
+import {
+  FILL_DELAY_MS, indexAt, isGap, landingOf, offsetsOf, rangeOf, segmentsOf, speedOf, WINDOW_ROWS,
+  windowAround, type Heights,
+} from "@/lib/ledger-window";
+import { SkeletonRow } from "./chrome";
 import { revealWhole, scrollTarget } from "@/lib/reveal";
 import { calmly, glide } from "@/lib/seek";
 
-export function LedgerRows<T>({ groupId, items, row, opens = true }: {
+/**
+ * `windowed`: only the rows near the screen are drawn, the rest kept as their
+ * height (docs/rows.md#the-ledger-draws-what-is-near-the-screen). The groups
+ * list is never long enough to need it.
+ */
+export function LedgerRows<T>({ groupId, items, row, opens = true, windowed = false }: {
   groupId?: string;
   items: LedgerItem<T>[];
   row: (row: T) => ReactNode;
   opens?: boolean;
+  windowed?: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const scroller = () => root.current?.closest<HTMLElement>(".scroll") ?? null;
@@ -63,6 +74,8 @@ export function LedgerRows<T>({ groupId, items, row, opens = true }: {
     setShown(drawing);
   }
 
+  const win = useWindow(windowed, drawing, root, scroller, groupId);
+
   const drawn = useRef<Set<string> | null>(null);
   const busy = useRef(new Set<string>());
   const flashed = useRef(false);
@@ -82,17 +95,26 @@ export function LedgerRows<T>({ groupId, items, row, opens = true }: {
     let saved: string | null = null;
     if (!flashed.current && groupId) {
       saved = peekSaved(groupId);
-      flashed.current = flashSaved(groupId, box, slot);
+      flashed.current = flashSaved(groupId, box, slot, win ?? undefined);
     }
     if (!before) return;
+
+    // Undrawn slots are only height: where a run sits and how tall it is come
+    // from the arithmetic, and the DOM answers for the rest.
+    const at = new Map(keys.map((k, i) => [k, i]));
+    const runTop = (run: string[], slots: HTMLElement[]) => win
+      ? box.getBoundingClientRect().top - box.scrollTop + win.listTop() + win.offsets[at.get(run[0]!)!]!
+      : slots[0]?.getBoundingClientRect().top ?? 0;
+    const runHeight = (run: string[], slots: HTMLElement[]) => win
+      ? win.offsets[at.get(run.at(-1)!)! + 1]! - win.offsets[at.get(run[0]!)!]!
+      : slots.reduce((n, s) => n + s.offsetHeight, 0);
 
     const hadRows = drawing.some((i) => i.kind === "row" && before.has(i.key));
     for (const run of runs(keys, (k) => !before.has(k) && !leaving.has(k))) {
       if (!hadRows) break;
       const slots = run.map(slot).filter((s): s is HTMLElement => s !== null);
-      const top = slots[0]?.getBoundingClientRect().top ?? 0;
-      if (top < box.getBoundingClientRect().top) {
-        box.scrollTop += slots.reduce((n, s) => n + s.offsetHeight, 0);
+      if (runTop(run, slots) < box.getBoundingClientRect().top) {
+        box.scrollTop += runHeight(run, slots);
       } else if (opens && !calmly() && !(saved && run.includes(saved))) {
         for (const s of slots) arrive(s);
       }
@@ -106,8 +128,11 @@ export function LedgerRows<T>({ groupId, items, row, opens = true }: {
         setShown((now) => now.filter((i) => !run.includes(i.key) || !i.leaving));
       };
       const bottom = slots.at(-1)?.getBoundingClientRect().bottom ?? 0;
-      if (slots.length === 0) done();
-      else if (bottom <= box.getBoundingClientRect().top + 1) {
+      if (slots.length === 0) {
+        // Never drawn: its height goes, and above the screen that is a scroll.
+        if (win && runTop(run, slots) < box.getBoundingClientRect().top) box.scrollTop -= runHeight(run, slots);
+        done();
+      } else if (bottom <= box.getBoundingClientRect().top + 1) {
         const h = slots.reduce((n, s) => n + s.offsetHeight, 0);
         for (const s of slots) s.style.height = "0px";
         box.scrollTop -= h;
@@ -117,22 +142,226 @@ export function LedgerRows<T>({ groupId, items, row, opens = true }: {
     }
   });
 
+  const slotOf = (item: Shown<T>, i: number, fill: boolean) => (
+    <div key={item.key} className="lslot" data-key={item.key} data-leaving={item.leaving ? "" : undefined}
+      data-skel={fill ? undefined : ""}>
+      {item.kind === "day" ? <div className="daylabel">{item.label}</div>
+        : fill ? row(item.row) : <SkeletonRow i={i} entry={item.key} />}
+    </div>
+  );
+
   return (
     <div className="rows lrows" ref={root}>
-      {drawing.map((item) => (
-        <div key={item.key} className="lslot" data-key={item.key} data-leaving={item.leaving ? "" : undefined}>
-          {item.kind === "day" ? <div className="daylabel">{item.label}</div> : row(item.row)}
-        </div>
-      ))}
+      {win
+        ? segmentsOf(win.offsets, win.drawn).map((seg) => isGap(seg)
+          ? <div key={`gap:${drawing[seg.first]!.key}`} className="lgap" style={{ height: seg.gap }} aria-hidden="true" />
+          : slotOf(drawing[seg.at]!, seg.at, win.filled(seg.at)))
+        : drawing.map((item, i) => slotOf(item, i, true))}
     </div>
   );
 }
 
-function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HTMLElement | null): boolean {
+/** Measured off the first slots drawn; a guess until then (`.entryrow`'s 68px and its line). */
+let heights: Heights = { row: 69, day: 30 };
+
+/** A scroll counts as the hand's while a finger is down, and for a fling's coast after. */
+const HAND_MS = 2500;
+/** Below this, px/ms, a coast has ended. */
+const STILL_SPEED = 0.05;
+/** How far back the speed is read, and how long a scroll stays news. */
+const SAMPLE_MS = 100;
+
+interface Window {
+  offsets: number[];
+  /** Drawn at all: on screen, or filled. */
+  drawn: (i: number) => boolean;
+  /** Drawn as itself rather than a skeleton. */
+  filled: (i: number) => boolean;
+  /** The rows' top inside the scroller's content. */
+  listTop: () => number;
+  /** A glide's landing, filled ahead of it; null when it lands. */
+  pin: (top: number | null) => void;
+  /** A row kept drawn wherever the screen goes: the saved one, until its flash ends. */
+  hold: (key: string | null) => void;
+}
+
+/**
+ * Which slots are drawn. On screen always — as a skeleton until filled, and a
+ * screen either side as skeletons too — and
+ * filled: the `WINDOW_ROWS` around the screen, or around where a fling will
+ * land rather than the rows rushing past. A scroll the hand drives waits
+ * `FILL_DELAY_MS` for its rows; opening, coming back and a glide don't.
+ */
+function useWindow<T>(
+  on: boolean, items: Shown<T>[], root: { current: HTMLDivElement | null },
+  scroller: () => HTMLElement | null, groupId: string | undefined,
+): Window | null {
+  const [measured, remeasure] = useReducer((n: number) => n + 1, 0);
+  const [, redraw] = useReducer((n: number) => n + 1, 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const offsets = useMemo(() => offsetsOf(items, heights), [items, measured]);
+  const state = useRef<{
+    top: number; bottom: number; wanted: Map<string, number>; pinned: number | null;
+    samples: { t: number; y: number }[]; touching: boolean; lastHand: number;
+    held: string | null;
+    /** False while a way back has yet to put the scroller where it was. */
+    placed: boolean;
+    timer?: ReturnType<typeof setTimeout>;
+  } | null>(null);
+
+  if (on && !state.current) {
+    // The first window goes where the screen will be: a saved row, or the row
+    // a way back puts at the top.
+    const back = groupId ? restoreAnchor(groupId) : null;
+    const anchor = back ?? (groupId ? peekSaved(groupId) : null);
+    const center = Math.max(0, items.findIndex((i) => i.key === anchor));
+    const [a, b] = windowAround(items, center, WINDOW_ROWS);
+    state.current = {
+      top: offsets[a] ?? 0, bottom: offsets[b] ?? 0, pinned: null, samples: [], touching: false, lastHand: 0,
+      wanted: new Map(items.slice(a, b).map((i) => [i.key, 0])), held: null, placed: back === null,
+    };
+  }
+
+  const listTop = () => {
+    const box = scroller();
+    const list = root.current;
+    return box && list ? list.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop : 0;
+  };
+
+  /**
+   * Only a scroll is a sample: the render a scroll causes computes again in
+   * the same frame, and a second sample at the same place would read as the
+   * fling having stopped.
+   */
+  const compute = (scrolled = false) => {
+    const w = state.current;
+    const box = scroller();
+    if (!w || !box) return;
+    const now = performance.now();
+    const base = listTop();
+    if (scrolled) w.samples.push({ t: now, y: box.scrollTop });
+    while (w.samples.length > 2 && now - w.samples[0]!.t > SAMPLE_MS) w.samples.shift();
+    const last = w.samples.at(-1);
+    const speed = last && now - last.t <= SAMPLE_MS ? speedOf(w.samples) : 0;
+    // A wheel's notch is one scroll with no speed to read: the input itself says.
+    const sinceHand = now - w.lastHand;
+    const hand = w.touching || sinceHand < SAMPLE_MS || (sinceHand < HAND_MS && Math.abs(speed) > STILL_SPEED);
+    const landing = w.pinned ?? (hand ? landingOf(box.scrollTop, speed, box.clientHeight, box.scrollHeight - box.clientHeight) : null);
+    const center = indexAt(offsets, (landing ?? box.scrollTop) - base + box.clientHeight / 2);
+    const [a, b] = windowAround(items, center, WINDOW_ROWS);
+    let changed = false;
+    const keep = new Set<string>();
+    for (let i = a; i < b; i++) {
+      const key = items[i]!.key;
+      keep.add(key);
+      if (!w.wanted.has(key)) { w.wanted.set(key, hand && w.pinned === null ? now : 0); changed = true; }
+    }
+    for (const key of [...w.wanted.keys()]) if (!keep.has(key)) { w.wanted.delete(key); changed = true; }
+    const top = box.scrollTop - base;
+    const was = rangeOf(offsets, w.top, w.bottom);
+    const is = rangeOf(offsets, top, top + box.clientHeight);
+    w.top = top;
+    w.bottom = top + box.clientHeight;
+    if (was[0] !== is[0] || was[1] !== is[1]) changed = true;
+    // One timer, for the next row whose wait is up.
+    clearTimeout(w.timer);
+    let next = Infinity;
+    for (const since of w.wanted.values()) if (since > 0) next = Math.min(next, since + FILL_DELAY_MS - now);
+    if (next < Infinity) w.timer = setTimeout(redraw, Math.max(0, next) + 1);
+    if (changed) redraw();
+  };
+  const latest = useRef(compute);
+  latest.current = compute;
+
+  // Before paint, every render: the items moved, or the scroller did.
+  useLayoutEffect(() => {
+    if (!on) return;
+    // A way back's restore runs after this, in the ledger's own layout effect,
+    // and moves the scroller: windowing at the top first would paint a blank.
+    if (state.current?.placed) latest.current();
+    const list = root.current;
+    if (!list) return;
+    const fits = (slot: Element | null | undefined) =>
+      slot instanceof HTMLElement && slot.getAnimations().length === 0 ? slot.offsetHeight : 0;
+    const row = fits(list.querySelector(":scope > .lslot:not([data-leaving]) > .entryrow")?.parentElement);
+    const day = fits(list.querySelector(":scope > .lslot:not([data-leaving]) > .daylabel")?.parentElement);
+    const next = { row: row || heights.row, day: day || heights.day };
+    if (Math.abs(next.row - heights.row) > 0.5 || Math.abs(next.day - heights.day) > 0.5) {
+      heights = next;
+      remeasure();
+    }
+  });
+
+  useEffect(() => {
+    const box = scroller();
+    const w = state.current;
+    if (!on || !box || !w) return;
+    let frame = 0;
+    const onScroll = () => {
+      w.placed = true;
+      if (!frame) frame = requestAnimationFrame(() => { frame = 0; latest.current(true); });
+    };
+    // A restore that found nothing to move scrolls nothing.
+    const settle = setTimeout(() => { if (!w.placed) onScroll(); }, 100);
+    const hand = () => { w.lastHand = performance.now(); };
+    const down = () => { w.touching = true; hand(); };
+    const up = () => { w.touching = false; hand(); };
+    box.addEventListener("scroll", onScroll, { passive: true });
+    box.addEventListener("touchstart", down, { passive: true });
+    box.addEventListener("touchmove", hand, { passive: true });
+    box.addEventListener("touchend", up, { passive: true });
+    box.addEventListener("touchcancel", up, { passive: true });
+    box.addEventListener("wheel", hand, { passive: true });
+    const sizes = new ResizeObserver(() => latest.current());
+    sizes.observe(box);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      clearTimeout(w.timer);
+      clearTimeout(settle);
+      sizes.disconnect();
+      box.removeEventListener("scroll", onScroll);
+      box.removeEventListener("touchstart", down);
+      box.removeEventListener("touchmove", hand);
+      box.removeEventListener("touchend", up);
+      box.removeEventListener("touchcancel", up);
+      box.removeEventListener("wheel", hand);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [on]);
+
+  const w = state.current;
+  if (!on || !w) return null;
+  const now = performance.now();
+  // A screen of skeletons past each edge: the scroller moves a frame before
+  // this hears of it, and a bare edge would show for that frame.
+  const screen = w.bottom - w.top;
+  const [v0, v1] = rangeOf(offsets, w.top - screen, w.bottom + screen);
+  const ready = (i: number) => {
+    const since = w.wanted.get(items[i]!.key);
+    return since !== undefined && (since === 0 || now - since >= FILL_DELAY_MS);
+  };
+  // Drawn before the flash finds it, and kept until the flash lets it go.
+  const kept = w.held ?? (groupId ? peekSaved(groupId) : null);
+  const filled = (i: number) => items[i]!.kind === "day" || items[i]!.key === kept || ready(i);
+  return {
+    offsets,
+    drawn: (i) => (i >= v0 && i < v1) || filled(i) && (items[i]!.kind !== "day" || w.wanted.has(items[i]!.key)),
+    filled,
+    listTop,
+    pin: (top) => { w.pinned = top; latest.current(); },
+    hold: (key) => { w.held = key; if (key === null) redraw(); },
+  };
+}
+
+function flashSaved(
+  groupId: string, box: HTMLElement, slot: (key: string) => HTMLElement | null,
+  win?: Pick<Window, "pin" | "hold">,
+): boolean {
   const id = peekSaved(groupId);
   if (!id) return true;
   const target = slot(id);
   if (!target) return false;
+  win?.hold(id);
   clearSaved();
   target.classList.add("saved");
   const nearTop = () => {
@@ -144,9 +373,14 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
   const release = () => {
     if (toTop) letRoll(groupId);
     target.classList.add("released");
-    target.addEventListener("animationend", () => target.classList.remove("saved", "released"), { once: true });
+    target.addEventListener("animationend", () => {
+      target.classList.remove("saved", "released");
+      win?.hold(null);
+    }, { once: true });
   };
-  const land = () => setTimeout(release, SAVED_DWELL);
+  // A windowed ledger fills where the glide lands before it gets there.
+  const land = () => { win?.pin(null); setTimeout(release, SAVED_DWELL); };
+  const fly = (top: number) => { win?.pin(top); glide(box, top, land); };
   setTimeout(() => {
     if (!target.isConnected) return;
     yieldPosition();
@@ -157,7 +391,7 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
     const band = { top: Math.max(view.top, bar), bottom: Math.min(view.bottom, fab) };
     if (toTop) {
       if (box.scrollTop === 0) release();
-      else glide(box, 0, land);
+      else fly(0);
       return;
     }
     const reach = revealWhole(
@@ -165,7 +399,7 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
       band,
     );
     if (reach === 0) release();
-    else glide(box, scrollTarget(box, reach), land);
+    else fly(scrollTarget(box, reach));
   }, SAVED_BEAT);
   return true;
 }
