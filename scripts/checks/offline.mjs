@@ -82,14 +82,21 @@ async function tap(label, act, expect) {
     }).catch(() => "");
     // A worker left waiting: late, or stuck? Watched a minute more, on failure only.
     const late = !/waiting installed/.test(sw) ? "" : await page.evaluate(async () => {
-      const from = performance.now();
-      while (performance.now() - from < 60_000) {
-        if (!(await navigator.serviceWorker.getRegistration())?.waiting) {
-          return ` · activated ${Math.round((performance.now() - from) / 1000)}s later`;
+      const gone = async (ms) => {
+        const from = performance.now();
+        while (performance.now() - from < ms) {
+          if (!(await navigator.serviceWorker.getRegistration())?.waiting) return Math.round((performance.now() - from) / 1000);
+          await new Promise((ok) => setTimeout(ok, 250));
         }
-        await new Promise((ok) => setTimeout(ok, 250));
-      }
-      return " · still waiting a minute later";
+        return null;
+      };
+      const late = await gone(30_000);
+      if (late !== null) return ` · activated ${late}s later`;
+      // Lost, or held? Ask it to skip waiting again, as an old build's offer does.
+      (await navigator.serviceWorker.getRegistration())?.waiting?.postMessage({ type: "skip-waiting" });
+      const asked = await gone(15_000);
+      return asked !== null ? ` · stuck 30s, then activated ${asked}s after a second skip-waiting`
+        : " · stuck 30s, and still after a second skip-waiting";
     }).catch(() => "");
     report(false, label, `at ${url} — ${body.replace(/\s+/g, " ")}\n        stack: ${stack}\n        sw: ${sw}${late}`);
   }
