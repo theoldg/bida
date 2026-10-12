@@ -227,11 +227,6 @@ on a real phone; `pnpm verify nav` drives each one it can.
   clock the file allows, because it fails cheap: a merely late traversal lands
   on an entry that is already the destination, costing a duplicate entry and
   never a wrong screen.
-- **A screen's handler registers in the commit that moves the URL.** Next
-  pushes the URL in an insertion effect; a passive `useEffect` can run a task
-  later on a slow phone, and a press in between was taken by the screen
-  underneath and climbed to *its* parent — back from an entry, onto the list
-  (`useLayoutEffect`, `back-button.ts`).
 - **So every exit names somewhere to land.** `goUp` has a parent; `goBack`
   reads the entry behind off `navigation.entries()`; `rules-check` spells out
   the two-argument shape so an exit the repair cannot reach fails the gate.
