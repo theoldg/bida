@@ -1470,8 +1470,6 @@ dialog.scrim::backdrop { background: transparent }
 .ratefrom { display: flex; align-items: center; justify-content: space-between; gap: 10px;
   margin-top: 10px; font-size: 12px; color: var(--muted) }
 .ratefrom .chip { flex: none }
-/* Not money's colour: a rate isn't credit or debit. */
-.ratecell { font-family: var(--f-mono); font-size: 13px; font-weight: 600; color: var(--ink) }
 /* A grid, so both amounts share a right edge and both controls a left one. */
 .amtgrid { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, max-content);
   justify-content: center; align-items: center; column-gap: 7px; row-gap: 4px }
@@ -1524,7 +1522,6 @@ dialog.scrim::backdrop { background: transparent }
 .ratechip .at { color: var(--muted) }
 .ratechip .bad { color: var(--debit); font-weight: 600 }
 .ratechip:is(.flash-a, .flash-b) :is(.at, .bad) { color: inherit }
-.row .ratecell + .rmeta:empty { display: none }
 
 /* ---- inputs ---- */
 .field { display: flex; align-items: center; gap: 10px; background: var(--card-2);

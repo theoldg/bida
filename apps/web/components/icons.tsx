@@ -129,8 +129,6 @@ export function IconSprite() {
           <circle cx="8.5" cy="9.5" r="1.6" />
           <path d="M3 16.5l5.5-5 4 4 3-3 5.5 5.5" />
         </symbol>
-        {/* The theme switch says what you'd get, not what you have: the sun
-            when a tap would turn the lights on. */}
         {/* Notifications' three answers. The masks cut a gap in what lies
             behind — the bell under the stroke, the back bell under the front
             one — in the symbol's own space, never the moved bell's. */}

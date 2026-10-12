@@ -119,13 +119,13 @@ function coPayers(state: State): [Id, number][] | null {
   return live.length > 1 ? live : null;
 }
 
+/** All `entriesCarryTheirOwnRate` writes. */
+const HEALED_RATE_FIELDS = new Set(["rateToBase", "baseAmountMinor", "rateSource"]);
+
 /**
  * Every entity kind gets a plain-English sentence and, where it helps, a diff —
  * or, where one revision moved several fields, a line for each of them.
  */
-/** All `entriesCarryTheirOwnRate` writes. */
-const HEALED_RATE_FIELDS = new Set(["rateToBase", "baseAmountMinor", "rateSource"]);
-
 export function describe(
   rev: Revision,
   who: string,

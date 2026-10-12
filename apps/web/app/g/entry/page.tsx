@@ -23,7 +23,7 @@ import { useLive } from "@/lib/db/live";
 import { kindOf, type EntryKind } from "@/lib/entry-kind";
 import { rateDayOf } from "@/lib/entry-rate";
 import { copy } from "@/lib/copy";
-import { money, moneyParts, plural, whenLabel } from "@/lib/format";
+import { bare, money, moneyParts, plural, whenLabel } from "@/lib/format";
 import { savedBill } from "@/lib/draft";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
 import { slidingDock, useFold } from "@/lib/fold";
@@ -380,12 +380,6 @@ function EntryBy({ expense, kind, group, data }: {
       );
     })}
   </>;
-}
-
-/** A figure with no currency code, for the middle of a sum that ends with one. */
-function bare(minor: number, currency: CurrencyCode): string {
-  const p = moneyParts(minor, currency);
-  return `${p.whole}${p.fraction}`;
 }
 
 /**

@@ -3,7 +3,7 @@ import {
   type CurrencyCode, type Rate, type SplitSpec,
 } from "@bida/core";
 import {
-  arithmeticSplit, draftAmountMinor, draftReceiptSplit, draftReceiptTotal,
+  activeSplit, draftAmountMinor, draftReceiptSplit, draftReceiptTotal,
   splitSeed, type EntryDraft, type SplitTab,
 } from "./draft";
 import { copy } from "./copy";
@@ -56,8 +56,8 @@ interface EntryCheck {
    */
   splitProblem: string | null;
   /**
-   * "N of total allocated" while amounts are typed and they add up — the tick
-   * that says the column is done, said beside `splitProblem` in the Save dock.
+   * Amounts' verdict once it holds — "N of total allocated", or what is left
+   * shared among the blanks — said beside `splitProblem` in the Save dock.
    */
   splitTick: string | null;
   /** No amount typed yet — held back from `blocker` since it names no sentence, only a field. */
@@ -104,9 +104,9 @@ export function checkEntry(input: {
   // Derived where it is read, never cached into the draft (ADR-0016).
   const receiptTotal = draftReceiptTotal(draft);
   // Null until the grid has been filled; the arithmetic tab behind it is what
-  // a save would write, and `receiptBlocker` refuses that.
+  // a save would write (`activeSplit`), and `receiptBlocker` refuses that.
   const receiptSplit = draftReceiptSplit(draft);
-  const effectiveSplit = receiptSplit ?? arithmeticSplit(draft);
+  const effectiveSplit = activeSplit(draft);
 
   // The same question the payers editor asks, answered by the same function.
   const amountMinor = draftAmountMinor(draft);

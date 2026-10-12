@@ -181,7 +181,7 @@ describe("checkEntry", () => {
       });
       const c = check(draft);
       expect(c.receiptSplit).toEqual({ mode: "receipt", weights: { [THEO]: 3000, [MARIE]: 1000 } });
-      expect(c.effectiveSplit).toBe(c.receiptSplit);
+      expect(c.effectiveSplit).toEqual(c.receiptSplit);
       expect(draft.splits.shares).toEqual({ mode: "shares", weights: { [THEO]: 3, [MARIE]: 1 } });
     });
 

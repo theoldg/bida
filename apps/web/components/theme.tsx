@@ -18,17 +18,9 @@ export function ThemeScript() {
   return <script dangerouslySetInnerHTML={{ __html: script }} />;
 }
 
-export type Theme = "system" | "light" | "dark";
-
-export function applyTheme(theme: Theme): void {
+/** Forced either way. Following the phone is only ever the start: nothing here takes a phone back to it. */
+export function applyTheme(theme: "light" | "dark"): void {
   if (typeof document === "undefined") return;
-  if (theme === "system") {
-    delete document.documentElement.dataset.theme;
-    try { localStorage.removeItem("bida.theme"); localStorage.removeItem("hajsik.theme"); }
-    catch { /* private mode */ }
-  } else {
-    document.documentElement.dataset.theme = theme;
-    try { localStorage.setItem("bida.theme", theme); } catch { /* private mode */ }
-  }
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem("bida.theme", theme); } catch { /* private mode */ }
 }
-

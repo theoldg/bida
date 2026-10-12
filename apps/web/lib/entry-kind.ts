@@ -9,7 +9,7 @@ import type { Expense } from "@bida/core";
  * - **Income** — money came in, shared by the people it belongs to. An
  *   `Expense` with `kind: "income"`; the sign lives in `computeBalances`.
  * - **Transfer** — money moved between two people. A `Settlement`.
- *   "Reimbursement" is not a kind, only the title settle-up prefills
+ *   "Reimbursement" is not a kind, only the note settle-up's Record writes
  *   (`copy.form.reimbursement`).
  *
  * The words are `copy.entryKind` (lib/copy.ts). ADR-0010.

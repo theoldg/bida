@@ -31,8 +31,10 @@ import type { EntryRateSource, Id, SplitSpec } from "./types.js";
 
 /**
  * Ids tried per search. Past it, the entry falls through to the next mode:
- * `exact` always fits. A count, not a time, so a file imports the same on any
- * phone: about 5 ms on a 2.1 GHz Xeon at 16–24 people, measured October 2026.
+ * `exact` always fits. A count, not a time, so a slow phone searches as far
+ * as a fast one; the search starts from a random id, though, so a rare split
+ * may land in another mode on another import. About 5 ms on a 2.1 GHz Xeon at
+ * 16–24 people, measured October 2026.
  */
 const SEARCH_TRIES = 4_000;
 

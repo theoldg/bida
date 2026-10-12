@@ -811,7 +811,7 @@ export const copy = {
     },
     untitled: "Untitled",
     notYours: "not yours",
-    /** The foot of the new-changes fold, always: History has the rest. */
+    /** The foot of one entry's history, out to the whole group's. */
     groupHistory: "Group history",
     you: {
       owe: "You owe",
@@ -987,10 +987,7 @@ export const copy = {
     what: "What",
     whatPlaceholder: "Title",
     note: "Note (optional)",
-    /**
-     * Seeded only when settle-up prefills a transfer (`edit/page.tsx`), never by
-     * a blank "+" or a kind switch, and cleared if it stops being a transfer (`changeKind`).
-     */
+    /** The note on a transfer settle-up's Record writes (`balances/page.tsx`); the form never seeds it. */
     reimbursement: "Reimbursement",
     when: "When",
     /** The payer picker's first row, out to the payers screen. */

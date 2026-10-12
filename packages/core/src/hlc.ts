@@ -86,12 +86,6 @@ export function compareHlc(a: Hlc, b: Hlc): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-export function maxHlc(a: Hlc | undefined, b: Hlc | undefined): Hlc | undefined {
-  if (a === undefined) return b;
-  if (b === undefined) return a;
-  return compareHlc(a, b) >= 0 ? a : b;
-}
-
 /**
  * A full counter carries into the millisecond instead of throwing: `(p + 1, 0)`
  * still sorts after `(p, n)`. A throw would stop the phone writing for good.

@@ -55,14 +55,6 @@ a line in the push that fixes it.
   edit" where only money-moving edits notify. design-review.md:27 names
   "Advanced" in the wrong shot. CLAUDE.md's core list omits rates. README.md:97
   (the owner's) says self-host for your own Gemini key, which Advanced takes.
-- **Dead or stale.** `.ratecell` CSS; `activeSplit` and
-  `maxHlc` used by tests alone; `demoStamp`'s `asOf`; a second `bare` in
-  `app/g/entry/page.tsx:385`; `changeKind`'s Reimbursement branch (settle-up
-  never seeds the form); `applyTheme`'s unreachable `"system"`. Comments that
-  outlived their code: `lib/fold.ts:14` (Save slides), `entry-check.ts:59-61`,
-  `app/g/history/page.tsx:139`, `copy.ts:814`, `icons.tsx:131`,
-  `history-copy.ts:127` (JSDoc now on a const), `import-shape.ts:32-35` (the
-  seed search is bounded, not the same on every phone).
 
 **Three things are closed as decisions, not as work**, so a session that
 rediscovers one is rediscovering a call the owner has already made:

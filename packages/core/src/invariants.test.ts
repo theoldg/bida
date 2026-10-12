@@ -4,7 +4,7 @@ import {
   liveEntriesNameLiveMembers, restoreClaimDrafts, wouldViolate, type OpDraft,
 } from "./invariants.js";
 import { foldOps } from "./fold.js";
-import { createHlcState, formatHlc, maxHlc } from "./hlc.js";
+import { createHlcState, formatHlc } from "./hlc.js";
 import type { Op } from "./ops.js";
 import { ADA, GROUP, MAD_RATE, MARIE, THEO, marrakechOps } from "./fixtures.test-helper.js";
 import type { GroupState } from "./types.js";
@@ -19,8 +19,8 @@ import { computeBalances } from "./balance.js";
 
 /** Stamp repair drafts as ops that sort after everything already in the log. */
 function applyDrafts(ops: readonly Op[], drafts: readonly OpDraft[]): Op[] {
-  let last: string | undefined;
-  for (const op of ops) last = maxHlc(last, op.hlc);
+  // An HLC's string form sorts in time order.
+  const last = ops.map((op) => op.hlc).sort().at(-1);
   const after = Number(last?.split("-")[0] ?? 0) + 1;
   return [
     ...ops,

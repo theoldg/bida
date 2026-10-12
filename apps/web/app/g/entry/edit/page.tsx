@@ -281,13 +281,8 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
    */
   function changeKind(next: EntryKind) {
     if (next === kind) return;
-    // "Reimbursement" is only written by settle up's card. A transfer leaving that
-    // kind hands on an empty field rather than a word that no longer fits.
-    const note = next !== "transfer" && draft.description === copy.form.reimbursement
-      ? "" : draft.description;
     patch({
       kind: next,
-      description: note,
       ...(activeTab === "receipt" && next !== "expense" ? changeSplitTab(draft, "equal") : {}),
     });
   }

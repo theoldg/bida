@@ -330,7 +330,7 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
  * new day or timezone doesn't read as a new seed.
  */
 export function demoStamp(): string {
-  const dated = /^(occurredAt|createdAt|claimedAt|asOf|at)$/;
+  const dated = /^(occurredAt|createdAt|at)$/;
   // The timeline, not the ops: who wrote what is part of the story too.
   const json = JSON.stringify(
     demoTimeline(demoCast(), 0),

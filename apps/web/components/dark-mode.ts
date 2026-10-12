@@ -3,7 +3,7 @@
 
 import { useSyncExternalStore } from "react";
 import { updateDevice } from "../lib/db/device";
-import { applyTheme, type Theme } from "./theme";
+import { applyTheme } from "./theme";
 
 /**
  * Whether the app is drawn dark right now: forced either way, or following
@@ -42,7 +42,7 @@ export function useDark(): boolean {
  * Dexie.
  */
 export function setDark(dark: boolean): void {
-  const theme: Theme = dark ? "dark" : "light";
+  const theme = dark ? "dark" : "light";
   applyTheme(theme);
   for (const notify of listeners) notify();
   void updateDevice({ theme });

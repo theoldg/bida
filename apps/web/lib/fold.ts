@@ -12,7 +12,7 @@ import { calmly, glide, glideMs } from "./seek";
  * glide lands, since a scroller past its new end would otherwise snap there
  * the frame the rows went.
  *
- * The dock under a short list (`.whodock`, Edit or Save) rides its foot, so
+ * The entry screen's dock (`.whodock`) rides the foot of a short entry, so
  * any height the fold changes moves it too: `slidingDock` slides it there,
  * once the held padding goes.
  *

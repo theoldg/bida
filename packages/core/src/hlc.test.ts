@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_DRIFT_MS, compareHlc, createHlcState, formatHlc, hlcReceive, hlcSend, isAhead, isHlc,
-  maxHlc, parseHlc,
+  parseHlc,
 } from "./hlc.js";
 
 describe("hlc", () => {
@@ -104,11 +104,5 @@ describe("hlc", () => {
   it("rejects malformed stamps and node ids", () => {
     expect(() => parseHlc("nope")).toThrow();
     expect(() => createHlcState("NOT-LOWER")).toThrow();
-  });
-
-  it("maxHlc handles absent sides", () => {
-    const a = formatHlc(createHlcState("aaa", 1, 0));
-    expect(maxHlc(undefined, a)).toBe(a);
-    expect(maxHlc(a, undefined)).toBe(a);
   });
 });

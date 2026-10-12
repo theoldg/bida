@@ -155,7 +155,7 @@ export function draftReceiptSplit(draft: EntryDraft): SplitSpec | null {
   return Object.keys(weights).length > 0 ? { mode: "receipt", weights } : null;
 }
 
-/** Receipt falls back to Evenly while the grid is unfilled. */
+/** What a save writes. Receipt falls back to Evenly while the grid is unfilled. */
 export function activeSplit(draft: EntryDraft): SplitSpec {
   return draftReceiptSplit(draft) ?? arithmeticSplit(draft);
 }
