@@ -1,4 +1,5 @@
 import Dexie, { type Table } from "dexie";
+import { foldOps } from "@bida/core";
 import { started } from "../diag";
 import type {
   Attachment,
@@ -150,6 +151,18 @@ class BidaDb extends Dexie {
       await tx.table("groupKeys").toCollection().modify({ lastSeq: 0 });
     });
     this.version(9).stores({ notices: "id, groupId" });
+    this.version(10).stores({}).upgrade(async (tx) => {
+      // The fold now reads parts typed beside a bill between RECEIPT_MODE_SINCE
+      // and the flag as parts; rows folded before it say receipt until a pull
+      // refolds, so refold every receipt row from its own ops.
+      const receipts = await tx.table<Expense>("expenses").filter((e) => e.split?.mode === "receipt").toArray();
+      for (const row of receipts) {
+        const ops = await tx.table<StoredOp>("ops").where("entityId").equals(row.id)
+          .and((op) => op.groupId === row.groupId).toArray();
+        const folded = foldOps(ops).expenses[row.id];
+        if (folded && folded.split.mode !== "receipt") await tx.table<Expense>("expenses").put(folded);
+      }
+    });
   }
 }
 

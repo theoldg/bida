@@ -113,7 +113,7 @@ function revisionsForEntity(
       running["deletedAt"] = op.createdAt;
     } else {
       // Diff the folds; a whole-entity patch names every field and moves almost none.
-      applyPatch(running, op.patch);
+      applyPatch(running, op.patch, op.hlc);
       for (const field of Object.keys(op.patch)) {
         // An immutable or already-set write-once field needs no check of its
         // own: the fold ignored it, so the diff below finds nothing.

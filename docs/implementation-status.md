@@ -45,11 +45,6 @@ One thing: push notifications, built and unchecked on a phone. The visual review
 A read of the hundred commits to 1.3.65; each item names where to start. Delete
 a line in the push that fixes it.
 
-- **Smaller.** Two folds closing within one glide leave padding under the list
-  (`lib/fold.ts:52-61`). An icon launch
-  whose `/install` fragment still has a key to save paints the ledger skeleton,
-  then the list (`firstFrame`). Parts typed beside a bill between 0336c2a9
-  and 97037e75 carry no flag and open on Items.
 - **Rules.** `effectSum` (`lib/entry-kind.ts:57-60`, and the older `myEffect`)
   signs an income outside `computeBalances`. The bill-pricing rule in
   `rules-check.mjs:89-100` bans `weightsFromItems`, which nothing calls, while

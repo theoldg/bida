@@ -1,4 +1,4 @@
-import { compareHlc } from "./hlc.js";
+import { compareHlc, parseHlc } from "./hlc.js";
 import { IMMUTABLE_FIELDS, WRITE_ONCE_FIELDS, type Op } from "./ops.js";
 import { upgradeReceiptSplit } from "./split.js";
 import {
@@ -24,10 +24,11 @@ type Bag = Record<string, unknown>;
 
 /**
  * Apply a patch: `IMMUTABLE_FIELDS` never, `WRITE_ONCE_FIELDS` only if unset.
- * Also upgrades older op shapes. Exported so history folds identically — a
- * second copy of these rules is a second answer to what the log means.
+ * Also upgrades older op shapes, which can turn on when the op was written
+ * (`hlc`). Exported so history folds identically — a second copy of these
+ * rules is a second answer to what the log means.
  */
-export function applyPatch(target: Bag, patch: Record<string, unknown>): void {
+export function applyPatch(target: Bag, patch: Record<string, unknown>, hlc?: string): void {
   for (const [key, value] of Object.entries(patch)) {
     if (IMMUTABLE_FIELDS.has(key)) continue;
     if (WRITE_ONCE_FIELDS.has(key) && target[key] !== undefined && target[key] !== null) continue;
@@ -36,7 +37,13 @@ export function applyPatch(target: Bag, patch: Record<string, unknown>): void {
   // Only a patch that wrote the split, the bill or the flag: the flag never
   // stays in state, so rerunning on a restore or a rate repair would read
   // flagged parts as an unflagged legacy grid.
-  if ("split" in patch || "receiptItems" in patch || "splitTab" in patch) upgradeReceiptSplit(target);
+  if ("split" in patch || "receiptItems" in patch || "splitTab" in patch) upgradeReceiptSplit(target, stampOf(hlc));
+}
+
+/** When an op was written, or undefined for a stamp that won't parse: the fold never throws. */
+function stampOf(hlc: string | undefined): number | undefined {
+  if (hlc === undefined) return undefined;
+  try { return parseHlc(hlc).physical; } catch { return undefined; }
 }
 
 function bucketFor(state: GroupState, entity: Op["entity"]): Record<Id, Bag> | null {
@@ -56,7 +63,7 @@ function applyOp(state: GroupState, op: Op): void {
     const current: Bag =
       (state.group as unknown as Bag) ?? { id: op.entityId, createdAt: op.createdAt };
     if (op.kind === "delete") current["archivedAt"] = op.createdAt;
-    else applyPatch(current, op.patch);
+    else applyPatch(current, op.patch, op.hlc);
     current["id"] = op.entityId;
     state.group = current as unknown as Group;
     return;
@@ -73,7 +80,7 @@ function applyOp(state: GroupState, op: Op): void {
     case "update":
     // Applies like an update; history is never rewound.
     case "restore":
-      applyPatch(target, op.patch);
+      applyPatch(target, op.patch, op.hlc);
       break;
     case "delete":
       target["deletedAt"] = op.createdAt;

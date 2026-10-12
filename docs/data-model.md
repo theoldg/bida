@@ -104,7 +104,9 @@ the form opens it on Evenly. **`receipt` is the only mode nobody types** — a s
 never converts into it ([ADR-0016](decisions/0016-receipts.md)). A `shares`
 split saved beside a kept bill is written with `splitTab: "shares"`, the one
 field an op carries that no state keeps: the fold reads it and drops it
-(`upgradeReceiptSplit`).
+(`upgradeReceiptSplit`). Builds between `receipt` becoming a mode and that flag
+wrote such parts unflagged, so an unflagged one stamped after
+`RECEIPT_MODE_SINCE` is parts, and one before it a grid.
 What a person calls each mode is `copy.split.mode` in `apps/web/lib/copy.ts`
 and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
 

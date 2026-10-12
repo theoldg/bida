@@ -490,13 +490,22 @@ export function partsBesideBill(
 }
 
 /**
- * Rewrite a legacy receipt expense (`shares` plus `splitTab: "receipt"`, or
- * `shares` beside a scanned bill with no flag at all) into `receipt` mode.
- * Runs in `applyPatch` on a patch that writes the split, the bill or the flag,
- * so every reader sees one shape, and no state keeps the flag: a write derives
- * it again (`partsBesideBill`). Mutates in place. ADR-0016.
+ * When `receipt` became a mode (0336c2a9). Every build since writes it for a
+ * bill, and every build since the bill arrived flagged one, so an unflagged
+ * `shares` beside a bill stamped after this is parts somebody typed — saved by
+ * a build that wrote no flag for them, until 97037e75.
  */
-export function upgradeReceiptSplit(entity: Record<string, unknown>): void {
+export const RECEIPT_MODE_SINCE = Date.UTC(2026, 8, 11, 8, 34);
+
+/**
+ * Rewrite a legacy receipt expense (`shares` plus `splitTab: "receipt"`, or
+ * `shares` beside a scanned bill with no flag at all, written before
+ * `RECEIPT_MODE_SINCE`) into `receipt` mode. Runs in `applyPatch` on a patch
+ * that writes the split, the bill or the flag, so every reader sees one shape,
+ * and no state keeps the flag: a write derives it again (`partsBesideBill`).
+ * `writtenAt` is the op's stamp, absent when unknown. Mutates in place. ADR-0016.
+ */
+export function upgradeReceiptSplit(entity: Record<string, unknown>, writtenAt?: number): void {
   const spec = entity["split"] as SplitSpec | undefined;
   const tab = entity["splitTab"];
   if (tab !== undefined) delete entity["splitTab"];
@@ -504,5 +513,6 @@ export function upgradeReceiptSplit(entity: Record<string, unknown>): void {
   const items = entity["receiptItems"];
   if (!Array.isArray(items) || items.length === 0) return;
   if (tab !== undefined && tab !== null && tab !== "receipt") return;
+  if (tab !== "receipt" && writtenAt !== undefined && writtenAt >= RECEIPT_MODE_SINCE) return;
   entity["split"] = { mode: "receipt", weights: spec.weights };
 }

@@ -3,6 +3,7 @@ import { foldForward, foldOps, sortOps } from "./fold.js";
 import { validateOp, type Op } from "./ops.js";
 import { marrakechOps, GROUP, THEO } from "./fixtures.test-helper.js";
 import { alive } from "./types.js";
+import { RECEIPT_MODE_SINCE } from "./split.js";
 import { createHlcState, formatHlc } from "./hlc.js";
 
 function op(partial: Partial<Op> & Pick<Op, "entityId" | "kind" | "hlc">): Op {
@@ -252,6 +253,19 @@ describe("an expense written in the old receipt shape", () => {
       ];
       expect(foldOps(ops).expenses["e1"]?.split.mode).toBe("shares");
     }
+  });
+
+  // Between `receipt` becoming a mode and writes flagging parts, typed parts
+  // beside a kept bill were saved with no flag: the stamp says which they are.
+  it("reads an unflagged grid by when it was written", () => {
+    const { splitTab: _, ...unflagged } = legacy;
+    const written = (ms: number) =>
+      foldOps([op({ entityId: "e1", kind: "create", hlc: at(ms), patch: unflagged })]).expenses["e1"]?.split.mode;
+    expect(written(RECEIPT_MODE_SINCE - 1)).toBe("receipt");
+    expect(written(RECEIPT_MODE_SINCE)).toBe("shares");
+    // An old build still running then flags its grid, and is believed.
+    const flagged = foldOps([op({ entityId: "e1", kind: "create", hlc: at(RECEIPT_MODE_SINCE + 1), patch: legacy })]);
+    expect(flagged.expenses["e1"]?.split.mode).toBe("receipt");
   });
 
   it("still upgrades a legacy grid that a later partial patch follows", () => {
