@@ -189,8 +189,9 @@ interface Window {
  * Which slots are drawn. On screen always — as a skeleton until filled, and a
  * screen either side as skeletons too — and
  * filled: the `WINDOW_ROWS` around the screen, or around where a fling will
- * land rather than the rows rushing past. A scroll the hand drives waits
- * `FILL_DELAY_MS` for its rows; opening, coming back and a glide don't.
+ * land rather than the rows rushing past, kept once filled. A scroll the hand
+ * drives waits `FILL_DELAY_MS` for its rows; opening, coming back and a glide
+ * don't.
  */
 function useWindow<T>(
   on: boolean, items: Shown<T>[], root: { current: HTMLDivElement | null },
@@ -256,7 +257,13 @@ function useWindow<T>(
       keep.add(key);
       if (!w.wanted.has(key)) { w.wanted.set(key, hand && w.pinned === null ? now : 0); changed = true; }
     }
-    for (const key of [...w.wanted.keys()]) if (!keep.has(key)) { w.wanted.delete(key); changed = true; }
+    // A row once filled stays for the visit (the owner, 2026-10-12); one still
+    // waiting is let go, or a fling would fill its whole path behind it.
+    for (const [key, since] of [...w.wanted]) {
+      if (keep.has(key) || since === 0 || now - since >= FILL_DELAY_MS) continue;
+      w.wanted.delete(key);
+      changed = true;
+    }
     const top = box.scrollTop - base;
     const was = rangeOf(offsets, w.top, w.bottom);
     const is = rangeOf(offsets, top, top + box.clientHeight);

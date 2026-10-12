@@ -43,10 +43,11 @@ Two things: push notifications, built and unchecked on a phone, and the ledger's
 - **The ledger draws only what is near the screen**, as an experiment
   ([rows.md](rows.md#the-ledger-draws-what-is-near-the-screen)): twelve rows,
   filled 400ms after a scroll asks, hard-coded on so the owner can try a slow
-  phone's worst case. **Not for a release**: take out `FILL_DELAY_MS`, keep
-  rows once drawn rather than dropping them (the owner, 2026-10-12), and size
-  the window for the screen. A 600-entry ledger opened in 2.8s before and
-  0.3s with it (4× CPU).
+  phone's worst case. **Not for a release**: take out `FILL_DELAY_MS` and size
+  the window for the screen. Rows are kept once drawn (the owner, 2026-10-12),
+  which scrolled end to end holds all 600 rows; before a release, cap what is
+  kept and memoise rows, or a data change landing then re-renders every kept
+  row. A 600-entry ledger opened in 2.8s before and 0.3s with it (4× CPU).
 
 ### Found by the audit of 2026-10-11, not yet fixed
 
