@@ -6,53 +6,34 @@ import type { PlannedEntry, PlannedTransfer } from "./import.js";
 import type { EntryRateSource, Id, SplitSpec } from "./types.js";
 
 /**
- * How a planned row is written: which currency, at what rate, split how. The
- * plan holds the source's figures in the base currency and the checksum has
- * passed on them, so **every shape here is verified to resolve back to exactly
- * those figures** — through `resolveEntrySplit` and `resolvePayers`, which
- * `computeBalances` asks — or it is not used. Whatever is picked, the balances
- * the import approved stand to the cent.
+ * How a planned row is written: which currency, at what rate, split how. **Every
+ * shape is verified to resolve back to exactly the checksummed figures**, as
+ * `computeBalances` reads them, or it is not used. Preference: the spent
+ * currency, then `shares`, `equal`, `exact`.
  *
- * Preference: the currency it was spent in, then `shares` (the parts the
- * source split by), `equal`, `exact`.
- *
- * **The leftover cent is the hard part.** `equal` and `shares` hand it out by
- * `hash32("<entryId>:<memberId>")`, smallest first — and the entry id isn't
- * chosen yet, so `seedFor` searches for one that puts the cents where the
- * source did. Odds are 1/C(n, k) per id, so each search is capped and a miss
- * falls through to the next mode.
- *
- * **A CSV row in another currency is the exception**: its figures are in that
- * currency and the base ones don't exist until a rate does, so there is
- * nothing in base to match. It is written in its own currency at the rate for
- * its day — Evenly when its shares are, Amounts otherwise — and the file's
- * checksum, in that currency, is what vouched for it.
+ * **The leftover cent is the hard part**: it goes by a hash of the entry id, so
+ * `seedFor` searches for an id that puts the cents where the source did, capped,
+ * and a miss falls through to the next mode. A CSV row in another currency has no
+ * base figures to match; its own currency's checksum vouched for it.
  */
 
 /**
- * Ids tried per search. Past it, the entry falls through to the next mode:
- * `exact` always fits. A count, not a time, so a slow phone searches as far
- * as a fast one; the search starts from a random id, though, so a rare split
- * may land in another mode on another import. About 5 ms on a 2.1 GHz Xeon at
- * 16–24 people, measured October 2026.
+ * A count, not a time, so a slow phone searches as far as a fast one. About 5 ms
+ * at 16–24 people.
  */
 const SEARCH_TRIES = 4_000;
 
-/** A UUID's last group: twelve random hex digits, the part the search varies. */
 const TAIL = 12;
 
-/** A rate for a currency on a day, and where it came from. */
 export interface DayRate {
   rate: Rate;
   source: EntryRateSource;
 }
 
-/** The rates `ratesWanted` asked for, by currency and day. */
 export type RateFor = (currency: CurrencyCode, day: string) => DayRate | undefined;
 
 interface ShapeOptions {
   newId: () => Id;
-  /** Needed only by a row with its own `currency`. */
   rateFor?: RateFor;
 }
 
@@ -61,10 +42,8 @@ export interface EntryShape {
   currency: CurrencyCode;
   amountMinor: number;
   rateToBase: Rate;
-  /** Null in the base currency. */
   rateSource: EntryRateSource | null;
   split: SplitSpec;
-  /** In `currency`, summing to `amountMinor`. */
   payers: Record<Id, number>;
 }
 
@@ -74,13 +53,11 @@ interface Money {
   rate: Rate;
 }
 
-/** A split to try: the spec, and the weights its base figures are distributed by (none for a base `exact`). */
 interface Candidate {
   split: SplitSpec;
   weights?: Record<Id, number>;
 }
 
-/** A plan's entry as written. `idOf` maps the plan's names to member ids. */
 export function shapeEntry(
   e: PlannedEntry,
   base: CurrencyCode,
@@ -97,7 +74,7 @@ export function shapeEntry(
 
   const monies: Money[] = [];
   const foreign = foreignMoney(e.local, e.amountMinor, base);
-  // A co-paid foreign entry would need its payers' cents placed too; none comes from a tricount.
+  // A co-paid foreign entry would need its payers' cents placed too.
   if (foreign && Object.keys(paid).length === 1) monies.push(foreign);
   monies.push({ currency: base, amountMinor: e.amountMinor, rate: "1" });
 
@@ -127,11 +104,10 @@ export function shapeEntry(
       }
     }
   }
-  // A base `exact` resolves to its own amounts under any id: unreachable unless the plan doesn't add up.
+  // Unreachable unless the plan doesn't add up.
   throw new RangeError(`shapeEntry: line ${e.line} does not add up`);
 }
 
-/** A plan's transfer as written: in the currency it was sent in, when a rate reproduces the base figure. */
 export function shapeTransfer(t: PlannedTransfer, base: CurrencyCode, rateFor?: RateFor): {
   currency: CurrencyCode; amountMinor: number; rateToBase: Rate; rateSource: EntryRateSource | null;
 } {
@@ -145,7 +121,6 @@ export function shapeTransfer(t: PlannedTransfer, base: CurrencyCode, rateFor?: 
     : { currency: base, amountMinor: t.amountMinor, rateToBase: "1", rateSource: null };
 }
 
-/** A row whose figures are in another currency, at the rate for its day. */
 function priced(
   e: PlannedEntry,
   currency: CurrencyCode,
@@ -155,7 +130,6 @@ function priced(
 ): EntryShape {
   const { rate, source } = rateOf(currency, e.day, e.line, rateFor);
   const shares = Object.values(owed);
-  // Even to the cent in its own currency; the base cents are the app's to place, as on any foreign entry.
   const even = shares.length > 0 && Math.max(...shares) - Math.min(...shares) <= 1;
   return {
     id: newId(),
@@ -177,18 +151,10 @@ function rateOf(currency: CurrencyCode, day: string, line: number, rateFor?: Rat
 }
 
 /**
- * An id under which `resolveSplit(total, shares by weights, seed id)` gives
- * exactly `target`, or undefined when none can or none was found in `SEARCH_TRIES`.
- *
- * Largest remainder hands the leftover units out by remainder first, so most
- * of the answer is settled before the seed is read: only members whose
- * remainders tie at the boundary are ordered by it. Those the source gave a
- * unit (`chosen`) must all rank before those it didn't (`passed`).
- *
- * The rank hashes `"<id>:<memberId>"` left to right, so a UUID is fixed but
- * for its last twelve hex digits, the state up to them hashed once, and each
- * candidate costs a few dozen steps per member — stopping at the first that
- * ranks out of place.
+ * Only members whose remainders tie at the boundary are ordered by the seed;
+ * those the source gave a unit must all rank first. A UUID's last twelve hex
+ * digits vary, the prefix hashed once, each candidate stopping at the first
+ * member out of place.
  */
 export function seedFor(
   totalMinor: number,
@@ -211,7 +177,6 @@ export function seedFor(
   const leftover = rows.filter((r) => r.extra === 1).length;
   if (leftover === 0) return newId();
 
-  // The remainder the last unit goes at. Above it everybody gets one, below it nobody.
   const byRem = [...rows].sort((a, b) => (a.rem === b.rem ? 0 : a.rem > b.rem ? -1 : 1));
   const boundary = byRem[leftover - 1]!.rem;
   for (const r of rows) {
@@ -232,7 +197,6 @@ export function seedFor(
     tail = (tail + 1) % 2 ** 48;
     const ending = tail.toString(16).padStart(TAIL, "0");
     const state = fnv1a(headState, `${ending}:`);
-    // The last of the chosen, as `distribute` sorts: rank, then id.
     let lastRank = -1;
     let lastId = "";
     for (const id of chosen) {
@@ -264,7 +228,6 @@ function byId(byName: Record<string, number>, idOf: (name: string) => Id): Recor
   return out;
 }
 
-/** The spent currency at a rate that converts it to the base figure exactly, or undefined. */
 function foreignMoney(
   local: PlannedEntry["local"],
   baseMinor: number,
@@ -276,10 +239,8 @@ function foreignMoney(
 }
 
 /**
- * A rate taking `localMinor` to exactly `baseMinor` under `convertMinor`: the
- * source's own when it does, else the shortest decimal that does. The base
- * figure is re-derived from the rate on every read, so one that misses by a
- * cent would move a balance.
+ * The source's own when it does, else the shortest decimal that does: the base
+ * figure is re-derived from the rate on every read.
  */
 export function rateReproducing(
   localMinor: number,
@@ -315,11 +276,7 @@ function trimDecimal(text: string): string {
   return text.includes(".") ? text.replace(/0+$/, "").replace(/\.$/, "") : text;
 }
 
-/**
- * An `exact` split's amounts in a foreign currency: the source's own, when it
- * states them and they add up, else the base shares apportioned. Fixed here,
- * not seeded — the seed is then found for the base figures they apportion.
- */
+/** Fixed here, not seeded — the seed is then found for the base figures. */
 function exactIn(
   m: Money,
   owed: Record<Id, number>,
@@ -330,7 +287,6 @@ function exactIn(
   return nonZero(resolveSplit(m.amountMinor, { mode: "shares", weights: owed }).shares);
 }
 
-/** Whether this shape reads back as exactly the source's figures, as `computeBalances` reads it. */
 function fits(
   id: Id,
   m: Money,

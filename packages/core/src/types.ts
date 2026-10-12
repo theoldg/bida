@@ -38,14 +38,12 @@ export interface Group {
   importedFrom?: ImportSource | null;
 }
 
-/** `file` is any spreadsheet: Splitwise's, bida's, Tricount's. */
 export type ImportSource = "tricount" | "file";
 
 export interface Member {
   id: Id;
   groupId: Id;
   name: string;
-  /** Stable seed for the member's avatar colour. */
   colorSeed: number;
   deletedAt?: number | null;
 }
@@ -58,11 +56,9 @@ export interface Receipt {
   receiptTax?: string | null;
   receiptDiscounts?: ReceiptDiscount[] | null;
   receiptInvolved?: Id[] | null;
-  /** Parallel to `receiptItems`. */
   receiptAssignments?: Id[][] | null;
-  /** The bill as typed into "Type it in". */
   receiptText?: string | null;
-  /** The translate toggle, saved so every phone reads the bill alike (`billLabel`). Written only when true. */
+  /** Saved so every phone reads the bill alike. Written only when true. */
   receiptEnglish?: boolean | null;
 }
 
@@ -73,10 +69,7 @@ export interface Expense extends Receipt {
   description: string;
   categoryId?: string | null;
   occurredAt: number;
-  /**
-   * `occurredAt` is local midnight of a day with no time. Absent, not `false`,
-   * otherwise. docs/data-model.md#a-day-without-a-time.
-   */
+  /** Absent, not `false`, otherwise. docs/data-model.md#a-day-without-a-time. */
   dateOnly?: boolean | null;
   /** Never touched by an edit: breaks same-day ties in list order. */
   createdAt?: number;
@@ -86,9 +79,12 @@ export interface Expense extends Receipt {
   rateToBase: Rate;
   /** `amountMinor` × `rateToBase`, rounded once. Re-derived on read (`atCurrentRates`). */
   baseAmountMinor: number;
-  /** Where `rateToBase` came from. Absent on a base-currency entry, and on one written before rates were the entry's. */
+  /**
+   * Absent on a base-currency entry, and on one from before rates were the
+   * entry's.
+   */
   rateSource?: EntryRateSource | null;
-  /** The largest payer when `payers` is set. Always present: a row needs one name. */
+  /** The largest payer when `payers` is set: a row needs one name. */
   paidBy: Id;
   /** In `currency`, summing to `amountMinor`. Absent means `paidBy` paid it all. */
   payers?: Record<Id, number> | null;
@@ -102,13 +98,11 @@ export interface Expense extends Receipt {
 export interface ReceiptDiscount {
   label: string;
   amount: string;
-  /** Absent on an English bill. `receiptEnglish` picks which label shows. */
   labelEn?: string | null;
 }
 
 /** `amount` is the printed line total; `quantity` ("2x") is shown and never multiplied. ADR-0016. */
 export interface ReceiptItem {
-  /** In the bill's own language. */
   label: string;
   labelEn?: string | null;
   amount: string;
@@ -130,12 +124,9 @@ export interface Settlement {
   currency: CurrencyCode;
   rateToBase: Rate;
   baseAmountMinor: number;
-  /** As `Expense.rateSource`. */
   rateSource?: EntryRateSource | null;
   occurredAt: number;
-  /** As `Expense.dateOnly`. */
   dateOnly?: boolean | null;
-  /** As `Expense.createdAt`. */
   createdAt?: number;
   note?: string | null;
   deletedAt?: number | null;
@@ -157,14 +148,10 @@ export interface Identity {
 /** A setting of the phone, so every group's identity carries the same one. "Nothing" is no subscription. */
 export type NotifyScope = "own" | "all";
 
-/** What a sender needs to encrypt to one device (RFC 8291). */
 export interface DevicePush {
   endpoint: string;
-  /** P-256, base64url, uncompressed. */
   p256dh: string;
-  /** 16 bytes, base64url. */
   auth: string;
-  /** Absent reads as "own". */
   scope?: NotifyScope;
 }
 
@@ -179,10 +166,8 @@ export type RateSource = "fetched" | "typed";
 export type EntryRateSource = RateSource | "copied" | "imported" | "group";
 
 /**
- * The registry rates used to live in, before each entry carried its own. No
- * screen writes one now; the rows production holds still fold, and
- * `entriesCarryTheirOwnRate` writes each onto the entries it valued (ADR-0005).
- * Never the base currency.
+ * The registry rates used to live in. No screen writes one now; production's rows
+ * still fold (ADR-0005). Never the base currency.
  */
 export interface ExchangeRate {
   /** The currency, as the id, so two phones editing one currency merge. */
@@ -191,7 +176,6 @@ export interface ExchangeRate {
   /** 1 `id` = `rate` of the base currency. */
   rate: Rate;
   source: RateSource;
-  /** The feed's own date, or when it was typed. */
   asOf: number;
   deletedAt?: number | null;
 }
@@ -221,7 +205,6 @@ export interface GroupState {
   /** One per device, not per member. */
   identities: Record<Id, Identity>;
   rates: Record<CurrencyCode, ExchangeRate>;
-  /** Highest applied: tells whether a fold is up to date. */
   lastHlc: Hlc | undefined;
 }
 
@@ -238,10 +221,7 @@ export function emptyGroupState(): GroupState {
   };
 }
 
-/**
- * For readers holding rows rather than a log: a hand-built state missing a
- * field is wrong in a way nothing catches. Unpriced, tombstones kept.
- */
+/** A hand-built state missing a field is wrong in a way nothing catches. */
 export function stateFromRows(rows: {
   group: Group | undefined;
   members?: readonly Member[];
@@ -261,7 +241,6 @@ export function stateFromRows(rows: {
   };
 }
 
-/** Not tombstoned. */
 export function alive<T extends { deletedAt?: number | null }>(
   record: Record<string, T>,
 ): T[] {

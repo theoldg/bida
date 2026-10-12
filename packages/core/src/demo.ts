@@ -4,44 +4,31 @@ import { colorSeedFor, memberIdFor } from "./names.js";
 import type { Id, SplitSpec } from "./types.js";
 
 /**
- * The demo group: ordinary ops that never sync. Nothing downstream knows it's
- * a demo — the caller just skips `saveGroupKey`, so `runSyncAll` never sees it
- * (docs/sync.md#the-demo-group-has-no-key). Dates are offsets from `now`.
+ * The demo group: ordinary ops that never sync, because the caller skips
+ * `saveGroupKey` (docs/sync.md#the-demo-group-has-no-key).
  */
 
-/**
- * A constant, so opening `/demo` twice reopens one group. Shaped like
- * `newGroupId()`; readable on purpose, as a keyless group never reaches the server.
- */
+/** A constant, so opening `/demo` twice reopens one group. */
 export const DEMO_GROUP_ID = "demodemodemo";
 
-/** Is this the demo? The one question anything outside this module may ask. */
+/** The one question anything outside this module may ask. */
 export function isDemo(groupId: string | undefined): boolean {
   return groupId === DEMO_GROUP_ID;
 }
 
-/** The four people; which one this phone is, the visitor says (`/g/claim`). */
 export const DEMO_NAMES = ["Luke", "Han", "Chewie", "Ben"] as const;
 type DemoName = (typeof DEMO_NAMES)[number];
 
-/** Credits, and the local coin the spaceport actually takes. */
 const DEMO_CURRENCY = "CRD";
 const DEMO_FOREIGN = "WUP";
-/** Sixteen wupiupi to the credit. */
 const DEMO_RATE = "0.0625";
 
-/**
- * Member ids and hues derive from the constant group id, so every phone lays
- * the same seed and `demoStamp` can fingerprint it.
- */
+/** Derived from the constant group id, so every phone lays the same seed. */
 export interface DemoCast {
-  /** Member id per name, from `memberIdFor(DEMO_GROUP_ID, name)`. */
   ids: Record<DemoName, Id>;
-  /** Avatar hue per name, from `colorSeedFor(DEMO_GROUP_ID, name)`. */
   colorSeeds: Record<DemoName, number>;
 }
 
-/** The cast every phone derives identically. */
 export function demoCast(): DemoCast {
   const ids = {} as Record<DemoName, Id>;
   const colorSeeds = {} as Record<DemoName, number>;
@@ -54,13 +41,12 @@ export function demoCast(): DemoCast {
 
 const DAY = 86_400_000;
 
-/** Local midnight `daysAgo` days back: an entry carries a day, not an hour. */
 function dayBefore(now: number, daysAgo: number): number {
   const d = new Date(now - daysAgo * DAY);
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
 
-/** Entity ids are fixed, so re-seeding writes the same group rather than a second one. */
+/** Fixed, so re-seeding writes the same group rather than a second one. */
 const ENTRY = {
   passage: "demo-passage",
   cantina: "demo-cantina",
@@ -72,10 +58,8 @@ const ENTRY = {
 } as const;
 
 /**
- * The cantina bill: one table read as printed lines, grid and split weights.
- * In the local tongue with English beside it, so the demo shows translation.
- * **Every line must divide evenly** among its people: the cent tiebreak lives
- * in the web's `receiptBreakdown`, beyond core's check.
+ * **Every line must divide evenly** among its people: the cent tiebreak lives in
+ * the web's `receiptBreakdown`, beyond core's check.
  */
 const DEMO_BILL: readonly {
   label: string; labelEn: string; minor: number; quantity?: number; who: readonly DemoName[];
@@ -87,7 +71,6 @@ const DEMO_BILL: readonly {
   { label: "Wabba kroba, da nudchaa", labelEn: "Back booth, the quiet one", minor: 1_200, who: DEMO_NAMES },
 ];
 
-/** What each person's own lines come to: the tab's split, itemised. */
 function billWeights(ids: Record<DemoName, Id>): Record<Id, number> {
   const weights: Record<Id, number> = {};
   for (const line of DEMO_BILL) {
@@ -99,9 +82,7 @@ function billWeights(ids: Record<DemoName, Id>): Record<Id, number> {
 }
 
 /**
- * The bill as a scan would have written it into the "Edit" box: the web's
- * `billAsText` shape — English, a count only where one was printed — so the
- * box opens on the bill rather than empty.
+ * The web's `billAsText` shape, so the box opens on the bill rather than empty.
  */
 function demoBillText(): string {
   return DEMO_BILL.map(({ labelEn, minor, quantity }) =>
@@ -110,7 +91,6 @@ function demoBillText(): string {
   ).join("\n");
 }
 
-/** One sitting: who wrote these ops, and when. History reads both off the op. */
 export interface DemoStep {
   by: Id;
   at: number;
@@ -118,25 +98,16 @@ export interface DemoStep {
 }
 
 /**
- * The trip as it was written down, deterministic in `cast` and `now`: each
- * step its own author and moment, so history reads as four people keeping a
- * ledger over nine days rather than one phone writing it in one go.
- * `openDemo` appends each step as its own batch and the HLC follows this
- * order, so **steps are chronological**, and each falls before `now`'s day
- * (the test holds both).
- *
- * Chosen so every screen has something: two payers with an itemised bill,
- * local coin, a partial split, an income, a transfer, an edit and a delete.
- * Balances don't cancel, so settle-up has transfers to propose. Entry dates
- * follow the tour, not the story: the ledger is newest first, so the cantina
- * is the latest day and the passage the day before, as the features a visitor
- * sees first.
+ * Each step its own author and moment, so history reads as four people over nine
+ * days. **Steps are chronological** and fall before `now`'s day (tested). Dates
+ * follow the tour: the ledger is newest first, so what a visitor should see first
+ * is latest.
  */
 export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
   const { ids } = cast;
   const all = DEMO_NAMES.map((name) => ids[name]);
   const equal = (members: readonly Id[]): SplitSpec => ({ mode: "equal", members: [...members] });
-  /** An amount in spaceport coin, at the rate typed for it: no feed knows WUP. */
+  /** No feed knows WUP. */
   const inWup = (minor: number) => ({
     amountMinor: minor,
     currency: DEMO_FOREIGN,
@@ -150,13 +121,12 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
     rateToBase: "1",
     baseAmountMinor: minor,
   });
-  /** A moment `daysAgo` days back, at a local hour; before 23:00, so a DST day can't push it into the next. */
+  /** Before 23:00, so a DST day can't push it into the next. */
   const at = (daysAgo: number, hour: number, minute = 0) =>
     dayBefore(now, daysAgo) + (hour * 60 + minute) * 60_000;
   const step = (by: DemoName, when: number, ...ops: OpDraft[]): DemoStep =>
     ({ by: ids[by], at: when, ops });
 
-  /** Written whole twice — created, then edited — so it is named once. */
   const passage = {
     occurredAt: dayBefore(now, 2),
     dateOnly: true,
@@ -184,10 +154,8 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
         kind: "create",
         patch: { name, colorSeed: cast.colorSeeds[name], deletedAt: null },
       })),
-      // No identity: the claim gate asks the visitor which of the four they
-      // are, as it asks anyone joining a group.
+      // No identity: the claim gate asks the visitor which of the four they are.
     ),
-    // So history is not all creates: deleted, further down.
     step("Han", at(8, 18, 5), {
       entity: "expense",
       entityId: ENTRY.greedo,
@@ -202,7 +170,6 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
         split: equal(all),
       },
     }),
-    // Priced by the registry above.
     step("Han", at(6, 14, 22), {
       entity: "expense",
       entityId: ENTRY.docking,
@@ -217,7 +184,6 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
         split: equal(all),
       },
     }),
-    // One that leaves two people out: the faded row, nothing to do with you.
     step("Chewie", at(5, 22, 47), {
       entity: "expense",
       entityId: ENTRY.dejarik,
@@ -232,7 +198,6 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
         split: equal([ids.Han, ids.Chewie]),
       },
     }),
-    // Same shape as an expense; the sign is applied only in `computeBalances`.
     step("Luke", at(4, 11, 30), {
       entity: "expense",
       entityId: ENTRY.speeder,
@@ -248,7 +213,6 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
         split: equal(all),
       },
     }),
-    // A transfer: it moves a debt, it does not create one.
     step("Luke", at(3, 16, 8), {
       entity: "settlement",
       entityId: ENTRY.advance,
@@ -264,23 +228,19 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
         deletedAt: null,
       },
     }),
-    // Fronted by somebody else, leaving Han and Chewie (being paid) out.
     step("Ben", at(2, 19, 51), {
       entity: "expense",
       entityId: ENTRY.passage,
       kind: "create",
       patch: { description: "Passage to Alderaan", ...inCredits(1_500_000), ...passage },
     }),
-    // Edited in two fields, so the diff shows more than one number. An entry is
-    // written whole (docs/sync.md), so the patch carries unchanged fields too.
+    // An entry is written whole, so the patch carries unchanged fields too.
     step("Ben", at(1, 8, 15), {
       entity: "expense",
       entityId: ENTRY.passage,
       kind: "update",
       patch: { description: "Passage to Alderaan, no questions", ...inCredits(1_700_000), ...passage },
     }),
-    // Two payers (`paidBy` is the larger) and itemised, so each person's split is
-    // what they ordered (ADR-0016).
     step("Luke", at(1, 21, 36), {
       entity: "expense",
       entityId: ENTRY.cantina,
@@ -303,8 +263,6 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
         receiptInvolved: all,
         receiptAssignments: DEMO_BILL.map(({ who }) => who.map((name) => ids[name])),
         receiptText: demoBillText(),
-        // As if somebody at the table had tapped translate: a visitor can't
-        // read Huttese, and the toggle is there to turn it back.
         receiptEnglish: true,
       },
     }),
@@ -312,22 +270,19 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
       entity: "expense",
       entityId: ENTRY.greedo,
       kind: "delete",
-      // The fold stamps `deletedAt` from the op's `createdAt` and ignores the patch.
+      // The fold stamps `deletedAt` from the op's `createdAt`.
       patch: {},
       note: "Han settled that one at the table",
     }),
   ];
 }
 
-/** The timeline's ops alone, in order: the log one phone ends up holding. */
 export function demoOps(cast: DemoCast, now: number): OpDraft[] {
   return demoTimeline(cast, now).flatMap((s) => s.ops);
 }
 
 /**
- * A fingerprint of this build's seed. `openDemo` is idempotent, so the caller
- * re-seeds when this differs from the stored one. Dates are zeroed first, so a
- * new day or timezone doesn't read as a new seed.
+ * Dates are zeroed first, so a new day or timezone doesn't read as a new seed.
  */
 export function demoStamp(): string {
   const dated = /^(occurredAt|createdAt|at)$/;
@@ -336,7 +291,7 @@ export function demoStamp(): string {
     demoTimeline(demoCast(), 0),
     (key, value) => (dated.test(key) ? 0 : value),
   );
-  // FNV-1a, base 36. A fingerprint, not a digest: nothing here is secret.
+  // A fingerprint, not a digest: nothing here is secret.
   let hash = 0x811c9dc5;
   for (let i = 0; i < json.length; i++) {
     hash = Math.imul(hash ^ json.charCodeAt(i), 0x01000193) >>> 0;
