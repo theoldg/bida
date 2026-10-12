@@ -1,7 +1,6 @@
 /**
- * A model's reading of a receipt, turned into an entry-draft patch. No
- * arithmetic or reformatting on top: the prompt fixes the shapes (plain
- * decimal, `YYYY-MM-DD`). docs/scan-reading.md.
+ * A model's reading of a receipt, turned into an entry-draft patch. No arithmetic
+ * or reformatting on top: the prompt fixes the shapes.
  */
 
 import { isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money.js";
@@ -10,97 +9,70 @@ import type { Receipt, ReceiptDiscount } from "./types.js";
 import { sameLocalDay } from "./when.js";
 
 /**
- * One bill line as the model returns it. A typed bill fills one cost: the line
- * total (`amount`) or a price-of-one (`unitAmount` plus `quantity`) — asking
- * for a figure the bill doesn't hold makes the model invent one, so
- * `lineMinor` multiplies. A photo fills `amount`, and `unitAmount` too where
- * the till prints it, which only `correctOneLine` reads.
+ * A typed bill fills one cost — the line total, or a unit price and `quantity` —
+ * since asking for a figure the bill doesn't hold makes the model invent one.
  */
 export interface ScanLineItem {
-  /** As written, in the bill's own language. */
   label: string;
-  /** English translation, or null if `label` already is English. */
   labelEn: string | null;
-  /** What the whole line came to, when the bill gives that. Plain decimal, same convention as ScanResult.total. */
   amount: string | null;
-  /** The price of one, when that is what the bill gives instead. Same notation; needs `quantity` to mean anything. */
   unitAmount: string | null;
-  /** The count the bill states for this line ("2x", a qty column), or null if none is stated — not inferred. */
+  /** As stated, never inferred. */
   quantity: number | null;
 }
 
-/** A line with its figure resolved, whichever way the bill wrote it. */
 export interface BillItem {
   label: string;
   labelEn: string | null;
-  /** Always the whole line — `unitAmount` times the count where that is what the bill gave. */
   amount: string;
   quantity: number | null;
 }
 
-/** One deduction, as the receipt printed it. `amount` is what comes off, written positive. */
+/** `amount` is what comes off, written positive. */
 export interface ScanDiscount {
   label: string;
-  /** English translation, or null if `label` already is English. */
   labelEn: string | null;
   amount: string;
 }
 
 export interface ScanResult {
   /**
-   * What to call the expense: the merchant's name without the legal suffix
-   * ("Bar Zahra"), plus what was bought if the name alone wouldn't say
-   * ("Lidl - barbecue"). Null when no name is legible.
+   * The merchant without the legal suffix, plus what was bought if the name alone
+   * wouldn't say ("Lidl - barbecue").
    */
   title: string | null;
-  /** Plain decimal notation, e.g. "42.50" or "1234.50" — parseMinor()-ready. Not a number. */
+  /** Plain decimal, parseMinor()-ready. Not a number. */
   total: string | null;
-  /** A separate tip or service charge line, same notation as `total`, or null if none. */
   tip: string | null;
-  /** Tax charged on top of the printed lines — never VAT already inside them. Same notation, or null. */
+  /** Never VAT already inside the printed lines. */
   tax: string | null;
-  /** Every deduction the bill printed, one entry each. Empty when it takes nothing off. */
   discounts: ScanDiscount[];
-  /** ISO 4217, or null if illegible. */
   currency: string | null;
-  /** YYYY-MM-DD, or null if illegible. */
   date: string | null;
-  /** Every line the bill lists. `readBill` resolves each one's figure. */
   lineItems: ScanLineItem[];
   /**
-   * The bill is written in English, which clears every `labelEn` in `readBill`:
-   * asked line by line, the model "translates" an English bill's shorthand
-   * ("Chkn wrap" → "Chicken wrap") and the translate toggle turns up on it.
+   * Clears every `labelEn`: asked line by line, the model "translates" an English
+   * bill's shorthand.
    */
   english: boolean;
-  /**
-   * Why the model couldn't read a receipt ("This doesn't look like a receipt"),
-   * shown verbatim; null when it did. Set instead of guessing the other fields.
-   */
+  /** Shown verbatim; set instead of guessing the other fields. */
   error: string | null;
 }
 
 export interface ScanPatch {
   description?: string;
-  /** Ready for parseMinor() with the chosen currency. */
   amountText?: string;
   currency?: string;
-  /** The moment of the scan for a receipt printed today; local midnight for any other day. */
   occurredAt?: number;
-  /** True when `occurredAt` is a day and nothing more — a receipt prints no hour. */
   dateOnly?: boolean;
 }
 
-/**
- * A receipt printed today takes `now` as its stamp; any other day takes local
- * midnight and `dateOnly`, since the hour isn't on it. `currency` is for a
- * bill with no total, whose summed amount must be written in the draft's.
- */
+/** Today's receipt takes `now`; any other day local midnight and `dateOnly`. */
 export function normalizeScan(result: ScanResult, currency: CurrencyCode, now: number): ScanPatch {
   const patch: ScanPatch = {};
   if (result.title) patch.description = result.title;
   if (result.total) {
-    // Already in the prompt's notation; re-rendering it would be an opinion.
+    // Re-rendering the prompt's notation would be an opinion.
     patch.amountText = result.total;
   } else {
     const minor = billTotalMinor(result, currency);
@@ -108,8 +80,7 @@ export function normalizeScan(result: ScanResult, currency: CurrencyCode, now: n
   }
   const scanned = readCurrency(result);
   if (scanned) patch.currency = scanned;
-  // Local time, not UTC midnight: the screens read it locally, so UTC midnight
-  // files a receipt a day early west of Greenwich.
+  // Local time: UTC midnight files a receipt a day early west of Greenwich.
   if (result.date) {
     const [y, m, d] = result.date.split("-").map(Number);
     if (y && m && d) {
@@ -125,70 +96,54 @@ export function normalizeScan(result: ScanResult, currency: CurrencyCode, now: n
 }
 
 /**
- * The scan's own currency, or null. Only three letters are accepted: anything
- * else makes `formatMinor` throw on every render. Dropped, never repaired —
- * "USDT" clipped to "USD" banks money in a currency nobody named.
+ * Dropped, never repaired — "USDT" clipped to "USD" banks money in a currency
+ * nobody named.
  */
 function readCurrency(result: ScanResult): CurrencyCode | null {
   const code = result.currency?.trim().toUpperCase();
   return code && isCurrencyCode(code) ? code : null;
 }
 
-/** What a scan is counted in: its own currency when it has a usable one, else the draft's. */
 export function scanCurrency(result: ScanResult, fallback: CurrencyCode): CurrencyCode {
   return readCurrency(result) ?? fallback;
 }
 
-/**
- * What a bill charges that nobody ordered: tip, tax on top, deductions. All
- * divide in proportion to what each person ordered. All positive magnitudes;
- * the sign is applied in `receiptBreakdown` only (docs/data-model.md#money).
- */
+/** All positive magnitudes; the sign is applied in `receiptBreakdown` only. */
 export interface BillExtras {
   tip: string | null;
   tax: string | null;
-  /** Kept apart, not summed, so the grid can name each deduction. */
+  /** Kept apart so the grid can name each deduction. */
   discounts: ReceiptDiscount[];
 }
 
-/** The extras in the order a printed bill rules them off under the items. */
+/** The order a printed bill rules them off under the items. */
 const EXTRAS = ["discount", "tax", "tip"] as const;
 export type ExtraKind = (typeof EXTRAS)[number];
 
-/** A bill the app can work with: positive lines, and the extras beside them. */
 export interface Bill {
   items: BillItem[];
   extras: BillExtras;
 }
 
-/**
- * One line in minor units, whichever way the bill stated it — the only
- * multiplication in the reading. `amount` wins when both are filled; null
- * (no usable figure) is `checkScan`'s `unreadable-line`.
- */
+/** The only multiplication in the reading; `amount` wins when both are filled. */
 export function lineMinor(item: ScanLineItem, currency: CurrencyCode): number | null {
   const whole = readAmount(item.amount, currency);
   if (whole !== null) return whole;
 
   const unit = readAmount(item.unitAmount, currency);
   const count = item.quantity;
-  // A unit price without a count prices nothing; taking it as the line total
-  // would charge three skewers as one.
+  // A unit price without a count prices nothing.
   if (unit === null || count === null || !Number.isInteger(count) || count <= 0) return null;
   const minor = unit * count;
-  // `parseMinor` guards its own range; the product needs this.
   return Number.isSafeInteger(minor) ? minor : null;
 }
 
 /**
- * A reading with every deduction pooled. Receipts put discounts anywhere and
- * the model files them inconsistently, so every negative amount joins the
- * pool: items all positive, one figure off the lot. Pooling is what makes a
- * discount proportional (ADR-0016).
+ * Every negative amount joins one pool, wherever the model filed it: pooling is
+ * what makes a discount proportional (ADR-0016).
  */
 export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
   const discounts: ReceiptDiscount[] = [];
-  /** Keeps a positive extra; a negative one is a deduction and joins the list. */
   const keep = (text: string | null, label: string): string | null => {
     const minor = readAmount(text, currency);
     if (minor === null || minor >= 0) return text;
@@ -196,7 +151,6 @@ export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
     return null;
   };
 
-  /** No English for a bill already in English, whatever the lines came back with. */
   const en = (labelEn: string | null) => (result.english ? null : labelEn);
 
   const tip = keep(result.tip, "");
@@ -213,16 +167,14 @@ export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
     items.push({
       label: item.label,
       labelEn: en(item.labelEn),
-      // A line priced outright keeps the model's own string, unreadable or not,
-      // for `checkScan` to refuse. No usable figure becomes "" (unreadable).
+      // Keeps the model's own string, for `checkScan` to refuse.
       amount: item.amount ?? (minor === null ? "" : minorToDecimalString(minor, currency)),
       quantity: item.quantity,
     });
   }
   for (const printed of result.discounts) {
     const minor = readAmount(printed.amount, currency);
-    // `Math.abs`: the model sometimes echoes the printed minus, which would turn
-    // a deduction into a surcharge.
+    // `Math.abs`: the model sometimes echoes the printed minus.
     if (minor === null || minor === 0) continue;
     discounts.push({
       label: printed.label,
@@ -234,7 +186,6 @@ export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
   return { items, extras: { tip, tax, discounts } };
 }
 
-/** The extras' net effect on a total: what is added, less what comes off. Null if any is illegible. */
 export function extrasMinor(extras: BillExtras, currency: CurrencyCode): number | null {
   let net = 0;
   for (const text of [extras.tip, extras.tax]) {
@@ -251,7 +202,6 @@ export function extrasMinor(extras: BillExtras, currency: CurrencyCode): number 
   return net;
 }
 
-/** The extras as an entry keeps them — three flat fields on `Expense` and on the draft. */
 export function receiptExtras(source: Receipt): BillExtras {
   return {
     tip: source.receiptTip ?? null,
@@ -260,11 +210,7 @@ export function receiptExtras(source: Receipt): BillExtras {
   };
 }
 
-/**
- * The whole bill off an expense, a draft or an input, in the shape every write
- * takes it: each field null when absent, and `receiptEnglish` true or null.
- * `receiptOf({})` is no bill at all.
- */
+/** `receiptOf({})` is no bill at all. */
 export function receiptOf(source: Receipt): { [K in keyof Receipt]-?: NonNullable<Receipt[K]> | null } {
   return {
     receiptItems: source.receiptItems ?? null,
@@ -278,10 +224,8 @@ export function receiptOf(source: Receipt): { [K in keyof Receipt]-?: NonNullabl
   };
 }
 
-/** Why a reading can't be trusted, when the model itself didn't object to the bill. */
 export type ScanProblem = "no-total" | "unreadable-line" | "mismatch";
 
-/** The bill's own lines and extras added up, or null if any figure is unreadable. */
 function sumBill(result: ScanResult, currency: CurrencyCode): number | null {
   const bill = readBill(result, currency);
   let sum = 0;
@@ -295,15 +239,9 @@ function sumBill(result: ScanResult, currency: CurrencyCode): number | null {
 }
 
 /**
- * A photo's reading with one line's printed total swapped for its count times
- * its printed unit price, when that alone makes the bill come to its total —
- * a washed-out 8 read as a 6 (docs/scan-reading.md#one-faded-figure). Else the
- * reading as it came, for `checkScan` to judge.
- *
- * **One line, never a combination**: two lines that each disagree are tried
- * one at a time, and if more than one would square the bill there is no way
- * to say which, so none is taken. The total is what vouches for a correction;
- * a bill that already adds up is never touched.
+ * One line's printed total swapped for count × unit price, when that alone makes
+ * the bill come to its total (docs/scan-reading.md#one-faded-figure). One line,
+ * never a combination; a bill that already adds up is never touched.
  */
 export function correctOneLine(result: ScanResult, currency: CurrencyCode): ScanResult {
   const total = readAmount(result.total, currency);
@@ -332,12 +270,10 @@ export function correctOneLine(result: ScanResult, currency: CurrencyCode): Scan
   return found ?? result;
 }
 
-/** Did the bill itself state a total, as opposed to us being able to work one out? */
 function statesTotal(result: ScanResult): boolean {
   return (result.total ?? "").trim().length > 0;
 }
 
-/** The stated total, else lines and extras summed; null when neither. */
 export function billTotalMinor(result: ScanResult, currency: CurrencyCode): number | null {
   const stated = readAmount(result.total, currency);
   if (stated !== null) return stated;
@@ -345,29 +281,20 @@ export function billTotalMinor(result: ScanResult, currency: CurrencyCode): numb
 }
 
 /**
- * Does this reading hold together? `null` when it does: every figure readable,
- * and lines + tip + tax − discounts equal to the total. A refusal costs one more
- * photo; accepting prices the grid against a wrong total.
- *
- * Only a stated total is reconciled against. A photo with none is cropped; a
- * typed bill usually has none, and its lines are the bill
- * (docs/scan-reading.md#what-a-reading-is-checked-against).
+ * A refusal costs one more photo; accepting prices the grid against a wrong
+ * total. Only a stated total is reconciled against.
  */
 export function checkScan(
   result: ScanResult,
   currency: CurrencyCode,
-  /** A photograph unless said otherwise — the original act, and the strict one. */
   medium: ScanMedium = "photo",
 ): ScanProblem | null {
   const stated = statesTotal(result);
   const total = readAmount(result.total, currency);
-  // A figure that is there and won't parse is a failed reading in any medium.
   if (stated && total === null) return "no-total";
-  // Absent means cropped on a photo; fine on a typed bill with lines.
   if (!stated && (medium === "photo" || result.lineItems.length === 0)) return "no-total";
 
-  // Before `readBill`, which takes an illegible figure as nothing — a discount
-  // silently worth zero is the error to catch.
+  // Before `readBill`, which takes an illegible figure as nothing.
   for (const text of [result.tip, result.tax, ...result.discounts.map((d) => d.amount)]) {
     if (text && readAmount(text, currency) === null) return "unreadable-line";
   }
@@ -375,12 +302,10 @@ export function checkScan(
   const sum = sumBill(result, currency);
   if (sum === null) return "unreadable-line";
 
-  // No total: the lines are the bill; just check they come to something.
   if (total === null) return sum > 0 ? null : "mismatch";
 
   // Includes a discount bigger than what it comes off.
   if (total <= 0) return "mismatch";
-  // A receipt that is just a total is an ordinary expense.
   if (result.lineItems.length === 0) return null;
   return sum === total ? null : "mismatch";
 }
@@ -395,32 +320,23 @@ function readAmount(text: string | null, currency: CurrencyCode): number | null 
 }
 
 /**
- * The scan budget, shared so the phone refuses instantly and the Worker
- * enforces the same numbers. docs/scan-worker.md#what-the-scan-costs.
+ * Shared, so the phone refuses instantly and the Worker enforces the same
+ * numbers.
  */
 export const SCAN_LIMITS = {
-  /** The `:id` a scan is billed to — a group, shared by everyone in it, or one phone's credential. */
+  /** The `:id` billed — a group, or one phone's credential. */
   caller: { hour: 10, day: 30 },
-  /** One address, HMAC'd server-side. Loose enough for a table of friends on one restaurant wifi. */
+  /** One address, HMAC'd. Loose enough for friends on one restaurant wifi. */
   client: { hour: 20, day: 50 },
-  /** The bill. The only bucket nothing can be minted around; the hourly sub-cap keeps a burst from eating the day. */
+  /** The only bucket nothing can be minted around. */
   global: { hour: 700, day: 4300 },
 } as const;
 
-/** Which bucket a refusal came out of. The phone prints a different sentence for each. */
 export type ScanLimitScope = keyof typeof SCAN_LIMITS;
 
-/**
- * The longest typed-in bill. ~4,000 chars costs about what the downscaled
- * photo does, so typing is never dearer; a sixty-line till roll is ~1,800.
- * The Worker's `MAX_TEXT_BYTES` is a looser abuse ceiling.
- */
+/** About what the downscaled photo costs, so typing is never dearer. */
 export const BILL_TEXT_MAX = 4000;
 
-/**
- * The largest base64 photo the Worker wraps. The phone aims well under it
- * (`lib/scan/downscale.ts` shrinks until it fits), so hitting it means a
- * caller that isn't ours — it refuses a 50 MB "photo" before forwarding a byte.
- */
+/** The phone aims well under it, so hitting it means a caller that isn't ours. */
 export const MAX_IMAGE_BYTES = 400_000;
 

@@ -3,95 +3,51 @@ import { resolveSplit } from "./split.js";
 import type { ImportSource } from "./types.js";
 
 /**
- * A Splitwise CSV read back into a group — `export.ts` in reverse. Takes parsed
- * rows (the dialect is `apps/web/lib/import/csv.ts`) and returns a **plan**;
- * nothing here writes. Liberal in what it reads (CRLF, BOM, case), but refuses
- * anything that needs a guess. docs/import-export.md#the-group-as-a-spreadsheet.
+ * A Splitwise CSV read back into a plan — `export.ts` in reverse; nothing here
+ * writes. Refuses anything that needs a guess, naming the line.
  *
- * **A member's cell is `paid − owed`**, which does not invert. One positive
- * column (every file Splitwise writes) is lossless: that member paid, split
- * `exact` at `paid − delta`. Several positive columns become payers at
- * `deltaᵢ × cost / Σ positive` by largest remainder — balances exact, payer
- * figures a guess. Both need `Σ positive ≤ cost`.
- *
- * A row is dropped only when it carries no money; anything else that can't
- * become an entry refuses the whole file, naming the line.
- *
- * The `Total balance` foot is the checksum: recomputing it from the plan catches
- * a misread column, a wrong drop and rounding drift. It can't catch an income
- * read backwards (nets zero); a test holds that.
- *
- * **A file may mix currencies.** Every row's figures are in its own `Currency`,
- * and each currency has its own foot, checked in that currency — nothing here
- * converts. The one most rows are in becomes the group's; a row in another
- * carries `currency`, and is priced at the rate for its day when it is written
- * (`ratesWanted`, `shapeEntry`).
+ * A member's cell is `paid − owed`, which does not invert: several positive
+ * columns become payers by largest remainder, balances exact and payer figures a
+ * guess. The `Total balance` foot, one per currency, is the checksum.
  */
 
-/** The five cells the format dictates, and the tokens `export.ts` writes into them. */
 const HEADER = ["date", "description", "category", "cost", "currency"] as const;
 const PAYMENT = "payment";
 const GENERAL = "general";
 const TOTAL_BALANCE = "total balance";
 
-/** Why the file cannot be read at all. Every one names the fix. */
+/**
+ * Why the file cannot be read at all; the person reads `copy.importData.refused`.
+ */
 export type ImportRefusalCode =
-  /** No rows, or nothing but blank lines. */
   | "empty"
-  /** The first five columns are not the shape. */
   | "header"
-  /** A header with no member columns after the five. */
   | "no-members"
-  /** Two member columns with the same name — indistinguishable, so their balances would merge. */
   | "duplicate-member"
-  /** A member column with no name in it. */
   | "blank-member"
-  /** A member column named something JavaScript cannot hold as a plain key. */
   | "bad-member-name"
-  /** A row with more cells than the header has columns. */
   | "extra-cells"
-  /** A tricount stating more than one currency, which has no rates to bridge them. (`tricount.ts`) */
   | "mixed-currency"
-  /** A `Currency` cell that is not three letters. */
   | "unknown-currency"
-  /** A row with no `Currency` in a file that has several, so no telling which. */
   | "blank-currency"
-  /** No `Total balance` row — or none for one of the file's currencies — so nothing to check against. */
   | "no-foot"
-  /** Two `Total balance` rows for one currency: which one is the checksum? */
   | "duplicate-foot"
-  /** A `Date` cell that is not `YYYY-MM-DD`. Guessing between 01/02 and 02/01 is not on. */
   | "bad-date"
-  /** A `Cost` or member cell that is not a number. */
   | "bad-amount"
-  /** A cell with more decimal places than the currency has. */
   | "too-precise"
-  /** A row whose member cells do not sum to zero — the shape's own invariant. */
   | "row-not-zero"
-  /** `Σ positive > cost`: more was net-paid than the thing cost. */
   | "overpaid"
-  /** Nothing left to import once the empty rows were dropped. */
   | "no-entries"
-  /** The plan's balances disagree with the ones the source stated. */
   | "checksum"
-  /** The JSON behind a tricount link is not a tricount. (`tricount.ts`) */
   | "not-tricount"
-  /** A tricount entry whose amount is not a number the currency can hold. */
   | "tricount-amount"
-  /** A tricount entry with no date in it, or one that is not a real day. */
   | "tricount-date"
-  /** A tricount entry whose shares do not add up to what it cost. */
   | "tricount-split";
 
-/**
- * Why a file was refused. `message` is for a developer; the person reads
- * `copy.importData.refused[code]`, interpolating `line` and `detail`.
- */
 export class ImportError extends Error {
   readonly code: ImportRefusalCode;
   /** 1-based, as a spreadsheet counts them — blank lines included. */
   readonly line?: number;
-  /** Whatever makes the refusal actionable: the codes found, the cell, the drift. */
   readonly detail?: string;
 
   constructor(code: ImportRefusalCode, message: string, line?: number, detail?: string) {
@@ -104,140 +60,100 @@ export class ImportError extends Error {
 }
 
 interface ImportOptions {
-  /** `YYYY-MM-DD` to a timestamp at local midnight; only the app knows the timezone. */
+  /** Local midnight; only the app knows the timezone. */
   dayToTimestamp: (day: string) => number;
 }
 
-/** An expense or income the plan would write. Amounts are positive minor units. */
+/** Amounts are positive minor units. */
 export interface PlannedEntry {
-  /** Which way it runs: a negative `Cost` is the only thing in the file that says. */
   kind: "expense" | "income";
   description: string;
-  /**
-   * The `Category` cell verbatim, or null for the tokens `General` and
-   * `Payment`, which nobody chose — the exact mirror of what `export.ts` writes.
-   */
+  /** Null for the tokens `General` and `Payment`, which nobody chose. */
   categoryId: string | null;
   day: string;
   occurredAt: number;
-  /**
-   * When the source says it was entered, written as `createdAt` — the order
-   * inside a day (`byWhen`). A tricount's `date` carries a time; a CSV's never
-   * does, and absent means the moment of import.
-   */
+  /** Written as `createdAt`, the order inside a day. A CSV never has one. */
   recordedAt?: number;
   amountMinor: number;
-  /** name -> minor units handed over. Sums to `amountMinor`. */
   paid: Record<string, number>;
-  /** name -> minor units owed. Sums to `amountMinor`; members owing nothing are absent. */
+  /** Members owing nothing are absent. */
   owed: Record<string, number>;
-  /** What was spent, when that was another currency. A tricount says; a CSV never does. */
   local?: LocalMoney;
-  /** name -> the parts the source split by. Tricount's `RATIO` allocations. */
   parts?: Record<string, number>;
-  /**
-   * The currency every figure on this row is in, when not the plan's: a CSV
-   * row in another currency, priced at the rate for its day when written.
-   * Absent means the plan's — the only case for a tricount.
-   */
+  /** Absent means the plan's — always, for a tricount. */
   currency?: CurrencyCode;
-  /** 1-based line it came from, for the summary screen. */
   line: number;
 }
 
 /**
- * The figure in the currency it was spent in, beside the plan's base one.
- * Only ever a hint: `shapeEntry` writes it when a rate reproduces the base
- * figure exactly, and the base figure otherwise.
+ * Only a hint: `shapeEntry` writes it when a rate reproduces the base figure
+ * exactly, and the base figure otherwise.
  */
 export interface LocalMoney {
   currency: CurrencyCode;
-  /** Positive. */
   amountMinor: number;
-  /** The source's own rate, 1 `currency` = `rate` base, if it gave one. */
+  /** 1 `currency` = `rate` base, if the source gave one. */
   rate: string | null;
-  /** name -> each share in `currency`, when the source states them and they add up. */
   owed?: Record<string, number>;
 }
 
-/** A transfer the plan would write. */
 export interface PlannedTransfer {
   from: string;
   to: string;
   amountMinor: number;
-  /** The `Description` cell, or null when it is only the `Payment` token again. */
   note: string | null;
-  /** As `PlannedEntry.local`, without shares. */
   local?: Omit<LocalMoney, "owed">;
-  /** As `PlannedEntry.currency`. */
   currency?: CurrencyCode;
   day: string;
   occurredAt: number;
-  /** As `PlannedEntry.recordedAt`. */
   recordedAt?: number;
   line: number;
 }
 
-/** A row that carried no money and was therefore dropped, checksum intact. */
 interface DroppedRow {
   line: number;
   description: string;
 }
 
 export interface ImportPlan {
-  /** What was read. The group keeps it (`Group.importedFrom`). */
   source: ImportSource;
-  /** The group's name, when the source has one (a tricount does; a CSV's is the filename). */
   title?: string;
-  /** The currency every figure in the plan is in. Becomes the group's base. */
   currency: CurrencyCode;
-  /** Member names in header order — the order the columns are in, which is the writer's sort. */
   members: string[];
   entries: PlannedEntry[];
   transfers: PlannedTransfer[];
   dropped: DroppedRow[];
-  /** name -> minor units, as the file's `Total balance` row states them. */
   stated: Record<string, number>;
-  /** The same for each other currency a CSV holds, in that currency's minor units. */
   statedOther?: Record<CurrencyCode, Record<string, number>>;
 }
 
-/** One row, with its line number and the cells padded out to the header's width. */
 interface Line {
   line: number;
   cells: string[];
 }
 
-/** A cell as a comparison: BOM gone, trimmed, case folded. */
 function token(cell: string | undefined): string {
   return (cell ?? "").replace(/^\uFEFF/, "").trim().toLocaleLowerCase();
 }
 
-/** A cell as a value: BOM gone, trimmed, case as typed. */
 function text(cell: string | undefined): string {
   return (cell ?? "").replace(/^\uFEFF/, "").trim();
 }
 
 /**
- * A figure keyed by a member's name. **Never `map[name] ?? 0`**: names come
- * from somebody else's file and `map["constructor"]` is a function, giving
- * NaN. `__proto__` is refused at the header instead (`readHeader`).
+ * **Never `map[name] ?? 0`**: names come from somebody else's file and
+ * `map["constructor"]` is a function.
  */
 export function at(map: Record<string, number>, key: string): number {
   return Object.hasOwn(map, key) ? map[key]! : 0;
 }
 
-/**
- * Read the rows into a plan, or throw an `ImportError` naming the line. The
- * currency decides how every amount parses, so it is found first.
- */
 export function readCsvGroup(
   rows: readonly (readonly string[])[],
   { dayToTimestamp }: ImportOptions,
 ): ImportPlan {
   const lines: Line[] = [];
   rows.forEach((cells, i) => {
-    // Blank lines are structure in this format, not data.
     if (cells.every((c) => text(c) === "")) return;
     lines.push({ line: i + 1, cells: [...cells] });
   });
@@ -249,8 +165,7 @@ export function readCsvGroup(
   const body = lines.slice(1);
 
   for (const row of body) {
-    // Fewer cells is a normal short row. More is data with nowhere to go, and
-    // ignoring it is how a column gets misread.
+    // Fewer cells is a normal short row; more is how a column gets misread.
     if (row.cells.length > width) {
       throw new ImportError("extra-cells",
         `line ${row.line}: ${row.cells.length} cells, header has ${width}`,
@@ -261,8 +176,7 @@ export function readCsvGroup(
 
   const currencyOf = readCurrencies(body);
 
-  // Found by its `Description`, never by position: its `Date` cell holds a real
-  // date, so a shape-based reader books the checksum as an expense.
+  // By its `Description`, never by position: its `Date` cell holds a real date.
   const isFoot = (row: Line) => token(row.cells[1]) === TOTAL_BALANCE;
   const feet = new Map<CurrencyCode, Record<string, number>>();
   for (const row of body) {
@@ -282,7 +196,6 @@ export function readCsvGroup(
   const entries: PlannedEntry[] = [];
   const transfers: PlannedTransfer[] = [];
   const dropped: DroppedRow[] = [];
-  /** Rows per currency, in order of first appearance, to choose the group's by. */
   const counts = new Map<CurrencyCode, number>();
 
   for (const row of body) {
@@ -305,7 +218,6 @@ export function readCsvGroup(
     throw new ImportError("no-entries", "nothing to import");
   }
 
-  // The busiest currency is the group's; a tie goes to whichever came first.
   let currency = [...counts.keys()][0]!;
   for (const [code, n] of counts) if (n > counts.get(currency)!) currency = code;
   const ownCurrency = <T extends { currency?: CurrencyCode }>(row: T): T => {
@@ -330,10 +242,7 @@ export function readCsvGroup(
   return plan;
 }
 
-/** The five columns, then the member names. */
 function readHeader({ line, cells }: Line): string[] {
-  // A trailing empty column is spreadsheet debris; a blank one between names
-  // is a member with no name, refused below.
   const trimmed = [...cells];
   while (trimmed.length > 0 && text(trimmed[trimmed.length - 1]) === "") trimmed.pop();
 
@@ -348,23 +257,17 @@ function readHeader({ line, cells }: Line): string[] {
   return names;
 }
 
-/**
- * The people a source names, refused if any can't be told apart or held.
- * `line` is the CSV header's; a tricount has none. Shared with `tricount.ts`.
- */
 export function checkMemberNames(names: readonly string[], line?: number): void {
   if (names.length === 0) throw new ImportError("no-members", "no members", line);
   if (names.some((n) => n === "")) {
     throw new ImportError("blank-member", "a member has no name", line);
   }
-  // Assigning `__proto__` on a plain object stores nothing, so the figures would
-  // vanish and surface as a baffling checksum mismatch later.
+  // Assigning `__proto__` stores nothing, so the figures would vanish into a
+  // baffling checksum mismatch.
   const reserved = names.find((n) => n === "__proto__");
   if (reserved !== undefined) {
     throw new ImportError("bad-member-name", `a member is called ${reserved}`, line, reserved);
   }
-  // Would merge two people's balances. `export.ts` emits this for a group
-  // holding two members of one name.
   const seen = new Set<string>();
   for (const name of names) {
     const key = name.toLocaleLowerCase();
@@ -376,8 +279,7 @@ export function checkMemberNames(names: readonly string[], line?: number): void 
 }
 
 /**
- * Each row's currency. A blank cell says nothing, which is fine while the file
- * holds one currency — it can only be that one — and refused once it holds
+ * A blank cell is fine while the file holds one currency, refused once it holds
  * several.
  */
 function readCurrencies(body: readonly Line[]): (row: Line) => CurrencyCode {
@@ -402,9 +304,8 @@ function readCurrencies(body: readonly Line[]): (row: Line) => CurrencyCode {
 }
 
 /**
- * A tricount's one currency, from every code it states, already upper-cased;
- * blanks say nothing. More than one is refused by name: its `amount`s are all
- * in the tricount's own, so a second means a payload we don't understand.
+ * More than one is refused: a tricount's `amount`s are all in its own, so a
+ * second means a payload we don't understand.
  */
 export function oneCurrency(stated: Iterable<{ code: string; line?: number }>): CurrencyCode {
   const found = new Set<string>();
@@ -424,7 +325,6 @@ export function oneCurrency(stated: Iterable<{ code: string; line?: number }>): 
   return codes[0]!;
 }
 
-/** One money cell. */
 function amount(row: Line, index: number, currency: CurrencyCode, exp: number): number {
   const raw = text(row.cells[index]);
   return strictMinor(raw, currency, exp, (why) => why === "unreadable"
@@ -434,10 +334,8 @@ function amount(row: Line, index: number, currency: CurrencyCode, exp: number): 
 }
 
 /**
- * One figure, strictly. Empty is zero; anything unparseable is refused, and so
- * is excess precision — `parseMinor` rounds it, right for a keyboard but wrong
- * here: extra decimals mean the wrong currency or column. `refuse` names the
- * source's own refusal. Shared with `tricount.ts`.
+ * Excess precision is refused, not rounded as `parseMinor` would: extra decimals
+ * mean the wrong currency or column.
  */
 export function strictMinor(
   raw: string,
@@ -493,7 +391,6 @@ function readRow(
   const transfer = asTransfer(row, members, deltas, cost, category, description, day, occurredAt);
   if (transfer) return { kind: "transfer", row: transfer };
 
-  // An income is negative in the amount and member columns alike; flip it here.
   const income = cost < 0;
   const amountMinor = Math.abs(cost);
   const net_ = deltas.map((d) => (income ? -d : d));
@@ -510,7 +407,8 @@ function readRow(
   const owed: Record<string, number> = {};
   members.forEach((name, i) => {
     const share = at(paid, name) - (net_[i] ?? 0);
-    // Omitted rather than zero: `resolveSplit` reads an `exact` split off this map.
+    // Omitted rather than zero: `resolveSplit` reads an `exact` split off this
+    // map.
     if (share !== 0) owed[name] = share;
   });
 
@@ -519,7 +417,6 @@ function readRow(
     row: {
       kind: income ? "income" : "expense",
       description,
-      // Protocol tokens, not categories anybody picked.
       categoryId: category === "" || token(category) === GENERAL || token(category) === PAYMENT
         ? null : category,
       day,
@@ -533,9 +430,8 @@ function readRow(
 }
 
 /**
- * A transfer, or null. Needs the `Payment` category **and** the shape: two
- * non-zero figures, equal and opposite, sized to the cost. Never reads the
- * description ("payment for dinner"). Token without shape imports as an expense.
+ * Needs the `Payment` category **and** the shape: two equal and opposite figures
+ * sized to the cost. Never reads the description ("payment for dinner").
  */
 function asTransfer(
   row: Line,
@@ -560,7 +456,6 @@ function asTransfer(
     from: from.name,
     to: to.name,
     amountMinor: cost,
-    // The bare token is not something a person wrote.
     note: token(description) === PAYMENT || description === "" ? null : description,
     day,
     occurredAt,
@@ -568,10 +463,6 @@ function asTransfer(
   };
 }
 
-/**
- * Who paid, from the positive columns. Several are apportioned by the
- * shares-split distribution, seeded off the row since no entity id exists yet.
- */
 function payersOf(
   members: readonly string[],
   net: readonly number[],
@@ -592,19 +483,14 @@ function payersOf(
   }).shares;
 }
 
-/** `2026-02-30` parses as a date and is not one. Shared with `tricount.ts`. */
+/** `2026-02-30` parses as a date and is not one. */
 export function isRealDay(day: string): boolean {
   const d = new Date(`${day}T00:00:00Z`);
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === day;
 }
 
-/**
- * The plan's balances against the source's, to the cent. Computed from the
- * plan because that is what the person approves. `tricount.ts` checks through
- * here too.
- */
+/** Computed from the plan, because that is what the person approves. */
 export function checkStated(plan: ImportPlan): void {
-  /** Per currency, since nothing here converts: each foot is in its own. */
   const computed = new Map<CurrencyCode, Record<string, number>>();
   const move = (code: CurrencyCode, name: string, minor: number) => {
     const sums = computed.get(code) ?? {};
@@ -642,10 +528,6 @@ export function checkStated(plan: ImportPlan): void {
   }
 }
 
-/**
- * Every rate a plan needs before it can be written: one per foreign currency
- * per day a row in it is dated. Sorted, so a lookup goes in a stable order.
- */
 export function ratesWanted(plan: ImportPlan): { currency: CurrencyCode; day: string }[] {
   const keys = new Set<string>();
   for (const row of [...plan.entries, ...plan.transfers]) {
@@ -657,7 +539,6 @@ export function ratesWanted(plan: ImportPlan): { currency: CurrencyCode; day: st
   });
 }
 
-/** The currencies a plan holds besides its own, busiest first. */
 export function otherCurrencies(plan: ImportPlan): CurrencyCode[] {
   const counts = new Map<CurrencyCode, number>();
   for (const row of [...plan.entries, ...plan.transfers]) {
@@ -666,7 +547,6 @@ export function otherCurrencies(plan: ImportPlan): CurrencyCode[] {
   return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([code]) => code);
 }
 
-/** How many entries a plan would write, which is what the summary counts. */
 export function plannedCount(plan: ImportPlan): number {
   return plan.entries.length + plan.transfers.length;
 }
