@@ -36,6 +36,7 @@ import {
   retimed, saveDraft, seedDraft, splitSeed, transferDraft, useDraft, withSplit,
   type EntryDraft, type SplitTab,
 } from "@/lib/draft";
+import { usePrefetch } from "@/lib/prefetch";
 
 /**
  * One form for all three kinds of entry (ADR-0010): switching kind keeps the
@@ -145,6 +146,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   leaving: RefObject<boolean>;
 }) {
   const router = useRouter();
+  usePrefetch([route.payers(groupId)]);
   const scan = useReceiptScan(groupId, useScanAs(groupId));
   const saveTo = formParent(groupId, draft.entryId, via);
   const base = group.baseCurrency;

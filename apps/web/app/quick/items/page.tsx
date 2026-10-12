@@ -12,6 +12,7 @@ import { bare } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useQuickPeople } from "@/lib/quick";
 import { useScanCredential } from "@/lib/scan/credential";
+import { usePrefetch } from "@/lib/prefetch";
 
 /**
  * Who had what, on a bill that belongs to no group (ADR-0035). The same grid
@@ -23,6 +24,7 @@ import { useScanCredential } from "@/lib/scan/credential";
  */
 export default function QuickItemsPage() {
   const router = useRouter();
+  usePrefetch([route.quickResult()]);
   const cred = useScanCredential();
   const people = useQuickPeople();
   const draft = useDraft(cred?.id);

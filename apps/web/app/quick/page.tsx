@@ -19,6 +19,7 @@ import { goUp } from "@/lib/nav";
 import { useRefusal } from "@/lib/refusal";
 import { addQuickPerson, clearQuickPeople, removeQuickPerson, useQuickPeople } from "@/lib/quick";
 import { registerScanCredential, useScanCredential } from "@/lib/scan/credential";
+import { usePrefetch } from "@/lib/prefetch";
 
 /**
  * A bill split with people who are not a group (ADR-0035): who is splitting,
@@ -31,6 +32,7 @@ import { registerScanCredential, useScanCredential } from "@/lib/scan/credential
  */
 export default function QuickPage() {
   const router = useRouter();
+  usePrefetch([route.quickItems()]);
   const cred = useScanCredential();
   const people = useQuickPeople();
   const draft = useDraft(cred?.id);

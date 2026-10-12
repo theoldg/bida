@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MenuButton, type SheetAction } from "./row-menu";
 import { copy } from "../lib/copy";
 import { route } from "../lib/group-link";
+import { usePrefetch } from "../lib/prefetch";
 
 /**
  * Everything the groups list can be asked for that isn't a group, behind one
@@ -14,6 +15,7 @@ import { route } from "../lib/group-link";
  */
 export function HomeMenu() {
   const router = useRouter();
+  usePrefetch([route.import(), route.settings(), route.about()]);
   const actions: SheetAction[] = [
     // First: it is an act, and the other two are screens.
     { label: copy.importData.title, icon: "import", onSelect: () => router.push(route.import()) },

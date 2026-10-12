@@ -12,6 +12,7 @@ import { keepLink, setPendingImport, typedLink } from "@/lib/import/pending";
 import {
   fetchTricount, TricountDownError, TricountOfflineError, tricountKey,
 } from "@/lib/import/tricount";
+import { usePrefetch } from "@/lib/prefetch";
 
 /**
  * Somebody else's ledger as a group of ours. Reached only from the groups
@@ -32,6 +33,7 @@ import {
  */
 export default function ImportPage() {
   const router = useRouter();
+  usePrefetch([route.importPlan()]);
   const file = useRef<HTMLInputElement>(null);
   const [link, setLink] = useState(typedLink);
   const [fetching, setFetching] = useState(false);

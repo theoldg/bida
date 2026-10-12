@@ -14,7 +14,10 @@ the device's back button is kept honest.
 Only static routes exist — a static export can't generate a page per group id.
 Each screen is its own route, with the group id (never the secret) in the query
 string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
-`lib/group-link.ts`'s `route` object is the one place URLs are built.
+`lib/group-link.ts`'s `route` object is the one place URLs are built. A
+`<Link>` loads its screen's code once it is in view; a screen that `router.push`es
+names the destinations to `usePrefetch` (`lib/prefetch.ts`), or the tap waits
+on the download — Settings off a menu did, Advanced off a link never.
 
 | Route | Purpose |
 |---|---|
@@ -262,6 +265,12 @@ on a real phone; `pnpm verify nav` drives each one it can.
   ([Back goes up](#routing))
   ([history manipulation intervention](https://github.com/chromium/chromium/blob/main/docs/history_manipulation_intervention.md)).
   Playwright's `goBack()` doesn't skip, so no check here can see it.
+
+- **A screen drawn in its first frame renders before the URL moves.** Next
+  pushes it in an insertion effect, so `location.href` read in a render is the
+  screen being left: the ledger read the list it had just gone back to as a
+  way back to itself. Ask about the screen's own address (`returning`,
+  `components/ledger-search.tsx`).
 
 - **Two navigations asked for in one tick are folded into the last one.** A
   screen that wants to both give its history entry away and push another on top

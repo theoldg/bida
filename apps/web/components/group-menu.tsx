@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { copy } from "../lib/copy";
 import { exportFilename, groupCsv, handOffCsv } from "../lib/export";
 import { route } from "../lib/group-link";
+import { usePrefetch } from "../lib/prefetch";
 import { type GroupData } from "../lib/hooks";
 import { useGroupActions } from "./group-actions";
 import { MenuButton, type SheetAction } from "./row-menu";
@@ -21,6 +22,7 @@ import { MenuButton, type SheetAction } from "./row-menu";
  */
 export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData }) {
   const router = useRouter();
+  usePrefetch([route.members(groupId), route.settings()]);
   // Unlike the groups list, this screen *is* the group: once it's forgotten
   // there is nothing here to come back to, so leave and don't leave it behind
   // in the history either.
