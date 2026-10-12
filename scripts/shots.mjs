@@ -1,20 +1,8 @@
 #!/usr/bin/env node
 /**
- * `pnpm shots` — photograph every screen in one browser launch.
- *
- * Use it after building or changing a screen, or when something looks wrong —
- * not after every edit (docs/standing-instructions.md).
- *
- *   0. builds the static export if it is missing or stale;
- *   1. serves it over http — not `next dev`, whose quirks differ from what
- *      ships;
- *   2. seeds a group, members and expenses through the real UI, so the shots
- *      show a populated ledger and the harness fails when an unphotographed
- *      screen breaks;
- *   3. walks every route in both themes, one PNG each into shots/.
- *
- * Chromium comes from PLAYWRIGHT_BROWSERS_PATH (already on disk in the agent
- * environment). Never run `playwright install`.
+ * `pnpm shots` — photograph every screen, both themes, into shots/
+ * (docs/shots.md). Serves the built export, not `next dev`, whose quirks differ
+ * from what ships; seeds through the real UI. Never run `playwright install`.
  */
 import { Buffer } from "node:buffer";
 import { mkdir, rm } from "node:fs/promises";
@@ -25,20 +13,16 @@ import { PHOTO, stubScan } from "./lib/receipts.mjs";
 
 const SHOTS = join(ROOT, "shots");
 
-/** Build a group with three people and one of each kind of entry, via the UI. */
 async function seed(page, base) {
   const groupId = await newGroup(page, base, {
     name: "Marrakech", me: "Theo", members: ["Marie", "Sam"],
   });
 
-  // A plain expense, then a co-sponsored one.
   await addExpense(page, base, groupId, { amount: "4800", what: "Riad Jnane" });
   await addExpense(page, base, groupId, { amount: "6200", what: "Dinner", coSponsor: true });
-  // Then the two rows the personal lens exists for: one somebody else paid
-  // that you owe a share of (red), and one with nothing to do with you (faded).
+  // The two rows the personal lens exists for: one you owe a share of, one with
+  // nothing to do with you.
   await addExpense(page, base, groupId, { amount: "900", what: "Taxi", paidBy: "Marie" });
-  // One in the currency the trip is actually spent in, so the ledger shows a
-  // converted figure and the entry a rate worth photographing.
   await addExpense(page, base, groupId, {
     amount: "62000", what: "Café Clock", currency: "MAD", rate: "0.0921",
   });
@@ -46,16 +30,11 @@ async function seed(page, base) {
     amount: "450", what: "Marie's sunglasses", paidBy: "Marie", exclude: "Theo",
   });
 
-  // One of each of the other two kinds, so the ledger shot shows what the
-  // ledger actually holds: an income's verb and signed figure, and a transfer
-  // between two people (ADR-0010).
   await addEntry(page, base, groupId, { kind: "Income", amount: "1500", what: "Deposit back" });
   await addTransfer(page, base, groupId, { amount: "800", from: "Sam", to: "Theo" });
 
-  // ...and one edit, so the history screens have a revision that is not just a
-  // create: something with a diff to render. Two fields, because an entry is
-  // saved whole and that is what a revision usually looks like — the shot
-  // should show the sentence *and* the line under it.
+  // Two fields, as an entry is saved whole: the shot shows the sentence *and* the
+  // line under it.
   await page.getByText("Riad Jnane").click();
   await page.waitForURL(/\/g\/entry\?/);
   await page.getByRole("link", { name: "Edit", exact: true }).click();
@@ -63,8 +42,7 @@ async function seed(page, base) {
   await page.locator("input.amount").fill("5100");
   await page.locator("#what").fill("Riad Jnane, two nights");
   await page.getByRole("button", { name: "Save" }).click();
-  // Save goes back to where the form was opened from — here, the entry we
-  // tapped Edit on, not the ledger.
+  // Save goes back to where the form was opened from.
   await page.waitForURL(/\/g\/entry\?/);
   return groupId;
 }
@@ -76,9 +54,8 @@ async function addEntry(
 ) {
   await page.goto(`${base}/g/entry/edit?id=${groupId}`);
   if (kind) await pick(page, '[aria-label="What kind of entry"]', kind);
-  // Currency first: there is no feed behind the static export, so a currency
-  // new to the group opens the rate dialog once the look-up fails, and the
-  // number is typed the way a phone with no signal would have to type it.
+  // No feed behind the static export, so the rate dialog opens and the number is
+  // typed.
   if (currency) {
     await pick(page, '[aria-label="Currency"]', currency);
     const dialog = page.locator("dialog.scrim");
@@ -92,18 +69,14 @@ async function addEntry(
   await page.locator("input.amount").fill(amount);
   await page.locator("#what").fill(what);
   if (paidBy) await pick(page, "#paidby", paidBy);
-  // The split editor is on this form (ADR-0010), so leaving someone out is a
-  // tap here.
   if (exclude) await page.getByRole("button", { name: `Leave ${exclude} out` }).click();
   if (coSponsor) {
     await page.locator("#paidby").click();
     await page.getByRole("option", { name: "Multiple people" }).click();
     await page.waitForURL(/\/g\/payers/);
-    // Marie chips in 20,00; whoever was already paying takes the rest.
     await page.locator(".rows .row").filter({ hasText: "Marie" })
       .getByLabel(/contribution/).fill("2000");
-    // ...and the person who was already paying takes the remainder: a tap on
-    // the name clears the whole amount they held, a second hands them the rest.
+    // A tap on the name clears what they held, a second hands them the rest.
     const theo = page.locator(".rows .row").filter({ hasText: "Theo" });
     await theo.getByRole("button", { name: /^Clear/ }).click();
     await theo.getByRole("button", { name: /the rest$/i }).click();
@@ -114,7 +87,6 @@ async function addEntry(
   await page.waitForURL(/\/g\?id=/);
 }
 
-/** A transfer: no split, no payer picker, two sides and an arrow. */
 async function addTransfer(page, base, groupId, { amount, from, to }) {
   await page.goto(`${base}/g/entry/edit?id=${groupId}&kind=transfer`);
   await page.waitForSelector(".transfer");
@@ -125,14 +97,10 @@ async function addTransfer(page, base, groupId, { amount, from, to }) {
   await page.waitForURL(/\/g\?id=/);
 }
 
-/** Each side of a transfer opens our own picker, not a <select> (ADR-0008). */
 const pickSide = (page, label, name) => pick(page, `[aria-label="${label}"]`, name);
 
 /**
- * A Splitwise export, as `/import` reads one: three people, an uneven expense,
- * an income, a co-sponsored row, a transfer, and a row carrying no money. The
- * refused twin differs by one cell, so the shot shows what a person sees when
- * they have a date their spreadsheet wrote its own way.
+ * The refused twin differs by one cell: a date the spreadsheet wrote its own way.
  */
 const CSV = [
   "Date,Description,Category,Cost,Currency,Ada,Sam,Theo",
@@ -166,7 +134,6 @@ const routes = (g) => [
   ["export", `/g/export?id=${g}`],
   ["entry-expense", `/g/entry/edit?id=${g}`],
   ["entry-transfer", `/g/entry/edit?id=${g}&kind=transfer`],
-  // A quick split has no group in it at all (ADR-0035) — the id is ignored.
   ["quick", "/quick"],
 ];
 
@@ -184,9 +151,8 @@ async function main() {
       const groupId = await seed(page, base);
 
       for (const [name, path] of routes(groupId)) {
-        // The groups list is reached the way a person reaches it on a phone
-        // that has been in a group: launch, then back out of the group the
-        // launch reopens (apps/web/lib/launch.ts).
+        // The way a phone that has been in a group reaches it: launch, then back
+        // out.
         if (path === "/") await openGroupsList(page, base);
         else await page.goto(base + path);
         await page.waitForTimeout(250);
@@ -194,9 +160,7 @@ async function main() {
         process.stdout.write(`${theme}/${name} `);
       }
 
-      // Settling up asks in a card rather than on a form: tapping a suggested
-      // payment states the payment and offers to record it, with nothing in it
-      // to type into. It has no URL of its own, so this is the only shot of it.
+      // The settle-up card has no URL of its own.
       await page.goto(`${base}/g/balances?id=${groupId}`);
       await page.locator("button.card").first().click();
       await page.waitForSelector("dialog.scrim .settle");
@@ -205,8 +169,7 @@ async function main() {
       process.stdout.write(`${theme}/settle-record `);
       await page.keyboard.press("Escape");
 
-      // The picker behind either side of a transfer, which is a <dialog>
-      // rather than the browser's wheel (ADR-0008), so it has no URL either.
+      // A <dialog>, so it has no URL either.
       await page.goto(`${base}/g/entry/edit?id=${groupId}&kind=transfer`);
       await page.waitForSelector(".transfer");
       await page.getByLabel("Who received it").click();
@@ -216,8 +179,6 @@ async function main() {
       process.stdout.write(`${theme}/transfer-who `);
       await page.keyboard.press("Escape");
 
-      // An income: the same form with the segmented control flipped, so the
-      // relabelled payer picker and the missing Receipt tab are visible.
       await page.goto(`${base}/g/entry/edit?id=${groupId}`);
       await pick(page, '[aria-label="What kind of entry"]', "Income");
       await page.locator("input.amount").fill("300");
@@ -226,41 +187,30 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-entry-income.png`) });
       process.stdout.write(`${theme}/entry-income `);
 
-      // An "as amounts" split with one figure typed and everyone else sharing
-      // what it leaves: the three row states, and the rest's quiet field.
       await page.goto(`${base}/g/entry/edit?id=${groupId}`);
       await page.locator("input.amount").fill("120");
       await page.locator("#what").fill("Hammam");
       await page.getByRole("button", { name: "As amounts" }).click();
-      // 25 of the 120, deliberately: the docked line reads the €95 the rest
-      // shares in money, not "9500 minor units".
+      // The docked line reads the €95 the rest shares in money.
       await page.getByRole("textbox", { name: /Marie.s amount/ }).fill("25");
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-expense-split-amounts.png`) });
       process.stdout.write(`${theme}/expense-split-amounts `);
 
-      // Who paid, mid-allocation: the payer side's verdict line, in the two
-      // colours the split editor's own footer uses. It hangs off the draft the
-      // block above just typed, which is why it can't be reached by URL.
+      // Hangs off the draft typed above, so it can't be reached by URL.
       await page.locator("#paidby").click();
     await page.getByRole("option", { name: "Multiple people" }).click();
       await page.waitForURL(/\/g\/payers/);
-      // Marie's field, typed into without touching Theo's — the same shortfall
-      // the split screen shot above catches, on the payer side this time.
       await page.locator(".rows .row").filter({ hasText: "Marie" })
         .getByLabel(/contribution/).fill("25");
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-payers.png`) });
       process.stdout.write(`${theme}/payers `);
 
-      // Who had what — reached only by a scan, since the draft is in memory: a
-      // real photo upload with the model's answer stubbed from `pnpm drive`'s
-      // canned bill (`lib/receipts.mjs`). Long on purpose, to show the initials
-      // header freezing over a bill taller than the screen. Shot twice: as printed,
-      // then with its "×2" salad opened onto its two portions.
+      // Reached only by a scan, the answer stubbed from `pnpm drive`'s canned
+      // bill. Long, to show the header freezing over a tall bill.
       await stubScan(page, "cafe-clock");
 
-      // Scan first: the whole screen behind the camera above the ledger's "+".
       await page.goto(`${base}/g/scan?id=${groupId}`);
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-scan.png`) });
@@ -270,9 +220,7 @@ async function main() {
       await page.waitForTimeout(200);
       await page.locator('input[aria-label="Upload a receipt photo"]')
         .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
-      // A scan fills the form and stops there — the grid is the tap after it,
-      // never a place the scan sends you (docs/scan-reading.md). On a
-      // bill nobody has been assigned a line of, that tap says "Assign".
+      // A scan fills the form and stops there; the grid is the tap after it.
       await page.getByRole("link", { name: /(Assign|Edit) who.had.what/ }).click();
       await page.waitForURL(/entry\/items/);
       await page.waitForTimeout(250);
@@ -283,9 +231,7 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what-unfolded.png`) });
       process.stdout.write(`${theme}/who-had-what-unfolded `);
 
-      // A quick split, all the way through: the same grid with nobody's
-      // group behind it, and the answer it ends on (ADR-0035). Bare figures
-      // throughout — nothing here converts, so a currency would be a label.
+      // Bare figures throughout: nothing in a quick split converts.
       await stubScan(page, "two-for-one");
       await page.goto(`${base}/quick`);
       for (const who of ["Ana", "Bo", "Cy"]) {
@@ -293,15 +239,11 @@ async function main() {
         await page.getByLabel("Add someone").press("Enter");
       }
       await page.waitForTimeout(150);
-      // The empty screen is in `routes` above; this is the same one with a
-      // table's worth of people on it and the camera live.
       await page.screenshot({ path: join(SHOTS, `${theme}-quick-people.png`) });
       process.stdout.write(`${theme}/quick-people `);
       await page.locator('input[aria-label="Upload a receipt photo"]')
         .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
       await page.waitForURL(/quick\/items/);
-      // Everybody had the knots and the soda; a pizza each for the other two.
-      // A folded run's cell says "shared the 2" once anyone else is on it.
       const any = (who, item) => new RegExp(`^${who} (had (all \\d+ )?|shared the \\d+ )${item}`);
       for (const label of [
         /^Ana had Ham pizza/, /^Bo had Cheese pizza/,
@@ -313,23 +255,16 @@ async function main() {
       process.stdout.write(`${theme}/quick-items `);
       await page.getByRole("button", { name: "Done" }).click();
       await page.waitForURL(/quick\/result/);
-      // Every row open, which is how the screen arrives: the answer is the
-      // bill, not a summary of one.
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-quick-result.png`) });
       process.stdout.write(`${theme}/quick-result `);
 
-      // The import past its first screen: the plan a file is read into, the same
-      // screen refused, and the question it ends on. The OS picker can't be
-      // driven, so the file goes straight to its input — the real path.
+      // The OS picker can't be driven, so the file goes straight to its input.
       await page.goto(`${base}/import`);
       await page.setInputFiles('input[type="file"]', {
         name: "Marrakech.csv", mimeType: "text/csv", buffer: Buffer.from(CSV),
       });
       await page.waitForSelector(".rows .row");
-      // The name field is left as the file filled it: a Splitwise export is
-      // named after the group, and the shot should show what a person actually
-      // arrives at rather than a field typed into for the camera.
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-import-plan.png`) });
       process.stdout.write(`${theme}/import-plan `);
@@ -348,21 +283,15 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-import-refused.png`) });
       process.stdout.write(`${theme}/import-refused `);
 
-      // Adding someone is the last row of the list, mid-name — boxed, because
-      // that name is not on the list until its plus is pressed.
       await page.goto(`${base}/g/members?id=${groupId}`);
       await page.getByLabel("Add someone").fill("Nadia");
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-add-member.png`) });
       process.stdout.write(`${theme}/add-member `);
 
-      // The group's kebab, open: the menu card carrying as many items as it
-      // ever holds, a destructive one last. The groups list's is the same card
-      // with two rows on it, so this is the shot that shows the whole of it.
+      // The group's kebab carries as many items as a menu ever holds.
       await page.goto(`${base}/g?id=${groupId}`);
 
-      // A ledger row's own menu: the row risen out of a list that has stepped
-      // back, and the card hanging off it.
       await page.locator(".entryrow").nth(1).click({ button: "right" });
       await page.waitForSelector(".rowmenu");
       await page.waitForTimeout(300);
@@ -376,9 +305,6 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-group-menu.png`) });
       process.stdout.write(`${theme}/group-menu `);
 
-      // Forgetting lives only in the groups list's row menu, so the shot goes
-      // through it: a right click opens the menu, and the confirmation is the
-      // dialog this app draws in place of confirm() (ADR-0008).
       await openGroupsList(page, base);
       await page.locator(".rows .row").first().click({ button: "right" });
       await page.getByRole("menuitem", { name: "Forget group" }).click();
@@ -386,8 +312,6 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-forget.png`) });
       process.stdout.write(`${theme}/forget `);
 
-      // The rate dialog, opened from the entry it belongs to: one number,
-      // both ways round, and where it came from.
       await page.goto(`${base}/g?id=${groupId}`);
       await page.locator("a.row").filter({ hasText: "Café Clock" }).click();
       await page.waitForURL(/\/g\/entry\?/);
@@ -398,8 +322,7 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-rate.png`) });
       process.stdout.write(`${theme}/rate `);
 
-      // Deleting an entry — the last thing in the app that asked with the
-      // browser's own confirm(). Opened and photographed, never confirmed.
+      // Opened and photographed, never confirmed.
       await page.goto(`${base}/g?id=${groupId}`);
       await page.getByText("Riad Jnane").click();
       await page.waitForURL(/\/g\/entry\?/);
@@ -408,9 +331,7 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-delete-entry.png`) });
       process.stdout.write(`${theme}/delete-entry `);
 
-      // The kebab that holds the import, and the empty list behind it: a
-      // phone that holds no groups at all, in a context of its own, because
-      // the one above has a trip in it.
+      // A phone of its own: the one above has a trip in it.
       const fresh = await newPhone(browser, { ...PIXEL_9A, colorScheme: theme });
       const blank = await fresh.newPage();
       await blank.goto(`${base}/`);

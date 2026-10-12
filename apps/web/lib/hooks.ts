@@ -21,24 +21,17 @@ import { tick } from "./haptics";
 import { formatJoinLink, route } from "./group-link";
 
 /**
- * Every screen reads through these. Two rules:
- *   - Nothing here writes. Writes go through lib/db/commands/, always.
- *   - Derived money (balances, settle-up) is computed here from the
- *     materialised rows, never stored. It is cheap and it cannot go stale.
+ * Every screen reads through these. Nothing here writes, and derived money is
+ * computed here from the rows, never stored.
  */
 
-/**
- * The rows that haven't been tombstoned — core's `alive`, over Dexie's arrays.
- */
 function living<T extends { deletedAt?: number | null }>(rows: T[] | undefined): T[] {
   return (rows ?? []).filter((r) => !r.deletedAt);
 }
 
 /**
- * The keyed shape core's readers want, from Dexie's arrays — **each entry
- * valued at the rate it is read at** (`atCurrentRates`). One builder (core's
- * `stateFromRows`), because one screen reading the stored `baseAmountMinor`
- * while the rest re-derive it is how screens disagree (ADR-0005).
+ * Each entry valued at the rate it is read at, by one builder: one screen reading
+ * the stored `baseAmountMinor` is how screens disagree (ADR-0005).
  */
 function stateOf(
   group: Group | undefined,
@@ -53,8 +46,8 @@ function stateOf(
 export function useDevice(): DeviceRecord | undefined {
   const [fallback, setFallback] = useState<DeviceRecord>();
   const live = useLive("device", () => db().device.get("device"), []);
-  // The record is created on first read; a live read alone would sit at
-  // undefined forever on a brand-new phone.
+  // The record is created on first read; a live read alone would sit at undefined
+  // forever on a brand-new phone.
   useEffect(() => {
     if (live === undefined) void getDevice().then(setFallback);
   }, [live]);
@@ -62,11 +55,8 @@ export function useDevice(): DeviceRecord | undefined {
 }
 
 /**
- * The invite secret for a group, if this device holds it.
- *
  * `null`, not `undefined`, for no key row: to `useLive` `undefined` is a read
- * that hasn't answered, so the demo group (core/demo.ts) or a dropped key
- * would show "Still reading this phone's data…" over a drawn ledger.
+ * that hasn't answered.
  */
 export function useGroupSecret(groupId: string | undefined): string | undefined {
   return useLive("groupSecret", async () => {
@@ -75,10 +65,6 @@ export function useGroupSecret(groupId: string | undefined): string | undefined 
   }, [groupId]) ?? undefined;
 }
 
-/**
- * A "done" that says so for a moment and then flips back by itself — Copied,
- * and the like — so there is no dialog to dismiss.
- */
 export function useFlash(ms = 1600): [boolean, (on: boolean) => void] {
   const [on, setOn] = useState(false);
   useEffect(() => {
@@ -90,16 +76,13 @@ export function useFlash(ms = 1600): [boolean, (on: boolean) => void] {
 }
 
 /**
- * The invite link for a group, and a one-tap copy of it. Clipboard, not
- * `navigator.share` — the share sheet is a different detour on every phone.
- * `copied` flips back on its own, so no dialog to dismiss.
+ * Clipboard, not `navigator.share`: the share sheet is a different detour on
+ * every phone.
  */
 export function useInviteLink(groupId: string | undefined): {
   copy: (() => Promise<void>) | undefined;
   copied: boolean;
-  /** The link itself, for showing when the clipboard won't take it. */
   link: string | undefined;
-  /** The last attempt was refused, and the link has to be read instead. */
   failed: boolean;
   clearFailure: () => void;
 } {
@@ -111,15 +94,13 @@ export function useInviteLink(groupId: string | undefined): {
 
   const copy = useMemo(() => {
     if (!link) return undefined;
-    // A write fails on an insecure context, a denied permission or no clipboard
-    // (lib/clipboard.ts). Never swallow it: the link is the whole access model,
-    // so a refusal puts it on screen to be read instead.
+    // Never swallow a refusal: the link is the whole access model, so it goes on
+    // screen to be read instead.
     return async () => {
       try {
         await writeClipboardText(link);
         setCopied(true);
-        // The check that says so is a small glyph in a top bar, and on the
-        // groups list it is in a menu that has already closed (lib/haptics.ts).
+        // The check is a small glyph, or in a menu that has already closed.
         tick();
       } catch {
         setFailed(true);
@@ -132,42 +113,26 @@ export function useInviteLink(groupId: string | undefined): {
 
 export interface GroupData {
   group: Group | undefined;
-  /** Live members, sorted by name — the list every picker offers. */
   members: Member[];
-  /**
-   * Every member the group has ever had, removed ones included: an entry's id
-   * outlives the member (removal is a tombstone), and the name matters most
-   * exactly when they've left.
-   */
+  /** Removed ones included: the name matters most exactly when they've left. */
   memberById: Map<string, Member>;
-  /** Their name, or `copy.unknown`. Use this rather than reaching into the map. */
   nameOf: (id: string) => string;
-  /** True for a member who has been removed but is still named on an entry. */
   hasLeft: (id: string) => boolean;
-  /** Live expenses, newest first, each valued at the rate it is read at (`atCurrentRates`). */
   expenses: Expense[];
-  /** Live transfers, newest first, valued as `expenses` are. */
   settlements: Settlement[];
-  /** The old rate registry, keyed by currency code: a fallback for `latestRate`. See `ExchangeRate`. */
+  /** The old rate registry: a fallback for `latestRate`. */
   rates: Record<string, ExchangeRate>;
-  /** Every currency entries are written in, busiest first — the picker's first rows. */
   currencies: CurrencyInUse[];
   balances: BalanceReport;
   transfers: Transfer[];
-  /** The member this device is, in this group. Undefined until they pick one. */
   me: string | undefined;
   /**
-   * The invariant this write would break, as far as this device can see, or
-   * undefined. **The only source of a refusal in the app** — a screen deciding
-   * for itself is the drift docs/invariants.md is about. A courtesy either way:
-   * `healGroup` is what makes the state legal when it loses.
+   * **The only source of a refusal in the app** — a screen deciding for itself is
+   * the drift docs/invariants.md is about. `healGroup` makes the state legal when
+   * it loses.
    */
   guard: (draft: OpDraft) => RegisteredInvariant | undefined;
-  /**
-   * The group with its tombstones: every entry, member and rate it has ever
-   * had, unpriced. For the deleted entry's screen and what restoring it would
-   * bring back — everything else reads the live arrays above.
-   */
+  /** For the deleted entry's screen; everything else reads the live arrays. */
   withTombstones: GroupState;
   pendingOps: number;
   loading: boolean;
@@ -180,9 +145,8 @@ const EMPTY_REPORT: BalanceReport = {
 };
 
 /**
- * Whether what the worker pulled ahead for this group is in (`applyStash`).
- * Held as loading until then, so a group opened from a notification draws
- * with the news already in it rather than animating it in a moment later.
+ * Held as loading until then, so a group opened from a notification draws with
+ * the news already in it.
  */
 function useStashApplied(groupId: string | undefined): boolean {
   const [applied, setApplied] = useState<string>();
@@ -228,9 +192,7 @@ export function useGroupData(groupId: string | undefined): GroupData {
     const state = stateOf(
       rows.group, members, sortedExpenses, sortedSettlements, living(rows.rates),
     );
-    // Back out of the repriced state, in the order they went in — `stateOf`
-    // keys them and loses the sort. Every screen reads these two arrays, so
-    // none of them can be left looking at a stale conversion.
+    // `stateOf` keys them and loses the sort.
     const bySortOrder = <T extends { id: string }>(rows: T[], keyed: Record<string, T>) =>
       rows.map((row) => keyed[row.id] ?? row);
     const expenses = bySortOrder(sortedExpenses, state.expenses);
@@ -238,9 +200,8 @@ export function useGroupData(groupId: string | undefined): GroupData {
 
     const balances = computeBalances(state);
     const memberById = new Map((rows.members ?? []).map((m) => [m.id, m]));
-    // Detection needs the tombstones `state` filtered out — a removed member on a
-    // live entry is the point. Folded from raw rows and handed to the registry,
-    // never re-derived here.
+    // Detection needs the tombstones: a removed member on a live entry is the
+    // point.
     const withTombstones = stateFromRows(rows);
     return {
       group: rows.group,
@@ -264,20 +225,11 @@ export function useGroupData(groupId: string | undefined): GroupData {
 }
 
 /**
- * Send a phone that hasn't said who it is to the screen that asks.
+ * A device with no claimed member has no honest `actor`. **Never fall back to the
+ * member an action is about**: removing Bruno would read "Bruno left".
  *
- * A device with no claimed member has no honest `actor` for an op. **Never
- * fall back to the member an action is *about***: removing Bruno would read
- * "Bruno left the group", and there is no leaving.
- *
- * Every `/g` screen redirects (each is reachable on its own) except
- * `/g/claim`. Returns whether we are leaving, so the caller draws a frame
- * rather than somebody else's ledger.
- *
- * **Asks the device again before leaving.** `data` can be the read's last
- * answer (`useLive`'s `remembered`) from before the claim landed, so the
- * Continue that just answered the question would be bounced straight back to
- * it — a ledger first mounted unclaimed, then claimed, then reopened.
+ * Asks the device again before leaving: `data` can be the read's last answer from
+ * before the claim landed, bouncing the Continue that just answered it.
  */
 export function useClaimGate(groupId: string | undefined, data: GroupData): boolean {
   const router = useRouter();
@@ -297,23 +249,15 @@ export interface GroupSummary {
   group: Group;
   memberCount: number;
   entryCount: number;
-  /** This device's net position, or undefined if they haven't said who they are. */
   netMinor: number | undefined;
-  /** When the group last changed: its newest op's wall time, whoever made it. */
   lastActivity: number;
-  /** The member this device is, in this group — same undefined-until-claimed as `GroupData.me`. */
   me: string | undefined;
-  /** What the ledger's history dot counts (`components/history-button.tsx`). */
   newCount: number;
 }
 
 /**
- * How many groups this phone holds a key to but has never seen — waiting on a
- * first sync. A home-screen icon arrives carrying its invites (docs/ios.md),
- * and without this its first launch shows the empty state.
- *
- * **Count keys against groups, minus `leftGroups`** — a forgotten group with
- * ops still to push keeps its key until they go.
+ * Keys held for groups never seen: an icon arrives carrying its invites, and
+ * without this its first launch shows the empty state. Minus `leftGroups`.
  */
 export function useArrivingGroups(): number | undefined {
   return useLive("arrivingGroups", async () => {
@@ -329,12 +273,10 @@ export function useArrivingGroups(): number | undefined {
   }, []);
 }
 
-/** The groups list, with each group's net for whoever is holding the phone. */
 export function useGroupSummaries(): GroupSummary[] | undefined {
   return useLive("groupSummaries", async () => {
     const d = db();
-    // Each table whole and bucketed here, not a read per group: a constant
-    // number of IndexedDB round trips.
+    // Each table whole and bucketed here: a constant number of round trips.
     const [groups, device, members, expenses, settlements, rates, keys] = await Promise.all([
       d.groups.toArray(),
       d.device.get("device"),
@@ -344,8 +286,6 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
       d.rates.toArray(),
       d.groupKeys.toArray(),
     ]);
-    // The log is read only for a group pulled past its mark: one with changes
-    // waiting, or pulled since its ledger was last open.
     const newCount = async (groupId: string): Promise<number> => {
       const key = keys.find((k) => k.groupId === groupId);
       if (!device || key?.seenSeq === undefined || key.lastSeq <= key.seenSeq) return 0;
@@ -362,8 +302,7 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
       }
       return map;
     };
-    // Last *changed*, not the newest entry's date: an edit, a delete or a
-    // back-dated expense is activity too. One indexed read per group.
+    // An edit, a delete or a back-dated expense is activity too.
     const lastChanged = async (group: Group): Promise<number> => {
       const newest = await d.ops.where("[groupId+hlc]")
         .between([group.id, Dexie.minKey], [group.id, Dexie.maxKey]).last();
@@ -375,9 +314,7 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
     const left = new Set(device?.leftGroups ?? []);
     const out: GroupSummary[] = [];
     for (const group of groups) {
-      // Left means gone from this phone, whether or not the group itself
-      // still has other people in it — this list is "your groups", not
-      // "every group this device has ever synced".
+      // This list is "your groups", not every group the device has synced.
       if (left.has(group.id)) continue;
       const live = {
         m: m.get(group.id) ?? [], e: e.get(group.id) ?? [], s: s.get(group.id) ?? [],
@@ -400,22 +337,19 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
 }
 
 /**
- * How sync is actually going for one group. **Never `navigator.onLine`** — it
- * says there is a link, not that the server answers; a 500, a D1 outage or a
- * rejected key all look "online". This reads what the engine recorded.
+ * **Never `navigator.onLine`**: a 500, a D1 outage or a rejected key all look
+ * "online". This reads what the engine recorded.
  */
 interface SyncHealth {
-  /** Failing for long enough to be worth saying out loud — see FAILURES_BEFORE_WARNING. */
   failing: boolean;
-  /** The server refused this device's secret. Retrying cannot fix it; a fresh link can. */
+  /** Retrying cannot fix it; a fresh link can. */
   rejected: boolean;
-  /** When this device last completed a sync of this group, if it ever has. */
   lastSyncedAt: number | undefined;
 }
 
 /**
- * One failure is a dropped packet on a train; two, spaced by the engine's
- * backoff, is a server that isn't there — only then a banner.
+ * One failure is a dropped packet on a train; two, spaced by backoff, is a server
+ * that isn't there.
  */
 const FAILURES_BEFORE_WARNING = 2;
 
@@ -437,10 +371,8 @@ export function useSyncHealth(groupId: string | undefined): SyncHealth {
 }
 
 /**
- * The host this copy was opened from — `""` until the bundle lands. Only the
- * browser knows it (dev and self-hosted Workers differ,
- * [hosting.md](../../../docs/hosting.md)), so it can't be baked into the
- * export; before hydration a sentence shows the bare path.
+ * Only the browser knows it (dev and self-hosted Workers differ), so it can't be
+ * baked into the export.
  */
 export function useHost(): string {
   const [host, setHost] = useState("");
@@ -448,7 +380,6 @@ export function useHost(): string {
   return host;
 }
 
-/** Whether the browser thinks it is online. Drives the offline banner. */
 export function useOnline(): boolean {
   const [online, setOnline] = useState(true);
   useEffect(() => {
