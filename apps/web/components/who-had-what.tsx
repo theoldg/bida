@@ -264,7 +264,7 @@ export function WhoHadWhat({
   }, [pending]);
 
   const involvedMembers = people.filter((m) => involved.has(m.id));
-  // Asked of lib/draft, not of weightsFromItems directly: what these rows are
+  // Asked of lib/draft, not of receiptBreakdown directly: what these rows are
   // worth has to be the same answer the form gives once Done has written them
   // down, and the seed that decides it is not this screen's to pick.
   const { weights } = receiptBill(draft, items, assignments, involved);

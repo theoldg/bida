@@ -128,18 +128,18 @@ under it cannot disagree.
 - **`receiptItems.length` is not how many items the bill has.** A line of
   several is kept as portions, so "Salad ×2" is two rows; say a count with
   `printedCount` (or `printedBill`), never the array's length.
-- **What a bill is worth is asked of `receiptBill` (lib/draft.ts), never of
-  `weightsFromItems` under it.** Dividing a line leaves a remainder cent, and
-  only `tiebreakSeed` says whose it is, and a screen choosing its own seed
-  quotes a cent the form then saves on someone else. The wrapper takes the rows
-  and names the seed itself, so
-  a caller cannot get it wrong, and `pnpm rules` fails on a screen that reaches
-  past it.
+- **What a bill is worth is asked of `receiptBill` or, saved, `savedBill`
+  (lib/draft.ts), never of `receiptBreakdown` under them.** Dividing a line
+  leaves a remainder cent, and only `tiebreakSeed` says whose it is, and a
+  screen choosing its own seed quotes a cent the form then saves on someone
+  else. The wrappers take the rows and name the seed themselves, so a caller
+  cannot get it wrong, and `pnpm rules` fails on a screen that reaches past them.
 - **Two things that mean different things to a person are two things in the
   code, however alike their arithmetic.** `receipt` is its own `SplitMode`, not
   `shares` with a flag; old ops carrying the flag are upgraded on the way out of
   the op log (`upgradeReceiptSplit`). That upgrade also takes unflagged `shares`
-  beside a bill, so a write must flag parts typed there (`partsBesideBill`).
+  beside a bill written before `RECEIPT_MODE_SINCE`, so a write must flag parts
+  typed there (`partsBesideBill`).
 - `validateSplit(0, spec)` reads as **fully allocated**, not incomplete
   (`allocated === total === 0`). The verdict is `splitFooter`'s
   (`lib/format.ts`), so "€0.00 of €0.00 allocated" is unreachable rather than

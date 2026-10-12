@@ -348,7 +348,10 @@ would want its own columns.
 **v8 declares all of it but `notices`**, which v9 adds with no upgrade;
 earlier versions are collapsed away. The v8 upgrade does one thing — re-arm every op as pending and reset each sync
 cursor — so a phone's log refills a server copy that was wiped for sealing
-([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)).
+([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). v10 refolds
+every cached `receipt` row from its ops, for a fold that learned to read some
+of them as parts (`RECEIPT_MODE_SINCE`) — a cache is refolded only when a pull
+brings ops.
 
 The materialised stores are a **cache**: if a migration gets confusing, drop
 them and re-fold from `ops`. Never migrate materialised data by hand — which is

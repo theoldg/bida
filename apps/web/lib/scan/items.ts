@@ -169,17 +169,6 @@ function sameEaters(assignments: readonly ReadonlySet<string>[], start: number, 
   return true;
 }
 
-export function weightsFromItems(
-  items: readonly BillLine[],
-  assignments: Set<string>[],
-  extras: BillExtras | null,
-  involved: ReadonlySet<string>,
-  currency: string,
-  seed: string,
-): Record<string, number> {
-  return receiptBreakdown(items, assignments, extras, involved, currency, seed).weights;
-}
-
 /** Null when there is nothing to sum, so the caller leaves the amount alone rather than zeroing it. */
 export function receiptTotalMinor(
   items: readonly { amount: string }[],

@@ -10,7 +10,7 @@ import {
 } from "@bida/core";
 import { kindOf, type EntryKind } from "./entry-kind";
 import { dateInputValue } from "./format";
-import { receiptBreakdown, receiptTotalMinor, type MemberLine } from "./scan/items";
+import { billExtrasIn, billLabels, receiptBreakdown, receiptTotalMinor, type MemberLine } from "./scan/items";
 import { clearScan } from "./scan/live";
 import { signal } from "./signal";
 
@@ -119,6 +119,23 @@ export function receiptBill(
     draft.currency,
     splitSeed(draft),
   );
+}
+
+/**
+ * A saved receipt expense's bill, each person's lines in the words it is read
+ * in. Seeded with the entry's id, the seed its weights were saved with
+ * (`splitSeed`), so the lines are those weights itemised. Null for no bill.
+ */
+export function savedBill(expense: Expense, english: boolean): Record<string, MemberLine[]> | null {
+  if (expense.split.mode !== "receipt" || !expense.receiptItems?.length) return null;
+  return receiptBreakdown(
+    billLabels(expense.receiptItems, english),
+    (expense.receiptAssignments ?? []).map((row) => new Set(row)),
+    billExtrasIn(receiptExtras(expense), english),
+    new Set(expense.receiptInvolved ?? []),
+    expense.currency,
+    expense.id,
+  ).lines;
 }
 
 function showsReceipt(draft: EntryDraft): boolean {

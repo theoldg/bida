@@ -86,16 +86,16 @@ for (const file of sources(join(ROOT, "apps/web"))) {
   }
 }
 
-// ADR-0016: what a scanned bill is worth is asked of `receiptWeights`
-// (lib/draft.ts), never of `weightsFromItems` beneath it. Both take the same
-// rows; only the wrapper knows the seed the leftover cents fall by, and a
-// screen that picks its own prices the bill a cent away from what the form
+// ADR-0016: what a scanned bill is worth is asked of `receiptBill` or
+// `savedBill` (lib/draft.ts), never of `receiptBreakdown` beneath them. All take
+// the same rows; only the wrappers know the seed the leftover cents fall by, and
+// a screen that picks its own prices the bill a cent away from what the form
 // then saves — silently, on two screens a person reads one after the other.
 for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT, "apps/web/components")))) {
   const src = code(readFileSync(file, "utf8"));
-  if (/\bweightsFromItems\b/.test(src)) {
-    fail(file, "calls `weightsFromItems` — a bill is priced through `receiptWeights`, "
-      + "which is the only thing that may name a tiebreak seed (docs/who-had-what.md)");
+  if (/\breceiptBreakdown\b/.test(src)) {
+    fail(file, "calls `receiptBreakdown` — a bill is priced through `receiptBill` or `savedBill`, "
+      + "the only things that may name a tiebreak seed (docs/who-had-what.md)");
   }
 }
 

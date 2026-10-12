@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
-  payerList, resolvePayers, resolveEntrySplit, splitParticipants,
+  entryEffect, payerList, resolvePayers, splitParticipants,
   type Expense, type Member, type Settlement,
 } from "@bida/core";
-import { kindOf, myEffect, type EntryKind } from "@/lib/entry-kind";
+import { kindOf, type EntryKind } from "@/lib/entry-kind";
 import { signClass } from "@/components/bits";
 import {
   BadLink, Blank, Body, Empty, Fab, LedgerSkeleton, QueryBoundary, ScanFab, Screen, Scroll,
@@ -261,10 +261,7 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
   const payers = payerList(expense);
   const involved = me ? splitParticipants(expense.split).includes(me) : false;
   const putIn = me ? resolvePayers(expense)[me] ?? 0 : 0;
-  const share = me && involved
-    ? resolveEntrySplit(expense).shares[me] ?? 0
-    : 0;
-  const myNet = myEffect(me, { kind, putIn, share });
+  const myNet = me ? entryEffect(expense, me).net : 0;
   const mine = putIn !== 0 || involved;
   const participants = splitParticipants(expense.split).length;
   const foreign = expense.currency !== base;
@@ -353,7 +350,7 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
 }) {
   const from = memberById.get(settlement.fromMember);
   const to = memberById.get(settlement.toMember);
-  const myNet = myEffect(me, { kind: "transfer", settlement });
+  const myNet = me ? entryEffect(settlement, me).net : 0;
   const { hold, menu } = useEntryMenu(gid, me, "transfer", settlement.id);
 
   return (

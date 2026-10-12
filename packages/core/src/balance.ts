@@ -1,7 +1,7 @@
 // Doc: docs/data-model.md#balances-and-settle-up — read it whole before changing this file.
 import { resolvePayers } from "./payers.js";
 import { resolveEntrySplit } from "./split.js";
-import { alive, type GroupState, type Id } from "./types.js";
+import { alive, emptyGroupState, type Expense, type GroupState, type Id, type Settlement } from "./types.js";
 
 /**
  * Balances are derived on read, never stored: paid − owed, in base minor
@@ -104,6 +104,26 @@ export function computeBalances(state: GroupState): BalanceReport {
   return {
     byMember, totalSpendMinor, totalIncomeMinor,
     paidMinor, owedMinor, receivedMinor, incomeShareMinor, settledMinor, problems,
+  };
+}
+
+/**
+ * How one entry moves one member's balance: `computeBalances` run on that entry
+ * alone, so an income's sign is still applied there and nowhere else. `up` is
+ * what moved them up (paid, or their cut of an income), `down` what moved them
+ * down (their share, or an income they took in) — both positive, `net` their
+ * difference. A transfer's legs are `net` alone.
+ */
+export function entryEffect(entry: Expense | Settlement, memberId: Id): { up: number; down: number; net: number } {
+  const state = emptyGroupState();
+  if ("fromMember" in entry) state.settlements[entry.id] = entry;
+  else state.expenses[entry.id] = entry;
+  const r = computeBalances(state);
+  const at = (table: Record<Id, number>) => table[memberId] ?? 0;
+  return {
+    up: at(r.paidMinor) + at(r.incomeShareMinor),
+    down: at(r.owedMinor) + at(r.receivedMinor),
+    net: at(r.byMember),
   };
 }
 

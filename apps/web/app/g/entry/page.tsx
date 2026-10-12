@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
-  groupCreateOf, isCoSponsored, isImported, ownCurrencySplit, payerList, receiptExtras, resolvePayers,
+  entryEffect, groupCreateOf, isCoSponsored, isImported, ownCurrencySplit, payerList, resolvePayers,
   resolveEntrySplit, resolveSplit, restoreEntryDrafts, sortOps, splitParticipants,
   type CurrencyCode, type Expense, type Group, type Op, type RateSource, type Settlement,
 } from "@bida/core";
@@ -20,11 +20,11 @@ import { editExpense, editSettlement, restoreEntry } from "@/lib/db/commands";
 import { db } from "@/lib/db/dexie";
 import { syncGroup } from "@/lib/db/sync";
 import { useLive } from "@/lib/db/live";
-import { effectSum, kindOf, type EntryKind } from "@/lib/entry-kind";
+import { kindOf, type EntryKind } from "@/lib/entry-kind";
 import { rateDayOf } from "@/lib/entry-rate";
 import { copy } from "@/lib/copy";
 import { money, moneyParts, plural, whenLabel } from "@/lib/format";
-import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
+import { savedBill } from "@/lib/draft";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
 import { slidingDock, useFold } from "@/lib/fold";
 import { markReturn } from "@/lib/nav";
@@ -467,18 +467,8 @@ function ExpenseDetail({ expense, kind, group, data }: {
     } catch { /* as above */ }
   }
   // A receipt expense keeps its grid (ADR-0016), so each person's row opens
-  // onto their copy of the bill. Seeded with the entry's id, the seed the saved
-  // weights were rounded with, so these lines are those weights itemised.
-  const bill = expense.split.mode === "receipt" && expense.receiptItems?.length
-    ? receiptBreakdown(
-      billLabels(expense.receiptItems, english),
-      (expense.receiptAssignments ?? []).map((row) => new Set(row)),
-      billExtrasIn(receiptExtras(expense), english),
-      new Set(expense.receiptInvolved ?? []),
-      expense.currency,
-      expense.id,
-    ).lines
-    : null;
+  // onto their copy of the bill.
+  const bill = savedBill(expense, english);
 
   return (
     <div className="pad" style={{ paddingTop: 0 }}>
@@ -515,7 +505,7 @@ function ExpenseDetail({ expense, kind, group, data }: {
       {/* Unless you neither paid nor had a share. */}
       {me && kind !== "transfer" && ((putIn[me] ?? 0) > 0 || participants.includes(me)) ? (
         <div className="balline">
-          <YourBalance kind={kind} {...effectSum(kind, putIn[me] ?? 0, participants.includes(me) ? shares[me] ?? 0 : 0)}
+          <YourBalance kind={kind} {...entryEffect(expense, me)}
             currency={group.baseCurrency} />
         </div>
       ) : null}

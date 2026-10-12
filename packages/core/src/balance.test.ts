@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { assertBalanced, computeBalances, netFor } from "./balance.js";
+import { assertBalanced, computeBalances, entryEffect, netFor } from "./balance.js";
 import { foldOps } from "./fold.js";
+import type { Expense, Settlement } from "./types.js";
 import { settleUp, applyTransfers, transfersFor } from "./settle.js";
 import { formatMinor } from "./money.js";
 import { ADA, MARIE, SAM, THEO, marrakechOps, OpBuilder, GROUP } from "./fixtures.test-helper.js";
@@ -271,5 +272,45 @@ describe("income", () => {
     const transfers = settleUp(report.byMember);
     expect(transfers).toEqual([{ from: "a", to: "b", amountMinor: 500 }]);
     expect(Object.values(applyTransfers(report.byMember, transfers)).every((v) => v === 0)).toBe(true);
+  });
+});
+
+describe("entryEffect", () => {
+  // One entry, read through `computeBalances`, so nothing else signs an income.
+  const expense = (over: Partial<Expense> = {}): Expense => ({
+    id: "e1", groupId: GROUP, description: "Dinner", occurredAt: 1, amountMinor: 9000, currency: "EUR",
+    rateToBase: "1", baseAmountMinor: 9000, paidBy: THEO, split: { mode: "equal", members: [THEO, MARIE, ADA] },
+    ...over,
+  });
+
+  it("is what you paid up and your share down, summing to what the balances say", () => {
+    const e = expense();
+    expect(entryEffect(e, THEO)).toEqual({ up: 9000, down: 3000, net: 6000 });
+    expect(entryEffect(e, MARIE)).toEqual({ up: 0, down: 3000, net: -3000 });
+    expect(entryEffect(e, SAM)).toEqual({ up: 0, down: 0, net: 0 });
+  });
+
+  it("runs an income backwards: your cut up, what you took in down", () => {
+    const i = expense({ kind: "income" });
+    expect(entryEffect(i, THEO)).toEqual({ up: 3000, down: 9000, net: -6000 });
+    expect(entryEffect(i, MARIE)).toEqual({ up: 3000, down: 0, net: 3000 });
+  });
+
+  it("moves a transfer's sender up and its receiver down", () => {
+    const t: Settlement = {
+      id: "s1", groupId: GROUP, fromMember: MARIE, toMember: THEO, amountMinor: 500, currency: "EUR",
+      rateToBase: "1", baseAmountMinor: 500, occurredAt: 1,
+    };
+    expect(entryEffect(t, MARIE).net).toBe(500);
+    expect(entryEffect(t, THEO).net).toBe(-500);
+  });
+
+  it("agrees with the whole group's balances, entry by entry", () => {
+    const state = foldOps(marrakechOps());
+    const whole = computeBalances(state).byMember;
+    for (const id of [THEO, MARIE, SAM, ADA]) {
+      const summed = Object.values(state.expenses).reduce((sum, e) => sum + entryEffect(e, id).net, 0);
+      expect(summed).toBe(whole[id]);
+    }
   });
 });

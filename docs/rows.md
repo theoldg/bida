@@ -34,7 +34,7 @@ one merged block.
 **Not on the ledger.** There nearly every entry is one of yours, so a wash on
 each would mark nothing: ledger rows are the plain rows of the groups list. What they did to your balance is said on the figure — `+€45,00`
 green, `−€14,28` red: what you put in for that entry minus what you owe for it
-(`myEffect` in `lib/entry-kind.ts`, one subtraction for all three kinds),
+(`entryEffect` in core, which is `computeBalances` run on that entry alone),
 changing rendering only, never data — and the exception is what the list marks: a row you are
 no part of drops to 58% opacity rather than disappearing. Balances' suggested
 reimbursements do the same, under rows that do wear the bar: a bar there
@@ -48,8 +48,8 @@ a share, is the ledger row's figure, signed and coloured as it is there:
 `Your balance +CRD 40.00`. When two of the card's numbers made it, it opens
 folded to that figure, a chevron after the label as on your bill's row, and
 unfolds to the sum written out as at school: "you paid 50.00", "your share
-− 20.00", the result under a rule (`effectSum` — an income's share comes first,
-since it is what moved you up). Always one figure under the other, digits
+− 20.00", the result under a rule (`entryEffect`'s up and down — an income's
+share comes first, since it is what moved you up). Always one figure under the other, digits
 aligned whichever side the locale puts the code; the result moves down into
 the sum rather than being printed twice. Opened under the fold line, it glides up until
 all of it shows, and shut, glides back to where it was opened from — never a

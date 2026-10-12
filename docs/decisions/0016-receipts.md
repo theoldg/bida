@@ -44,17 +44,16 @@ sync, replay and fold with no change to `Op`, `fold.ts`, the D1 schema or the
 Dexie schema, and the grid reopens later from any device. Ops already written
 in the old shape are upgraded in one place, `upgradeReceiptSplit`, where ops
 become state (`applyPatch`, so the fold and the history read it alike). That
-upgrade takes `shares` beside a bill with no flag for a receipt from before the
-flag existed, so **the one entry that still writes `splitTab` is parts typed
-beside a kept bill** (`partsBesideBill`): unflagged, it folded into `receipt`,
-reopened on Items and had its split rewritten from the grid by the next save.
+upgrade takes `shares` beside a bill with no flag, written before
+`RECEIPT_MODE_SINCE`, for a receipt from before the flag existed, so **the one
+entry that still writes `splitTab` is parts typed beside a kept bill**
+(`partsBesideBill`): unflagged, it folded into `receipt`, reopened on Items and
+had its split rewritten from the grid by the next save. The builds between the
+mode and that flag wrote such parts unflagged, which the op's stamp tells apart;
+Dexie version 10 refolds the receipt rows cached before it.
 No state keeps the flag; a write derives it, so the upgrade runs only on a
 patch that writes the split, the bill or the flag — a restore after it would
-otherwise reread the parts as a grid. The
-Dexie migration that carried the materialised cache over has been collapsed
-away with the rest of the chain
-([data-model.md](../data-model.md#indexeddb-dexie)); the fold is what
-holds it now.
+otherwise reread the parts as a grid.
 
 **The receipt split is the fourth tab on the split editor** — labelled
 "Items", for what the tab holds rather than for the photograph — and a fourth
@@ -101,7 +100,7 @@ handed over, so a bill worth nothing never overwrites a typed figure.
 **A "×2" line unfolds into portions, and a portion is an ordinary line.**
 A bill arrives with such a line already as N rows, each carrying its share of
 the printed amount and its own eaters; tapping the count only folds and opens
-them as a view, so it is never an edit, and `weightsFromItems` learns nothing
+them as a view, so it is never an edit, and `receiptBreakdown` learns nothing
 new. Portions are marked (`portionOf`), never
 inferred from equal labels, and sum to the printed line exactly, because a
 display control must not move the bill's total. Only a count the receipt

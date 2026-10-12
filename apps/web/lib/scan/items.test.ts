@@ -6,8 +6,11 @@ import {
   billCharges, billExtrasIn, billLabel, billLabels, foldedLine, hasTranslation, portions, receiptBreakdown, receiptTotalMinor,
   runAssignment,
   printedBill, printedCount, unfoldAll, unfoldItem,
-  MAX_PORTIONS, unfoldableInto, weightsFromItems,
+  MAX_PORTIONS, unfoldableInto,
 } from "./items";
+
+/** Just the weights: the ratio a receipt split saves. */
+const weightsOf = (...args: Parameters<typeof receiptBreakdown>) => receiptBreakdown(...args).weights;
 
 /** The three bill-level lines, named one at a time. */
 const extras = (some: Partial<BillExtras> = {}): BillExtras =>
@@ -16,9 +19,9 @@ const extras = (some: Partial<BillExtras> = {}): BillExtras =>
 const off = (amount: string, label = "") => ({ label, amount });
 const table = (...ids: string[]) => new Set(ids);
 
-describe("weightsFromItems", () => {
+describe("receiptBreakdown's weights", () => {
   it("splits each item evenly among its assigned members", () => {
-    const weights = weightsFromItems(
+    const weights = weightsOf(
       [{ amount: "10.00" }],
       [new Set(["a", "b"])],
       null,
@@ -33,7 +36,7 @@ describe("weightsFromItems", () => {
   it("scales the tip to what each person already ordered, not evenly", () => {
     // "a" had a €30 item alone; "b" had a €10 item alone. A €4 tip should
     // land roughly 3:1 in a's favour, not split €2/€2.
-    const weights = weightsFromItems(
+    const weights = weightsOf(
       [{ amount: "30.00" }, { amount: "10.00" }],
       [new Set(["a"]), new Set(["b"])],
       extras({ tip: "4.00" }),
@@ -47,7 +50,7 @@ describe("weightsFromItems", () => {
   });
 
   it("falls back to an even tip split when nobody has an item weight yet", () => {
-    const weights = weightsFromItems(
+    const weights = weightsOf(
       [],
       [],
       extras({ tip: "4.00" }),
@@ -63,7 +66,7 @@ describe("weightsFromItems", () => {
   it("gives someone who ordered nothing no share of the tip", () => {
     // "c" is marked present (so they are at the table) but had no items — a
     // proportional tip should give them nothing, same as their item total.
-    const weights = weightsFromItems(
+    const weights = weightsOf(
       [{ amount: "20.00" }],
       [new Set(["a"])],
       extras({ tip: "4.00" }),
@@ -420,12 +423,6 @@ describe("receiptBreakdown", () => {
     expect(Object.values(weights).reduce((a, b) => a + b, 0)).toBe(1000 + 333 + 555 + 137);
   });
 
-  it("is the same arithmetic weightsFromItems reports", () => {
-    const assignments = [new Set(["a", "b"]), new Set(["b"]), new Set(["a", "b"])];
-    const tip = extras({ tip: "2.50" });
-    expect(receiptBreakdown(bill, assignments, tip, table("a", "b"), "EUR", "seed").weights)
-      .toEqual(weightsFromItems(bill, assignments, tip, table("a", "b"), "EUR", "seed"));
-  });
 });
 
 describe("bill extras", () => {
@@ -433,7 +430,7 @@ describe("bill extras", () => {
   // comes off both in the ratio ordered — the same rule as a whole-bill
   // discount, so there is one rule, not two.
   it("takes a two-for-one off both pizzas in proportion", () => {
-    const weights = weightsFromItems(
+    const weights = weightsOf(
       [{ amount: "10.00" }, { amount: "8.00" }],
       [new Set(["a"]), new Set(["b"])],
       extras({ discounts: [off("8.00")] }),
@@ -451,15 +448,15 @@ describe("bill extras", () => {
   it("leaves the ratio between people where the items put it", () => {
     const items = [{ amount: "30.00" }, { amount: "10.00" }];
     const assignments = [new Set(["a"]), new Set(["b"])];
-    const gross = weightsFromItems(items, assignments, null, table("a", "b"), "EUR", "seed");
-    const net = weightsFromItems(
+    const gross = weightsOf(items, assignments, null, table("a", "b"), "EUR", "seed");
+    const net = weightsOf(
       items, assignments, extras({ discounts: [off("10.00")] }), table("a", "b"), "EUR", "seed");
     expect(gross["a"]! / gross["b"]!).toBeCloseTo(net["a"]! / net["b"]!, 6);
     expect(net["a"]! + net["b"]!).toBe(3000);
   });
 
   it("spreads the tax the same way, and adds it rather than taking it off", () => {
-    const weights = weightsFromItems(
+    const weights = weightsOf(
       [{ amount: "30.00" }, { amount: "10.00" }],
       [new Set(["a"]), new Set(["b"])],
       extras({ tax: "4.00" }),
@@ -474,7 +471,7 @@ describe("bill extras", () => {
   // The reason the extras divide by a snapshot of the item weights: a tip must
   // not decide how much of the tax is yours, nor the tax how much of the tip.
   it("divides every extra by what was ordered, never by another extra", () => {
-    const one = weightsFromItems(
+    const one = weightsOf(
       [{ amount: "30.00" }, { amount: "10.00" }],
       [new Set(["a"]), new Set(["b"])],
       extras({ tip: "4.00", tax: "4.00", discounts: [off("4.00")] }),
@@ -502,7 +499,7 @@ describe("bill extras", () => {
   it("spreads several deductions to the same total as one pooled figure", () => {
     const items = [{ amount: "10.00" }, { amount: "8.00" }, { amount: "3.33" }];
     const assignments = [new Set(["a"]), new Set(["b"]), new Set(["a", "b"])];
-    const apart = weightsFromItems(
+    const apart = weightsOf(
       items, assignments, extras({ discounts: [off("4.00"), off("1.25")] }),
       table("a", "b"), "EUR", "seed");
     const summed = Object.values(apart).reduce((x, y) => x + y, 0);
@@ -539,7 +536,7 @@ describe("bill extras", () => {
   it("leaves nobody owing less than nothing when a discount swallows the bill", () => {
     // `checkScan` refuses such a receipt outright; this is the floor under a
     // bill edited into that state by hand.
-    const weights = weightsFromItems(
+    const weights = weightsOf(
       [{ amount: "10.00" }],
       [new Set(["a"])],
       extras({ discounts: [off("25.00")] }),
@@ -549,7 +546,7 @@ describe("bill extras", () => {
   });
 
   it("splits an extra evenly while nobody has been assigned anything", () => {
-    const weights = weightsFromItems(
+    const weights = weightsOf(
       [{ amount: "10.00" }], [new Set()],
       extras({ tax: "4.00" }), table("a", "b"), "EUR", "seed",
     );
@@ -580,7 +577,7 @@ describe("the demo's itemised cantina tab", () => {
       seq: null,
     }))).expenses["demo-cantina"]!;
 
-    expect(weightsFromItems(
+    expect(weightsOf(
       dinner.receiptItems!,
       (dinner.receiptAssignments ?? []).map((row) => new Set(row)),
       receiptExtras(dinner),

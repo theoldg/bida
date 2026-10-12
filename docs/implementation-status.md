@@ -45,11 +45,6 @@ One thing: push notifications, built and unchecked on a phone. The visual review
 A read of the hundred commits to 1.3.65; each item names where to start. Delete
 a line in the push that fixes it.
 
-- **Rules.** `effectSum` (`lib/entry-kind.ts:57-60`, and the older `myEffect`)
-  signs an income outside `computeBalances`. The bill-pricing rule in
-  `rules-check.mjs:89-100` bans `weightsFromItems`, which nothing calls, while
-  `receiptBreakdown` is called from `app/g/entry/page.tsx:472`; its message
-  still says `receiptWeights`.
 - **Checks.** Fixed waits against timers: `nav.mjs:518` (2000ms against
   600+480+600), `nav.mjs:446`, `entries.mjs:756`, `homescreen.mjs:307,402`;
   `search.mjs:150` hard-codes half of `--search-h`. A check that reports
@@ -60,7 +55,7 @@ a line in the push that fixes it.
   edit" where only money-moving edits notify. design-review.md:27 names
   "Advanced" in the wrong shot. CLAUDE.md's core list omits rates. README.md:97
   (the owner's) says self-host for your own Gemini key, which Advanced takes.
-- **Dead or stale.** `.ratecell` CSS; `activeSplit`, `weightsFromItems`,
+- **Dead or stale.** `.ratecell` CSS; `activeSplit` and
   `maxHlc` used by tests alone; `demoStamp`'s `asOf`; a second `bare` in
   `app/g/entry/page.tsx:385`; `changeKind`'s Reimbursement branch (settle-up
   never seeds the form); `applyTheme`'s unreachable `"system"`. Comments that
