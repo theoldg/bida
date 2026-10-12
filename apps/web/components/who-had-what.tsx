@@ -18,13 +18,11 @@ import {
 } from "../lib/scan/items";
 
 /**
- * The floor under how long the pointed column stays faint. The scroll is
- * usually longer and sets the pace; this keeps a run already in view from
- * opening and resolving in one frame.
+ * The floor under how long the pointed column stays faint, so a run already in
+ * view doesn't open and resolve in one frame.
  */
 const HOLD_MS = 280;
 
-/** Whether a drawn row and column are the ones being pointed at. */
 const inColumn = (
   at: { start: number; count: number; member: string } | null,
   start: number,
@@ -32,81 +30,57 @@ const inColumn = (
 ) => !!at && at.member === memberId && start >= at.start && start < at.start + at.count;
 
 /**
- * Who had what: the grid a scanned bill is assigned on (ADR-0016).
- *
- * Worn by `/g/entry/items` and by `/quick/items`
- * ([ADR-0035](../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
- * **Neither owns it** — two copies of this arithmetic would disagree, and the
- * cent it hands out is the cent the next screen quotes (`receiptBill`). The
- * props are exactly what the two differ in: the columns, how a figure prints,
- * where Done goes. Assumes a bill with lines on it.
+ * The grid a scanned bill is assigned on (ADR-0016), worn by `/g/entry/items` and
+ * `/quick/items`. **Neither owns it** — two copies would disagree on a cent; the
+ * props are what the two differ in.
  */
 export function WhoHadWhat({
   title, people, draft, save, format, saysCurrency = true, onDone, onBack, leaving,
 }: {
   title: string;
-  /** The columns: everybody who might have been at this table. */
   people: readonly { id: string; name: string }[];
   draft: EntryDraft;
-  /** Writes the draft back — the grid's rows and the bill's lines are one list. */
   save: (draft: EntryDraft) => void;
   format: (minor: number) => string;
   /**
-   * Whether the currency may be *said*. A quick split prints no symbol
-   * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)),
-   * so the tip field's label must not name one to a screen reader either.
+   * A quick split prints no symbol, so the tip's label must not name one to a
+   * screen reader either.
    */
   saysCurrency?: boolean;
-  /** Done, with the grid written down. */
   onDone: () => void;
-  /** Left without keeping it; the bill has been put back as it was found. */
   onBack: () => void;
   /**
-   * Asks before *every* way back, in these words, not only once the grid is
-   * touched. A quick split's grid is the only way on to its bill: the screen
-   * behind it can only scan again, so leaving loses what was read.
+   * Asks before every way back: a quick split's screen behind can only scan
+   * again.
    */
   leaving?: { title: string; body: string };
 }) {
   const items = draft.receiptItems ?? [];
-  // Which language the bill's own words are read in — the draft's, so the
-  // expense this grid saves reads the same way afterwards, on every phone
-  // (`billLabel`). **Never applied to `items` itself** — the labels on the
-  // draft are the bill's, and splitting a line writes them back.
+  // The draft's, so the saved expense reads the same on every phone. **Never
+  // applied to `items` itself** — splitting a line writes the labels back.
   const english = draft.receiptEnglish === true;
   const said = (line: { label: string; labelEn?: string | null }) => billLabel(line, english);
   const [involved, setInvolved] = useState<Set<string>>(new Set());
   const [assignments, setAssignments] = useState<Set<string>[]>([]);
   const seeded = useRef(false);
   const [asking, setAsking] = useState(false);
-  // Whether the deductions are showing one by one or as one figure. Display
-  // only — it changes nothing the bill is worth, so nothing is written down.
   const [openDiscounts, setOpenDiscounts] = useState(false);
-  // The grid's rows and the bill's lines are one list, and an older bill's
-  // lines are split into portions on the draft as the grid opens (the seeding
-  // effect). **So keep what was found and put it back on the way out.**
+  // Older bills are split into portions as the grid opens: **keep what was found
+  // and put it back on the way out.**
   const opened = useRef<Pick<EntryDraft,
     "receiptItems" | "receiptTip" | "receiptTax" | "receiptDiscounts"
     | "receiptInvolved" | "receiptAssignments" | "splitTab"> | null>(null);
   const [touched, setTouched] = useState(false);
-  // A refused Done blooms every line with nobody on it, off one refusal, so a
-  // second press replays them together; Done greys for the flash. The sentence
-  // stays until the grid is finishable. **A bloom off screen is no signal**:
-  // the nearest unassigned line is scrolled in first and the flash waits for it
-  // (`reveal`), with Done spent across both.
+  // One refusal blooms every unassigned line; one off screen is scrolled to first
+  // (`reveal`).
   const refusal = useRefusal();
   const [seeking, setSeeking] = useState(false);
   const wrap = useRef<HTMLDivElement | null>(null);
-  /** Every drawn row, by the item it starts at — a folded run is one row. */
   const rowEl = useRef<(HTMLTableRowElement | null)[]>([]);
   const [told, setTold] = useState(false);
-  // Which runs of portions are drawn open, by the item index they start at.
   // Folding is only a view (`foldedLine`): the bill holds its portions from the
-  // start (`unfoldAll`), so which portion was whose is never thrown away. A
-  // restored draft starts with every run folded.
+  // start (`unfoldAll`).
   const [open, setOpen] = useState<Set<number>>(new Set());
-  // A run just opened by tapping a cell in it, and the column that tap was in:
-  // it is scrolled to whole and only then does that column flash (`follow`).
   const [pending, setPending] = useState<{ start: number; count: number; member: string } | null>(null);
   const [point, setPoint] = useState<
     { start: number; count: number; member: string; n: number } | null>(null);
@@ -119,9 +93,8 @@ export function WhoHadWhat({
     };
   }
 
-  // Seeded once, when people and items are both in: a saved assignment if there
-  // is one, otherwise everyone at the table and nothing assigned. **Never start
-  // with every item on everybody** — that is unticking your way out of an answer.
+  // **Never start with every item on everybody** — that is unticking your way out
+  // of an answer.
   useEffect(() => {
     if (seeded.current || items.length === 0 || people.length === 0) return;
     seeded.current = true;
@@ -129,11 +102,7 @@ export function WhoHadWhat({
       ? draft.receiptAssignments : null;
     setInvolved(new Set(saved ? draft.receiptInvolved : people.map((m) => m.id)));
     const rows = saved ? saved.map((row) => new Set(row)) : items.map(() => new Set<string>());
-    // A bill arrives with its lines of several already in portions
-    // (`unfoldAll`); one saved before that did not is split here, each portion
-    // starting with whoever had the line. Written straight away, since the
-    // grid's rows and the bill's lines are one list — and the history reads it
-    // as the same bill (`printedBill`), so it is no edit anybody sees.
+    // Written straight away; history reads it as the same bill (`printedBill`).
     const split = unfoldAll(items, draft.currency);
     if (split.items.length === items.length) { setAssignments(rows); return; }
     const widened = split.from.map((i) => new Set(rows[i]));
@@ -148,10 +117,8 @@ export function WhoHadWhat({
   const labels = distinctInitials(people);
   const runs = portions(items);
 
-  // Saying somebody was there opens their column and nothing more — an empty
-  // one, like the grid starts. Saying they weren't takes back every item they
-  // had been given, since a column that isn't shown can't be corrected. The
-  // last one there can't be taken away: a bill nobody was at has no split.
+  // Taking somebody out takes back their items, since a hidden column can't be
+  // corrected. The last one there can't be taken away.
   function toggleInvolved(memberId: string) {
     const adding = !involved.has(memberId);
     if (!adding && involved.size === 1) return;
@@ -167,11 +134,9 @@ export function WhoHadWhat({
     }));
   }
 
-  /** Closed and opened again — a view, so nothing is written down either way. */
   const showAsOneLine = (start: number) => {
-    // The pointed cells go with the rows, and an animation removed mid-flight
-    // reports nothing: drop the point rather than leave it to be replayed on
-    // whatever opens next.
+    // An animation removed mid-flight reports nothing: drop the point rather than
+    // replay it on whatever opens next.
     setPoint(null);
     setOpen((was) => { const now = new Set(was); now.delete(start); return now; });
   };
@@ -189,11 +154,8 @@ export function WhoHadWhat({
   }
 
   /**
-   * The line itself, tapped: everybody had it, or nobody did.
-   *
-   * **It overwrites**, including a folded run somebody is split across, which
-   * `toggleRun` refuses — that refusal is about a *cell*, where the tap could
-   * mean either portion.
+   * **It overwrites**, including a run somebody is split across, which a cell
+   * refuses — there the tap could mean either portion.
    */
   function toggleEveryone(start: number, count: number) {
     const ids = involvedMembers.map((m) => m.id);
@@ -205,9 +167,6 @@ export function WhoHadWhat({
       i < start || i >= start + count ? row : new Set(everyone ? [] : ids)));
   }
 
-  /**
-   * A folded run nobody is split across edits like the one line it is drawn as.
-   */
   function toggleRun(start: number, count: number, memberId: string, had: boolean) {
     setTouched(true);
     setAssignments(assignments.map((row, i) => {
@@ -218,28 +177,20 @@ export function WhoHadWhat({
     }));
   }
 
-  /**
-   * A run that *is* split opens instead of guessing which portion a tap meant,
-   * so the split is never quietly flattened. The rest is `follow`'s.
-   */
+  /** Opens rather than guessing which portion a tap meant. */
   function openForEditing(start: number, count: number, memberId: string) {
     showPortions(start);
     setPending({ start, count, member: memberId });
   }
 
-  /**
-   * The run just opened, brought into view whole and then pointed at.
-   * **Two rows in view, not one** — and when more than fit, the top wins
-   * (`revealWhole`). The flash waits for the scroll, like the refusal's.
-   */
+  /** Two rows in view, not one; past that the top wins. */
   useEffect(() => {
     if (!pending) return;
     const box = wrap.current;
     const head = rowEl.current[pending.start];
     const tail = rowEl.current[pending.start + pending.count - 1];
-    // The column was painted faint with the rows (`point-hold`), so `aim` is
-    // the *release*: the dots ease back to what they really are. **Never sooner
-    // than `HOLD_MS`**, or a run that needed no scrolling resolves in one frame.
+    // **Never sooner than `HOLD_MS`**, or a run that needed no scrolling resolves
+    // in one frame.
     const since = Date.now();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const aim = () => {
@@ -264,13 +215,10 @@ export function WhoHadWhat({
   }, [pending]);
 
   const involvedMembers = people.filter((m) => involved.has(m.id));
-  // Asked of lib/draft, not of receiptBreakdown directly: what these rows are
-  // worth has to be the same answer the form gives once Done has written them
-  // down, and the seed that decides it is not this screen's to pick.
+  // Of lib/draft, not receiptBreakdown: the seed that decides the cent is not
+  // this screen's to pick.
   const { weights } = receiptBill(draft, items, assignments, involved);
   const missing = items.map((_, i) => (assignments[i]?.size ?? 0) === 0);
-  // What the grid actually draws: one entry per row, which is one item —
-  // or one closed run of portions read as the line it came from.
   const lines: { start: number; count: number }[] = [];
   for (let i = 0; i < items.length; ) {
     const part = runs[i];
@@ -282,32 +230,25 @@ export function WhoHadWhat({
       i++;
     }
   }
-  // A drawn row is missing somebody if any of the items under it is: a folded
-  // run with one unassigned portion blooms whole, because that row is all
-  // there is to point at.
   const lineMissing = lines.map(
     (line) => missing.slice(line.start, line.start + line.count).some(Boolean));
-  // Whether anything is left to bloom at all. Kept in a ref as well, because a
-  // scroll that finishes after the grid was fixed would otherwise start a
-  // refusal off a stale reading of it.
+  // In a ref too: a scroll finishing after the grid was fixed would refuse off a
+  // stale reading.
   const blooms = missing.some(Boolean);
   const stillBlooms = useRef(blooms);
   stillBlooms.current = blooms;
 
   /**
-   * A refusal whose lines stopped being refused. Assigning the last of them
-   * during the flash takes the class off every element carrying it, and a
-   * removed animation never fires `animationend` — so Done would stay greyed
-   * for good (lib/refusal.ts).
+   * Assigning the last line mid-flash removes the class, and a removed animation
+   * never fires `animationend` — Done would stay greyed for good.
    */
   useEffect(() => {
     if (refusal.live && !blooms) refusal.onFlashEnd();
   }, [refusal, blooms]);
   const everyItemAssigned = assignments.length === items.length && assignments.every((r) => r.size > 0);
   const canFinish = involvedMembers.length > 0 && everyItemAssigned && Object.keys(weights).length > 0;
-  // The extras the bill printed, in the order it printed them, and signed the
-  // way they are worth: a deduction is the one figure on this screen that comes
-  // off. The tip is not among them — it is typed, and has its own row.
+  // A deduction is the one figure here that comes off. The tip is typed, and has
+  // its own row.
   const minorOf = (amount: string) => {
     try { return parseMinor(amount, draft.currency); } catch { return null; }
   };
@@ -316,16 +257,12 @@ export function WhoHadWhat({
     return minor === null || minor <= 0 ? [] : [{ label: said(d), minor: -minor }];
   });
   const taxMinor = draft.receiptTax ? minorOf(draft.receiptTax) : null;
-  // Several deductions collapse into one row the way repeated items do: the
-  // printed names are worth reading, but four above the tip bury the bill.
-  // Display only — not assignable, so never written to the draft.
+  // Display only — never written to the draft.
   const discountTotal = discounts.reduce((sum, d) => sum + d.minor, 0);
   const discountRows = discounts.length > 1 && !openDiscounts
     ? [{ label: "", minor: discountTotal, of: discounts.length }]
     : discounts.map((d) => ({ ...d, of: discounts.length > 1 ? discounts.length : 0 }));
 
-  // Which of the bill's own charges this receipt actually has, in the order
-  // their rows print — what the caption under them names (`copy.items.extraNote`).
   const tipMinor = draft.receiptTip ? minorOf(draft.receiptTip) : null;
   const extraKinds: ExtraKind[] = [
     ...(discounts.length > 0 ? ["discount" as const] : []),
@@ -333,9 +270,8 @@ export function WhoHadWhat({
     ...(tipMinor !== null && tipMinor > 0 ? ["tip" as const] : []),
   ];
 
-  // A tip is a percentage of what the food actually came to, so the discounts
-  // are already off it and the tax is not on it — which is how a bill prints a
-  // suggested tip, and how anybody works one out in their head.
+  // A tip is a percentage of what the food came to: discounts off, tax not on —
+  // as a bill prints one.
   let tipPercent: number | null = null;
   if (tipMinor !== null) {
     try {
@@ -345,23 +281,17 @@ export function WhoHadWhat({
     } catch { /* mid-type */ }
   }
 
-  /**
-   * The refusal, once the lines it points at can be seen. **Nothing moves while
-   * any of them is in view**; otherwise the nearest is scrolled to, then the
-   * flash runs.
-   */
+  /** **Nothing moves while any of them is in view.** */
   function reveal() {
     const box = wrap.current;
-    // The cells are what is sticky, not the row around them (globals.css):
-    // `thead`'s own box stays where the table put it, halfway up the bill.
+    // The cells are sticky, not the row: `thead`'s own box stays where the table
+    // put it.
     const head = box?.querySelector("thead th");
     const aimed = lines.flatMap((line, li) => {
       const el = lineMissing[li] ? rowEl.current[line.start] : null;
       return el ? [el] : [];
     });
     if (!box) { refusal.refuse(); return; }
-    // The header is sticky, so the top of the scroller is not where a row
-    // becomes visible — it is where it goes underneath something.
     const view = box.getBoundingClientRect();
     const target = seekTarget(box, aimed, {
       top: head ? head.getBoundingClientRect().bottom : view.top, bottom: view.bottom,
@@ -370,26 +300,21 @@ export function WhoHadWhat({
     setSeeking(true);
     glide(box, target, () => {
       setSeeking(false);
-      // Fixed while the list was still travelling: there is nothing left to
-      // point at, and a refusal with nothing blooming never ends itself.
+      // Fixed mid-travel: a refusal with nothing blooming never ends itself.
       if (stillBlooms.current) refusal.refuse();
     });
   }
 
   function finish() {
-    // Never held grey: a Done that can't go through points at what is missing
-    // rather than sitting dead with a sentence beside it (design-system.md).
     if (!canFinish) {
       setTold(true);
-      // The flash needs a line to run on: Done is spent until it ends, and one that
-      // never runs would leave it spent for good.
+      // Done is spent until the flash ends; one that never runs would spend it
+      // for good.
       if (!refusal.live && !seeking && missing.some(Boolean)) reveal();
       return;
     }
-    // **This screen writes only the raw grid**: who was there and who had what.
-    // The total and split are derived where needed (the form's render and save),
-    // so nothing drifts. The items, tip and assignment are kept so "Edit
-    // who-had-what" reopens this grid later, on any device. ADR-0016.
+    // **This screen writes only the raw grid**; the total and split are derived
+    // where needed, so nothing drifts. ADR-0016.
     save({
       ...draft,
       receiptInvolved: [...involved],
@@ -399,7 +324,6 @@ export function WhoHadWhat({
     onDone();
   }
 
-  /** Leaving undoes what this screen wrote; `finish` is the only way to keep it. */
   function mayLeave() {
     if (touched || leaving) { setAsking(true); return false; }
     return true;
@@ -410,13 +334,10 @@ export function WhoHadWhat({
     onBack();
   }
 
-  // What a refused Done was pointing at. **The sentence waits for the refusal
-  // that earns it** — on arrival nothing is assigned yet. The pointer restarts
-  // by the refusal's two-name trick (lib/refusal.ts).
+  // **The sentence waits for the refusal that earns it** — on arrival nothing is
+  // assigned yet.
   const pointClass = point ? (point.n % 2 === 1 ? " point-a" : " point-b") : "";
 
-  // The bar's one control: the bill in its own words, or in English. Only where
-  // the model had something to translate (`hasTranslation`).
   const translate = hasTranslation(items, draft.receiptDiscounts) ? (
     <button type="button" className={`iconbtn${english ? " lit" : ""}`}
       // Not a touch: a way of reading the bill, which leaving keeps.
@@ -427,8 +348,6 @@ export function WhoHadWhat({
     </button>
   ) : null;
 
-  // Said over Done, as the entry form and /g/payers say theirs, and flashed
-  // with the lines it is about.
   const note = told && !everyItemAssigned ? (
     <div role="status" style={{ marginBottom: 9 }}
       className={`splitfoot bad alone${refusal.flash}`} onAnimationEnd={refusal.onFlashEnd}>
@@ -441,9 +360,6 @@ export function WhoHadWhat({
       <Body>
         <TopBar title={title} back={{ ask: mayLeave }} right={translate} />
 
-        {/* One scroller: who was there, the grid and the totals pass through
-            it together. What stays put is what you work against: the initials
-            row and the names column (globals.css). */}
         <div className="itemscroll" ref={wrap}>
           <div className="itemhead itemwide">
             <div className="eyebrow" style={{ marginBottom: 8 }}>{copy.items.whoWasThere}</div>
@@ -465,8 +381,10 @@ export function WhoHadWhat({
 
           <table className="itemtable"
             style={{ "--cols": involvedMembers.length } as CSSProperties}>
-            {/* Where the widths are decided, once — see `table-layout: fixed`
-                in globals.css. Nothing in a row can move them after this. */}
+            {/*
+             * Widths decided once (`table-layout: fixed`): nothing in a row can
+             * move them.
+             */}
             <colgroup>
               <col className="collabel" />
               {involvedMembers.map((m) => <col key={m.id} className="colwho" />)}
@@ -487,45 +405,37 @@ export function WhoHadWhat({
               {lines.map((line, li) => {
                 const item = items[line.start];
                 if (!item) return null;
-                // A closed run is drawn as the line it came from, which is a
-                // reading of the rows rather than a replacement for them.
                 const folded = line.count > 1;
                 const shown = (folded && foldedLine(items, line.start, line.count, draft.currency)) || item;
                 const run = folded
                   ? runAssignment(assignments.slice(line.start, line.start + line.count)) : null;
                 const part = folded ? null : runs[line.start] ?? null;
-                // A line nobody has been given blooms whole, across every column
-                // (globals.css). The listener is on the row because the animation runs
-                // on the cells and `animationend` bubbles up.
+                // The listener is on the row: the animation runs on the cells and
+                // `animationend` bubbles.
                 return (
                   <tr key={line.start} ref={(el) => { rowEl.current[line.start] = el; }}
                     onAnimationEnd={refusal.onFlashEnd}
                     className={`${part ? "part" : ""}${lineMissing[li] ? refusal.flash : ""}` || undefined}>
                     <td className="itemlabel">
                       <div className="itemrow">
-                        {/* "Everybody had this" / "nobody did" (`toggleEveryone`): the name is
-                            the row's one target that isn't a person's column. */}
                         <button type="button" className="itemtext"
                           onClick={() => toggleEveryone(line.start, folded ? line.count : 1)}
                           aria-label={copy.items.everyone(said(shown))}>
                           <span className="itemname">
                             {said(shown)}
-                            {/* The printed count, where no fold button below is
-                                carrying it: a count that can't be portioned. */}
                             {!folded && !part && item.quantity && item.quantity > 1 ? (
                               <span className="itemqty"> ×{item.quantity}</span>
                             ) : null}
                           </span>
-                          {/* Which portion this is goes on the amount line:
-                              the label's own line has a button to share
-                              with and a name of any length in it. */}
+                          {/*
+                           * On the amount line: the label's line has a button and
+                           * a name of any length.
+                           */}
                           <span className="itemamount">
                             {priced(shown.amount, draft.currency)}
                             {part ? <span className="itemqty"> · {copy.items.portion(part.index, part.of)}</span> : null}
                           </span>
                         </button>
-                        {/* Show the portions, or show them as one line — a view
-                            either way, since the bill holds them split. */}
                         {folded ? (
                           <button className="itemfold" onClick={() => showPortions(line.start)}
                             title={copy.items.showPortions(line.count)}
@@ -544,22 +454,18 @@ export function WhoHadWhat({
                       </div>
                     </td>
                     {involvedMembers.map((m) => {
-                      // What this cell shows: nothing, a dot, or the split mark
-                      // a folded run wears while somebody is on some of it.
                       const mark = run
                         ? run.marks.get(m.id) ?? null
                         : assignments[line.start]?.has(m.id) ? "all" : null;
-                      // Faint from the moment the rows appear, and eased back
-                      // once they have stopped moving: a column that paints at
-                      // full strength and is dimmed a beat later flickers.
+                      // Painted faint with the rows and eased back once they
+                      // stop: dimmed a beat later, it flickers.
                       const held = inColumn(pending, line.start, m.id);
                       const aimed = inColumn(point, line.start, m.id);
                       return (
                         <td key={m.id} className="itemwho">
                           <button className={`itemcell${held ? " point-hold" : aimed ? pointClass : ""}`}
-                            // Stopped here: the refusal listens for its flash on the row, and a
-                            // pointer settling inside would read as that flash ending — handing
-                            // Done back mid-bloom (docs/design-system.md).
+                            // Stopped here, or the refusal would read a pointer
+                            // settling as its flash ending.
                             onAnimationEnd={(e) => { e.stopPropagation(); setPoint(null); }}
                             onClick={() => (run?.detailed
                               ? openForEditing(line.start, line.count, m.id)
@@ -570,16 +476,14 @@ export function WhoHadWhat({
                             aria-label={folded
                               ? (run?.detailed
                                 ? copy.items.hadSome(m.name, said(item), line.count)
-                                // Anybody else on the run makes it shared: "Leia had all 2"
-                                // beside "Luke had all 2" reads as four salads.
+                                // "Leia had all 2" beside "Luke had all 2" reads
+                                // as four salads.
                                 : run && [...run.marks].some(([id, v]) => id !== m.id && v === "all")
                                   ? copy.items.sharedAll(m.name, said(item), line.count)
                                   : copy.items.hadAll(m.name, said(item), line.count))
                               : part
                                 ? copy.items.hadPortion(m.name, said(item), part.index, part.of)
                                 : copy.items.had(m.name, said(item))}>
-                            {/* Empty cells carry an invisible dot, so a pointer at this column
-                                shows where an answer would go. */}
                             <span className={`dot${mark === "some" ? " some" : mark ? "" : " off"}`} />
                           </button>
                         </td>
@@ -588,8 +492,6 @@ export function WhoHadWhat({
                   </tr>
                 );
               })}
-              {/* What the bill took off and added on. Nobody ordered them, so they
-                  follow what everybody did order (`receiptBreakdown`). */}
               {discountRows.map((row, i) => (
                 <tr key={`off${i}`} className={discountRows.length > 1 ? "part" : undefined}>
                   <td className="itemlabel">
@@ -600,8 +502,6 @@ export function WhoHadWhat({
                         </span>
                         <span className="itemamount">{bare(row.minor, draft.currency)}</span>
                       </span>
-                      {/* The same ×N the repeated items wear, so one control
-                          means one thing on this screen. */}
                       {row.of > 1 && (openDiscounts ? i === 0 : true) ? (
                         <button className={`itemfold${openDiscounts ? " on" : ""}`}
                           onClick={() => setOpenDiscounts(!openDiscounts)}
@@ -641,11 +541,11 @@ export function WhoHadWhat({
                     {copy.items.extra.tip}
                     {tipPercent !== null ? <span className="itemqty"> {copy.items.tipPercent(tipPercent)}</span> : null}
                   </span>
-                  {/* The one figure here that is typed, so it is drawn as a field. */}
                   <span className="tipfield">
-                    {/* `AmountInput`, like every other typed figure: a bare
-                        input took "5.5.5" and kept showing it while
-                        `receiptTotalMinor` quietly dropped it from the total. */}
+                    {/*
+                     * A bare input took "5.5.5" and kept showing it while the
+                     * total dropped it.
+                     */}
                     <AmountInput className="itemamountin" frame="none"
                       enterKeyHint="done"
                       currency={draft.currency} placeholder={bare(0, draft.currency)}
@@ -663,14 +563,13 @@ export function WhoHadWhat({
             </tbody>
           </table>
 
-          {/* Why the rows above have no cells. A block under the table, not its
-              last row: a sentence in a cell wraps at the table's width. */}
+          {/*
+           * Under the table: a sentence in a cell wraps at the table's width.
+           */}
           {extraKinds.length > 0 ? (
             <div className="itemnote itemwide">{copy.items.extraNote(extraKinds)}</div>
           ) : null}
 
-          {/* What the grid adds up to, one name per line, at the end of the
-              scroll. */}
           {involvedMembers.length > 0 ? (
             <div className="itemtotals itemwide">
               <div className="totalstrip">
@@ -685,9 +584,6 @@ export function WhoHadWhat({
           ) : null}
         </div>
 
-        {/* The way out, docked (`.whodock`): under the totals while the bill
-            fits, at the foot of the screen once it scrolls, and above the
-            keyboard while the tip is typed. */}
         <div className="pad whodock" style={{ paddingTop: note ? 9 : 18 }}>
           {note}
           <button type="button" className="btn btn-p btn-lg"
