@@ -23,7 +23,6 @@ const memberCreate = (groupId: Id, name: string) => ({
 export interface NewGroupInput {
   name: string;
   baseCurrency: CurrencyCode;
-  /** The person holding this device: the first member and the actor. */
   myName: string;
   otherNames?: readonly string[];
 }
@@ -62,7 +61,6 @@ export async function createGroup(
         kind: "create",
         patch: { memberId, claimedAt: now },
       },
-      // One batch, so history reads as the group created with these people in it.
       ...(input.otherNames ?? []).map((name) => memberCreate(groupId, name)),
     ],
     now,
@@ -72,25 +70,20 @@ export async function createGroup(
   return { groupId, memberId, secret };
 }
 
-/** The secret never travels through an op, only through the link fragment. ADR-0003. */
 export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
   // Sync walks key rows, so one would push the demo into D1
   // (docs/sync.md#the-demo-group-has-no-key). rules-check keeps this the only writer.
   if (isDemo(groupId)) throw new Error("the demo group is never given a key");
   const existing = await db().groupKeys.get(groupId);
-  // A fresh link is the only cure for a 403, so it clears the failure.
   await db().groupKeys.put({
     ...existing, groupId, secret, lastSeq: existing?.lastSeq ?? 0, failure: undefined,
   });
   await unhideGroup(groupId);
-  // This phone now holds something that exists nowhere else until it syncs.
   void requestPersistence();
 }
 
 /**
- * For a home-screen icon to bring along (docs/ios.md). From the keys, not the
- * groups: one just accepted has its key before its ops. Reads only (no
- * `getDevice`, which writes), so a live query can run it.
+ * From the keys, not the groups: one just accepted has its key before its ops.
  */
 export async function heldInvites(first?: Id): Promise<CarriedGroup[]> {
   const [keys, device] = await Promise.all([db().groupKeys.toArray(), db().device.get("device")]);
@@ -124,18 +117,10 @@ export async function forgetGroup(groupId: Id): Promise<void> {
   await dropForgotten(groupId);
 }
 
-/**
- * Checked inside the erase's transaction, so a write or a reopened link
- * landing meanwhile keeps it. Returns whether it went.
- */
 export function dropForgotten(groupId: Id): Promise<boolean> {
   return erase(groupId, false);
 }
 
-/**
- * Only when the server deleted the group (the one event that is not an op) or
- * to clear the demo. The id goes into `deletedGroups` so screens can say so.
- */
 export async function eraseGroupLocally(groupId: Id): Promise<void> {
   await erase(groupId, true);
 }
@@ -169,10 +154,8 @@ async function erase(groupId: Id, deleted: boolean): Promise<boolean> {
   });
   if (!gone) return false;
   forgetShown(groupId);
-  // The worker's cursor holds the group's bearer; nothing of the group stays.
   await dropStash(groupId).catch(() => {});
 
-  // After the transaction: the device record has one writer (../device.ts).
   const device = await getDevice();
   const { [groupId]: _gone, ...meByGroup } = device.meByGroup;
   await updateDevice({
@@ -201,7 +184,6 @@ export async function claimIdentity(
   const device = await getDevice();
   const current = device.meByGroup[groupId];
   if (current === memberId) return;
-  // A phone that forgot the group still has its claim on the log.
   const previous = current
     ?? (await db().identities.get([groupId, device.nodeId]))?.memberId;
 
@@ -235,7 +217,6 @@ export async function publishExistingClaims(now = Date.now()): Promise<void> {
 
   for (const [groupId, memberId] of Object.entries(device.meByGroup)) {
     if (claimed.has(groupId)) continue;
-    // A group whose ops haven't been pulled yet isn't ours to write to.
     if (!(await db().groups.get(groupId))) continue;
     await appendOps(
       groupId,
@@ -255,7 +236,6 @@ export async function publishExistingClaims(now = Date.now()): Promise<void> {
 
 /** No `actor` for a joining phone adding its holder before claiming anybody. */
 export async function addMember(groupId: Id, actor: Id | undefined, name: string): Promise<Id> {
-  // Re-adding a removed member returns the person, balance and history included.
   const op = memberCreate(groupId, name);
   await appendOps(groupId, actor ?? op.entityId, [op]);
   return op.entityId;
@@ -276,7 +256,6 @@ export async function renameMember(
   ]);
 }
 
-/** Their past expenses stay as they were: removing someone never redistributes what they owed. */
 export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promise<void> {
   await appendOps(groupId, actor, [
     { entity: "member", entityId: memberId, kind: "delete", patch: {} },
@@ -290,7 +269,6 @@ export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promis
  * ordinary ops, and idempotent: two devices healing at once write the same one.
  */
 export async function healGroup(groupId: Id): Promise<number> {
-  // Unclaimed, it heals nothing; the others will.
   const me = await getMe(groupId);
   if (!me) return 0;
 
@@ -298,7 +276,6 @@ export async function healGroup(groupId: Id): Promise<number> {
   // Bounded: two healers that fought would write synced ops forever.
   for (let pass = 0; pass < 8; pass++) {
     const state = await groupState(groupId);
-    // The claim first: putting this person back can strand entries the registry then heals.
     const registered = healDrafts(state);
     const claim = restoreClaimDrafts(state, me)
       .filter((d) => !registered.some((r) => r.entity === d.entity && r.entityId === d.entityId));

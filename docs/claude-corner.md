@@ -20,7 +20,9 @@ but "wait for my approval" means stop until a yes.
 When a request undoes an ADR, say so ("this undoes ADR-N, sure?") and wait for the yes.
 
 The failure mode is *earnestness* — the extra paragraph, the ADR, prose
-restating what the code enforces. What gets praised is deleting.
+restating what the code enforces. What gets praised is deleting — and when
+told to cut, drop whole comments and sections; squeezing each into a denser
+sentence is the same earnestness, compressed.
 
 ## Postcards
 

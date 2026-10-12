@@ -4,21 +4,15 @@ import {
   type BillExtras, type ExtraKind, type ReceiptItem,
 } from "@bida/core";
 
-/** A line of the bill, and how much of it was one person's. */
 export interface MemberLine {
-  /** Empty for an extra, which is nobody's order. */
   label: string;
   extra?: ExtraKind;
-  /** One, two, or a third of a shared plate. */
   count: Count;
-  /** In the receipt's own currency. */
   minor: number;
 }
 
-/** `n/d`, always in lowest terms. */
 interface Count { n: number; d: number }
 
-/** `ReceiptItem` satisfies it. */
 interface BillLine { amount: string; label?: string; quantity?: number | null; portionOf?: number | null }
 
 interface Labelled { label: string; labelEn?: string | null }
@@ -39,7 +33,6 @@ export function billExtrasIn(extras: BillExtras, english: boolean): BillExtras {
   return english ? { ...extras, discounts: [...billLabels(extras.discounts, true)] } : extras;
 }
 
-/** Whether the English toggle is drawn at all. */
 export function hasTranslation<T extends Labelled>(
   ...lines: readonly (readonly T[] | null | undefined)[]
 ): boolean {
@@ -57,10 +50,6 @@ function plus(a: Count, b: Count): Count { return count(a.n * b.d + b.n * a.d, a
 
 interface BillCharge { kind: ExtraKind; label: string; amount: string; seed: string }
 
-/**
- * In a bill's order: each deduction by name, then tax, then tip. Deductions stay
- * separate so a person's copy says "2 for 1 −4.44", not one opaque figure.
- */
 export function billCharges(extras: BillExtras | null): BillCharge[] {
   if (!extras) return [];
   const off = extras.discounts.map((d, i) => (
@@ -72,10 +61,8 @@ export function billCharges(extras: BillExtras | null): BillCharge[] {
 }
 
 /**
- * Who had what as split weights and as each person's copy of the bill; the
- * lines add up to the weight by construction. The weights are only a ratio, so
- * their currency doesn't matter. Extras are nobody's order, so each is spread
- * in proportion to what people did order (ADR-0016).
+ * Extras are nobody's order, so each is spread in proportion to what people did
+ * order (ADR-0016).
  */
 export function receiptBreakdown(
   items: readonly BillLine[],
@@ -88,7 +75,6 @@ export function receiptBreakdown(
   const weights: Record<string, number> = {};
   const lines: Record<string, MemberLine[]> = {};
   const add = (id: string, minor: number) => { weights[id] = (weights[id] ?? 0) + minor; };
-  // One entry per label, so two rows of a thing read as "×2", not the word twice.
   const note = (id: string, line: MemberLine) => {
     const own = lines[id] ??= [];
     const same = own.find((l) => l.label === line.label && l.extra === line.extra);
@@ -125,19 +111,16 @@ export function receiptBreakdown(
       i += run.of;
       continue;
     }
-    // "Fries ×2" shared by two is one order each. A portion's count went into its rows.
     share(i, 1, !item.portionOf && item.quantity && item.quantity > 1 ? Math.floor(item.quantity) : 1);
     i++;
   }
 
-  // Fixed before any extra is spread, so the extras' order can't matter.
   const ordered = { ...weights };
   for (const charge of billCharges(extras)) {
     if (involved.size === 0) continue;
     let minor = 0;
     try { minor = parseMinor(charge.amount, currency); } catch { continue; /* mid-type */ }
     if (minor <= 0) continue;
-    // Even while nothing is assigned, rather than dropped.
     const proportional: Record<string, number> = {};
     for (const id of involved) if (ordered[id]) proportional[id] = ordered[id];
     const { shares } = Object.keys(proportional).length > 0
@@ -169,7 +152,6 @@ function sameEaters(assignments: readonly ReadonlySet<string>[], start: number, 
   return true;
 }
 
-/** Null when there is nothing to sum, so the caller leaves the amount alone rather than zeroing it. */
 export function receiptTotalMinor(
   items: readonly { amount: string }[],
   extras: BillExtras | null,
@@ -190,7 +172,6 @@ export function receiptTotalMinor(
 
 interface Portion { start: number; index: number; of: number }
 
-/** Null for an ordinary line. A half-deleted group degrades to ordinary lines. */
 export function portions<T extends Pick<BillLine, "label" | "portionOf">>(items: readonly T[]): (Portion | null)[] {
   const out: (Portion | null)[] = items.map(() => null);
   for (let i = 0; i < items.length; ) {
@@ -205,14 +186,13 @@ export function portions<T extends Pick<BillLine, "label" | "portionOf">>(items:
   return out;
 }
 
-/** A run of portions is one printed line. */
 export function printedCount(items: readonly ReceiptItem[]): number {
   return portions(items).filter((p) => !p || p.index === 1).length;
 }
 
 /**
- * More portions than anyone taps one by one. Above it a line stays whole and is
- * shared like any other: a typed "1 million tomatoes" is a million rows otherwise.
+ * Above it a line stays whole: a typed "1 million tomatoes" is a million rows
+ * otherwise.
  */
 export const MAX_PORTIONS = 100;
 
@@ -223,10 +203,7 @@ export function unfoldableInto(item: ReceiptItem, currency: string): number | nu
   return count;
 }
 
-/**
- * Sums to the line exactly (remainder to the earliest), so the total and tip
- * percentage don't move. `at` and `count` let the caller widen the assignment rows.
- */
+/** Sums to the line exactly, so the total and tip percentage don't move. */
 export function unfoldItem(
   items: readonly ReceiptItem[],
   index: number,
@@ -250,10 +227,6 @@ export function unfoldItem(
   return { items: [...items.slice(0, index), ...parts, ...items.slice(index + 1)], at: index, count };
 }
 
-/**
- * How a bill is kept from the moment it arrives, so folding a run on the grid
- * is only ever a view. `from[i]` is the line row `i` came from.
- */
 export function unfoldAll(
   items: readonly ReceiptItem[],
   currency: string,
@@ -267,10 +240,6 @@ export function unfoldAll(
   return { items: out, from };
 }
 
-/**
- * What the history compares, so splitting a line into portions never reads as
- * "6 items → 7 items". A run's eaters are one row where they all agree.
- */
 export function printedBill(
   items: readonly ReceiptItem[],
   assignments: readonly (readonly string[])[] | null | undefined,
@@ -324,13 +293,10 @@ export function foldedLine(
 type RunMark = "some" | "all";
 
 interface RunAssignment {
-  /** Somebody has some portions but not all, so a tap on the folded row would be ambiguous. */
   detailed: boolean;
-  /** Absent is an empty cell. */
   marks: Map<string, RunMark>;
 }
 
-/** A detailed run marks everyone who had any of it as "some", even whoever had all of it. */
 export function runAssignment(rows: readonly ReadonlySet<string>[]): RunAssignment {
   const counts = new Map<string, number>();
   for (const row of rows) for (const id of row) counts.set(id, (counts.get(id) ?? 0) + 1);

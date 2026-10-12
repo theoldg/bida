@@ -1,7 +1,5 @@
 /**
- * The app as text: a daemon you send one command at a time, answering with the
- * screen written out in words. Nothing here speaks the app's vocabulary — every
- * control is a number the last screen handed you. Commands and when to use them:
+ * The app as text, a daemon answering each command with the screen in words —
  * docs/drive.md.
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -17,12 +15,6 @@ const READY = join(DIR, "ready.json");
 
 /* ---- reading the screen ------------------------------------------------- */
 
-/**
- * The page as experienced rather than as written: layout decides the lines, not
- * tags; what a modal covers is not on the screen; the fold is real;
- * `text-transform` is what a person reads and `text-overflow` what they never get
- * to.
- */
 const READ = `(() => {
   const vw = innerWidth, vh = innerHeight;
   const out = [];        // { text, where } in document order
@@ -37,10 +29,6 @@ const READ = `(() => {
 
   const modal = [...document.querySelectorAll("dialog[open]")].filter((d) => d.matches(":modal")).pop() ?? null;
 
-  /**
-   * Not every sheet is a \`<dialog>\` (the row menu is a fixed veil), so the hit
-   * test decides.
-   */
   const veil = (() => {
     if (modal) return null;
     for (let el = document.elementFromPoint(vw / 2, vh / 2); el; el = el.parentElement) {
@@ -62,7 +50,6 @@ const READ = `(() => {
 
   const BLOCKISH = new Set(["block", "flow-root", "list-item", "table", "table-row", "table-caption", "flex", "grid"]);
   const CONTROL = new Set(["A", "BUTTON", "INPUT", "SELECT", "TEXTAREA", "SUMMARY"]);
-  // Alternatives, read as one question with its current answer.
   const SETS = { tablist: "tabs", radiogroup: "options", listbox: "list", menu: "menu", tabs: "tabs" };
 
   const isControl = (el) => CONTROL.has(el.tagName) || el.getAttribute("role") === "button";
@@ -89,16 +76,11 @@ const READ = `(() => {
     return text;
   };
 
-  /**
-   * An offset inside the last-reached control for the finger, or null for its
-   * middle.
-   */
   let reachAt = null;
 
   /**
-   * **A scrim takes the whole screen, fold and all**, so the sheet is asked
-   * before the fold. Several points are tested: the tab bar and FABs cover a
-   * point, not a control.
+   * A scrim takes the whole screen, fold and all, so the sheet is asked before
+   * the fold.
    */
   const reach = (el) => {
     reachAt = null;
@@ -120,8 +102,6 @@ const READ = `(() => {
       if (dx !== r.width / 2 || dy !== r.height / 2) reachAt = { x: dx, y: dy };
       return "on";
     }
-    // Under a scrim it is off the screen a person has; without one, a number
-    // would offer a press that lands elsewhere.
     return veil ? "behind" : "covered";
   };
 
@@ -141,10 +121,6 @@ const READ = `(() => {
     return /[\\uE000-\\uF8FF]/.test(text) ? "" : text;
   };
 
-  /**
-   * Joined with a separator: "Dinner | Ana · 3 | €120.00" reads; run together it
-   * does not.
-   */
   const labelOf = (el) => {
     const parts = [];
     const gather = (node, parentStyle) => {
@@ -175,8 +151,6 @@ const READ = `(() => {
     if (cur.trim()) lines.push(cur.trim());
     const joined = lines.join(" | ").replace(/\\s+/g, " ").trim();
     if (joined) return { text: joined, spoken: false };
-    // Saying where the name came from separates "fine" from "a mystery to anyone
-    // not looking at the icon".
     return { text: el.getAttribute("aria-label") || el.title || el.querySelector("img")?.alt || "", spoken: true };
   };
 
@@ -206,10 +180,6 @@ const READ = `(() => {
     return [s.backgroundColor, s.color, s.fontWeight, s.borderBottomColor, s.boxShadow, s.opacity].join("|");
   };
 
-  /**
-   * Same-tag siblings painted exactly two ways, carrying words labelled alike —
-   * so the transfer's swap button between two sides is not read as a choice.
-   */
   const alternatives = (els) => {
     const words = (el) => (el.innerText ?? "").trim().length > 0;
     return new Set(els.map((e) => e.tagName)).size === 1
@@ -217,10 +187,6 @@ const READ = `(() => {
       && new Set(els.map(words)).size === 1;
   };
 
-  /**
-   * The odd one out, or -1. A control only visibly selected is a finding. Three
-   * is the smallest set with a majority.
-   */
   const oddOne = (els) => {
     if (els.length < 3) return -1;
     const looks = els.map(look);
@@ -235,7 +201,6 @@ const READ = `(() => {
     const where = reach(el);
     const at = reachAt;
     if (where === "behind" || where === "covered") { behind++; return null; }
-    // Only what a finger can reach gets a number.
     el.setAttribute("data-drive", String(++n));
     if (at) el.setAttribute("data-drive-at", \`\${at.x},\${at.y}\`);
     const isField = ["INPUT", "SELECT", "TEXTAREA"].includes(el.tagName);
@@ -248,7 +213,6 @@ const READ = `(() => {
       : \`\${el.tagName === "A" ? "link" : el.tagName.toLowerCase()} \${name.text ? \`"\${name.text}"\` : "(NO ACCESSIBLE NAME)"}\`;
     const flags = [
       name?.spoken && name.text ? "icon only" : "",
-      // Inside a set the (•) already says it.
       !inSet && chosenSays(el) === true ? "chosen" : "",
       el.disabled ? "disabled" : "",
       el === document.activeElement ? "focused" : "",
@@ -339,8 +303,6 @@ const READ = `(() => {
     last = item.where;
     lines.push(item.text);
   }
-  // Where focus sits is part of the screen; saying nothing would read as "nothing
-  // is focused".
   const active = document.activeElement;
   if (!active || active === document.body) lines.push("── nothing has keyboard focus ──");
   else if (!active.hasAttribute("data-drive"))
@@ -373,11 +335,9 @@ async function start() {
 
   const phone = async (who) => {
     if (!phones.has(who)) {
-      // The invite link travels by clipboard.
       const ctx = await newPhone(browser, { permissions: ["clipboard-read", "clipboard-write"] });
       const page = await ctx.newPage();
       const noise = [];
-      // An offline phone failing to reach the API is the test, not news.
       const offlineChatter = (text) => text.includes("ERR_INTERNET_DISCONNECTED");
       page.on("pageerror", (e) => noise.push(`page error: ${e.message.split("\n")[0]}`));
       page.on("console", (m) => {
@@ -402,7 +362,6 @@ async function start() {
     const { page, ctx, noise } = await phone(who);
     const arg = args.join(" ");
 
-    /** Two matches are refused rather than guessed at. */
     const named = async (label) => {
       const hits = await page.evaluate((want) => {
         const norm = (s) => (s ?? "").trim().toLowerCase();
@@ -417,11 +376,7 @@ async function start() {
       return hits[0];
     };
 
-    /**
-     * A number never handed out means read again; one matching twice means this
-     * script lost track. Playwright is `strict` too: a wrong press is worse than
-     * a failed one.
-     */
+    /** A wrong press is worse than a failed one. */
     const target = async (ref) => {
       const n = ref?.startsWith('"') ? await named(ref.slice(1, -1)) : ref;
       const sel = `[data-drive="${Number(n)}"]`;
@@ -431,10 +386,6 @@ async function start() {
       return sel;
     };
 
-    /**
-     * Its middle, unless the dump found the middle taken: Playwright refuses a
-     * press that lands on something else.
-     */
     /** Commands split on whitespace, so a newline is written `\n`. */
     const typed = (parts) => parts.join(" ").replace(/\\n/g, "\n");
 
@@ -454,12 +405,11 @@ async function start() {
         break;
       }
       case "fill": await page.fill(await target(args[0]), typed(args.slice(1)), { strict: true }); break;
-      // Keyed one at a time: the amount field regroups and restores the caret per
-      // keystroke, which `fill` never exercises.
+      // Keyed one at a time: the amount field regroups per keystroke, which
+      // `fill` never exercises.
       case "type": await page.locator(await target(args[0])).pressSequentially(typed(args.slice(1)), { delay: 20, timeout: 5000 }); break;
       case "select": await page.selectOption(await target(args[0]), { label: args.slice(1).join(" ") }, { strict: true }); break;
       case "press": for (let i = Math.max(1, Number(args[1] ?? 1)); i > 0; i--) await page.keyboard.press(args[0]); break;
-      // A right click is the same `contextmenu` a touch hold sends.
       case "hold": {
         const sel = await target(args[0]);
         await page.click(sel, { button: "right", strict: true, ...(await aim(sel)) });
@@ -472,8 +422,6 @@ async function start() {
       case "offline": await ctx.setOffline(args[0] !== "off"); break;
       case "theme": await page.emulateMedia({ colorScheme: args[0] === "dark" ? "dark" : "light" }); break;
       case "forget": await ctx.close(); phones.delete(who); return { who, url: "(phone thrown away)", title: "", lines: [], noise: [] };
-      // Sets up the world, not the screen: the scan button is still pressed by
-      // number, and its chooser gets a real photo the client really downscales.
       case "receipt": {
         const say = (lines) => ({ who, url: page.url().replace(base, ""), title: "", lines, noise: noise.splice(0) });
         if (!args[0] || args[0] === "list") return say(["receipts on offer:", ...receiptList()]);
@@ -484,7 +432,6 @@ async function start() {
           return say(["this phone scans for real again — which needs a key it hasn't got"]);
         }
         const fixture = await stubScan(page, args[0]);
-        // Persistent: a second scan would otherwise meet a cancelled chooser.
         if (!phones.get(who).chooser) {
           const answer = (chooser) => chooser
             .setFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO })
@@ -498,7 +445,6 @@ async function start() {
           "the stub answers a typed bill too: press \"Type\" (\"As text\" over a bill), fill the box and press \"Read it\"",
         ]);
       }
-      // Once, since a receipt's chooser is persistent and the two would race.
       case "file": {
         const say = (lines) => ({ who, url: page.url().replace(base, ""), title: "", lines, noise: noise.splice(0) });
         if (phones.get(who).chooser) return say(["a receipt is armed on this phone: `receipt off` first"]);
@@ -542,8 +488,8 @@ async function start() {
   };
 
   let done = 0;
-  // Later commands were written against a screen that never arrived, so a batch
-  // stops at its first failure.
+  // A batch stops at its first failure: later commands were written against a
+  // screen that never arrived.
   let aborted = null;
   for (;;) {
     const lines = readFileSync(IN, "utf8").split("\n").filter(Boolean);
@@ -582,8 +528,6 @@ function send(commands) {
     process.exit(1);
   }
   let seq = readFileSync(IN, "utf8").split("\n").filter(Boolean).length;
-  // The first sequence number names the batch: unique without agreeing on
-  // anything.
   const batch = seq;
   return commands.map((cmd) => {
     appendFileSync(IN, `${JSON.stringify({ seq, batch, cmd })}\n`);
@@ -591,10 +535,6 @@ function send(commands) {
   });
 }
 
-/**
- * Only the last screen whole; each step before it as where it landed and what the
- * page complained about. `--all` prints every screen.
- */
 async function collect(wanted, all = false) {
   const bodies = [];
   for (const { seq, cmd } of wanted) {
