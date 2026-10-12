@@ -128,12 +128,10 @@ It also opens `/diag` while the database is still wedged and fails unless the
 readout names what never came back. A diagnostics screen that hangs on the
 fault it reports is worse than none.
 
-Then the database is deleted from another connection, which is what a browser
-reclaiming storage looks like from inside the page. That half is a smoke test
-and says so in the file: it passes with the `close` handler removed too,
-because re-opening an absent database happens to wake the reads by itself. It
-is there for the property — a forced close must not strand the app on rows that
-are no longer there — not for the mechanism.
+Then the database is deleted from another connection — a browser reclaiming
+storage, from inside the page. A smoke test, for the property (a forced close
+must not strand the app on rows no longer there), not the mechanism: it passes
+with the `close` handler removed too.
 
 Then a second tab holds a readwrite transaction open over every store — the
 lock a frozen copy keeps. A screen already read must show its remembered
@@ -290,9 +288,8 @@ from the list opens at the top. That section alone reads the scroller, not the h
 carry: a launch's reopened ledger and a cold one each climb to the list on a
 close request with no tap first, and a screen above them doesn't. **Escape
 stands in for Android's button** there, being a close request too. Last, a back
-press the instant an entry opens, on a CPU throttled sixfold: the press must
-find the entry's own handler, not the ledger's, which would climb to the list
-— it fails every time with the handler registered in a passive effect.
+press the instant an entry opens on a CPU throttled sixfold, which a handler
+registered in a passive effect sends past the ledger to the list.
 
 **A device back press is `page.goBack()`**, which Chromium reports
 `userInitiated` and `cancelable` — the pair the guard reads. A keyboard
@@ -361,9 +358,8 @@ commits the URL, so a step that reads the stack or presses Back waits for the
 URL too. The rate dialog opens a moment after the currency pick, once the
 look-up behind it fails. The one honest pause is the window for proving that
 *nothing* happened. **A wait that swallows its timeout must ask for a state
-that comes**: one waiting for a row count that can't be, or a scroll past where
-the list ends, sits out the whole ceiling and then passes — three of them once
-cost the suite 90s a run, unseen. Time a check's lines once after writing it.
+that comes**, or it sits out the ceiling and passes — three once cost 90s a
+run, unseen. Time a check's lines once after writing it.
 
 **The app has its own clock, and a starved machine can overrun it.**
 `SWALLOWED_MS` ([navigation.md](navigation.md#keeping-the-devices-back-honest))
@@ -398,10 +394,7 @@ navigation that could ask, and serve a forged revision once (`swOnce`).
   thing it reported: Playwright's `close` and `bringToFront` take no timeout.
 - **Don't edit `apps/web` while a check runs.** Each calls `ensureBuild()`, so
   a queued one rebuilds `out/` under the running ones.
-- **Flakes still open**, rare and green alone, each printing its next clue on
-  failure. `offline` "a page in use is offered the new build", about one run in
-  thirty: the new worker installs and then never activates, the old one still
-  active a minute on. `stall` "the list empties without a reload": the reads
-  re-armed after the delete first answer with the old row, and the re-read that
-  empties the list doesn't always follow. `offline` "tap a suggested transfer":
-  the page reaches balances, then is found back on the ledger.
+- **Flakes still open**, rare, green alone, each printing its next clue:
+  `offline`'s new build installed and never activated; `stall`'s list kept
+  after the delete (re-armed reads answer with the old row first); `offline`'s
+  suggested transfer found back on the ledger.
