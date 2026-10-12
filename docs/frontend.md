@@ -188,6 +188,10 @@ figure-free.
 
 ## Gotchas
 
+- **Constructing an `Intl.NumberFormat` costs far more than formatting.** One
+  per figure was half the script of drawing a long ledger; `formatMinor` keeps
+  one per shape. Keep any new `Intl` formatter the same way.
+
 - **The theme is a hydration mismatch on purpose.** `<ThemeScript />` sets
   `data-theme` on `<html>` before paint, but the export is prerendered light,
   so React finds an attribute it did not write and says so. `<html>` carries

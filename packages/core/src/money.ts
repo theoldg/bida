@@ -113,16 +113,27 @@ export function formatMinorParts(
 const minorValue = (minor: number, currency: CurrencyCode) =>
   Number(minorToDecimalString(minor, currency));
 
+/**
+ * Built once per shape: constructing an `Intl.NumberFormat` costs far more than
+ * formatting with one, and a ledger formats two or three figures a row.
+ */
+const formatters = new Map<string, Intl.NumberFormat>();
+
 function minorFormatter(currency: CurrencyCode, options: FormatOptions): Intl.NumberFormat {
   const { locale, showCurrency = true, signDisplay = "auto" } = options;
+  const key = `${locale ?? ""}|${currency}|${showCurrency}|${signDisplay}`;
+  const known = formatters.get(key);
+  if (known) return known;
   const exp = exponentOf(currency);
-  return new Intl.NumberFormat(locale, {
+  const made = new Intl.NumberFormat(locale, {
     style: showCurrency ? "currency" : "decimal",
     currency: showCurrency ? currency : undefined,
     minimumFractionDigits: exp,
     maximumFractionDigits: exp,
     signDisplay: signDisplay === "always" ? "exceptZero" : signDisplay,
   });
+  formatters.set(key, made);
+  return made;
 }
 
 /**

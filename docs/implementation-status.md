@@ -28,7 +28,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-One thing: push notifications, built and unchecked on a phone. The visual review is closed
+Two things: push notifications, built and unchecked on a phone, and big groups. The visual review is closed
 ([design-review.md](design-review.md)).
 
 - **Push notifications are built and work on dev**
@@ -39,6 +39,13 @@ One thing: push notifications, built and unchecked on a phone. The visual review
   ahead ([sync.md](sync.md#the-pull-ahead)), untried on a phone — `/diag`'s
   `pull ahead:` lines now say whether it ran. Settings' Off · Just me · All
   is built; All is untried on a phone.
+
+- **A big group is slow on every screen**: the ledger draws every row, so
+  600 entries cost ~2s to open and ~0.5s to leave (4× CPU). Touch handlers and
+  links cost nothing; the row's markup and per-row balance math do. Held for
+  design (the owner, 2026-10-12): a ledger the full height, rows drawn around
+  the scroll and skeletons elsewhere, with the motions' start and landing
+  strips drawn for a flight ([rows.md](rows.md#the-ledger-moves)).
 
 ### Found by the audit of 2026-10-11, not yet fixed
 

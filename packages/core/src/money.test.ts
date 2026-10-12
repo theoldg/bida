@@ -88,6 +88,30 @@ describe("formatMinor", () => {
     expect(formatMinor(4116, "EUR", { locale: "en-IE", signDisplay: "always" })).toContain("+");
     expect(formatMinor(0, "EUR", { locale: "en-IE", signDisplay: "always" })).not.toContain("+");
   });
+
+  // Formatters are kept and reused: one call's options must never reach another's.
+  it("formats each call by its own options, in any order", () => {
+    const calls = [
+      [4116, "EUR", { locale: "en-IE", signDisplay: "always" }],
+      [4116, "EUR", { locale: "en-IE" }],
+      [4116, "EUR", { locale: "en-IE", showCurrency: false }],
+      [4116, "JPY", { locale: "en-IE" }],
+      [4116, "EUR", { locale: "fr-FR" }],
+      [150279, "KWD", { locale: "en-IE" }],
+    ] as const;
+    const fresh = (minor: number, currency: string, o: { locale: string; signDisplay?: "always"; showCurrency?: boolean }) => {
+      const exp = currency === "JPY" ? 0 : currency === "KWD" ? 3 : 2;
+      return new Intl.NumberFormat(o.locale, {
+        style: o.showCurrency === false ? "decimal" : "currency",
+        currency: o.showCurrency === false ? undefined : currency,
+        minimumFractionDigits: exp, maximumFractionDigits: exp,
+        signDisplay: o.signDisplay === "always" ? "exceptZero" : "auto",
+      }).format(minor / 10 ** exp);
+    };
+    for (const order of [calls, [...calls].reverse()]) {
+      for (const [minor, currency, o] of order) expect(formatMinor(minor, currency, o)).toBe(fresh(minor, currency, o));
+    }
+  });
 });
 
 describe("formatMinorParts", () => {
