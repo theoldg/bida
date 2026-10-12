@@ -18,6 +18,8 @@ Taste arrives as feel ("the wrong vibe") — answer with the screen photographed
 not described. Permission is usually pre-granted: build, then be corrected —
 but "wait for my approval" means stop until a yes.
 When a request undoes an ADR, say so ("this undoes ADR-N, sure?") and wait for the yes.
+A request naming something this session never saw ("the flags", three answers to
+unasked questions) is another conversation's: ask which, that turn, not later.
 
 The failure mode is *earnestness* — the extra paragraph, the ADR, prose
 restating what the code enforces. What gets praised is deleting — and when
@@ -28,6 +30,11 @@ sentence is the same earnestness, compressed.
 
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
+
+- *2026-10-12* — "ship the flags that speed up the trace": flags from a
+  conversation I wasn't in. I measured my way toward them until they pasted
+  it, and the paste was the whole brief. Build what it proposed and check it
+  again, here: the export compared by content this time, not names.
 
 - *2026-10-12* — "Should the deploy take so long?", then "Ok do your version.
   Why does the build take 30 seconds though?" Time each phase before
@@ -78,13 +85,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   then mid-scan "push whatever you have … this machine might be dropped". An
   audit's findings are work product: commit them as a list in the docs as
   they land, not only in chat.
-
-- *2026-10-11* — Three numbered answers to questions this session never
-  asked; they were another session's. I said so, then they pasted the whole
-  exchange. Asking which conversation it belonged to cost one turn; guessing
-  would have built the wrong thing.
-
-- *2026-10-11* — "1 minute than 5, or no timer at all? Wdyt" — an either-or
-  ending in wdyt wants a pick with its one reason, then the build, not a
-  survey. And when the owner pastes another session's proposal, that paste is
-  the whole brief.

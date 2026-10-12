@@ -25,6 +25,11 @@ const nextConfig = {
   // fails the same step: checking again here was a third of the build's time.
   typescript: { ignoreBuildErrors: process.env.BIDA_TYPECHECKED_BESIDE === "1" },
   transpilePackages: ["@bida/core"],
+  // The custom `webpack` below silently turns off Next's build worker, and with
+  // it the server traces running beside the rest of the build — so they ran
+  // after it, ~12s nothing reads (only `out/` is deployed). Both stated
+  // outright: should the worker ever go off again, Next refuses the build.
+  experimental: { webpackBuildWorker: true, parallelServerBuildTraces: true },
   webpack(config) {
     // packages/core imports its siblings as "./hlc.js" etc — valid under
     // TS's "bundler" moduleResolution (which tsc/next dev understand), but

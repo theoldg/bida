@@ -336,3 +336,5 @@ Recognise these if you ever propose one:
 - **`packages/core` imports siblings with `.js`**, which Next's production
   webpack resolves only through `extensionAlias` in `next.config.mjs`;
   `next dev` won't show the failure, the CI build will.
+- **A custom `webpack()` silently turns off Next's build worker**, and the
+  parallel traces with it (~12s); `next.config.mjs` turns both back on by name.
