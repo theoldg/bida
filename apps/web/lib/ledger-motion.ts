@@ -1,25 +1,12 @@
 // Doc: docs/rows.md#the-ledger-moves
-/**
- * How the ledger's list moves when it changes under somebody looking at it
- * (components/ledger-rows.tsx): the pure half — which items are leaving, how
- * a fold spends its height, and the hand-off that tells the ledger which row a
- * save just wrote. The DOM half measures and paints; this is what it asks.
- */
 
 /** A date line or an entry: the ledger drawn as one flat list. */
 export type LedgerItem<T> =
   | { key: string; kind: "day"; label: string }
   | { key: string; kind: "row"; row: T };
 
-/** An item as drawn: `leaving` ones are still on screen, folding away. */
 export type Shown<T> = LedgerItem<T> & { leaving?: true };
 
-/**
- * The next list, with whatever the last one drew and this one lacks kept in
- * place as `leaving` — each after the nearest item above it that survives, so
- * a row folds where it stood rather than jumping to the end. What the last
- * one had leaving and this one has again (a restored entry) simply stays.
- */
 export function presence<T>(prev: readonly Shown<T>[], next: readonly LedgerItem<T>[]): Shown<T>[] {
   const keep = new Set(next.map((i) => i.key));
   const after = new Map<string | null, Shown<T>[]>();
@@ -35,7 +22,6 @@ export function presence<T>(prev: readonly Shown<T>[], next: readonly LedgerItem
   return out;
 }
 
-/** Keys in order, cut into runs of neighbours that all pass `test`. */
 export function runs(keys: readonly string[], test: (key: string) => boolean): string[][] {
   const out: string[][] = [];
   let run: string[] = [];
@@ -51,12 +37,8 @@ export function runs(keys: readonly string[], test: (key: string) => boolean): s
 // ------------------------------------------------------------- folding
 
 /**
- * One frame of a fold: `heights` top-down, `removed` pixels into it. The
- * bottom slot gives first and the top one last, so a date line left with no
- * rows is the last thing to go and reads whole for as long as it has room.
- * With `carry`, the bottom slot keeps 1px — the divider under the row it held,
- * which is the line above whatever comes next — until a final pixel of
- * `lift` lays it on the line above the run, and the two are one.
+ * The bottom slot gives first, so a date line left with no rows is the last thing
+ * to go.
  */
 export function foldFrame(heights: readonly number[], removed: number, carry: boolean):
   { heights: number[]; lift: number } {
@@ -70,16 +52,10 @@ export function foldFrame(heights: readonly number[], removed: number, carry: bo
   return { heights: out, lift: carry ? Math.max(0, Math.min(1, left)) : 0 };
 }
 
-/** The whole of a fold: every slot's height, and the carried pixel if any. */
 export function foldTotal(heights: readonly number[], carry: boolean): number {
   return heights.reduce((n, h) => n + h, 0) + (carry ? 1 : 0);
 }
 
-/**
- * The fold's curve: CSS's `cubic-bezier(.2, 0, 0, 1)`, the one the opening
- * gap uses, solved for a frame-by-frame fold that CSS can't run — several
- * slots giving up height in turn.
- */
 export function standard(t: number): number {
   const at = (a: number, b: number, u: number) => 3 * a * u * (1 - u) ** 2 + 3 * b * u * u * (1 - u) + u ** 3;
   const x = Math.min(1, Math.max(0, t));
@@ -91,33 +67,19 @@ export function standard(t: number): number {
   return at(0, 1, u);
 }
 
-/** Leaving: the content fades, then the space closes. Arriving: the reverse. */
 export const FADE_OUT_MS = 140;
 export const FOLD_MS = 220;
 export const OPEN_MS = 220;
 export const FADE_IN_MS = 180;
-/** A list moving under a finger, or gliding after one, holds its changes this long past the last scroll. */
 export const STILL_MS = 300;
-/**
- * How long a saved row sits washed before it is brought into view and let go:
- * longer than the you-owe card's beat, so the screen has plainly arrived
- * before anything on it moves.
- */
 export const SAVED_BEAT = 600;
-/**
- * How long a saved row the ledger had to scroll to stays washed after it
- * lands: the eye arrives with the scroll, and a wash already fading by then
- * is missed.
- */
 export const SAVED_DWELL = 600;
 
 // ------------------------------------------------------------- the saved row
 
 /**
- * What a save just wrote, for the ledger it lands on: that row is brought
- * into view and flashed. Module state, since the form and the ledger are
- * never on screen together and the hand-off is one navigation long; it
- * expires so a save landing elsewhere can't flash a ledger opened later.
+ * Module state: the form and the ledger are never on screen together. It expires
+ * so a save landing elsewhere can't flash a ledger opened later.
  */
 const SAVED_FOR_MS = 10_000;
 let saved: { groupId: string; entryId: string; at: number } | null = null;
@@ -127,7 +89,6 @@ export function markSaved(groupId: string, entryId: string, now = Date.now()): v
   rollLet.delete(groupId);
 }
 
-/** The entry to flash, if a save for this group is still fresh; it stays until `clearSaved`. */
 export function peekSaved(groupId: string, now = Date.now()): string | null {
   if (!saved || saved.groupId !== groupId || now - saved.at > SAVED_FOR_MS) return null;
   return saved.entryId;
@@ -138,13 +99,10 @@ export function clearSaved(): void {
 }
 
 /**
- * The summary's roll, held while a save is landing: a saved row near the top
- * takes the ledger up to the banner, and the figure rolls once it is there,
- * not off screen. The card waits (`awaitRoll`); the ledger says go
- * (`letRoll`) — at once when the row is further down, or when the glide ends.
+ * The summary's roll waits for a saved row's glide, so the figure rolls on
+ * screen, not off it.
  */
 const rollWaiting = new Map<string, Set<() => void>>();
-/** Let go before the card was listening: the ledger's effects run first. */
 const rollLet = new Set<string>();
 
 export function awaitRoll(groupId: string, go: () => void): () => void {

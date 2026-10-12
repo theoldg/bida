@@ -1,25 +1,17 @@
 // Doc: docs/scan-worker.md#what-the-scan-costs
-/**
- * The Turnstile token every scan carries: fail closed, one per scan, warmed
- * while a scan button is on screen.
- */
 
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 const SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
 /**
- * How long a warmed token may sit unspent. Cloudflare gives 300s, and it must
- * still be valid when the Worker verifies it after the upload — half is the
- * margin.
+ * Cloudflare gives 300s, and it must still be valid when the Worker verifies it
+ * after the upload.
  */
 const WARM_TTL_MS = 120_000;
 
 /**
- * No token, or one the Worker rejected. `side` says which end: `"browser"` is
- * a script or widget that never answered — their network, and a retry may
- * work. `"server"` is `siteverify` rejecting our token: a deployment whose
- * secret and site key disagree (docs/scan-worker.md#what-the-scan-costs),
- * which no retry fixes. One sentence for both sends the wrong person looking.
+ * `"browser"` is a widget that never answered, and a retry may work; `"server"`
+ * is a secret and site key that disagree, which no retry fixes.
  */
 export class TurnstileBlockedError extends Error {
   constructor(message: string, readonly side: "browser" | "server" = "browser") {
@@ -39,8 +31,7 @@ declare global {
 let loading: Promise<void> | null = null;
 
 function loadScript(): Promise<void> {
-  // Not memoised across a failure: a rejected promise kept here would make one
-  // dead radio permanent, and the retry for a scan is the same button.
+  // Not memoised across a failure, or one dead radio would be permanent.
   if (loading) return loading;
   loading = new Promise<void>((resolve, reject) => {
     const el = document.createElement("script");
@@ -57,14 +48,9 @@ function loadScript(): Promise<void> {
 }
 
 /**
- * Run the widget once and resolve with what it says.
- *
- * **In a fixed host at the foot of the screen, never off-screen**:
- * `interaction-only` normally draws nothing, but a challenge needing a tap must
- * be reachable or the scan times out.
- *
- * A warm runs `interactive` false and gives up if Cloudflare wants a tap — an
- * unasked-for checkbox is worse than the second saved. The press runs true.
+ * In a fixed host on screen, never off it: a challenge needing a tap must be
+ * reachable. A warm gives up on one — an unasked-for checkbox is worse than the
+ * second saved.
  */
 async function mint(interactive: boolean): Promise<string> {
   await loadScript();
@@ -81,9 +67,6 @@ async function mint(interactive: boolean): Promise<string> {
         clearTimeout(timer);
         reject(new TurnstileBlockedError(why));
       };
-      // Longer than a scan, because a challenge that needs a tap is waiting on
-      // a person; short enough that a widget which will never answer doesn't
-      // leave the button reading "Reading…" forever.
       const timer = setTimeout(fail("turnstile timed out"), 45_000);
       id = turnstile.render(host, {
         sitekey: SITE_KEY,
@@ -101,16 +84,10 @@ async function mint(interactive: boolean): Promise<string> {
   }
 }
 
-/** A token minted ahead of the press, and when — see `WARM_TTL_MS`. */
 let warmed: { token: string; at: number } | null = null;
-/** A mint already in flight, so two warm calls are one challenge. */
 let minting: Promise<string> | null = null;
 
-/**
- * The warmed token if it is still young enough to survive the round trip,
- * else null. **Takes** it: a token is single-use, so the one thing worse than
- * minting again is two scans sending the same one.
- */
+/** Takes it: a token is single-use. */
 function takeWarmed(): string | null {
   if (!warmed) return null;
   const { token, at } = warmed;
@@ -119,9 +96,8 @@ function takeWarmed(): string | null {
 }
 
 /**
- * One challenge, shared by whoever asks while it runs. The token is filed
- * *in the continuation that resolves this promise*, so awaiters see the filled
- * slot — or `turnstileToken` could return a token still sitting in `warmed`.
+ * Filed in the continuation that resolves this promise, so awaiters see the
+ * filled slot.
  */
 function startMint(): Promise<string> {
   if (minting) return minting;
@@ -133,11 +109,7 @@ function startMint(): Promise<string> {
   return run;
 }
 
-/**
- * Start the challenge now, wherever a scan control is ready (`ScanPair`).
- * **Never throws or reports**: a failed warm costs nothing, and the press
- * names a blocked browser to somebody who asked.
- */
+/** Never throws or reports: a failed warm costs nothing. */
 export function warmTurnstile(): void {
   if (!SITE_KEY || typeof document === "undefined") return;
   if (minting || (warmed && Date.now() - warmed.at < WARM_TTL_MS)) return;
@@ -145,17 +117,13 @@ export function warmTurnstile(): void {
 }
 
 /**
- * A fresh token, or null where Turnstile isn't configured (a self-hosted
- * deployment with no site key, whose Worker isn't checking — SELFHOSTING.md).
- * Takes a warm token, joins a warm in flight, or mints — only the last throws.
+ * Null where Turnstile isn't configured (a self-hosted deployment,
+ * SELFHOSTING.md).
  */
 export async function turnstileToken(): Promise<string | null> {
   if (!SITE_KEY) return null;
   const ready = takeWarmed();
   if (ready) return ready;
-  // A warm that is still running is this scan's token: waiting on it beats
-  // starting a second challenge beside it. A warm that fails falls through to
-  // a mint of our own, so the error belongs to this call and not to that one.
   if (minting) {
     try {
       await minting;
