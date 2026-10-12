@@ -27,6 +27,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "Continue fixing the bugs from yesterday's list." Many
+  pushes in, after a compaction, they stopped me mid-command. A long unattended
+  run wants checkpoints the owner can see: what is done, what is next, then
+  carry on. A summary that only the next context reads is not one.
+
 - *2026-10-12* — "Are the docs too long?", then "do all 4", then "push
   frequently, another session is working". A split moves text away from
   whoever is reading it: commit each step and run every moved link through
@@ -79,8 +84,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   nonsense." Another session landed the same rework while I wrote mine; the
   push found out. Fetch dev before a rewrite and again before the tests, then
   keep only the faults theirs left: here, what a save wrote, not the tabs.
-
-- *2026-10-11* — "How did this bug even arise". A copied pattern copies half:
-  the query was kept like the position, but only the position was forgotten
-  on a fresh visit. The check stopped one step short of the repro. Answer
-  the how; it was the question.
