@@ -1,3 +1,4 @@
+// Doc: docs/history.md#what-a-revision-says
 import {
   isValidRate, resolveEntrySplit, resolveSplit, splitParticipants,
   type CurrencyCode, type Id, type ImportSource, type Member, type ReceiptItem, type Revision, type SplitSpec,

@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/who-had-what.md#the-grid
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { parseMinor, type ExtraKind } from "@bida/core";

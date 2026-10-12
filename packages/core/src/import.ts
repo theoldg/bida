@@ -1,3 +1,4 @@
+// Doc: docs/import-export.md#reading-one-back
 import { exponentOf, isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money.js";
 import { resolveSplit } from "./split.js";
 import type { ImportSource } from "./types.js";
