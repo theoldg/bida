@@ -1,9 +1,5 @@
 #!/usr/bin/env node
-/**
- * `pnpm verify offline` — does the built app work with the network cut? If the
- * precache misses the RSC payloads Next fetches on every tap, a phone with no
- * signal gets a wall of `1:"$Sreact.fragment"`. Builds first if it has to.
- */
+// Doc: docs/testing.md
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { asInstalledApp, ensureBuild, OUT, PATIENCE, serveExport, launch, newPhone, openGroupsList,
@@ -14,10 +10,6 @@ ensureBuild();
 // Levers for a deploy over a dying signal: one asset goes missing, and the worker
 // comes back claiming to be a new build.
 let swRevision = null;
-/**
- * For one fetch of `sw.js` only: the page's own update checks fetch it too, and a
- * second install of the forged build races the check.
- */
 let swOnce = false;
 const blocked = new Set();
 
@@ -58,7 +50,6 @@ for (const [amount, what] of [["4800", "Riad"], ["6200", "Dinner"], ["900", "Tax
   await page.waitForURL(/\/g\?id=/);
 }
 
-// The worker takes over on the next launch, never mid-session.
 await page.goto(`${base}/`);
 await page.waitForFunction(() => navigator.serviceWorker.getRegistration().then((r) => !!r?.active), null,
   { timeout: PATIENCE });
@@ -79,7 +70,6 @@ async function tap(label, act, expect) {
   } catch (e) {
     const url = page.url().replace(base, "");
     const body = (await page.evaluate(() => document.body.innerText).catch(() => "")).slice(0, 100);
-    // Somewhere it wasn't sent is usually a traversal that landed late.
     const stack = await page.evaluate(() => navigation.entries().map((e, i) =>
       `${i === navigation.currentEntry.index ? "*" : ""}${new URL(e.url).pathname}`).join(" ")).catch(() => "");
     report(false, label, `at ${url} — ${body.replace(/\s+/g, " ")}\n        stack: ${stack}`);
@@ -88,7 +78,6 @@ async function tap(label, act, expect) {
 
 await tap("groups list loads", () => openGroupsList(page, base), ".rows a.row");
 await tap("tap a group", () => page.locator("a.row").first().click(), ".daylabel");
-// The router commits the URL after it draws, and the Back below reads the stack.
 await tap("tap an entry", async () => {
   await page.getByText("Dinner").first().click();
   await page.waitForURL(/\/g\/entry\?/, { timeout: PATIENCE });
@@ -106,7 +95,6 @@ await tap("tap a suggested transfer", () => page.locator("button.card").first().
 await page.keyboard.press("Escape");
 await tap("history", () => page.goto(`${base}/g/history?id=${g}`), ".tle");
 await tap("members", () => page.goto(`${base}/g/members?id=${g}`), ".rows .row");
-// Found by place and state, never by wording.
 await tap("theme toggle", async () => {
   await page.goto(`${base}/settings`);
   await page.locator('.settings .seg').first().locator('button[aria-pressed="false"]').click();
@@ -133,8 +121,8 @@ try {
 }
 
 // ---- a deploy that installs over a dying signal --------------------------
-// `activate` deletes the previous cache, so a new worker installed with holes in
-// its own leaves a phone unable to paint the build it has.
+// `activate` deletes the previous cache, so a worker installed with holes in its
+// own leaves a phone unable to paint the build it has.
 console.log("\nupdate over a flaky network:");
 await ctx.setOffline(false);
 const cacheBefore = (await page.evaluate(() => caches.keys())).find((k) => k.startsWith("bida-shell-"));
@@ -178,20 +166,13 @@ await page.waitForFunction(async () => {
 }, null, { timeout: PATIENCE });
 blocked.delete(ASSET_TO_DROP);
 
-// Activating deletes the caches it doesn't need, so a hole shows on the next
-// launch.
 await page.close();
 page = await ctx.newPage();
 await ctx.setOffline(true);
 await tap("still loads offline on the next launch", () => openGroupsList(page, base), ".rows a.row");
 
-// ---- a deploy that arrives by itself ------------------------------------ Only
-// the front door reloads at once (lib/update.ts). Four pages across it:
-//
-// - untouched on the groups list, which takes the build at once; - in use on
-// Settings, which is offered the reload; - untouched on a group, which stays put;
-// - resumed on a group, on its own build through a quick switch, reloaded after
-// a long one.
+// ---- a deploy that arrives by itself ------------------------------------
+// Only the front door reloads at once (lib/update.ts).
 console.log("\nupdating:");
 await ctx.setOffline(false);
 const oldShell = (await page.evaluate(() => caches.keys())).find((k) => k.startsWith("bida-shell-"));
@@ -223,7 +204,6 @@ await page.waitForSelector(".verrow");
 await mark(page);
 await touch(page);
 
-// Opened before the two below, which clear `leftOnList` (lib/launch.ts).
 const doorstep = await ctx.newPage();
 await doorstep.goto(`${base}/`);
 await doorstep.waitForSelector(".rows a.row");
@@ -234,11 +214,9 @@ await straggler.goto(`${base}/g?id=${g}`);
 await straggler.waitForSelector(".fab");
 await mark(straggler);
 await touch(straggler);
-// A file only the old build's cache holds, so which build answers is visible.
 await straggler.evaluate((name) =>
   caches.open(name).then((c) => c.put("/legacy-probe.txt", new Response("OLD"))), oldShell);
 
-// By URL: `openGroupsList`'s Back tap would count as a touch.
 const fresh = await ctx.newPage();
 await fresh.goto(`${base}/g?id=${g}`);
 await fresh.waitForSelector(".fab");
@@ -246,7 +224,6 @@ await mark(fresh);
 
 const reload = page.getByRole("button", { name: "Reload" });
 await page.bringToFront();
-// Only here: the browser rechecks `sw.js` on every navigation.
 swRevision = "gooddeploy01";
 await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
 await tap("a page in use is offered the new build", () => reload.waitFor({ state: "visible", timeout: PATIENCE }), ".verrow");
@@ -263,7 +240,6 @@ const legacyAnswer = await straggler.evaluate(() =>
 report(legacyAnswer === "OLD", "a page still on the old build is served from that build's cache", legacyAnswer);
 await straggler.locator("a[href^='/g/balances']").first().click().catch(() => {});
 try {
-  // Both views draw a floating button, so a selector alone can pass early.
   await straggler.waitForURL((url) => url.pathname === "/g/balances", { timeout: PATIENCE });
   await straggler.waitForSelector(".fab", { timeout: PATIENCE });
   const kept = new URL(straggler.url()).searchParams.get("id") === g;
@@ -314,8 +290,6 @@ const answeredAt = await page.evaluate((id) =>
 report(answeredAt.includes(`id=${g}`), "a payload is answered under the URL it was asked for", answeredAt);
 
 // ---- and a second deploy over the page that never reloaded ---------------
-// Handing every page the newest cache would delete `fresh`'s own and serve it a
-// stranger's unhashed `/g.txt`: a screen that never finishes drawing.
 console.log("\ndeploying again, over a page that never reloaded:");
 swRevision = "gooddeploy02";
 await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
@@ -337,7 +311,6 @@ const after = await (async () => {
   return last ? last.split(",") : [];
 })();
 report(after.includes(oldShell), "the cache of the page two builds back is kept", after.join(", "));
-// One per build somebody is on, and no more.
 report(after.length === 3, "one cache per build a window is on, and no more", after.join(", "));
 const stillOld = await fresh.evaluate(() =>
   fetch("/legacy-probe.txt").then((r) => r.text()).catch(() => "failed"));
@@ -355,10 +328,9 @@ try {
   report(false, "and can still draw a screen it taps to", fresh.url().replace(base, ""));
 }
 
-// ---- and when that page's own build is gone from the cache --------------- A
-// page running a build nothing can serve is refused a payload, and the router's
-// fallback navigation must keep its `?id=` (`payloadFor`). One `out/` can't make
-// two builds, so only the cause's two halves are asserted.
+// ---- and when that page's own build is gone from the cache ---------------
+// A page running a build nothing can serve must keep its `?id=` on the router's
+// fallback navigation (`payloadFor`).
 console.log("\nand with that page's build evicted under it:");
 await fresh.evaluate((name) => caches.delete(name), oldShell);
 const refused = await fresh.evaluate((id) =>
@@ -377,11 +349,7 @@ try {
     fresh.url().replace(base, ""));
 }
 
-// What must load is the route at the route's own address: every back arrow is a
-// path, and `/g.txt` is not one. Driven directly: `fetch` cannot make a
-// navigation.
 try {
-  // Inside the try: a slow one must not take every assertion above with it.
   await fresh.goto(`${base}/g.txt?id=${g}&_rsc=probe`);
   await fresh.waitForSelector(".fab", { timeout: PATIENCE });
   report(fresh.url() === `${base}/g?id=${g}` && await fresh.locator(".keyless").count() === 0,

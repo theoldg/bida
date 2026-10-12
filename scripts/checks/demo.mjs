@@ -101,9 +101,9 @@ report(await page.getByText("No invite link").count() === 1,
   "Invite refuses out loud rather than going missing");
 await page.getByRole("button", { name: "Close" }).click();
 
-// ---- and the way out ---------------------------------------------------- Only
-// a changed demo tests anything: an untouched one reopens identically whether the
-// address re-seeds or merely un-hides.
+// ---- and the way out ----------------------------------------------------
+// Only a changed demo tests anything: an untouched one reopens identically
+// whether the address re-seeds or merely un-hides.
 await page.goto(`${base}/g/entry/edit?id=${groupId}`);
 await page.locator("input.amount").fill("12");
 await page.locator("#what").fill("Droid oil");

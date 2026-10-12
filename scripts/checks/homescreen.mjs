@@ -1,9 +1,5 @@
 #!/usr/bin/env node
-/**
- * `pnpm verify homescreen` — the invite that rides onto the home screen. Only an
- * iPhone can say what WebKit bookmarks; everything around it is checked here, in
- * a phone-shaped browser with an iPhone user agent.
- */
+// Doc: docs/browser-checks.md#pnpm-verify-homescreen--the-invite-that-rides-onto-the-home-screen
 import {
   ensureBuild, serveExport, launch, newPhone, newGroup, openGroupsList, asInstalledApp, PATIENCE, reporter,
   readStore, readDevice, untilDevice,
@@ -19,10 +15,8 @@ const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebK
 
 const iphone = (opts) => newPhone(browser, { userAgent: IPHONE, ...opts });
 
-/** The body, not the prerendered title: it waits for the key to be written. */
 const joined = (page) => page.getByText("Taking a while.");
 
-/** Read from IndexedDB: no sync API is behind this check. */
 const secretsHeld = async (page) =>
   (await readStore(page, "groupKeys")).map((row) => `${row.groupId}.${row.secret}`);
 
@@ -39,7 +33,6 @@ const manifestOf = (page) => page.evaluate(async () => {
   };
 });
 
-/** `state: "attached"`: a head `<link>` is never visible, the default wait. */
 const blobManifest = (page) =>
   page.waitForSelector('link[rel="manifest"][href^="blob:"]', { state: "attached", timeout: PATIENCE })
     .then(() => manifestOf(page), () => ({ count: 0, href: null, json: null }));
@@ -57,8 +50,6 @@ const fragment = new URL(invite).hash;
 const tab = await iphone({ permissions: ["clipboard-read", "clipboard-write"] });
 const tabPage = await tab.newPage();
 await tabPage.goto(`${base}/join${fragment}`);
-// No sync API, so the join waits forever — the point is that an iOS tab isn't
-// stopped to be asked to install.
 await joined(tabPage).waitFor({ timeout: PATIENCE });
 report(await tabPage.getByRole("button", { name: "Add bida to home screen" }).count() === 0,
   "an iOS tab joins without being asked to install first");
@@ -83,8 +74,6 @@ report(swapped.json?.id === `${base}/` && swapped.json?.scope === `${base}/`,
 report(swapped.json?.icons?.every((icon) => icon.src.startsWith(`${base}/`)),
   "with absolute icons — a blob manifest has no base to resolve them against");
 
-// `Page.getAppManifest` is Chromium, not WebKit, but it is a second
-// implementation of the same parse, and the only one that can be run.
 const cdp = await tab.newCDPSession(tabPage);
 const wouldInstall = await cdp.send("Page.getAppManifest");
 report(wouldInstall.url === swapped.href && wouldInstall.errors.length === 0,
@@ -130,7 +119,6 @@ const inviteTo = async (name, me, other) => {
   await heldPage.getByRole("button", { name: "Copy invite link" }).first().click();
   return new URL(await heldPage.evaluate(() => navigator.clipboard.readText())).hash.slice(1);
 };
-// Newest last: the second is the top row, and the fragment must lead with it.
 const flat = await inviteTo("Flat", "Cem", "Dita");
 const ski = await inviteTo("Ski", "Eve", "Fen");
 
@@ -164,9 +152,8 @@ for (const path of ["/", `/g?id=${flatId}`, `/g/members?id=${flatId}`]) {
 }
 
 // ---- a name picked after the page loaded --------------------------------
-// Safari never re-reads a manifest, so a client-side move to a reloadable screen
-// must bring a stale head up to date. A row tap, not the back arrow: a traversal
-// is a fresh load, green either way.
+// Safari never re-reads a manifest, so a client-side move must bring a stale head
+// up to date.
 const stampStale = (page) => page.evaluate(() => {
   window.__samePage = true;
   document.head.querySelector('link[rel="manifest"]').setAttribute("data-carry", "stale");
@@ -190,16 +177,14 @@ const rebuiltStart = rebuilt.json?.start_url ?? "";
 report(refreshed && heldLoads.length === 1 && rebuiltStart.startsWith(`${base}/install#`)
   && sameGroups(new URL(rebuiltStart).hash.slice(1), carried),
   "a page whose head predates a change reloads, and its manifest carries it",
-  // The URLs, not the count: "2 loads" hides which second load it was.
   `${heldLoads.length} loads${heldLoads.map((u) => `\n        ${u.replace(base, "")}`).join("")}`
   + `\n        start_url: ${rebuiltStart}`);
 await heldPage.evaluate(() => { window.__afterTheReload = true; });
 await heldPage.waitForTimeout(1500);
 report(await heldPage.evaluate(() => !!window.__afterTheReload), "once — the rebuilt head is not stale");
 
-// ---- but never before the shell is cached -------------------------------- On a
-// first visit the reload would race the precache, so it waits for the next
-// reloadable screen (`shellIsWarm`). A context with no worker holds that still.
+// ---- but never before the shell is cached --------------------------------
+// On a first visit the reload would race the precache.
 const cold = await iphone({ serviceWorkers: "block" });
 const coldPage = await cold.newPage();
 await newGroup(coldPage, base, { name: "Cold", me: "Gil", members: ["Hana"] });
@@ -208,7 +193,6 @@ await blobManifest(coldPage);
 const coldLoads = countLoads(coldPage);
 await stampStale(coldPage);
 await coldPage.getByText("Cold").first().click();
-// Without this the assertion passes on a page that never went anywhere.
 const onLedger = await coldPage.waitForURL((url) => url.pathname === "/g", { timeout: PATIENCE })
   .then(() => true, () => false);
 await coldPage.waitForTimeout(1500);
@@ -246,8 +230,6 @@ report(androidManifest.href === "/manifest.webmanifest" && androidManifest.count
   "a browser that installs by itself gets the one static manifest, starting at /");
 
 // ---- ...but it is asked in the same two places ----------------------------
-// Chrome fires `beforeinstallprompt` on its own heuristics, so the page is handed
-// one, repeatedly until the listener has attached.
 const androidOffer = (page) => page.getByRole("button", { name: "Keep bida on your home screen" });
 async function offerInstall(page) {
   for (let attempt = 0; attempt < 24; attempt++) {
@@ -269,10 +251,6 @@ if (androidFolded) await androidOffer(androidPage).click();
 report(androidFolded && await androidAdd.waitFor({ timeout: 2000 }).then(() => true, () => false),
   "a group's ledger offers Android the same card, folded");
 
-/**
- * Every frame a launch paints, counted into `sessionStorage` under `run`, which
- * outlives the reload into `/join` (lib/first-frame.ts).
- */
 const watchFrames = (page, run) => page.addInitScript((run) => {
   const count = (key) => {
     const at = `frames.${run}.${key}`;
@@ -313,7 +291,6 @@ const newcomerFrames = await framesSeen(freshPage, "newcomer");
 report(steady(newcomerFrames) && newcomerFrames.list === 0,
   "wearing \"Joining…\" from the first frame: never the tutorial, nor the list it is not going to",
   JSON.stringify(newcomerFrames));
-// The secret is written by the join screen, not the launch: wait for it.
 await joined(freshPage).waitFor({ timeout: PATIENCE });
 
 // ---- and every launch after ----------------------------------------------
@@ -327,11 +304,7 @@ report(new URL(freshPage.url()).pathname !== "/install",
   "and does not sit on the tutorial", freshPage.url());
 
 // ---- and a launch is a launch --------------------------------------------
-// `start_url` is `/install` for the bookmark's life, so `/install` must know a
-// launch itself (`launchedOnto`). Made here: a carried group never arrives.
 const made = await newGroup(freshPage, base, { name: "Ferry", me: "Ana", members: ["Bo"] });
-// The last group is written by an effect on the ledger: wait for the write, not a
-// pause.
 await freshPage.waitForSelector(".fab");
 await untilDevice(freshPage, (d) => d?.lastOpenedGroupId === made);
 await watchFrames(freshPage, "reopen");
@@ -367,8 +340,6 @@ report(Object.keys(me).every((id) => claimed[id] === me[id]),
   "and already somebody in each — nobody is asked who they are again",
   JSON.stringify(claimed));
 
-// These groups never arrive — the slow phone's first launch held still. It must
-// not say there are none.
 report(await manyPage.getByText("Getting your groups").waitFor({ timeout: PATIENCE })
   .then(() => true, () => false)
   && await manyPage.getByText("No groups yet").count() === 0,
@@ -387,9 +358,7 @@ report(!oneVisited.some((url) => new URL(url).pathname === "/join")
   && (await namesHeld(onePage))[flatId] === me[flatId],
   "one named group skips the join screen and is already claimed", oneVisited.join(" "));
 
-// ---- the in-app browser -------------------------------------------------- A
-// webview's storage nothing can get back to, so the app refuses to run there
-// (lib/embedded.ts).
+// ---- the in-app browser --------------------------------------------------
 const IN_APP_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15"
   + " (KHTML, like Gecko) Mobile/15E148 Instagram 339.0.3.12.106";
 const webview = await newPhone(browser, { userAgent: IN_APP_UA, permissions: ["clipboard-read", "clipboard-write"] });
@@ -401,7 +370,6 @@ report(refused && await joined(webviewPage).count() === 0,
   "an in-app browser is turned round rather than joined in");
 report(await webviewPage.getByText("Instagram").count() > 0,
   "named, so the person knows which app has them");
-// It must name a button, not "a menu".
 report(await webviewPage.getByText("Open in Safari").count() > 0
   && await webviewPage.getByText("⋯", { exact: false }).count() > 0,
   "and told which button to press, and what it says underneath");
@@ -413,12 +381,11 @@ report(await webviewPage.locator(".escapelink .linkbox").evaluate((box) => {
   const link = box.querySelector(".selectable").getBoundingClientRect();
   return box.scrollWidth <= box.clientWidth && Math.abs(state.top - link.top) < link.height;
 }).catch(() => false), "on one line that fits the screen, the copy state beside it");
-// Blocked means the key is not saved behind the screen either.
 report((await secretsHeld(webviewPage).catch(() => [])).length === 0,
   "nothing is written to a storage nobody can get back to");
 
-// Some in-app browsers have no `navigator.clipboard`, and this screen copies on
-// arrival outside `ReadErrorBoundary`: a throw takes the page down.
+// Some in-app browsers have no `navigator.clipboard`, and a throw here takes the
+// page down.
 const dry = await newPhone(browser, { userAgent: IN_APP_UA });
 const dryPage = await dry.newPage();
 const crashes = [];
@@ -436,9 +403,7 @@ report(await dryPage.locator(".escapelink .linkbox .selectable").textContent()
   "with the link still there to be taken by hand");
 await dry.close();
 
-// A false positive locks somebody out, so prove the lookalikes: the home-screen
-// app drops `Safari/` as a webview does, and Brave and DuckDuckGo differ by a
-// token.
+// A false positive locks somebody out, so prove the lookalikes.
 const NEAR_MISSES = [
   ["the home-screen app", `${IPHONE.replace(" Version/17.5", "").replace(" Safari/604.1", "")}`, true],
   ["Brave", `${IPHONE} Brave/1.67`, false],

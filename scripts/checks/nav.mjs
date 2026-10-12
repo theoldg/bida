@@ -49,8 +49,8 @@ async function phone() {
 
 const ctx = await phone();
 
-// ---- 1. the walk in from the groups list ------------------------------- The
-// group made here is reused by every later section: building one is the most
+// ---- 1. the walk in from the groups list -------------------------------
+// The group made here is reused by every later section: building one is the most
 // expensive step.
 const group = await (async () => {
   const page = await ctx.newPage();
@@ -135,8 +135,9 @@ async function onLedger() {
   await page.close();
 }
 
-// ---- 4. a cold load, with nothing behind it ----------------------------- A
-// shared link never visited the parent: the arrow puts it in this screen's place.
+// ---- 4. a cold load, with nothing behind it -----------------------------
+// A shared link never visited the parent: the arrow puts it in this screen's
+// place.
 {
   const cold = await onLedger();
   await is(cold, "a cold ledger has nothing behind it", { i: 0, urls: ["/g?id=G"] });
@@ -145,8 +146,8 @@ async function onLedger() {
   await cold.close();
 }
 
-// ---- 4b. the press at the bottom of the stack --------------------------- A
-// `CloseWatcher` takes the press that would close the app. Playwright cannot
+// ---- 4b. the press at the bottom of the stack ---------------------------
+// A `CloseWatcher` takes the press that would close the app. Playwright cannot
 // press Android's button, but Escape is a close request too.
 {
   await (await onLedger()).close();
@@ -208,8 +209,8 @@ async function onLedger() {
   await page.close();
 }
 
-// ---- 7. the dialog the platform shuts by itself ------------------------ A
-// close request the browser won't let us refuse fires no `cancel`; unheard,
+// ---- 7. the dialog the platform shuts by itself ------------------------
+// A close request the browser won't let us refuse fires no `cancel`; unheard,
 // `/new` believes its dialog is up and back goes dead (components/dialog.tsx).
 {
   const page = await (await phone()).newPage();
@@ -238,8 +239,8 @@ async function onLedger() {
   await page.close();
 }
 
-// ---- 8. and the recorder has the taps it was given --------------------- "It
-// refused a bunch of taps" has many causes, so /diag carries the sequence
+// ---- 8. and the recorder has the taps it was given ---------------------
+// "It refused a bunch of taps" has many causes, so /diag carries the sequence
 // (lib/press-trace.ts).
 {
   const page = await (await phone()).newPage();
@@ -341,8 +342,8 @@ async function onLedger() {
   await page.close();
 }
 
-// ---- 4. the ledger comes back where it was left, only on the way back ---- A
-// row straddling the top edge must come back to the pixel by the arrow, the
+// ---- 4. the ledger comes back where it was left, only on the way back ----
+// A row straddling the top edge must come back to the pixel by the arrow, the
 // device's back and Save; a tap in from the list opens at the top.
 {
   const short = await newPhone(browser, { viewport: { width: 390, height: 480 } });
