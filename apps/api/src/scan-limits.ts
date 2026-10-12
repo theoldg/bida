@@ -1,22 +1,12 @@
-/**
- * Enforcing `SCAN_LIMITS` (core), plus the one-way client key and Turnstile.
- * The scan is the only endpoint that spends money, and its credential is cheap
- * — `ensureGroup` registers any unseen id (ADR-0035) — so the bearer is a speed
- * bump and these are the gates. docs/scan-worker.md#what-the-scan-costs.
- */
-
+// Doc: docs/scan-worker.md#what-the-scan-costs
 import { SCAN_LIMITS, type ScanLimitScope } from "@bida/core";
 
-/** Stands in for a client key on a deployment with no salt — see `countScans`. */
 const UNSALTED = "unsalted";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
-/**
- * The caller's IP, HMAC'd with `SCAN_IP_SALT`: a bare sha256 of an IPv4 is
- * rainbow-tabled in minutes. Truncated to 64 bits, plenty at this scale.
- */
+/** HMAC'd: a bare sha256 of an IPv4 is rainbow-tabled in minutes. */
 export async function clientKey(ip: string, salt: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw", new TextEncoder().encode(salt), { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
@@ -25,7 +15,6 @@ export async function clientKey(ip: string, salt: string): Promise<string> {
   return [...new Uint8Array(mac)].slice(0, 8).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** Which bucket is full, or null. `global` first: it's the refusal that isn't about the reader. */
 export function overLimit(counts: ScanCounts): ScanLimitScope | null {
   for (const scope of ["global", "client", "caller"] as const) {
     const { hour, day } = SCAN_LIMITS[scope];
@@ -46,15 +35,12 @@ interface CountRow {
   global_hour: number; global_day: number;
 }
 
-/** Every count in one query: six conditional sums over at most a day of rows (pruned at 24h). */
 export async function countScans(
   db: D1Database, caller: string, client: string | null, now: number,
 ): Promise<ScanCounts> {
   const hourAgo = now - HOUR;
   const dayAgo = now - DAY;
-  // No `SCAN_IP_SALT`: the client bucket is absent, not shared — the sentinel
-  // matches no real key and its count is zeroed, so nobody gets a tighter
-  // second global cap.
+  // No salt: the client bucket is absent, not a second global cap.
   const row = await db.prepare(`
     SELECT
       COALESCE(SUM(caller = ?1 AND at > ?3), 0) AS caller_hour,
@@ -72,10 +58,7 @@ export async function countScans(
   };
 }
 
-/**
- * Book the scan and prune old rows, *before* the upstream request, so a hang
- * or refusal is still paid for. The prune rides the same round trip.
- */
+/** Before the upstream request, so a hang or refusal is still paid for. */
 export async function recordScan(
   db: D1Database, caller: string, client: string | null, now: number,
 ): Promise<void> {
@@ -86,11 +69,6 @@ export async function recordScan(
   ]);
 }
 
-/**
- * Is there a real browser behind this? The counts only bind a caller who lets
- * themselves be counted; Turnstile is what a script can't skip, so a fresh id
- * buys nothing without a fresh token. Verified server-side, before streaming.
- */
 export async function turnstileOk(secret: string, token: string | null, ip: string): Promise<boolean> {
   if (!token) return false;
   const form = new URLSearchParams({ secret, response: token, remoteip: ip });

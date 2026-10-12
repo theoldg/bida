@@ -1,9 +1,5 @@
+// Doc: docs/sync.md
 import { chunk, type SealedOp } from "@bida/core";
-
-/**
- * The D1 half of sync (docs/sync.md). The server appends and assigns seqs; it
- * never folds (ADR-0002) and can't, since ops are sealed (ADR-0036).
- */
 
 export interface GroupRow {
   id: string;
@@ -11,9 +7,8 @@ export interface GroupRow {
   created_at: number;
   last_op_seq: number;
   /**
-   * Set when deleted on request. The row stays so the id can't be registered
-   * again — otherwise the next phone with the link pushes the log back.
-   * `0003_group_tombstone.sql`.
+   * The row stays so the id can't be registered again — otherwise the next phone
+   * with the link pushes the log back.
    */
   deleted_at: number | null;
 }
@@ -33,19 +28,13 @@ export async function getGroup(db: D1Database, groupId: string): Promise<GroupRo
   return db.prepare("SELECT * FROM groups WHERE id = ?").bind(groupId).first<GroupRow>();
 }
 
-/** A row that is a tombstone rather than a group: nothing may be read or written. */
 export function isDeleted(group: GroupRow): boolean {
   return group.deleted_at !== null && group.deleted_at !== undefined;
 }
 
 /**
- * Delete one group: every op, and the group to a tombstone. The only
- * destructive path, and the only non-append in the app (ADR-0002): "delete my
- * data" can't be an entry in a log the server keeps. Authorised by the link's
- * token like everything else (ADR-0003).
- *
- * `last_op_seq` is left as is: a counter going backwards could hand a future
- * op a deleted op's seq.
+ * The only non-append in the app (ADR-0002). `last_op_seq` is left as is: a
+ * counter going backwards could hand a future op a deleted op's seq.
  */
 export async function deleteGroup(
   db: D1Database, groupId: string, now: number,
@@ -57,7 +46,6 @@ export async function deleteGroup(
   ]);
 }
 
-/** First push for a group registers it — see docs/sync.md's "two endpoints". */
 export async function ensureGroup(
   db: D1Database,
   groupId: string,
@@ -86,29 +74,16 @@ export async function opsSince(
 }
 
 /**
- * D1 binds at most 100 parameters per statement, so never build a clause from
- * the caller's array uncut. A phone back from weeks offline pushes its whole
- * queue at once; an uncut `IN (...)` fails every push past ~99 ops, retried
- * forever.
- *
- * Cut here, not refused with a 413: the server can't make old phones chunk,
- * and a refusal wedges exactly those clients.
+ * D1 binds at most 100 parameters per statement, and the server can't make old
+ * phones chunk — so cut here rather than refuse.
  */
 const IDS_PER_QUERY = 90;
 const OPS_PER_BATCH = 100;
 
 /**
- * Accept sealed ops, idempotent on `SealedOp.id`: an op already stored keeps
- * its seq, so retrying after a dropped response is safe. A retry reseals under
- * a fresh IV, so the id — not the ciphertext — identifies it; the first stays.
- *
- * Reserving seqs and writing rows is **one** `db.batch` (one D1 transaction),
- * holding the invariant pulls rely on: every seq up to `last_op_seq` is a
- * readable row. As two statements, a pull between them got a `latestSeq`
- * covering missing rows, saved it as its cursor, and never saw those ops.
- *
- * Two pushes racing one op id collide on `ops.id` and fail whole; the retry
- * then finds the row, which is the idempotent path.
+ * Seqs and rows are one `db.batch`, holding what pulls rely on: every seq up to
+ * `last_op_seq` is a readable row. A retry reseals under a fresh IV, so the id,
+ * not the ciphertext, identifies an op.
  */
 export async function acceptOps(
   db: D1Database,
@@ -136,13 +111,10 @@ export async function acceptOps(
     return { assigned, latestSeq: group?.last_op_seq ?? 0 };
   }
 
-  // One transaction per chunk: each reserves and writes together, and a run
-  // leaves the log as smaller pushes would.
   let latestSeq = 0;
   for (const batch of chunk(fresh, OPS_PER_BATCH)) {
-    // Reserve first, then each insert reads the counter back from the row just
-    // moved (`last_op_seq - (n - 1 - i)` is op `i`'s seq); the subquery lets both
-    // be bound in one batch.
+    // Each insert reads the counter back from the row just moved, so both bind in
+    // one batch.
     const statements = [
       db
         .prepare(

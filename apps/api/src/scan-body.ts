@@ -1,16 +1,11 @@
-/**
- * The Worker's half of the scan request: the bill streamed into core's
- * envelope (core/scan-body.ts) without the Worker holding it, refusing
- * anything that isn't base64.
- */
+// Doc: docs/scan-worker.md
 import { MAX_IMAGE_BYTES, buildScanRequestBody, type ScanMedium, type ScanTone } from "@bida/core";
 
 export type { ScanMedium, ScanTone } from "@bida/core";
 
 /**
- * The envelope split around where the bill goes. Built by cutting core's JSON
- * at a sentinel, so there is no second copy of the prompt. Per request, not per
- * isolate: the prompt carries today's date, and an isolate outlives midnight.
+ * Cut from core's JSON at a sentinel, so there is no second copy of the prompt.
+ * Per request: the prompt carries today's date.
  */
 const SENTINEL = "__RECEIPT_IMAGE__";
 
@@ -23,12 +18,6 @@ function halves(
   return { prefix: encoder.encode(prefix), suffix: encoder.encode(suffix!) };
 }
 
-/**
- * The largest base64 body we wrap: a photo's is `MAX_IMAGE_BYTES`, shared with
- * the phone that shrinks to fit under it. Text is capped at 4,000 characters on
- * the phone (`BILL_TEXT_MAX`); its ceiling here is an abuse limit that must
- * still fit a three-byte script.
- */
 export { MAX_IMAGE_BYTES };
 
 export const MAX_TEXT_BYTES = 16_000;
@@ -38,7 +27,6 @@ export const MAX_BYTES: Record<ScanMedium, number> = {
   text: MAX_TEXT_BYTES,
 };
 
-/** The base64 alphabet, as a byte lookup — see `wrapPayload` for why. */
 const BASE64 = (() => {
   const ok = new Uint8Array(256);
   for (const ch of "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=") {
@@ -47,28 +35,18 @@ const BASE64 = (() => {
   return ok;
 })();
 
-/** The body was not base64 — `wrapPayload` refuses to send it anywhere. */
 export class NotBase64Error extends Error {}
 
 /**
- * Our envelope with the caller's bill (base64 JPEG or base64 text), streamed
- * between the halves so the Worker never parses a body (docs/hosting.md).
- *
- * The per-chunk alphabet check is a security boundary: the bytes land inside a
- * JSON string, so a quote or backslash could close it and inject its own
- * `contents`. Base64 has neither, so rejecting anything outside it closes the
- * hole at one lookup per byte. **That is why typed bills travel base64 too** —
- * escaping text while streaming would be a second, subtler guard; the medium
- * rides in our own `mimeType`.
+ * The alphabet check is a security boundary: the bytes land inside a JSON string,
+ * and a quote could inject its own `contents`. That is why typed bills travel
+ * base64 too.
  */
 export function wrapPayload(
   bill: ReadableStream<Uint8Array>,
-  /** Called before the stream errors, since `fetch` surfaces the refusal wrapped. */
   onRefuse?: (err: NotBase64Error) => void,
-  /** One of four envelopes — all a caller can say about the prompt. */
   tone: ScanTone = "kind",
   medium: ScanMedium = "photo",
-  /** The Worker's own UTC day; a day off is nothing to a year. Never the caller's. */
   today?: string,
 ): ReadableStream<Uint8Array> {
   const { prefix, suffix } = halves(tone, medium, today);

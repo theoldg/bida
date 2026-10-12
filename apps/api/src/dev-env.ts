@@ -1,21 +1,11 @@
-/**
- * How the dev Worker marks itself while the export stays byte-identical across
- * Workers (docs/hosting.md#dev-and-production): applied on the way out, only
- * where `BIDA_ENV` is `"dev"` (`[env.dev]`).
- */
-
-/** The blue-receipt icons `pnpm icons` writes to `public/dev/`, served at the ordinary URLs. */
+// Doc: docs/hosting.md#dev-and-production
 const DEV_ICONS = new Set(["/icon-192.png", "/icon-512.png", "/icon-maskable-512.png"]);
 
-/** The asset path to serve for a request path on dev: the dev icon, or itself. */
 export function devAssetPath(pathname: string): string {
   return DEV_ICONS.has(pathname) ? `/dev${pathname}` : pathname;
 }
 
-/**
- * An asset, dressed for dev: HTML gets `data-env="dev"`, which swaps the
- * balance colours. The service worker precaches through here, so it stays so offline.
- */
+/** The service worker precaches through here, so dev stays dressed offline. */
 export async function devAsset(assets: Fetcher, request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = devAssetPath(url.pathname);

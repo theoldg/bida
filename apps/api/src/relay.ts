@@ -2,23 +2,14 @@
 import { fromBase64, vapidAuthorization, type VapidKeys } from "@bida/core";
 import { MAX_ENDPOINT_CHARS, MAX_NOTIFY_BYTES, MAX_NOTIFY_PER_BATCH } from "./push-limits";
 
-/**
- * The relay that forgets (ADR-0037): notifications
- * the sending phone already encrypted end to end are signed with our VAPID key
- * and forwarded. Nothing here is stored or logged — an endpoint lives for the
- * length of the request.
- */
-
-/** One notification as the phone hands it over, `body` decoded from base64. */
 export interface Notification {
   endpoint: string;
   body: Uint8Array;
 }
 
 /**
- * The push services' own hosts, and nowhere else — so neither our signature
- * nor the Worker's fetch can be pointed at an arbitrary URL. Chrome is FCM,
- * Safari is Apple, Firefox is Mozilla, Edge on Windows is WNS.
+ * The push services' own hosts and nowhere else, so neither our signature nor the
+ * fetch can be pointed at an arbitrary URL.
  */
 const EXACT_HOSTS = new Set(["fcm.googleapis.com", "updates.push.services.mozilla.com"]);
 const HOST_SUFFIXES = [".push.apple.com", ".notify.windows.com"];
@@ -35,17 +26,14 @@ export function pushServiceAllowed(endpoint: string): boolean {
   return EXACT_HOSTS.has(host) || HOST_SUFFIXES.some((s) => host.endsWith(s));
 }
 
-/** A refused batch is refused whole; nothing in it is forwarded. */
 export interface NotifyRefusal {
   error: string;
   status: 400 | 413;
 }
 
 /**
- * Shape-check `notifications: [{ endpoint, body }]`. A host off the list is
- * *not* a refusal — a phone may hold a subscription from a push service we
- * don't know, and a refusal would lose the whole batch every time — it is only
- * not forwarded (`relay` answers 0).
+ * A host off the list is not a refusal — a refusal would lose the whole batch
+ * every time — only not forwarded.
  */
 export function parseNotify(raw: unknown): Notification[] | NotifyRefusal {
   if (!Array.isArray(raw)) return { error: "notifications must be an array", status: 400 };
@@ -59,7 +47,6 @@ export function parseNotify(raw: unknown): Notification[] | NotifyRefusal {
       return { error: "a notification's endpoint is a URL", status: 400 };
     }
     if (typeof body !== "string") return { error: "a notification's body is base64", status: 400 };
-    // On the text first, so an oversized string is never decoded.
     if (body.length > Math.ceil(MAX_NOTIFY_BYTES / 3) * 4) {
       return { error: `a notification is at most ${MAX_NOTIFY_BYTES} bytes`, status: 413 };
     }
@@ -73,22 +60,16 @@ export function parseNotify(raw: unknown): Notification[] | NotifyRefusal {
   return out;
 }
 
-/** How long a push service holds a message for a phone that is off. A day-old share is still news. */
 const TTL_SECONDS = 24 * 60 * 60;
 
-/** Per push service; they run in parallel, so a slow one costs the sync this at most. */
 const RELAY_TIMEOUT_MS = 1000;
 
 type Send = (url: string, init: RequestInit) => Promise<Response>;
 
 /**
- * Forward each notification and answer each endpoint's status. **0 is "not
- * delivered, and not the subscription's fault"**: a host off the list, a
- * timeout, a network error, no VAPID key on this Worker. Only `404`/`410` tells
- * the sender a subscription is dead. A repeated endpoint is sent once.
- *
- * One JWT per push service, not per message: an ES256 signature is the costly
- * part, and the free plan's CPU budget is milliseconds.
+ * 0 is "not delivered, and not the subscription's fault"; only 404/410 tells the
+ * sender a subscription is dead. One JWT per push service: ES256 is the costly
+ * part.
  */
 export async function relay(
   notifications: readonly Notification[],
@@ -121,12 +102,9 @@ export async function relay(
         body,
         signal: AbortSignal.timeout(RELAY_TIMEOUT_MS),
       });
-      // The push service's prose; nothing reads it.
       await res.body?.cancel();
       return res.status;
     } catch {
-      // A timeout, the network, or a malformed VAPID key — ours to fix, never
-      // the sync's to fail over.
       return 0;
     }
   };
