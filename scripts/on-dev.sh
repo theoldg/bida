@@ -35,13 +35,19 @@ git fetch origin --quiet
 work=$(git rev-parse --abbrev-ref HEAD)
 
 # The harness loads CLAUDE.md from whatever it checked out, before anything
-# runs, and that can be a branch days behind `dev`. Say so on every way out.
+# runs, and that can be a branch days behind `dev`. Say so on every way out,
+# then print Claude's corner: it is written for an agent before it starts, and
+# was otherwise first opened at the end, to add a postcard.
 start=$(git rev-parse HEAD)
-stale_rules() {
+on_exit() {
   git diff --quiet "$start" origin/dev -- CLAUDE.md 2>/dev/null ||
     echo "CLAUDE.md on dev differs from the copy this session started with — read it again before going on" >&2
+  echo
+  echo "Claude's corner (docs/claude-corner.md on dev) — read it before starting:"
+  echo
+  git show origin/dev:docs/claude-corner.md 2>/dev/null || cat docs/claude-corner.md
 }
-trap stale_rules EXIT
+trap on_exit EXIT
 
 if ! git show-ref --quiet refs/remotes/origin/dev; then
   echo "origin/dev does not exist — create it before running this (docs/hosting.md#dev-and-production)" >&2

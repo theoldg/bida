@@ -1,8 +1,8 @@
 # CLAUDE.md — start here
 
 **bida** is a Tricount-style shared-expense app: mobile web / PWA, local-first,
-hosted for free. Read this, then [claude-corner.md](docs/claude-corner.md) (a
-cloud session's startup hook prints it), then the doc your task points at.
+hosted for free. Read this, then [claude-corner.md](docs/claude-corner.md) (`pnpm
+session` prints it), then the doc your task points at.
 
 ## Non-negotiables
 
