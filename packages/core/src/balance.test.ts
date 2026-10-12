@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertBalanced, computeBalances, entryEffect, netFor } from "./balance.js";
+import { assertBalanced, computeBalances, entryDeltas, entryEffect, netFor } from "./balance.js";
 import { foldOps } from "./fold.js";
 import type { Expense, Settlement } from "./types.js";
 import { settleUp, applyTransfers, transfersFor } from "./settle.js";
@@ -312,5 +312,21 @@ describe("entryEffect", () => {
       const summed = Object.values(state.expenses).reduce((sum, e) => sum + entryEffect(e, id).net, 0);
       expect(summed).toBe(whole[id]);
     }
+  });
+});
+
+describe("entryDeltas", () => {
+  const income: Expense = {
+    id: "i1", groupId: GROUP, description: "Deposit back", occurredAt: 1, amountMinor: 9000, currency: "EUR",
+    rateToBase: "1", baseAmountMinor: 9000, paidBy: THEO, kind: "income",
+    split: { mode: "equal", members: [THEO, MARIE, ADA] },
+  };
+
+  it("names every member an entry moves, netting to zero", () => {
+    expect(entryDeltas(income)).toEqual({ [THEO]: -6000, [MARIE]: 3000, [ADA]: 3000 });
+  });
+
+  it("moves nobody on an entry nothing can apportion", () => {
+    expect(entryDeltas({ ...income, split: { mode: "exact", amounts: { [THEO]: 1 } } })).toEqual({});
   });
 });

@@ -1,7 +1,6 @@
 // Doc: docs/import-export.md#the-group-as-a-spreadsheet
+import { entryDeltas } from "./balance.js";
 import { minorToDecimalString } from "./money.js";
-import { resolvePayers } from "./payers.js";
-import { resolveEntrySplit } from "./split.js";
 import { alive, type Expense, type GroupState, type Id, type Settlement } from "./types.js";
 
 /**
@@ -116,25 +115,10 @@ export function groupToCsv(state: GroupState, { formatDay, exportedAt }: CsvOpti
 }
 
 function expenseRow(e: Expense, formatDay: (ts: number) => string): Row {
-  const income = e.kind === "income";
-  const deltas: Record<Id, number> = {};
-  const move = (id: Id, amount: number) => { deltas[id] = (deltas[id] ?? 0) + amount; };
-
-  let shares: Record<Id, number> | undefined;
-  try {
-    shares = resolveEntrySplit(e).shares;
-  } catch {
-    // Unapportionable (also in `computeBalances`' `problems`). Kept with every
-    // column zero: dropping it loses money, and apportioning only the payers
-    // breaks the zero sum and the foot.
-    shares = undefined;
-  }
-
-  if (shares) {
-    for (const [id, amount] of Object.entries(resolvePayers(e))) move(id, income ? -amount : amount);
-    for (const [id, amount] of Object.entries(shares)) move(id, income ? amount : -amount);
-  }
-
+  // An entry nothing can apportion moves nobody, so it keeps every column
+  // zero: dropping it loses money, and apportioning only the payers breaks the
+  // zero sum and the foot.
+  const deltas = entryDeltas(e);
   return {
     when: e.occurredAt,
     created: e.createdAt ?? e.occurredAt,
@@ -142,7 +126,7 @@ function expenseRow(e: Expense, formatDay: (ts: number) => string): Row {
     description: e.description,
     category: e.categoryId || GENERAL,
     // The sign is the only way this format can say "income".
-    costMinor: income ? -e.baseAmountMinor : e.baseAmountMinor,
+    costMinor: e.kind === "income" ? -e.baseAmountMinor : e.baseAmountMinor,
     deltas,
   };
 }
@@ -155,7 +139,7 @@ function transferRow(s: Settlement, formatDay: (ts: number) => string): Row {
     description: s.note || PAYMENT,
     category: PAYMENT,
     costMinor: s.baseAmountMinor,
-    deltas: { [s.fromMember]: s.baseAmountMinor, [s.toMember]: -s.baseAmountMinor },
+    deltas: entryDeltas(s),
   };
 }
 

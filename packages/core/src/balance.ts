@@ -107,24 +107,37 @@ export function computeBalances(state: GroupState): BalanceReport {
   };
 }
 
-/**
- * How one entry moves one member's balance: `computeBalances` run on that entry
- * alone, so an income's sign is still applied there and nowhere else. `up` is
- * what moved them up (paid, or their cut of an income), `down` what moved them
- * down (their share, or an income they took in) — both positive, `net` their
- * difference. A transfer's legs are `net` alone.
- */
-export function entryEffect(entry: Expense | Settlement, memberId: Id): { up: number; down: number; net: number } {
+/** `computeBalances` run on one entry alone. */
+function alone(entry: Expense | Settlement): BalanceReport {
   const state = emptyGroupState();
   if ("fromMember" in entry) state.settlements[entry.id] = entry;
   else state.expenses[entry.id] = entry;
-  const r = computeBalances(state);
+  return computeBalances(state);
+}
+
+/**
+ * How one entry moves one member's balance, so an income's sign is still
+ * applied in `computeBalances` and nowhere else. `up` is what moved them up
+ * (paid, or their cut of an income), `down` what moved them down (their share,
+ * or an income they took in) — both positive, `net` their difference. A
+ * transfer's legs are `net` alone.
+ */
+export function entryEffect(entry: Expense | Settlement, memberId: Id): { up: number; down: number; net: number } {
+  const r = alone(entry);
   const at = (table: Record<Id, number>) => table[memberId] ?? 0;
   return {
     up: at(r.paidMinor) + at(r.incomeShareMinor),
     down: at(r.owedMinor) + at(r.receivedMinor),
     net: at(r.byMember),
   };
+}
+
+/**
+ * Every member one entry moves, by how much — empty for one nothing can
+ * apportion. The export's row, so its foot is `byMember` by construction.
+ */
+export function entryDeltas(entry: Expense | Settlement): Record<Id, number> {
+  return alone(entry).byMember;
 }
 
 /** Balances must sum to zero. Call it in dev; it catches real bugs. */

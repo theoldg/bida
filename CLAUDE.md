@@ -23,7 +23,8 @@ hosted for free. Read this, then the doc your task points at.
    the last push is green ([testing.md](docs/testing.md#where-each-check-runs)).
 3. **Docs change in the same commit as the code.** See [Doc upkeep](#doc-upkeep).
 4. **Money is never a float.** Integer minor units everywhere, and always
-   positive — an income's sign is applied in `computeBalances` and nowhere else.
+   positive — what an income does to a balance is worked out in `computeBalances`
+   and nowhere else; anything wanting one entry's effect asks it of that entry.
    [docs/data-model.md](docs/data-model.md#money).
 5. **Never mutate an entity in place.** Every change is an appended op — that
    one rule buys sync, offline and history. [docs/sync.md](docs/sync.md).

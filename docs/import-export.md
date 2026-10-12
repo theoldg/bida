@@ -156,11 +156,11 @@ because **Tricount refuses the whole file over any of them** while its row
 counter happily reaches the end — the blank lines especially, which read as
 cosmetic and are not: the same file with them stripped is rejected.
 
-**A member's cell is `paid − owed` for that row.** Every row therefore nets to
-zero and the column totals are the balances — the `Total balance` foot is
-`computeBalances().byMember`, to the cent, because the rows come from
-`resolvePayers` and `resolveSplit` under the same tiebreak seeds. It is one
-arithmetic with two readouts, not two opinions.
+**A member's cell is `paid − owed` for that row** — `entryDeltas`, which is
+`computeBalances` run on that entry alone. Every row therefore nets to zero and
+the column totals are the balances: the `Total balance` foot is
+`computeBalances().byMember`, to the cent, by construction rather than by
+keeping two arithmetics in step.
 
 Three facts have nowhere to go in the shape, and each is resolved the same
 way — by saying what is true rather than inventing a column:
@@ -170,8 +170,8 @@ way — by saying what is true rather than inventing a column:
   euros. The caller hands over a state already valued in the base and
   the column is constant — which is also the only way the foot agrees with
   the Balances screen ([ADR-0005](decisions/0005-money-and-currency.md)).
-- **Income.** No such concept there, so `Cost` is negative and the member
-  cells carry the flipped sign `computeBalances` applies. An importer that
+- **Income.** No such concept there, so `Cost` is negative; the member cells
+  need nothing, being `computeBalances`' own. An importer that
   refuses a negative refuses the row, which beats silently booking a cost.
 - **An entry nothing can apportion.** Kept, with every member cell zero.
   Dropping it would lose money somebody typed; apportioning the payers alone
