@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/rows.md#the-ledger-moves
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
@@ -9,27 +10,6 @@ import { yieldPosition } from "@/lib/ledger-position";
 import { revealWhole, scrollTarget } from "@/lib/reveal";
 import { calmly, glide } from "@/lib/seek";
 
-/**
- * The ledger's rows, and how they move when the list changes under somebody
- * looking at it (docs/rows.md#the-ledger-moves):
- *
- * - **A row this phone just saved** is brought into view whole — only as far
- *   as it has to, and only if it isn't already, or to the very top when it is
- *   near the top anyway — under a wash it wears from the first frame, and the
- *   wash lets go once it lands.
- * - **A row that goes** fades, then its space folds. The divider under it
- *   stays, rides up on the row beneath and settles on the line above; a date
- *   line left with nothing under it folds last.
- * - **A row that arrives** (another phone's) opens a gap and fills it. Above
- *   what you're reading, it grows the list upward instead, so nothing under
- *   your eye moves — and a list moving under a finger, or still gliding, takes
- *   no change until it stops.
- * - **The last row going** takes no motion: the list is simply gone, and the
- *   screen's empty state stands in its place at once.
- *
- * The groups list uses it too, for a forgotten group: no `groupId`, so no
- * saved row, and `opens={false}` — a group turning up just appears.
- */
 export function LedgerRows<T>({ groupId, items, row, opens = true }: {
   groupId?: string;
   items: LedgerItem<T>[];
@@ -39,9 +19,8 @@ export function LedgerRows<T>({ groupId, items, row, opens = true }: {
   const root = useRef<HTMLDivElement>(null);
   const scroller = () => root.current?.closest<HTMLElement>(".scroll") ?? null;
 
-  // What is drawn lags `items` while the list is moving: a row appearing
-  // mid-fling lands somewhere nobody is looking, and holding the view still
-  // for it would stop the fling dead on iOS.
+  // What is drawn lags `items` while the list is moving: holding the view still
+  // for an arrival mid-fling would stop the fling dead on iOS.
   const [applied, setApplied] = useState(items);
   const motion = useRef({ touching: false, scrolled: 0 });
   useEffect(() => {
@@ -75,7 +54,6 @@ export function LedgerRows<T>({ groupId, items, row, opens = true }: {
     };
   }, []);
 
-  // What is drawn: `applied`, plus whatever is still folding out of it.
   const [shown, setShown] = useState<Shown<T>[]>(applied);
   const [basis, setBasis] = useState(applied);
   let drawing = shown;
@@ -99,9 +77,8 @@ export function LedgerRows<T>({ groupId, items, row, opens = true }: {
     const before = drawn.current;
     drawn.current = new Set(keys);
 
-    // Back from a save, the live query can answer before the write lands
-    // (docs/frontend.md), so the saved row may turn up a commit late. It is
-    // held still for like any arrival, but not opened: it was already there.
+    // The live query can answer before the save's write lands, so the saved row
+    // may turn up a commit late.
     let saved: string | null = null;
     if (!flashed.current && groupId) {
       saved = peekSaved(groupId);
@@ -109,8 +86,6 @@ export function LedgerRows<T>({ groupId, items, row, opens = true }: {
     }
     if (!before) return;
 
-    // Arrivals, top-down: each measured after the ones above it have landed.
-    // Into an empty ledger (a first pull) nothing opens; it just appears.
     const hadRows = drawing.some((i) => i.kind === "row" && before.has(i.key));
     for (const run of runs(keys, (k) => !before.has(k) && !leaving.has(k))) {
       if (!hadRows) break;
@@ -123,7 +98,6 @@ export function LedgerRows<T>({ groupId, items, row, opens = true }: {
       }
     }
 
-    // Departures: a run of neighbours leaving together folds as one.
     for (const run of runs(keys, (k) => leaving.has(k) && !busy.current.has(k))) {
       for (const k of run) busy.current.add(k);
       const slots = run.map(slot).filter((s): s is HTMLElement => s !== null);
@@ -134,7 +108,6 @@ export function LedgerRows<T>({ groupId, items, row, opens = true }: {
       const bottom = slots.at(-1)?.getBoundingClientRect().bottom ?? 0;
       if (slots.length === 0) done();
       else if (bottom <= box.getBoundingClientRect().top + 1) {
-        // Wholly above the view: out at once, and the view held where it was.
         const h = slots.reduce((n, s) => n + s.offsetHeight, 0);
         for (const s of slots) s.style.height = "0px";
         box.scrollTop -= h;
@@ -155,13 +128,6 @@ export function LedgerRows<T>({ groupId, items, row, opens = true }: {
   );
 }
 
-/**
- * The row the last save wrote, if it is here: washed before the first paint,
- * then — from wherever the ledger was put back to — brought whole into the strip above the floating buttons after the ledger has
- * been up a beat — as far as it must and no further, date line included when
- * it heads its day — and let go when it lands. True once there is nothing left
- * to wait for.
- */
 function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HTMLElement | null): boolean {
   const id = peekSaved(groupId);
   if (!id) return true;
@@ -169,9 +135,6 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
   if (!target) return false;
   clearSaved();
   target.classList.add("saved");
-  // Near the top is a matter of where the row sits in the list, not of where
-  // the list is scrolled, so it is known now: anywhere else, the summary's
-  // roll need not wait for the glide.
   const nearTop = () => {
     const view = box.getBoundingClientRect();
     return target.getBoundingClientRect().top - view.top + box.scrollTop < view.height / 2;
@@ -183,24 +146,15 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
     target.classList.add("released");
     target.addEventListener("animationend", () => target.classList.remove("saved", "released"), { once: true });
   };
-  // Scrolled to, the row holds its wash a while where it landed before
-  // letting go, and the banner's roll with it.
   const land = () => setTimeout(release, SAVED_DWELL);
   setTimeout(() => {
     if (!target.isConnected) return;
-    // Back from a save the ledger was first put back where it was left
-    // (lib/ledger-position.ts); from there, this row is the next thing.
     yieldPosition();
     const heads = target.previousElementSibling?.querySelector(":scope > .daylabel") ? target.previousElementSibling : null;
     const view = box.getBoundingClientRect();
-    // The buttons float over the foot of the list; a row under them is not in view.
     const fab = document.querySelector(".fab")?.getBoundingClientRect().top ?? view.bottom;
-    // So does the search bar over its head, when it is out.
     const bar = document.querySelector(".searchdock:is([data-on], [data-held]) .searchclip")?.getBoundingClientRect().bottom ?? view.top;
     const band = { top: Math.max(view.top, bar), bottom: Math.min(view.bottom, fab) };
-    // A row that would sit in the top half of the screen with the list at its
-    // very top goes there instead, so the summary banner shows with it: what
-    // the save changed, beside the row that changed it.
     if (toTop) {
       if (box.scrollTop === 0) release();
       else glide(box, 0, land);
@@ -216,26 +170,16 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
   return true;
 }
 
-/**
- * Opens a new slot's gap, then fades it in — to the row's own strength, a
- * dimmed row included.
- */
 function arrive(slot: HTMLElement) {
   const h = slot.offsetHeight;
   slot.style.overflow = "hidden";
   const open = slot.animate([{ height: "0px" }, { height: `${h}px` }],
     { duration: OPEN_MS, easing: "cubic-bezier(.2, 0, 0, 1)" });
-  // The slot's opacity, not the row's: it multiplies with a dimmed row's
-  // own rather than overriding it and snapping back.
+  // The slot's opacity, not the row's: it multiplies with a dimmed row's own.
   slot.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FADE_IN_MS, delay: OPEN_MS, fill: "backwards" });
   void open.finished.then(() => { slot.style.overflow = ""; }, () => {});
 }
 
-/**
- * Fades a run's rows, then folds the run bottom-up (`foldFrame`). The divider
- * under the last row is the line above what follows, so it comes off the row
- * onto the slot, stays while the row fades, and rides up to the line above.
- */
 async function depart(slots: HTMLElement[]): Promise<void> {
   const last = slots.at(-1)!;
   const lastRow = last.querySelector<HTMLElement>(":scope > .row");

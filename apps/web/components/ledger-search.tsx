@@ -12,7 +12,6 @@ import { Icon } from "./icons";
 
 export function useLedgerQuery(groupId: string): [string, (query: string) => void] {
   const [query, setQuery] = useState(() => openingQuery(groupId, returnTo(location.href) !== null));
-  // Kept for a return from an entry, not for a reload.
   useHoldsWork(query !== "");
   return [query, (next) => {
     keepQuery(groupId, next);
@@ -20,48 +19,21 @@ export function useLedgerQuery(groupId: string): [string, (query: string) => voi
   }];
 }
 
-/**
- * The search's base state: the bar out, empty, and the whole ledger under it
- * with its first row where the first result would be — where a search starts
- * from and where clearing one returns to. This is the `scrollTop` that puts
- * the list there, under a bar `bar` pixels tall.
- */
 function searchBase(box: HTMLElement, bar: number): number {
   return Math.max(0, (box.querySelector<HTMLElement>(".lrows")?.offsetTop ?? 0) - bar);
 }
 
-/** The least time the scroll may take to bring the whole bar out or put it away (ms). */
 const REVEAL_MS = 180;
 
-/** How long after a press on a row a field let go of is taken to be that press's doing (ms). */
 const PRESS_MS = 700;
 
-/**
- * The ledger's search: a bar that comes out from under the top bar. One rule
- * places it — **held, it is out whole; otherwise it is where the scroll puts
- * it** (`shownAt`) — and held is the caret in it or a query typed.
- *
- * - **The scroll** unfolds it as slowly as it is scrolled, and stopping
- *   halfway leaves it halfway — up to a speed (`REVEAL_MS`), past which it
- *   slides out behind a fling rather than appearing whole.
- * - **A query** stands it in the column (`.searchdock[data-searching]`) with
- *   the results from its foot; emptied, the list is back at the base state.
- * - **Let go of empty** at the base state or short of it, the list glides
- *   back to its head, and the bar goes with it as the scroll's. Not when a
- *   finger on the list is what let go — a drag does, and it is driving — nor
- *   on the way into a row.
- *
- * Idle it lies over the head of the list, so showing it moves nothing.
- */
 export function LedgerSearch({ query, onQuery }: {
   query: string;
   onQuery: (query: string) => void;
 }) {
   const dock = useRef<HTMLDivElement>(null);
-  // The ledger's scroller, its head in `.lhead` and its rows in `.lrows`, is
-  // the element after the dock, as the CSS has it (`.searchdock + .scroll`).
-  // Found there rather than by a ref, since a later sibling's ref is not yet
-  // attached when this one's layout effect runs.
+  // Found by position, not a ref: a later sibling's ref isn't attached when this
+  // layout effect runs.
   const scroller = () => {
     const next = dock.current?.nextElementSibling;
     return next instanceof HTMLElement ? next : null;
@@ -70,28 +42,13 @@ export function LedgerSearch({ query, onQuery }: {
   const field = useRef<HTMLInputElement>(null);
   const [focused, setFocused] = useState(false);
   const held = focused || query !== "";
-  // How much of the bar the scroll has out, written straight onto the dock a
-  // frame at a time as `--shown`, with `data-on` while any of it is. Not
-  // state: a render is a frame late, and a frame drawn without the bar is a
-  // flicker. Held, CSS has it whole whatever these say.
+  // Not state: a render is a frame late, and a frame without the bar flickers.
   const shown = useRef<number | null>(null);
-  // A list too short to scroll to the base state is lent the room to
-  // (`.searchroom`, `data-room`) while the bar is out, and keeps it until it
-  // is back at its head: taken any sooner, the list would drop there. A way
-  // back lends it from the start, so the list can be put back where it was.
   const lent = useRef(returnTo(location.href) !== null);
   const base = (box: HTMLElement) => searchBase(box, bar.current?.offsetHeight ?? 0);
 
-  // The bar follows the scroll, or stands whole while held. What is drawn
-  // chases what is wanted by no more than the whole bar per `REVEAL_MS`: a
-  // slow scroll never asks for more, so the bar stays under the finger, and a
-  // fling gets a slide instead of a cut.
-  //
-  // **Placed in the first frame, before it is painted**: a layout effect, so
-  // the room is there before the ledger's own layout effect puts its position
-  // back (lib/ledger-position.ts, the parent's, so after this), and the first
-  // step a frame callback, by when that has. Arriving, it is where the list
-  // was put, at once.
+  // A layout effect, so the room is there before the ledger restores its position
+  // (lib/ledger-position.ts).
   useLayoutEffect(() => {
     const box = scroller();
     const el = dock.current;
@@ -102,7 +59,6 @@ export function LedgerSearch({ query, onQuery }: {
     const step = (now: number) => {
       frame = 0;
       const want = held ? 1 : shownAt(box.scrollTop, base(box), bar.current?.offsetHeight ?? 0);
-      // Arriving, it is where it should be; held, CSS has it whole already.
       const from = shown.current ?? want;
       const reach = held || calmly() ? 1 : (now - last) / REVEAL_MS;
       last = now;
@@ -116,13 +72,11 @@ export function LedgerSearch({ query, onQuery }: {
     };
     const ask = () => {
       if (frame) return;
-      // A frame's worth to start with, as if the last one had just been drawn.
       last = performance.now() - 16;
       frame = requestAnimationFrame(step);
     };
     ask();
     box.addEventListener("scroll", ask, { passive: true });
-    // The head comes and goes without a scroll: a card folded, a search begun.
     const sizes = new ResizeObserver(ask);
     const head = box.querySelector(".lhead");
     if (head) sizes.observe(head);
@@ -133,8 +87,6 @@ export function LedgerSearch({ query, onQuery }: {
     };
   }, [held]);
 
-  // A query begun or changed reads from its first result; emptied, the list
-  // is at the base state. After the commit: the head is back in the column.
   const placed = useRef(query);
   useLayoutEffect(() => {
     const box = scroller();
@@ -143,19 +95,15 @@ export function LedgerSearch({ query, onQuery }: {
     box.scrollTop = query === "" ? base(box) : 0;
   }, [query]);
 
-  // The one glide this owns at a time: to the base state, or back to the head.
   const gliding = useRef<(() => void) | null>(null);
   const stopGlide = () => { gliding.current?.(); gliding.current = null; };
   const glideTo = (box: HTMLElement, top: number) => {
     stopGlide();
-    // Moving the list, it is the bar's: a way back putting it back stops.
     yieldPosition();
     gliding.current = glide(box, top, () => { gliding.current = null; });
   };
   useEffect(() => stopGlide, []);
 
-  // **The caret pins nothing a finger wants moved**: a drag on the list, or a
-  // wheel, lets go of the field. And a press on a row is noted, for `letGo`.
   const driving = useRef(false);
   const pressed = useRef(0);
   useEffect(() => {
@@ -184,13 +132,11 @@ export function LedgerSearch({ query, onQuery }: {
     setFocused(false);
     const box = scroller();
     if (!box || query !== "" || driving.current || Date.now() - pressed.current < PRESS_MS) return;
-    // Already at its head, or further down than the base state: nothing to undo.
     if (box.scrollTop === 0 || box.scrollTop > base(box) + 1) return;
     glideTo(box, 0);
   };
 
   return (
-    // `data-on` and `data-room` are the frame's to write, above; React never names them.
     <div className="searchdock" ref={dock} role="search"
       data-held={held ? "" : undefined} data-searching={query ? "" : undefined}>
       <div className="searchclip">
@@ -202,14 +148,11 @@ export function LedgerSearch({ query, onQuery }: {
               inputMode="search" enterKeyHint="search" autoCapitalize="none" autoCorrect="off"
               autoComplete="off" spellCheck={false}
               onFocus={() => { stopGlide(); setFocused(true); }} onBlur={letGo}
-              // The confirm key has nothing to submit: the list is already the answer.
               onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) e.currentTarget.blur(); }} />
             {query ? (
               <button type="button" className="searchclear" aria-label={copy.group.search.clear}
-                // The press never takes the focus, so the field is left as it was: the caret
-                // stays if it was there, and a keyboard that was down stays down — Android
-                // keeps the caret in a field whose keyboard was dismissed, and focusing it
-                // again would raise it.
+                // Android keeps the caret in a field whose keyboard was
+                // dismissed; focusing it again would raise the keyboard.
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => onQuery("")}>
                 <Icon name="cross" size={14} />

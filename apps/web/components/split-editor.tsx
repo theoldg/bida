@@ -17,22 +17,15 @@ import { bare, money, plural } from "../lib/format";
 import type { SplitTab } from "../lib/draft";
 
 /**
- * Inline on the form, never a route: an expense is one thought. The receipt
- * split is never written here: it arrives as `receiptSplit` (ADR-0016). The
- * tab bar only reports a tap and lights `tab`; the draft hands a new tab its
- * start (`openSplitTab`).
+ * The receipt split is never written here: it arrives as `receiptSplit`
+ * (ADR-0016).
  */
 
 const MODES = ["equal", "shares", "exact"] as const;
 
-/**
- * An "as amounts" row: a figure somebody typed, in with none (sharing what the
- * typed ones leave), or out. A tap goes typed → out → rest → out → rest…;
- * typing makes any row typed, and clearing a typed one leaves it sharing.
- */
+/** A tap goes typed → out → rest → out → rest…; typing makes any row typed. */
 type AmountRow = "typed" | "rest" | "out";
 
-/** The exact spec, with no `rest` key when nobody floats (as `canonicalSplit` writes it). */
 function exactSpec(amounts: Record<Id, number>, rest: Id[]): ArithmeticSplit {
   return rest.length > 0
     ? { mode: "exact", amounts, rest: [...new Set(rest)].sort() }
@@ -42,7 +35,6 @@ function exactSpec(amounts: Record<Id, number>, rest: Id[]): ArithmeticSplit {
 interface ReceiptTabProps {
   items: { label: string; amount: string }[] | null;
   scan: ReceiptScan;
-  /** For whichever control takes the outstanding step. Empty while no flash runs. */
   flash: string;
   onFlashEnd: (e: React.AnimationEvent) => void;
   editItemsHref: string;
@@ -52,23 +44,18 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   members: Member[];
   me: string | undefined;
   title: string;
-  /** In the entry's own currency, as the payers are: the figures on the bill need no rate. */
   amountMinor: number;
   amountCurrency: string;
-  /** What the arithmetic tab showing holds (Evenly's under Items) — the only thing this edits. */
   spec: ArithmeticSplit;
-  /** Null while the grid is unfilled. */
   receiptSplit: SplitSpec | null;
   seed: string;
   onChange: (next: ArithmeticSplit) => void;
   tab: SplitTab;
   onTabChange: (next: SplitTab) => void;
-  /** Null on an income, which has no receipt. */
   receipt: ReceiptTabProps | null;
 }) {
   const opts = { tiebreakSeed: seed };
   const showReceipt = tab === "receipt" && receipt !== null;
-  // Receipt draws none until its grid is filled: the spec underneath isn't what a save would write.
   const shown: SplitSpec | null = showReceipt ? receiptSplit : spec;
   const included = new Set(shown ? splitParticipants(shown) : []);
 
@@ -77,18 +64,11 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     try { shares = resolveSplit(amountMinor, shown, opts).shares; } catch { /* incomplete */ }
   }
 
-  // As amounts: who shares the rest, what each gets, and whether there is any
-  // to get. Over the total, or with less than a cent each, a share would be a
-  // lie, so the rows say "?" — but never before there is an amount at all.
-  // With anybody sharing, those are the only ways `validateSplit` refuses.
   const rest = new Set(restOf(spec));
   const figures = spec.mode === "exact" ? exactFigures(amountMinor, spec, opts) : {};
   const restShort = amountMinor > 0 && rest.size > 0 && !validateSplit(amountMinor, spec, opts).ok;
   const rowOf = (id: Id): AmountRow =>
     rest.has(id) ? "rest" : spec.mode === "exact" && (spec.amounts[id] ?? 0) > 0 ? "typed" : "out";
-
-  // What the split adds up to, right or wrong, is said in the Save dock
-  // (`checkEntry`'s `splitProblem` and `splitTick`), where no scroll hides it.
 
   function toggle(memberId: string) {
     const next = new Set(included);
@@ -101,13 +81,10 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
         if (next.has(memberId)) weights[memberId] = 1; else delete weights[memberId];
         return onChange({ mode: "shares", weights });
       }
-      // Its rows answer `tapRow`, which knows typed from sharing.
       case "exact": return;
     }
   }
 
-  // The head box: one tap for the whole list, the same verb in every tab.
-  // Three people at least: with two, the other row is the same one tap.
   const head = !showReceipt && members.length >= 3 ? spec : null;
   const inCount = members.filter((m) => included.has(m.id)).length;
   const headState = inCount === 0 ? "none" : inCount === members.length ? "all" : "some";
@@ -116,12 +93,10 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     if (head) onChange(toggleEveryone(head, members.map((m) => m.id)));
   }
 
-  /** What the head box's tap would do, said the way the rows say theirs. */
   function headLabel(): string {
     return headState === "all" ? copy.split.everyone.out : copy.split.everyone.in;
   }
 
-  /** As with amounts: having parts puts you in, none takes you out. */
   function setParts(memberId: string, parts: number) {
     if (spec.mode !== "shares") return;
     const weights = { ...spec.weights };
@@ -130,7 +105,6 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     onChange({ mode: "shares", weights });
   }
 
-  /** A figure makes the row typed; clearing one leaves it in, sharing the rest. */
   function setExact(memberId: string, minor: number) {
     if (spec.mode !== "exact") return;
     const amounts = { ...spec.amounts };
@@ -140,26 +114,20 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     onChange(exactSpec(amounts, minor > 0 ? others : [...others, memberId]));
   }
 
-  /** A tap on the name: typed and rest go out, out joins the rest. It never types. */
   function tapRow(memberId: string) {
     if (spec.mode !== "exact") return;
     const amounts = { ...spec.amounts };
-    // A rest row's figure is only a filled-in copy; out holds none.
     delete amounts[memberId];
     const others = restOf(spec).filter((id) => id !== memberId);
     onChange(exactSpec(amounts, rowOf(memberId) === "out" ? [...others, memberId] : others));
   }
 
   return (
-    // No heading drawn: the tabs say what the box is. A lone ÷ parts
-    // it from the fields above, which it otherwise reads as one more of. The
-    // title is still its name to a reader; the mark is only for the eye.
     <section aria-label={title}>
       <div className="splitrule" aria-hidden="true"><span /></div>
 
       <div className="splitbox">
         <div className="seg">
-          {/* `aria-pressed`: painting it says so only to an eye. */}
           {MODES.map((mode) => {
             const on = !showReceipt && tab === mode;
             return (
@@ -181,8 +149,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
               shares={shares} included={included} />
           ) : members.map((m, i) => {
             const on = included.has(m.id);
-            // Where the right side is only a read-out, the toggle takes the whole
-            // row: one that answers on its left half only reads as broken.
+            // A toggle answering on its left half only reads as broken.
             const wholeRow = spec.mode === "equal";
             const typing = spec.mode === "exact";
             const fieldId = `sp-${m.id}`;
@@ -194,7 +161,6 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
                   disabled={parts === 0} aria-label={copy.split.fewerParts(m.name)}>
                   <Icon name="minus" size={9} />
                 </button>
-                {/* Typed like the amounts beside it: same caret, same walk down on Enter. */}
                 <PartsInput id={fieldId} className="bignum partsin"
                   enterKeyHint={i === members.length - 1 ? "done" : "next"}
                   aria-label={copy.split.partsFor(m.name)}
@@ -207,8 +173,6 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
               </span>
             ) : spec.mode === "exact" ? (
               <span style={{ display: "flex", alignItems: "center" }}>
-                {/* Never disabled: typing is how somebody joins. Enter walks down (`walkFields`).
-                    A rest row's share is the placeholder, so the first digit replaces it. */}
                 <MinorAmountInput id={fieldId} className="bignum splitin"
                   enterKeyHint={i === members.length - 1 ? "done" : "next"}
                   aria-label={copy.split.amountFor(m.name)}
@@ -224,8 +188,6 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
                 <Icon name={on ? "check" : "plus"} size={16} />
               </span>
             );
-            // The dimming rides on the name, so the plus stays legible. When typing,
-            // the field is the figure, so no line under the name (`SoloName`).
             const name = typing ? (
               <SoloName name={m.name} you={m.id === me} style={{ opacity: on ? 1 : .45 }} />
             ) : (
@@ -247,7 +209,6 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
                     aria-label={row === "typed" ? copy.split.clearOut(m.name)
                       : row === "rest" ? copy.split.leaveOut(m.name) : copy.split.joinRest(m.name)}>
                     {name}
-                    {/* Inside the button, so the row is a target up to the field. */}
                     <RowMark row={row} />
                   </button>
                 ) : (
@@ -264,11 +225,6 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
           })}
         </div>
         {head ? (
-          // Right-aligned, so the box foots the column of ticks, plus signs
-          // and figures above it, and the row never reads as a person. Only the
-          // box is the control: a whole-row toggle read as one more row.
-          // Sticky to the foot of `.scroll`, so a long list keeps it in reach,
-          // and under the last row whenever that row is on screen.
           <div className="splithead">
             <span className="splitcount" aria-hidden="true"><b>{inCount}</b> {copy.split.everyone.of(members.length)}</span>
             <button type="button" className="allmark" onClick={toggleAll}
@@ -285,11 +241,6 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   );
 }
 
-/**
- * An "as amounts" row's mark, in the column the payers' `TapMark` uses: × and +
- * say what a tap does, grey; the rest's tick says what the row is, in ink, as
- * Evenly's does — it is an even part of what is left.
- */
 function RowMark({ row }: { row: AmountRow }) {
   return (
     <span style={{ width: 16, flex: "none", display: "flex", justifyContent: "center",
@@ -301,8 +252,8 @@ function RowMark({ row }: { row: AmountRow }) {
 }
 
 /**
- * The typing door's dialog is rendered by `useReceiptScan`, never here: the
- * reading reshapes this panel, which would unmount it.
+ * Its typing dialog is rendered by `useReceiptScan`: the reading reshapes this
+ * panel, which would unmount it.
  */
 function ReceiptPanel({
   items, scan, flash, onFlashEnd, editItemsHref,
@@ -311,7 +262,6 @@ function ReceiptPanel({
   members: Member[];
   me: string | undefined;
   currency: string;
-  /** In the bill's own currency. */
   shares: Record<string, number>;
   included: Set<string>;
 }) {
@@ -319,7 +269,6 @@ function ReceiptPanel({
     const involved = members.filter((m) => included.has(m.id));
     return (
       <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-        {/* What a refused Save blooms, as a fill rather than a border. */}
         <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-p${flash}`} onAnimationEnd={onFlashEnd}
           style={{ textDecoration: "none", justifyContent: "space-between" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -356,7 +305,6 @@ function ReceiptPanel({
         <ScanPair scan={scan} register="s" flash={flash} onFlashEnd={onFlashEnd} />
       </div>
       {scan.refusal ? (
-        /* No "try again": the control right above is the retry. */
         <Failure>{scan.refusal}</Failure>
       ) : (
         <p className="scanterms" style={{ marginTop: 7 }}>{copy.scan.terms}</p>
