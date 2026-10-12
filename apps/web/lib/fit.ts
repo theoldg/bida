@@ -1,16 +1,5 @@
-// Doc: docs/rows.md#a-row-says-less-rather-than-being-cut-off — read it whole before changing this file.
-/**
- * Say less rather than be cut off.
- *
- * A row's second line is a stack of facts, and on a 360px phone it may not
- * fit. `text-overflow: ellipsis` cuts mid-word at the end, losing whatever is
- * last rather than what matters least. So the screen passes several wordings,
- * richest first (`lib/row-meta.ts` owns the ladder), and this picks the
- * richest that fits.
- *
- * Measured on a canvas, not by rendering and reading `scrollWidth`: one pass,
- * no layout thrash, no feedback loop between text and box.
- */
+// Doc: docs/rows.md#a-row-says-less-rather-than-being-cut-off
+/** Which of several wordings, richest first, fits a width — measured on a canvas. */
 
 /** First width that fits, else the leanest. Widths are richest-first. */
 export function fitIndex(widths: readonly number[], available: number): number {

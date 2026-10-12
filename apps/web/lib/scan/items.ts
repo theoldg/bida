@@ -1,4 +1,4 @@
-// Doc: docs/scan-reading.md — read it whole before changing this file.
+// Doc: docs/scan-reading.md
 import {
   extrasMinor, minorToDecimalString, parseMinor, resolveSplit,
   type BillExtras, type ExtraKind, type ReceiptItem,

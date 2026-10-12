@@ -1,15 +1,7 @@
+// Doc: docs/entry.md#the-split-editor
 /**
- * What tapping a person's row does on `/g/payers`. The split editor's "as
- * amounts" began here and parted ways: a split row can be in with no figure,
- * sharing the rest, which a payer cannot (components/split-editor.tsx). The two
- * gestures a column wants most, with no button for either:
- *
- * - a row holding a figure goes to **zero**;
- * - a row at zero takes **what is left** of the total;
- * - a row at zero with nothing left to take (the column is already full, or
- *   over) **edits** its field instead — the tap has no figure it could mean.
- *
- * Amounts are minor units, always positive (docs/data-model.md#money).
+ * What tapping a person's row does on `/g/payers`. Amounts are minor units,
+ * always positive (docs/data-model.md#money).
  */
 export type AmountTap = { set: number } | "edit";
 

@@ -1,15 +1,7 @@
+// Doc: docs/scan-worker.md#what-the-scan-costs
 /**
- * Proof that a real browser is asking for a scan. The scan credential is free
- * to mint by design (ADR-0035), so everything else can be dodged by minting a
- * new one; Turnstile can't be opted out of.
- *
- * **Fail closed.** No token, no scan, named as such
- * (`copy.scan.unverified.browser`). Failing open makes the check optional for
- * exactly the people it targets.
- *
- * **One token per scan**, not minted at the press: a token is single-use and
- * lasts minutes, so it is warmed while a scan button is on screen
- * (`warmTurnstile`). `turnstileToken` *takes* it, so two scans never share one.
+ * The Turnstile token every scan carries: fail closed, one per scan, warmed
+ * while a scan button is on screen.
  */
 
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";

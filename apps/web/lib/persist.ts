@@ -1,14 +1,7 @@
-// Doc: docs/ios.md — read it whole before changing this file.
+// Doc: docs/ios.md
 /**
- * Ask the browser to stop treating this app's data as a cache.
- *
- * IndexedDB is best-effort by default — Safari evicts after seven days
- * without a visit — taking unpushed ops and the only on-device copy of the
- * group secrets. With no accounts, getting back means finding the invite link
- * (ADR-0003).
- *
- * `persist()` is a request; an installed PWA is granted where a tab often
- * isn't. **Run it on every start**: installing changes the answer.
+ * Ask the browser to stop treating this app's data as a cache — on every
+ * start, because installing changes the answer.
  */
 
 let granted = false;

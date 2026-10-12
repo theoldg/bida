@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/data-model.md#entities — read it whole before changing this file.
+// Doc: docs/data-model.md#entities
 
 import Link from "next/link";
 import type { Expense, Settlement } from "@bida/core";

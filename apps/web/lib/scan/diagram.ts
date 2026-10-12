@@ -1,4 +1,4 @@
-// Doc: docs/design-system.md#direction — read it whole before changing this file.
+// Doc: docs/design-system.md#direction
 import { minorToDecimalString, parseMinor, sumMinor, type CurrencyCode } from "@bida/core";
 import { copy } from "../copy";
 

@@ -1,4 +1,4 @@
-// Doc: docs/data-model.md#a-day-without-a-time — read it whole before changing this file.
+// Doc: docs/data-model.md#a-day-without-a-time
 /**
  * Which local day a stamp falls in. Whether an entry has a *time* can't be
  * read off the stamp — that is `dateOnly` (types.ts).

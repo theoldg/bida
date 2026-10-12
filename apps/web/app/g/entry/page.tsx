@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/entry.md#the-entry-on-screen — read it whole before changing this file.
+// Doc: docs/entry.md#the-entry-on-screen
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";

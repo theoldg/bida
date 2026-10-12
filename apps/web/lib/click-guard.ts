@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/touch-and-viewport.md — read it whole before changing this file.
+// Doc: docs/touch-and-viewport.md
 
 import { guarding, note } from "./press-trace";
 

@@ -1,4 +1,4 @@
-// Doc: docs/design-system.md#direction — read it whole before changing this file.
+// Doc: docs/design-system.md#direction
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { drawnShares } from "../lib/scan/diagram";

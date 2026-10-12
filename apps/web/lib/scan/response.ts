@@ -1,4 +1,4 @@
-// Doc: docs/receipt-scanning.md — read it whole before changing this file.
+// Doc: docs/receipt-scanning.md
 import type { ScanResult } from "@bida/core";
 
 interface GeminiResponse {

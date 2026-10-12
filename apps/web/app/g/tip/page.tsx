@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/product.md#the-mvp — read it whole before changing this file.
+// Doc: docs/product.md#the-mvp
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";

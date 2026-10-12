@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/entry.md#the-keyboards-chain — read it whole before changing this file.
+// Doc: docs/entry.md#the-keyboards-chain
 
 import { useRef, useState } from "react";
 import { isCurrencyCode } from "@bida/core";

@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/navigation.md#a-launch-reopens-where-you-were — read it whole before changing this file.
+// Doc: docs/navigation.md#a-launch-reopens-where-you-were
 
 import { isDemo } from "@bida/core";
 import Link from "next/link";

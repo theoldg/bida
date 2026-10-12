@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/sync.md#the-demo-group-has-no-key — read it whole before changing this file.
+// Doc: docs/sync.md#the-demo-group-has-no-key
 
 import { isDemo } from "@bida/core";
 import { copy } from "../lib/copy";

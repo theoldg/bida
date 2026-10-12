@@ -1,4 +1,4 @@
-// Doc: docs/frontend.md — read it whole before changing this file.
+// Doc: docs/frontend.md
 import {
   formatMinor, formatMinorParts, formatRate, parseMinor, startOfLocalDay,
   type CurrencyCode, type PayerValidation, type Rate, type SplitValidation,

@@ -1,4 +1,4 @@
-// Doc: docs/sync.md#folding — read it whole before changing this file.
+// Doc: docs/sync.md#folding
 import type { Table } from "dexie";
 import { foldOps, type EntityKind, type GroupState } from "@bida/core";
 import { started } from "../diag";

@@ -1,4 +1,4 @@
-// Doc: docs/data-model.md#the-three-kinds-of-entry — read it whole before changing this file.
+// Doc: docs/data-model.md#the-three-kinds-of-entry
 import type { Expense } from "@bida/core";
 
 /**

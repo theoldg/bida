@@ -115,7 +115,7 @@ for (const dir of SOURCES) {
     if (!/\.tsx?$/.test(name) || /\.test\.|\.d\.ts$/.test(name)) continue;
     if (/(^|\/)index\.ts$/.test(name) && !/\/commands\//.test(name)) continue;
     if (!/\bdocs\/[\w./-]+\.md/.test(readFileSync(file, "utf8"))) {
-      problems.push(`${name}\n        names no doc — add "// Doc: docs/<doc>.md#<section> — read it whole before changing this file."`);
+      problems.push(`${name}\n        names no doc — add "// Doc: docs/<doc>.md#<section>" at its head`);
     }
   }
 }

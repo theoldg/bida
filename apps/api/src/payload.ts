@@ -1,19 +1,8 @@
-// Doc: docs/ios.md#gotchas — read it whole before changing this file.
+// Doc: docs/pwa.md
 /**
- * A payload URL requested as a page, and the page it should have been.
- *
- * When Next's router fails to fetch a route's RSC payload (`/g/claim.txt?…&_rsc=…`)
- * or gets one from another build, it navigates to the payload URL itself
- * (`doMpaNavigation` in `fetch-server-response.js`) — a screen of
- * `1:"$Sreact.fragment"`.
- *
- * The service worker fixes that (`apps/web/public/sw.js`) but only once it
- * controls the page, which it doesn't on a first visit — exactly the iPhone
- * invitee landing on `/g/claim`. So the rule is here too. Needs
- * `[assets] run_worker_first` for `.txt` in `wrangler.toml`.
- *
- * Nothing else in the export ends in `.txt`; if that changes, both places need
- * a carve-out.
+ * A payload URL requested as a page, redirected to the page: `sw.js`'s rule,
+ * here too for the first visit no service worker controls yet. Nothing else in
+ * the export ends in `.txt`; if that changes, both places need a carve-out.
  */
 
 /** Is this request the browser asking for a *document*, not the router asking for data? */

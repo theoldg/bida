@@ -1,4 +1,4 @@
-// Doc: docs/design-system.md — read it whole before changing this file.
+// Doc: docs/design-system.md
 /**
  * One sprite, mounted once in the layout, referenced by <use> everywhere else —
  * a couple of dozen paths, which is why there is no icon library in

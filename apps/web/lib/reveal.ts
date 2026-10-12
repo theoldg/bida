@@ -1,13 +1,7 @@
-// Doc: docs/refusals.md#a-refused-action-points-first — read it whole before changing this file.
+// Doc: docs/refusals.md#a-refused-action-points-first
 /**
- * Finding the thing a refusal is pointing at, when it is off the screen — on a
- * twenty-line bill the flash may land where nobody is looking.
- *
- * If *any* target is wholly on screen, flash where it stands; moving a list
- * under somebody who can see the answer is worse. Otherwise bring the nearest
- * in whole and flash when the scroll lands.
- *
- * Pure geometry, so it is testable without a DOM.
+ * Where a refusal's flash lands when its target may be off the screen. Pure
+ * geometry, so it is testable without a DOM.
  */
 
 /** One candidate, measured against the same viewport as the band. */

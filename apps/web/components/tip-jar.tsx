@@ -1,4 +1,4 @@
-// Doc: docs/product.md#the-mvp — read it whole before changing this file.
+// Doc: docs/product.md#the-mvp
 import type { ReactNode } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";

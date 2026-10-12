@@ -1,14 +1,7 @@
+// Doc: docs/ios.md#the-in-app-browser--refused
 /**
- * The in-app browser: the webview Instagram, Messenger and the rest open a
- * tapped link in.
- *
- * A dead end: its storage is its own, it has no Add to Home Screen, and a
- * group joined there gets claimed a *second* time when the link is opened
- * properly ([docs/ios.md](../../../docs/ios.md)). So the app refuses to run in
- * one (`components/embedded.tsx`).
- *
- * **The bar is proof, not suspicion.** A false positive locks somebody out of
- * a real browser, so a browser that names itself is believed first.
+ * The in-app browser — Instagram's, Messenger's — which the app refuses to run
+ * in (`components/embedded.tsx`). The bar is proof, not suspicion.
  */
 
 /**

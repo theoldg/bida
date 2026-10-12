@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/sync.md#the-sync-engine — read it whole before changing this file.
+// Doc: docs/sync.md#the-sync-engine
 
 import { Banner } from "@/components/chrome";
 import { copy } from "@/lib/copy";

@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/frontend.md#the-ledgers-search — read it whole before changing this file.
+// Doc: docs/frontend.md#the-ledgers-search
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { copy } from "@/lib/copy";

@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/frontend.md — read it whole before changing this file.
+// Doc: docs/frontend.md
 
 import { exponentOf, minorToDecimalString, parseMinor, type CurrencyCode } from "@bida/core";
 import { useEffect, useLayoutEffect, useRef, useState, type InputHTMLAttributes } from "react";

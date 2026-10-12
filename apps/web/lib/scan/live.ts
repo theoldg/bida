@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/receipt-scanning.md — read it whole before changing this file.
+// Doc: docs/receipt-scanning.md
 
 import { useSyncExternalStore } from "react";
 import type { ScanMedium } from "@bida/core";

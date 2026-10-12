@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/decisions/0005-money-and-currency.md — read it whole before changing this file.
+// Doc: docs/decisions/0005-money-and-currency.md
 
 import { useEffect, useRef, useState } from "react";
 import { isValidRate, type CurrencyCode, type EntryRateSource, type Rate } from "@bida/core";

@@ -1,18 +1,9 @@
 "use client";
-// Doc: docs/design-system.md#nothing-waits-in-silence — read it whole before changing this file.
+// Doc: docs/design-system.md#nothing-waits-in-silence
 
 /**
- * The app's one vibration: a single tick, short enough to be felt and not
- * heard.
- *
- * Spent only where the interface answers something you did *not* tap — a long
- * press that decided it was a hold, a link that reached the clipboard. Both
- * already say so on screen, out from under your thumb (`design-system.md` —
- * "Nothing waits in silence"). A tap with a press wash under it needs nothing.
- *
- * **Never the thing that says an action worked.** There is no vibration on
- * iOS — no `navigator.vibrate`, no web API reaching the Taptic Engine — so
- * this can only ever be an addition to a screen that reads without it.
+ * The app's one vibration. Never the thing that says an action worked: iOS has
+ * none to give.
  */
 
 /** Long enough to register as one tick, short enough not to buzz. */

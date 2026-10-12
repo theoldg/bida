@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/import-export.md#the-clipboard — read it whole before changing this file.
+// Doc: docs/import-export.md#the-clipboard
 
 import { useEffect, useState } from "react";
 import { Icon } from "./icons";

@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/navigation.md#a-launch-reopens-where-you-were — read it whole before changing this file.
+// Doc: docs/navigation.md#a-launch-reopens-where-you-were
 
 import Link from "next/link";
 import { useSyncExternalStore, type HTMLAttributes, type ReactNode } from "react";

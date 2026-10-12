@@ -1,15 +1,5 @@
-// Doc: docs/import-export.md — read it whole before changing this file.
-/**
- * CSV bytes into rows, and nothing beyond that. Here rather than in core
- * because a CSV dialect is a parsing decision, not domain arithmetic;
- * `core/import.ts` takes the rows.
- *
- * **Liberal on input**, unlike `core/export.ts`'s one exact byte shape: CRLF,
- * a lone CR, a BOM and a missing trailing newline are all accepted.
- *
- * **A real state machine, never `split("\n")`** — RFC 4180 allows a newline
- * inside a quoted cell, and a phone-typed description is where one turns up.
- */
+// Doc: docs/import-export.md#reading-one-back
+/** CSV bytes into rows, and nothing beyond that; `core/import.ts` takes the rows. */
 
 /**
  * Every record in the file, cells unquoted, in order. Blank lines are kept as

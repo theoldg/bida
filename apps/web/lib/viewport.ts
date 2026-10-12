@@ -1,30 +1,7 @@
-// Doc: docs/touch-and-viewport.md — read it whole before changing this file.
+// Doc: docs/touch-and-viewport.md
 /**
- * Reading the visual viewport: what the keyboard covers, and what nothing can
- * account for.
- *
- * The shell is `100dvh` and never scrolls (globals.css). The visual viewport
- * disagrees with it for two reasons:
- *
- * - **A keyboard.** On iOS it and its accessory bar overlay the layout viewport
- *   rather than shortening it, so the foot of `.scroll` sits behind them. Owed
- *   as `--kb`.
- * - **A browser that is wrong.** The same gap with nothing focused is a layout
- *   viewport taller than the screen: the shell's last strip (the about
- *   line) is off the bottom, unreachable.
- *
- * **A gap is a keyboard only while something is being typed into**, or it
- * becomes permanent padding.
- *
- * **Android pays nothing: it shrinks the page instead.** `interactive-widget=
- * resizes-content` (app/layout.tsx) has Chromium and Firefox take the keys
- * off the layout viewport, so `100dvh` ends at their top and there is no gap
- * to measure. Measuring was wrong a different way in every Android browser —
- * Chrome's tab, Brave and the installed app each moved the visual viewport
- * their own way, and `navigator.virtualKeyboard` reported keys mid-screen
- * while they slid. What the shrink can't say by itself is that the keys are
- * up, which `HoldCaret` needs: that is the layout viewport shorter than it has
- * been at this width by more than a toolbar.
+ * Reading the visual viewport: what an iOS keyboard covers, and what nothing
+ * can account for. Android shrinks the page instead and is never measured.
  */
 
 /** One look at the two viewports, and who has the caret. */

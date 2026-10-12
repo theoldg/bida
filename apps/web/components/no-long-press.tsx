@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/design-system.md#rules-that-are-not-negotiable — read it whole before changing this file.
+// Doc: docs/design-system.md#rules-that-are-not-negotiable
 
 import { useEffect } from "react";
 

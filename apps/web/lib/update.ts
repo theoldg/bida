@@ -1,15 +1,5 @@
-// Doc: docs/pwa.md — read it whole before changing this file.
-/**
- * A new build, taken as soon as it is safe to.
- *
- * `public/sw.js` activates the moment a build is precached and serves each open
- * page its own build. Here, a page whose build changed reloads onto the new
- * one — on the groups list as it is opened, or on any screen with nothing to
- * lose once the app comes back after a while away (`mayReloadOnReturn`).
- *
- * **Never wait for every client to close** — on iOS that is nearly never. A
- * page in use is offered a Reload in Settings › Version (`components/update.tsx`).
- */
+// Doc: docs/pwa.md
+/** A new build, taken as soon as it is safe to — never mid-use. */
 
 import { useEffect } from "react";
 import { mark } from "./diag";

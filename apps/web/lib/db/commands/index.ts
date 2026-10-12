@@ -1,10 +1,6 @@
-// Doc: docs/frontend.md#state — read it whole before changing this file.
+// Doc: docs/frontend.md#state
 /**
- * Every write in the app goes through this directory, and every function in it
- * appends ops rather than editing rows. Components never touch Dexie directly.
- *
- * If you find yourself wanting to `db().expenses.put(...)` somewhere in a
- * component, what you actually want is a new function in here.
+ * Every write in the app, each appending ops rather than editing rows:
  *
  * - `append.ts` — the one write: the op, the clock and the transaction they share
  * - `patch.ts` — what a patch may carry, which is the merge rule (ADR-0002)

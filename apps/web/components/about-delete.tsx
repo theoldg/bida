@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/import-export.md#deleting-a-group — read it whole before changing this file.
+// Doc: docs/import-export.md#deleting-a-group
 
 import { copy } from "../lib/copy";
 import { route } from "../lib/group-link";

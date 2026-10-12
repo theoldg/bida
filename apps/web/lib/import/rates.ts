@@ -1,4 +1,4 @@
-// Doc: docs/import-export.md#reading-one-back — read it whole before changing this file.
+// Doc: docs/import-export.md#reading-one-back
 import { ratesWanted, type CurrencyCode, type ImportPlan, type RateFor, type Rate } from "@bida/core";
 import { fetchRate, RateOfflineError } from "../rates";
 

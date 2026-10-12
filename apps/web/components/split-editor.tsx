@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/entry.md#the-split-editor — read it whole before changing this file.
+// Doc: docs/entry.md#the-split-editor
 
 import Link from "next/link";
 import {

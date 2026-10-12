@@ -1,11 +1,7 @@
+// Doc: docs/diag.md
 /**
- * A flight recorder for the things that make this app wait, read on /diag.
- * A slow `indexedDB.open`, a read queued behind `rebuild`'s lock and a dead
- * live read look identical except on a timeline.
- *
- * Always on: a debug flag records nothing on the launch that goes wrong. The
- * last few pages' timelines are kept in `localStorage`, never a table: it has
- * to work when IndexedDB is what's broken.
+ * The flight recorder /diag reads. Kept in `localStorage`, never a table: it
+ * has to work when IndexedDB is what's broken.
  */
 
 interface DiagEvent {

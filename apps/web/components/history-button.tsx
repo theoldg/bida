@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/history.md#the-clock-and-its-dot — read it whole before changing this file.
+// Doc: docs/history.md#the-clock-and-its-dot
 
 import Link from "next/link";
 import { useEffect } from "react";

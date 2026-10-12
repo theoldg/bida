@@ -1,4 +1,4 @@
-// Doc: docs/data-model.md#co-sponsored-expenses — read it whole before changing this file.
+// Doc: docs/data-model.md#co-sponsored-expenses
 import { addsUp, resolveSplit, SplitError, splitParticipants } from "./split.js";
 import type { Expense, Id, Settlement } from "./types.js";
 

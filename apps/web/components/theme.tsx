@@ -1,4 +1,4 @@
-// Doc: docs/design-system.md — read it whole before changing this file.
+// Doc: docs/design-system.md
 /**
  * The theme lives in a data-theme attribute on <html>; the CSS in globals.css
  * handles all three states (system, forced light, forced dark) with no

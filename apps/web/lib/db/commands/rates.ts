@@ -1,4 +1,4 @@
-// Doc: docs/decisions/0005-money-and-currency.md — read it whole before changing this file.
+// Doc: docs/decisions/0005-money-and-currency.md
 import {
   convertMinor, isValidRate,
   type CurrencyCode, type EntryRateSource, type Id, type Rate,

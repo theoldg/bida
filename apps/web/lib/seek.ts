@@ -1,10 +1,7 @@
-// Doc: docs/refusals.md#a-refused-action-points-first — read it whole before changing this file.
+// Doc: docs/refusals.md#a-refused-action-points-first
 /**
- * The DOM half of a refusal that has to travel before it flashes — the scroll
- * and the wait — beside the geometry in `lib/reveal.ts`. Shared by the
- * who-had-what grid and the entry form: a bloom spent mid-scroll is one nobody
- * sees, and the refused thing may be fixed by the time the scroll lands. A
- * fold travels the same way (`lib/fold.ts`).
+ * The DOM half of a refusal that travels before it flashes — the scroll and
+ * the wait — beside the geometry in `lib/reveal.ts`.
  *
  * **Never `scrollTo({ behavior: "smooth" })`** — iOS glides, Android jumps,
  * and no end event is reliable. Driving it frame by frame moves the same

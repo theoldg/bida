@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/receipt-scanning.md — read it whole before changing this file.
+// Doc: docs/receipt-scanning.md
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { clipAmountToCurrency } from "./amount-input";

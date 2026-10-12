@@ -1,25 +1,5 @@
-/**
- * Going up, not going back.
- *
- * Every back arrow names its parent, but a plain `<Link>` *pushes*, so the
- * device's back replays where you had been: group → expense → up to group →
- * device back → that expense again.
- *
- * So an up-link *unwinds*: where the parent is already behind us we go back
- * to it, however many entries that is. What remains is the path from the
- * groups list down to here, so device back climbs one level per press.
- *
- * The Navigation API makes this knowable. Without it (iOS before 18.4) an
- * up-link replaces the current entry: never the wrong screen, at worst one
- * extra press.
- *
- * **Read the entries and go back over them; never `traverseTo` a key.** WebKit
- * folds a `traverseTo` into one pending for the same key and never settles the
- * dropped one, so only a timeout can tell late from lost — and on a slow phone
- * it fires while the traversal is merely late, leaving the parent on the stack
- * twice. A count is read and spent in one tick, and never inside a cancelled
- * back press ([back-button.ts](./back-button.ts)).
- */
+// Doc: docs/navigation.md#routing
+/** Going up, not going back: an up-link unwinds to its parent rather than pushing. */
 
 /** Only what's needed here; TypeScript's DOM lib has no Navigation API yet. */
 type NavigationLike = EventTarget & {

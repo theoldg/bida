@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/navigation.md#routing — read it whole before changing this file.
+// Doc: docs/navigation.md#routing
 
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { BadLinkNotice } from "@/components/keyless-link";

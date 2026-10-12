@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/scan-worker.md#cropping-to-the-bill — read it whole before changing this file.
+// Doc: docs/scan-worker.md#cropping-to-the-bill
 
 import { useEffect, useRef, useState } from "react";
 import { copy } from "@/lib/copy";

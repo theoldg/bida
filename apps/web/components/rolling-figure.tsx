@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/rows.md#your-own-rows-are-highlighted — read it whole before changing this file.
+// Doc: docs/rows.md#your-own-rows-are-highlighted
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { CurrencyCode } from "@bida/core";

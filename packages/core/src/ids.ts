@@ -1,4 +1,4 @@
-// Doc: docs/data-model.md#entities — read it whole before changing this file.
+// Doc: docs/data-model.md#entities
 /** Id generation. Client-side, because ops are created offline. */
 
 import { webCrypto } from "./webcrypto.js";

@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/history.md#the-clock-and-its-dot — read it whole before changing this file.
+// Doc: docs/history.md#the-clock-and-its-dot
 
 import { useEffect, useState } from "react";
 import { CATCH_UP_MS, unseenRevisions, type Op } from "@bida/core";

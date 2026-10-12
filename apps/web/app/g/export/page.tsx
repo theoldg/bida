@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/import-export.md#getting-a-group-off-the-phone — read it whole before changing this file.
+// Doc: docs/import-export.md#getting-a-group-off-the-phone
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";

@@ -1,4 +1,4 @@
-// Doc: docs/data-model.md#balances-and-settle-up — read it whole before changing this file.
+// Doc: docs/data-model.md#balances-and-settle-up
 import type { Id } from "./types.js";
 
 /**

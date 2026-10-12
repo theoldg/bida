@@ -1,32 +1,5 @@
-// Doc: docs/navigation.md#keeping-the-devices-back-honest — read it whole before changing this file.
-/**
- * The device's back button, doing what the screen's back arrow does.
- *
- * The arrow goes *up* ([nav.ts](./nav.ts)); the button would replay history.
- * A screen's arrow is one of two things, needing opposite help:
- *
- * - **An ancestor.** Only descending pushes, so it is normally right behind
- *   us and the browser's back already goes there. Only where the arrow skips a
- *   level (a screen opened from a shared link) is the press taken over.
- * - **A question**, on the four screens that would lose typed work: the press
- *   is *cancelled and nothing follows* — the dialog opens. Where the answer is
- *   already yes, the browser takes the press.
- *
- * **Ask before cancelling, and never navigate inside a cancelled press**: a
- * traversal there is measured against an index the browser already moved.
- * The takeover replaces this screen with the parent (`swap`) rather than
- * counting back, which is the same hazard by another door.
- *
- * Only *user*-initiated, cancellable traversals count; the app's own are left
- * alone (no loop), and a browser that won't cancel — no Navigation API (iOS
- * before 18.4), or no interaction to spend — keeps its own back.
- *
- * **One press no traversal can carry: the bottom of the stack.** A screen
- * with a parent and nothing under it — the ledger a launch reopened, or any
- * cold load — has no entry to go back to, so the press would close the app.
- * There a `CloseWatcher` takes it instead (`settleFloor`), which the platform
- * allows once with no tap at all, where cancelling a traversal needs one.
- */
+// Doc: docs/navigation.md#keeping-the-devices-back-honest
+/** The device's back button, doing what the screen's back arrow does. */
 import { useEffect, useRef } from "react";
 import { mark } from "./diag";
 import { markReturn, sameScreen, takeOwnTraversal } from "./nav";

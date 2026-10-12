@@ -1,4 +1,4 @@
-// Doc: docs/frontend.md#state — read it whole before changing this file.
+// Doc: docs/frontend.md#state
 import { newNodeId } from "@bida/core";
 import { started } from "../diag";
 import { hintResume } from "../first-frame";

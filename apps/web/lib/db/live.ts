@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/live-reads.md — read it whole before changing this file.
+// Doc: docs/live-reads.md
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";

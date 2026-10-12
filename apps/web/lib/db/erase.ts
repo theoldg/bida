@@ -1,4 +1,4 @@
-// Doc: docs/import-export.md#deleting-a-group — read it whole before changing this file.
+// Doc: docs/import-export.md#deleting-a-group
 import { foldOps, type GroupState, type Op } from "@bida/core";
 import type { JoinLink } from "../group-link";
 import { eraseGroupLocally } from "./commands/groups";

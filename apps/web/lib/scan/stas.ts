@@ -1,19 +1,7 @@
-// Doc: docs/scan-worker.md#staś-mode — read it whole before changing this file.
+// Doc: docs/scan-worker.md#staś-mode
 /**
- * Staś mode: the scan's refusals, with the gloves off.
- *
- * The prompt normally tells Gemini to be light about a photo it can't use, and
- * never at the photographer's expense (`apps/api/src/scan-body.ts`). This flag
- * asks the Worker for the other prompt, the one that answers a picture of
- * somebody's thumb the way the group chat would. It changes nothing but the
- * wording of `error` — the reading of an actual receipt is the same prompt
- * either way.
- *
- * It lives in `localStorage` rather than the device record for the same reason
- * the theme does: the one screen that sets it (`app/diag/page.tsx`) is the
- * screen that must never wait on Dexie, and a scan asks for this flag while
- * the photo is already being resized. A private-mode refusal costs the
- * setting, nothing else.
+ * Staś mode's flag, in `localStorage` like the theme: `/diag`, which sets it,
+ * must never wait on Dexie, and a scan reads it mid-resize.
  */
 const KEY = "bida.stas";
 

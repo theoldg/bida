@@ -1,4 +1,4 @@
-// Doc: docs/sync.md#the-protocol — read it whole before changing this file.
+// Doc: docs/sync.md#the-protocol
 import { fromBase64, toBase64 } from "./bytes.js";
 import { validateOp, type Op } from "./ops.js";
 import type { Id } from "./types.js";

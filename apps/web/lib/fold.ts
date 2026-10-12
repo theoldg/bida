@@ -1,4 +1,4 @@
-// Doc: docs/rows.md#your-own-rows-are-highlighted — read it whole before changing this file.
+// Doc: docs/rows.md#your-own-rows-are-highlighted
 import { useLayoutEffect, useRef, useState } from "react";
 import { revealWhole, scrollTarget } from "./reveal";
 import { calmly, glide, glideMs } from "./seek";

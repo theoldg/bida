@@ -1,5 +1,5 @@
 "use client";
-// Doc: docs/frontend.md#names — read it whole before changing this file.
+// Doc: docs/frontend.md#names
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

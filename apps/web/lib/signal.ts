@@ -1,4 +1,4 @@
-// Doc: docs/live-reads.md — read it whole before changing this file.
+// Doc: docs/live-reads.md
 /**
  * The change signal behind a module-level store, for `useSyncExternalStore`.
  * `subscribe` is one function for the store's life: a fresh one per render

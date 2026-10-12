@@ -1,4 +1,4 @@
-// Doc: docs/navigation.md#routing — read it whole before changing this file.
+// Doc: docs/navigation.md#routing
 import type { ReactNode } from "react";
 import { Body, Empty, Screen, Scroll, TopBar } from "@/components/chrome";
 import { copy } from "@/lib/copy";

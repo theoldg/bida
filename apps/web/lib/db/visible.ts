@@ -1,4 +1,4 @@
-// Doc: docs/live-reads.md — read it whole before changing this file.
+// Doc: docs/live-reads.md
 import { started } from "../diag";
 
 /**

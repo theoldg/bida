@@ -1,4 +1,4 @@
-// Doc: docs/receipt-scanning.md — read it whole before changing this file.
+// Doc: docs/receipt-scanning.md
 import { BILL_TEXT_MAX, type Bill } from "@bida/core";
 import { copy } from "../copy";
 
