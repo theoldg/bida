@@ -29,6 +29,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "Change the … copy back to what it was. I don't care
+  that it's imprecise." An audit's precision fix can be the wrong fix: the
+  owner weighs plain words above exact ones. Revert, and record it as a
+  decision so the next audit doesn't redo it.
+
 - *2026-10-12* — "Run a few probe checks pretending you want to find
   something", then "Fix 1 and 2". Probing as a cold reader found a rule the
   code broke and a status file grown into a changelog; neither was visible
@@ -81,8 +86,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-11* — "Can we change the notification status bar icon to the
   apps icon?" One line, and the doc already claimed a badge the code never
   set. Trust the code over the doc, then make the doc true.
-
-- *2026-10-11* — A screenshot and one line: "wrap the names with ellipses".
-  "Wrap" meant cut. The demo's names are too short to show it, so I built a
-  group with theirs and looked. And say something while the build runs: two
-  nudges came before my first word.

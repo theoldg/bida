@@ -48,12 +48,15 @@ a line in the push that fixes it.
 - **Docs.** README.md:97 (the owner's) says self-host for your own Gemini
   key, which Advanced takes.
 
-**Three things are closed as decisions, not as work**, so a session that
+**Four things are closed as decisions, not as work**, so a session that
 rediscovers one is rediscovering a call the owner has already made:
 **no per-caller counter on `POST /ops`**, because counting callers means
 storing a row about each of them ([sync.md](sync.md#the-push-has-a-ceiling));
 **no hard quota on the Cloud project**, because the owner watches the spend
-with alerts of their own ([hosting.md](hosting.md#cost-tripwires)); and **an
+with alerts of their own ([hosting.md](hosting.md#cost-tripwires)); **Settings'
+All says "Every edit in your groups"** though only money-moving edits notify —
+the owner: *"I don't care that it's imprecise about non-money edits, and
+neither does the user"*; and **an
 uncancellable back press is behaviour, not a bug** — *"if someone does back 3x
 in a row without interacting with the page they deserve to be let out"* (the
 owner). So `/new` and `/quick` get no draft store and the press is
