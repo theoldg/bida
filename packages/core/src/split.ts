@@ -2,55 +2,41 @@
 import type { ArithmeticSplit, ArithmeticMode, Id, SplitSpec } from "./types.js";
 
 /**
- * Splitting. Shares sum to the total exactly, and the result is identical on
- * every device — hence largest-remainder with a seeded pure tiebreak, never
- * object iteration order.
+ * Shares sum to the total exactly, identically on every device — hence
+ * largest-remainder with a seeded pure tiebreak, never object iteration order.
  */
 
 interface SplitResult {
-  /** memberId -> minor units. Sums to the total. */
   shares: Record<Id, number>;
-  /** Members handed an extra minor unit. Diagnostic only; the UI never shows it. */
+  /** Diagnostic only; the UI never shows it. */
   remainderAbsorbedBy: Id[];
 }
 
-/**
- * Why a split doesn't add up. Core names the problem and never formats it:
- * it doesn't know the currency, so the sentence is the caller's.
- */
+/** Core names the problem and never formats it: it doesn't know the currency. */
 export type SplitProblem = "empty" | "under" | "over" | "nothingLeft";
 
 export interface SplitValidation {
   ok: boolean;
-  /** What the spec currently allocates, for the "€170,39 of €170,39" banner. */
   allocatedMinor: number;
   totalMinor: number;
   problem?: SplitProblem;
-  /** Unallocated minor units; negative when the split is over the total. */
+  /** Negative when the split is over the total. */
   diffMinor?: number;
-  /** A fallback sentence for callers with no currency to hand. */
   message?: string;
-  /** An `exact` split's rows sharing what is left, and how much that is. */
   rest?: { ids: Id[]; leftMinor: number };
 }
 
 export class SplitError extends Error {}
 
 interface SplitOptions {
-  /**
-   * Rotates who absorbs leftover minor units, so the same person doesn't
-   * subsidise every split. Pass the expense id. Invisible in the UI.
-   */
+  /** Rotates who absorbs leftover minor units. Pass the expense id. */
   tiebreakSeed?: string;
 }
 
-/** FNV-1a's starting state. */
 export const FNV_OFFSET = 0x811c9dc5;
 
 /**
- * FNV-1a, carried on from state `h` through `input`. Small, fast, and identical
- * everywhere — which is all we need. Exported so `import-shape.ts` can hash a
- * seed's prefix once and every candidate ending from there.
+ * Carried on from state `h`, so `import-shape.ts` can hash a seed's prefix once.
  */
 export function fnv1a(h: number, input: string): number {
   for (let i = 0; i < input.length; i++) {
@@ -65,9 +51,8 @@ function hash32(input: string): number {
 }
 
 /**
- * Members named by a spec, always sorted, always deduplicated. **In an `exact`
- * split a typed zero is nobody**: typing 0 clears a figure, so a zero reads as
- * out here too, whatever wrote it. Being in with no figure is `rest`.
+ * **In an `exact` split a typed zero is nobody**; being in with no figure is
+ * `rest`.
  */
 export function splitParticipants(spec: SplitSpec): Id[] {
   let ids: Id[];
@@ -75,30 +60,24 @@ export function splitParticipants(spec: SplitSpec): Id[] {
     case "equal": ids = spec.members; break;
     case "exact": ids = [...Object.keys(exactAmounts(spec.amounts)), ...restOf(spec)]; break;
     case "shares": case "receipt": ids = Object.keys(spec.weights); break;
-    // A mode this build doesn't know names nobody, so `resolveSplit` refuses it
-    // and the balances list it as a problem rather than a screen throwing.
+    // Names nobody, so `resolveSplit` refuses it rather than a screen throwing.
     default: ids = [];
   }
   return [...new Set(ids)].sort();
 }
 
-/**
- * An exact split's amounts with the zeros dropped — the only shape one is
- * built in. Converting hands someone a zero when the total is zero or has
- * fewer minor units than people, and a kept zero would read as "in".
- */
+/** A kept zero would read as "in". */
 function exactAmounts(amounts: Record<Id, number>): Record<Id, number> {
   const out: Record<Id, number> = {};
   for (const [id, v] of Object.entries(amounts)) if (v !== 0) out[id] = v;
   return out;
 }
 
-/** An exact split's rows sharing what is left: sorted, deduplicated, and empty for every other mode. */
 export function restOf(spec: SplitSpec): Id[] {
   return spec.mode === "exact" && spec.rest ? [...new Set(spec.rest)].sort() : [];
 }
 
-/** The figures somebody typed — `amounts` less the rest's, which are only ever a filled-in copy. */
+/** `amounts` less the rest's, which are only ever a filled-in copy. */
 function typedAmounts(spec: SplitSpec & { mode: "exact" }): Record<Id, number> {
   const rest = new Set(spec.rest ?? []);
   const out: Record<Id, number> = {};
@@ -107,10 +86,8 @@ function typedAmounts(spec: SplitSpec & { mode: "exact" }): Record<Id, number> {
 }
 
 /**
- * Every row's figure in an exact split: the typed ones as typed, and what they
- * leave of `totalMinor` divided evenly among the rest, seeded as Evenly is.
- * With nothing left (or less than one minor unit each) the rest get zeros;
- * `validateSplit` refuses that, and over the total nobody is handed a negative.
+ * The rest share what the typed figures leave, seeded as Evenly is. Nobody is
+ * handed a negative; `validateSplit` refuses what that leaves.
  */
 export function exactFigures(
   totalMinor: number,
@@ -128,9 +105,7 @@ export function exactFigures(
 }
 
 /**
- * The exact split as it is written: the rest's figures filled in against this
- * total, so the stored `amounts` sum to it for any reader. Zeros stay out of
- * `amounts` (a zero is nobody) but in `rest`. Anything else is handed back.
+ * Filled in against this total, so the stored `amounts` sum to it for any reader.
  */
 export function settleRest<S extends SplitSpec>(totalMinor: number, spec: S, options: SplitOptions = {}): S {
   if (spec.mode !== "exact" || restOf(spec).length === 0) return spec;
@@ -138,37 +113,30 @@ export function settleRest<S extends SplitSpec>(totalMinor: number, spec: S, opt
   return { mode: "exact", amounts, rest: restOf(spec) } as S;
 }
 
-/** The same map, keyed in sorted order. */
 function sortedKeys<T>(map: Record<Id, T>): Record<Id, T> {
   const out: Record<Id, T> = {};
   for (const id of Object.keys(map).sort()) out[id] = map[id] as T;
   return out;
 }
 
-/**
- * The split in canonical form: members sorted and deduplicated, maps keyed in
- * order. Lets anything downstream tell "nobody moved" from "somebody re-picked
- * the same people" by serialising.
- */
+/** Lets anything downstream tell "nobody moved" by serialising. */
 export function canonicalSplit(spec: SplitSpec): SplitSpec {
   switch (spec.mode) {
     case "equal": return { mode: "equal", members: splitParticipants(spec) };
     case "shares": return { mode: "shares", weights: sortedKeys(spec.weights) };
     case "exact": {
-      // No `rest` key when nobody floats, so every split written before it
-      // serialises as it always did.
+      // No `rest` key when nobody floats, so older splits serialise as they
+      // always did.
       const rest = restOf(spec);
       return rest.length > 0
         ? { mode: "exact", amounts: sortedKeys(spec.amounts), rest }
         : { mode: "exact", amounts: sortedKeys(spec.amounts) };
     }
     case "receipt": return { mode: "receipt", weights: sortedKeys(spec.weights) };
-    // A mode this build doesn't know passes through as it was written.
     default: return spec;
   }
 }
 
-/** Positive weight per participant, whatever the mode calls it. */
 function weightsOf(spec: SplitSpec, participants: Id[]): Map<Id, bigint> {
   const out = new Map<Id, bigint>();
   for (const id of participants) {
@@ -187,9 +155,7 @@ function weightsOf(spec: SplitSpec, participants: Id[]): Map<Id, bigint> {
 }
 
 /**
- * Distribute `total` across weighted participants using the largest-remainder
- * method. Deterministic: ties break by `hash32("<seed>:<memberId>")`, smallest
- * first, then by member id — by member id alone when there is no seed.
+ * Largest remainder. Ties break by `hash32("<seed>:<memberId>")`, then member id.
  */
 function distribute(
   total: bigint,
@@ -218,7 +184,6 @@ function distribute(
     remainders.push({ id, rem: exact % totalWeight });
   }
 
-  // Hand out the leftover minor units, biggest fractional part first.
   let leftover = abs - allocated;
   const rank = new Map<Id, number>(
     ids.map((id) => [id, seed === undefined ? 0 : hash32(`${seed}:${id}`)]),
@@ -241,10 +206,7 @@ function distribute(
   return { shares, remainderAbsorbedBy };
 }
 
-/**
- * Resolve a split spec into per-member minor amounts summing exactly to
- * `totalMinor`. Throws if the spec cannot produce that.
- */
+/** Throws if the spec cannot sum exactly to `totalMinor`. */
 export function resolveSplit(
   totalMinor: number,
   spec: SplitSpec,
@@ -287,7 +249,6 @@ export function resolveSplit(
   return distribute(BigInt(totalMinor), weightsOf(spec, participants), options.tiebreakSeed);
 }
 
-/** The fields of an entry its split is read against — everything the two below need. */
 interface SplitBearing {
   id: Id;
   amountMinor: number;
@@ -296,21 +257,15 @@ interface SplitBearing {
 }
 
 /**
- * An entry's shares in BASE currency, summing to `baseAmountMinor`. **Ask this,
- * never `resolveSplit` on an entry**: an `exact` split is typed in the entry's
- * own currency, as its payers are, and apportions the base total by those
- * amounts at read time — with the entry id as seed, so the cent a conversion
- * leaves lands where every device puts it.
- *
- * An entry written before that held base amounts. They sum to `baseAmountMinor`
- * instead, and the same apportioning hands them back unchanged; one entry in
- * the base currency reads the same either way.
+ * In BASE currency. **Ask this, never `resolveSplit` on an entry**: an `exact`
+ * split is typed in the entry's own currency and apportions the base total at
+ * read time, seeded by the entry id. Older entries held base amounts, which the
+ * same apportioning hands back unchanged.
  */
 export function resolveEntrySplit(entry: SplitBearing): SplitResult {
   const seed = { tiebreakSeed: entry.id };
   if (entry.split.mode !== "exact") return resolveSplit(entry.baseAmountMinor, entry.split, seed);
-  // The rest's figures are worked out again rather than trusted: the same
-  // total and seed give the same cents as were written.
+  // Worked out again rather than trusted: same total and seed, same cents.
   const split: SplitSpec = restOf(entry.split).length > 0
     ? { mode: "exact", amounts: exactFigures(entry.amountMinor, entry.split, seed) }
     : entry.split;
@@ -322,14 +277,9 @@ export function resolveEntrySplit(entry: SplitBearing): SplitResult {
   return resolveSplit(entry.baseAmountMinor, { mode: "shares", weights: split.amounts }, seed);
 }
 
-/**
- * The split as its editor shows it: an `exact` one in the entry's own currency.
- * A pre-change entry's base amounts are apportioned back over `amountMinor`
- * (see `resolveEntrySplit`); anything else is handed over as it is.
- */
+/** An `exact` one in the entry's own currency, as its editor shows it. */
 export function ownCurrencySplit<S extends SplitSpec>(entry: SplitBearing & { split: S }): S {
   const split: SplitSpec = entry.split;
-  // A split with a rest was only ever written in the entry's own currency.
   if (split.mode !== "exact" || restOf(split).length > 0) return entry.split;
   try {
     const sum = exactSum(split.amounts);
@@ -343,7 +293,6 @@ export function ownCurrencySplit<S extends SplitSpec>(entry: SplitBearing & { sp
   }
 }
 
-/** An exact split's total, validated as `resolveSplit` would. */
 function exactSum(amounts: Record<Id, number>): number {
   let sum = 0;
   for (const [id, v] of Object.entries(amounts)) {
@@ -355,7 +304,6 @@ function exactSum(amounts: Record<Id, number>): number {
   return sum;
 }
 
-/** Non-throwing check, so the UI can render a half-finished split. */
 export function validateSplit(
   totalMinor: number,
   spec: SplitSpec,
@@ -375,8 +323,7 @@ export function validateSplit(
     if (ids.length === 0) return addsUp(typed, totalMinor);
     const leftMinor = totalMinor - typed;
     if (leftMinor < 0) return { ...addsUp(typed, totalMinor), rest: { ids, leftMinor } };
-    // Somebody in the split with nothing to share is a row saying "in" over a
-    // zero: refused, rather than quietly dropping them.
+    // A row saying "in" over a zero: refused, not quietly dropped.
     if (leftMinor < ids.length) {
       return {
         ok: false, allocatedMinor: typed, totalMinor, problem: "nothingLeft", diffMinor: leftMinor,
@@ -387,7 +334,6 @@ export function validateSplit(
   }
 
   try {
-    // It sums to the total or it throws.
     resolveSplit(totalMinor, spec, options);
     return { ok: true, allocatedMinor: totalMinor, totalMinor };
   } catch (err) {
@@ -400,11 +346,7 @@ export function validateSplit(
   }
 }
 
-/**
- * Typed amounts against the total they must make — an exact split's shares,
- * and the payers' contributions (payers.ts). Both are the same "€12 still to
- * place" or "€3 too many", so they are one check.
- */
+/** An exact split's shares and the payers' contributions are one check. */
 export function addsUp(sum: number, totalMinor: number) {
   if (sum === totalMinor) return { ok: true, allocatedMinor: sum, totalMinor };
   const diff = totalMinor - sum;
@@ -418,7 +360,6 @@ export function addsUp(sum: number, totalMinor: number) {
   };
 }
 
-/** Convenience: what one member owes for one expense. 0 if not involved. */
 export function shareOf(
   totalMinor: number,
   spec: SplitSpec,
@@ -430,17 +371,14 @@ export function shareOf(
 }
 
 /**
- * Switch tabs carrying who is in and none of the numbers: parts are not
- * amounts, and a figure nobody typed is not one. Into As amounts everyone
- * shares the rest, so typing one figure re-divides the others. Never into
- * `receipt`, which nobody types (ADR-0016).
+ * Carries who is in and none of the numbers: a figure nobody typed is not one.
+ * Never into `receipt`, which nobody types (ADR-0016).
  */
 export function convertSplitMode(spec: SplitSpec, mode: ArithmeticMode): ArithmeticSplit {
   if (spec.mode === mode) return spec as ArithmeticSplit;
   const participants = splitParticipants(spec);
   switch (mode) {
     case "equal": return { mode: "equal", members: participants };
-    // No `rest` key when nobody is in, as `canonicalSplit` writes it.
     case "exact": return participants.length > 0
       ? { mode: "exact", amounts: {}, rest: participants }
       : { mode: "exact", amounts: {} };
@@ -453,10 +391,8 @@ export function convertSplitMode(spec: SplitSpec, mode: ArithmeticMode): Arithme
 }
 
 /**
- * The split editor's head box: everyone in takes everyone out; otherwise it
- * brings in whoever is out and leaves what the others hold alone — a 2 in
- * parts stays a 2, a typed amount stays typed. In `exact` the newcomers join
- * the rest, even with nothing left, where `validateSplit` says so.
+ * Everyone in takes everyone out; otherwise brings in whoever is out and leaves
+ * what the others hold alone.
  */
 export function toggleEveryone(
   spec: ArithmeticSplit,
@@ -480,9 +416,7 @@ export function toggleEveryone(
 }
 
 /**
- * What a write puts in `splitTab`: `"shares"` for parts typed beside a kept
- * bill, null for everything else. Without it the fold below reads that entry
- * as a legacy receipt, and the parts somebody typed reopen as "By items".
+ * Without it the fold reads parts typed beside a kept bill as a legacy receipt.
  */
 export function partsBesideBill(
   entry: { split: SplitSpec; receiptItems?: readonly unknown[] | null },
@@ -491,20 +425,14 @@ export function partsBesideBill(
 }
 
 /**
- * When `receipt` became a mode (0336c2a9). Every build since writes it for a
- * bill, and every build since the bill arrived flagged one, so an unflagged
- * `shares` beside a bill stamped after this is parts somebody typed — saved by
- * a build that wrote no flag for them, until 97037e75.
+ * When `receipt` became a mode: an unflagged `shares` beside a bill stamped after
+ * this is parts somebody typed, by a build that wrote no flag (to 97037e75).
  */
 export const RECEIPT_MODE_SINCE = Date.UTC(2026, 8, 11, 8, 34);
 
 /**
- * Rewrite a legacy receipt expense (`shares` plus `splitTab: "receipt"`, or
- * `shares` beside a scanned bill with no flag at all, written before
- * `RECEIPT_MODE_SINCE`) into `receipt` mode. Runs in `applyPatch` on a patch
- * that writes the split, the bill or the flag, so every reader sees one shape,
- * and no state keeps the flag: a write derives it again (`partsBesideBill`).
- * `writtenAt` is the op's stamp, absent when unknown. Mutates in place. ADR-0016.
+ * A legacy receipt expense into `receipt` mode, in `applyPatch`, so every reader
+ * sees one shape. Mutates in place. ADR-0016.
  */
 export function upgradeReceiptSplit(entity: Record<string, unknown>, writtenAt?: number): void {
   const spec = entity["split"] as SplitSpec | undefined;
