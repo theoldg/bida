@@ -29,6 +29,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "Should we special case the wording…?" I answered with a
+  pick and asked; their reply was a better design ("a single row … for Y").
+  A question can be the owner thinking aloud: answer briefly, then build what
+  comes back without asking again.
+
 - *2026-10-12* — "Change the app icon to have four teeth … like the receipt
   icon in the home screen. Any questions?" The ask pointed at its own spec, so
   none were owed: count the reference's teeth, match them, regenerate, and
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-11* — "Rename "by name" to "by title" in search results".
   One string in copy.ts; grep the docs and checks for it anyway, then ship
   without ceremony. A one-word ask wants a one-word diff.
-
-- *2026-10-11* — A UI request, cut off, then "Any questions?". The owner
-  wanted questions before code: four, each with a pick. They took the safe
-  default on three and kept today's rule on the fourth, which changed how
-  the build went. When asked to ask, ask.

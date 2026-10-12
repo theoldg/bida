@@ -174,7 +174,9 @@ entry it is the title, the figure and who paid, with your balance under the
 split, on the screen's ground. A transfer's form has no ÷, so no head card. Under a hairline the head card says who:
 one payer is a line — "paid by **Adaś**" — named nowhere else on the screen;
 several are rows carrying what each put in, under an eyebrow that counts them,
-"Paid by **2 people**". A transfer's head is no card: its card below is
+"Paid by **2 people**". A split of one is said the same way — "for **Han**"
+in the split card, no eyebrow and no figure, since "split evenly" between one
+is no split and the share is the figure above; a bill keeps its rows. A transfer's head is no card: its card below is
 nothing but who. The cards' eyebrows read as phrases ("Split by items", "Paid
 by 2 people"), not a label, a dot and a value.
 

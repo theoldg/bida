@@ -713,6 +713,8 @@ export const copy = {
     edited: (n: number) => (n === 1 ? "Edited once" : `Edited ${n} times`),
     editedBy: (n: number, who: string) => (n === 1 ? `by ${who}` : `last by ${who}`),
     byLead: { expense: "paid by", income: "received by" } as Voiced<string>,
+    /** A split of one, said as the payer is: "evenly" between one is no split. */
+    forLead: "for",
     you: "you",
     yourBalance: "Your balance",
     sumWords: { expense: ["you paid", "your share"], income: ["your share", "you received"] } as

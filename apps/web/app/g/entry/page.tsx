@@ -403,36 +403,45 @@ function ExpenseDetail({ expense, kind, group, data }: {
     } catch { /* as above */ }
   }
   const bill = savedBill(expense, english);
+  // One person in the split is a line, as one payer is: their share is the
+  // figure above. A bill keeps its rows, since its lines are the point.
+  const lone = participants.length === 1 && !bill ? data.memberById.get(participants[0]!) : undefined;
 
   return (
     <div className="pad" style={{ paddingTop: 0 }}>
       <div className="splitrule entrysplit" aria-hidden="true"><span /></div>
       <Card>
-        <Eyebrow style={{ marginBottom: 4 }}>
-          {copy.entry.splitMode(copy.entryKind.split[kind],
-            // `??`: a mode this build doesn't know heads as itself.
-            (copy.split.mode[expense.split.mode] ?? expense.split.mode).toLowerCase())}
-        </Eyebrow>
-        {/* Only the people in the split: a row per outsider owing nothing says
-            what their absence already says. */}
-        {/* Removed members too: a deleted entry can name somebody gone since. */}
-        {[...data.memberById.values()].filter((m) => participants.includes(m.id))
-          .sort((a, b) => a.name.localeCompare(b.name)).map((m) => {
-          // A receipt's weights are the bill's arithmetic, shown as the bill
-          // instead.
-          const detail = expense.split.mode === "shares"
-            ? ` · ${plural(expense.split.weights[m.id] ?? 0, copy.noun.part)}`
-            : "";
-          const k = yours(m.id, m.name, detail);
-          const v = foreign
-            ? <TwoCurrencies base={money(shares[m.id] ?? 0, group.baseCurrency)}
-              own={money(ownShares[m.id] ?? 0, expense.currency)} />
-            : money(shares[m.id] ?? 0, group.baseCurrency);
-          const lines = bill?.[m.id];
-          if (!lines?.length) return <KV key={m.id} k={k} v={v} />;
-          return <MemberBill key={m.id} name={k} total={v} lines={lines}
-            format={(minor) => money(minor, expense.currency)} />;
-        })}
+        {lone ? (
+          <p className="entryby">
+            {copy.entry.forLead} <b>{lone.name}</b>{lone.id === me ? <You /> : null}
+          </p>
+        ) : <>
+          <Eyebrow style={{ marginBottom: 4 }}>
+            {copy.entry.splitMode(copy.entryKind.split[kind],
+              // `??`: a mode this build doesn't know heads as itself.
+              (copy.split.mode[expense.split.mode] ?? expense.split.mode).toLowerCase())}
+          </Eyebrow>
+          {/* Only the people in the split: a row per outsider owing nothing says
+              what their absence already says. */}
+          {/* Removed members too: a deleted entry can name somebody gone since. */}
+          {[...data.memberById.values()].filter((m) => participants.includes(m.id))
+            .sort((a, b) => a.name.localeCompare(b.name)).map((m) => {
+            // A receipt's weights are the bill's arithmetic, shown as the bill
+            // instead.
+            const detail = expense.split.mode === "shares"
+              ? ` · ${plural(expense.split.weights[m.id] ?? 0, copy.noun.part)}`
+              : "";
+            const k = yours(m.id, m.name, detail);
+            const v = foreign
+              ? <TwoCurrencies base={money(shares[m.id] ?? 0, group.baseCurrency)}
+                own={money(ownShares[m.id] ?? 0, expense.currency)} />
+              : money(shares[m.id] ?? 0, group.baseCurrency);
+            const lines = bill?.[m.id];
+            if (!lines?.length) return <KV key={m.id} k={k} v={v} />;
+            return <MemberBill key={m.id} name={k} total={v} lines={lines}
+              format={(minor) => money(minor, expense.currency)} />;
+          })}
+        </>}
       </Card>
       {me && kind !== "transfer" && ((putIn[me] ?? 0) > 0 || participants.includes(me)) ? (
         <div className="balline">
