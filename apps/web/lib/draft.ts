@@ -14,7 +14,6 @@ import { billExtrasIn, billLabels, receiptBreakdown, receiptTotalMinor, type Mem
 import { clearScan } from "./scan/live";
 import { signal } from "./signal";
 
-/** Every mode is a tab: Evenly, As parts, As amounts, Items. */
 export type SplitTab = SplitMode;
 
 /**
@@ -29,29 +28,21 @@ export type SplitInputs = { [M in ArithmeticMode]?: Extract<ArithmeticSplit, { m
  */
 export interface EntryDraft extends Receipt {
   kind: EntryKind;
-  /** Present when editing. An edit never crosses between expense and transfer (ADR-0010). */
   entryId?: string;
   /** The leftover cent goes by the entry's id, so the quote must use the one written. */
   newEntryId: string;
-  /** Exactly what is typed, e.g. "620.". */
   amountText: string;
   currency: string;
   /**
-   * The entry's own rate, and what it is the rate for: `rateCurrency` on
-   * `rateDay` (local "YYYY-MM-DD"). Read only while `rateCurrency` is the
-   * draft's currency; a change of either sends `useEntryRate` to the feed
-   * (ADR-0005). Absent in the base currency.
+   * Read only while `rateCurrency` is the draft's currency; a change of either
+   * sends `useEntryRate` to the feed (ADR-0005).
    */
   rate?: string;
   rateSource?: EntryRateSource;
   rateCurrency?: string;
   rateDay?: string;
-  /**
-   * An opened entry's rate as saved, so a date moved away and back finds it
-   * again rather than the feed's (`savedRateBack`).
-   */
+  /** So a date moved away and back finds the saved rate again. */
   savedRate?: { rate: string; source: EntryRateSource; currency: string; day: string };
-  /** A transfer's note. */
   description: string;
   /** On an income, who received. */
   paidBy: string;
@@ -62,10 +53,11 @@ export interface EntryDraft extends Receipt {
   toMember: string;
   occurredAt: number;
   dateOnly: boolean;
-  /** What `retimed` measures against. Never saved. */
   recordedAt: number;
   categoryId: string | null;
-  /** The tab showing — the one thing that says so. A saved entry reopens on its mode. */
+  /**
+   * The one thing that says which tab shows. A saved entry reopens on its mode.
+   */
   splitTab: SplitTab;
   /** So a rescan can replace its own guess but not a typed title. */
   scannedDescription?: string;
@@ -102,8 +94,8 @@ export function withSplit(splits: SplitInputs, spec: ArithmeticSplit): SplitInpu
 }
 
 /**
- * Weights in the receipt's currency, with each person's lines. The grid, form
- * and quick split must agree to the cent, so the seed is fixed here.
+ * The grid, form and quick split must agree to the cent, so the seed is fixed
+ * here.
  */
 export function receiptBill(
   draft: EntryDraft,
@@ -121,11 +113,7 @@ export function receiptBill(
   );
 }
 
-/**
- * A saved receipt expense's bill, each person's lines in the words it is read
- * in. Seeded with the entry's id, the seed its weights were saved with
- * (`splitSeed`), so the lines are those weights itemised. Null for no bill.
- */
+/** Seeded with the entry's id, the seed its weights were saved with. */
 export function savedBill(expense: Expense, english: boolean): Record<string, MemberLine[]> | null {
   if (expense.split.mode !== "receipt" || !expense.receiptItems?.length) return null;
   return receiptBreakdown(
@@ -160,21 +148,13 @@ export function activeSplit(draft: EntryDraft): SplitSpec {
   return draftReceiptSplit(draft) ?? arithmeticSplit(draft);
 }
 
-/**
- * What the arithmetic tabs hold for the tab showing — Evenly's under Items.
- * Ignores the bill, so a scan never feeds As parts (ADR-0016).
- */
+/** Ignores the bill, so a scan never feeds As parts (ADR-0016). */
 export function arithmeticSplit(draft: EntryDraft): ArithmeticSplit {
   const tab: ArithmeticMode = draft.splitTab === "receipt" ? "equal" : draft.splitTab;
   return draft.splits[tab] ?? emptySplit(tab);
 }
 
-/**
- * A tab keeps what was typed into it; one opened for the first time starts
- * from who is in, never the numbers (`convertSplitMode`). Items opens the
- * Evenly under it the same way, so `arithmeticSplit` there is never nobody:
- * a parts entry looked at under Items used to leave it for an empty tab.
- */
+/** A tab opened for the first time starts from who is in, never the numbers. */
 export function openSplitTab(draft: EntryDraft, tab: SplitTab): SplitInputs {
   const opened: ArithmeticMode = tab === "receipt" ? "equal" : tab;
   if (draft.splitTab === tab || draft.splits[opened]) return draft.splits;
@@ -182,12 +162,8 @@ export function openSplitTab(draft: EntryDraft, tab: SplitTab): SplitInputs {
 }
 
 /**
- * Moving to `tab`, whoever asks — the tab bar, or a kind with no Items. Two
- * handoffs: `openSplitTab` gives a tab with nothing of its own a split to
- * start from, and leaving Items puts the bill's total in the amount field,
- * without which the expense silently becomes worth zero (ADR-0016). One-shot,
- * and only a total the field was showing (`draftReceiptTotal`): a bill worth
- * nothing leaves a typed amount alone.
+ * Leaving Items puts the bill's total in the amount field, or the expense
+ * silently becomes worth zero (ADR-0016).
  */
 export function changeSplitTab(
   draft: EntryDraft, tab: SplitTab,
@@ -224,11 +200,7 @@ const drafts = new Map<string, EntryDraft | undefined>();
 const baselines = new Map<string, string>();
 const seedKeys = new Map<string, string>();
 
-/**
- * The form has no time field, so on another day the recorded hour is
- * meaningless and the entry becomes `dateOnly`; back on the recording day the
- * reading returns.
- */
+/** No time field, so on another day the recorded hour is meaningless. */
 export function retimed(draft: EntryDraft, occurredAt: number): Pick<EntryDraft, "occurredAt" | "dateOnly"> {
   if (!sameLocalDay(occurredAt, draft.recordedAt)) return { occurredAt, dateOnly: true };
   return { occurredAt: draft.dateOnly ? draft.recordedAt : occurredAt, dateOnly: false };
@@ -239,10 +211,7 @@ export function saveDraft(groupId: string, draft: EntryDraft): void {
   emit();
 }
 
-/**
- * The form remounts on every return from payers or the grid and keeps its
- * draft; a different key is a different entry, which mustn't inherit it.
- */
+/** A different key is a different entry, which mustn't inherit the draft. */
 export function seedDraft(groupId: string, draft: EntryDraft, key: string): void {
   baselines.set(groupId, JSON.stringify(draft));
   seedKeys.set(groupId, key);
@@ -266,7 +235,6 @@ export function clearDraft(groupId: string): void {
   drafts.set(groupId, undefined);
   baselines.delete(groupId);
   seedKeys.delete(groupId);
-  // A scan in flight drops its result now, so "Reading…" goes too.
   clearScan(groupId);
   emit();
 }
@@ -316,11 +284,7 @@ export function blankDraft(
   };
 }
 
-/**
- * An entry's rate as its draft holds it: the one it is read at, for its own
- * currency and day, so opening it to edit looks nothing up. One from before
- * rates were the entry's says it was the group's (ADR-0005).
- */
+/** So opening it to edit looks nothing up (ADR-0005). */
 const KNOWN_MODES: ReadonlySet<string> = new Set<SplitTab>(["equal", "shares", "exact", "receipt"]);
 
 function ownRate(
@@ -349,8 +313,7 @@ export function expenseDraft(e: Expense, me: string, members: string[]): EntryDr
     description: e.description,
     paidBy: e.paidBy,
     payers: e.payers ?? null,
-    // A receipt's weights are not handed to the arithmetic tabs (ADR-0016), and
-    // a mode this build doesn't know opens on Evenly (data-model.md).
+    // A mode this build doesn't know opens on Evenly.
     ...(e.split.mode === "receipt" || !known ? {} : { splits: withSplit({}, ownCurrencySplit({ ...e, split: e.split })) }),
     occurredAt: e.occurredAt,
     dateOnly: e.dateOnly === true,
