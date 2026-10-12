@@ -86,7 +86,9 @@ const { report, finish } = reporter();
     req.onsuccess = req.onerror = req.onblocked = () => resolve();
   }));
 
-  await page.getByText("No groups yet").waitFor({ timeout: PATIENCE }).then(
+  // The row gone, not "No groups yet": the secret outlives the delete, and the
+  // list may say the group is on its way rather than that there is none.
+  await page.locator(".row .rmain").filter({ hasText: "Marrakech" }).waitFor({ state: "detached", timeout: PATIENCE }).then(
     () => report(true, "closing the connection re-reads: the list empties without a reload"),
     async () => {
       // The flight recorder's last words, kept to localStorage by a hide.

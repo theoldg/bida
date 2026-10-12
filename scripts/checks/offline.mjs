@@ -318,6 +318,7 @@ report(answeredAt.includes(`id=${g}`), "a payload is answered under the URL it w
 // ---- and a second deploy over the page that never reloaded ---------------
 console.log("\ndeploying again, over a page that never reloaded:");
 swRevision = "gooddeploy02";
+await mark(page);
 await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
 
 // Wait for the set expected, not for the list to stop changing: two samples can
@@ -390,7 +391,9 @@ await page.bringToFront();
 await straggler.close();
 await fresh.close();
 // `page` is reloaded by the deploy under us, and cutting the network mid-load is
-// a blank screen: wait for the list before pulling the plug.
+// a blank screen: wait for the reload, then the list, before pulling the plug —
+// the list alone can be the old page's, still up.
+report(await reloaded(page), "an untouched list reloads onto the second build too");
 await page.waitForSelector(".rows a.row", { timeout: PATIENCE });
 await ctx.setOffline(true);
 await tap("the new build loads offline too", () => openGroupsList(page, base), ".rows a.row");
