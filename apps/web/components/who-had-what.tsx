@@ -381,10 +381,7 @@ export function WhoHadWhat({
 
           <table className="itemtable"
             style={{ "--cols": involvedMembers.length } as CSSProperties}>
-            {/*
-             * Widths decided once (`table-layout: fixed`): nothing in a row can
-             * move them.
-             */}
+            {/* Widths decided once (`table-layout: fixed`): nothing in a row can move them. */}
             <colgroup>
               <col className="collabel" />
               {involvedMembers.map((m) => <col key={m.id} className="colwho" />)}
@@ -427,10 +424,7 @@ export function WhoHadWhat({
                               <span className="itemqty"> ×{item.quantity}</span>
                             ) : null}
                           </span>
-                          {/*
-                           * On the amount line: the label's line has a button and
-                           * a name of any length.
-                           */}
+                          {/* On the amount line: the label's line has a button and a name of any length. */}
                           <span className="itemamount">
                             {priced(shown.amount, draft.currency)}
                             {part ? <span className="itemqty"> · {copy.items.portion(part.index, part.of)}</span> : null}
@@ -542,10 +536,7 @@ export function WhoHadWhat({
                     {tipPercent !== null ? <span className="itemqty"> {copy.items.tipPercent(tipPercent)}</span> : null}
                   </span>
                   <span className="tipfield">
-                    {/*
-                     * A bare input took "5.5.5" and kept showing it while the
-                     * total dropped it.
-                     */}
+                    {/* A bare input took "5.5.5" and kept showing it while the total dropped it. */}
                     <AmountInput className="itemamountin" frame="none"
                       enterKeyHint="done"
                       currency={draft.currency} placeholder={bare(0, draft.currency)}
@@ -563,9 +554,7 @@ export function WhoHadWhat({
             </tbody>
           </table>
 
-          {/*
-           * Under the table: a sentence in a cell wraps at the table's width.
-           */}
+          {/* Under the table: a sentence in a cell wraps at the table's width. */}
           {extraKinds.length > 0 ? (
             <div className="itemnote itemwide">{copy.items.extraNote(extraKinds)}</div>
           ) : null}

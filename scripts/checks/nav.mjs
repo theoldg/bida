@@ -1,14 +1,8 @@
 #!/usr/bin/env node
 /**
- * `pnpm verify nav` — where the back arrow goes, and what it leaves on the stack.
- *
- * The destination is the easy half. The half that fails silently is the
- * **shape of the history behind it** — what the device's back button does
- * next. The same arrow traverses to a parent that is on the stack and
- * *replaces* into one that isn't, keeping forward entries in one case and
- * erasing them in the other (ADR-0007).
- *
- * So every assertion here reads `navigation.entries()`, never `location`.
+ * `pnpm verify nav` — where the back arrow goes, and the shape of the history it
+ * leaves behind: traverse to a parent on the stack, replace into one that isn't
+ * (ADR-0007). So every assertion reads `navigation.entries()`, never `location`.
  */
 import { ensureBuild, launch, newPhone, openDemo, openGroupsList, reporter, serveExport, settle }
   from "../lib/harness.mjs";
@@ -19,9 +13,8 @@ const browser = await launch();
 const { report, finish } = reporter();
 
 /**
- * The session's history as the device's back button sees it: the current
- * entry and every entry's screen, ids masked (shape only). Installed in the
- * page so the wait for a shape and its reading are one function.
+ * Installed in the page, so the wait for a shape and its reading are one
+ * function.
  */
 const SHAPE = () => {
   window.__shape = () => {
@@ -38,10 +31,6 @@ const SHAPE = () => {
 
 const stack = (page) => page.evaluate(() => window.__shape());
 
-/**
- * Wait for the history to read as `want`, then say whether it does — the
- * condition, not a duration, and the ceiling is only reached on a red run.
- */
 async function is(page, label, want) {
   const wanted = JSON.stringify(want);
   await page.waitForFunction((w) => JSON.stringify(window.__shape()) === w, wanted).catch(() => {});
@@ -49,14 +38,9 @@ async function is(page, label, want) {
   report(got === wanted, label, got === wanted ? "" : `wanted ${wanted}\n        got    ${got}`);
 }
 
-/** The screen's own back arrow. What follows waits for where it went. */
 const arrow = (page) => page.locator(".topbar .iconbtn").first().click();
 
-/**
- * A phone with nothing on it, so `/` is the groups list rather than the group
- * it would otherwise resume into (`lib/launch.ts`). The two sections that start
- * on the list get one each; the rest share a phone with groups on it.
- */
+/** Nothing on it, so `/` is the groups list rather than a resumed group. */
 async function phone() {
   const ctx = await newPhone(browser);
   await ctx.addInitScript(SHAPE);
@@ -65,13 +49,9 @@ async function phone() {
 
 const ctx = await phone();
 
-// ---- 1. the walk in from the groups list -------------------------------
-// Every door into a group is pushed from `/`, so the device's back button
-// climbs the app rather than leaving it.
-//
-// The group made here is reused by every later section: building one (form,
-// picker, claim) is the most expensive step, and these checks must stay cheap
-// ([testing.md](../docs/testing.md)).
+// ---- 1. the walk in from the groups list ------------------------------- The
+// group made here is reused by every later section: building one is the most
+// expensive step.
 const group = await (async () => {
   const page = await ctx.newPage();
   await page.goto(`${base}/`);
@@ -89,8 +69,6 @@ const group = await (async () => {
   await page.waitForURL(/\/g\?id=/);
   await is(page, "/new replaces itself with the ledger, over the list", { i: 1, urls: ["/", "/g?id=G"] });
 
-  // The balance card is pressed into, so balances is pushed over the ledger
-  // and its arrow goes back to it, leaving balances forward.
   await page.locator("a[href^='/g/balances']").first().click();
   await is(page, "the balance card pushes balances", { i: 2, urls: ["/", "/g?id=G", "/g/balances?id=G"] });
   await arrow(page);
@@ -100,7 +78,6 @@ const group = await (async () => {
   return id;
 })();
 
-/** That group's ledger, as a cold load: the stack starts here and nowhere else. */
 async function onLedger() {
   const page = await ctx.newPage();
   await page.goto(`${base}/g?id=${group}`);
@@ -130,12 +107,9 @@ async function onLedger() {
 }
 
 // ---- 3. the tip jar: a screen the form is opened from -------------------
-// Saving lands on the balances the tip screen was reached from — past the tip
-// screen as well as the form, since stopping there is stopping on a screen
-// nobody asked to see again.
+// Saving lands on the balances the tip screen was reached from, past both.
 {
   const page = await ctx.newPage();
-  // In through the list, so the shape under the ledger is the one a thumb makes.
   await openGroupsList(page, base);
   await page.locator(".grouprow").first().click();
   await page.waitForURL(/\/g\?id=/);
@@ -161,10 +135,8 @@ async function onLedger() {
   await page.close();
 }
 
-// ---- 4. a cold load, with nothing behind it -----------------------------
-// A shared link opens the document on the screen itself, so the parent was
-// never visited. The arrow puts it in this screen's place — which is the whole
-// of the degradation, and the ordinary case of it rather than a rare one.
+// ---- 4. a cold load, with nothing behind it ----------------------------- A
+// shared link never visited the parent: the arrow puts it in this screen's place.
 {
   const cold = await onLedger();
   await is(cold, "a cold ledger has nothing behind it", { i: 0, urls: ["/g?id=G"] });
@@ -173,14 +145,10 @@ async function onLedger() {
   await cold.close();
 }
 
-// ---- 4b. the press at the bottom of the stack ---------------------------
-// A launch reopens the last group in `/`'s place, so its back press has no
-// entry to traverse to and would close the app. A `CloseWatcher` takes it
-// instead (lib/back-button.ts), with no tap needed. Playwright cannot press
-// Android's button, but Escape is a close request too, which is enough to
-// prove the watcher is there — and gone where it must not be.
+// ---- 4b. the press at the bottom of the stack --------------------------- A
+// `CloseWatcher` takes the press that would close the app. Playwright cannot
+// press Android's button, but Escape is a close request too.
 {
-  // Section 4 left this phone on the list, which a launch would honour.
   await (await onLedger()).close();
   const page = await ctx.newPage();
   await page.goto(`${base}/`);
@@ -201,14 +169,12 @@ async function onLedger() {
   await cold.goBack();
   await is(cold, "back down on it", { i: 0, urls: ["/g?id=G", "/g/balances?id=G"] });
   await cold.keyboard.press("Escape");
-  // A swap, as the arrow's: balances stays forward of the list.
   await is(cold, "it holds one again", { i: 0, urls: ["/", "/g/balances?id=G"] });
   await cold.close();
 }
 
 // ---- 5. the quick split -------------------------------------------------
 {
-  // Its own phone: `/` on one that has been in a group resumes into it.
   const page = await (await phone()).newPage();
   await page.goto(`${base}/`);
   await page.waitForSelector(".starttile");
@@ -221,27 +187,19 @@ async function onLedger() {
 }
 
 // ---- 6. the press guard, on a screen holding typed work -----------------
-// The one thing plain navigation cannot do: a back press that is a question,
-// not a navigation. Cancelled outright — the dialog is the whole of the answer
-// and the screen stays put (ADR-0007).
 {
   const page = await onLedger();
   await page.locator(".fab").last().click();
   await page.waitForURL(/\/g\/entry\/edit/);
   await page.locator("#what").fill("Half-typed");
   const before = await stack(page);
-  // `page.goBack()` is the device's button: Chromium reports it
-  // `userInitiated` and `cancelable`, which the guard reads. A keyboard
-  // shortcut isn't — headless Chromium binds none, so `Alt+ArrowLeft` fires no
-  // `navigate` and passes by pressing nothing.
-  //
-  // Not awaited: the press is meant to be cancelled, so no navigation lands and
-  // awaiting would sit out the whole navigation ceiling. Await the dialog.
+  // `page.goBack()` is reported `userInitiated` and `cancelable`; a keyboard
+  // shortcut fires no `navigate` in headless Chromium and passes by pressing
+  // nothing. Not awaited: the press is meant to be cancelled.
   void page.goBack().catch(() => {});
   const asked = await page.waitForSelector(".scrim").then(() => true, () => false);
   report(asked, "a back press on a half-typed form asks before leaving");
-  // The one wait with no condition to wait for: the assertion is that the
-  // screen did *not* move, and a cancelled press has nothing to announce.
+  // The one wait with no condition: the assertion is that nothing moved.
   await settle(page, 300);
   const after = await stack(page);
   const stayed = after.i === before.i && /entry\/edit/.test(after.urls[after.i] ?? "");
@@ -250,13 +208,9 @@ async function onLedger() {
   await page.close();
 }
 
-// ---- 7. the dialog the platform shuts by itself ------------------------
-// `showModal()` registers a close watcher. A close request the browser won't
-// let us refuse (on Android, the next back press after the one that opened
-// the dialog) fires no `cancel` — the element just closes. If the screen
-// doesn't hear it, `/new` keeps believing its dialog is up: its state is
-// already `"discard"`, so every further press renders nothing and both back
-// and the arrow go dead (components/dialog.tsx).
+// ---- 7. the dialog the platform shuts by itself ------------------------ A
+// close request the browser won't let us refuse fires no `cancel`; unheard,
+// `/new` believes its dialog is up and back goes dead (components/dialog.tsx).
 {
   const page = await (await phone()).newPage();
   await page.goto(`${base}/`);
@@ -268,8 +222,7 @@ async function onLedger() {
   await page.waitForSelector(".scrim").catch(() => {});
   report(await page.locator(".scrim[open]").count() === 1, "a back press on a half-typed /new asks too");
 
-  // What the close watcher does, done to the element directly: closed, with no
-  // `cancel` to hear it by. Driving the real one takes an Android back press.
+  // What the close watcher does, done directly: closed, with no `cancel`.
   await page.evaluate(() => document.querySelector("dialog.scrim")?.close());
   await page.waitForFunction(() => !document.querySelector("dialog.scrim")).catch(() => {});
   const heard = await page.locator("dialog.scrim").count() === 0;
@@ -285,12 +238,9 @@ async function onLedger() {
   await page.close();
 }
 
-// ---- 8. and the recorder has the taps it was given ---------------------
-// "It refused a bunch of taps" is a phone-only report with many possible
-// causes in one short sequence — a lift on the card after a press on the
-// button, a click that never came, a card over the keyboard. Guessing is
-// unreliable, so the sequence is recorded while a dialog is up and /diag
-// carries it (lib/press-trace.ts).
+// ---- 8. and the recorder has the taps it was given --------------------- "It
+// refused a bunch of taps" has many causes, so /diag carries the sequence
+// (lib/press-trace.ts).
 {
   const page = await (await phone()).newPage();
   await page.goto(`${base}/`);
@@ -301,10 +251,7 @@ async function onLedger() {
   void page.goBack().catch(() => {});
   await page.waitForSelector(".scrim[open]").catch(() => {});
 
-  // A run of taps that lands on the card and does nothing — the shape of the
-  // report, and far more steps than either end of the line holds.
   for (let i = 0; i < 8; i++) await page.locator(".scrim .dtitle").click();
-  // Then the one that works. Cancel is the left half of the row, so `btn0`.
   await page.locator(".scrim .drow .btn-s").click();
   await page.waitForFunction(() => !document.querySelector("dialog.scrim")).catch(() => {});
 
@@ -319,8 +266,7 @@ async function onLedger() {
   report(/card \d+-\d+ visible \d+-\d+ of \d+/.test(line),
     "with where the card was against what was on screen, which no event says", line);
 
-  // Both ends, which is the whole point of the shape: a run of refused taps
-  // must not push the one that worked off the end of the line.
+  // A run of refused taps must not push the one that worked off the end.
   report(/…\d+ more…/.test(line), "a long run drops out of the middle, counted", line);
   report(/open guards=0 Discard/.test(line), "the head still holds the opening", line);
   report(/click@btn0/.test(line) && /gone dismissed/.test(line),
@@ -329,19 +275,10 @@ async function onLedger() {
 }
 
 // ---- 9. the traversal that never came, and the act happening anyway -------
-// `history.go` can be called and not move — on Android, from an act tapped in
-// a modal dialog, and from any act once a back press this app *refused* has
-// left the phone holding an undelivered traversal. Stubbed to a no-op here,
-// which is all the phone does.
-//
-// Two things must survive it: the card comes down (leaving closes any dialog
-// *before* the going), and the act happens anyway — the going checks its
-// traversal landed and otherwise puts the destination in this screen's place
-// (lib/nav.ts). The latch not being left armed is `lib/nav.test.ts`'s.
-//
-// **The stuck moment in between is deliberately not asserted** — a read
-// after a fixed pause is a bet on the repair's window (docs/browser-checks.md). With
-// `history.go` stubbed, landing at the parent at all proves the repair did it.
+// `history.go` can be called and not move, on Android. The card must come down
+// and the act happen anyway (lib/nav.ts). The stuck moment between is
+// deliberately not asserted: a read after a pause is a bet on the repair's
+// window.
 {
   const page = await (await phone()).newPage();
   await page.goto(`${base}/`);
@@ -358,8 +295,6 @@ async function onLedger() {
   report(await page.locator("dialog.scrim").count() === 0,
     "an act that cannot travel still takes its dialog down with it");
 
-  // And then the check fires and the parent takes this screen's place, so the
-  // button a phone read as dead does what it says after all.
   await page.waitForURL((url) => new URL(url).pathname === "/", { timeout: 4000 })
     .then(() => {}, () => {});
   const after = await stack(page);
@@ -370,13 +305,8 @@ async function onLedger() {
 }
 
 // ---- 10. Discard on a form one entry above the ledger --------------------
-// A cold ledger is index 0, so the form is 1 and Discard traverses to 0 —
-// which Android doesn't deliver after a refused press. `goBack` reads the
-// entry behind it off the stack, so it has a destination to put in this
-// screen's place (lib/nav.ts).
-//
-// The draft must not be thrown away before the going: a screen that failed
-// to leave would then look like a fresh blank entry ("New" bar, no form).
+// Android doesn't deliver the traversal after a refused press, so `goBack` reads
+// the destination off the stack. The draft must not go before the going.
 {
   const page = await onLedger();
   await page.locator(".fab").last().click();
@@ -388,8 +318,7 @@ async function onLedger() {
   void page.goBack().catch(() => {});
   await page.waitForSelector(".scrim[open]");
 
-  // Recorded rather than sampled: the repair is quicker than a round trip to
-  // ask, so a check that looks for the blank after the fact never sees it.
+  // Recorded, not sampled: the repair is quicker than a round trip to ask.
   await page.evaluate(() => {
     window.__blanked = false;
     const look = () => {
@@ -399,8 +328,6 @@ async function onLedger() {
     new MutationObserver(look).observe(document.body, { childList: true, subtree: true });
   });
 
-  // What the phone does, and the whole of it: `history.back` returns, nothing
-  // moves, and no `navigate` ever comes to say so.
   await page.evaluate(() => { window.history.back = () => {}; });
   await page.locator(".scrim .drow button").nth(1).click();
   await page.waitForURL((url) => new URL(url).pathname === "/g", { timeout: 4000 })
@@ -414,13 +341,9 @@ async function onLedger() {
   await page.close();
 }
 
-// ---- 4. the ledger comes back where it was left, only on the way back ----
-// Scrolled so a row straddles the top edge, then away and back three ways —
-// the arrow, the device's back, and Save on a new entry, which lands a row
-// above the one in view. Each must put that row back to the pixel — Save's
-// before it glides on to the row it saved; a tap in from the list must open
-// at the top. The demo group is long enough to
-// scroll on a short phone, and needs no form to make.
+// ---- 4. the ledger comes back where it was left, only on the way back ---- A
+// row straddling the top edge must come back to the pixel by the arrow, the
+// device's back and Save; a tap in from the list opens at the top.
 {
   const short = await newPhone(browser, { viewport: { width: 390, height: 480 } });
   const page = await short.newPage();
@@ -428,7 +351,6 @@ async function onLedger() {
   await page.waitForSelector(".rows a.row");
   await page.waitForSelector(".skelveil", { state: "detached" });
 
-  /** The row across the scroller's top edge and how far above it, as the app keeps it. */
   const place = () => page.evaluate(() => {
     const box = document.querySelector(".scroll");
     const edge = box.getBoundingClientRect().top;
@@ -439,7 +361,6 @@ async function onLedger() {
     await page.evaluate((to) => { document.querySelector(".scroll").scrollTop = to; }, y);
     await settle(page, 100);
   };
-  // Wait out the restore's window rather than sampling mid-way.
   const back = async () => {
     await page.waitForURL(/\/g\?id=/);
     await page.waitForSelector(".rows a.row");
@@ -449,13 +370,12 @@ async function onLedger() {
   await scrollTo(await page.evaluate(() => {
     const box = document.querySelector(".scroll");
     const rows = box.querySelectorAll("[data-entry]");
-    // Half into the third row, whatever the cards above add up to.
     const third = rows[2].getBoundingClientRect();
     return box.scrollTop + third.top - box.getBoundingClientRect().top + third.height / 2;
   }));
   const left = await place();
-  // A row wholly in view: Playwright scrolls a cut one into view before
-  // clicking it, which a thumb never does, and that scroll would be recorded.
+  // Playwright scrolls a cut row into view before clicking, which a thumb never
+  // does.
   const tap = () => page.locator(".rows a.row").nth(4).click();
   report(left.top > 0 && left.offset < 0, "the ledger scrolls to a row cut by its top edge", JSON.stringify(left));
 
@@ -479,11 +399,8 @@ async function onLedger() {
   await page.waitForURL(/\/g\/entry\/edit/);
   await page.locator("input.amount").fill("12");
   await page.locator("#what").fill("Droid oil");
-  // Watched from inside the page, frame by frame — the trip back stays in the
-  // one document. The saved row is washed the frame it is drawn, a beat before
-  // it is brought into view (components/ledger-rows.tsx), and the live query
-  // can draw it a commit after the rest; that frame is the one that says
-  // whether the ledger came back where it was left.
+  // Watched frame by frame from inside the page: the live query can draw the
+  // saved row a commit after the rest, and that frame is the one that counts.
   await page.evaluate(() => {
     window.__landed = null;
     const look = () => {
@@ -498,7 +415,6 @@ async function onLedger() {
       requestAnimationFrame(look);
     };
     requestAnimationFrame(look);
-    // And the summary's figure, held at the old one until the glide is up.
     window.__rolled = null;
     const roll = () => {
       const box = document.querySelector(".scroll");
@@ -512,9 +428,6 @@ async function onLedger() {
   report(got.entry === left.entry && got.offset === left.offset && got.top > left.top,
     "and Save, with a new row above it, keeps the same row rather than the same offset",
     `left ${JSON.stringify(left)} got ${JSON.stringify(got)}`);
-  // Then, from there, the row it saved is brought into view — today's, so near
-  // the top that the list goes all the way up and the banner shows too —
-  // beat, glide and the dwell after it (SAVED_BEAT, MAX_MS, SAVED_DWELL).
   await settle(page, 2000);
   const shown = await page.evaluate(() => {
     const scroll = document.querySelector(".scroll");
