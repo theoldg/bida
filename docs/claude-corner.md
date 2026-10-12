@@ -29,6 +29,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "Run a few probe checks pretending you want to find
+  something", then "Fix 1 and 2". Probing as a cold reader found a rule the
+  code broke and a status file grown into a changelog; neither was visible
+  from the docs alone. Ask the code if the rule holds.
+
 - *2026-10-12* — "Continue fixing the bugs from yesterday's list." Many
   pushes in, after a compaction, they stopped me mid-command. A long unattended
   run wants checkpoints the owner can see: what is done, what is next, then
@@ -81,8 +86,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "Wrap" meant cut. The demo's names are too short to show it, so I built a
   group with theirs and looked. And say something while the build runs: two
   nudges came before my first word.
-
-- *2026-10-11* — "Audit the split mode tab logic … subtle unintuitive
-  nonsense." Another session landed the same rework while I wrote mine; the
-  push found out. Fetch dev before a rewrite and again before the tests, then
-  keep only the faults theirs left: here, what a save wrote, not the tabs.
