@@ -8,7 +8,7 @@ import {
 } from "@/lib/ledger-motion";
 import { restoreAnchor, yieldPosition } from "@/lib/ledger-position";
 import {
-  FILL_DELAY_MS, indexAt, isGap, landingOf, offsetsOf, rangeOf, segmentsOf, speedOf, WINDOW_ROWS,
+  FILL_DELAY_MS, indexAt, isGap, KEEP_ROWS, landingOf, overCap, offsetsOf, rangeOf, segmentsOf, speedOf, WINDOW_ROWS,
   windowAround, type Heights,
 } from "@/lib/ledger-window";
 import { SkeletonRow } from "./chrome";
@@ -77,6 +77,7 @@ export function LedgerRows<T>({ groupId, items, row, opens = true, windowed = fa
   const win = useWindow(windowed, drawing, root, scroller, groupId);
 
   const drawn = useRef<Set<string> | null>(null);
+  const diffed = useRef<Shown<T>[] | null>(null);
   const busy = useRef(new Set<string>());
   const flashed = useRef(false);
 
@@ -85,6 +86,10 @@ export function LedgerRows<T>({ groupId, items, row, opens = true, windowed = fa
     const list = root.current;
     if (!box || !list) return;
     const slot = (key: string) => list.querySelector<HTMLElement>(`:scope > [data-key="${CSS.escape(key)}"]`);
+    // A scroll redraws without the data moving: nothing came or went, and a
+    // pass over every key on every frame of a fling is what 10,000 rows can't pay.
+    if (diffed.current === drawing && flashed.current) return;
+    diffed.current = drawing;
     const keys = drawing.map((i) => i.key);
     const leaving = new Set(drawing.filter((i) => i.leaving).map((i) => i.key));
     const before = drawn.current;
@@ -201,6 +206,7 @@ function useWindow<T>(
   const [, redraw] = useReducer((n: number) => n + 1, 0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const offsets = useMemo(() => offsetsOf(items, heights), [items, measured]);
+  const indexOf = useMemo(() => new Map(items.map((item, i) => [item.key, i])), [items]);
   const state = useRef<{
     top: number; bottom: number; wanted: Map<string, number>; pinned: number | null;
     samples: { t: number; y: number }[]; touching: boolean; lastHand: number;
@@ -259,11 +265,13 @@ function useWindow<T>(
     }
     // A row once filled stays for the visit (the owner, 2026-10-12); one still
     // waiting is let go, or a fling would fill its whole path behind it.
+    const kept = new Map<string, number>();
     for (const [key, since] of [...w.wanted]) {
-      if (keep.has(key) || since === 0 || now - since >= FILL_DELAY_MS) continue;
-      w.wanted.delete(key);
-      changed = true;
+      if (keep.has(key)) continue;
+      if (since === 0 || now - since >= FILL_DELAY_MS) kept.set(key, indexOf.get(key) ?? 0);
+      else { w.wanted.delete(key); changed = true; }
     }
+    for (const key of overCap(kept, center, KEEP_ROWS)) { w.wanted.delete(key); changed = true; }
     const top = box.scrollTop - base;
     const was = rangeOf(offsets, w.top, w.bottom);
     const is = rangeOf(offsets, top, top + box.clientHeight);

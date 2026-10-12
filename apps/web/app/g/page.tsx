@@ -33,7 +33,7 @@ import { dayLabel, money, plural } from "@/lib/format";
 import { ledgerItems, searchLedger, type LedgerRow } from "@/lib/ledger";
 import { route } from "@/lib/group-link";
 import { useLedgerPosition, yieldPosition } from "@/lib/ledger-position";
-import { awaitRoll, clearDeleted, letRoll, peekDeleted, peekSaved } from "@/lib/ledger-motion";
+import { awaitRoll, clearDeleted, letRoll, peekDeleted, peekSaved, type LedgerItem } from "@/lib/ledger-motion";
 import { keepShown, ROLL_BEAT, shownBefore } from "@/lib/roll";
 import { transferMeta } from "@/lib/row-meta";
 import { useClaimGate, useDevice, useGroupData, warmGroup, warmGroupsList } from "@/lib/hooks";
@@ -122,6 +122,23 @@ function GroupScreen() {
 
 // ------------------------------------------------------------- expenses
 
+/**
+ * By the arrays read, not per visit: the same answer is handed to every visit
+ * (lib/db/live.ts), and sorting and labelling 10,000 entries again on each
+ * open cost a tenth of a second. Today's date is in the key, as the labels say
+ * "Yesterday".
+ */
+const itemsCache = new WeakMap<Expense[], { settlements: Settlement[]; today: string; items: LedgerItem<LedgerRow>[] }>();
+
+function itemsFor(expenses: Expense[], settlements: Settlement[]): LedgerItem<LedgerRow>[] {
+  const today = new Date().toDateString();
+  const known = itemsCache.get(expenses);
+  if (known && known.settlements === settlements && known.today === today) return known.items;
+  const items = ledgerItems(expenses, settlements, dayLabel);
+  itemsCache.set(expenses, { settlements, today, items });
+  return items;
+}
+
 function Ledger({ data }: { data: GroupData }) {
   const { group, expenses, settlements, memberById, me, balances, withTombstones } = data;
   // An entry deleted from its own screen is drawn where it was, so the position
@@ -137,7 +154,7 @@ function Ledger({ data }: { data: GroupData }) {
   const items = useMemo(() => {
     const keep = <T extends { id: string }>(live: T[], all: Record<string, T>) =>
       !ghost || !all[ghost] || live.some((e) => e.id === ghost) ? live : [...live, all[ghost]];
-    return ledgerItems(keep(expenses, withTombstones.expenses), keep(settlements, withTombstones.settlements), dayLabel);
+    return itemsFor(keep(expenses, withTombstones.expenses), keep(settlements, withTombstones.settlements));
   }, [expenses, settlements, withTombstones, ghost]);
   const scroll = useRef<HTMLDivElement>(null);
   useLedgerPosition(scroll, groupId);

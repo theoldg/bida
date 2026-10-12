@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { LedgerItem } from "./ledger-motion";
 import {
-  COAST_MS, indexAt, landingOf, offsetsOf, rangeOf, segmentsOf, speedOf, windowAround,
+  COAST_MS, indexAt, landingOf, offsetsOf, overCap, rangeOf, segmentsOf, speedOf, windowAround,
 } from "./ledger-window";
 
 const H = { row: 69, day: 30 };
@@ -101,5 +101,16 @@ describe("what is drawn and what is left as height", () => {
     const offsets = offsetsOf(ledger(1, 2), H);
     expect(segmentsOf(offsets, () => true)).toEqual([{ at: 0 }, { at: 1 }, { at: 2 }]);
     expect(segmentsOf(offsets, () => false)).toEqual([{ gap: 168, first: 0 }]);
+  });
+});
+
+describe("rows kept past the window", () => {
+  it("lets the furthest go first, either side", () => {
+    const kept = new Map([["a", 0], ["b", 40], ["c", 55], ["d", 70], ["e", 200]]);
+    expect(overCap(kept, 60, 3).sort()).toEqual(["a", "e"]);
+  });
+
+  it("lets nothing go under the cap", () => {
+    expect(overCap(new Map([["a", 0]]), 0, 3)).toEqual([]);
   });
 });

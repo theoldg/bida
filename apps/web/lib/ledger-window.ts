@@ -16,7 +16,21 @@ import type { LedgerItem } from "./ledger-motion";
 export const WINDOW_ROWS = 12;
 export const FILL_DELAY_MS = 400;
 
+/**
+ * Rows kept drawn past the window, the furthest let go first: enough to scroll
+ * back over without waiting, few enough that a data change landing re-renders
+ * a bounded list and leaving costs the same after any scroll.
+ */
+export const KEEP_ROWS = 150;
+
 export interface Heights { row: number; day: number }
+
+/** Which of `kept` (key → index) go, furthest from `center` first, to fit `cap`. */
+export function overCap(kept: ReadonlyMap<string, number>, center: number, cap: number): string[] {
+  if (kept.size <= cap) return [];
+  return [...kept].sort((a, b) => Math.abs(b[1] - center) - Math.abs(a[1] - center))
+    .slice(0, kept.size - cap).map(([key]) => key);
+}
 
 /** `offsets[i]` is where item `i` starts; the last entry is the whole height. */
 export function offsetsOf<T>(items: readonly LedgerItem<T>[], h: Heights): number[] {
