@@ -263,7 +263,12 @@ const watchFrames = (page, run) => page.addInitScript((run) => {
       count("frames");
       const install = location.pathname === "/install";
       if (install && [...document.querySelectorAll(".ownframe")].some(shown)) count("tutorial");
-      if (![...document.querySelectorAll(".app .topbar")].some(shown)) count("blank");
+      if (![...document.querySelectorAll(".app .topbar")].some(shown)) {
+        count("blank");
+        // Where and when, so a failure says whether the app drew nothing or the
+        // parser had not reached it yet.
+        sessionStorage.setItem(`frames.${run}.blankAt`, `${location.pathname} ${document.readyState}`);
+      }
       if (install && [...document.querySelectorAll(".starttiles")].some(shown)) count("list");
       if (install && [...document.querySelectorAll("a, button")].some((el) => shown(el) && !el.closest("[inert]"))) {
         count("pressable");
@@ -274,8 +279,9 @@ const watchFrames = (page, run) => page.addInitScript((run) => {
   requestAnimationFrame(look);
 }, run);
 const framesSeen = (page, run) => page.evaluate((run) => Object.fromEntries(
-  ["frames", "tutorial", "blank", "list", "pressable"]
-    .map((k) => [k, Number(sessionStorage.getItem(`frames.${run}.${k}`) ?? 0)])), run);
+  [...["frames", "tutorial", "blank", "list", "pressable"]
+    .map((k) => [k, Number(sessionStorage.getItem(`frames.${run}.${k}`) ?? 0)]),
+  ["blankAt", sessionStorage.getItem(`frames.${run}.blankAt`)]]), run);
 const steady = (seen) => seen.frames > 0 && seen.tutorial === 0 && seen.blank === 0 && seen.pressable === 0;
 
 // ---- the icon's first launch ---------------------------------------------

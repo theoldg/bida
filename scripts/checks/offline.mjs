@@ -72,7 +72,15 @@ async function tap(label, act, expect) {
     const body = (await page.evaluate(() => document.body.innerText).catch(() => "")).slice(0, 100);
     const stack = await page.evaluate(() => navigation.entries().map((e, i) =>
       `${i === navigation.currentEntry.index ? "*" : ""}${new URL(e.url).pathname}`).join(" ")).catch(() => "");
-    report(false, label, `at ${url} — ${body.replace(/\s+/g, " ")}\n        stack: ${stack}`);
+    // Which worker is where: an offer that never came is a deploy that never
+    // installed, or one that installed and was never announced.
+    const sw = await page.evaluate(async () => {
+      const r = await navigator.serviceWorker.getRegistration();
+      const at = (w) => (w ? w.state : "-");
+      return `installing ${at(r?.installing)} waiting ${at(r?.waiting)} active ${at(r?.active)}`
+        + ` · caches ${(await caches.keys()).join(" ")}`;
+    }).catch(() => "");
+    report(false, label, `at ${url} — ${body.replace(/\s+/g, " ")}\n        stack: ${stack}\n        sw: ${sw}`);
   }
 }
 

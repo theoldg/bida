@@ -46,7 +46,7 @@ jobs:
             line=$(grep -E '^(  ok  |FAIL  )[^ ]+ +[0-9.]+s$' out.txt | sed -E 's/ +/ /g' | tr '\n' ';')
             summary="${summary}R${r} ${secs}s | ${line}%0A"
             for f in $(grep -E '^FAIL  [^ ]+ +[0-9.]+s$' out.txt | awk '{print $2}'); do
-              detail=$(awk -v n="$f" '$0 ~ "^──── "n" " {p=1; next} /^──── / {p=0} p' out.txt | grep -E -A1 '^FAIL  |Error|^    at .*checks/' | grep -v '^--$' | head -8 | cut -c1-240 | sed 's/%/%25/g' | tr '\n' '|')
+              detail=$(awk -v n="$f" '$0 ~ "^──── "n" " {p=1; next} /^──── / {p=0} p' out.txt | grep -E -A3 '^FAIL  |Error|^    at .*checks/' | grep -v '^--$' | head -14 | cut -c1-240 | sed 's/%/%25/g' | tr '\n' '|')
               summary="${summary}   ${f}: ${detail}%0A"
             done
           done
