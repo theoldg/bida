@@ -88,8 +88,18 @@ const { report, finish } = reporter();
 
   await page.getByText("No groups yet").waitFor({ timeout: PATIENCE }).then(
     () => report(true, "closing the connection re-reads: the list empties without a reload"),
-    () => report(false, "closing the connection re-reads: the list empties without a reload",
-      "still showing the group that is no longer there"),
+    async () => {
+      // The flight recorder's last words, kept to localStorage by a hide.
+      const told = await page.evaluate(() => {
+        Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+        document.dispatchEvent(new Event("visibilitychange"));
+        const pages = JSON.parse(localStorage.getItem("bida.diag.pages") ?? "[]");
+        return (pages.at(-1)?.events ?? []).slice(-14)
+          .map((e) => `${e.at} ${e.what}${e.ms !== undefined ? ` ${e.ms}ms` : ""}${e.info ? ` ${e.info}` : ""}`).join(" | ");
+      }).catch((e) => `unreadable: ${e.message}`);
+      report(false, "closing the connection re-reads: the list empties without a reload",
+        `still showing the group that is no longer there\n        ${told}`);
+    },
   );
   await ctx.close();
 }
