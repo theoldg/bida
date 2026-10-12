@@ -286,6 +286,14 @@ describe("a draft that edits a saved entry", () => {
     expect(d.receiptItems).toEqual(items);
   });
 
+  // The retired `percent`, or a newer build's mode: opened, not thrown on.
+  it("opens a split in a mode it doesn't know on Evenly", () => {
+    const split = { mode: "percent", bps: { [A]: 10000 } } as unknown as Expense["split"];
+    const d = expenseDraft({ ...saved, split }, A, MEMBERS);
+    expect(d.splitTab).toBe("equal");
+    expect(activeSplit(d)).toEqual({ mode: "equal", members: MEMBERS });
+  });
+
   it("gives a transfer its own two sides and its note", () => {
     const s: Settlement = {
       id: "s1", groupId: "g", fromMember: C, toMember: B, amountMinor: 500, currency: "EUR",

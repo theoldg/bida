@@ -98,8 +98,9 @@ save), so a phone that predates `rest` reads a whole split that adds up; the
 key is absent when nobody floats, so older splits serialise unchanged.
 `convertSplitMode` carries who is in and no numbers, so every mode opens "as
 amounts" as everyone in `rest`, nothing typed. A mode this build doesn't know
-(the retired `percent`, never written) names nobody, so it reads as a split
-that can't be resolved, not a crash. **`receipt` is the only mode nobody types** — a scanned bill writes it and `convertSplitMode`
+(the retired `percent`, written for a day before the September wipe) names nobody, so it reads as a split
+that can't be resolved, not a crash: the screen heads it by its own name and
+the form opens it on Evenly. **`receipt` is the only mode nobody types** — a scanned bill writes it and `convertSplitMode`
 never converts into it ([ADR-0016](decisions/0016-receipts.md)). A `shares`
 split saved beside a kept bill is written with `splitTab: "shares"`, the one
 field an op carries that no state keeps: the fold reads it and drops it

@@ -485,7 +485,8 @@ function ExpenseDetail({ expense, kind, group, data }: {
       <Card>
         <Eyebrow style={{ marginBottom: 4 }}>
           {copy.entry.splitMode(copy.entryKind.split[kind],
-            copy.split.mode[expense.split.mode].toLowerCase())}
+            // `??`: a mode this build doesn't know (data-model.md) heads as itself.
+            (copy.split.mode[expense.split.mode] ?? expense.split.mode).toLowerCase())}
         </Eyebrow>
         {/* Only the people in the split. A row per outsider saying they owe
             nothing is the longest part of a two-person expense in a big group,

@@ -278,9 +278,9 @@ export function describe(
         // A new mode is said, in the words the entry screen heads its split
         // with: "split it by items" is why the money moved.
         const mode = modeOf(rev.after);
+        const word = mode ? (copy.split.mode[mode] ?? mode).toLowerCase() : "";
         sharesPart = mode && mode !== modeOf(rev.before)
-          ? { what: said.splitAs(who, copy.split.mode[mode].toLowerCase()),
-            label: named.splitAs(copy.split.mode[mode].toLowerCase()), rows }
+          ? { what: said.splitAs(who, word), label: named.splitAs(word), rows }
           : { what: said.changedShares(who), label: named.split, rows };
         parts.push(sharesPart);
       }

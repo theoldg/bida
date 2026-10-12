@@ -303,6 +303,8 @@ export function blankDraft(
  * currency and day, so opening it to edit looks nothing up. One from before
  * rates were the entry's says it was the group's (ADR-0005).
  */
+const KNOWN_MODES: ReadonlySet<string> = new Set<SplitTab>(["equal", "shares", "exact", "receipt"]);
+
 function ownRate(
   e: Expense | Settlement,
 ): Pick<EntryDraft, "rate" | "rateSource" | "rateCurrency" | "rateDay" | "savedRate"> {
@@ -319,6 +321,7 @@ function ownRate(
 }
 
 export function expenseDraft(e: Expense, me: string, members: string[]): EntryDraft {
+  const known = KNOWN_MODES.has(e.split.mode);
   return {
     ...blankDraft(kindOf(e), me, e.currency, members),
     entryId: e.id,
@@ -328,14 +331,15 @@ export function expenseDraft(e: Expense, me: string, members: string[]): EntryDr
     description: e.description,
     paidBy: e.paidBy,
     payers: e.payers ?? null,
-    // A receipt's weights are not handed to the arithmetic tabs (ADR-0016).
-    ...(e.split.mode === "receipt" ? {} : { splits: withSplit({}, ownCurrencySplit({ ...e, split: e.split })) }),
+    // A receipt's weights are not handed to the arithmetic tabs (ADR-0016), and
+    // a mode this build doesn't know opens on Evenly (data-model.md).
+    ...(e.split.mode === "receipt" || !known ? {} : { splits: withSplit({}, ownCurrencySplit({ ...e, split: e.split })) }),
     occurredAt: e.occurredAt,
     dateOnly: e.dateOnly === true,
     recordedAt: e.createdAt ?? e.occurredAt,
     categoryId: e.categoryId ?? null,
     ...receiptOf(e),
-    splitTab: e.split.mode,
+    splitTab: known ? e.split.mode : "equal",
   };
 }
 

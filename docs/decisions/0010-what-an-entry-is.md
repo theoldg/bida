@@ -59,7 +59,7 @@ the first time is handed who is in on screen, once — "even, then nudge one
 person" is why — but none of its numbers: parts are not amounts, and a figure
 carried over reads as typed when nobody typed it. It keeps what was typed into
 it after that. Which tab shows is `splitTab` on the draft, always set — one
-field, never derived. `percent` is gone: nothing ever wrote it.
+field, never derived. `percent` is gone: written only on 2026-08-27–28, before the D1 wipe.
 
 ## Consequences
 

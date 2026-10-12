@@ -162,6 +162,8 @@ export function canonicalSplit(spec: SplitSpec): SplitSpec {
         : { mode: "exact", amounts: sortedKeys(spec.amounts) };
     }
     case "receipt": return { mode: "receipt", weights: sortedKeys(spec.weights) };
+    // A mode this build doesn't know passes through as it was written.
+    default: return spec;
   }
 }
 
