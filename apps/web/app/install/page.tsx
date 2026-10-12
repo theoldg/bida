@@ -91,7 +91,9 @@ function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined): void {
         for (const invite of [...plan.fresh, ...plan.naming]) syncGroup(invite.groupId).catch(() => {});
       }
       if (cancelled) return;
-      if (plan.kind === "list") launchedOnto();
+      // Reopens the last group, if there is one: a launch that saved a key is
+      // still a launch, and its frame was the ledger (`firstFrame`).
+      launchedOnto();
       router.replace(route.groups());
     })();
     return () => { cancelled = true; };

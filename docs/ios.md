@@ -121,14 +121,16 @@ saved. A group the tab had named is claimed here, before its first sync — an
 identity op of this app's own, since it is a device of its own, which history
 reads as "Ana started editing from a new device". Nobody is asked who they are.
 One group nobody has named is the newcomer, and goes to `/join`, which names
-the group and waits out a first sync; everything else lands on the list. What
+the group and waits out a first sync. What
 the phone already holds is spent, so the icon is a door into the app rather
 than into one group forever, and nothing un-forgets: `saveGroupKey` would undo
 a `forgetGroup`, and a forgotten group's key is erased, so it is the id kept in
-`leftGroups` that turns the carried key away. A launch the fragment has nothing left to give is an ordinary
-one, so it says `launchedOnto` and the list reopens the group you were last in
-as it would for any other start (`lib/launch.ts`): the document never loads on
-the list here, so nothing about the address could tell.
+`leftGroups` that turns the carried key away. Everything but the newcomer is
+then an ordinary launch: it says `launchedOnto` and the list reopens the group
+you were last in as it would for any other start (`lib/launch.ts`) — on a first
+launch there is none, so the list stays — which is the frame the mark picked:
+the document never loads on the list here, so nothing about the address could
+tell.
 
 **What a real iPhone does**, against what WebKit's source suggests
 (`WebPage::getApplicationManifest` walks the head when asked):

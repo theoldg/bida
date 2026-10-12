@@ -140,8 +140,9 @@ export function useResumeLastGroup(): { deciding: boolean; joining: boolean } {
  *
  * - **join**: one carried group this phone lacks, nobody named in it, nothing
  *   else to claim — the newcomer who added the icon before picking a name.
- * - **save**: keys to save or names to claim, then the list.
- * - **list**: the fragment is spent; an ordinary launch (`launchedOnto`).
+ * - **save**: keys to save or names to claim, then an ordinary launch.
+ * - **list**: the fragment is spent; an ordinary launch (`launchedOnto`),
+ *   reopening the group last opened — the frame `firstFrame` picked.
  *
  * **Nothing un-forgets**: a group in `leftGroups` is neither saved nor claimed.
  */
