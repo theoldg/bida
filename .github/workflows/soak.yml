@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        jobs: [1, 2, 3, 4, 8]
+        jobs: [2, 3, 4, 6, 8]
         replica: [1, 2, 3, 4]
     env:
       WRANGLER_SEND_METRICS: "false"

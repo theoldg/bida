@@ -1,5 +1,5 @@
 // Doc: docs/navigation.md#keeping-the-devices-back-honest
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { mark } from "./diag";
 import { markReturn, sameScreen, takeOwnTraversal } from "./nav";
 import { note } from "./press-trace";
@@ -108,7 +108,10 @@ function onNavigate(event: Event): void {
 export function useBackButton(back: ScreenBack | undefined): void {
   const held = useRef(back);
   held.current = back;
-  useEffect(() => {
+  // Layout, not passive: Next commits the URL in the same commit, and a passive
+  // effect can run a task later on a slow phone — a press in between was taken
+  // by the screen underneath, whose parent is further up.
+  useLayoutEffect(() => {
     const screen = held;
     screens.push(screen);
     const nav = navigation();

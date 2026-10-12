@@ -469,6 +469,31 @@ async function onLedger() {
   await short.close();
 }
 
+// ---- 11. a press the moment a screen opens, on a slow phone ---------------
+// The URL moves in the commit that mounts the screen; its back handler must be
+// there in the same commit, or the screen underneath takes the press and climbs
+// to *its* parent (lib/back-button.ts). A throttled CPU is what opens the gap.
+{
+  const slow = await phone();
+  const page = await slow.newPage();
+  await (await slow.newCDPSession(page)).send("Emulation.setCPUThrottlingRate", { rate: 6 });
+  await openDemo(page, base);
+  await page.waitForSelector(".rows a.row");
+  const landed = [];
+  for (let i = 0; i < 3; i++) {
+    await page.locator(".rows a.row").nth(1).click();
+    await page.waitForURL(/\/g\/entry\?/);
+    void page.goBack().catch(() => {});
+    await page.waitForURL((url) => url.pathname !== "/g/entry").catch(() => {});
+    landed.push(new URL(page.url()).pathname);
+    if (landed.at(-1) !== "/g") break;
+    await page.waitForSelector(".rows a.row");
+  }
+  report(landed.every((p) => p === "/g"),
+    "a back press as an entry opens goes to the ledger, not past it", landed.join(" "));
+  await slow.close();
+}
+
 await browser.close();
 close();
 finish();

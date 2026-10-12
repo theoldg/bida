@@ -80,7 +80,18 @@ async function tap(label, act, expect) {
       return `installing ${at(r?.installing)} waiting ${at(r?.waiting)} active ${at(r?.active)}`
         + ` · caches ${(await caches.keys()).join(" ")}`;
     }).catch(() => "");
-    report(false, label, `at ${url} — ${body.replace(/\s+/g, " ")}\n        stack: ${stack}\n        sw: ${sw}`);
+    // A worker left waiting: late, or stuck? Watched a minute more, on failure only.
+    const late = !/waiting installed/.test(sw) ? "" : await page.evaluate(async () => {
+      const from = performance.now();
+      while (performance.now() - from < 60_000) {
+        if (!(await navigator.serviceWorker.getRegistration())?.waiting) {
+          return ` · activated ${Math.round((performance.now() - from) / 1000)}s later`;
+        }
+        await new Promise((ok) => setTimeout(ok, 250));
+      }
+      return " · still waiting a minute later";
+    }).catch(() => "");
+    report(false, label, `at ${url} — ${body.replace(/\s+/g, " ")}\n        stack: ${stack}\n        sw: ${sw}${late}`);
   }
 }
 

@@ -50,11 +50,15 @@ const read = (page) => page.evaluate(() => {
 });
 
 /** Wait for a reading, then hand it back; a miss reports what was there instead. */
-async function until(page, test, timeout = PATIENCE) {
+async function until(page, test, timeout = PATIENCE, each) {
   const end = Date.now() + timeout;
   for (;;) {
+    await each?.();
     const now = await read(page);
-    if (test(now) || Date.now() > end) return now;
+    if (test(now)) return now;
+    // The assertion after it decides; this says a wait ran out its ceiling,
+    // which on a pass is a wait asking for the wrong thing.
+    if (Date.now() > end) { console.log(`      waited ${timeout / 1000}s for a state that never came: ${JSON.stringify(now)}`); return now; }
     await settle(page, 30);
   }
 }
@@ -157,8 +161,9 @@ await page.waitForSelector(".skelveil", { state: "detached" });
   now = await until(page, (s) => s.shown === 1);
   report(now.shown === 1 && now.gap === 0, "at the base state it is whole, the first row at its foot", say(now));
 
+  // Not `top === whole + 300`: the demo's list ends short of that, and clamps.
   await scrollTo(page, whole + 300);
-  now = await until(page, (s) => s.shown === 1 && s.top === whole + 300);
+  now = await until(page, (s) => s.shown === 1 && s.top > whole);
   report(now.shown === 1, "and stays whole further down the list", say(now));
 
   await scrollTo(page, 0);
@@ -251,8 +256,8 @@ await page.waitForSelector(".skelveil", { state: "detached" });
   now = await read(page);
   report(!now.caret && now.top === now.base && now.shown === 1,
     "a drag on the list lets go of the field, and nothing glides: the finger is driving", say(now));
-  await scrollTo(page, 0);
-  await until(page, (s) => !s.on);
+  // Again on each look: the way back's restore can land after the first.
+  await until(page, (s) => !s.on, PATIENCE, () => scrollTo(page, 0));
 }
 
 // ---- 5. a way back draws the bar where it was from its first frame --------
@@ -267,8 +272,8 @@ await page.waitForSelector(".skelveil", { state: "detached" });
   report(trip.seen.length > 0 && astray(trip).length === 0,
     "back from an entry, the bar is out from the ledger's first frame",
     `${astray(trip).length} of ${trip.seen.length} frames astray, first ${say(trip.seen[0])}, left ${trip.left.top}`);
-  await scrollTo(page, 0);
-  await until(page, (s) => !s.on);
+  // Again on each look: the way back's restore can land after the first.
+  await until(page, (s) => !s.on, PATIENCE, () => scrollTo(page, 0));
 }
 
 // ---- 6. a query is kept for the way back, and only for that --------------
