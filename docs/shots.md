@@ -7,7 +7,7 @@ of the [testing](testing.md) docs; both scripts stand on the harness in
 ## `pnpm shots` — photograph every screen
 
 *One screen is not this: `pnpm drive … shot` reaches it in a few commands and
-doesn't stake the picture on thirty-five other scenes —
+doesn't stake the picture on every other scene —
 [drive.md](drive.md#looking-at-one-screen).*
 
 One browser launch, one PNG per route per theme, no human and no phone. Run it
@@ -26,8 +26,8 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
    harness that fails loudly when a screen it isn't even photographing breaks.
 3. **Walks the routes in both themes** via two `newContext()`s with
    `colorScheme` set, as a Pixel 9a (`PIXEL_9A`, 412×923 at 2.625 — a little wider than
-   the checks' 390×844; `readme-shots` uses it too). Fifteen scenes have no URL
-   worth visiting and are reached by driving instead: five dialogs (add member,
+   the checks' 390×844; `readme-shots` uses it too). The scenes with no URL
+   worth visiting are reached by driving instead: dialogs (add member,
    forget group — from the groups list's row menu — delete entry, a transfer
    side's person picker, and the rate editor), the group's kebab open — the one
    shot of the menu card carrying a full set of items — `who-had-what` twice, `expense-split-amounts` (a deliberate

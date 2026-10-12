@@ -39,7 +39,7 @@ Obey them; adding one is rare and has a bar at the head of that file.
 
 | Path | What |
 |---|---|
-| `packages/core/` | Pure domain logic: money, HLC, ops, folding, splits, payers, balances, settle-up, history, invariants, sealing, import/export, the scan prompt, notifications |
+| `packages/core/` | Pure domain logic: money, rates, HLC, ops, folding, splits, payers, balances, settle-up, history, invariants, sealing, import/export, the scan prompt, notifications |
 | `apps/web/` | Next.js App Router, static export — every screen |
 | `apps/api/` | Cloudflare Worker: static assets + Hono sync API + D1 |
 | `docs/` | Start at [docs/README.md](docs/README.md) |

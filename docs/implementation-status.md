@@ -50,11 +50,8 @@ a line in the push that fixes it.
   `search.mjs:150` hard-codes half of `--search-h`. A check that reports
   nothing passes (`verify.mjs:83`). The pre-push hook drops `BUSY` before the
   push has succeeded.
-- **Docs.** browser-checks.md: nav's "Seven" sections (ten), no `offline` section; testing.md:62 "seven" checks
-  (eight); shots.md:29's count. `copy.settings.notify.means.all` says "Every
-  edit" where only money-moving edits notify. design-review.md:27 names
-  "Advanced" in the wrong shot. CLAUDE.md's core list omits rates. README.md:97
-  (the owner's) says self-host for your own Gemini key, which Advanced takes.
+- **Docs.** README.md:97 (the owner's) says self-host for your own Gemini
+  key, which Advanced takes.
 
 **Three things are closed as decisions, not as work**, so a session that
 rediscovers one is rediscovering a call the owner has already made:

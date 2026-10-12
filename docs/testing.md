@@ -60,7 +60,7 @@ suite has had came from.
 and `packages/core` against `apps/web/out` and runs the build only when it is
 missing or stale. `pnpm verify` does that build once and then runs them
 together: each serves the export on its own port 0, and the build is the one
-thing seven of them starting at once would have raced on.
+thing they would race on, started at once.
 
 **What gates, and why.** The build, because `next build` catches what `tsc`
 cannot (a prerender touching `window`, a client-boundary mistake, a

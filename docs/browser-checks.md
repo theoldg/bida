@@ -246,6 +246,21 @@ ones a webview's most resembles, each proved *not* refused
 
 It needs no server beyond the static export: what it asserts is which URL each end reaches.
 
+## `pnpm verify offline` — the built app with the network cut
+
+An offline-first data layer is not enough: if the precache misses the payloads
+Next fetches on every tap, a phone with no signal gets a wall of
+`1:"$Sreact.fragment"`. So this seeds a group online, lets the service worker
+install, pulls the plug, and walks every screen, saving an expense on the way
+([pwa.md](pwa.md)). Then the deploys, on levers the server holds: one arriving
+over a dying signal with an asset missing must fail to install rather than
+activate with holes; one arriving by itself is taken at once only by a page
+untouched on the groups list — a page in use is offered the reload, an
+untouched group stays put, and a resumed one reloads only after a long absence,
+played out by moving the page's clock; a second deploy must not delete the
+cache a page that never reloaded still runs on; and a page whose build has left
+the cache is refused a stranger's payload and keeps its `?id=`.
+
 ## `pnpm verify nav` — where the back arrow goes, and what it leaves behind
 
 The arrow's destination is the half the other checks already stumble over on
@@ -255,15 +270,18 @@ back button reads on the next press. Every assertion
 here reads `navigation.entries()` rather than `location`
 ([ADR-0007](decisions/0007-a-screen-is-a-route.md), `lib/nav.ts`).
 
-Seven, each the one a thumb makes: the walk in from the list, where every
+Each section is a move a thumb makes: the walk in from the list, where every
 door into a group is pushed from `/` so the list stays underneath the ledger;
 the balance card, which pushes balances over the ledger, and the arrow on
 balances that goes back to it; an entry opened off the ledger, and the Save that
 returns to it; the tip jar, whose form has to unwind past the tip screen as
-well as itself; a cold load with nothing behind it, where the arrow puts the
+well as itself; the quick split, pushed onto the list; a cold load with nothing behind it, where the arrow puts the
 parent in this screen's place — the degradation, and the ordinary case of it;
 the press guard on a half-typed form, cancelled outright with the dialog as
-the whole of the answer; and the ledger's position, left with a row cut by the
+the whole of the answer; the dialog the platform shuts with no `cancel`, and
+the taps it was given as `/diag` records them; a `history.go` that never
+moves, after which the card still comes down and the act still happens;
+Discard one entry above a cold ledger; and the ledger's position, left with a row cut by the
 top edge and required back to the pixel after the arrow, the device's back and
 a Save that lands a row above it — watched from inside the page on the frame
 the saved row is drawn, since it then glides to that row (today's, so up to the top, under the banner, whose figure rolls only then) — while a tap in

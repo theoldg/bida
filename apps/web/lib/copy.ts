@@ -347,7 +347,7 @@ export const copy = {
       means: {
         off: "No notifications at all.",
         own: "Only entries that involve you.",
-        all: "Every edit in your groups.",
+        all: "Any entry that moves money, whoever it involves.",
       },
       blocked: "Turned off in your phone’s settings. Allow notifications for bida there to choose here.",
     },

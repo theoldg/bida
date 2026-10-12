@@ -25,7 +25,7 @@ The owner looked at each of these and kept it:
 - The slashed zero in the empty amount field. *`entry-expense`*
 - Scan and Support centred on the screen. *`scan`, `tip`*
 - "yours", "the other side: picking swaps them" and "Advanced" as
-  labels. *`rate`, `transfer-who`, `groups-menu`*
+  labels. *`rate`, `transfer-who`, `settings`*
 - `$` on the tip jar in a group of another currency. *`tip`*
 - Times with a leading zero ("06:14 PM"), and the quick split's grey names.
 
