@@ -289,7 +289,10 @@ the saved row is drawn, since it then glides to that row (today's, so up to the 
 from the list opens at the top. That section alone reads the scroller, not the history. Beside the cold load, the press no traversal can
 carry: a launch's reopened ledger and a cold one each climb to the list on a
 close request with no tap first, and a screen above them doesn't. **Escape
-stands in for Android's button** there, being a close request too.
+stands in for Android's button** there, being a close request too. Last, a back
+press the instant an entry opens, on a CPU throttled sixfold: the press must
+find the entry's own handler, not the ledger's, which would climb to the list
+— it fails every time with the handler registered in a passive effect.
 
 **A device back press is `page.goBack()`**, which Chromium reports
 `userInitiated` and `cancelable` — the pair the guard reads. A keyboard
@@ -357,7 +360,10 @@ wait for the page to have parsed it. The router draws the next screen before it
 commits the URL, so a step that reads the stack or presses Back waits for the
 URL too. The rate dialog opens a moment after the currency pick, once the
 look-up behind it fails. The one honest pause is the window for proving that
-*nothing* happened.
+*nothing* happened. **A wait that swallows its timeout must ask for a state
+that comes**: one waiting for a row count that can't be, or a scroll past where
+the list ends, sits out the whole ceiling and then passes — three of them once
+cost the suite 90s a run, unseen. Time a check's lines once after writing it.
 
 **The app has its own clock, and a starved machine can overrun it.**
 `SWALLOWED_MS` ([navigation.md](navigation.md#keeping-the-devices-back-honest))
@@ -392,6 +398,10 @@ navigation that could ask, and serve a forged revision once (`swOnce`).
   thing it reported: Playwright's `close` and `bringToFront` take no timeout.
 - **Don't edit `apps/web` while a check runs.** Each calls `ensureBuild()`, so
   a queued one rebuilds `out/` under the running ones.
-- **One flake is still open**, rare and green alone: `pnpm verify offline` "tap
-  a suggested transfer" — the page reaches balances, then is found back on the
-  ledger. Not a late Back; its failure prints the history stack, the next clue.
+- **Flakes still open**, rare and green alone, each printing its next clue on
+  failure. `offline` "a page in use is offered the new build", about one run in
+  thirty: the new worker installs and then never activates, the old one still
+  active a minute on. `stall` "the list empties without a reload": the reads
+  re-armed after the delete first answer with the old row, and the re-read that
+  empties the list doesn't always follow. `offline` "tap a suggested transfer":
+  the page reaches balances, then is found back on the ledger.

@@ -51,10 +51,11 @@ fails under load is betting on the machine's speed (*Wait for the thing, never a
 mid-task unless you touched what it drives.
 
 **Don't run the whole `pnpm verify` yourself.** Run the one check you are
-writing or fixing, alone (`pnpm verify <name>`). On GitHub they run one at a time
-(`VERIFY_JOBS=1`); locally, as many at once as the machine has cores (`VERIFY_JOBS` overrides): seven chromiums on four cores
-starve the pages past the app's own timers, which is where every flake this
-suite has had came from.
+writing or fixing, alone (`pnpm verify <name>`). On GitHub they run four at a
+time, one per core (`VERIFY_JOBS=4`); locally, as many as the machine has cores.
+Soaked at 1 to 8 on the runner, four was fastest (~55s, against ~240s one at a
+time) and past it every check stretches; what flaked at any number was a wait
+asking for the wrong thing, not the load.
 
 **The browser checks build for themselves.** `ensureBuild()` compares `apps/web`
 and `packages/core` against `apps/web/out` and runs the build only when it is

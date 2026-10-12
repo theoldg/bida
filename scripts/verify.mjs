@@ -5,7 +5,7 @@
  *
  * The checks `pnpm check` can't afford: run in series they take minutes, so
  * GitHub runs them at every push (docs/testing.md#where-each-check-runs).
- * Together they cost the slowest one; GitHub runs them one at a time.
+ * Together they cost the slowest one; GitHub runs four at a time.
  *
  * **A check is a file in `scripts/checks/`**, named for what it checks; this
  * finds them there, so adding one is adding the file.
@@ -26,7 +26,7 @@ import { annotation, runTogether } from "./lib/together.mjs";
  * the rest follow in name order. Only an ordering hint — a check missing here
  * still runs.
  */
-const SLOW = ["entries", "homescreen", "offline", "stall", "nav", "demo"];
+const SLOW = ["entries", "stall", "homescreen", "nav", "demo", "offline"];
 const rank = (name) => (SLOW.includes(name) ? SLOW.indexOf(name) : SLOW.length);
 const ALL = readdirSync(join(ROOT, "scripts/checks"))
   .filter((f) => f.endsWith(".mjs"))
@@ -34,10 +34,9 @@ const ALL = readdirSync(join(ROOT, "scripts/checks"))
   .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
 
 /**
- * How many chromiums at once. Each check wants about a core; ten on a
- * four-core cloud container starve the pages past the app's own timers, which
- * is where this suite's flakes came from (docs/browser-checks.md#writing-a-check-that-holds). A laptop
- * with the cores runs them all together, as before. `VERIFY_JOBS` overrides.
+ * How many chromiums at once. Each check wants about a core: past one per
+ * core every check stretches, and a wait that bets on speed starts losing
+ * (docs/browser-checks.md#writing-a-check-that-holds). `VERIFY_JOBS` overrides.
  */
 const LIMIT = Number(process.env.VERIFY_JOBS) || Math.max(2, availableParallelism());
 
