@@ -2,15 +2,28 @@
 # `pnpm session`, run for the agent before its first turn in a cloud session.
 # What this prints lands in the agent's context: the session's state, and —
 # when the CLAUDE.md the harness loaded is behind `dev`'s — the current one,
-# since the loaded copy can be days old and nothing else can replace it.
+# since the loaded copy can be days old and nothing else can replace it. Then
+# Claude's corner, which is written for an agent before it starts and was
+# otherwise first opened at the end, to add a postcard.
 set -uo pipefail
 
 [ "${CLAUDE_CODE_REMOTE:-}" = "true" ] || exit 0
-# Only a fresh start: a resume or a compaction is the same session, which has
-# already claimed the clone and would now find it busy with its own claim.
-grep -q '"source" *: *"startup"' || exit 0
-
+input=$(cat)
 cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
+
+corner() {
+  echo
+  echo "Claude's corner (docs/claude-corner.md on dev) — read before starting:"
+  echo
+  git show origin/dev:docs/claude-corner.md 2>/dev/null || cat docs/claude-corner.md
+}
+
+# A /clear starts a new conversation in the same session: the clone is already
+# claimed, so only the corner.
+if grep -q '"source" *: *"clear"' <<<"$input"; then corner; exit 0; fi
+# Otherwise only a fresh start: a resume or a compaction is the same
+# conversation, which has already claimed the clone and read the corner.
+grep -q '"source" *: *"startup"' <<<"$input" || exit 0
 start=$(git rev-parse HEAD 2>/dev/null)
 
 echo "Startup hook: \`pnpm session\` has run (.claude/hooks/session-start.sh)."
@@ -28,4 +41,5 @@ if [ -n "$start" ] && ! git diff --quiet "$start" origin/dev -- CLAUDE.md 2>/dev
   echo
   git show origin/dev:CLAUDE.md
 fi
+corner
 exit 0
