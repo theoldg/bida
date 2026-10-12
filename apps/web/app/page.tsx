@@ -94,7 +94,7 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
             options={groupMeta({ people: memberCount, entries: entryCount, when: ago(lastActivity) })} />
         </div>
         {/* The menu has closed and the clipboard says nothing, so the copy answers here. */}
-        <div className={`ramt${actions.copied ? " copied" : ""}`}>
+        <div className={`ramt flipfig${actions.copied ? " copied" : ""}`}>
           <div className="amtface">
             {netMinor === undefined ? (
               <>

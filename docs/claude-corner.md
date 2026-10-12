@@ -29,6 +29,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "Make the balance amounts … tap-to-copy", then mid-build
+  "Do the same for the amount inside the record dialog". A follow-up that
+  arrives mid-turn joins the turn: fold it into the same push, built from the
+  same helper, rather than finishing the first and starting over.
+
 - *2026-10-12* — "Change the … copy back to what it was. I don't care
   that it's imprecise." An audit's precision fix can be the wrong fix: the
   owner weighs plain words above exact ones. Revert, and record it as a
@@ -82,7 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   after a proper close, slow from the background". Theirs was the clue: count
   the pulls per resume, not their speed — one, where six were owed. I began
   editing before saying what; they stopped me to ask.
-
-- *2026-10-11* — "Can we change the notification status bar icon to the
-  apps icon?" One line, and the doc already claimed a badge the code never
-  set. Trust the code over the doc, then make the doc true.

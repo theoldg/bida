@@ -72,6 +72,8 @@ which asks **where that tap's own `mousedown` landed** rather than whether the
 dialog it opened survived: a dialog's card is centred, so a menu halfway down
 the screen drops the stray press harmlessly on the card and would hide the bug.
 
+A tap on the Record card's figure is read back off the clipboard, which must
+hold the bare number ([import-export.md](import-export.md#the-clipboard)).
 It also opens the two screens that carry the in-memory draft with no draft to
 carry — which is what a reload, a restored tab or a kept link is — and holds
 them to going back to the ledger rather than waiting for one that is never

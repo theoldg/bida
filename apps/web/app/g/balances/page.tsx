@@ -3,20 +3,22 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import type { Transfer } from "@bida/core";
+import type { CurrencyCode, Transfer } from "@bida/core";
 import { Card, Eyebrow, signClass } from "@/components/bits";
 import {
   BadLink, Body, Empty, QueryBoundary, Screen, Scroll, SupportFab, TopBar,
 } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
-import { Icon } from "@/components/icons";
+import { FlipCheck, Icon } from "@/components/icons";
 import { SyncBanner } from "@/components/sync-banner";
+import { hasClipboard, writeClipboardText } from "@/lib/clipboard";
 import { copy } from "@/lib/copy";
 import { recordSettlement } from "@/lib/db/commands";
-import { money, plural } from "@/lib/format";
+import { figure, money, plural } from "@/lib/format";
 import { useFold } from "@/lib/fold";
 import { route } from "@/lib/group-link";
-import { useClaimGate, useGroupData } from "@/lib/hooks";
+import { tick } from "@/lib/haptics";
+import { useClaimGate, useFlash, useGroupData } from "@/lib/hooks";
 import type { GroupData } from "@/lib/hooks";
 
 /**
@@ -108,9 +110,7 @@ function Balances({ data }: { data: GroupData }) {
                   <span className="axis" />
                 </div>
               </div>
-              <div className={`bignum balfig ${signClass(net)}`} style={{ fontSize: 14 }}>
-                {money(net, group.baseCurrency, net !== 0)}
-              </div>
+              <BalanceFigure net={net} currency={group.baseCurrency} />
             </div>
           );
         })}
@@ -165,6 +165,53 @@ function Balances({ data }: { data: GroupData }) {
           nameOf={nameOf} onClose={() => setSettling(undefined)} />
       ) : null}
     </Scroll>
+  );
+}
+
+/**
+ * A balance, or a payment, is the figure somebody types into a bank app, so a
+ * tap copies it — the number alone (`figure`) — and the press flips to a check.
+ * A refused copy says nothing: the figure it would have handed over is already
+ * on screen. No clipboard, no button.
+ */
+function useCopyFigure(minor: number, currency: CurrencyCode) {
+  const [copied, setCopied] = useFlash();
+  return {
+    can: hasClipboard(),
+    copied,
+    copy: () => void writeClipboardText(figure(minor, currency)).then(() => { setCopied(true); tick(); }, () => {}),
+  };
+}
+
+/** The figure itself flips, as a group's does on the groups list. */
+function BalanceFigure({ net, currency }: { net: number; currency: CurrencyCode }) {
+  const { can, copied, copy: write } = useCopyFigure(net, currency);
+  const shown = money(net, currency, net !== 0);
+  const className = `bignum balfig ${signClass(net)}`;
+  if (!can) return <div className={className} style={{ fontSize: 14 }}>{shown}</div>;
+  return (
+    <button type="button" className={`${className} flipfig${copied ? " copied" : ""}`} style={{ fontSize: 14 }}
+      onClick={write}>
+      <span className="amtface">{shown}</span>
+      {/* Always drawn: the flip back is a transition on a class going away. */}
+      <span className="copiedface" aria-hidden={!copied}>
+        <Icon name="check" size={16} />
+        <span className="sm">{copy.groups.copied}</span>
+      </span>
+    </button>
+  );
+}
+
+/** The payment's figure in its card: one figure, so the glyph beside it flips instead. */
+function PaymentFigure({ minor, currency }: { minor: number; currency: CurrencyCode }) {
+  const { can, copied, copy: write } = useCopyFigure(minor, currency);
+  const shown = money(minor, currency);
+  if (!can) return <div className="bignum settleamt">{shown}</div>;
+  return (
+    <button type="button" className="bignum settleamt copyamt" onClick={write}>
+      {shown}
+      <FlipCheck name="copy" size={16} on={copied} />
+    </button>
   );
 }
 
@@ -228,7 +275,7 @@ function SettleDialog({ t, groupId, actor, base, nameOf, onClose }: {
           <Icon name="arrow" size={18} className="settlearrow" />
           <span className="settlename">{to}</span>
         </div>
-        <div className="bignum settleamt">{money(t.amountMinor, base)}</div>
+        <PaymentFigure minor={t.amountMinor} currency={base} />
       </div>
     </ConfirmDialog>
   );

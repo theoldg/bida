@@ -134,6 +134,12 @@ report((await page.locator(".settleamt").innerText()).includes("2,900.00"),
   "the card states the payment, income already netted off");
 report(await page.locator("dialog.scrim input, dialog.scrim textarea").count() === 0,
   "nothing in the card is a field");
+// What a bank app is typed with: the figure, nothing around it.
+await ctx.grantPermissions(["clipboard-read", "clipboard-write"]);
+await page.locator(".settleamt").click();
+await page.waitForSelector(".settleamt .flipcheck.on");
+report(await page.evaluate(() => navigator.clipboard.readText()) === "2900.00",
+  "tapping the payment copies the bare figure");
 await page.getByRole("button", { name: "Record" }).click();
 await page.waitForSelector("dialog.scrim", { state: "detached", timeout: PATIENCE });
 const shorter = await page.waitForFunction(() => document.querySelectorAll("button.card").length < 2,

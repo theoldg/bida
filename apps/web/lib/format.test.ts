@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import {
-  ago, bare, byWhen, moneyParts, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
+  ago, bare, byWhen, figure, moneyParts, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
   initials, priced, rateText, splitFooter, stamp, usd, whenLabel,
 } from "./format";
 
@@ -393,6 +393,31 @@ describe("moneyParts", () => {
       const joined = p.currencyFirst ? p.currency + p.whole + p.fraction : p.whole + p.fraction + p.currency;
       expect(strip(joined)).toBe(strip(new Intl.NumberFormat(locale, {
         style: "currency", currency: "UZS", minimumFractionDigits: 2 }).format(12480000)));
+    }
+  });
+});
+
+describe("figure", () => {
+  it("drops the sign, the symbol and the grouping, and keeps the decimal mark", () => {
+    expect(figure(-123450, "EUR", "en-US")).toBe("1234.50");
+    expect(figure(123450, "EUR", "en-US")).toBe("1234.50");
+    expect(figure(123456789, "USD", "en-US")).toBe("1234567.89");
+    expect(figure(-123450, "EUR", "fr-FR")).toBe("1234,50");
+    expect(figure(-123450, "EUR", "de-CH")).toBe("1234.50");
+  });
+
+  it("follows the currency's own decimals, zero included", () => {
+    expect(figure(-25000, "JPY", "en-US")).toBe("25000");
+    expect(figure(1234567, "BHD", "en-US")).toBe("1234.567");
+    expect(figure(0, "EUR", "en-US")).toBe("0.00");
+    expect(figure(-5, "EUR", "en-US")).toBe("0.05");
+  });
+
+  it("reads back as the same amount, sign aside", () => {
+    for (const [minor, currency, locale] of [
+      [-123450, "EUR", "fr-FR"], [987654321, "USD", "en-US"], [-25000, "JPY", "de-DE"], [1234567, "BHD", "en-US"],
+    ] as const) {
+      expect(parseMinor(figure(minor, currency, locale), currency)).toBe(Math.abs(minor));
     }
   });
 });

@@ -10,7 +10,7 @@ export type IconName =
   | "chev" | "updown" | "back" | "plus" | "minus" | "cross" | "cam" | "off" | "check" | "clock"
   | "users" | "arrow" | "sync" | "trash" | "edit" | "link"
   | "image" | "split" | "merge" | "share" | "import" | "sun" | "moon" | "more" | "info"
-  | "mail" | "dollar" | "sliders" | "translate" | "search" | "bell" | "bell-off" | "bells";
+  | "mail" | "copy" | "dollar" | "sliders" | "translate" | "search" | "bell" | "bell-off" | "bells";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
@@ -85,6 +85,9 @@ export function IconSprite() {
         {/* An envelope, for the one address in the app (app/about/page.tsx). */}
         <symbol id="i-mail" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
           <rect x="3" y="5.5" width="18" height="13" rx="1.5" /><path d="M3.6 6.8l8.4 6 8.4-6" />
+        </symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <rect x="8.5" y="8.5" width="11.5" height="11.5" rx="1.5" /><path d="M15.5 5.5V5.5A1.5 1.5 0 0014 4H5.5A1.5 1.5 0 004 5.5V14a1.5 1.5 0 001.5 1.5" />
         </symbol>
         <symbol id="i-link" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
           <path d="M9.5 14.5l5-5M8 12.2l-2 2a3.5 3.5 0 004.9 4.9l2.4-2.4M16 11.8l2-2a3.5 3.5 0 00-4.9-4.9l-2.4 2.4" />
@@ -188,7 +191,7 @@ export function Icon({ name, size = 16, className, style }: {
 
 /**
  * An icon that flips on its X axis to a check while `on` holds — the groups
- * list's flip (`.grouprow .ramt.copied`) as one glyph, so copying confirms
+ * list's flip (`.flipfig`) as one glyph, so copying confirms
  * itself the same way everywhere. Both faces are always drawn: the flip back
  * is a transition on a class going away.
  */

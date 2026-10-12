@@ -59,6 +59,17 @@ export function bare(minor: number, currency: CurrencyCode): string {
   return formatMinor(minor, currency, { showCurrency: false });
 }
 
+/**
+ * The figure alone, for pasting into a bank app: no sign, no symbol, no
+ * grouping, and the decimal mark the screen showed ("-€1,234.50" -> "1234.50",
+ * "1 234,50" in French). `parseMinor` reads either mark back.
+ */
+export function figure(minor: number, currency: CurrencyCode, locale?: string): string {
+  return formatMinorParts(minor, currency, { locale, showCurrency: false, signDisplay: "never" })
+    .filter(({ type }) => type === "integer" || type === "decimal" || type === "fraction")
+    .map(({ value }) => value).join("");
+}
+
 /** A bill line's figure. It arrives as the model's own string; one that isn't a figure survives as is. */
 export function priced(amount: string, currency: CurrencyCode): string {
   try { return bare(parseMinor(amount, currency), currency); } catch { return amount; }

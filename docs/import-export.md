@@ -317,7 +317,11 @@ Four screens hand a string over — the invite link, a quick split, the CSV,
 the `/diag` report — and every one of them was written for a clipboard that
 **refuses**: `writeText` rejects on an insecure context or a denied
 permission, and the answer is to put the text on screen to be read instead
-(`InviteFallback`, and the same shape on the other three).
+(`InviteFallback`, and the same shape on the other three). A fifth hands over
+a figure — a balance, or the payment in the Record card — and a refusal there
+says nothing, since the figure is already on screen. It copies **the number
+alone** (`figure`, `lib/format.ts`): no sign, symbol or grouping, the screen's
+own decimal mark, because it is typed into a bank app.
 
 A browser can also have **no clipboard at all** (in-app browsers such as
 Messenger's). `navigator.clipboard` is then `undefined`, so
@@ -341,9 +345,10 @@ menu. A copy that works says so where it was asked for, and **all three places
 run the same flip**: the thing that was there **turns away on its X axis and
 the check comes up behind it**. On the groups list — where the menu card has
 closed and there is no bar to put a glyph in — that cell is the row's own figure
-(`.grouprow .ramt.copied`); on the group's kebab (`MenuButton`'s `confirmed`)
+(`.flipfig`), and a balance on Balances flips the same way; on the group's kebab (`MenuButton`'s `confirmed`)
 and People's top bar (`InviteButton`) it is the 18px glyph itself, at a
-shallower perspective (`FlipCheck`, `.flipcheck`). A quick split's hand-over
+shallower perspective (`FlipCheck`, `.flipcheck`) — as is the copy glyph
+beside the Record card's figure. A quick split's hand-over
 answers the same way from its own button, the label turning and the check
 coming up beside the word behind it (`FlipLabel`, `.flipcheck.line`). A
 transition and not keyframes, because it reverses itself a second and a half
