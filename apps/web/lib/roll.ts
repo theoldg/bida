@@ -1,3 +1,4 @@
+// Doc: docs/rows.md#your-own-rows-are-highlighted — read it whole before changing this file.
 import { formatMinorParts, type CurrencyCode } from "@bida/core";
 
 /**

@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/design-system.md#direction — read it whole before changing this file.
 
 import { useState } from "react";
 import { copy } from "../lib/copy";

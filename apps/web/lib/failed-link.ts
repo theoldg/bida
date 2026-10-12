@@ -1,3 +1,4 @@
+// Doc: docs/navigation.md#routing — read it whole before changing this file.
 /**
  * The link a "Bad link" or "missing its password" screen is about, so the
  * screen can show it: a person who can see what they opened can tell a typo,

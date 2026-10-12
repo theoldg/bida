@@ -1,3 +1,4 @@
+// Doc: docs/touch-and-viewport.md — read it whole before changing this file.
 /**
  * Reading the visual viewport: what the keyboard covers, and what nothing can
  * account for.

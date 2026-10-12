@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/touch-and-viewport.md — read it whole before changing this file.
 
 import { useEffect } from "react";
 import { mark } from "../lib/diag";

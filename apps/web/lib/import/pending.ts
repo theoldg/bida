@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/import-export.md — read it whole before changing this file.
 
 import { useSyncExternalStore } from "react";
 import type { ImportPlan } from "@bida/core";

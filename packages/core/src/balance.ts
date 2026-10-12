@@ -1,3 +1,4 @@
+// Doc: docs/data-model.md#balances-and-settle-up — read it whole before changing this file.
 import { resolvePayers } from "./payers.js";
 import { resolveEntrySplit } from "./split.js";
 import { alive, type GroupState, type Id } from "./types.js";

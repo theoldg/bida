@@ -1,3 +1,4 @@
+// Doc: docs/product.md#the-mvp — read it whole before changing this file.
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { TipJar } from "@/components/tip-jar";
 import { copy } from "@/lib/copy";

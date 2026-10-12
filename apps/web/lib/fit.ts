@@ -1,3 +1,4 @@
+// Doc: docs/rows.md#a-row-says-less-rather-than-being-cut-off — read it whole before changing this file.
 /**
  * Say less rather than be cut off.
  *

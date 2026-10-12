@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/pwa.md — read it whole before changing this file.
 
 import { useSyncExternalStore } from "react";
 import { subscribeUpdate, updateState, type UpdateState } from "../lib/update";

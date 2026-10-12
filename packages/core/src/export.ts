@@ -1,3 +1,4 @@
+// Doc: docs/import-export.md#the-group-as-a-spreadsheet — read it whole before changing this file.
 import { minorToDecimalString } from "./money.js";
 import { resolvePayers } from "./payers.js";
 import { resolveEntrySplit } from "./split.js";

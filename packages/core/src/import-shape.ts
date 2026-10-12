@@ -1,3 +1,4 @@
+// Doc: docs/import-export.md#writing-a-plan — read it whole before changing this file.
 import { convertMinor, exponentOf, isValidRate, type CurrencyCode, type Rate } from "./money.js";
 import { resolvePayers } from "./payers.js";
 import { FNV_OFFSET, fnv1a, resolveEntrySplit, resolveSplit } from "./split.js";

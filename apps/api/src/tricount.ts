@@ -1,3 +1,4 @@
+// Doc: docs/import-export.md#reading-a-tricount-back — read it whole before changing this file.
 /**
  * The two calls turning a tricount link into its JSON. bunq's API is
  * undocumented: no key, but a **handshake** — register an installation, get a

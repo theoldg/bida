@@ -1,3 +1,4 @@
+// Doc: docs/navigation.md#routing — read it whole before changing this file.
 import { useSyncExternalStore } from "react";
 import { Icon, type IconName } from "./icons";
 import { copy } from "../lib/copy";

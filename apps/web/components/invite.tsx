@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/import-export.md#the-clipboard — read it whole before changing this file.
 
 import { isDemo } from "@bida/core";
 import { useState, type ReactNode } from "react";

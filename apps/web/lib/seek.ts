@@ -1,3 +1,4 @@
+// Doc: docs/refusals.md#a-refused-action-points-first — read it whole before changing this file.
 /**
  * The DOM half of a refusal that has to travel before it flashes — the scroll
  * and the wait — beside the geometry in `lib/reveal.ts`. Shared by the

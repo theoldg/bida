@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/data-model.md#balances-and-settle-up — read it whole before changing this file.
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";

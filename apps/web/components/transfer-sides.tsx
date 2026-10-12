@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/rows.md#an-arrow-points-one-way-and-an-income-says-so-twice — read it whole before changing this file.
 
 import { useState } from "react";
 import type { Member } from "@bida/core";

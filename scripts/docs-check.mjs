@@ -7,7 +7,7 @@
  * `pnpm check`.
  *
  * Checked: every relative markdown link resolves, and so does every
- * `docs/….md` a code comment names; every `#anchor` — a bare one included —
+ * `docs/….md` a code comment names, and every source file names one; every `#anchor` — a bare one included —
  * matches a heading by GitHub's slug rules (where they get clicked); the ADR index names
  * exactly the ADRs on disk; no doc states a test count; no doc runs past
  * 400 lines, nor its Gotchas past 30; claude-corner.md keeps to its own three
@@ -98,6 +98,24 @@ for (const file of codeFiles(ROOT)) {
     if (!anchors.has(to)) anchors.set(to, anchorsOf(to));
     if (!anchors.get(to).has(fragment.toLowerCase())) {
       problems.push(`${where}\n        no heading "#${fragment}" in ${path}`);
+    }
+  }
+}
+
+/**
+ * Every source file names the doc that explains it, so an agent who opens the
+ * code finds the prose without going through the README's table. The pointer
+ * is checked above like any other; here it only has to exist. A barrel that
+ * re-exports and a test are exempt: neither is where a change is made.
+ */
+const SOURCES = ["packages/core/src", "apps/web/lib", "apps/web/components", "apps/web/app", "apps/api/src"];
+for (const dir of SOURCES) {
+  for (const file of codeFiles(join(ROOT, dir))) {
+    const name = relative(ROOT, file);
+    if (!/\.tsx?$/.test(name) || /\.test\.|\.d\.ts$/.test(name)) continue;
+    if (/(^|\/)index\.ts$/.test(name) && !/\/commands\//.test(name)) continue;
+    if (!/\bdocs\/[\w./-]+\.md/.test(readFileSync(file, "utf8"))) {
+      problems.push(`${name}\n        names no doc — add "// Doc: docs/<doc>.md#<section> — read it whole before changing this file."`);
     }
   }
 }

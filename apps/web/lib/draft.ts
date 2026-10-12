@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/entry.md#the-draft — read it whole before changing this file.
 
 import { useSyncExternalStore } from "react";
 import {

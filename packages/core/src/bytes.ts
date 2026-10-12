@@ -1,3 +1,4 @@
+// Doc: docs/sync.md#the-protocol — read it whole before changing this file.
 /**
  * Base64 both ways, hand-rolled, because `btoa` wants a binary string and isn't
  * typed without DOM. The url alphabet (RFC 4648 §5, unpadded) is what Web Push

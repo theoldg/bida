@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/navigation.md#routing — read it whole before changing this file.
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";

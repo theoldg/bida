@@ -1,3 +1,4 @@
+// Doc: docs/receipt-scanning.md — read it whole before changing this file.
 import type { ScanResult } from "@bida/core";
 
 interface GeminiResponse {

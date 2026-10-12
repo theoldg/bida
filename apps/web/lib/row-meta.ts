@@ -1,3 +1,4 @@
+// Doc: docs/rows.md#a-row-says-less-rather-than-being-cut-off — read it whole before changing this file.
 import { copy } from "./copy";
 import { plural } from "./format";
 

@@ -1,3 +1,4 @@
+// Doc: docs/scan-worker.md#staś-mode — read it whole before changing this file.
 /**
  * Staś mode: the scan's refusals, with the gloves off.
  *

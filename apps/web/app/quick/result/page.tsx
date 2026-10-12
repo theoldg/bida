@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md — read it whole before changing this file.
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

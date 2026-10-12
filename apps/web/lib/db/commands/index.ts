@@ -1,3 +1,4 @@
+// Doc: docs/frontend.md#state — read it whole before changing this file.
 /**
  * Every write in the app goes through this directory, and every function in it
  * appends ops rather than editing rows. Components never touch Dexie directly.

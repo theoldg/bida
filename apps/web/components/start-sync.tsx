@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/sync.md#the-sync-engine — read it whole before changing this file.
 
 import { useEffect } from "react";
 import { publishExistingClaims } from "../lib/db/commands";

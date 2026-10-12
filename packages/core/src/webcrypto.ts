@@ -1,3 +1,4 @@
+// Doc: docs/sync.md#the-protocol — read it whole before changing this file.
 /**
  * WebCrypto off `globalThis`, or a refusal saying what would otherwise go weak
  * or in the clear. Each caller types it as the slice it uses, so core stays

@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/frontend.md — read it whole before changing this file.
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";

@@ -1,3 +1,4 @@
+// Doc: docs/decisions/0005-money-and-currency.md — read it whole before changing this file.
 /**
  * A past day, as the rate feed names its dated releases ("2026-10-05"); null
  * for anything else, today and the future included, which ask for the latest.

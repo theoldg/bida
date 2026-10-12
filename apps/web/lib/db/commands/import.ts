@@ -1,3 +1,4 @@
+// Doc: docs/import-export.md — read it whole before changing this file.
 import {
   colorSeedFor, memberIdFor, newGroupId, newGroupSecret, newId, shapeEntry, shapeTransfer,
   type CurrencyCode, type Id, type ImportPlan, type OpDraft, type PlannedEntry, type PlannedTransfer, type RateFor,

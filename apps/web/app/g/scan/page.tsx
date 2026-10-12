@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/receipt-scanning.md — read it whole before changing this file.
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";

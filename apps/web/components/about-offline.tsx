@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/navigation.md#routing — read it whole before changing this file.
 
 import { InstallButton, useInstallOffer } from "./install";
 import { copy } from "../lib/copy";

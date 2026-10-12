@@ -1,3 +1,4 @@
+// Doc: docs/history.md#what-a-revision-says — read it whole before changing this file.
 import Link from "next/link";
 import type { Expense, ImportSource, Member, Revision, Settlement } from "@bida/core";
 import { Icon } from "@/components/icons";

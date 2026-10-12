@@ -1,3 +1,4 @@
+// Doc: docs/ios.md#gotchas — read it whole before changing this file.
 /**
  * A payload URL requested as a page, and the page it should have been.
  *

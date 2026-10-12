@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/diag.md — read it whole before changing this file.
 
 import { mark } from "./diag";
 

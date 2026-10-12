@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/history.md#deleted-entries — read it whole before changing this file.
 
 import { useState, type ReactNode } from "react";
 import { copy } from "../lib/copy";

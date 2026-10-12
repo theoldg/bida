@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/navigation.md#the-ledger-comes-back-where-you-left-it--on-the-way-back-only — read it whole before changing this file.
 
 import { useLayoutEffect, type RefObject } from "react";
 import { returnTo } from "./nav";

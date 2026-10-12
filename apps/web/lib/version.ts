@@ -1,3 +1,4 @@
+// Doc: docs/hosting.md#versions — read it whole before changing this file.
 /**
  * What this build calls itself: `major.semi.minor`, shown on `/about` and the
  * first line of `/diag`. Lives in the root `package.json`, inlined here at

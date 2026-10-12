@@ -1,3 +1,4 @@
+// Doc: docs/sync.md#the-operation — read it whole before changing this file.
 import {
   canonicalSplit, newId, partsBesideBill, primaryPayer, receiptOf, restoreEntryDrafts,
   type CurrencyCode, type EntryEntity, type EntryRateSource, type ExpenseKind, type Id, type OpDraft, type Rate,

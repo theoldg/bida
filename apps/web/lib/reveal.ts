@@ -1,3 +1,4 @@
+// Doc: docs/refusals.md#a-refused-action-points-first — read it whole before changing this file.
 /**
  * Finding the thing a refusal is pointing at, when it is off the screen — on a
  * twenty-line bill the flash may land where nobody is looking.

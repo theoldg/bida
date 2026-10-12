@@ -1,3 +1,4 @@
+// Doc: docs/rows.md#the-ledger-moves — read it whole before changing this file.
 /**
  * How the ledger's list moves when it changes under somebody looking at it
  * (components/ledger-rows.tsx): the pure half — which items are leaving, how

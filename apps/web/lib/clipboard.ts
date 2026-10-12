@@ -1,3 +1,4 @@
+// Doc: docs/import-export.md#the-clipboard — read it whole before changing this file.
 /**
  * Putting a string on the clipboard — the app's one way of handing something
  * over: an invite link, a CSV, a diag report, a quick split.

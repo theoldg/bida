@@ -1,3 +1,4 @@
+// Doc: docs/sync.md#the-protocol — read it whole before changing this file.
 import { deriveGroupCrypto, type GroupCrypto } from "@bida/core";
 
 /**

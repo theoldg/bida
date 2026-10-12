@@ -1,3 +1,4 @@
+// Doc: docs/data-model.md#splits--the-only-tricky-arithmetic — read it whole before changing this file.
 import type { ArithmeticSplit, ArithmeticMode, Id, SplitSpec } from "./types.js";
 
 /**

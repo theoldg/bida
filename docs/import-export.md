@@ -334,3 +334,18 @@ selectable link, rather than answering a press with nothing. Reading has its
 own door for its own reasons (`lib/paste.ts`, whose calls are all already
 inside the `try` that awaits them). `rules-check` holds the pair, because it
 costs a line to lose and is invisible until it is somebody else's phone.
+
+**The invite link is `components/invite.tsx`** (`useCopyLink`), written once for
+the People screen's top bar, the groups list's row menu and the group's own
+menu. A copy that works says so where it was asked for, and **all three places
+run the same flip**: the thing that was there **turns away on its X axis and
+the check comes up behind it**. On the groups list — where the menu card has
+closed and there is no bar to put a glyph in — that cell is the row's own figure
+(`.grouprow .ramt.copied`); on the group's kebab (`MenuButton`'s `confirmed`)
+and People's top bar (`InviteButton`) it is the 18px glyph itself, at a
+shallower perspective (`FlipCheck`, `.flipcheck`). A quick split's hand-over
+answers the same way from its own button, the label turning and the check
+coming up beside the word behind it (`FlipLabel`, `.flipcheck.line`). A
+transition and not keyframes, because it reverses itself a second and a half
+later when `invite.copied` lapses and a class going away replays no animation —
+which is also why both faces stay drawn.

@@ -1,3 +1,4 @@
+// Doc: docs/ios.md — read it whole before changing this file.
 /**
  * Ask the browser to stop treating this app's data as a cache.
  *

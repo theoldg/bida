@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/who-had-what.md#the-bill-read-back — read it whole before changing this file.
 
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";

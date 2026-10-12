@@ -1,3 +1,4 @@
+// Doc: docs/navigation.md#routing — read it whole before changing this file.
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AboutDelete } from "@/components/about-delete";

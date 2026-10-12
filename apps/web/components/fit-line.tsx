@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/rows.md#a-row-says-less-rather-than-being-cut-off — read it whole before changing this file.
 
 import { useLayoutEffect, useRef, useState, type DependencyList, type ReactNode, type RefObject } from "react";
 import { fitIndex, styleOf, textWidth } from "../lib/fit";

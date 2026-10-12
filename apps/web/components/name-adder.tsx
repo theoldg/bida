@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/frontend.md#names — read it whole before changing this file.
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./icons";

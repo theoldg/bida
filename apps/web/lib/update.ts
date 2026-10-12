@@ -1,3 +1,4 @@
+// Doc: docs/pwa.md — read it whole before changing this file.
 /**
  * A new build, taken as soon as it is safe to.
  *

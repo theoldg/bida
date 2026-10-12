@@ -121,7 +121,8 @@ reflects reality · pushed to `dev`.
 These docs exist so a cold agent is useful in five minutes. That decays unless
 every session pays in. **Before you finish:**
 
-1. Changed behaviour → update the doc that describes it, in the same commit.
+1. Changed behaviour → update the doc that describes it, in the same commit —
+   the `// Doc:` line at the head of the file you changed names it.
 2. Made a choice expensive to reverse that someone might argue with → **edit
    the ADR on that subject** so it says where we stand now.
 3. Learned something the hard way → one line in the relevant **Gotchas**

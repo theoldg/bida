@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/entry.md — read it whole before changing this file.
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { goBack } from "@/lib/nav";

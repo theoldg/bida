@@ -1,3 +1,4 @@
+// Doc: docs/ios.md#gotchas — read it whole before changing this file.
 import { mark } from "./diag";
 
 /**

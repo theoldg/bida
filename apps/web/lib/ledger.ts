@@ -1,3 +1,4 @@
+// Doc: docs/data-model.md#a-day-without-a-time — read it whole before changing this file.
 import { minorToDecimalString, payerList, splitParticipants, type Expense, type Settlement } from "@bida/core";
 import { kindOf, type EntryKind } from "./entry-kind";
 import { byWhen } from "./format";

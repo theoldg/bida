@@ -1,3 +1,4 @@
+// Doc: docs/navigation.md#routing — read it whole before changing this file.
 import type { Metadata } from "next";
 import { copy } from "@/lib/copy";
 import { preview } from "@/lib/preview";

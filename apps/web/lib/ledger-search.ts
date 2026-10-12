@@ -1,3 +1,4 @@
+// Doc: docs/frontend.md#the-ledgers-search — read it whole before changing this file.
 /**
  * How much of the bar the scroll has brought out, 0 to 1. **Tied to the
  * scroll, not set off by it**: over the last bar's height the list travels to

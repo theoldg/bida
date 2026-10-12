@@ -1,3 +1,4 @@
+// Doc: docs/history.md#what-a-revision-says — read it whole before changing this file.
 import { type Id } from "@bida/core";
 import { copy } from "./copy";
 

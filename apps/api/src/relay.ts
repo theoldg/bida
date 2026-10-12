@@ -1,3 +1,4 @@
+// Doc: docs/notifications.md — read it whole before changing this file.
 import { fromBase64, vapidAuthorization, type VapidKeys } from "@bida/core";
 import { MAX_ENDPOINT_CHARS, MAX_NOTIFY_BYTES, MAX_NOTIFY_PER_BATCH } from "./push-limits";
 

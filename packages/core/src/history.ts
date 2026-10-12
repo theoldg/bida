@@ -1,3 +1,4 @@
+// Doc: docs/history.md — read it whole before changing this file.
 import { compareHlc, parseHlc } from "./hlc.js";
 import type { Op } from "./ops.js";
 import { applyPatch, sortOps } from "./fold.js";

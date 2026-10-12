@@ -1,3 +1,4 @@
+// Doc: docs/sync.md#folding — read it whole before changing this file.
 import { compareHlc, parseHlc } from "./hlc.js";
 import { IMMUTABLE_FIELDS, WRITE_ONCE_FIELDS, type Op } from "./ops.js";
 import { upgradeReceiptSplit } from "./split.js";

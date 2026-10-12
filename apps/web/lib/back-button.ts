@@ -1,3 +1,4 @@
+// Doc: docs/navigation.md#keeping-the-devices-back-honest — read it whole before changing this file.
 /**
  * The device's back button, doing what the screen's back arrow does.
  *

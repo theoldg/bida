@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/design-system.md — read it whole before changing this file.
 
 import { useSyncExternalStore } from "react";
 import { updateDevice } from "../lib/db/device";

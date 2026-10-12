@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/history.md — read it whole before changing this file.
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";

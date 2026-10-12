@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/navigation.md#one-navigation — read it whole before changing this file.
 
 import { useRouter } from "next/navigation";
 import { MenuButton, type SheetAction } from "./row-menu";

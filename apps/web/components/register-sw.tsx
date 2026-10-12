@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/pwa.md — read it whole before changing this file.
 
 import { useEffect } from "react";
 import { registerServiceWorker } from "../lib/update";

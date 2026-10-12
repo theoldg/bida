@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/design-system.md#nothing-waits-in-silence — read it whole before changing this file.
 
 /**
  * The app's one vibration: a single tick, short enough to be felt and not

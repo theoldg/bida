@@ -11,7 +11,7 @@ pnpm verify nav   # one of them (or several, named) — each is a file in script
 pnpm shots        # PNGs into shots/ (gitignored)
 pnpm readme-shots # the six pictures in README.md, into docs/media/ (committed)
 pnpm drive        # the app as text, one command at a time: one screen's shot, a bug, two phones — [drive.md](drive.md)
-pnpm run docs     # links resolve, ADRs indexed, claude-corner within size, ~30ms
+pnpm run docs     # links resolve, ADRs indexed, every source file names its doc, no doc over 400 lines or Gotchas over 30, claude-corner within size
 pnpm run rules    # the decisions one line could reverse, checked against the code, ~30ms
 pnpm bump         # the number this deploy will show; `push` does it for you — [hosting.md](hosting.md#versions)
 ```

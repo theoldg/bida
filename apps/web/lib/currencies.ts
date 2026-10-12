@@ -1,3 +1,4 @@
+// Doc: docs/entry.md — read it whole before changing this file.
 /**
  * A short list, not a complete one. core/money.ts knows the ISO exponent of
  * every currency it is handed; this is only about what the picker offers first,

@@ -1,3 +1,4 @@
+// Doc: docs/import-export.md — read it whole before changing this file.
 /**
  * CSV bytes into rows, and nothing beyond that. Here rather than in core
  * because a CSV dialect is a parsing decision, not domain arithmetic;
