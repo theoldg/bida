@@ -10,28 +10,17 @@ import { appendOps } from "./append";
 import { movesAnything, only, wholeEntity } from "./patch";
 import { baseOf, rateFields } from "./rates";
 
-/**
- * The three kinds of entry (ADR-0010) — added, edited, tombstoned and put back.
- * Everything that moves money lands here. Both editors diff the form against
- * what is stored (`patch.ts`), and write the entry's own rate with it
- * (`rates.ts`).
- */
-
 export interface ExpenseInput extends Receipt {
-  /** Which way the entry runs. Omitted or "expense" for the ordinary case. */
   kind?: ExpenseKind | null;
   description: string;
   occurredAt: number;
   /** True when `occurredAt` carries a day and no time — a backdated scan. */
   dateOnly?: boolean | null;
-  /** In `currency`, minor units. */
   amountMinor: number;
   currency: CurrencyCode;
-  /** The entry's own, frozen at save. Ignored when the expense is in the base currency. */
   rateToBase: Rate;
   rateSource?: EntryRateSource | null;
   paidBy: Id;
-  /** Co-sponsors, in `currency` minor units. Omit or null for a single payer. */
   payers?: Record<Id, number> | null;
   split: SplitSpec;
   categoryId?: string | null;
@@ -39,10 +28,8 @@ export interface ExpenseInput extends Receipt {
 }
 
 /**
- * Normalise the payer side before it is written. One contributor is a single
- * payer, stored as null `payers`. With two or more, `paidBy` becomes the
- * largest contributor, so a row, an avatar and an older client still have one
- * answer. ADR-0010.
+ * With two or more contributors `paidBy` becomes the largest, so a row, an avatar
+ * and an older client still have one answer (ADR-0010).
  */
 function normalisePayers(input: ExpenseInput): { paidBy: Id; payers: Record<Id, number> | null } {
   const spec = input.payers;
@@ -56,26 +43,14 @@ function normalisePayers(input: ExpenseInput): { paidBy: Id; payers: Record<Id, 
   return { paidBy: primaryPayer(live, input.paidBy), payers: live };
 }
 
-/**
- * Every write in this file: a person's own command about an entry, so the rest
- * of the group may hear of it (`appendOps`'s `notify`).
- */
 function write(groupId: Id, actor: Id, drafts: readonly OpDraft[], now = Date.now()) {
   return appendOps(groupId, actor, drafts, now, { notify: true });
 }
 
-/**
- * An expense's content as both writes put it: the payer side normalised, the
- * split canonical, the base figure derived from its own rate. A create and an
- * edit differ only in what they do with an absence (`only`, `wholeEntity`).
- */
 function expenseContent(input: ExpenseInput, base: CurrencyCode) {
-  // The payer fields are derived together — `paidBy` must never name somebody
-  // who isn't in `payers`.
   const payer = normalisePayers(input);
   return {
-    // An ordinary expense is the *absence* of `kind`, on every op ever
-    // appended: null here, which a create leaves off and an edit writes.
+    // An ordinary expense is the *absence* of `kind`, on every op ever appended.
     kind: input.kind === "income" ? "income" : null,
     description: input.description,
     occurredAt: input.occurredAt,
@@ -85,8 +60,8 @@ function expenseContent(input: ExpenseInput, base: CurrencyCode) {
     ...rateFields(input, base),
     paidBy: payer.paidBy,
     payers: payer.payers,
-    // Canonical from the very first op: `sameValue` sorts object keys but not
-    // arrays, so re-picking the same people would otherwise read as an edit.
+    // Canonical from the first op: `sameValue` sorts keys but not arrays, so
+    // re-picking the same people would otherwise read as an edit.
     split: canonicalSplit(input.split),
     splitTab: partsBesideBill(input),
     categoryId: input.categoryId,
@@ -95,19 +70,13 @@ function expenseContent(input: ExpenseInput, base: CurrencyCode) {
   };
 }
 
-/**
- * The `create` patch for an expense — the form's and the importer's. Absent
- * fields are left off (`only`); no `deletedAt` either, since a fresh id is
- * never a tombstone.
- */
 export function expenseCreatePatch(input: ExpenseInput, base: CurrencyCode, now: number) {
   return { createdAt: now, ...only(expenseContent(input, base)) };
 }
 
 /**
- * `expenseId` comes from the caller, because the leftover minor unit goes by
- * `tiebreakSeed`, which is that id (core/split.ts, `splitSeed` in lib/draft):
- * the form must write under the id it quoted. Minted here if absent.
+ * `expenseId` comes from the caller: the leftover minor unit goes by that id
+ * (`tiebreakSeed`), so the form must write under the id it quoted.
  */
 export async function addExpense(
   groupId: Id,
@@ -127,9 +96,8 @@ export async function addExpense(
 }
 
 /**
- * Edit an expense. The patch carries the **whole** entry, not just what moved:
- * the last edit wins the entity, so every version anybody sees is one a person
- * actually looked at (`patch.ts`, ADR-0002).
+ * The patch carries the **whole** entry, so every version anybody sees is one a
+ * person looked at (ADR-0002).
  */
 export async function editExpense(
   groupId: Id,
@@ -144,9 +112,8 @@ export async function editExpense(
   const base = await baseOf(groupId);
   const patch = wholeEntity(expenseContent({ ...existing, ...changes }, base));
 
-  // A save that moved nothing is a revision saying nothing happened — measured
-  // against the stored split made canonical too, as the patch's is, and beside
-  // the flag the fold dropped from it.
+  // A save that moved nothing is a revision saying nothing happened — compared
+  // against the stored split made canonical too.
   const held = { ...existing, split: canonicalSplit(existing.split), splitTab: partsBesideBill(existing) };
   if (!movesAnything(held, patch)) return;
   await write(groupId, actor, [
@@ -172,16 +139,13 @@ export interface SettlementInput {
   toMember: Id;
   amountMinor: number;
   currency: CurrencyCode;
-  /** As `ExpenseInput.rateToBase`. */
   rateToBase: Rate;
   rateSource?: EntryRateSource | null;
   occurredAt: number;
-  /** True when `occurredAt` carries a day and no time — see `ExpenseInput`. */
   dateOnly?: boolean | null;
   note?: string | null;
 }
 
-/** A transfer's content as both writes put it — see `expenseContent`. */
 function settlementContent(input: SettlementInput, base: CurrencyCode) {
   return {
     fromMember: input.fromMember,
@@ -195,7 +159,6 @@ function settlementContent(input: SettlementInput, base: CurrencyCode) {
   };
 }
 
-/** The `create` patch for a transfer — the form's and the importer's. */
 export function settlementCreatePatch(input: SettlementInput, base: CurrencyCode, now: number) {
   return { createdAt: now, ...only(settlementContent(input, base)) };
 }
@@ -220,10 +183,6 @@ export async function recordSettlement(
   return settlementId;
 }
 
-/**
- * Edit a transfer, by `editExpense`'s rule: the whole entry reaches the log,
- * its own rate with it.
- */
 export async function editSettlement(
   groupId: Id,
   actor: Id,
@@ -256,10 +215,8 @@ export async function deleteSettlement(
 // ------------------------------------------------------------ restoring
 
 /**
- * A deleted entry, back whole (ADR-0031), with anybody it names who was
- * removed since — the entry wins, as it does after a merge
- * (`restoreEntryDrafts`). One append, so the group is never left holding a
- * live entry that names nobody.
+ * One append, so the group is never left holding a live entry naming nobody
+ * (ADR-0031).
  */
 export async function restoreEntry(groupId: Id, actor: Id, entity: EntryEntity, entryId: Id): Promise<void> {
   const drafts = restoreEntryDrafts(await groupState(groupId), entity, entryId);

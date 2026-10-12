@@ -1,11 +1,9 @@
 // Doc: docs/navigation.md#keeping-the-devices-back-honest
-/** The device's back button, doing what the screen's back arrow does. */
 import { useEffect, useRef } from "react";
 import { mark } from "./diag";
 import { markReturn, sameScreen, takeOwnTraversal } from "./nav";
 import { note } from "./press-trace";
 
-/** Only what's needed here; TypeScript's DOM lib has no Navigation API yet. */
 type NavigateEventLike = Event & {
   navigationType: string;
   userInitiated: boolean;
@@ -18,48 +16,33 @@ function navigation(): NavigationLike | undefined {
   return (window as unknown as { navigation?: NavigationLike }).navigation;
 }
 
-/** What a screen's back arrow is, and so what the device's button must do. */
 interface ScreenBack {
-  /** Where the arrow climbs to, if it climbs. Absent: it is a plain back. */
   up?: string;
   /**
-   * May we leave? `false` means it asked instead — so the press is cancelled
-   * and the screen stays. Absent: yes, always.
+   * `false` means it asked instead, so the press is cancelled and the screen
+   * stays.
    */
   mayLeave?: () => boolean;
   /**
-   * Put `up` in this screen's place, for a press that has to be taken over. A
-   * swap, never a count back: inside a cancelled press the browser thinks we are
-   * already on the destination entry, so `history.go(-1)` would move two.
+   * A swap, never a count back: inside a cancelled press the browser thinks we
+   * are already on the destination, so `history.go(-1)` would move two.
    */
   swap: (to: string) => void;
 }
 
-/**
- * A stack, because React mounts the screen you are going to before it unmounts
- * the one you are leaving: the newest registration is the one on screen.
- */
+/** A stack, because React mounts the next screen before unmounting this one. */
 const screens: { current?: ScreenBack }[] = [];
 let listening = false;
 
-/** Only what's needed here; TypeScript's DOM lib has no `CloseWatcher` yet. */
 type CloseWatcherLike = { destroy(): void; onclose: ((e: Event) => void) | null };
 
-/** The watcher standing in for the entry under the bottom screen, and whose it is. */
 let floor: { screen: { current?: ScreenBack }; watcher: CloseWatcherLike } | undefined;
 
 /**
- * A watcher while, and only while, the screen on show climbs somewhere and is
- * the first entry of this app's history. Everywhere else it must not exist: a
- * close watcher is asked before history is, so one left behind would eat the
- * press meant for the screen above it.
- *
- * Never on a screen that asks (`mayLeave`): refusing a close request needs the
- * same activation a traversal does, so a watcher there buys nothing. And it
- * only climbs — the parent is either the list, which registers none, or a
- * screen one level nearer it, so a run of presses ends outside the app, as
- * ADR-0007 promises. Escape is a close request too, so on a desktop Escape on
- * such a screen climbs as well.
+ * A close watcher only while the screen on show climbs and is the first entry of
+ * this app's history: one left elsewhere would eat the press meant for the screen
+ * above. Never on a screen that asks — refusing needs the same activation a
+ * traversal does (ADR-0007).
  */
 function settleFloor(): void {
   const top = screens[screens.length - 1];
@@ -83,9 +66,6 @@ function settleFloor(): void {
   floor = { screen: want, watcher };
 }
 
-/**
- * Is this the device's back button? Pure, and exported for its test.
- */
 export function isBackPress(
   e: {
     navigationType: string; userInitiated: boolean; cancelable: boolean;
@@ -94,62 +74,37 @@ export function isBackPress(
   here: number | undefined,
 ): boolean {
   if (!e.userInitiated || e.navigationType !== "traverse") return false;
-  // A forward traversal is the redo of a back press, not a back press.
   if (here === undefined || e.destination.index >= here) return false;
   return e.cancelable;
 }
 
-/**
- * Every press, and what was done with it, in the flight recorder — whether
- * the event was cancelable and whether an interaction was left to spend are
- * gone by the time anyone asks (lib/diag.ts).
- */
 function saw(e: NavigateEventLike, here: number | undefined, act: string): void {
   mark("back.press", `${act}  ${e.navigationType} to=${e.destination.index} here=${here}`
     + ` user=${e.userInitiated} cancelable=${e.cancelable}`
     + ` active=${navigator.userActivation?.isActive ?? "?"}`);
-  // And inside whatever is open, beside the taps. A press the close watcher
-  // takes reaches neither — it is the dialog's own `close event`.
   note(`back ${act}`);
 }
 
 function onNavigate(event: Event): void {
   const e = event as NavigateEventLike;
-  // A push or a replace is the app moving itself, and neither the guard below
-  // nor the recorder has anything to say about one. Only a traversal can be
-  // the device's button.
   if (e.navigationType !== "traverse") return;
   const here = navigation()?.currentEntry?.index;
-  // The screen on show, and only it: a screen that declares no back action
-  // (the groups list, or one whose arrow is a plain back) keeps the browser's.
-  // The app's own traversal first, whatever the event claims (`nav.ts`).
   if (takeOwnTraversal()) { saw(e, here, "ours"); return; }
   const back = screens[screens.length - 1]?.current;
-  // Told apart in the log, because they are the two different ways a press
-  // gets no guard at all: no screen asked for one, or the browser handed over
-  // a press this cannot be spent on — the degradation ADR-0007 names.
   if (!back) { saw(e, here, "no screen"); return; }
   if (!isBackPress(e, here)) { saw(e, here, "not ours to take"); return; }
-  // Asked and answered no: cancel, and let the dialog be the whole of it.
   if (back.mayLeave && !back.mayLeave()) { saw(e, here, "ASKED"); e.preventDefault(); return; }
-  // The browser is already going where the arrow points — nearly every press.
-  // Cancelling and re-navigating to the same place is the whole of what goes
-  // wrong.
+  // Cancelling and re-navigating to where the browser is already going is the
+  // whole of what goes wrong.
   const up = back.up;
   if (up === undefined || sameScreen(e.destination.url, up)) { saw(e, here, "let through"); return; }
   saw(e, here, "swap");
   e.preventDefault();
-  // Out of the event's *task* before navigating again, not merely out of its
-  // microtask checkpoint: a navigation started while the cancellation is still
-  // unwinding is refused outright.
+  // Out of the event's *task*, not merely its microtask: a navigation started
+  // while the cancellation unwinds is refused outright.
   setTimeout(() => { markReturn(up); back.swap(up); }, 0);
 }
 
-/**
- * While this screen is on show, the device's back button agrees with its back
- * arrow. `undefined` (no arrow, or a plain back) leaves it alone, so the app
- * can still be left.
- */
 export function useBackButton(back: ScreenBack | undefined): void {
   const held = useRef(back);
   held.current = back;
@@ -159,7 +114,6 @@ export function useBackButton(back: ScreenBack | undefined): void {
     const nav = navigation();
     if (nav && !listening) {
       nav.addEventListener("navigate", onNavigate);
-      // Where the screen stands moves without it remounting: a push from it.
       nav.addEventListener("currententrychange", settleFloor);
       listening = true;
     }

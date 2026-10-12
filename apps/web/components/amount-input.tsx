@@ -6,25 +6,12 @@ import { useEffect, useLayoutEffect, useRef, useState, type InputHTMLAttributes 
 import { GROUP, groupDigits } from "../lib/format";
 
 /**
- * Every field in the app where you type money.
- *
- * **It holds the *text* you typed, never a round-trip of the parsed value** —
- * controlled from the parsed value, "1" snaps to "1.00" with the caret thrown
- * to the end, and a decimal can't be typed at all. The model gets minor units.
- *
- * Thousands are grouped as you type, with **a narrow no-break space**, never a
- * comma or point: both are somebody's decimal separator and either is accepted
- * as one, so stripping a space on parse can't eat a meant character.
- *
- * The grouping and caret handling is `GroupedInput`, shared with the rate
- * dialog ("1 EUR = 18 000 IDR").
+ * Holds the *text* typed, never a round-trip of the parsed value — that snaps "1"
+ * to "1.00" and throws the caret. Groups with a narrow no-break space, since a
+ * comma or point is somebody's decimal separator.
  */
 
-/**
- * Whatever a keyboard can produce -> the canonical text we store: digits, at
- * most one ".", the fraction clipped to the currency's exponent. "," is
- * accepted as a separator and normalised, because half of Europe types it.
- */
+/** "," is accepted as the separator, because half of Europe types it. */
 export function sanitizeAmount(raw: string, currency: CurrencyCode): string {
   const exp = exponentOf(currency);
   let text = raw.replace(/[^0-9.,]/g, "").replace(/,/g, ".");
@@ -34,8 +21,6 @@ export function sanitizeAmount(raw: string, currency: CurrencyCode): string {
   }
   if (exp === 0) text = text.split(".")[0] ?? "";
   const [whole = "", frac] = text.split(".");
-  // "007" is a typo, not an amount: strip leading zeros but keep a lone "0".
-  // A separator typed with nothing before it means "nought point something".
   const clipped = whole === "" && frac !== undefined
     ? "0"
     : whole.replace(/^0+(?=\d)/, "").slice(0, 12);
@@ -43,10 +28,8 @@ export function sanitizeAmount(raw: string, currency: CurrencyCode): string {
 }
 
 /**
- * **The typed amount and its currency must never disagree**: JPY has no minor
- * units and BHD three, and `sanitizeAmount` only runs on a keystroke — so
- * switching currency over "12.34" would save ¥12 with nothing on screen
- * saying so. Every draft write and every scan goes through this.
+ * The typed amount and its currency must never disagree: switching JPY over
+ * "12.34" would otherwise save ¥12 with nothing on screen saying so.
  */
 export function clipAmountToCurrency<T extends { amountText: string; currency: string }>(
   draft: T,
@@ -55,7 +38,6 @@ export function clipAmountToCurrency<T extends { amountText: string; currency: s
   return amountText === draft.amountText ? draft : { ...draft, amountText };
 }
 
-/** Digits and the separator are what the caret counts; group marks are not. */
 function significantLength(text: string): number {
   return text.replace(/[^0-9.]/g, "").length;
 }
@@ -78,26 +60,16 @@ type BaseProps = Omit<
 >;
 
 interface GroupedInputProps extends BaseProps {
-  /** Canonical text: digits and at most one ".". Never grouped. */
   value: string;
   onChange: (canonical: string) => void;
-  /** What may be typed. Must be idempotent, and must strip the group mark. */
+  /** Must be idempotent, and must strip the group mark. */
   sanitize: (raw: string) => string;
-  /** Underline the field so it reads as something you can type in. */
   frame?: "underline" | "none";
-  /** Grow the field to hug its own figure (the big one on the expense form). */
   autoSize?: boolean;
-  /** Class for the wrapper, not the input. */
   fieldClassName?: string;
-  /** "numeric" for a count, whose keypad has no separator to offer. */
   inputMode?: "decimal" | "numeric";
 }
 
-/**
- * A number field that shows its thousands grouped while holding the ungrouped
- * text you typed. Everything here is about the caret; what a *given* field
- * will accept is its `sanitize`.
- */
 export function GroupedInput({
   value, onChange, sanitize, frame = "underline", autoSize = false,
   fieldClassName, className, inputMode = "decimal", ...rest
@@ -106,8 +78,7 @@ export function GroupedInput({
   const caret = useRef<number | null>(null);
   const shown = groupDigits(value);
 
-  // React writes the reformatted value into the DOM; we put the caret back
-  // where the typist's finger thinks it is, in the same frame, so it never
+  // Put the caret back in the same frame React rewrote the value, so it never
   // visibly jumps to the end.
   useLayoutEffect(() => {
     if (caret.current === null || !ref.current) return;
@@ -129,8 +100,8 @@ export function GroupedInput({
   }
 
   /**
-   * Backspace onto a group mark eats the digit in front of it — deleting the
-   * space, which nobody typed, would look like the key did nothing.
+   * Backspace onto a group mark eats the digit before it, since nobody typed the
+   * space.
    */
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     const el = e.currentTarget;
@@ -162,9 +133,7 @@ export function GroupedInput({
 
   return (
     <span className={classes.join(" ")}>
-      {/* The mirror that gives an auto-sized field its width. Same class, so
-          same font, weight and letter-spacing, so its box is the figure's own
-          box to the pixel. `aria-hidden` because it is the same text twice. */}
+      {/* Same class as the input, so its box is the figure's own to the pixel. */}
       {autoSize ? (
         <span className={`${className ?? ""} amountsizer`} aria-hidden="true">
           {shown || rest.placeholder || "0"}
@@ -175,11 +144,6 @@ export function GroupedInput({
   );
 }
 
-/**
- * What a half-typed amount settles to once the field is left: "5" -> "5.00",
- * "1." -> "1.00". Empty stays empty so a placeholder survives, and a
- * zero-decimal currency has nothing to pad.
- */
 export function settleAmount(text: string, currency: CurrencyCode): string {
   if (text === "") return "";
   try { return minorToDecimalString(parseMinor(text, currency), currency); } catch { return text; }
@@ -189,7 +153,6 @@ interface AmountInputProps extends Omit<GroupedInputProps, "sanitize"> {
   currency: CurrencyCode;
 }
 
-/** A `GroupedInput` that accepts what this currency can hold. */
 export function AmountInput({ currency, value, onChange, onBlur, ...rest }: AmountInputProps) {
   return (
     <GroupedInput
@@ -220,11 +183,7 @@ interface MinorAmountInputProps extends Omit<AmountInputProps, "value" | "onChan
   onChangeMinor: (minor: number) => void;
 }
 
-/**
- * The same field for editors that think in minor units (split amounts, payer
- * contributions). The text is local; it re-reads the model only when something
- * *else* changes it (a tap on the row's name, a mode switch).
- */
+/** The text is local; it re-reads the model only when something else moves it. */
 export function MinorAmountInput({
   valueMinor, onChangeMinor, currency, ...rest
 }: MinorAmountInputProps) {
@@ -252,10 +211,8 @@ export function MinorAmountInput({
   );
 }
 
-/** The most parts one person can hold: three digits is a dinner, not a ledger. */
 export const MAX_PARTS = 999;
 
-/** Whatever a keyboard can produce -> a whole count: digits only, no leading zeros. */
 export function sanitizeParts(raw: string): string {
   return raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, String(MAX_PARTS).length);
 }
@@ -265,12 +222,6 @@ interface PartsInputProps extends Omit<GroupedInputProps, "value" | "onChange" |
   onChangeValue: (parts: number) => void;
 }
 
-/**
- * The money field's caret and Backspace, for a count of parts. As in
- * `MinorAmountInput`, the text is local and re-reads the model only when
- * something *else* moves it (a − or +, a tap on the name). A typed "0" settles
- * to empty on leaving, so the row shows the placeholder its neighbours do.
- */
 export function PartsInput({ value, onChangeValue, onBlur, ...rest }: PartsInputProps) {
   const [text, setText] = useState(() => (value ? String(value) : ""));
   const emitted = useRef(value);
