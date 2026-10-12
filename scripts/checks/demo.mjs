@@ -1,18 +1,5 @@
 #!/usr/bin/env node
-/**
- * `pnpm verify demo` — `bida.bid/demo` lands on a group somebody already used, and
- * that group holds no key.
- *
- * The seed's arithmetic is core's (`packages/core/src/demo.test.ts`). This
- * asks whether the group a person walks into is populated, says what it is,
- * and — the hinge — left the key table empty: `runSyncAll` iterates key rows,
- * so a demo with one would push tourists into D1
- * (docs/sync.md#the-demo-group-has-no-key), and the demo would still look
- * perfect.
- *
- * Then: Invite refuses out loud, and clearing takes the group (and your
- * additions) off the phone while leaving `/demo` able to lay a fresh one.
- */
+// Doc: docs/browser-checks.md#pnpm-verify-demo--the-demo-group-and-the-key-it-must-not-have
 import {
   onePhone, newPhone, openDemo, PATIENCE, readStore, readDevice, putDevice,
 } from "../lib/harness.mjs";
@@ -20,14 +7,11 @@ import { PHOTO, stubScan } from "../lib/receipts.mjs";
 
 const { base, close, browser, ctx, page, report, finish } = await onePhone();
 
-/** Say this phone was given some older build's demo, without shipping one. */
 const stampAs = async (page, demoSeed) =>
   putDevice(page, { ...await readDevice(page), demoSeed });
 
-/** Every group this phone holds a secret for. */
 const keysHeld = async (page) => (await readStore(page, "groupKeys")).map((row) => row.groupId);
 
-/** The group menu is the same card a long press opens on a row (`RowMenu`). */
 const openMenu = async () => {
   await page.locator('[aria-label="Group menu"]').click();
   await page.waitForSelector(".rowmenu-item");
@@ -38,8 +22,6 @@ const menuItem = (text) => page.locator(".rowmenu-item").filter({ hasText: text 
 await page.goto(`${base}/demo`);
 await page.waitForURL(/\/g\/claim\?id=/, { timeout: PATIENCE });
 await page.waitForSelector("button.row");
-// The first thing asked, as a joined group asks it: the personal lens on every
-// screen after is the visitor's own choice, not a Luke they never picked.
 const names = await page.locator("button.row").allInnerTexts();
 report(names.length === 4 && ["Ben", "Chewie", "Han", "Luke"].every((n) => names.some((t) => t.includes(n)))
   && await page.locator('button.row[aria-pressed="true"]').count() === 0,
@@ -54,34 +36,23 @@ await page.waitForSelector(".rows .row:not(.skelrow)");
 const rows = await page.locator(".rows .row:not(.skelrow)").count();
 report(rows >= 6, `the ledger is populated, not an empty state (${rows} rows)`);
 report(await page.getByText("Passage to Alderaan").count() > 0, "and it is the cantina group");
-// After the veil: for its 120ms it wears the same mark over the real one.
 await page.waitForSelector(".skelveil", { state: "detached" });
 report(await page.getByText("Demo group").count() === 1,
   "with the mark at its head, which does not fold away");
 
 // ---- a bill, not a quarter each -----------------------------------------
-// The dinner keeps the receipt it was split from (ADR-0016), which only shows
-// up by opening it: the row says the same thing either way.
 await page.locator(".rows .row:not(.skelrow)").filter({ hasText: "Chalmun’s cantina" }).first().click();
 await page.waitForSelector(".billgroup");
 report(await page.getByText("By items").count() > 0,
   "the tab is split by the bill, not a quarter each");
-// Each person's row opens onto their own lines — the grid kept on the entry.
 await page.locator(".billgroup .kv").filter({ hasText: "Ben" }).first().click();
 await page.waitForSelector(".billline");
-// In English: the demo's bill is saved translated, as if somebody at the
-// table had tapped the icon (`receiptEnglish`, docs/scan-reading.md).
 report(await page.getByText("Blue milk").count() > 0,
   "and Ben's row opens onto what Ben ordered, translated as the bill was saved");
 await page.goBack();
 await page.waitForSelector(".rows .row:not(.skelrow)");
 
 // ---- the camera works here too, and says nothing about this group -------
-// The demo holds no key, and `/api/groups/:id/scan` authenticates a bearer
-// against a row in D1 — so scanning here goes out under this phone's own scan
-// credential, the one a quick split uses (`useScanAs`). The demo's id must
-// not appear in any request: a row under it is the thing that must never
-// exist (docs/sync.md#the-demo-group-has-no-key).
 const apiCalls = [];
 page.on("request", (req) => {
   const url = new URL(req.url());
@@ -130,10 +101,9 @@ report(await page.getByText("No invite link").count() === 1,
   "Invite refuses out loud rather than going missing");
 await page.getByRole("button", { name: "Close" }).click();
 
-// ---- and the way out ----------------------------------------------------
-// Play with it first: an untouched demo clears and reopens identically
-// whether the address re-seeds or merely un-hides, so only a changed one
-// tests anything — and it is what the dialog promises about.
+// ---- and the way out ---------------------------------------------------- Only
+// a changed demo tests anything: an untouched one reopens identically whether the
+// address re-seeds or merely un-hides.
 await page.goto(`${base}/g/entry/edit?id=${groupId}`);
 await page.locator("input.amount").fill("12");
 await page.locator("#what").fill("Droid oil");
@@ -147,25 +117,19 @@ report(await page.getByText("Droid oil").count() > 0,
 
 await openMenu();
 await menuItem("Clear the demo").click();
-// The dialog names the address to come back to, and the host in it is the
-// browser's own (`useHost`): a static export cannot know which server it is
-// being read from, so an unwired host would leave a bare "/demo" here.
 await page.waitForSelector(".dbody");
 const promise = await page.locator(".dbody").innerText();
 report(promise.includes(`Visit ${new URL(base).host}/demo to create a fresh one.`),
   "the clear dialog sends you to this server's own /demo", promise);
 await page.getByRole("button", { name: "Clear the demo" }).click();
 await page.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE });
-// The list, drawn: asserting an absence over a screen that has not read Dexie
-// yet is a pass for the wrong reason, and on a slow machine that is all it is.
+// Asserting an absence before the screen has read Dexie passes for the wrong
+// reason.
 await page.waitForFunction(() => !document.querySelector(".skelrow"), null, { timeout: PATIENCE });
 report(await page.getByText("Passage to Alderaan").count() === 0,
   "clearing takes it off the phone, not merely off the list");
 
 // ---- a copied address is a door too ------------------------------------
-// What a friend gets sent is the address bar, not `/demo`, and from any screen.
-// On a phone that never had the demo it must lay one down rather than say "bad
-// link" (`BadLink`) — and land on `/demo`'s own question, then the ledger.
 const friend = await (await newPhone(browser)).newPage();
 await friend.goto(`${base}/g/balances?id=demodemodemo`);
 await friend.waitForFunction(
@@ -181,19 +145,15 @@ await friend.waitForFunction(
 report(await friend.locator(".rows .row:not(.skelrow)").count() === rows && (await keysHeld(friend)).length === 0,
   "a demo address copied off another phone opens the demo as whoever they pick, still with no key");
 await friend.close();
-// Not on the phone that cleared it, though: the screen draws "no group" there
-// before the menu has left, and re-seeding on that would undo the clear.
+// Not on the phone that cleared it: re-seeding on its "no group" would undo the
+// clear.
 await page.goto(`${base}/g?id=demodemodemo`);
 await page.waitForTimeout(1500);
 report(new URL(page.url()).pathname === "/g" && await page.getByText("Passage to Alderaan").count() === 0,
   "while the phone that cleared it is not handed it back unasked", page.url());
 
-// Deterministic seed, so the address is also the reset: reopening builds the
-// story as shipped, rather than the one that was played with or a second copy
-// beside it. This is what the clear dialog promises, in as many words.
 const reopenedAt = Date.now();
 await page.goto(`${base}/demo`);
-// Cleared took the answer with it, so a fresh demo asks again.
 const askedAgain = await page.waitForURL(/\/g\/claim\?id=/, { timeout: PATIENCE }).then(() => true, () => false);
 report(askedAgain, "a cleared demo asks again who you are", page.url());
 await openDemo(page, base);
@@ -206,23 +166,14 @@ report(await page.getByText("Droid oil").count() === 0,
 report((await keysHeld(page)).length === 0, "still with no key to its name");
 
 // ---- and it does not accuse itself of being stuck ----------------------
-// A group with no key row is what the demo *is*, and `useGroupSecret` reading
-// that as "the read never answered" put "Still reading this phone's data…"
-// over a ledger that had drawn twelve seconds earlier — the one bug on this
-// screen that takes longer than a glance to show up, so the check waits.
 await page.waitForTimeout(Math.max(0, 14_000 - (Date.now() - reopenedAt)));
 report(await page.getByText("Still reading this phone").count() === 0,
   "and no read gives up on it: no stall notice, a watchdog later");
 
 // ---- a new build lays its demo down over the old one -------------------
-// The demo is this version's pitch; without `demoStamp`, `/demo` being
-// idempotent by id would keep a phone on its first story forever. Given an
-// older build's seed, the address must replace the group
-// (lib/db/commands/demo.ts).
 const before = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 await stampAs(page, "some-older-build");
 await page.goto(`${base}/demo`);
-// A new build is no reason to ask again: the answer survives the re-seed.
 await page.waitForFunction(
   () => location.pathname === "/g" && document.querySelector(".rows .row:not(.skelrow)"),
   null, { timeout: PATIENCE },
@@ -234,7 +185,6 @@ report(after.length === before.length && !after.some((op) => kept.has(op.id)),
   `${before.length} ops before, ${after.length} after`);
 report(await page.locator(".rows .row:not(.skelrow)").count() === rows && (await keysHeld(page)).length === 0,
   "and what it lands on is the same populated ledger, still with no key");
-// ...and only once: the stamp it just stored makes the next visit ordinary.
 const third = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 await page.goto(`${base}/demo`);
 await page.waitForFunction(

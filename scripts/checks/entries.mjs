@@ -1,9 +1,5 @@
 #!/usr/bin/env node
-/**
- * `pnpm verify entries` — can you add, edit and read back all three kinds of
- * entry? The unit tests prove the arithmetic; this proves the form is wired to
- * it. ADR-0010.
- */
+// Doc: docs/browser-checks.md#pnpm-verify-entries--the-form-is-wired-to-the-commands
 import { onePhone, PATIENCE, pick, newGroup, openGroupsList, settle }
   from "../lib/harness.mjs";
 import { PHOTO, stubScan } from "../lib/receipts.mjs";
@@ -19,10 +15,6 @@ async function save(expectRows) {
   );
 }
 
-/**
- * An edit opened on an entry's own screen goes back there (`goUp`), so the ledger
- * is a navigation away.
- */
 async function saveAndList(expectRows) {
   await page.getByRole("button", { name: "Save" }).click();
   await page.waitForURL(/\/g\/entry\?/);
@@ -51,8 +43,8 @@ await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("9000");
 await page.locator("#what").fill("Dinner");
 
-// No feed behind the static export and no USD entry to borrow from, so it asks —
-// or `rateToBase` would silently stick at "1" (ADR-0005).
+// No feed and no USD entry to borrow from, so it asks — or `rateToBase` would
+// silently stick at "1" (ADR-0005).
 await pick(page, '[aria-label="Currency"]', "USD");
 report((await page.locator('[aria-label="Currency"]').innerText()).includes("USD"),
   "the currency picker sets the currency");
@@ -64,8 +56,6 @@ const inverse = page.getByRole("textbox", { name: "Rate, EUR to USD" });
 report(await forward.count() === 1 && await inverse.count() === 1,
   "the rate dialog offers the rate both ways round");
 
-// showModal() focuses the first focusable descendant when the card names none, so
-// the keyboard came up over the dialog.
 report(await page.evaluate(() => document.activeElement?.tagName !== "INPUT"),
   "the rate dialog opens with the caret in neither field");
 await forward.fill("0.8");
@@ -79,7 +69,6 @@ await settle(page, 80);
 await page.getByRole("button", { name: "Save" }).last().click();
 await settle(page, 200);
 report(await page.locator("dialog.scrim").count() === 0, "saving the rate closes the dialog");
-// 9000 USD at 0.8 is €7,200.00.
 report((await page.getByLabel("Set the USD rate").innerText()).includes("7,200.00"),
   "the form's rate line values the entry at the rate just given");
 report(!(await page.getByLabel("Set the USD rate").innerText()).includes("0.8"),
@@ -106,15 +95,12 @@ report(await page.getByText("Dinner").count() > 0, "an expense saves and lists")
 
 // ---- an income ---------------------------------------------------------
 await page.goto(`${base}/g/entry/edit?id=${g}`);
-// With no amount the payers door is shut. Pressed on its label: the whole field
-// is the button.
 await page.locator(".field:has(> #paidby)").click({ position: { x: 16, y: 12 } });
 const multi = page.getByRole("option", { name: "Multiple people" });
 report(await multi.isDisabled() && (await multi.innerText()).includes("set the amount first"),
   "several payers wait for an amount, and say so");
 await page.keyboard.press("Escape");
 await settle(page, 150);
-// By count: the Items tab is the one an income must not have.
 const expenseTabs = await page.locator(".splitbox .seg button").count();
 await pick(page, '[aria-label="What kind of entry"]', "Income");
 await page.locator("input.amount").fill("300");
@@ -122,7 +108,6 @@ await page.locator("#what").fill("Deposit back");
 report(await page.getByText("Paid to").count() > 0, "an income relabels the payer picker");
 report(await page.locator(".splitbox .seg button").count() === expenseTabs - 1, "an income offers no Items tab");
 
-// An income's payer question is "who received it", on every line of the screen.
 await page.locator("#paidby").click();
 await page.getByRole("option", { name: "Multiple people" }).click();
 await page.waitForURL(/\/g\/payers/);
@@ -135,7 +120,6 @@ report(incomeVoice, "the payers screen asks an income in the income's voice",
 await page.getByRole("button", { name: "Done" }).click();
 await page.waitForURL(/entry\/edit/);
 await save(2);
-// No avatar marks an income (ADR-0023): the sign does.
 report(/^[-−]/.test(await page.locator(".ramt .big").first().innerText()), "the income row signs its figure with a minus");
 report(await page.locator(".avatar").count() === 0, "no screen of the ledger draws a person's initials");
 
@@ -145,7 +129,7 @@ await page.waitForSelector("button.card");
 report(await page.locator("button.card").count() === 2, "settle-up suggests the payments");
 await page.locator("button.card").first().click();
 await page.waitForSelector("dialog.scrim .settle");
-// (9000 − 300) ÷ 3. If this moves, an income stopped reducing the debt.
+// If this moves, an income stopped reducing the debt.
 report((await page.locator(".settleamt").innerText()).includes("2,900.00"),
   "the card states the payment, income already netted off");
 report(await page.locator("dialog.scrim input, dialog.scrim textarea").count() === 0,
@@ -166,8 +150,6 @@ await settle(page, 100);
 report((await page.locator(".tside .who").last().innerText()) === wasFrom, "the arrow swaps the two sides");
 await page.locator(".tswap").click();
 await settle(page, 100);
-// Nothing on this form is a native picker (ADR-0008), so the assertion is the
-// whole screen.
 report(await page.locator("select").count() === 0, "no screen of the form has a <select>");
 await page.getByLabel("Who sent it").click();
 await page.waitForSelector(".dlist");
@@ -207,7 +189,6 @@ await page.getByText("Dinner").first().click();
 await page.waitForURL(/\/g\/entry\?/);
 await page.getByRole("link", { name: "Edit", exact: true }).click();
 await page.waitForURL(/entry\/edit/);
-// A transfer is not reachable from an expense: different entities (ADR-0010).
 await page.locator('[aria-label="What kind of entry"]').click();
 await page.waitForSelector(".dlist");
 const kinds = (await page.locator(".drow-pick .rtitle").allInnerTexts()).map((t) => t.trim());
@@ -222,17 +203,12 @@ report((await page.locator(".ramt .big").allInnerTexts()).filter((t) => /^[-−]
 // ---- a touch hold, the way phones send one ------------------------------
 //
 // iOS never fires `contextmenu` for a touch, so the row menu times the hold
-// itself — and Chromium's emulated touch is that case. Android's own contextmenu,
-// either side of our timer, is sent by hand.
+// itself.
 const cdp = await ctx.newCDPSession(page);
 const ledger = page.url();
 const touch = (type, x, y) => cdp.send("Input.dispatchTouchEvent",
   { type, touchPoints: type === "touchEnd" ? [] : [{ x, y }] });
 
-/**
- * `contextmenuAt` plays Android; `slideTo` walks the finger, still down, to a
- * point once the menu is up.
- */
 async function hold(row, { ms = 700, drift = 0, contextmenuAt, slideTo } = {}) {
   const b = await row.boundingBox();
   const x = b.x + b.width / 3, y = b.y + b.height / 2;
@@ -251,13 +227,13 @@ async function hold(row, { ms = 700, drift = 0, contextmenuAt, slideTo } = {}) {
     }, [x, y]);
     waited = contextmenuAt;
   }
-  // On the page's clock: on a starved machine a 700ms hold by node's can be over
+  // On the page's clock: on a starved machine a 700ms hold by node's can end
   // before the app's 500ms timer has run.
   await settle(page, ms - waited);
   let endX = x, endY = y + drift;
   if (slideTo) {
     const to = await slideTo();
-    // In steps, as a thumb moves: the scroller decides on the first millimetre.
+    // In steps: the scroller decides on the first millimetre.
     for (let i = 1; i <= 6; i++) {
       await touch("touchMove", x + (to.x - x) * i / 6, y + (to.y - y) * i / 6);
       await settle(page, 25);
@@ -266,7 +242,6 @@ async function hold(row, { ms = 700, drift = 0, contextmenuAt, slideTo } = {}) {
     endY = to.y;
   }
   await touch("touchEnd", endX, endY);
-  // Node's, deliberately: the window a tap's navigation lands in.
   await page.waitForTimeout(250);
 }
 const menus = () => page.locator(".rowmenu").count();
@@ -289,8 +264,6 @@ await hold(dinnerRow(), { drift: 30 });
 report(await menus() === 0 && page.url() === ledger,
   "a finger that moves is a scroll: no menu when it has rested long enough");
 
-// Choosing from the menu without lifting, as iPhone menus work: past the pan slop
-// the scroller can steal the touch.
 await hold(dinnerRow(), {
   slideTo: async () => {
     const b = await page.getByRole("menuitem", { name: "Delete" }).boundingBox();
@@ -304,15 +277,12 @@ report(await menus() === 0 && await page.locator("dialog[open]").count() === 1
 await page.getByRole("button", { name: "Cancel" }).click();
 await settle(page, 150);
 
-// A finger that never left the row it held has chosen nothing, though the card is
-// only a few px clear.
 await hold(dinnerRow(), { drift: 6, ms: 700 });
 report(await menus() === 1 && await page.locator("dialog[open]").count() === 0,
   "a held finger that only drifts chooses nothing, and the menu stays");
 await closeMenu();
 
-// iOS sends a whole press onto a menu item with no click at all, so the card sat
-// there and the press had to be made twice.
+// iOS sends a whole press onto a menu item with no click at all.
 async function tapWithoutClick(item, liftBy = 0) {
   const b = await item.boundingBox();
   await page.evaluate(([x, y, by]) => {
@@ -320,8 +290,7 @@ async function tapWithoutClick(item, liftBy = 0) {
     const how = (cy) => ({ bubbles: true, cancelable: true, clientX: x, clientY: cy,
       pointerId: 7, pointerType: "touch", isPrimary: true });
     at?.dispatchEvent(new PointerEvent("pointerdown", how(y)));
-    // A touch's `pointerup` goes where its `pointerdown` went, however far the
-    // finger has travelled.
+    // A touch's `pointerup` goes where its `pointerdown` went.
     at?.dispatchEvent(new PointerEvent("pointerup", how(y + by)));
   }, [b.x + b.width / 2, b.y + b.height / 2, liftBy]);
 }
@@ -336,7 +305,6 @@ report(await menus() === 0 && await page.locator("dialog[open]").count() === 1
 await page.getByRole("button", { name: "Cancel" }).click();
 await settle(page, 150);
 
-// Sliding off "Delete" calls the press off, and no click comes to say so.
 await hold(dinnerRow());
 await tapWithoutClick(deleteItem(), 80);
 await settle(page, 150);
@@ -345,8 +313,7 @@ report(await menus() === 1 && await page.locator("dialog[open]").count() === 0,
 await closeMenu();
 
 // Android's whole tap, click and all: answering the lift outright let the compat
-// `mousedown` dismiss the confirm dialog. Held above the fold, since a mid-screen
-// item lands on the card and passes by luck.
+// `mousedown` dismiss the confirm dialog.
 async function tap(item) {
   const b = await item.boundingBox();
   const x = b.x + b.width / 2, y = b.y + b.height / 2;
@@ -355,8 +322,6 @@ async function tap(item) {
   await touch("touchEnd", x, y);
 }
 await hold(dinnerRow());
-// Asked rather than inferred: a stray press on the card does no harm, and a check
-// that only looked at the dialog would pass on the broken code.
 await page.evaluate(() => {
   window.__stray = [];
   document.addEventListener("mousedown", (e) => window.__stray.push(
@@ -375,7 +340,6 @@ report(await menus() === 0 && await page.locator("dialog[open]").count() === 1,
 await page.getByRole("button", { name: "Cancel" }).click();
 await settle(page, 150);
 
-// The guard that ate the lifting click must not eat the next tap.
 await hold(dinnerRow());
 await page.locator(".rowmenu-veil").tap();
 await settle(page, 50);
@@ -385,8 +349,6 @@ report(/\/g\/entry\?/.test(page.url()), "a tap right after a hold's menu closes 
 await page.goto(ledger);
 await page.waitForSelector(".rows a.row");
 
-// Android sends its own contextmenu for the same hold, before our timer or
-// after it. Either way: one menu, and it stays.
 await hold(dinnerRow(), { contextmenuAt: 300 });
 report(await menus() === 1 && page.url() === ledger,
   "an Android contextmenu before the timer opens one menu, and it stays");
@@ -415,7 +377,6 @@ await page.waitForSelector(".rows a.row");
 // ---- and a transfer's row answers a long press, as an expense's does ---
 const transferRows = async () =>
   (await page.locator(".rmeta").allInnerTexts()).filter((t) => t.startsWith("Transfer")).length;
-// Two reach the ledger, so this deletes one and counts.
 const before = await transferRows();
 await page.locator("a.row").filter({ hasText: "→" }).first().click({ button: "right" });
 await page.waitForSelector(".rowmenu");
@@ -437,9 +398,6 @@ for (const line of ["created this expense", "created this income", "recorded a t
 }
 
 // ---- an entry's own rate -----------------------------------------------
-//
-// Frozen onto the entry (ADR-0005): correcting one entry's rate moves that entry
-// and no other.
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("100");
 await page.locator("#what").fill("Cab");
@@ -492,8 +450,6 @@ await page.keyboard.press("Escape");
 await settle(page, 200);
 
 // ---- the cent the form quotes is the cent the ledger keeps -------------
-//
-// The draft carries the id it will be written under, which `tiebreakSeed` uses.
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("10");
 await page.locator("#what").fill("Coffee");
@@ -518,8 +474,6 @@ await page.goto(`${base}/g?id=${g}`);
 await page.locator("a.row").filter({ hasText: "Coffee" }).click();
 await page.waitForURL(/\/g\/entry\?/);
 await page.getByRole("button", { name: "Delete" }).first().click();
-// The entry's screen must never redraw as deleted on its way out. A desktop
-// outruns the live read, so this guards more than it reproduces.
 await page.evaluate(() => {
   const w = /** @type {any} */ (window);
   w.__band = false;
@@ -567,9 +521,6 @@ await page.locator("a.row").filter({ hasText: "Coffee" }).first().waitFor({ time
 report(true, "and it is back on the ledger");
 
 // ---- one press on Save is one entry ------------------------------------
-//
-// Two taps before `router.replace` could write twice. From the keyboard: two
-// `click()`s wait for a settled screen between them.
 async function pressSaveTwice() {
   await page.getByRole("button", { name: "Save" }).focus();
   await page.keyboard.press("Enter");
@@ -594,7 +545,6 @@ await settle(page, 400);
 report(await page.locator(".rows a.row").count() === beforeDouble + 1,
   "two presses on Save record one transfer, not two");
 
-// A create is idempotent by the draft's id, yet still had a revision to spare.
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("6");
 await page.locator("#what").fill("Twice");
@@ -627,8 +577,7 @@ await page.waitForSelector(".transfer");
 report((await page.locator("#what").inputValue()) === "Convert me",
   "the words survive switching to transfer before saving");
 await pick(page, '[aria-label="What kind of entry"]', "Expense");
-// "7.00", not "7": the kind picker blurs the amount field, which settles to its
-// canonical text.
+// "7.00", not "7": the kind picker blurs the amount field, which settles.
 report((await page.locator("#what").inputValue()) === "Convert me"
   && (await page.locator("input.amount").inputValue()) === "7.00",
   "and switching back before saving loses nothing");
@@ -640,9 +589,6 @@ await page.waitForFunction(
 );
 
 // ---- a refused Save points at the field, once -------------------------
-//
-// The class also spends Save for the length of a refusal, so one left behind is a
-// button greyed for good.
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.waitForSelector("input.amount");
 const titleField = page.locator("#what").locator("xpath=..");
@@ -656,7 +602,6 @@ report((await dockSays()).join("|") === "Set the amount",
 await settle(page, 900);
 report(!/flash-/.test(await titleField.getAttribute("class")),
   "and the flash ends, taking its class with it");
-// A number not on this form blooms the way to it: the rate badge.
 await pick(page, '[aria-label="Currency"]', "MAD");
 await page.locator("dialog.scrim").waitFor({ timeout: PATIENCE }).catch(() => {});
 if (await page.locator("dialog.scrim").count() > 0) {
@@ -664,8 +609,6 @@ if (await page.locator("dialog.scrim").count() > 0) {
   await settle(page, 200);
 }
 const rateNote = page.getByRole("button", { name: "MAD rate", exact: true });
-// The rate chip heads the form, so a refusal glides to the very top before it
-// blooms.
 await page.locator("input.amount").fill("5");
 await page.locator("#what").fill("Rate only");
 const fullSize = page.viewportSize();
@@ -685,7 +628,6 @@ await page.getByRole("button", { name: "Save" }).click();
 await settle(page, 120);
 report(/flash-/.test(await rateNote.getAttribute("class")),
   "a missing rate flashes the chip that opens where it is set");
-// The rate goes first: an empty field going red explains itself, a `?` does not.
 report((await dockSays()).join("|") === "Set the MAD rate",
   "and the dock says the rate over the empty fields", (await dockSays()).join("|"));
 await settle(page, 900);
@@ -700,10 +642,8 @@ await settle(page, 80);
 report(!/flash-/.test(await titleField.getAttribute("class")),
   "emptying a field again is not a refusal");
 
-// A split that doesn't add up has no field: its sentence over Save flashes.
 await page.locator("input.amount").fill("40");
 await page.locator("#what").fill("Split check");
-// Every mode's row is one height, so switching tabs moves no row.
 const rowHeights = {};
 for (const tab of ["Evenly", "As amounts", "As parts", "As amounts"]) {
   await page.getByRole("button", { name: tab }).click();
@@ -715,8 +655,6 @@ report(new Set(Object.values(rowHeights)).size === 1 && !Object.values(rowHeight
   "every split tab draws its rows at one height", JSON.stringify(rowHeights));
 const firstShare = page.locator("input[aria-label$=\"’s amount\"]").first();
 const firstRow = page.locator(".splitrow").first();
-// From Evenly, As amounts opens with everyone sharing: the share is the
-// placeholder.
 const seeded = await firstShare.inputValue();
 report(seeded === "" && /\d/.test(await firstShare.getAttribute("placeholder"))
   && await page.locator(".splitrow.rest").count() === await page.locator(".splitrow").count(),
@@ -735,7 +673,6 @@ const shortRows = page.locator(".splitrow.rest.short input");
 report(await shortRows.count() > 0
   && (await shortRows.evaluateAll((els) => els.map((el) => el.placeholder))).every((p) => p === "?"),
   "over the total, the rows sharing the rest show a ?");
-// The line keeps its own air above it, not the form's bottom padding.
 await page.locator(".scroll").evaluate((el) => { el.scrollTop = el.scrollHeight / 3; });
 await settle(page, 80);
 const air = await page.evaluate(() => Math.round(
@@ -752,8 +689,6 @@ await page.getByRole("button", { name: "Evenly" }).click();
 await settle(page, 120);
 report(await splitLine.count() === 0, "and a tab that adds up takes it away");
 await page.getByRole("button", { name: "As amounts" }).click();
-// A tap on the mark is the row's tap: a cross leaves the row out, the plus brings
-// it back sharing.
 const firstName = page.locator(".splitrow > button").first();
 const tapMark = async () => {
   const box = await firstName.boundingBox();
@@ -777,7 +712,6 @@ await page.getByRole("option", { name: "Multiple people" }).click();
 await page.waitForURL(/\/g\/payers/);
 await page.waitForSelector(".rows .row input");
 const payerFields = page.locator(".rows .row input");
-// Done is never disabled: short, it flashes the verdict and stays put.
 await payerFields.nth(0).fill("25");
 for (let i = 1; i < await payerFields.count(); i++) await payerFields.nth(i).fill("");
 await page.getByRole("button", { name: "Done" }).click();
@@ -803,9 +737,6 @@ await page.locator("input.amount").fill("");
 await page.locator("#what").fill("");
 
 // ---- a refused Done blooms the rows, not the words on them --------------
-//
-// The class is on the `<tr>`: most of a row is dots, and its text alone was a
-// refusal you had to be looking for.
 await stubScan(page, "cafe-clock");
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.waitForSelector("input.amount");
@@ -825,9 +756,6 @@ report(await page.locator(".itemtable tbody tr[class*='flash-']").count() === 0,
   "and that flash ends too, so Done comes back");
 
 // ---- a screen whose draft is gone hands back -------------------------
-//
-// The draft lives in memory only, so a reload or an old link arrives with none,
-// and is put back on the ledger rather than an empty frame.
 for (const [name, path] of [["payers", "/g/payers"], ["who had what", "/g/entry/items"]]) {
   await page.goto(`${base}${path}?id=${g}`);
   const back = await page.waitForURL((url) => url.pathname === "/g", { timeout: 8000 })
@@ -837,9 +765,6 @@ for (const [name, path] of [["payers", "/g/payers"], ["who had what", "/g/entry/
 }
 
 // ---- and a link naming a group this phone hasn't got says so ----------
-//
-// `pnpm rules` holds every `/g` screen to rendering a `BadLink`; this checks an
-// unknown id reaches it.
 for (const path of ["/g/payers", "/g/entry/items", "/g/entry/edit", "/g/claim"]) {
   await page.goto(`${base}${path}?id=nosuchgroup`);
   const said = await page.getByText("This link is missing its password")
