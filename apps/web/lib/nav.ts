@@ -12,16 +12,12 @@ function navigation(): NavigationLike | undefined {
   return (window as unknown as { navigation?: NavigationLike }).navigation;
 }
 
-/**
- * Two URLs are the same screen when path and query agree, ignoring query order
- * and a trailing slash — a built link and a pasted one must compare equal.
- */
+/** A built link and a pasted one must compare equal. */
 export function sameScreen(a: string, b: string): boolean {
   return screenKey(a) === screenKey(b);
 }
 
 function screenKey(url: string): string {
-  // The base is only there to satisfy the parser; app URLs are all relative.
   const u = new URL(url, "http://app.invalid");
   const path = u.pathname.replace(/\/+$/, "") || "/";
   u.searchParams.sort();
@@ -29,10 +25,7 @@ function screenKey(url: string): string {
   return query ? `${path}?${query}` : path;
 }
 
-/**
- * How many entries back `target` sits, or `null` if it isn't behind us.
- * Pure, and exported for its test: the browser reading is the caller's.
- */
+/** Pure, and exported for its test. */
 export function stepsBackTo(entries: (string | null)[], here: number, target: string): number | null {
   const want = screenKey(target);
   for (let i = Math.min(here, entries.length) - 1; i >= 0; i--) {
@@ -43,11 +36,9 @@ export function stepsBackTo(entries: (string | null)[], here: number, target: st
 }
 
 /**
- * **Leaving closes any open dialog first, not with the screen.** A modal
- * `<dialog>` holds a close watcher, and Android doesn't deliver a traversal
- * begun underneath one: `history.go` returns and nothing moves. `close()`
- * empties the top layer synchronously, and the element's `close` listener
- * updates the state drawing it (components/dialog.tsx).
+ * **Leaving closes any open dialog first.** Android doesn't deliver a traversal
+ * begun under a modal `<dialog>`'s close watcher: `history.go` returns and
+ * nothing moves.
  */
 function closeDialogs(): void {
   if (typeof document === "undefined") return;
@@ -57,56 +48,33 @@ function closeDialogs(): void {
 }
 
 /**
- * **A traversal Android can swallow whole, and the act happening anyway.**
- *
- * A back press this app *refused* (cancelled so the dialog could ask,
- * [back-button.ts](./back-button.ts)) leaves Android holding a traversal it
- * won't deliver again: the next `history.go` returns, no `navigate`, no error,
- * the screen still there. Only ever after a refused press.
- *
- * So the traversal is *checked*: still on the same entry a beat later means
- * swallowed, and the destination replaces this screen instead — a push, not
- * the stuck traversal queue.
- *
- * **A wrong guess costs an entry, never the act**: a late traversal lands on
- * an entry that is already the destination. That is the opposite trade from
- * `traverseTo` (see the head), which is why a clock may decide this. A
- * delivered traversal lands in ~10ms; a phone slow enough to overrun this
- * pays one duplicate entry (docs/browser-checks.md).
+ * **A traversal Android can swallow whole.** After a back press this app refused,
+ * the next `history.go` can return with no `navigate` and no error. So still on
+ * the same entry a beat later means swallowed, and the destination replaces this
+ * screen. A wrong guess costs an entry, never the act; a delivered traversal
+ * lands in ~10ms.
  */
 const SWALLOWED_MS = 150;
 
-/**
- * Go, and put the destination here if the going is swallowed.
- *
- * **Every exit names somewhere to land**, which is why one check covers them
- * all: `goUp` names the parent, `goBack` reads the entry behind it. An exit
- * with no destination is the one thing this can't rescue.
- */
+/** **Every exit names somewhere to land**, so one check covers them all. */
 function leaveTo(to: string | undefined, traverse: () => void, replace: (to: string) => void): void {
   closeDialogs();
-  // The entry itself, not its index: a traversal that landed and a tap that
-  // pushed straight on come back to the same index on a different entry.
+  // The entry itself, not its index: a tap that pushed straight on comes back to
+  // the same index on a different entry.
   const here = navigation()?.currentEntry;
   markOwnTraversal();
   traverse();
   if (to === undefined || !here) return;
   setTimeout(() => {
-    // Any entry but the one we asked from is a traversal that arrived — or a
-    // hand that has moved on, which is not ours to undo either.
     if (navigation()?.currentEntry !== here) return;
-    // The latch was armed for a `navigate` that is never coming, and one
-    // left armed swallows a real press.
+    // A latch left armed swallows a real press.
     disarmOwnTraversal();
     markReturn(to);
     replace(to);
   }, SWALLOWED_MS);
 }
 
-/**
- * Move to `href` as an ancestor: back out to it if we came through it,
- * otherwise take its place. Nothing below it stays behind us.
- */
+/** Back out to `href` if we came through it, otherwise take its place. */
 export function goUp(href: string, replace: (href: string) => void): void {
   const nav = navigation();
   const here = nav?.currentEntry?.index;
@@ -115,18 +83,13 @@ export function goUp(href: string, replace: (href: string) => void): void {
     if (steps !== null) { leaveTo(href, () => window.history.go(steps), replace); return; }
   }
   closeDialogs();
-  // Not a traversal, but still the way back, so the parent comes back as it was.
   markReturn(href);
   replace(href);
 }
 
 /**
- * A plain back, as the app's own: the arrow on a screen reached only from
- * below, Done, Discard. Everything that goes back uses this or `goUp`, never
- * `router.back()` — see `takeOwnTraversal`.
- *
- * **It reads its destination** off the stack (the entry behind us), which
- * gives it the swallow check too.
+ * Everything that goes back uses this or `goUp`, never `router.back()`. It reads
+ * its destination off the stack, which gives it the swallow check too.
  */
 export function goBack(back: () => void, replace: (to: string) => void): void {
   const nav = navigation();
@@ -137,27 +100,16 @@ export function goBack(back: () => void, replace: (to: string) => void): void {
 }
 
 /**
- * The app's own traversal, told apart from the device's back button.
- *
- * **Never trust `NavigateEvent.userInitiated`**: WebKit sets it whenever a tap
- * is being handled, so the app's own back reads as a device press and the
- * guard asks "discard?" of Done. The app flags it itself, just before.
- *
- * **A latch spent by the one `navigate` it explains, never a time window** —
- * a slow phone delivers late. Armed only where a traversal is coming.
+ * **Never trust `NavigateEvent.userInitiated`**: WebKit sets it whenever a tap is
+ * being handled, so Done would be asked "discard?". A latch spent by the one
+ * `navigate` it explains, never a time window.
  */
 let ownTraversal = false;
 
 /**
- * **And spent by the next press or keystroke**, because a traversal that
- * never arrives (`history.go` can simply not move) leaves it armed — and the
- * next device back is then waved through unguarded, losing typed work with no
- * dialog.
- *
- * The app's traversal arrives long before a hand can move again, so a moved
- * hand proves it isn't coming. Not a clock (same reasoning as
- * lib/click-guard.ts), and it fails safe: dropped early costs an unneeded
- * "discard?", held too long costs the work.
+ * **And spent by the next press or keystroke**: a traversal that never arrives
+ * would leave it armed, waving the next device back through unguarded. Fails
+ * safe: dropped early costs an unneeded "discard?".
  */
 function disarmOwnTraversal(): void {
   ownTraversal = false;
@@ -167,8 +119,7 @@ function disarmOwnTraversal(): void {
 }
 
 function markOwnTraversal(): void {
-  // At the start of the history there is nothing to go back to, so `back()`
-  // moves nothing and no `navigate` arrives to spend the latch.
+  // At the start of the history `back()` moves nothing, and no `navigate` comes.
   ownTraversal = (navigation()?.currentEntry?.index ?? 0) > 0;
   if (!ownTraversal || typeof document === "undefined") return;
   // Capture, so a handler that stops the press still spends this.
@@ -176,7 +127,6 @@ function markOwnTraversal(): void {
   document.addEventListener("keydown", disarmOwnTraversal, true);
 }
 
-/** Was this traversal the app's? Consumed by the one `navigate` it explains. */
 export function takeOwnTraversal(): boolean {
   const ours = ownTraversal;
   disarmOwnTraversal();
@@ -184,17 +134,10 @@ export function takeOwnTraversal(): boolean {
 }
 
 /**
- * **Arriving by going back, told apart from arriving by being sent** — what
- * decides whether the ledger comes back where it was left
- * ([ledger-position.ts](./ledger-position.ts)).
- *
- * A return is any traversal (the device's back, and `goUp`/`goBack` where the
- * parent is behind us) or the replace an exit falls back on. Everything else —
- * a tap into a group, a launch reopening one — is a push or a replace nobody
- * marks, and opens at the top.
- *
- * Kept with the URL it arrived at, so a mark nothing spent can't send a later
- * push somewhere; and numbered, so a screen spends each one once.
+ * **Arriving by going back, told apart from arriving by being sent** — whether
+ * the ledger comes back where it was left (ledger-position.ts). Kept with its URL
+ * so a mark nothing spent can't send a later push somewhere, and numbered so a
+ * screen spends each one once.
  */
 let returned: { url: string; n: number } | undefined;
 let returns = 0;
@@ -203,11 +146,10 @@ export function markReturn(url: string): void {
   returned = { url, n: ++returns };
 }
 
-/** The number of the return that arrived at `url`, or null if it wasn't one. */
 export function returnTo(url: string): number | null {
   return returned && sameScreen(returned.url, url) ? returned.n : null;
 }
 
-// Here rather than beside the ledger: this module loads with every screen, and
-// the ledger's own chunk can arrive after the traversal that brought it.
+// Here rather than beside the ledger: the ledger's chunk can arrive after the
+// traversal that brought it.
 if (typeof window !== "undefined") window.addEventListener("popstate", () => markReturn(location.href));
