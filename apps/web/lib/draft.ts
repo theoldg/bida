@@ -45,6 +45,11 @@ export interface EntryDraft extends Receipt {
   rateSource?: EntryRateSource;
   rateCurrency?: string;
   rateDay?: string;
+  /**
+   * An opened entry's rate as saved, so a date moved away and back finds it
+   * again rather than the feed's (`savedRateBack`).
+   */
+  savedRate?: { rate: string; source: EntryRateSource; currency: string; day: string };
   /** A transfer's note. */
   description: string;
   /** On an income, who received. */
@@ -298,12 +303,18 @@ export function blankDraft(
  * currency and day, so opening it to edit looks nothing up. One from before
  * rates were the entry's says it was the group's (ADR-0005).
  */
-function ownRate(e: Expense | Settlement): Pick<EntryDraft, "rate" | "rateSource" | "rateCurrency" | "rateDay"> {
-  return {
+function ownRate(
+  e: Expense | Settlement,
+): Pick<EntryDraft, "rate" | "rateSource" | "rateCurrency" | "rateDay" | "savedRate"> {
+  const held = {
     rate: e.rateToBase,
     rateSource: e.rateSource ?? "group",
     rateCurrency: e.currency,
     rateDay: dateInputValue(e.occurredAt),
+  };
+  return {
+    ...held,
+    savedRate: { rate: held.rate, source: held.rateSource, currency: held.rateCurrency, day: held.rateDay },
   };
 }
 

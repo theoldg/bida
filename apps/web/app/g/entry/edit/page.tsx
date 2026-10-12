@@ -219,7 +219,9 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
    */
   const missing = {
     amount: amountMissing, title: titleMissing, receipt: receiptMissing,
-    rate: foreign && rate === undefined, blocker: blocker !== null, split: splitProblem !== null,
+    // `rateOk`, not just a rate held: one that multiplies the amount out of
+    // range is no base amount either, and a refusal must say something.
+    rate: !rateOk, blocker: blocker !== null, split: splitProblem !== null,
   };
   /**
    * A Save has been refused over a field or step still missing. Off again once
@@ -321,7 +323,11 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     // — so this is the compiler being shown that, not a fallback.
     const actor = data.me;
     if (!ready) {
-      refusals.refuse(missing);
+      // The payers' and the split's sentences live only in the dock's one
+      // line: a flash on the one not drawn would never end, and Save would
+      // stay spent.
+      const line = dockLine(missing, true);
+      refusals.refuse({ ...missing, blocker: line === "blocker", split: line === "split" });
       setTold(true);
       return;
     }

@@ -94,6 +94,14 @@ function PayersScreen() {
       saveDraft(gid, { ...current, payers: null });
       return;
     }
+    // One person holding the whole amount is the single payer the form draws
+    // as its plain picker. Kept as a table it would be checked as one, and a
+    // later change of amount held Save over figures nobody can see.
+    const ids = Object.keys(next);
+    if (ids.length === 1 && next[ids[0]!] === amountMinor) {
+      saveDraft(gid, { ...current, payers: null, paidBy: ids[0]! });
+      return;
+    }
     // Same rule the fold keeps `paidBy` by (core/payers.ts): the largest
     // contributor is who the entry names outside this screen — the picker,
     // the row's avatar, history's summary line.

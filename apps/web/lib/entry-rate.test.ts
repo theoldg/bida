@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { blankDraft, type EntryDraft } from "./draft";
-import { rateDayOf, rateLookupWanted, settleRate } from "./entry-rate";
+import { rateDayOf, rateLookupWanted, savedRateBack, settleRate } from "./entry-rate";
 
 /**
  * When the form asks the feed for an entry's rate, and what it settles on when
@@ -69,5 +69,26 @@ describe("settleRate", () => {
 
   it("asks only for a currency new to the group with the feed out of reach", () => {
     expect(settleRate(draft({ currency: "MAD" }), "MAD", null, none)).toBeNull();
+  });
+});
+
+describe("savedRateBack", () => {
+  const saved = { rate: "0.0900", source: "imported" as const, currency: "MAD", day: rateDayOf(DAY) };
+
+  it("puts an opened entry's rate back when its date comes back to its day", () => {
+    // Moved to the next day, the feed's rate for it came in; then moved back.
+    const d = priced({ savedRate: saved, rate: "0.0930", rateDay: rateDayOf(NEXT_DAY) });
+    expect(savedRateBack(d)).toEqual({ rate: "0.0900", rateSource: "imported", rateCurrency: "MAD", rateDay: rateDayOf(DAY) });
+  });
+
+  it("does nothing on another day, another currency, or with the saved rate held", () => {
+    expect(savedRateBack(priced({ savedRate: saved, occurredAt: NEXT_DAY }))).toBeNull();
+    expect(savedRateBack(priced({ savedRate: saved, currency: "PLN" }))).toBeNull();
+    expect(savedRateBack(priced({ savedRate: saved, rate: "0.0900", rateSource: "imported" }))).toBeNull();
+    expect(savedRateBack(priced())).toBeNull();
+  });
+
+  it("leaves a rate typed for this currency", () => {
+    expect(savedRateBack(priced({ savedRate: saved, rate: "0.1", rateSource: "typed" }))).toBeNull();
   });
 });

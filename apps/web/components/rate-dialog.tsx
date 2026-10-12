@@ -92,6 +92,13 @@ export function RateDialog({
   const [from, setFrom] = useState<Provenance>(() =>
     current ? (current.source === "fetched" ? { kind: "fetched", asOf: null } : { kind: current.source })
       : { kind: "loading" });
+  /**
+   * The rate behind the fields at full precision, until somebody types: the
+   * fields show six figures, and saving those would rewrite a rate nobody
+   * touched — and call it typed.
+   */
+  const [held, setHeld] = useState<{ rate: Rate; fresh: boolean } | null>(
+    () => (current ? { rate: current.rate, fresh: false } : null));
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string>();
   // A rate that arrives after somebody has started typing is not welcome.
@@ -105,6 +112,7 @@ export function RateDialog({
       const got = await fetchRate(currency, base, day);
       if (!live.current || touched.current) return;
       setPair(pairOf(got.rate));
+      setHeld({ rate: got.rate, fresh: true });
       setFrom({ kind: "fetched", asOf: got.asOf });
     } catch (err) {
       if (!live.current) return;
@@ -122,19 +130,22 @@ export function RateDialog({
 
   function type(typed: string, side: "forward" | "inverse") {
     touched.current = true;
+    setHeld(null);
     setPair(pairFrom(typed, side));
     setFrom({ kind: "typed" });
   }
 
   const rate = pair.forward.trim();
-  const ok = isValidRate(rate);
+  const ok = held !== null || isValidRate(rate);
 
   async function save() {
     if (!ok || busy) return;
+    // The entry's own rate, untouched: Save is Cancel.
+    if (held && !held.fresh) { onClose(); return; }
     setBusy(true);
     setFailed(undefined);
     try {
-      await onSave(rate, from.kind === "fetched" ? "fetched" : "typed");
+      await onSave(held ? held.rate : rate, held ? "fetched" : "typed");
       onClose();
     } catch (err) {
       if (live.current) setFailed(errorText(err));

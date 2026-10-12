@@ -28,7 +28,9 @@ What an entry is worth is its amount at its own rate, re-derived on read
 (`GET /api/rates/:from/:to?date=`, in the Worker, so the feed is swappable and
 cacheable at the edge) for the rate **on the entry's own day** whenever its
 currency or day changes, or a scan lands — never again on an entry merely
-opened to edit, and a day change leaves a typed rate alone. When the feed can't
+opened to edit, and a day change leaves a typed rate alone; an opened entry
+moved back to its own day and currency gets its saved rate back
+(`savedRateBack`). When the feed can't
 answer, the entry keeps the rate it already had for that currency, else borrows
 the group's most recent entry in it (`latestRate`). **Only a currency new to the
 group, with the feed out of reach, opens the rate dialog.** The rate rides on
@@ -36,7 +38,9 @@ the entry, so nothing is written until Save.
 
 **A rate is edited in whichever direction you think in** — 1 EUR = 4.5 PLN or
 1 PLN = 0.22 EUR — two fields for one number, each derived from the other, in
-the dialog the entry form's rate chip and the entry screen's both open.
+the dialog the entry form's rate chip and the entry screen's both open. Its
+Save on a rate nobody touched writes nothing: the fields show six figures,
+the rate behind them keeps all of its.
 Correcting a rate from the entry's screen is an edit of that entry and nothing
 else. Rates are exact decimal strings, stored to 12 significant digits and shown
 to 6 (5 on a chip), which is what makes the round trip through the inverse land

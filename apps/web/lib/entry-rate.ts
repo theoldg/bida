@@ -33,6 +33,24 @@ export function rateLookupWanted(draft: EntryDraft, base: CurrencyCode): boolean
   return draft.rateDay !== rateDayOf(draft.occurredAt) && draft.rateSource !== "typed";
 }
 
+/**
+ * The rate an opened entry was saved with, back on the draft once its
+ * currency and day are the saved ones again — or null. A date moved away and
+ * back is no edit, so it must not swap an imported or copied rate for the
+ * feed's. A rate typed meanwhile for this currency stands.
+ */
+export function savedRateBack(
+  draft: EntryDraft,
+): Pick<EntryDraft, "rate" | "rateSource" | "rateCurrency" | "rateDay"> | null {
+  const s = draft.savedRate;
+  if (!s || s.currency !== draft.currency || s.day !== rateDayOf(draft.occurredAt)) return null;
+  if (draft.rateCurrency === s.currency && draft.rateDay === s.day && draft.rate === s.rate) return null;
+  if (draft.rateCurrency === draft.currency && draft.rateSource === "typed" && draft.rateDay !== undefined) {
+    return null;
+  }
+  return { rate: s.rate, rateSource: s.source, rateCurrency: s.currency, rateDay: s.day };
+}
+
 /** What a look-up settled on, or null for "ask". */
 export function settleRate(
   latest: EntryDraft,
@@ -66,7 +84,15 @@ export function useEntryRate(
   borrowRef.current = borrow;
 
   const day = rateDayOf(draft.occurredAt);
-  const want = rateLookupWanted(draft, base) ? `${draft.currency} ${day}` : null;
+  const back = savedRateBack(draft) !== null;
+  const want = !back && rateLookupWanted(draft, base) ? `${draft.currency} ${day}` : null;
+
+  useEffect(() => {
+    if (!back) return;
+    const latest = getDraft(groupId);
+    const restored = latest ? savedRateBack(latest) : null;
+    if (latest && restored) saveDraft(groupId, { ...latest, ...restored });
+  }, [back, groupId]);
 
   useEffect(() => {
     if (!want) return;
