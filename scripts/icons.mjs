@@ -62,7 +62,7 @@ const devSvg = svg.replace(PAPER, 'fill="#86b4ea"');
  * The status bar's small icon (the notification's `badge`, public/sw.js).
  * Android reads only its alpha, so the receipt is drawn opaque on transparent
  * with the ÷ cut through it, cropped to the receipt so it fills the slot.
- * Redrawn for ~24px rather than copied from the logo: there, five teeth blur
+ * Redrawn for ~24px rather than copied from the logo: there, four teeth blur
  * into a fringe and the ÷ into a smudge, so this one has three teeth and a
  * larger ÷, in the logo's own 512 grid.
  */

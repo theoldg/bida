@@ -29,6 +29,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "Change the app icon to have four teeth … like the receipt
+  icon in the home screen. Any questions?" The ask pointed at its own spec, so
+  none were owed: count the reference's teeth, match them, regenerate, and
+  name what stayed (badge, banner) for them to veto.
+
 - *2026-10-12* — "Take your time, do many runs", then "I'm bored". Twenty
   runners at once, four rounds each, and a status table after every batch:
   the soak said the flakes were the checks' waits, not the load. Show the
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   wanted questions before code: four, each with a pick. They took the safe
   default on three and kept today's rule on the fourth, which changed how
   the build went. When asked to ask, ask.
-
-- *2026-10-11* — "Do 1 and 2", pointing at another session's plan. Built
-  both, then measured: fix 1 changed nothing, the stutter was layout. Ship
-  what the numbers back and say what they killed; a plan read off the code is
-  a guess until it is timed.
