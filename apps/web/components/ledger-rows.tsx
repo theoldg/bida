@@ -3,8 +3,8 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
-  clearSaved, FADE_IN_MS, letRoll, FADE_OUT_MS, FOLD_MS, foldFrame, foldTotal, OPEN_MS, peekSaved,
-  presence, runs, SAVED_BEAT, SAVED_DWELL, standard, STILL_MS, type LedgerItem, type Shown,
+  clearSaved, FADE_IN_MS, letRoll, FADE_OUT_MS, FOLD_MS, OPEN_MS, peekSaved,
+  presence, runs, SAVED_BEAT, SAVED_DWELL, STILL_MS, type LedgerItem, type Shown,
 } from "@/lib/ledger-motion";
 import { yieldPosition } from "@/lib/ledger-position";
 import { revealWhole, scrollTarget } from "@/lib/reveal";
@@ -113,7 +113,7 @@ export function LedgerRows<T>({ groupId, items, row, opens = true }: {
         box.scrollTop -= h;
         done();
       } else if (calmly()) done();
-      else void depart(slots).then(done);
+      else void depart(slots, box).then(done);
     }
   });
 
@@ -180,34 +180,34 @@ function arrive(slot: HTMLElement) {
   void open.finished.then(() => { slot.style.overflow = ""; }, () => {});
 }
 
-async function depart(slots: HTMLElement[]): Promise<void> {
-  const last = slots.at(-1)!;
-  const lastRow = last.querySelector<HTMLElement>(":scope > .row");
-  const line = lastRow ? getComputedStyle(lastRow).borderBottomColor : "";
-  const carry = lastRow !== null && last.nextElementSibling?.querySelector(":scope > .row") != null;
-  for (const s of slots) { s.style.overflow = "hidden"; s.style.boxSizing = "content-box"; }
-  if (carry && lastRow) {
-    lastRow.style.borderBottomWidth = "0";
-    last.style.borderBottom = `1px solid ${line}`;
-  }
-  const heights = slots.map((s) => s.offsetHeight - (s === last && carry ? 1 : 0));
+/**
+ * What leaves fades, then the rows beneath close over it. The layout changes
+ * once, as the fade starts, and the rows ride transforms held where they were
+ * until it ends: a height moved frame by frame re-lays out every row under it
+ * (docs/rows.md#gotchas). The line under the last row leaving is the line above
+ * the row beneath, so that row carries it, onto the line above the gap.
+ */
+async function depart(slots: HTMLElement[], box: HTMLElement): Promise<void> {
+  const all = [...slots[0]!.parentElement!.children] as HTMLElement[];
+  const lastRow = slots.at(-1)!.querySelector<HTMLElement>(":scope > .row");
+  const below = slots.at(-1)!.nextElementSibling as HTMLElement | null;
+  const carry = lastRow && below?.querySelector(":scope > .row") ? below : null;
+  const was = all.map((s) => s.getBoundingClientRect());
 
-  const rows = slots.map((s) => s.querySelector<HTMLElement>(":scope > .row")).filter((r): r is HTMLElement => r !== null);
-  await Promise.all(rows.map((r) =>
-    r.animate([{ opacity: getComputedStyle(r).opacity }, { opacity: 0 }], { duration: FADE_OUT_MS, fill: "forwards" })
-      .finished.catch(() => {})));
+  const fades = slots.map((s) => s.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FADE_OUT_MS, fill: "forwards" }));
+  for (const s of slots) s.style.height = "0px";
+  if (carry) carry.style.boxShadow = `0 -1px 0 ${getComputedStyle(lastRow!).borderBottomColor}`;
 
-  const total = foldTotal(heights, carry);
-  await new Promise<void>((done) => {
-    const start = performance.now();
-    const step = (now: number) => {
-      const t = Math.min(1, (now - start) / FOLD_MS);
-      const frame = foldFrame(heights, total * standard(t), carry);
-      slots.forEach((s, i) => { s.style.height = `${frame.heights[i]}px`; });
-      if (carry) last.style.marginTop = `${-frame.lift}px`;
-      if (t < 1) requestAnimationFrame(step);
-      else done();
-    };
-    requestAnimationFrame(step);
+  // Only what shows, before or after: the rest move unseen.
+  const view = box.getBoundingClientRect();
+  const shows = (top: number, height: number) => view.bottom > top && top + height > view.top;
+  const moves = all.flatMap((s, i) => {
+    const { top, height } = was[i]!;
+    const now = s.getBoundingClientRect().top;
+    if (now === top || !(shows(top, height) || shows(now, height))) return [];
+    return [s.animate([{ transform: `translateY(${top - now}px)` }, { transform: "none" }],
+      { duration: FOLD_MS, delay: FADE_OUT_MS, easing: "cubic-bezier(.2, 0, 0, 1)", fill: "backwards" })];
   });
+  await Promise.all([...fades, ...moves].map((a) => a.finished.catch(() => {})));
+  if (carry) carry.style.boxShadow = "";
 }

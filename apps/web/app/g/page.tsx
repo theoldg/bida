@@ -33,7 +33,7 @@ import { dayLabel, money, plural } from "@/lib/format";
 import { ledgerItems, searchLedger, type LedgerRow } from "@/lib/ledger";
 import { route } from "@/lib/group-link";
 import { useLedgerPosition, yieldPosition } from "@/lib/ledger-position";
-import { awaitRoll, clearDeleted, letRoll, peekDeleted, peekSaved, SAVED_BEAT } from "@/lib/ledger-motion";
+import { awaitRoll, clearDeleted, letRoll, peekDeleted, peekSaved } from "@/lib/ledger-motion";
 import { keepShown, ROLL_BEAT, shownBefore } from "@/lib/roll";
 import { transferMeta } from "@/lib/row-meta";
 import { useClaimGate, useDevice, useGroupData, warmGroup, warmGroupsList } from "@/lib/hooks";
@@ -131,7 +131,7 @@ function Ledger({ data }: { data: GroupData }) {
   useEffect(() => {
     if (!ghost) return;
     clearDeleted();
-    const t = setTimeout(() => { yieldPosition(); letRoll(groupId); setGhost(null); }, SAVED_BEAT);
+    const t = setTimeout(() => { yieldPosition(); letRoll(groupId); setGhost(null); }, ROLL_BEAT);
     return () => clearTimeout(t);
   }, [ghost, groupId]);
   const items = useMemo(() => {

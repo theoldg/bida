@@ -34,39 +34,6 @@ export function runs(keys: readonly string[], test: (key: string) => boolean): s
   return out;
 }
 
-// ------------------------------------------------------------- folding
-
-/**
- * The bottom slot gives first, so a date line left with no rows is the last thing
- * to go.
- */
-export function foldFrame(heights: readonly number[], removed: number, carry: boolean):
-  { heights: number[]; lift: number } {
-  const out = [...heights];
-  let left = removed;
-  for (let i = out.length - 1; i >= 0; i--) {
-    const give = Math.max(0, Math.min(out[i]!, left));
-    out[i] = out[i]! - give;
-    left -= heights[i]!;
-  }
-  return { heights: out, lift: carry ? Math.max(0, Math.min(1, left)) : 0 };
-}
-
-export function foldTotal(heights: readonly number[], carry: boolean): number {
-  return heights.reduce((n, h) => n + h, 0) + (carry ? 1 : 0);
-}
-
-export function standard(t: number): number {
-  const at = (a: number, b: number, u: number) => 3 * a * u * (1 - u) ** 2 + 3 * b * u * u * (1 - u) + u ** 3;
-  const x = Math.min(1, Math.max(0, t));
-  let lo = 0, hi = 1, u = x;
-  for (let i = 0; i < 30; i++) {
-    u = (lo + hi) / 2;
-    if (at(0.2, 0, u) < x) lo = u; else hi = u;
-  }
-  return at(0, 1, u);
-}
-
 export const FADE_OUT_MS = 140;
 export const FOLD_MS = 220;
 export const OPEN_MS = 220;

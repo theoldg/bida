@@ -16,11 +16,20 @@ export function entryOf(row: LedgerRow): Expense | Settlement {
   return row.row === "expense" ? row.expense : row.settlement;
 }
 
+/**
+ * Rows `byWhen` can't tell apart (an import's timeless day carries no
+ * `createdAt`) fall back to the order the read hands them in — expenses first,
+ * then by id — said outright, so a row the list holds on to after it went
+ * (`peekDeleted`) comes back to its own place, not the foot of its day.
+ */
 export function ledgerRows(expenses: Expense[], settlements: Settlement[]): LedgerRow[] {
+  const id = (row: LedgerRow) => entryOf(row).id;
   return [
     ...expenses.map((expense): LedgerRow => ({ row: "expense", expense })),
     ...settlements.map((settlement): LedgerRow => ({ row: "settlement", settlement })),
-  ].sort((a, b) => byWhen(entryOf(a), entryOf(b)));
+  ].sort((a, b) => byWhen(entryOf(a), entryOf(b))
+    || (a.row === b.row ? 0 : a.row === "expense" ? -1 : 1)
+    || (id(a) < id(b) ? -1 : id(a) > id(b) ? 1 : 0));
 }
 
 /**

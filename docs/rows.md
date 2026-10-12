@@ -91,17 +91,18 @@ line, whose band is its own edge, and under the last row.
   moved, and `SAVED_DWELL` (600ms) after landing if the list scrolled, since
   the eye arrives with the scroll; a held roll waits with it. A colour
   settling, so exempt from the motion clamp.
-- **A row that goes** fades (140ms), then its space folds (220ms). The divider
-  under it is the line above the row beneath, so it stays, rides up on that
-  row and lands on the line above — two lines closing into one. A date line
-  left with no rows folds in the same motion, after the row's blank space:
-  it reads whole for as long as there is room for it. The last row takes no
+- **A row that goes** fades (140ms), a date line left with no rows fading
+  with it, then the rows beneath close the gap (220ms). The divider under it
+  is the line above the row beneath, so it stays, rides up on that row and
+  lands on the line above — two lines closing into one. The last row takes no
   motion: it is gone and the empty state is up at once — too rare to earn one.
   **Deleted on its own screen**, the entry is gone from the live read before
   the ledger is back, so the ledger draws it where it was (`markDeleted`, off
   `withTombstones`), puts the list back as it was left — never scrolling, the
-  row was in view to be tapped — and after `SAVED_BEAT` lets it go, with the
-  figure's roll held until then.
+  row was in view to be tapped — and after the card's beat (`ROLL_BEAT`,
+  250ms) lets it go, its figure rolling with it. Rows `byWhen` can't tell
+  apart keep an explicit order (`ledgerRows`), or the redrawn row lands at
+  the foot of its day.
 - **A row that arrives** from another phone opens a gap (220ms) and fades in
   (180ms), at the slot's opacity so a dimmed row fades to its own 58% and not
   past it. No flash: the history clock's dot already says it came. **Above what
@@ -165,10 +166,12 @@ separation enough — and prints a `−` on its ledger figure
 ## Gotchas
 
 - **A height moved frame by frame re-lays out every row under it.** On a
-  300-entry ledger at 4× CPU each frame of a fold cost ~85ms of layout.
-  `content-visibility: auto` on the slots made it one long frame, but
-  off-screen rows then report a placeholder height to the scroll compensation,
-  so it is not on.
+  400-slot ledger at 4× CPU each frame of a fold cost ~100ms, so it played in
+  four frames. The fold changes the layout once, as the fade starts, and the
+  visible rows ride transforms — one long frame where the eye isn't yet
+  looking. `content-visibility: auto` on the slots would make even that cheap,
+  but off-screen rows then report a placeholder height to the scroll
+  compensation, so it is not on. An arrival's opening still moves a height.
 - **`.row:last-child` sees wrappers, not lists.** A div around each ledger row
   made every row a last child: two rows on one day had no line between them for
   months.

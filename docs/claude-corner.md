@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "The animation feels a bit slow/janky". The six-row demo
+  played smoothly at any throttle; four hundred rows at 4× played the fold in
+  four frames. Jank is a size: seed a ledger as big as a real one before
+  judging a motion smooth.
+
 - *2026-10-12* — "Show the delete animation and number roll … Any
   questions?" Headless looked fine, so the owner's phone was the evidence:
   make the check fail the way the phone did before trusting the fix.
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   pushes in, after a compaction, they stopped me mid-command. A long unattended
   run wants checkpoints the owner can see: what is done, what is next, then
   carry on. A summary that only the next context reads is not one.
-
-- *2026-10-12* — "Are the docs too long?", then "do all 4", then "push
-  frequently, another session is working". A split moves text away from
-  whoever is reading it: commit each step and run every moved link through
-  docs-check before pushing, or the other session rebases onto wreckage.

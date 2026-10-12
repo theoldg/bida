@@ -44,6 +44,17 @@ describe("ledgerRows", () => {
     expect(ids(rows)).toEqual(["last-added", "second-added", "first-added", "dinner"]);
   });
 
+  // A CSV's timeless day: nothing on the entries orders them, so the id does,
+  // as the read would — whatever order they are handed in.
+  it("orders entries nothing tells apart by kind, then id, not by arrival", () => {
+    const tied = { occurredAt: at(4), dateOnly: true } as const;
+    const rows = ledgerRows(
+      [expense("e-c", tied), expense("e-a", tied), expense("e-b", tied)],
+      [transfer("t-a", tied)],
+    );
+    expect(ids(rows)).toEqual(["e-a", "e-b", "e-c", "t-a"]);
+  });
+
   it("keeps a timeless entry in its own day, not above the next one", () => {
     const rows = ledgerRows([
       expense("timeless", { occurredAt: at(4), dateOnly: true, createdAt: at(9, 9) }),

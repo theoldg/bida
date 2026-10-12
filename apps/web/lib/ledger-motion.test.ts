@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
-  awaitRoll, clearDeleted, clearSaved, foldFrame, letRoll, foldTotal, markDeleted, markSaved, peekDeleted, peekSaved, presence, runs, standard,
+  awaitRoll, clearDeleted, clearSaved, letRoll, markDeleted, markSaved, peekDeleted, peekSaved, presence, runs,
   type LedgerItem, type Shown,
 } from "./ledger-motion";
 
@@ -46,38 +46,6 @@ describe("runs", () => {
   it("cuts neighbours that pass into runs", () => {
     expect(runs(["a", "b", "c", "d", "e"], (k) => k !== "c")).toEqual([["a", "b"], ["d", "e"]]);
     expect(runs(["a", "b"], () => false)).toEqual([]);
-  });
-});
-
-describe("foldFrame", () => {
-  // A date line (38px) over the row it headed (68px, the carried pixel apart).
-  const heights = [38, 67];
-
-  it("gives up the row's blank space before any of the date line", () => {
-    expect(foldFrame(heights, 40, false).heights).toEqual([38, 27]);
-    expect(foldFrame(heights, 67, false).heights).toEqual([38, 0]);
-    expect(foldFrame(heights, 80, false).heights).toEqual([25, 0]);
-  });
-
-  it("lays the carried line on the line above only for the last pixel", () => {
-    const total = foldTotal(heights, true);
-    expect(total).toBe(106);
-    expect(foldFrame(heights, total - 1, true)).toEqual({ heights: [0, 0], lift: 0 });
-    expect(foldFrame(heights, total, true)).toEqual({ heights: [0, 0], lift: 1 });
-    expect(foldFrame(heights, total - 0.5, true).lift).toBeCloseTo(0.5);
-  });
-
-  it("never lifts without a line to carry", () => {
-    expect(foldFrame(heights, 500, false)).toEqual({ heights: [0, 0], lift: 0 });
-  });
-});
-
-describe("standard", () => {
-  it("runs from 0 to 1, fast out of the gate and settling late", () => {
-    expect(standard(0)).toBeCloseTo(0);
-    expect(standard(1)).toBeCloseTo(1);
-    expect(standard(0.5)).toBeGreaterThan(0.8);
-    for (let t = 0; t < 1; t += 0.05) expect(standard(t + 0.05)).toBeGreaterThanOrEqual(standard(t));
   });
 });
 
