@@ -4,7 +4,7 @@
  * leaves behind: traverse to a parent on the stack, replace into one that isn't
  * (ADR-0007). So every assertion reads `navigation.entries()`, never `location`.
  */
-import { ensureBuild, launch, newPhone, openDemo, openGroupsList, reporter, serveExport, settle }
+import { ensureBuild, launch, newPhone, openDemo, openGroupsList, reporter, serveExport, settle, untilDevice }
   from "../lib/harness.mjs";
 
 ensureBuild();
@@ -150,7 +150,11 @@ async function onLedger() {
 // A `CloseWatcher` takes the press that would close the app. Playwright cannot
 // press Android's button, but Escape is a close request too.
 {
-  await (await onLedger()).close();
+  // Closed only once the ledger has said it is the one to resume: §4 left on the
+  // list, and the write undoing that lands after the rows are drawn.
+  const opened = await onLedger();
+  await untilDevice(opened, (d) => d?.lastOpenedGroupId === group && !d.leftOnList);
+  await opened.close();
   const page = await ctx.newPage();
   await page.goto(`${base}/`);
   await page.waitForURL(/\/g\?id=/);
