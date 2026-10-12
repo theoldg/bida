@@ -390,7 +390,8 @@ report(await page.getByRole("menuitem", { name: "Delete" }).count() === 1,
   "a long press on a transfer row offers to delete it");
 await page.getByRole("menuitem", { name: "Delete" }).click();
 await page.getByRole("button", { name: "Delete" }).click();
-await page.waitForFunction((n) => document.querySelectorAll(".rows a.row").length === n, before + 1,
+await page.waitForFunction((n) => [...document.querySelectorAll(".rmeta")]
+  .filter((m) => m.innerText.startsWith("Transfer")).length === n, before - 1,
   { timeout: PATIENCE }).catch(() => {});
 report(await transferRows() === before - 1, "and the transfer leaves the ledger");
 

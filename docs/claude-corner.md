@@ -29,6 +29,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "Take your time, do many runs", then "I'm bored". Twenty
+  runners at once, four rounds each, and a status table after every batch:
+  the soak said the flakes were the checks' waits, not the load. Show the
+  numbers as they land; a long experiment is not a silent one.
+
 - *2026-10-12* — "Make the balance amounts … tap-to-copy", then mid-build
   "Do the same for the amount inside the record dialog". A follow-up that
   arrives mid-turn joins the turn: fold it into the same push, built from the
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   both, then measured: fix 1 changed nothing, the stutter was layout. Ship
   what the numbers back and say what they killed; a plan read off the code is
   a guess until it is timed.
-
-- *2026-10-11* — "Updates slowly on open", two /diag pastes, then "fine
-  after a proper close, slow from the background". Theirs was the clue: count
-  the pulls per resume, not their speed — one, where six were owed. I began
-  editing before saying what; they stopped me to ask.

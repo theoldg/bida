@@ -102,8 +102,8 @@ jobs:
       - run: pnpm exec playwright-core install --with-deps --only-shell chromium
       # Its own build, without the Turnstile key, as `pnpm verify` builds on a
       # laptop: the checks stub the scan, and a real widget would call out.
-      # One at a time: side by side on the runner's four cores they starved
-      # each other past the app's own timers, and flaked.
+      # Four at once, one per core: soaked at 1–8 (docs/testing.md#where-each-check-runs),
+      # four is the fastest, and past it every check stretches.
       - run: pnpm verify --retry
         env:
-          VERIFY_JOBS: "1"
+          VERIFY_JOBS: "4"

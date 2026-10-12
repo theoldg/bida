@@ -72,7 +72,33 @@ async function tap(label, act, expect) {
     const body = (await page.evaluate(() => document.body.innerText).catch(() => "")).slice(0, 100);
     const stack = await page.evaluate(() => navigation.entries().map((e, i) =>
       `${i === navigation.currentEntry.index ? "*" : ""}${new URL(e.url).pathname}`).join(" ")).catch(() => "");
-    report(false, label, `at ${url} — ${body.replace(/\s+/g, " ")}\n        stack: ${stack}`);
+    // Which worker is where: an offer that never came is a deploy that never
+    // installed, or one that installed and was never announced.
+    const sw = await page.evaluate(async () => {
+      const r = await navigator.serviceWorker.getRegistration();
+      const at = (w) => (w ? w.state : "-");
+      return `installing ${at(r?.installing)} waiting ${at(r?.waiting)} active ${at(r?.active)}`
+        + ` · caches ${(await caches.keys()).join(" ")}`;
+    }).catch(() => "");
+    // A worker left waiting: late, or stuck? Watched a minute more, on failure only.
+    const late = !/waiting installed/.test(sw) ? "" : await page.evaluate(async () => {
+      const gone = async (ms) => {
+        const from = performance.now();
+        while (performance.now() - from < ms) {
+          if (!(await navigator.serviceWorker.getRegistration())?.waiting) return Math.round((performance.now() - from) / 1000);
+          await new Promise((ok) => setTimeout(ok, 250));
+        }
+        return null;
+      };
+      const late = await gone(30_000);
+      if (late !== null) return ` · activated ${late}s later`;
+      // Lost, or held? Ask it to skip waiting again, as an old build's offer does.
+      (await navigator.serviceWorker.getRegistration())?.waiting?.postMessage({ type: "skip-waiting" });
+      const asked = await gone(15_000);
+      return asked !== null ? ` · stuck 30s, then activated ${asked}s after a second skip-waiting`
+        : " · stuck 30s, and still after a second skip-waiting";
+    }).catch(() => "");
+    report(false, label, `at ${url} — ${body.replace(/\s+/g, " ")}\n        stack: ${stack}\n        sw: ${sw}${late}`);
   }
 }
 
@@ -292,6 +318,7 @@ report(answeredAt.includes(`id=${g}`), "a payload is answered under the URL it w
 // ---- and a second deploy over the page that never reloaded ---------------
 console.log("\ndeploying again, over a page that never reloaded:");
 swRevision = "gooddeploy02";
+await mark(page);
 await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
 
 // Wait for the set expected, not for the list to stop changing: two samples can
@@ -364,7 +391,9 @@ await page.bringToFront();
 await straggler.close();
 await fresh.close();
 // `page` is reloaded by the deploy under us, and cutting the network mid-load is
-// a blank screen: wait for the list before pulling the plug.
+// a blank screen: wait for the reload, then the list, before pulling the plug —
+// the list alone can be the old page's, still up.
+report(await reloaded(page), "an untouched list reloads onto the second build too");
 await page.waitForSelector(".rows a.row", { timeout: PATIENCE });
 await ctx.setOffline(true);
 await tap("the new build loads offline too", () => openGroupsList(page, base), ".rows a.row");

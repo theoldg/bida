@@ -4,7 +4,7 @@
  * leaves behind: traverse to a parent on the stack, replace into one that isn't
  * (ADR-0007). So every assertion reads `navigation.entries()`, never `location`.
  */
-import { ensureBuild, launch, newPhone, openDemo, openGroupsList, reporter, serveExport, settle }
+import { ensureBuild, launch, newPhone, openDemo, openGroupsList, reporter, serveExport, settle, untilDevice }
   from "../lib/harness.mjs";
 
 ensureBuild();
@@ -150,7 +150,11 @@ async function onLedger() {
 // A `CloseWatcher` takes the press that would close the app. Playwright cannot
 // press Android's button, but Escape is a close request too.
 {
-  await (await onLedger()).close();
+  // Closed only once the ledger has said it is the one to resume: §4 left on the
+  // list, and the write undoing that lands after the rows are drawn.
+  const opened = await onLedger();
+  await untilDevice(opened, (d) => d?.lastOpenedGroupId === group && !d.leftOnList);
+  await opened.close();
   const page = await ctx.newPage();
   await page.goto(`${base}/`);
   await page.waitForURL(/\/g\?id=/);
@@ -364,7 +368,9 @@ async function onLedger() {
   };
   // Honest: `settle` ends a frame after the restore's window, on the page's clock.
   const back = async () => {
-    await page.waitForURL(/\/g\?id=/);
+    await page.waitForURL(/\/g\?id=/).catch(async () => {
+      throw new Error(`never back on the ledger: ${JSON.stringify(await stack(page))}`);
+    });
     await page.waitForSelector(".rows a.row");
     await settle(page, 1400);
   };
@@ -448,6 +454,8 @@ async function onLedger() {
   report(shown.inView && shown.top === 0 && shown.banner,
     "and then glides to the very top, the row it saved in view under the banner",
     JSON.stringify(shown));
+  // The roll starts after the glide ends, a frame or more later on a busy machine.
+  await page.waitForFunction(() => window.__rolled !== null).catch(() => {});
   const rolled = await page.evaluate(() => window.__rolled);
   report(rolled?.top === 0, "and the figure rolls only once it is there", JSON.stringify(rolled));
 
@@ -459,6 +467,31 @@ async function onLedger() {
   await settle(page, 300);
   report((await place()).top === 0, "while a tap in from the list opens at the top");
   await short.close();
+}
+
+// ---- 11. a press the moment a screen opens, on a slow phone ---------------
+// The URL moves in the commit that mounts the screen; its back handler must be
+// there in the same commit, or the screen underneath takes the press and climbs
+// to *its* parent (lib/back-button.ts). A throttled CPU is what opens the gap.
+{
+  const slow = await phone();
+  const page = await slow.newPage();
+  await (await slow.newCDPSession(page)).send("Emulation.setCPUThrottlingRate", { rate: 6 });
+  await openDemo(page, base);
+  await page.waitForSelector(".rows a.row");
+  const landed = [];
+  for (let i = 0; i < 3; i++) {
+    await page.locator(".rows a.row").nth(1).click();
+    await page.waitForURL(/\/g\/entry\?/);
+    void page.goBack().catch(() => {});
+    await page.waitForURL((url) => url.pathname !== "/g/entry").catch(() => {});
+    landed.push(new URL(page.url()).pathname);
+    if (landed.at(-1) !== "/g") break;
+    await page.waitForSelector(".rows a.row");
+  }
+  report(landed.every((p) => p === "/g"),
+    "a back press as an entry opens goes to the ledger, not past it", landed.join(" "));
+  await slow.close();
 }
 
 await browser.close();
