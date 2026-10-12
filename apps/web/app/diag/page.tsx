@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/diag.md
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -15,18 +16,13 @@ import { setStasMode, stasMode } from "@/lib/scan/stas";
 import { VERSION } from "@/lib/version";
 
 /**
- * What this phone has been doing, as text you can send. Linked from nowhere —
- * long-press the wordmark on the groups list. lib/diag.ts is the recorder;
- * this is the readout.
- *
- * Refreshes on a timer rather than live: a live read would be another line in
- * the log it prints.
+ * What this phone has been doing, as text you can send (lib/diag.ts records). On
+ * a timer rather than live: a live read would be another line in the log.
  */
 export default function DiagPage() {
   const [report, setReport] = useState<string>();
   const [copied, setCopied] = useFlash();
-  // Read after mount, not during render: the app is a static export, so the
-  // first render happens where there is no localStorage to ask.
+  // After mount: the static export's first render has no localStorage.
   const [stas, setStas] = useState(false);
 
   useEffect(() => { setStas(stasMode()); }, []);
@@ -47,24 +43,21 @@ export default function DiagPage() {
       <Body>
         <TopBar title={copy.diag.title} back={route.groups()} />
         <Scroll>
-          {/* Stuck to the top of the scroll, not a `Foot`: the bottom of an
-              installed app is the system bar, and `env(safe-area-inset-bottom)`
-              reads 0 on Android often enough to cut a foot button in half. */}
+          {/* Stuck to the top, not a `Foot`: `env(safe-area-inset-bottom)` reads
+              0 on Android often enough to cut a foot button in half. */}
           <div className="diag-act">
             <button type="button" className="btn btn-p" disabled={!report}
               onClick={() => {
                 writeClipboardText(report ?? "").then(
                   () => setCopied(true),
-                  // The clipboard can refuse or be missing (lib/clipboard.ts); the report is
-                  // already on screen to select, so there is nothing to recover.
+                  // The report is already on screen to select.
                   () => setCopied(false),
                 );
               }}>
               {copied ? copy.diag.copied : copy.diag.copyAll}
             </button>
-            {/* Not a setting for a person using the app — it changes how a scan
-                talks to whoever took the photo, so it costs a long-press to find
-                (lib/scan/stas.ts). */}
+            {/* Changes how a scan talks to whoever took the photo, so it costs a
+                long-press to find. */}
             <div className="diag-stas">
               <div>
                 <div className="diag-stas-name">{copy.diag.stas}</div>
@@ -78,8 +71,8 @@ export default function DiagPage() {
             </div>
             <Link className="btn btn-s diag-link" href={route.diagCrop()}>{copy.diag.cropLink}</Link>
           </div>
-          {/* One <pre>, not a laid-out table: it is read on a phone, pasted
-              into a message and diffed against the next one. */}
+          {/* One <pre>: it is pasted into a message and diffed against the next
+              one. */}
           <pre className="diag">{report ?? copy.diag.reading}</pre>
         </Scroll>
       </Body>
@@ -88,27 +81,16 @@ export default function DiagPage() {
 }
 
 /**
- * How long the *whole report* may take before it prints what it has.
- *
  * **This screen must never wait on the database** — it is opened because the
- * database isn't answering. Everything that can block races this; the
- * timeline needs no database and prints either way.
- *
- * **One window for the report, not one per question**: awaiting each in turn
- * adds their waits up, and six seconds of "Reading…" is exactly the fault
- * being described (PROBE_MS in lib/db/live.ts).
+ * database isn't answering. One window for the whole report, not one per
+ * question: their waits would add up.
  */
 const PATIENCE_MS = 2000;
 
-/** The one window, started when the report is. */
 function patience(): Promise<void> {
   return new Promise((resolve) => { setTimeout(resolve, PATIENCE_MS); });
 }
 
-/**
- * The answer, or what it means that there wasn't one. `until` is shared, so
- * a question costs nothing if *started* with the others — see `collect`.
- */
 async function within<T>(promise: Promise<T>, otherwise: T, until: Promise<void>): Promise<T> {
   try {
     return await Promise.race([promise, until.then(() => otherwise)]);
@@ -117,11 +99,7 @@ async function within<T>(promise: Promise<T>, otherwise: T, until: Promise<void>
   }
 }
 
-/**
- * The layout viewport, the visible one, and the shell drawn into them. A
- * `shell` taller than `visible` has its last strip off the phone. `safe` is
- * what the browser admits the system bars cover — on Android, often 0 wrongly.
- */
+/** A `shell` taller than `visible` has its last strip off the phone. */
 function screenLine(): string {
   const view = window.visualViewport;
   const probe = document.createElement("div");
@@ -137,11 +115,7 @@ function screenLine(): string {
     + `, kb ${getComputedStyle(document.documentElement).getPropertyValue("--kb").trim()}`;
 }
 
-/**
- * Which stores answer a read. Locks are per store, so the hanging reads name
- * the transaction holding one. **Probed separately, in parallel**: one
- * transaction over all would let one wedged store hide the rest.
- */
+/** Probed separately, in parallel: one wedged store must not hide the rest. */
 async function stores(until: Promise<void>): Promise<string> {
   const d = db();
   const held = (await Promise.all(d.tables.map(async (table) =>
@@ -153,9 +127,7 @@ async function stores(until: Promise<void>): Promise<string> {
 }
 
 /**
- * Every copy of the app open on this origin, as the service worker sees them.
- * More than one, with another hidden or frozen, is the likeliest reason for
- * reads that all hang at once and all clear together.
+ * More than one copy, another frozen, is the likeliest reason every read hangs.
  */
 function copies(): Promise<string> {
   const worker = navigator.serviceWorker?.controller;
@@ -175,24 +147,20 @@ function copies(): Promise<string> {
 }
 
 /**
- * The report: what this phone holds, then what it has been doing. Counts
- * first: 14s of `rebuild` means one thing over 200 ops, another over 20,000.
+ * Counts first: 14s of `rebuild` means one thing over 200 ops, another over
+ * 20,000.
  */
 async function collect(): Promise<string> {
   const d = db();
   const lines: string[] = [];
   const say = (k: string, v: string | number) => lines.push(`${`${k}:`.padEnd(14)}${v}`);
 
-  // First, because every line under it describes a phone and none of them say
-  // which build it was running (lib/version.ts).
   say("version", VERSION);
   say("recorded", new Date(loadedAt()).toISOString());
   say("now", new Date().toISOString());
   say("up", `${((Date.now() - loadedAt()) / 1000).toFixed(0)}s`);
 
-  // **Every question that can block is started here** and read in printing
-  // order below, so they share one window (PATIENCE_MS). A new blocking line
-  // belongs up here too.
+  // **Every question that can block is started here**, so they share one window.
   const until = patience();
   const storeLine = stores(until);
   const countsLine = within(
@@ -208,17 +176,14 @@ async function collect(): Promise<string> {
     undefined,
     until,
   );
-  // Ops the server had and this build could not open. Skipped rather than
-  // failed on (lib/db/sync.ts), so without this line the app shows a ledger
-  // with holes in it and says nothing at all.
+  // Skipped rather than failed on, so without this the ledger has holes and says
+  // nothing.
   const unreadLine = within(
     (async () => (await d.groupKeys.toArray())
       .flatMap((key) => (key.unreadable ? [{ groupId: key.groupId, ...key.unreadable }] : [])))(),
     [],
     until,
   );
-  // Whether this origin is evictable is the difference between "the browser
-  // closed our connection" being a wild guess and a likely story.
   const storageLine = within(
     (async () => {
       const persisted = await navigator.storage?.persisted?.();
@@ -231,17 +196,15 @@ async function collect(): Promise<string> {
     "no answer",
     until,
   );
-  // Which key this phone scans with — never the key itself, a credential in a
-  // report pasted into chats. It decides where a failed scan went: ours, or
-  // Google directly (lib/scan/key.ts).
+  // Which key — never the key itself, in a report pasted into chats.
   const scanKeyLine = within(
     (async () => (await ownKey()) ? "own" : "shared")(),
     "no answer",
     until,
   );
   const copiesLine = within(copies(), "no answer from the worker", until);
-  // What the worker did when notifications landed (docs/sync.md#the-pull-ahead):
-  // it writes to no timeline, so this is the only proof a push pulled anything.
+  // The worker writes to no timeline: this is the only proof a push pulled
+  // anything.
   const pullsLine = within<PullNote[] | undefined>(pullNotes(), undefined, until);
 
   const counts = await countsLine;
@@ -251,7 +214,6 @@ async function collect(): Promise<string> {
       + `${counts.expenses} expenses, ${counts.settlements} transfers, `
       + `${counts.rates} rates, ${counts.identities} identities, ${counts.keys} group keys`);
   } else {
-    // Not a failure to report — a finding, and the loudest line in the file.
     say("ops", `NO ANSWER in ${PATIENCE_MS}ms — the database is not reading`);
   }
   say("db", `v${d.verno}, ${d.isOpen() ? "open" : "CLOSED"}`);
@@ -265,9 +227,6 @@ async function collect(): Promise<string> {
   say("stas", stasMode() ? "on" : "off");
   say("scan key", await scanKeyLine);
   say("display", matchMedia("(display-mode: standalone)").matches ? "installed" : "browser");
-  // The screen actually painted beside the one laid out for; when they differ,
-  // that strip is what a person reports as "the bottom is cut off"
-  // (lib/viewport.ts).
   say("screen", screenLine());
   say("online", String(navigator.onLine));
   say("worker", navigator.serviceWorker?.controller ? "controlling" : "none");
@@ -282,26 +241,21 @@ async function collect(): Promise<string> {
 
   const rows = timeline();
 
-  // Up here, not in the timeline: a pasted report gets cut short, and this is
-  // the block people get asked for. Every page's, since the bad press was often
-  // pages ago; menus and dialogs together, since one can open the other.
+  // Up here: a pasted report gets cut short, and this is the block people get
+  // asked for.
   const presses = [...otherPages().flatMap((page) => page.events), ...rows]
     .filter((e) => e.what === "menu.trace" || e.what === "dialog.trace")
     .slice(-6)
     .reverse()
     .map((e) => `${(e.at / 1000).toFixed(2)}s  ${e.what.replace(".trace", "")}  ${e.info ?? ""}`);
   if (presses.length) lines.push("", "menus and dialogs, newest first:", ...presses);
-  // Each page headed by its address, secrets masked, newest first: a paste that
-  // loads `/join` is a second page beside this one.
   const past = otherPages().map((page) =>
     `---- page ${new Date(page.at).toISOString()} ${page.url} (${page.events.length} events) ----\n\n`
     + `${format(page.events)}\n\n`).join("");
 
   /**
-   * **The head, then everything else newest first.** A phone pastes the top and
-   * stops, so the order is what the first screenful needs: counts, this page's
-   * timeline newest first, earlier pages, and last the home-screen hand-off
-   * (docs/ios.md, experiment A). Secrets masked throughout.
+   * A phone pastes the top and stops, so the order is what the first screenful
+   * needs. Secrets masked throughout.
    */
   return `${lines.join("\n")}\n\n---- this page (${rows.length} events) ----\n\n${format(rows)}\n\n`
     + `${past}---- home screen ----\n\n${handoff()}\n`;

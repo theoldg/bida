@@ -1,4 +1,5 @@
 "use client";
+// Doc: docs/frontend.md
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -40,59 +41,45 @@ import type { GroupData } from "@/lib/hooks";
 
 /**
  * The group's ledger: where a group opens, and the only screen that leaves it.
- * Everything else about the group is pressed into from here — the balances
- * from the card at its head (app/g/balances), the rest from the top-bar menu.
  */
 export default function GroupPage() {
   return <QueryBoundary><GroupScreen /></QueryBoundary>;
 }
 
-/** How long a skeleton must have been up for its hand-off to fade (ms). */
 const SKELETON_SEEN = 100;
 
 function GroupScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
-  // Ids only, and only ever a handful: what this phone knows was deleted.
   const deleted = useDevice()?.deletedGroups;
-  // Opening a group is when you want it current, so sync now rather than on
-  // the next 60s tick. A failure is recorded by the engine and read by
-  // `useSyncHealth`; the backoff retry is what turns the banner on.
+  // Opening a group is when you want it current, not the next 60s tick.
   useEffect(() => {
     if (groupId) void syncGroup(groupId).catch(() => {});
   }, [groupId]);
 
-  // Remembered so `/new` can default a fresh group's currency to the one you
-  // spend in most recently, instead of always landing on EUR.
+  // So `/new` can default a fresh group's currency to the one you spend in.
   useEffect(() => {
     if (groupId) void setLastOpenedGroup(groupId);
   }, [groupId]);
 
-  // Joining isn't finished until "who are you" is answered; unclaimed, there
-  // is no honest name to sign a write with. See `useClaimGate`.
   const unclaimed = useClaimGate(groupId, data);
 
-  // When the skeleton went up, so the ledger can dissolve it rather than cut to
-  // it — but only one that was seen: under SKELETON_SEEN it barely registered,
-  // and a fade would stretch a flash into a wait. A launch reopening this group
-  // wore the same frame on `/` since first paint (lib/first-frame.ts), and
-  // that mark is still on during this screen's first render. Decided once, on
-  // the ledger's first render.
+  // Only a skeleton that was seen dissolves: under SKELETON_SEEN a fade would
+  // stretch a flash into a wait. A launch's mark covers this first render too
+  // (lib/first-frame.ts).
   const skeletonSince = useRef<number>(undefined);
   const fade = useRef<boolean>(undefined);
   const [veiled, setVeiled] = useState(true);
 
   if (!groupId) return <Blank title={copy.group.noGroup} back={route.groups()} />;
 
-  // The whole frame while loading, which also covers the redirect above rather
-  // than flashing somebody else's ledger.
+  // Also covers the redirect, rather than flashing somebody else's ledger.
   if (data.loading || unclaimed) {
     skeletonSince.current ??= document.documentElement.dataset.frame === "ledger" ? 0 : performance.now();
     return <LedgerSkeleton groupId={groupId} head={<SkeletonBanner groupId={groupId} />} />;
   }
-  // A group deleted from the server takes this phone's copy with it
-  // (lib/db/sync.ts), so the screen says "deleted" rather than "bad link".
+  // A group deleted from the server takes this phone's copy with it.
   if (!data.group) {
     return deleted?.includes(groupId)
       ? (
@@ -114,15 +101,12 @@ function GroupScreen() {
         <TopBar
           title={group.name}
           back={route.groups()}
-          /* History, dotted when other phones changed something, then the
-             group's other actions as a menu (components/group-menu.tsx). */
           right={<><HistoryButton groupId={group.id} /><GroupMenu groupId={group.id} data={data} /></>}
         />
         <Ledger data={data} />
       </Body>
       {fade.current && veiled ? <SkeletonVeil head={<SkeletonBanner groupId={group.id} />} onGone={() => setVeiled(false)} /> : null}
 
-      {/* Two ways to start an expense. */}
       <ScanFab href={route.scan(group.id)} />
       <Fab href={route.addEntry(group.id)} />
     </Screen>
@@ -136,8 +120,6 @@ function Ledger({ data }: { data: GroupData }) {
   const items = useMemo(() => ledgerItems(expenses, settlements, dayLabel), [expenses, settlements]);
   const scroll = useRef<HTMLDivElement>(null);
   useLedgerPosition(scroll, group?.id ?? "");
-  // The search bar comes out as the head scrolls away, and what is typed in
-  // it narrows the rows (components/ledger-search.tsx).
   const [query, setQuery] = useLedgerQuery(group?.id ?? "");
   const found = useMemo(
     () => searchLedger(items, query, {
@@ -149,39 +131,27 @@ function Ledger({ data }: { data: GroupData }) {
     [items, query, memberById, group?.baseCurrency],
   );
   if (!group) return null;
-  // Whatever is typed, a space alone included: the bar stands in the column
-  // on the same test (`.searchdock[data-searching]`), and the head would show
-  // above a list that had just been put at its top.
+  // A space alone included: the bar stands in the column on the same test.
   const searching = query !== "";
-  // Read out once past the guard: both row components take them as props.
   const { id: gid, baseCurrency: base } = group;
 
-  // The ledger answers "does this one help me or hurt me?", so every row
-  // carries its own effect on your balance — what you put in for it, minus what
-  // you owe for it — signed and coloured in the figure. They add up to `net`.
+  // Every row carries its own effect on your balance, signed and coloured; they
+  // add up to `net`.
   const net = me ? balances.byMember[me] ?? 0 : 0;
 
   return (
     <>
     <LedgerSearch query={query} onQuery={setQuery} />
     <Scroll ref={scroll}>
-      {/* Hidden rather than dropped while a search is on: the card keeps the
-          figure it has drawn, and the fold its place. */}
+      {/* Hidden rather than dropped: the card keeps the figure it has drawn. */}
       <div className="lhead" hidden={searching}>
-      {/* Inside the scroll, not fixed above it, so the ledger isn't pushed a
-          third of the way down. */}
-      {/* Either platform's install offer, folded to one line (docs/ios.md),
-          or once installed the notifications offer (docs/notifications.md).
-          Here because launches and joins both land on this screen. */}
-      {/* Above the install offer, because it outranks it: what group you are
-          standing in comes before what to do with this browser. It draws
-          nothing for every other group. */}
+      {/* The demo card outranks the install offer: what group you are standing in
+          comes before what to do with this browser. */}
       <DemoCard groupId={gid} />
       <LedgerInstall groupId={gid} />
       {me ? <MySummary net={net} base={base} gid={gid} /> : null}
       </div>
 
-      {/* One box, so the search can ask it to be tall enough (`.searchroom`). */}
       <div className="searchroom">
       {items.length === 0 ? (
         <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>
@@ -189,8 +159,8 @@ function Ledger({ data }: { data: GroupData }) {
         <Empty title={copy.group.search.none.title}>{copy.group.search.none.body(query.trim())}</Empty>
       ) : null}
 
-      {/* Keyed by the search, so a keystroke redraws the list at once: the
-          rows' fold and fade are for an entry that came or went. */}
+      {/* Keyed by the search, so a keystroke redraws at once: the rows' fold and
+          fade are for an entry that came or went. */}
       <LedgerRows key={searching ? query : ""} groupId={gid} items={found} row={(entry: LedgerRow) => entry.row === "expense"
         ? <ExpenseRow expense={entry.expense} gid={gid} base={base} me={me} memberById={memberById} />
         : <SettlementRow settlement={entry.settlement} gid={gid} base={base} me={me} memberById={memberById} />} />
@@ -201,27 +171,19 @@ function Ledger({ data }: { data: GroupData }) {
   );
 }
 
-/**
- * Where you stand, and the way to the balances: the whole card is the button,
- * so it wears a chevron and the press wash of `a.card`.
- * The figure is sized to its own length (`.mysum` in globals.css), so a long
- * sum shrinks to fit rather than running under the chevron.
- */
+/** The whole card is the button. The figure is sized to its own length. */
 function MySummary({ net, base, gid }: { net: number; base: string; gid: string }) {
-  // Unsigned, unlike every other figure: "You owe" already says the direction,
-  // and a "-" reads as arithmetic rather than debt.
+  // Unsigned: "You owe" already says the direction, and a "-" reads as
+  // arithmetic.
   const figure = money(Math.abs(net), base);
-  // What this card drew last time, read once: a figure that moved while it was
-  // away — a save, another phone's edit — rolls from it (lib/roll.ts).
+  // A figure that moved while it was away rolls from what it drew last
+  // (lib/roll.ts).
   const [before] = useState(() => shownBefore(gid, base));
-  // Back from a save, the ledger may glide up to this card; the roll waits for
-  // it to arrive (components/ledger-rows.tsx).
   const [hold] = useState(() => peekSaved(gid) === null ? undefined
     : (go: () => void) => awaitRoll(gid, go));
   useEffect(() => keepShown(gid, net, base), [gid, net, base]);
-  // The sign the card is dressed in — colour and words — trails `net` until
-  // the figure sets off, so a settle-up fades from red as it rolls to zero
-  // rather than arriving already neutral.
+  // The sign trails `net` until the figure sets off, so a settle-up fades from
+  // red as it rolls to zero.
   const [tone, setTone] = useState(() => before ?? net);
   const latest = useRef(net);
   latest.current = net;
@@ -247,10 +209,8 @@ function MySummary({ net, base, gid }: { net: number; base: string; gid: string 
 }
 
 /**
- * **Hoisted out of `Ledger`, never nested inside it** (as `SettlementRow`
- * is): a nested function component is a new identity on every render, which
- * would discard this row's open delete confirmation the moment a live query
- * elsewhere in the group redraws the ledger.
+ * **Hoisted out of `Ledger`, never nested inside it**: a nested component is a
+ * new identity every render, discarding an open delete confirmation.
  */
 function ExpenseRow({ expense, gid, base, me, memberById }: {
   expense: Expense; gid: string; base: string; me: string | undefined; memberById: Map<string, Member>;
@@ -277,9 +237,8 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
             coPayers={payers.filter((id) => id !== expense.paidBy).length} ways={participants} />
         </div>
         <div className="ramt">
-          {/* An income's figure carries a "−": it is the group's number, not
-              yours, and without a sign it reads as one more thing spent.
-              Display only — the stored amount stays positive. */}
+          {/* An income's figure carries a "−", or it reads as one more thing
+              spent. Display only — the stored amount stays positive. */}
           <div className="big">{money(income ? -expense.baseAmountMinor : expense.baseAmountMinor, base)}</div>
           {foreign ? (
             <div className="sm">{money(expense.amountMinor, expense.currency)}</div>
@@ -296,14 +255,8 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
 }
 
 /**
- * An expense row's second line: who paid, how many it is split between, and
- * an "income" tag on an income — the figure's "−" alone is easy to miss. The
- * mode is the entry's own screen's to say.
- *
- * The name is never dropped and takes the ellipsis; the co-payer count and the
- * tag stay beside it, since leaving either out would be untrue. The head count
- * is the one thing that goes: its box gives way first and wraps the count onto
- * a clipped second line. No measuring, so nothing to redo when the font lands.
+ * The name is never dropped and takes the ellipsis; the head count is the one
+ * thing that goes, wrapping onto a clipped line. No measuring.
  */
 function ExpenseMeta({ payer, coPayers, ways, income }: {
   payer: string; coPayers: number; ways: number; income: boolean;
@@ -327,10 +280,6 @@ function ExpenseMeta({ payer, coPayers, ways, income }: {
   );
 }
 
-/**
- * A ledger row's long press: edit, or delete after the question
- * (`useDeleteEntry`). `menu` carries both the card and the question.
- */
 function useEntryMenu(gid: string, me: string | undefined, kind: EntryKind, entryId: string) {
   const router = useRouter();
   const del = useDeleteEntry({ groupId: gid, me, kind, entryId });
@@ -341,9 +290,6 @@ function useEntryMenu(gid: string, me: string | undefined, kind: EntryKind, entr
   return { hold, menu: <>{menu}{del.dialog}</> };
 }
 
-/**
- * A transfer's row, with the same long press as an expense's (ADR-0010).
- */
 function SettlementRow({ settlement, gid, base, me, memberById }: {
   settlement: Settlement; gid: string; base: string; me: string | undefined;
   memberById: Map<string, Member>;
@@ -364,7 +310,6 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
           <FitLine className="rmeta" options={transferMeta(settlement.note)} />
         </div>
         <div className="ramt">
-          {/* Inked like an expense's: one that isn't yours fades as a row. */}
           <div className="big">{money(settlement.baseAmountMinor, base)}</div>
           <div className={`sm share ${signClass(myNet)}`}>
             {myNet !== 0 ? money(myNet, base, true) : copy.group.notYours}

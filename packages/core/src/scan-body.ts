@@ -1,21 +1,16 @@
+// Doc: docs/scan-reading.md#what-the-model-decides-and-what-it-must-not
 /**
- * The bill-reading request: prompt, schema and the bill (a photo or typed
- * text). Pure data, so the Worker and the phone can both send it. `scan.ts`
- * reads the reply.
- *
- * **Two prompts, not one with two dialects**: the rules that make a photo read
- * safely (amounts multiplied out, compute nothing, a total to reconcile) make
- * typed text unreadable. Both share one answer shape and conventions; tone
- * moves only the refusal paragraph (`apps/api/src/scan-body.test.ts`).
+ * The bill-reading request: prompt, schema and the bill. **Two prompts, not one
+ * with two dialects**: what makes a photo read safely makes typed text
+ * unreadable. Tone moves only the refusal paragraph.
  */
 
-/** The model both paths call. Ours to move, never a caller's. */
+/** Ours to move, never a caller's. */
 const GEMINI_MODEL = "gemini-3.1-flash-lite";
 
 /**
- * Two hosts for one model, billed differently: `VERTEX_URL` takes our shared
- * key, billed to the Cloud project (where the credit is); `AI_STUDIO_URL` takes
- * a person's own key (docs/scan-worker.md#a-key-of-your-own). Same envelope.
+ * Two hosts, billed differently: Vertex takes our shared key and the Cloud
+ * credit; AI Studio takes a person's own key.
  */
 export const VERTEX_URL =
   `https://aiplatform.googleapis.com/v1/publishers/google/models/${GEMINI_MODEL}:generateContent`;
@@ -23,26 +18,22 @@ export const VERTEX_URL =
 export const AI_STUDIO_URL =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-/** A photograph, or a bill typed in (docs/receipt-scanning.md#typing-a-bill-in). */
 export type ScanMedium = "photo" | "text";
 
 /**
- * `kind` is the app's voice: jokes about the thumb in the photo, never the
- * person. `stas` (toggled on `/diag`) aims at the person on purpose, but
- * never at what somebody was born as. Either must still say plainly what to
- * re-send. Tone moves only the refusal (`scan-body.test.ts`).
+ * `kind` jokes about the thumb in the photo, never the person. `stas` aims at the
+ * person on purpose, never at what somebody was born as. Either must still say
+ * plainly what to re-send.
  */
 export type ScanTone = "kind" | "stas";
 
-/* ── A photograph of a receipt ─────────────────────────────────────────────
- * Columns, a merchant, amounts multiplied out, a total at the foot.
- */
+/* ── A photograph of a receipt ───────────────────────────────────────────── */
 
 const PHOTO_LEAD = "Read this receipt. ";
 
 /**
- * Photo field rules. **Say how to read, never what it must come to**: told the
- * lines must equal the total, a model adjusts a line, which `checkScan` can't see.
+ * **Say how to read, never what it must come to**: told the lines must equal the
+ * total, a model adjusts a line.
  */
 const PHOTO_FIELDS_HEAD =
   "Return a title for the expense (described below); the total "
@@ -94,8 +85,7 @@ const PHOTO_FIELDS_HEAD =
   + "don't correct either one from the other. ";
 
 /**
- * Casing is the only thing the reader may change about a label; words and
- * spelling are transcribed so the split can be checked against the paper.
+ * Words and spelling are transcribed so the split can be checked against paper.
  */
 const PHOTO_CASING =
   "A till prints in capitals; a name is not written that way. Case the title and every "
@@ -105,17 +95,13 @@ const PHOTO_CASING =
   + "Re-case only: the words themselves, their language and their spelling stay "
   + "exactly as the receipt prints them. ";
 
-/**
- * One question for the whole bill, since per line the model "translates" an
- * English bill's shorthand and the toggle turns up for nothing. `readBill`.
- */
+/** One question for the whole bill: per line the model "translates" shorthand. */
 const ENGLISH =
   "Set english to true when the bill is written in English, and false otherwise. An "
   + "English bill has nothing to translate: leave every labelEn on it null, even where "
   + "a label is abbreviated, misspelled or terse — expanding \"Chkn wrap\" is not a "
   + "translation. ";
 
-/** A photograph can shear its own columns, which is the whole of this paragraph. */
 const PHOTO_LAYOUT =
   "Read the columns as the printer laid them out, not as the photo happens to line "
   + "them up: a receipt shot at an angle shears them, so an amount can sit lower than "
@@ -163,7 +149,6 @@ const PHOTO_REFUSAL: Record<ScanTone, string> = {
     + "is fair game. Leave every other field null or empty.",
 };
 
-/** The receipt that only half arrived — the same refusal, for a real and incomplete one. */
 const PHOTO_TAIL =
   " The same applies if the receipt is cropped, "
   + "folded, or photographed at an angle that hides part of the line-item list, or if the "
@@ -171,10 +156,7 @@ const PHOTO_TAIL =
   + "missing lines or report a partial list as if it were complete; set error asking for "
   + "a photo of the whole receipt instead. Otherwise leave error null.";
 
-/* ── A bill somebody typed ─────────────────────────────────────────────────
- * A message or note: no columns, usually no merchant or total. Rewrites the
- * three photo rules that are wrong here (docs/receipt-scanning.md#typing-a-bill-in).
- */
+/* ── A bill somebody typed ───────────────────────────────────────────────── */
 
 const TEXT_LEAD =
   "Read this bill. It is text somebody typed or pasted — a chat message, an email, a "
@@ -185,10 +167,8 @@ const TEXT_LEAD =
   + "things, and one thing can be spread over several lines. ";
 
 /**
- * A typist writes the unit price ("3 chicken at 13 each"), so asking for a line
- * amount while forbidding multiplication leaves no legal answer; `scan.ts`
- * multiplies. The label may be completed from the surrounding line — scoped
- * tight, since it is still invention.
+ * A typist writes the unit price, so forbidding multiplication would leave no
+ * legal answer; `scan.ts` multiplies.
  */
 const TEXT_ITEMS =
   "Return every separate thing that was bought as a line item, each with: label — a "
@@ -222,11 +202,7 @@ const TEXT_ITEMS =
   + "not four, and its 15 is not an amount. Read the breakdown and leave the "
   + "announcement out, or the bill is counted twice. ";
 
-/**
- * A typed bill usually has no total; asked for one, the model makes one up,
- * and a derived total can't check the lines
- * (docs/scan-reading.md#what-a-reading-is-checked-against).
- */
+/** Asked for a total, the model makes one up, which can't check the lines. */
 const TEXT_TOTAL =
   "Return total only where the text states one — a figure it calls the total, the sum, "
   + "the bill or the amount due, or one plainly standing for the whole of it. Where it "
@@ -247,10 +223,7 @@ const TEXT_EXTRAS =
   + "amount or unitAmount is ever negative. A percentage the text does not work out is "
   + "not an amount: return null rather than working it out. ";
 
-/**
- * Almost never a title: asked to name a food list, the model describes it back
- * ("Skewers"), which is worse than the empty field and looks read off the bill.
- */
+/** Asked to name a food list, the model describes it back ("Skewers"). */
 const TEXT_TITLE =
   "Return title only where the text plainly names where the money went — a restaurant, "
   + "a bar, a shop, a driver. Otherwise return null, which will usually be the answer: a "
@@ -319,12 +292,10 @@ const TEXT_REFUSAL: Record<ScanTone, string> = {
 };
 
 /**
- * Today, last and bare. A ticket printing "Friday, 9 October" with no year got
- * one from the weekday — 2020 fits as well as this year does.
+ * A ticket printing "Friday, 9 October" with no year got one from the weekday.
  */
 const dated = (today: string): string => ` Today is ${today}.`;
 
-/** The four prompts. Within a medium only the refusal differs (`scan-body.test.ts`). */
 const PROMPT: Record<ScanMedium, Record<ScanTone, string>> = {
   photo: {
     kind: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_CASING + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
@@ -340,21 +311,14 @@ const PROMPT: Record<ScanMedium, Record<ScanTone, string>> = {
   },
 };
 
-/** What the bill is attached as, per medium. The Worker picks it, never a caller. */
 const MIME: Record<ScanMedium, string> = {
   photo: "image/jpeg",
   text: "text/plain",
 };
 
 /**
- * The Gemini request body. In core because both the Worker and the phone (own
- * key) build it, so readings can't drift — and it keeps `/api/groups/:id/scan`
- * a receipt reader, not a general model endpoint on our key. A caller picks
- * `tone` and `medium`, never a word of the prompt. On `text` the bill is
- * user-written, but only a bill-shaped object can come back.
- *
- * `today` is the caller's "YYYY-MM-DD" (core takes no clock); anything else is
- * left out rather than written into the prompt.
+ * In core so both the Worker and the phone build it, and readings can't drift. A
+ * caller picks `tone` and `medium`, never a word of the prompt.
  */
 export function buildScanRequestBody(
   billBase64: string,
@@ -365,7 +329,6 @@ export function buildScanRequestBody(
   const prompt = PROMPT[medium][tone]
     + (today && /^\d{4}-\d{2}-\d{2}$/.test(today) ? dated(today) : "");
   return {
-    // Optional on AI Studio, required by Vertex.
     contents: [{
       role: "user",
       parts: [
@@ -403,7 +366,6 @@ export function buildScanRequestBody(
               properties: {
                 label: { type: "STRING" },
                 labelEn: { type: "STRING", nullable: true },
-                // Exactly one filled; see `ScanLineItem`.
                 amount: { type: "STRING", nullable: true },
                 unitAmount: { type: "STRING", nullable: true },
                 quantity: { type: "INTEGER", nullable: true },

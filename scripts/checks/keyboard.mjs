@@ -1,45 +1,26 @@
 #!/usr/bin/env node
 /**
- * `pnpm verify keyboard` — the act a list of names is typed for survives the keyboard.
- *
- * Four screens ask for people in the same add row and end on an act docked
- * under the scroller (`.whodock`): `/new`'s Create, the picker's "Continue as
- * …", the quick split's scan pair, the people menu's "Change who you are". The
- * dock pays the keyboard's strip as its own padding, which is what lifts the
- * act above the keys; nothing else notices that going missing.
- *
- * Also the confirm key: on a field promising "next" it must move the caret to
- * the field below (`walkFields`, components/viewport.tsx).
- *
- * Headless browsers have no keyboard, so one is faked where the app reads it
- * — iOS's shrunken `visualViewport`, or Android's page shrunk whole
- * (`interactive-widget=resizes-content`) — and the app answers as on a phone
- * (`gapOf`, `--kb`, its own scroll). The assertion is what a thumb cares
- * about: field *and* act above the keys.
+ * `pnpm verify keyboard` — the act docked under a list of names (`.whodock`)
+ * survives the keyboard, and the confirm key walks the fields. Headless browsers
+ * have no keyboard, so one is faked where the app reads it: iOS's shrunken
+ * `visualViewport`, or Android's page shrunk whole.
  */
 import { onePhone, newGroup, PATIENCE, settle }
   from "../lib/harness.mjs";
 
 const { base, close, browser, ctx, page, report, finish } = await onePhone();
 
-/** A phone keyboard, roughly: iOS with its accessory bar over a 844pt screen. */
 const KB = 336;
 
-// A list's add row, or the "Which one are you?" one, whichever is on screen.
 const field = () => page.getByLabel(/^Add (someone|your name)$/);
 
 /**
- * Enough people that the list outgrows the screen — which is the only state
- * this is about. A group of three fits above the keyboard whatever the scroll
- * does, and a check that green-lights the fix being deleted is worse than none.
+ * Only a list that outgrows the screen tests anything: three names fit above the
+ * keyboard whatever the scroll does.
  */
 const CROWD = ["Ana", "Bo", "Cy", "Dee", "Eli", "Fay", "Gus", "Hal", "Ivy", "Jo"];
 
-/**
- * Open the keyboard on the add row, the way a thumb does: the caret first —
- * which is what makes a gap a keyboard at all (`lib/viewport.ts`) — and then
- * the strip it covers.
- */
+/** The caret first — which is what makes a gap a keyboard at all. */
 async function openKeyboard() {
   await field().focus();
   await page.evaluate((kb) => {
@@ -49,10 +30,8 @@ async function openKeyboard() {
     });
     view.dispatchEvent(new Event("resize"));
   }, KB);
-  // The app measures a resize a frame later and scrolls the frame after, so
-  // the scroll reads the padding it paid for (components/viewport.tsx). Wait
-  // for `--kb` to land, then for the scroll to stop — a fixed pause measures
-  // before the app has answered.
+  // Wait for `--kb`, then for the scroll to stop: a fixed pause measures before
+  // the app has answered.
   await page.waitForFunction(
     () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--kb")) > 0,
     null, { timeout: PATIENCE },
@@ -60,7 +39,6 @@ async function openKeyboard() {
   await scrollSettled();
 }
 
-/** The scroller, two frames in a row without moving. */
 const scrollSettled = () => page.waitForFunction(() => new Promise((ok) => {
   const scroll = document.querySelector(".scroll, .dialog");
   if (!scroll) return ok(true);
@@ -68,10 +46,6 @@ const scrollSettled = () => page.waitForFunction(() => new Promise((ok) => {
   requestAnimationFrame(() => requestAnimationFrame(() => ok(scroll.scrollTop === at)));
 }), null, { timeout: PATIENCE });
 
-/**
- * Android's keyboard: `interactive-widget=resizes-content` takes the keys off
- * the page, so the window itself is shorter and nothing is left to pay.
- */
 async function shrinkForKeyboard() {
   await field().focus();
   const { width, height } = page.viewportSize();
@@ -85,7 +59,6 @@ async function shrinkForKeyboard() {
   };
 }
 
-/** Put it away again, for a screen reached without a reload. */
 async function closeKeyboard() {
   await page.evaluate(() => {
     document.activeElement?.blur?.();
@@ -99,19 +72,14 @@ async function closeKeyboard() {
   await scrollSettled();
 }
 
-/**
- * What is left above the keys once the app has done its scrolling. Both the
- * field and the act have to clear them; the margin each clears by is the
- * detail a failure needs.
- */
 async function clears(label, actSelector) {
   const seen = await page.evaluate((selector) => {
     const input = document.querySelector(".addname");
     const act = document.querySelector(selector);
     if (!input || !act) return { missing: !input ? "add row" : selector };
     const kb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--kb"));
-    // The top of the keys is the foot of what is visible — not the shell's foot
-    // less `--kb`, which would only check the app against its own arithmetic.
+    // The foot of what is visible, not the shell's foot less `--kb`, which would
+    // check the app against its own arithmetic.
     const view = window.visualViewport;
     const keys = view.offsetTop + view.height;
     return {
@@ -120,7 +88,7 @@ async function clears(label, actSelector) {
       field: Math.round(keys - input.getBoundingClientRect().bottom),
     };
   }, actSelector);
-  // `data-kb`, not `--kb`, says the app saw the keys: Android pays none.
+  // `data-kb`, not `--kb`: Android pays none.
   const ok = !seen.missing && seen.up && seen.act >= 0 && seen.field >= 0;
   report(ok, label, seen.missing
     ? `no ${seen.missing} on this screen`
@@ -137,8 +105,7 @@ for (const who of CROWD) {
 await openKeyboard();
 await clears("/new — Create is above the keys", "button.btn-lg");
 
-// The row is a box while a name sits unfiled in it, and a box is the taller of
-// the two states: what clears the keys empty has to clear them drawn.
+// A box is the taller of the row's two states.
 await field().fill("Di");
 await settle(page, 150);
 await openKeyboard();
@@ -152,7 +119,6 @@ await unshrink();
 await field().fill("");
 await closeKeyboard();
 await page.getByRole("button", { name: "Create" }).click();
-// The screen this lands on, rather than a moment long enough to have reached it.
 await page.waitForSelector(".rows button.row");
 await openKeyboard();
 await clears("which one are you — Continue is above the keys", ".pad .btn");
@@ -176,19 +142,12 @@ await openKeyboard();
 await clears("people — changing who you are is above the keys", ".pad .btn");
 
 // ---- the confirm key ----------------------------------------------------
-/**
- * Where the caret is, named the way a failure can be read: a field's id where
- * it has one, its label otherwise. `"nothing"` is a field put down, which is
- * what the end of a chain does.
- */
 const caret = () => page.evaluate(() => {
   const el = document.activeElement;
   if (!el || el === document.body) return "nothing";
   return el.id || el.getAttribute("aria-label") || el.tagName.toLowerCase();
 });
 
-// The group name hands over to the row the people go in — two fields nothing
-// else on that screen sits between.
 await page.goto(`${base}/new`);
 await page.locator("#g-name").focus();
 await page.keyboard.press("Enter");
@@ -196,16 +155,12 @@ report(await caret() === "Add someone",
   "/new — the confirm key takes the caret from the name to the add row",
   `caret on ${await caret()}`);
 
-// The entry form: the amount hands over to what it was for. The date between
-// that and the split is a spinner the walk steps over.
 await page.goto(`${base}/g/entry/edit?id=${groupId}`);
 await page.locator("input.amount").focus();
 await page.keyboard.press("Enter");
 report(await caret() === "what", "the entry form — the amount hands the caret to the note",
   `caret on ${await caret()}`);
 
-// The note is the end of that chain, not a way into the split underneath: the
-// column of figures is the chain a thumb starts on purpose, by tapping a row.
 await page.getByRole("button", { name: "As amounts" }).click();
 await settle(page, 120);
 await page.locator("#what").focus();
@@ -214,8 +169,6 @@ report(await caret() === "nothing",
   "the entry form — the note folds the keyboard rather than entering the column",
   `caret on ${await caret()}`);
 
-// A column of figures is the case this is for: one press per person, down the
-// list, without a tap between any two of them.
 await page.locator("input.splitin").first().focus();
 const walked = [await caret()];
 for (let i = 1; i < CROWD.length; i++) {
@@ -226,13 +179,11 @@ report(new Set(walked).size === CROWD.length && walked.every((id) => id.startsWi
   "one press per person walks the whole column",
   `${walked.length} rows, ${new Set(walked).size} of them distinct`);
 
-// And the last of them folds the keyboard — never a wrap round to the top of
-// the list it has just been walked down.
+// The last folds the keyboard, never wrapping round to the top.
 await page.keyboard.press("Enter");
 report(await caret() === "nothing", "the last row folds the keyboard",
   `caret on ${await caret()}, was ${walked[walked.length - 1]}`);
 
-// As parts is a column of the same kind, its counts typed as the amounts are.
 await page.getByRole("button", { name: "As parts" }).click();
 await settle(page, 120);
 await page.locator("input.partsin").first().focus();
@@ -248,8 +199,6 @@ report(new Set(parted).size === CROWD.length
   "as parts — one press per person, and the last of them folds the keyboard",
   `${new Set(parted).size} distinct rows, ended on ${await caret()}`);
 
-// The other column, on a screen of its own and with its own idea of which row
-// is the last one: who actually paid.
 await page.locator("input.amount").fill("60");
 await page.locator("#paidby").click();
 await page.getByRole("option", { name: "Multiple people" }).click();
@@ -267,9 +216,8 @@ report(new Set(payers).size === CROWD.length
   "payers — one press per person, and the last of them folds the keyboard",
   `${new Set(payers).size} distinct rows, ended on ${await caret()}`);
 
-// Every other field on a screen is the end of a chain of one, and ends it the
-// same way. The add row is the exception that must not change: it is a form,
-// and its Enter files the name and hands the caret straight back.
+// The add row is the exception: its Enter files the name and hands the caret
+// straight back.
 await page.goto(`${base}/new`);
 await page.locator("#g-name").fill("Trip");
 await page.getByLabel("Add someone").fill("Ana");
