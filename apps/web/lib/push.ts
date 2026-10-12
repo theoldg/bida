@@ -113,7 +113,8 @@ export function pushWrites(
 /** The Worker's public key; asked each time, since one build serves two Workers. */
 async function serverKey(): Promise<Uint8Array | null> {
   try {
-    const res = await fetch("/api/push/key");
+    // Bounded: everything that changes push state waits its turn behind this.
+    const res = await fetch("/api/push/key", { signal: AbortSignal.timeout(10_000) });
     if (!res.ok) return null;
     const { publicKey } = await res.json() as { publicKey?: unknown };
     return typeof publicKey === "string" ? fromBase64Url(publicKey) : null;
@@ -151,6 +152,19 @@ async function subscription(reg: ServiceWorkerRegistration): Promise<PushSubscri
   });
 }
 
+/**
+ * One change to this phone's push state at a time, in the order asked. Each
+ * reads the level, waits on the network, then writes: a start's reconcile run
+ * beside a Settings tap would otherwise write the level it read over the one
+ * just chosen.
+ */
+let turn: Promise<unknown> = Promise.resolve();
+function inTurn(task: () => Promise<void>): Promise<void> {
+  const run = turn.then(task, task);
+  turn = run.catch(() => {});
+  return run;
+}
+
 /** Write `want` onto every identity that says otherwise. */
 async function publish(want: DevicePush | null, now = Date.now()): Promise<void> {
   const device = await getDevice();
@@ -178,17 +192,19 @@ export async function turnOnNotifications(level: NotifyScope = "own"): Promise<v
   if (!supported()) return;
   const answer = await Notification.requestPermission();
   asked = true;
-  try {
-    if (answer !== "granted") return;
-    await updateDevice({ notify: level });
-    const reg = await navigator.serviceWorker.getRegistration();
-    const sub = reg ? await subscription(reg) : null;
-    await publish(pushAt(sub?.toJSON() ?? null, level));
-  } catch (err) {
-    keepNote("push.subscribe", String(err));
-  } finally {
-    for (const listener of listeners) listener();
-  }
+  return inTurn(async () => {
+    try {
+      if (answer !== "granted") return;
+      await updateDevice({ notify: level });
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg ? await subscription(reg) : null;
+      await publish(pushAt(sub?.toJSON() ?? null, level));
+    } catch (err) {
+      keepNote("push.subscribe", String(err));
+    } finally {
+      for (const listener of listeners) listener();
+    }
+  });
 }
 
 /**
@@ -199,16 +215,18 @@ export async function turnOnNotifications(level: NotifyScope = "own"): Promise<v
 export async function setNotifyLevel(level: NotifyLevel): Promise<void> {
   if (!supported()) return;
   if (level !== "off" && Notification.permission !== "granted") return turnOnNotifications(level);
-  try {
-    await updateDevice({ notify: level });
-    const reg = level === "off" ? null : await navigator.serviceWorker.getRegistration();
-    const sub = reg ? await subscription(reg) : null;
-    await publish(pushAt(sub?.toJSON() ?? null, level));
-  } catch (err) {
-    keepNote("push.level", String(err));
-  } finally {
-    for (const listener of listeners) listener();
-  }
+  return inTurn(async () => {
+    try {
+      await updateDevice({ notify: level });
+      const reg = level === "off" ? null : await navigator.serviceWorker.getRegistration();
+      const sub = reg ? await subscription(reg) : null;
+      await publish(pushAt(sub?.toJSON() ?? null, level));
+    } catch (err) {
+      keepNote("push.level", String(err));
+    } finally {
+      for (const listener of listeners) listener();
+    }
+  });
 }
 
 /**
@@ -219,15 +237,17 @@ export async function setNotifyLevel(level: NotifyLevel): Promise<void> {
  */
 export async function reconcilePush(): Promise<void> {
   if (!supported()) return;
-  try {
-    const reg = await navigator.serviceWorker.getRegistration();
-    if (!reg) return;
-    // A permission taken back leaves the subscription dead, not gone: null.
-    // And Settings' "off" is kept off however the browser stands.
-    const level = (await getDevice()).notify ?? "own";
-    const sub = Notification.permission === "granted" && level !== "off" ? await subscription(reg) : null;
-    await publish(pushAt(sub?.toJSON() ?? null, level));
-  } catch (err) {
-    keepNote("push.reconcile", String(err));
-  }
+  return inTurn(async () => {
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) return;
+      // A permission taken back leaves the subscription dead, not gone: null.
+      // And Settings' "off" is kept off however the browser stands.
+      const level = (await getDevice()).notify ?? "own";
+      const sub = Notification.permission === "granted" && level !== "off" ? await subscription(reg) : null;
+      await publish(pushAt(sub?.toJSON() ?? null, level));
+    } catch (err) {
+      keepNote("push.reconcile", String(err));
+    }
+  });
 }

@@ -76,6 +76,28 @@ describe("syncGroup", () => {
     expect(left).toHaveLength(0);
   });
 
+  it("gives up on a request that never answers, so the next run is not held behind it", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    // Stands in for the clock: the test says when patience runs out.
+    const patience = new AbortController();
+    const timeout = vi.spyOn(AbortSignal, "timeout").mockReturnValue(patience.signal);
+    // Parked: a connection the app went to the background on, answering nothing.
+    const parkedFetch = vi.fn((_url: string, init: RequestInit) => new Promise((_ok, fail) => {
+      init.signal?.addEventListener("abort", () => fail(init.signal!.reason));
+    }));
+    vi.stubGlobal("fetch", parkedFetch);
+
+    const parked = syncGroup(groupId);
+    await vi.waitFor(() => expect(parkedFetch).toHaveBeenCalled());
+    patience.abort(new DOMException("timed out", "TimeoutError"));
+    await expect(parked).rejects.toThrow("timed out");
+    timeout.mockRestore();
+
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({ assigned: {}, ops: [], latestSeq: 0 }))));
+    await expect(syncGroup(groupId)).resolves.toBeDefined();
+  });
+
   it("lands the rest of a pull that carries an op it cannot open", async () => {
     const { groupId, memberId: theo } = await createGroup({
       name: "Marrakech", baseCurrency: "EUR", myName: "Theo",

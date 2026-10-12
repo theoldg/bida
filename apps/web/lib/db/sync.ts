@@ -60,6 +60,15 @@ interface PushPullResult {
  * bearer is the derived token, never the link secret — that would let the
  * server derive the key to everything it stores.
  */
+/**
+ * How long a sync request may take. A request the app went to the background
+ * on can stay pending after its connection is gone, and the run waiting on it
+ * holds every run queued behind it (`syncGroup`). The timer counts only while
+ * the page runs, so a resume ends a dead one within this. A push that did land
+ * is pushed again harmlessly: the op id is the idempotency key.
+ */
+const SYNC_PATIENCE_MS = 30_000;
+
 async function pushPullGroup(
   groupId: string,
   secret: string,
@@ -85,6 +94,7 @@ async function pushPullGroup(
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${crypto.token}` },
     body: JSON.stringify({ ops, since }),
+    signal: AbortSignal.timeout(SYNC_PATIENCE_MS),
   });
   if (!res.ok) {
     throw new SyncHttpError(res.status, await res.text().catch(() => ""));
@@ -512,6 +522,7 @@ async function sendNotices(groupId: string, secret: string): Promise<void> {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${crypto.token}` },
         body: JSON.stringify({ notifications: batch.map(({ endpoint, body }) => ({ endpoint, body })) }),
+        signal: AbortSignal.timeout(SYNC_PATIENCE_MS),
       });
       if (res.status >= 500) answered = false;
       if (res.ok) Object.assign(statuses, ((await res.json()) as { notified: Record<string, number> }).notified);

@@ -425,6 +425,9 @@ A labelled line carries its rows like a sentence does.
   the queue up before it asks which ops it already has. Otherwise a phone with a
   fortnight of expenses pushes, fails, and retries the identical oversized
   batch forever.
+- **Every request a sync run awaits has a timeout** (`SYNC_PATIENCE_MS`). A
+  fetch the app was backgrounded on can stay pending with its connection gone,
+  and the single-flight run waiting on it holds every run queued behind it.
 - **A seq number must never exist before its row does.** `acceptOps` reserves
   and inserts in one `db.batch`, which D1 runs as a transaction, because a phone
   that pulls in between is told `latestSeq` covers rows it cannot read yet —

@@ -46,9 +46,7 @@ A read of the hundred commits to 1.3.65; each item names where to start. Delete
 a line in the push that fixes it.
 
 - **Smaller.** Two folds closing within one glide leave padding under the list
-  (`lib/fold.ts:52-61`). Sync fetches have no timeout, so a parked one holds
-  the fresh run queued behind it (`lib/db/sync.ts`). `reconcilePush` can
-  republish the old level over one just chosen in Settings. An icon launch
+  (`lib/fold.ts:52-61`). An icon launch
   whose `/install` fragment still has a key to save paints the ledger skeleton,
   then the list (`firstFrame`). Parts typed beside a bill between 0336c2a9
   and 97037e75 carry no flag and open on Items.

@@ -103,3 +103,6 @@ it is still missing after.
 - **The large `icon` is a transparent PNG** (`notify-blank.png`). The app's
   icon there repeats the badge, and with none Android draws a grey letter
   avatar of the host name.
+- **Push state changes one at a time** (`inTurn`, `lib/push.ts`). Each reads
+  the level, waits on the network, then writes, so a start's reconcile beside a
+  Settings tap would write the level it read over the one just chosen.
