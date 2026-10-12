@@ -452,6 +452,8 @@ async function onLedger() {
   report(shown.inView && shown.top === 0 && shown.banner,
     "and then glides to the very top, the row it saved in view under the banner",
     JSON.stringify(shown));
+  // The roll starts after the glide ends, a frame or more later on a busy machine.
+  await page.waitForFunction(() => window.__rolled !== null).catch(() => {});
   const rolled = await page.evaluate(() => window.__rolled);
   report(rolled?.top === 0, "and the figure rolls only once it is there", JSON.stringify(rolled));
 
