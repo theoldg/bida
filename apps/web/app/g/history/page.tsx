@@ -8,14 +8,12 @@ import { activityFeed, entityHistory, type Revision } from "@bida/core";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { Icon } from "@/components/icons";
 import { RevisionEntry, type RevisionContext } from "@/components/revision";
-import { db } from "@/lib/db/dexie";
 import { useLive } from "@/lib/db/live";
-import { opsForGroup } from "@/lib/db/fold";
 import { useCatchUp } from "@/lib/catch-up";
 import { copy } from "@/lib/copy";
 import { plural } from "@/lib/format";
 import { parseEntrySource, route } from "@/lib/group-link";
-import { useClaimGate, useGroupData } from "@/lib/hooks";
+import { historyReads, useClaimGate, useGroupData } from "@/lib/hooks";
 
 /** How much of a long feed is drawn before asking. The rest comes in one tap,
  *  which is why the button can say exactly how many it is. */
@@ -36,35 +34,19 @@ function HistoryScreen() {
   const unclaimed = useClaimGate(groupId, data);
   const [shown, setShown] = useState(PAGE);
 
-  // History needs every member's name, including people who've since been
-  // removed — the alive-only map from useGroupData would erase them from
-  // their own past.
-  const allMembers = useLive(
-    "historyMembers",
-    async () => (groupId ? db().members.where("groupId").equals(groupId).toArray() : []),
-    [groupId],
-  ) ?? [];
+  const reads = historyReads(groupId);
+  const allMembers = useLive("historyMembers", reads.historyMembers, [groupId]) ?? [];
   const memberById = new Map(allMembers.map((m) => [m.id, m]));
 
-  const loaded = useLive("historyOps", async () => (groupId ? opsForGroup(groupId) : []), [groupId]);
+  const loaded = useLive("historyOps", reads.historyOps, [groupId]);
   const ops = loaded ?? [];
   // The group's feed is where what's new gets seen; one entry's history isn't.
   const fresh = useCatchUp(entryId ? undefined : groupId, loaded) ?? new Set<string>();
 
-  // Every expense ever, deleted ones included: a deleted expense is half the
-  // reason to open history.
-  const allExpenses = useLive(
-    "historyExpenses",
-    async () => (groupId ? db().expenses.where("groupId").equals(groupId).toArray() : []),
-    [groupId],
-  ) ?? [];
+  const allExpenses = useLive("historyExpenses", reads.historyExpenses, [groupId]) ?? [];
   const expenseById = new Map(allExpenses.map((e) => [e.id, e]));
 
-  const allSettlements = useLive(
-    "historySettlements",
-    async () => (groupId ? db().settlements.where("groupId").equals(groupId).toArray() : []),
-    [groupId],
-  ) ?? [];
+  const allSettlements = useLive("historySettlements", reads.historySettlements, [groupId]) ?? [];
   const settlementById = new Map(allSettlements.map((s) => [s.id, s]));
 
   // One id, both tables (ADR-0010). **Looked up in the maps that keep the
@@ -91,7 +73,8 @@ function HistoryScreen() {
   const rest = revisions.length - visible.length;
 
   if (!groupId) return <BadLink />;
-  if (data.loading || unclaimed) {
+  // Until the log answers, its count would read "0 revisions".
+  if (data.loading || unclaimed || loaded === undefined) {
     return <Blank back={back} />;
   }
   if (!data.group) return <BadLink />;

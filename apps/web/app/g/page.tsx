@@ -36,7 +36,7 @@ import { useLedgerPosition } from "@/lib/ledger-position";
 import { awaitRoll, peekSaved } from "@/lib/ledger-motion";
 import { keepShown, ROLL_BEAT, shownBefore } from "@/lib/roll";
 import { transferMeta } from "@/lib/row-meta";
-import { useClaimGate, useDevice, useGroupData } from "@/lib/hooks";
+import { useClaimGate, useDevice, useGroupData, warmGroup, warmGroupsList } from "@/lib/hooks";
 import type { GroupData } from "@/lib/hooks";
 
 /**
@@ -56,6 +56,13 @@ function GroupScreen() {
   // Opening a group is when you want it current, not the next 60s tick.
   useEffect(() => {
     if (groupId) void syncGroup(groupId).catch(() => {});
+  }, [groupId]);
+
+  // Every other screen of the group reads what this one does, but history;
+  // and the list is one Back away.
+  useEffect(() => {
+    if (groupId) warmGroup(groupId, { history: true });
+    warmGroupsList();
   }, [groupId]);
 
   // So `/new` can default a fresh group's currency to the one you spend in.

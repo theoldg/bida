@@ -325,12 +325,34 @@ const healedThisSession = new Set<string>();
 
 const applying = new Map<string, Promise<void>>();
 
+/**
+ * Groups whose stash was applied since the app last came to the front. A push
+ * waits on a hidden app, so until then a screen of one of these has no news to
+ * wait for, and draws from its first frame.
+ */
+const settled = new Set<string>();
+let away = 0;
+
+export function stashSettled(groupId: string): boolean {
+  return settled.has(groupId) && !applying.has(groupId);
+}
+
+/** Hidden, a push can land a stash for any group. */
+export function unsettleStashes(): void {
+  away += 1;
+  settled.clear();
+}
+
 export function applyStash(groupId: string): Promise<void> {
   let run = applying.get(groupId);
   if (!run) {
+    const since = away;
     run = applyStashOnce(groupId)
       .catch((err: unknown) => keepNote("stash", errorText(err)))
-      .finally(() => { applying.delete(groupId); });
+      .finally(() => {
+        applying.delete(groupId);
+        if (since === away) settled.add(groupId);
+      });
     applying.set(groupId, run);
   }
   return run;
@@ -543,7 +565,7 @@ export function startSyncLoop(): () => void {
     void syncAll();
   };
   const onVisible = () => {
-    if (document.visibilityState !== "visible") return;
+    if (document.visibilityState !== "visible") return unsettleStashes();
     lastInput = Date.now();
     markInFlightStale();
     void applyStashes();

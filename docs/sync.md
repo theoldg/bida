@@ -312,11 +312,14 @@ A group an older build only hid is erased by the next `syncAll`.
 **A notification pulls its group before anyone opens it.** After every sync
 the page leaves the group's bearer (the token, never the secret) and `lastSeq`
 in the `bida-pull` cache (`lib/db/stash.ts`). A push for the group — its `tag`
-— makes `sw.js` pull with them and keep the answer, sealed. Every screen of the
+— makes `sw.js` pull with them and keep the answer, sealed. A screen of the
 group waits in `useGroupData` for `applyStash`, which opens the ops, stores the
 ones not held, adopts their stamps and rebuilds, so a group opened from a
 notification draws with the news in it — even offline — instead of animating
-the pull in. A screen already open, or the groups list, mounts nothing to ask,
+the pull in. Only until it has been applied since the app last came to the
+front (`stashSettled`, forgotten when the app is hidden, which is where a
+notification is tapped from): every screen after that draws from its first
+frame rather than holding a skeleton up for news nobody could have tapped. A screen already open, or the groups list, mounts nothing to ask,
 so starting and coming back to the front apply every group's (`applyStashes`),
 alongside the sweep. Each pull ahead leaves a note — `3 ops`, `no cursor`,
 `http 503` — the last eight of which `/diag` prints as `pull ahead:`, the

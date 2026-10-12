@@ -2,7 +2,7 @@ import Dexie, { liveQuery } from "dexie";
 import { beforeEach, describe, expect, it } from "vitest";
 import { forget, timeline } from "../diag";
 import { db } from "./dexie";
-import { testing } from "./live";
+import { keepWarm, testing } from "./live";
 
 const settle = () => new Promise((r) => setTimeout(r, 60));
 
@@ -248,5 +248,59 @@ describe("the hidden gate", () => {
     // hook reads it from, and it starts from the document.
     expect(testing.health.hidden).toBe(false);
     expect(testing.health.stalls).toBe(0);
+  });
+});
+
+/** Past `WARM_AFTER_MS`, the pause that keeps a warm read off the next screen's own. */
+const warmed = () => new Promise((r) => setTimeout(r, 500));
+
+describe("a read kept warm", () => {
+  beforeEach(async () => {
+    testing.reset();
+    await db().groups.clear();
+  });
+
+  const count = () => db().groups.count();
+
+  it("keeps its answer current with nothing on screen reading it", async () => {
+    keepWarm("count", count, ["a"]);
+    await warmed();
+    expect(testing.remembered.get('count ["a"]')).toBe(0);
+
+    // The edit made on another screen, which the list comes back already showing.
+    await db().groups.put({ id: "g1" } as never);
+    await settle();
+    expect(testing.remembered.get('count ["a"]')).toBe(1);
+  });
+
+  it("is brought back with the rest when the browser killed it", async () => {
+    testing.arm();
+    let kill = true;
+    keepWarm("count", async () => {
+      if (kill) {
+        kill = false;
+        const err = new Error("killed by the browser");
+        err.name = "DatabaseClosedError";
+        throw err;
+      }
+      return count();
+    }, ["b"]);
+    await warmed();
+    await db().groups.put({ id: "g2" } as never);
+    await settle();
+    // Swallowed, so dead even to a write (the first describe above).
+    expect(testing.remembered.has('count ["b"]')).toBe(false);
+
+    db().close({ disableAutoOpen: false });
+    await db().open();
+    await settle();
+    expect(testing.remembered.get('count ["b"]')).toBe(1);
+  });
+
+  it("keeps only the newest dozen", () => {
+    for (let i = 0; i < 13; i++) keepWarm("count", count, [i]);
+    expect(testing.warm.size).toBe(12);
+    expect(testing.warm.has("count [0]")).toBe(false);
+    expect(testing.warm.has("count [12]")).toBe(true);
   });
 });

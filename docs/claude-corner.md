@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-12* — "Could switching screens be even snappier with like
+  prefetches?" The ask named a fix; a frame-by-frame probe at 4× CPU named
+  the cause, a wait on every mount that prefetching would never touch. Record
+  what each screen paints before building the remedy offered.
+
 - *2026-10-12* — "ship the flags that speed up the trace": flags from a
   conversation I wasn't in. I measured my way toward them until they pasted
   it, and the paste was the whole brief. Build what it proposed and check it

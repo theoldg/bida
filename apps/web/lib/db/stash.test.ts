@@ -4,7 +4,7 @@ import { db } from "./dexie";
 import { createGroup } from "./commands";
 import { eraseGroupLocally } from "./commands/groups";
 import { getDevice } from "./device";
-import { applyStash, applyStashes, syncGroup } from "./sync";
+import { applyStash, applyStashes, stashSettled, syncGroup, unsettleStashes } from "./sync";
 
 /**
  * The pull ahead (docs/sync.md#the-pull-ahead): `public/sw.js` leaves a pull in
@@ -132,6 +132,30 @@ describe("applying what the worker pulled ahead", () => {
     expect(await db().expenses.where("groupId").equals(first.groupId).count()).toBe(1);
     expect(await db().expenses.where("groupId").equals(second.groupId).count()).toBe(1);
     expect(entries.size).toBe(0);
+  });
+
+  // What lets every screen after the first draw from its first frame.
+  it("is settled once applied, until the app goes away", async () => {
+    const { groupId, theo } = await heldGroup();
+    await stash(entries, groupId, [peerExpense(groupId, theo, 5, "Riad")]);
+    expect(stashSettled(groupId)).toBe(false);
+
+    const run = applyStash(groupId);
+    expect(stashSettled(groupId)).toBe(false);
+    await run;
+    expect(stashSettled(groupId)).toBe(true);
+
+    unsettleStashes();
+    expect(stashSettled(groupId)).toBe(false);
+  });
+
+  it("is not settled by a run the app went away during", async () => {
+    const { groupId, theo } = await heldGroup();
+    await stash(entries, groupId, [peerExpense(groupId, theo, 5, "Riad")]);
+    const run = applyStash(groupId);
+    unsettleStashes();
+    await run;
+    expect(stashSettled(groupId)).toBe(false);
   });
 
   it("never fails the screen waiting on it", async () => {

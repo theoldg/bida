@@ -1,8 +1,9 @@
 "use client";
 // Doc: docs/live-reads.md
 
+import { liveQuery } from "dexie";
 import { useLiveQuery } from "dexie-react-hooks";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { keep, mark, started } from "../diag";
 import { db } from "./dexie";
 import { signal } from "../signal";
@@ -36,10 +37,68 @@ const { emit: announce, subscribe } = changes;
 function resubscribeAll(): void {
   health.epoch += 1;
   health.blocked = false;
+  for (const [memo, w] of warm) subscribeWarm(memo, w);
   announce();
 }
 
 const remembered = new Map<string, unknown>();
+
+/**
+ * A screen's reads stay subscribed for a while after it closes, keeping
+ * `remembered` current: the screen comes back as it is now, rather than as it
+ * was left and then moving into place. A handful, newest kept.
+ */
+const WARM = 12;
+/** Clear of the next screen's own first read. */
+const WARM_AFTER_MS = 400;
+
+interface Warm {
+  querier: () => Promise<unknown>;
+  sub?: { unsubscribe(): void };
+  timer?: ReturnType<typeof setTimeout>;
+}
+const warm = new Map<string, Warm>();
+
+/** The querier as a hidden page must run it: from memory, opening nothing. */
+function guarded<T>(memo: string, querier: () => Promise<T>): () => Promise<T | undefined> {
+  return async () => isHidden() ? remembered.get(memo) as T | undefined : querier();
+}
+
+function subscribeWarm(memo: string, w: Warm): void {
+  clearTimeout(w.timer);
+  w.sub?.unsubscribe();
+  w.sub = liveQuery(w.querier).subscribe({
+    next: (value) => { if (value !== undefined) remembered.set(memo, value); },
+    error: () => coolDown(memo),
+  });
+}
+
+function coolDown(memo: string): void {
+  const w = warm.get(memo);
+  if (!w) return;
+  clearTimeout(w.timer);
+  w.sub?.unsubscribe();
+  warm.delete(memo);
+}
+
+/** How a screen readies the read of one it is likely to open next. */
+export function keepWarm<T>(name: string, querier: () => Promise<T>, deps: readonly unknown[]): void {
+  warmUp(`${name} ${JSON.stringify(deps)}`, querier);
+}
+
+function warmUp(memo: string, querier: () => Promise<unknown>): void {
+  if (warm.has(memo) || mounted.has(memo)) return;
+  const w: Warm = { querier: guarded(memo, querier) };
+  w.timer = setTimeout(() => mounted.has(memo) ? coolDown(memo) : subscribeWarm(memo, w), WARM_AFTER_MS);
+  warm.set(memo, w);
+  for (const oldest of warm.keys()) {
+    if (warm.size <= WARM) break;
+    coolDown(oldest);
+  }
+}
+
+/** Reads a screen on display holds, which need no warm copy. */
+const mounted = new Map<string, number>();
 
 let lastReopen = -Infinity;
 let reopening = false;
@@ -115,6 +174,19 @@ export function useLive<T>(
   const hidden = useSyncExternalStore(subscribe, () => health.hidden, () => false);
 
   const key = JSON.stringify(deps);
+  const latest = useRef(querier);
+  useEffect(() => { latest.current = querier; });
+  useEffect(() => {
+    const memo = `${name} ${key}`;
+    coolDown(memo);
+    mounted.set(memo, (mounted.get(memo) ?? 0) + 1);
+    return () => {
+      const left = (mounted.get(memo) ?? 1) - 1;
+      if (left > 0) return void mounted.set(memo, left);
+      mounted.delete(memo);
+      warmUp(memo, latest.current);
+    };
+  }, [name, key]);
   const [probe, setProbe] = useState({ key, n: 0 });
   const n = probe.key === key ? probe.n : 0;
 
@@ -181,6 +253,7 @@ export const testing = {
   arm,
   reopen,
   remembered,
+  warm,
   subscribe,
   addStall,
   reset(): void {
@@ -190,6 +263,8 @@ export const testing = {
     health.hidden = isHidden();
     changes.clear();
     remembered.clear();
+    for (const memo of [...warm.keys()]) coolDown(memo);
+    mounted.clear();
     lastReopen = -Infinity;
   },
 };

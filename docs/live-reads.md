@@ -71,6 +71,16 @@ connection (`db.reopen`), the one lever a page has on a stuck backend of its
 own. `/diag`'s `copies:` line names every copy the service worker can see, and
 whether it is hidden.
 
+**A read outlives its screen.** When the last screen holding one closes,
+`useLive` keeps it subscribed (`keepWarm`, the newest twelve), so `remembered`
+follows every write made elsewhere and a screen comes back as the database is
+now — the groups list, back from an edit, already in its new order rather than
+gliding into it. Screens also ready the ones a tap is likeliest to open: the
+list its first three groups, the ledger history and the list (`warmGroup`,
+`warmGroupsList`). A warm read subscribes 400ms late, clear of the next
+screen's own first read, obeys the hidden gate, and is subscribed again with
+the rest.
+
 `ReadErrorBoundary` (app/layout.tsx) catches the rest. `dexie-react-hooks`
 reports a failed read by throwing during render; without a boundary every error
 `liveQuery` does *not* swallow is a white screen.
@@ -91,3 +101,6 @@ Dexie behaviour itself, so an upgrade that fixes it tells us.
   `liveQuery` whose error was swallowed. Every screen that draws a skeleton
   needs something that eventually stops believing it
   ([A live read can die](#a-live-read-can-die)).
+- **A clean `close()` kills no subscription; a swallowed error does.** A test
+  that a read is subscribed again has to kill its querier, or it passes with
+  the resubscribing taken out (`live.test.ts`).

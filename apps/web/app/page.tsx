@@ -22,7 +22,7 @@ import { groupMeta } from "@/lib/row-meta";
 import { JoiningFrame } from "@/components/joining";
 import { firstFrameMarked } from "@/lib/first-frame";
 import { useResumeLastGroup } from "@/lib/launch";
-import { useArrivingGroups, useGroupSummaries, type GroupSummary } from "@/lib/hooks";
+import { useArrivingGroups, useGroupSummaries, warmGroup, type GroupSummary } from "@/lib/hooks";
 
 export default function GroupsPage() {
   const router = useRouter();
@@ -42,6 +42,10 @@ export default function GroupsPage() {
     [resuming, summaries]);
   // The first an icon would actually carry: the demo has no key.
   const lead = groups?.find((g) => !isDemo(g.group.id));
+  // The groups a tap is likeliest to open, read before it lands.
+  useEffect(() => {
+    for (const summary of groups?.slice(0, WARM_GROUPS) ?? []) warmGroup(summary.group.id);
+  }, [groups]);
   const rows = useMemo(() => (groups ?? []).map((summary) =>
     ({ key: summary.group.id, kind: "row" as const, row: summary })), [groups]);
 
@@ -76,6 +80,8 @@ export default function GroupsPage() {
 }
 
 const never = () => () => {};
+
+const WARM_GROUPS = 3;
 
 function GroupRow({ summary }: { summary: GroupSummary }) {
   const { group, memberCount, entryCount, netMinor, lastActivity, newCount } = summary;
