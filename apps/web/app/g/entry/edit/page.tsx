@@ -166,7 +166,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   // (lib/entry-check.ts).
   const {
     activeTab, canScan, receiptSplit, effectiveSplit, receiptTotal, receiptLocksAmount,
-    amountMinor, baseMinor, foreign, rate, rateOk, blocker, splitProblem, splitTick,
+    amountMinor, baseMinor, foreign, rate, rateOk, blocker, splitProblem,
     receiptMissing, ready,
     amountMissing, titleMissing,
   } = checkEntry({
@@ -196,9 +196,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     : said === "amount" ? copy.form.noAmount
     : said === "title" ? copy.form.noTitle
     : null;
-  /** Never both: a tick beside a refusal reads as "fine". */
-  const tick = said === null ? splitTick : null;
-  const docked = said !== null || tick !== null;
+  const docked = said !== null;
   const refusals = useRefusals(missing, (aimed) => !!aimed.rate || !!aimed.amount || !!aimed.title);
 
   // Merges against the latest saved draft: some handlers patch twice, and a stale
@@ -493,12 +491,6 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
               className={`splitfoot bad alone${refusals.flash(said)}`}
               onAnimationEnd={refusals.onFlashEnd(said)}>
               <span>{saidText}</span>
-            </div>
-          ) : null}
-          {tick ? (
-            <div role="status" className="splitfoot ok alone" style={{ marginBottom: 9 }}>
-              <Icon name="check" size={14} style={{ flex: "none" }} />
-              <span>{tick}</span>
             </div>
           ) : null}
           {failed ? (

@@ -10,7 +10,7 @@ import { MAX_PARTS, MinorAmountInput, PartsInput } from "./amount-input";
 import { Failure } from "./chrome";
 import { ScanPair, type ReceiptScan } from "./receipt-scan";
 import { Icon } from "./icons";
-import { SoloName, You } from "./bits";
+import { You } from "./bits";
 import { copy } from "../lib/copy";
 import { printedCount } from "../lib/scan/items";
 import { bare, money, plural } from "../lib/format";
@@ -190,16 +190,16 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
                 <Icon name={on ? "check" : "plus"} size={16} />
               </span>
             );
-            const name = typing ? (
-              <SoloName name={m.name} you={m.id === me} style={{ opacity: on ? 1 : .45 }} />
-            ) : (
+            // As amounts, the figure is already in the field: the line says what decides it.
+            const meta = !on ? copy.split.notInvolved
+              : !typing ? money(shares[m.id] ?? 0, amountCurrency)
+              : row === "rest" ? copy.split.sharingRest : copy.split.fixedAmount;
+            const name = (
               <span className="rmain" style={{ opacity: on ? 1 : .45 }}>
                 <span className="rtitle" style={{ display: "block", fontSize: 13.5 }}>
                   {m.name}{m.id === me ? <You /> : null}
                 </span>
-                <span className="rmeta" style={{ display: "block" }}>
-                  {!on ? copy.split.notInvolved : money(shares[m.id] ?? 0, amountCurrency)}
-                </span>
+                <span className="rmeta" style={{ display: "block" }}>{meta}</span>
               </span>
             );
             const lead = { display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 } as const;
@@ -229,8 +229,8 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
         {head ? (
           <div className="splithead">
             <span className="splitcount" aria-hidden="true">
-              {partCount === null ? null : <><b>{partCount}</b> {partCount === 1 ? copy.noun.part.one : copy.noun.part.many} · </>}
-              <b>{inCount}</b> {copy.split.everyone.of(members.length)}
+              {partCount === null ? null : <>{plural(partCount, copy.noun.part)} · </>}
+              <Icon name="users" size={12} /> {inCount}/{members.length}
             </span>
             <button type="button" className="allmark" onClick={toggleAll}
               role="checkbox" aria-checked={headState === "all" ? true : headState === "some" ? "mixed" : false}

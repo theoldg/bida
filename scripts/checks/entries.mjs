@@ -676,13 +676,12 @@ report(seeded === "" && /\d/.test(await firstShare.getAttribute("placeholder"))
   "Evenly opens As amounts as everyone sharing the rest, each share a placeholder",
   `"${seeded}" / ${await firstShare.getAttribute("placeholder")}`);
 await settle(page, 120);
-const splitTick = page.locator(".whodock .splitfoot.ok");
-report(await splitTick.count() === 1 && /shared by/.test(await splitTick.innerText()),
-  "a rest that adds up is ticked in the Save dock, not the split box");
+report(await page.locator(".whodock .splitfoot").count() === 0,
+  "a rest that adds up leaves the Save dock silent");
 await firstShare.fill("999");
 await settle(page, 120);
 const splitLine = page.locator(".whodock .splitfoot.bad");
-report(await splitLine.count() === 1 && await splitTick.count() === 0,
+report(await splitLine.count() === 1,
   "a split that doesn't add up is said in the Save dock");
 const shortRows = page.locator(".splitrow.rest.short input");
 report(await shortRows.count() > 0

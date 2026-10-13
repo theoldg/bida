@@ -141,9 +141,9 @@ under it cannot disagree.
   beside a bill written before `RECEIPT_MODE_SINCE`, so a write must flag parts
   typed there (`partsBesideBill`).
 - `validateSplit(0, spec)` reads as **fully allocated**, not incomplete
-  (`allocated === total === 0`). The verdict is `splitFooter`'s
-  (`lib/format.ts`), so "€0.00 of €0.00 allocated" is unreachable rather than
-  guarded per call site.
+  (`allocated === total === 0`). The verdict is `splitProblemText`'s
+  (`lib/format.ts`), which leaves a zero total to the amount field once rather
+  than per call site.
 - **Don't write a derived value into the draft for another screen's effect to
   resync.** That resync is only as reliable as the next mount happening before
   anyone reads the value, and a screen that writes the input then navigates away

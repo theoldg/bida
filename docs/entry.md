@@ -50,7 +50,9 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
   field's grey placeholder on a faint rule), or not in the split (a zero, as
   faint). A tap on the name never types: typed and sharing go out, out comes
   back sharing, under the mark that says so — a grey × or + for what the tap
-  does, Evenly's ink tick for a row that shares. Typing makes any row typed;
+  does, Evenly's ink tick for a row that shares. The faint line under the name,
+  which the other tabs spend on the share, says which: "fixed amount",
+  "sharing the rest", "not involved" — the figure is already in the field. Typing makes any row typed;
   clearing a typed figure leaves it sharing. Over the total, or with nothing
   left, the sharing rows read a red "?" and the dock names them. On
   `/g/payers` a tap on a name is not a focus either: it clears a figure, hands
@@ -60,8 +62,8 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
   but Items and only from three people up: everyone in takes everyone out,
   else it brings in whoever is out and leaves the rest — a 2 in parts stays 2,
   a typed amount stays, and in amounts whoever was out joins the rest. Beside it
-  As parts counts the parts too ("4 parts · 3 of 4"), the one figure a share is
-  a fraction of that no row says. The tabs
+  As parts counts the parts too, the one figure a share is a fraction of that
+  no row says ([rows.md](rows.md)). The tabs
   stick to the top of `.scroll` and the everyone box, under the last row, to
   its foot, so a long list keeps both in reach.
 
@@ -88,13 +90,13 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
   tapping it while `!checkEntry(...).ready` refuses instead of saving, and what
   is *missing* blooms. `amountMissing`/`titleMissing` *flash* their field rather
   than adding a caption — a word doesn't fit next to the hero figure — counted
-  per field so a repeat refusal replays. That flash is the only thing that reports a missing amount — `splitFooter`
+  per field so a repeat refusal replays. That flash is the only thing that reports a missing amount — `splitProblemText`
   returns `null` for a zero total. What is *wrong* is said in words, live, in
   the Save dock over the button, where no scroll hides it: `blocker` (a removed
   member, payers that no longer add up to the amount) and `splitProblem` (the
   split now showing, following its tab). A refused Save flashes them and spends
-  the button like any bloom. Typed amounts that do add up are ticked there too
-  (`splitTick`), but only while nothing is wrong: the dock holds one line. The dock keeps 9px of its own above its first line, so a
+  the button like any bloom. A split that adds up says nothing — the rows already
+  do; `/g/payers` keeps its green "accounted for", having no rest to show it. The dock keeps 9px of its own above its first line, so a
   half-scrolled form never runs into it. An Items tab short of
   its split says nothing in words — its step blooms.
 - **A press already spending the draft is the form's own `saving` flag.**

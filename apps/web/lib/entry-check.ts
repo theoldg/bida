@@ -7,7 +7,7 @@ import {
   splitSeed, type EntryDraft, type SplitTab,
 } from "./draft";
 import { copy } from "./copy";
-import { payerProblemText, splitFooter } from "./format";
+import { payerProblemText, splitProblemText } from "./format";
 
 /**
  * What the entry being typed is worth, and whether it may be saved: it decides
@@ -34,7 +34,6 @@ interface EntryCheck {
   effectiveSplit: SplitSpec;
   blocker: string | null;
   splitProblem: string | null;
-  splitTick: string | null;
   /** A field, not a sentence. */
   amountMissing: boolean;
   titleMissing: boolean;
@@ -108,12 +107,9 @@ export function checkEntry(input: {
       ...(receiptMissing ? [] : splitParticipants(effectiveSplit))])
     .find((id) => id && !live.has(id));
 
-  const foot = transfer || receiptMissing ? null
-    : splitFooter(validateSplit(amountMinor, effectiveSplit, { tiebreakSeed: splitSeed(draft) }), draft.currency,
-      nameOf);
-  const splitProblem = foot && !foot.ok ? foot.text : null;
-  // A bill's split adds up by construction.
-  const splitTick = foot?.ok && effectiveSplit.mode === "exact" ? foot.text : null;
+  const splitProblem = transfer || receiptMissing ? null
+    : splitProblemText(validateSplit(amountMinor, effectiveSplit, { tiebreakSeed: splitSeed(draft) }),
+      draft.currency, nameOf);
 
   // Said unasked. A missing rate blooms its badge instead.
   const blocker = goneMember
@@ -132,7 +128,7 @@ export function checkEntry(input: {
     amountMinor, baseMinor, foreign, rate, rateOk,
     activeTab, canScan, receiptTotal, receiptLocksAmount: receiptTotal !== null,
     receiptSplit, effectiveSplit,
-    blocker, splitProblem, splitTick, amountMissing, titleMissing, receiptMissing, ready,
+    blocker, splitProblem, amountMissing, titleMissing, receiptMissing, ready,
   };
 }
 

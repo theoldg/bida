@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import {
   ago, bare, byWhen, sortedByWhen, figure, moneyParts, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
-  initials, priced, rateText, splitFooter, stamp, usd, whenLabel,
+  initials, priced, rateText, splitProblemText, stamp, usd, whenLabel,
 } from "./format";
 
 describe("groupDigits", () => {
@@ -30,50 +30,42 @@ describe("rateText", () => {
   });
 });
 
-describe("splitFooter", () => {
+describe("splitProblemText", () => {
   it("never reports a zero total as a satisfied split", () => {
-    // A blank amount split evenly: 0 === 0, but "€0.00 of €0.00 allocated"
-    // would claim a settled split. It says nothing — the missing amount is the
-    // amount field's to report, flashing on Save.
+    // A blank amount split evenly: 0 === 0. It says nothing — the missing
+    // amount is the amount field's to report, flashing on Save.
     const check = validateSplit(0, { mode: "equal", members: ["a", "b"] });
     expect(check.ok).toBe(true);
-    expect(splitFooter(check, "EUR")).toBeNull();
+    expect(splitProblemText(check, "EUR")).toBeNull();
   });
 
   it("says nobody is included before it mentions the total", () => {
     const check = validateSplit(0, { mode: "equal", members: [] });
-    expect(splitFooter(check, "EUR")).toEqual({ ok: false, text: "Nobody is included yet" });
+    expect(splitProblemText(check, "EUR")).toBe("Nobody is included yet");
   });
 
-  it("reports a real allocation once there is a total", () => {
-    const check = validateSplit(4500, { mode: "exact", amounts: { a: 2500, b: 2000 } });
-    const foot = splitFooter(check, "EUR");
-    expect(foot).toMatchObject({ ok: true });
-    expect(foot?.text).toContain("allocated");
+  it("says nothing of a split that adds up", () => {
+    expect(splitProblemText(validateSplit(4500, { mode: "exact", amounts: { a: 2500, b: 2000 } }), "EUR")).toBeNull();
+    expect(splitProblemText(validateSplit(6000, { mode: "exact", amounts: { a: 2400 }, rest: ["b"] }), "EUR")).toBeNull();
   });
 
   it("reports a shortfall and an excess against a real total", () => {
-    const under = splitFooter(validateSplit(4500, { mode: "exact", amounts: { a: 2500, b: 1000 } }), "EUR");
-    expect(under).toMatchObject({ ok: false });
-    expect(under?.text).toContain("left to split");
+    const under = splitProblemText(validateSplit(4500, { mode: "exact", amounts: { a: 2500, b: 1000 } }), "EUR");
+    expect(under).toContain("left to split");
 
-    const over = splitFooter(validateSplit(4500, { mode: "exact", amounts: { a: 4000, b: 1000 } }), "EUR");
-    expect(over).toMatchObject({ ok: false });
-    expect(over?.text).toContain("too much");
+    const over = splitProblemText(validateSplit(4500, { mode: "exact", amounts: { a: 4000, b: 1000 } }), "EUR");
+    expect(over).toContain("too much");
   });
 
-  it("says what the rest shares, or who it has nothing left for", () => {
+  it("says who the rest has nothing left for", () => {
     const names = (id: string) => ({ b: "Bo", c: "Cy" })[id] ?? id;
-    const shared = splitFooter(validateSplit(6000, { mode: "exact", amounts: { a: 2400 }, rest: ["b", "c"] }), "EUR", names);
-    expect(shared).toEqual({ ok: true, text: "€36.00 left, shared by 2" });
+    const one = splitProblemText(validateSplit(6000, { mode: "exact", amounts: { a: 6000 }, rest: ["c"] }), "EUR", names);
+    expect(one).toBe("Nothing left for Cy");
+    const two = splitProblemText(validateSplit(6000, { mode: "exact", amounts: { a: 6000 }, rest: ["b", "c"] }), "EUR", names);
+    expect(two).toBe("Nothing left for 2 people");
 
-    const one = splitFooter(validateSplit(6000, { mode: "exact", amounts: { a: 6000 }, rest: ["c"] }), "EUR", names);
-    expect(one).toEqual({ ok: false, text: "Nothing left for Cy" });
-    const two = splitFooter(validateSplit(6000, { mode: "exact", amounts: { a: 6000 }, rest: ["b", "c"] }), "EUR", names);
-    expect(two).toEqual({ ok: false, text: "Nothing left for 2 people" });
-
-    const over = splitFooter(validateSplit(6000, { mode: "exact", amounts: { a: 7000 }, rest: ["c"] }), "EUR", names);
-    expect(over?.text).toContain("too much");
+    const over = splitProblemText(validateSplit(6000, { mode: "exact", amounts: { a: 7000 }, rest: ["c"] }), "EUR", names);
+    expect(over).toContain("too much");
   });
 });
 

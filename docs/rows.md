@@ -20,7 +20,8 @@ the entry), with no bar — as are the form's Paid by, its payer lines (no tint
 for yours) and the bill's per-person lines under Items.
 
 **The split's foot row is a count and a box, right-aligned** (`.splithead`):
-"**3** of 4" beside a drawn checkbox — ink with a tick for everyone, ink with
+the people icon and "3/4" in one muted run — As parts puts "4 parts ·" before them —
+beside a drawn checkbox — ink with a tick for everyone, ink with
 a dash for some, an empty outline for nobody — sitting in the rows' 16px mark
 column, so it foots the ticks, the parts' plus and the figures above it. No
 wash and an empty left half, so it is never read as one more person — and only
