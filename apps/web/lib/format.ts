@@ -3,7 +3,7 @@ import {
   formatMinor, formatMinorParts, formatRate, parseMinor, startOfLocalDay,
   type CurrencyCode, type PayerValidation, type Rate, type SplitValidation,
 } from "@bida/core";
-import { copy, type Noun, type Voice } from "./copy";
+import { copy, lang, type Noun, type Voice } from "./copy";
 
 /**
  * A narrow no-break space. A comma and a point are each somebody's decimal
@@ -198,7 +198,7 @@ export function dayLabel(ts: number, now = Date.now()): string {
   const near = nearDay(ts, now);
   if (near) return near;
   const d = new Date(ts);
-  const month = copy.time.months[d.getMonth()]!;
+  const month = copy.time.monthsOf[d.getMonth()]!;
   return d.getFullYear() === new Date(now).getFullYear()
     ? copy.time.day(copy.time.weekdays[d.getDay()]!, d.getDate(), month)
     : copy.time.dayInYear(d.getDate(), month, d.getFullYear());
@@ -269,9 +269,19 @@ export function stamp(ts: number, now = Date.now()): string {
   return `${date.toUpperCase()} · ${clockTime(ts)}`;
 }
 
-/** "3 changes". */
-export function plural(n: number, noun: Noun): string {
-  return `${n} ${n === 1 ? noun.one : noun.many}`;
+/** "3 changes", "3 zmiany", "5 zmian". */
+export function plural(n: number, noun: Noun, speaking = lang): string {
+  return `${n} ${nounFor(n, noun, speaking)}`;
+}
+
+const pluralRules = new Map<string, Intl.PluralRules>();
+
+/** By the language's own rule: Polish says 22 "zmiany" but 12 "zmian". */
+function nounFor(n: number, noun: Noun, speaking = lang): string {
+  let rules = pluralRules.get(speaking);
+  if (!rules) pluralRules.set(speaking, rules = new Intl.PluralRules(speaking));
+  const form = rules.select(n);
+  return form === "one" ? noun.one : form === "few" ? noun.few ?? noun.many : noun.many;
 }
 
 /** "2026-04-04", local time. */

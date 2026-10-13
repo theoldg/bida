@@ -192,13 +192,13 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
 
 // No em dashes in the copy, permanently — the owner's call: they read as
 // LLM-written. A literal that is only the dash is `copy.none`.
-{
-  const src = readFileSync(COPY_FILE, "utf8")
+for (const file of [COPY_FILE, join(ROOT, "apps/web/lib/copy-pl.ts")]) {
+  const src = readFileSync(file, "utf8")
     .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "))
     .replace(/\/\/.*$/gm, "");
   src.split("\n").forEach((line, i) => {
     if (line.replace(/(["'`])—\1/g, "").includes("—")) {
-      fail(COPY_FILE, `line ${i + 1}: an em dash in copy — use a full stop, comma or colon (owner, 2026-09-17)`);
+      fail(file, `line ${i + 1}: an em dash in copy — use a full stop, comma or colon (owner, 2026-09-17)`);
     }
   });
 }

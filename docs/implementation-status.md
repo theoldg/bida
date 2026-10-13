@@ -28,7 +28,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Two things: push notifications, built and unchecked on a phone, and the ledger's windowing experiment. The visual review is closed
+Three things: push notifications, built and unchecked on a phone, the ledger's windowing experiment, and Polish. The visual review is closed
 ([design-review.md](design-review.md)).
 
 - **Push notifications are built and work on dev**
@@ -51,6 +51,12 @@ Two things: push notifications, built and unchecked on a phone, and the ledger's
   button a bar ([import-export.md](import-export.md#bringing-a-group-onto-the-phone)). A group whose rows predate the `rev` stamp is
   added up whole until its next pull rebuilds it. 5,000 entries are quick on a
   Pixel 9a (the owner, 2026-10-13).
+
+- **Polish is being translated with the owner, a section at a time**
+  ([frontend.md](frontend.md#every-word-in-libcopyts)): `lib/copy-pl.ts`,
+  `"???"` where not yet done, reached only from `/diag`. Undecided before it
+  ships: how a phone gets it, notifications written in the sender's language
+  (ADR-0037), and the scan's model-written messages, still English.
 
 ### Found by the audit of 2026-10-11, not yet fixed
 

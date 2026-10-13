@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import {
   ago, bare, byWhen, sortedByWhen, figure, moneyParts, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
-  initials, priced, rateText, splitProblemText, stamp, usd, whenLabel,
+  initials, plural, priced, rateText, splitProblemText, stamp, usd, whenLabel,
 } from "./format";
 
 describe("groupDigits", () => {
@@ -418,5 +418,26 @@ describe("figure", () => {
     ] as const) {
       expect(parseMinor(figure(minor, currency, locale), currency)).toBe(Math.abs(minor));
     }
+  });
+});
+
+describe("plural", () => {
+  const change = { one: "change", many: "changes" };
+  const zmiana = { one: "zmiana", few: "zmiany", many: "zmian" };
+
+  it("says English with one and many", () => {
+    expect([0, 1, 2, 5, 22].map((n) => plural(n, change, "en")))
+      .toEqual(["0 changes", "1 change", "2 changes", "5 changes", "22 changes"]);
+  });
+
+  it("says Polish with its three forms, by the last digits", () => {
+    expect([0, 1, 2, 4, 5, 12, 14, 21, 22, 25, 102, 112].map((n) => plural(n, zmiana, "pl"))).toEqual([
+      "0 zmian", "1 zmiana", "2 zmiany", "4 zmiany", "5 zmian", "12 zmian", "14 zmian",
+      "21 zmian", "22 zmiany", "25 zmian", "102 zmiany", "112 zmian",
+    ]);
+  });
+
+  it("falls back to many where a noun has no few", () => {
+    expect(plural(3, change, "pl")).toBe("3 changes");
   });
 });

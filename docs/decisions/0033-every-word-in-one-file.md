@@ -24,8 +24,11 @@ language would have meant reading every `.tsx` in the app.
   between JSX tags, and those three attributes. It is a fence, not a type
   system: a string handed to some other prop is still on review to catch.
 - **A second language is a second object of the same shape**, and nothing else.
-  No framework, no message ids, no extraction step, and no runtime locale switch
-  until there is a second language to switch to.
+  No framework, no message ids, no extraction step. Polish is `lib/copy-pl.ts`,
+  typed `Copy` (English's shape, its words widened to `string`), so the compiler
+  names whatever it lacks; `copy` is picked once as the app loads (`lib/lang.ts`).
+  Polish counts in three forms, so a `Noun` may carry `few`, and `plural()`
+  picks by the language's `Intl.PluralRules`.
 
 ## Consequences
 

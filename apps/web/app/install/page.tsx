@@ -5,7 +5,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { FirstFrames, ListSkeleton } from "@/components/home-frame";
 import { useBrowserName, useInstallOffer } from "@/components/install";
-import { Icon } from "@/components/icons";
+import { Icon, type IconName } from "@/components/icons";
 import { claimIdentity, saveGroupKey } from "@/lib/db/commands";
 import { getDevice } from "@/lib/db/device";
 import { db } from "@/lib/db/dexie";
@@ -100,6 +100,9 @@ function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined): void {
   }, [invites, router]);
 }
 
+/** Beside `copy.install.page.steps`, one each: the buttons as Safari draws them. */
+const STEP_ICONS: readonly IconName[] = ["share", "plus"];
+
 function Tutorial() {
   const browser = useBrowserName();
   const { page } = copy.install;
@@ -122,10 +125,10 @@ function Tutorial() {
                   button is meant (the share sheet moves between iOS versions), but is
                   silent to a screen reader. */}
               <ol className="installsteps">
-                {page.steps.map((step) => (
-                  <li key={step.text}>
-                    <Icon name={step.icon} size={15} className="stepicon" />
-                    <span>{step.text}</span>
+                {page.steps.map((step, i) => (
+                  <li key={step}>
+                    <Icon name={STEP_ICONS[i]!} size={15} className="stepicon" />
+                    <span>{step}</span>
                   </li>
                 ))}
               </ol>

@@ -136,9 +136,19 @@ so the sentence beside them carries only what they can't. No em dashes in copy,
 ever (the owner: they read as machine-written); `copy.none`'s lone dash, a
 blank figure, is the one exception, and `rules` enforces both halves.
 
-Dates are words too: `lib/format.ts` spells them from `copy.time` (English
-names, a 24-hour clock), never `Intl.DateTimeFormat`, or a French phone reads
-"sam. 5 avril" under "Yesterday". Money still follows the phone's locale.
+**Polish is `lib/copy-pl.ts`**, translated with the owner a section at a time;
+`"???"` is a line not yet done. It is reached only from `/diag`'s Language
+switch, which writes `bida.lang` and reloads, since `copy` is picked once as the
+app loads. That load is a hydration mismatch: the export is prerendered
+in English, so React finds text it did not write (error #418) and renders the
+page again on the client; shipping Polish means choosing it before React runs. A Polish sentence can't always take a value English hands it (a name
+in another case, a past tense with a gender), so a string that needs a
+different argument changes its signature in both files.
+
+Dates are words too: `lib/format.ts` spells them from `copy.time` (the app's
+own names, a 24-hour clock, `monthsOf` for a month inside a date), never
+`Intl.DateTimeFormat`, or a French phone reads "sam. 5 avril" under
+"Yesterday". Money still follows the phone's locale.
 
 A string whose wording depends on which way the entry runs is `Voiced<T>` —
 `{ expense, income }`, keyed by the entry's kind. Money going out is *paid* and

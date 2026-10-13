@@ -11,8 +11,11 @@
  * the toggle is pressed, so nothing restores the key if it goes missing.
  * That is why the script still reads the pre-rebrand `hajsik.theme` and
  * promotes it: dropping it would silently put every phone back on system.
+ *
+ * It also says `lang` on <html> for a phone `/diag` switched to Polish
+ * (lib/lang.ts), so a screen reader reads the words in the right voice.
  */
-const script = `try{var t=localStorage.getItem("bida.theme")||localStorage.getItem("hajsik.theme");if(t==="dark"||t==="light"){document.documentElement.dataset.theme=t;localStorage.setItem("bida.theme",t)}}catch(e){}`;
+const script = `try{var t=localStorage.getItem("bida.theme")||localStorage.getItem("hajsik.theme");if(t==="dark"||t==="light"){document.documentElement.dataset.theme=t;localStorage.setItem("bida.theme",t)}if(localStorage.getItem("bida.lang")==="pl")document.documentElement.lang="pl"}catch(e){}`;
 
 export function ThemeScript() {
   return <script dangerouslySetInnerHTML={{ __html: script }} />;

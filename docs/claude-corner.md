@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-13* — "Let's start a polish translation … Any questions?" The ADR
+  had left the door open (a second object, same shape), so the build was
+  small; the questions were Polish's own: gendered verbs, declined names, three
+  plural forms. Ask the grammar before the strings.
+
 - *2026-10-13* — "Suggest better copy … and review the idea", then mid-turn
   "the parts footer should state the number of parts". The review asked for
   words, so it went back as words to pick from; the footer was a spec, so it
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   prefetches?" The ask named a fix; a frame-by-frame probe named the cause, a
   wait no prefetch touches. Measure before building the remedy offered, and
   at size: 600 entries slowed every screen, which no small group showed.
-
-- *2026-10-12* — "ship the flags that speed up the trace": flags from a
-  conversation I wasn't in. I measured my way toward them until they pasted
-  it, and the paste was the whole brief. Build what it proposed and check it
-  again, here: the export compared by content this time, not names.

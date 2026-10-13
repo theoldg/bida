@@ -3,16 +3,20 @@ import type {
   ExtraKind, ImportRefusalCode, ImportSource, ScanMedium, ScanProblem, SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
+import { chosenLang } from "./lang";
+import { pl } from "./copy-pl";
 
 /**
  * Every word the app says to a person, in one place — for translation (ADR-0033)
  * and tone. Screens hold no readable literal (`rules-check`); a string needing a
  * value is a function, since translations reorder words; plurals go through
- * `plural()`.
+ * `plural()`. A second language is `copy-pl.ts`, the same shape (`Copy`).
  */
 
+/** `few` is Polish's 2–4, 22–24…; a language without one leaves it out for `many`. */
 export interface Noun {
   one: string;
+  few?: string;
   many: string;
 }
 
@@ -31,7 +35,7 @@ const extraSubject: Record<ExtraKind, string> = {
 const upper = (browser: string | undefined) => browser ?? "This browser";
 const lower = (browser: string | undefined) => browser ?? "this browser";
 
-export const copy = {
+const en = {
   app: {
     name: "bida",
     description: "Split things. Mostly bills.",
@@ -85,6 +89,7 @@ export const copy = {
     stasNote: "Send a bad photo, get insulted.",
     on: "On",
     off: "Off",
+    lang: "Language",
     cropLink: "Test the scan crop",
     crop: {
       title: "Scan crop",
@@ -178,6 +183,9 @@ export const copy = {
     } as Record<ImportRefusalCode, (fact: RefusalFact) => string>,
   },
 
+  /** Each in its own language, so either can be found from the other. */
+  languages: { en: "English", pl: "Polski" },
+
   unknown: "?",
   none: "—",
   someone: "Someone",
@@ -208,6 +216,9 @@ export const copy = {
     /** Ours, not the phone's locale. */
     weekdays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     months: ["January", "February", "March", "April", "May", "June", "July",
+      "August", "September", "October", "November", "December"],
+    /** As said inside a date: Polish has "4 kwietnia" but "kwiecień 2026". */
+    monthsOf: ["January", "February", "March", "April", "May", "June", "July",
       "August", "September", "October", "November", "December"],
     monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
     day: (weekday: string, day: number, month: string) => `${weekday} ${day} ${month}`,
@@ -309,12 +320,9 @@ export const copy = {
       clipAlt: "In Safari: the menu, Share, View More, Add to Home Screen, then Add.",
       /**
        * The clip can't be read at a glance, searched, or heard by a screen
-       * reader.
+       * reader. Each beside its icon (`STEP_ICONS`, install/page.tsx).
        */
-      steps: [
-        { icon: "share", text: "Tap the Share button" },
-        { icon: "plus", text: "Select Add to home screen" },
-      ],
+      steps: ["Tap the Share button", "Select Add to home screen"],
       after: {
         ask: "Still seeing this after adding bida?",
         answer: (browser: string | undefined) =>
@@ -1155,3 +1163,13 @@ export const copy = {
     openFor: (code: string) => `Set the ${code} rate`,
   },
 } as const;
+
+/** The shape every language fills: `en`'s, with its words widened to `string`. */
+type Widen<T> = T extends string ? string
+  : T extends number ? number
+    : T extends (...args: infer A) => infer R ? (...args: A) => Widen<R>
+      : { readonly [K in keyof T]: Widen<T[K]> };
+export type Copy = Widen<typeof en>;
+
+export const lang = chosenLang();
+export const copy: Copy = lang === "pl" ? pl : en;
