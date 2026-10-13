@@ -214,7 +214,7 @@ suite("describe", () => {
     // against the group as it was, which Cy was still in.
     expect(latest!.rows).toEqual([
       { name: "Cy", mark: "−", was: "25.00" },
-      { name: "Everyone but Cy", was: "25.00", now: "33.33" },
+      { name: "Everyone else", was: "25.00", now: "33.33" },
     ]);
   });
 

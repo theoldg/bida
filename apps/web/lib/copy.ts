@@ -1059,6 +1059,7 @@ export const copy = {
     everyoneBut: (names: string) => `Everyone but ${names}`,
     everyoneIn: "everyone",
     everyoneButIn: (names: string) => `everyone but ${names}`,
+    everyoneElse: "Everyone else",
     quantity: (n: number, amount: string) => `${n}× ${amount}`,
     onLine: (line: string, what: string) => `${line}: ${what}`,
     handedOver: (was: string, now: string) => `${was} → ${now}`,

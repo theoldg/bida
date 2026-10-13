@@ -13,7 +13,7 @@ import { copy } from "./copy";
 
 /** One row: a person (or several moving alike), or a line of the bill. */
 export interface Row {
-  /** Who or what — "Cy", "Everyone but Cy", "Jawa juice". */
+  /** Who or what — "Cy", "Everyone else", "Jawa juice". */
   name: string;
   /** Came in or went out. Absent where it is there either side. */
   mark?: "+" | "−";
@@ -39,15 +39,20 @@ export function byName(ids: Iterable<Id>, people: People): Id[] {
  * A set of people as briefly as it can be said truly. "Everyone" and "everyone
  * but" are about the group *as it was*: a later joiner mustn't turn last
  * month's "Everyone" into "Everyone but Zoe". Below three people the names are
- * as short as either.
+ * as short as either. Where everyone left out is `named` just before, on the
+ * same list, it is "Everyone else" — "− Cy" then "Everyone else", not "Everyone
+ * but Cy" again — however many that is.
  */
-export function peopleText(ids: readonly Id[], people: People, inPhrase = false): string {
+export function peopleText(
+  ids: readonly Id[], people: People, inPhrase = false, named?: ReadonlySet<Id>,
+): string {
   const said = copy.history;
   const set = new Set(ids);
   const roster = new Set(people.roster);
   const within = roster.size >= 3 && ids.every((id) => roster.has(id));
   if (within && set.size === roster.size) return inPhrase ? said.everyoneIn : said.everyone;
   const missing = people.roster.filter((id) => !set.has(id));
+  if (within && set.size >= 3 && named && missing.every((id) => named.has(id))) return said.everyoneElse;
   // "Everyone but" only where it is the shorter way round.
   if (within && set.size >= 3 && missing.length <= 2 && missing.length < set.size) {
     const left = byName(missing, people).map(people.nameOf).join(", ");
@@ -59,7 +64,7 @@ export function peopleText(ids: readonly Id[], people: People, inPhrase = false)
 /**
  * Each person's figure either side, as rows — people who moved alike share
  * one. Taking one of ten out of an even split is two rows ("− Cy", "Everyone
- * but Cy 10.00 → 11.11"), not ten. A figure of `""` is a person with no
+ * else 10.00 → 11.11"), not ten. A figure of `""` is a person with no
  * figure to show: they still come and go.
  *
  * In joins first, then outs, then moves; each run in name order.
@@ -82,9 +87,14 @@ export function moves(
     else groups.set(key, { mark, was: before || undefined, now: after || undefined, ids: [id] });
   }
   const rank = (m?: "+" | "−") => (m === "+" ? 0 : m === "−" ? 1 : 2);
+  const named = new Set<Id>();
   return [...groups.values()]
     .sort((a, b) => rank(a.mark) - rank(b.mark))
-    .map(({ ids, ...row }) => ({ name: peopleText(ids, people), ...row }));
+    .map(({ ids, ...row }) => {
+      const name = peopleText(ids, people, false, named);
+      for (const id of ids) named.add(id);
+      return { name, ...row };
+    });
 }
 
 /** The most common figure: an even split's cents land on a few people, which isn't news. */
@@ -199,9 +209,13 @@ export function netLine(
     if (group) group.push(id);
     else groups.set(delta, [id]);
   }
+  const named = new Set<Id>();
   return [...groups]
     .sort(([a], [b]) => Number(b > 0) - Number(a > 0) || Math.abs(b) - Math.abs(a))
-    .map(([delta, ids]) => copy.history.shareOf(peopleText(ids, people),
-      `${delta > 0 ? "+" : "−"}${show(Math.abs(delta))}`))
+    .map(([delta, ids]) => {
+      const name = peopleText(ids, people, false, named);
+      for (const id of ids) named.add(id);
+      return copy.history.shareOf(name, `${delta > 0 ? "+" : "−"}${show(Math.abs(delta))}`);
+    })
     .join(" · ");
 }

@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-13* — "In history, add an 'everyone else' text … wherever it makes
+  sense". The hedge was the spec: "else" only where the people left out were
+  named a row above, and the first test it broke ("Marie, Theo" turning into
+  it) drew the other edge — two names are as short.
+
 - *2026-10-13* — "Change the “4 people” small text in the group list to the
   icon + number that the ledger uses". The ask pointed at its own spec again:
   copy the ledger's glyph, size and gap, then crop both shots side by side
@@ -85,7 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   answering a why; the numbers were the answer, and a fix touching a gate
   went to them as a question rather than into the push.
 
-- *2026-10-12* — "Should we special case the wording…?" I answered with a
-  pick and asked; their reply was a better design ("a single row … for Y").
-  A question can be the owner thinking aloud: answer briefly, then build what
-  comes back without asking again.

@@ -21,6 +21,17 @@ describe("peopleText", () => {
     expect(peopleText(["a", "b"], people(["a", "b"]))).toBe("Ana, Bo");
     expect(peopleText(["a", "b", "c", "z"], people(["a", "b", "c"]))).toBe("Ana, Bo, Cy, Zoe");
   });
+
+  // "Else" points back at names already read; anyone left out and unnamed
+  // makes it untrue, and two people are as short by name.
+  it("says everyone else only where everyone left out was just named", () => {
+    const five = people(["a", "b", "c", "d", "e"]);
+    expect(peopleText(["a", "b", "d", "e"], five, false, new Set(["c"]))).toBe("Everyone else");
+    expect(peopleText(["a", "b", "c"], people(["a", "b", "c", "d", "e", "z"]), false, new Set(["d", "e", "z"])))
+      .toBe("Everyone else");
+    expect(peopleText(["a", "b", "e"], five, false, new Set(["c"]))).toBe("Everyone but Cy, Dee");
+    expect(peopleText(["a", "b"], five, false, new Set(["c", "d", "e"]))).toBe("Ana, Bo");
+  });
 });
 
 describe("moves", () => {
@@ -34,7 +45,18 @@ describe("moves", () => {
     expect(rows).toEqual([
       { name: "Eve, Zoe", mark: "+", now: "20.00" },
       { name: "Cy", mark: "−", was: "25.00" },
-      { name: "Ana, Bo, Dee", was: "25.00", now: "20.00" },
+      { name: "Everyone else", was: "25.00", now: "20.00" },
+    ]);
+  });
+
+  it("calls the rest everyone else once the one who left is named", () => {
+    expect(moves(
+      figures({ a: "25.00", b: "25.00", c: "25.00", d: "25.00" }),
+      figures({ a: "33.33", b: "33.33", d: "33.33" }),
+      people(["a", "b", "c", "d"]),
+    )).toEqual([
+      { name: "Cy", mark: "−", was: "25.00" },
+      { name: "Everyone else", was: "25.00", now: "33.33" },
     ]);
   });
 
@@ -103,5 +125,12 @@ describe("netLine", () => {
     const now = new Map([["a", 800], ["b", 4100], ["c", 1600], ["d", 1600], ["e", 500]]);
     expect(netLine(was, now, show, people(["a", "b", "c", "d", "e"])))
       .toBe("Bo +17.00 · Ana −9.00 · Cy, Dee −4.00");
+  });
+
+  it("calls the rest everyone else once the gainer is named", () => {
+    const was = new Map([["a", 1000], ["b", 1000], ["c", 1000], ["d", 1000]]);
+    const now = new Map([["a", 2200], ["b", 600], ["c", 600], ["d", 600]]);
+    expect(netLine(was, now, show, people(["a", "b", "c", "d"])))
+      .toBe("Ana +12.00 · Everyone else −4.00");
   });
 });

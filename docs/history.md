@@ -29,8 +29,9 @@ so sorting by it puts a was/now pair in two unrelated orders.
 revision moved a list — people in a split, payers, lines of a bill, who had
 which line — it gets **rows** (`lib/history-rows.ts`, drawn by `components/revision.tsx`, the sixth and later folded behind "Show N more"), one per *kind* of move:
 "+ Chewie 20.00", "− Cy ~~25.00~~", and the people who moved alike on one row,
-"Everyone but Cy 25.00 → 33.33". Taking one of ten out of a split is two rows,
-not two lists of ten for the reader to compare. A **split** is read as what each
+"Everyone else 25.00 → 33.33" — "else" once everyone left out is named on a
+row above, "everyone but Cy" where not. Taking one of ten out of a split is two
+rows, not two lists of ten for the reader to compare. A **split** is read as what each
 person owes, in money — the one reading that survives a change of mode and the
 only one that says anything about a split by items — so "changed who's
 involved" and "changed how it's split" both answer with figures, and a new mode
