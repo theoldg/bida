@@ -9,7 +9,8 @@ import type { Copy } from "./copy";
  * The owner's conventions: "ty", never "Pan/Pani", and capitalised as in a
  * letter: Ty, Twój, Ciebie, Ci. A name is never declined
  * (a member is whatever they typed): rephrase so it stands in the nominative,
- * "Usunąć: Ana?" rather than "Usunąć Anę?".
+ * "Usunąć: Ana?" rather than "Usunąć Anę?". A group's name stands beside the
+ * word grupa, which takes the case: "Dołącz do grupy Wyjazd".
  *
  * The glossary, chosen by the owner: entry wpis · expense wydatek · income
  * wpływ · transfer przelew · balance saldo · share udział · receipt and bill
@@ -370,43 +371,63 @@ export const pl: Copy = {
   // ------------------------------------------------------------- new group
 
   newGroup: {
-    title: "???",
-    named: () => "???",
-    name: "???",
-    namePlaceholder: "???",
-    currency: "???",
-    people: "???",
-    failed: () => "???",
-    discardTitle: "???",
-    discardBody: "???",
+    title: "Nowa grupa",
+    named: (group) => `Utwórz grupę ${group}`,
+    name: "Nazwa",
+    namePlaceholder: "Nazwa grupy",
+    currency: "Waluta",
+    people: "Osoby",
+    failed: (why) => `Nie udało się utworzyć grupy: ${why}`,
+    discardTitle: "Porzucić tę grupę?",
+    discardBody: "Nic jeszcze nie zostało utworzone.",
   },
 
   // ------------------------------------------------------------- join
 
   join: {
-    title: "???",
-    badLink: { title: "???", body: "???" },
-    linkUsed: "???",
-    keyless: { empty: "???", body: "???", groupName: "???" },
-    joining: { title: "???", fetching: () => "???", body: "???" },
-    deleted: { title: "???", body: "???" },
+    title: "Dołącz do grupy",
+    badLink: {
+      title: "Nieprawidłowy link",
+      body: "Poproś osobę, która go wysłała, żeby wysłała go jeszcze raz.",
+    },
+    linkUsed: "Użyty link",
+    keyless: {
+      empty: "W tym linku brakuje hasła",
+      body: "Adres grupy z paska przeglądarki nie zawiera części, która ją odblokowuje. Poproś o link skopiowany w menu aplikacji.",
+      groupName: "Twoja grupa",
+    },
+    joining: {
+      title: "Dołączanie…",
+      fetching: (percent) => `Pobieranie… ${percent}%`,
+      body: "To trwa dłużej niż zwykle. Albo ten telefon jest offline, albo osoba, która wysłała link, nie była online od utworzenia grupy. Dołączanie dokończy się samo.",
+    },
+    deleted: {
+      title: "Ta grupa została usunięta",
+      body: "Ktoś z grupy usunął ją z serwera dla wszystkich. Nic z niej nie zostało.",
+    },
   },
   paste: { title: "Link z zaproszeniem", placeholder: "Wklej tutaj", open: "Otwórz" },
   demo: {
     opening: "???",
-    title: "???",
+    title: "grupa przykładowa",
     clear: "???",
     clearTitle: "???",
     clearBody: () => "???",
     noLink: { title: "???", body: "???" },
   },
   claim: {
-    title: "???",
-    join: () => "???",
-    addPlaceholder: "???",
-    continueAs: () => "???",
-    pickFirst: "???",
-    inApp: { title: "???", body: () => "???", copyLink: "???", copied: "???", hold: "???" },
+    title: "Kim jesteś?",
+    join: (group) => `Dołącz do grupy ${group}`,
+    addPlaceholder: "Dodaj swoje imię",
+    continueAs: (name) => `Kontynuuj jako ${name}`,
+    pickFirst: "Wybierz swoje imię",
+    inApp: {
+      title: "Masz aplikację?",
+      body: (browser) => `Linki zawsze otwierają się w ${browser ?? "tej przeglądarce"}. Wklej ten link w aplikacji.`,
+      copyLink: "Kopiuj",
+      copied: "Skopiowano",
+      hold: "Przytrzymaj, aby skopiować",
+    },
   },
 
   // ------------------------------------------------------------- the group
