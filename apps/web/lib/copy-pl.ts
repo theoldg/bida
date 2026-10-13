@@ -5,27 +5,46 @@ import type { Copy } from "./copy";
  * Polish, filled in a section at a time with the owner. "???" is a line not yet
  * translated; the shape is `Copy`, so the compiler names anything English has
  * that this lacks. Shown only when /diag's Language says Polski.
+ *
+ * The owner's conventions: "ty", never "Pan/Pani". A name is never declined
+ * (a member is whatever they typed): rephrase so it stands in the nominative,
+ * "Usunąć: Ana?" rather than "Usunąć Anę?".
+ *
+ * The glossary, chosen by the owner: entry wpis · expense wydatek · income
+ * wpływ · transfer przelew · balance saldo · share udział · receipt and bill
+ * alike paragon · invite link "link z zaproszeniem", but the menu's button is
+ * "Kopiuj link" · group grupa · history historia · people and members osoby ·
+ * split podział, podzielić · scan skan, skanuj · amount kwota · currency waluta
+ * · rate kurs · title tytuł · note notatka · date data. Undecided: you owe,
+ * you're owed, you're square, and any past tense that agrees with a name.
  */
 export const pl: Copy = {
   app: { name: "bida", description: "???", invite: "???", banner: "???" },
   act: {
-    add: "???",
-    back: "???",
-    cancel: "???",
-    record: "???",
-    create: "???",
-    delete: "???",
-    discard: "???",
-    done: "???",
-    edit: "???",
-    remove: "???",
-    save: "???",
-    useIt: "???",
-    close: "???",
-    retry: "???",
-    reload: "???",
+    add: "Dodaj",
+    back: "Wróć",
+    cancel: "Anuluj",
+    record: "Zapisz",
+    create: "Utwórz",
+    delete: "Usuń",
+    discard: "Porzuć",
+    done: "Gotowe",
+    edit: "Edytuj",
+    remove: "Usuń",
+    save: "Zapisz",
+    useIt: "Zapisz",
+    close: "Zamknij",
+    retry: "Spróbuj ponownie",
+    reload: "Odśwież",
   },
-  db: { stalled: "???", blocked: "???", broken: { title: "???", body: "???" } },
+  db: {
+    stalled: "Wczytywanie danych z telefonu…",
+    blocked: "bida jest otwarta w innym oknie. Zamknij ją, żeby kontynuować tutaj.",
+    broken: {
+      title: "Nie można odczytać danych z telefonu",
+      body: "Nic nie przepadło, wszystko jest nadal na telefonie. Zwykle pomaga odświeżenie.",
+    },
+  },
   diag: {
     title: "???",
     what: { ask: "???", lead: "???", tail: "???" },
@@ -115,36 +134,38 @@ export const pl: Copy = {
   languages: { en: "English", pl: "Polski" },
   unknown: "?",
   none: "—",
-  someone: "???",
-  someoneLower: "???",
+  someone: "Ktoś",
+  someoneLower: "ktoś",
   noun: {
-    change: { one: "???", few: "???", many: "???" },
-    entry: { one: "???", few: "???", many: "???" },
-    expense: { one: "???", few: "???", many: "???" },
-    item: { one: "???", few: "???", many: "???" },
-    other: { one: "???", few: "???", many: "???" },
-    part: { one: "???", few: "???", many: "???" },
-    person: { one: "???", few: "???", many: "???" },
-    photo: { one: "???", few: "???", many: "???" },
-    revision: { one: "???", few: "???", many: "???" },
-    newChange: { one: "???", few: "???", many: "???" },
-    row: { one: "???", few: "???", many: "???" },
+    change: { one: "zmiana", few: "zmiany", many: "zmian" },
+    entry: { one: "wpis", few: "wpisy", many: "wpisów" },
+    expense: { one: "wydatek", few: "wydatki", many: "wydatków" },
+    item: { one: "pozycja", few: "pozycje", many: "pozycji" },
+    part: { one: "część", few: "części", many: "części" },
+    person: { one: "osoba", few: "osoby", many: "osób" },
+    photo: { one: "zdjęcie", few: "zdjęcia", many: "zdjęć" },
+    revision: { one: "wersja", few: "wersje", many: "wersji" },
+    newChange: { one: "nowa zmiana", few: "nowe zmiany", many: "nowych zmian" },
+    row: { one: "wiersz", few: "wiersze", many: "wierszy" },
   },
   time: {
-    today: "???",
-    yesterday: "???",
-    justNow: "???",
-    minutesAgo: () => "???",
-    hoursAgo: () => "???",
-    daysAgo: () => "???",
-    agoYesterday: "???",
-    weekdays: ["???", "???", "???", "???", "???", "???", "???"],
-    months: ["???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???"],
-    monthsOf: ["???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???"],
-    monthsShort: ["???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???"],
-    day: () => "???",
-    dayInYear: () => "???",
-    monthInYear: () => "???",
+    today: "Dzisiaj",
+    yesterday: "Wczoraj",
+    justNow: "przed chwilą",
+    minutesAgo: (n) => `${n} min temu`,
+    hoursAgo: (n) => `${n} godz. temu`,
+    // Two to six: "dni" for every one of them.
+    daysAgo: (n) => `${n} dni temu`,
+    agoYesterday: "wczoraj",
+    weekdays: ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."],
+    months: ["styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec",
+      "sierpień", "wrzesień", "październik", "listopad", "grudzień"],
+    monthsOf: ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca", "lipca",
+      "sierpnia", "września", "października", "listopada", "grudnia"],
+    monthsShort: ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"],
+    day: (weekday, day, month) => `${weekday} ${day} ${month}`,
+    dayInYear: (day, month, year) => `${day} ${month} ${year}`,
+    monthInYear: (month, year) => `${month} ${year}`,
   },
 
   // ------------------------------------------------------------- groups list
@@ -457,6 +478,7 @@ export const pl: Copy = {
     who: "???",
     noLines: "???",
     discardTitle: "???",
+    done: "Zakończ",
     doneTitle: "???",
     discardBody: "???",
     backTitle: "???",

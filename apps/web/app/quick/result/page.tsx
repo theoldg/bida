@@ -111,14 +111,14 @@ export default function QuickResultPage() {
             {/* The way out, in the secondary register: the act this screen
                 exists for is the one above it. */}
             <button type="button" className="btn btn-s" onClick={() => setAsking(true)}>
-              {copy.act.done}
+              {copy.quick.done}
             </button>
           </div>
         </Scroll>
       </Body>
 
       {asking ? (
-        <ConfirmDialog title={copy.quick.doneTitle} confirm={copy.act.done}
+        <ConfirmDialog title={copy.quick.doneTitle} confirm={copy.quick.done}
           danger={true} onConfirm={done} onClose={() => setAsking(false)}>
           <p>{copy.quick.discardBody}</p>
         </ConfirmDialog>

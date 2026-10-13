@@ -196,7 +196,6 @@ const en = {
     entry: { one: "entry", many: "entries" } as Noun,
     expense: { one: "expense", many: "expenses" } as Noun,
     item: { one: "item", many: "items" } as Noun,
-    other: { one: "other", many: "others" } as Noun,
     part: { one: "part", many: "parts" } as Noun,
     person: { one: "person", many: "people" } as Noun,
     photo: { one: "photo", many: "photos" } as Noun,
@@ -701,6 +700,8 @@ const en = {
     who: "Who’s splitting",
     noLines: "That receipt has no lines on it. There’s nothing to assign.",
     discardTitle: "Discard this split?",
+    /** Its own: Polish ends a split with "Zakończ", not the form's "Gotowe". */
+    done: "Done",
     doneTitle: "Finished with this split?",
     discardBody: "Nothing about it is kept.",
     backTitle: "Discard this receipt?",
