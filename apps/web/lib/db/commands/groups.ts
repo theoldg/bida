@@ -134,7 +134,7 @@ async function erase(groupId: Id, deleted: boolean): Promise<boolean> {
     if (!deleted) {
       const [device, queued] = await Promise.all([
         d.device.get("device"),
-        d.ops.where("groupId").equals(groupId).and((op) => op.pending === 1).count(),
+        d.ops.where("[groupId+pending]").equals([groupId, 1]).count(),
       ]);
       if (!device?.leftGroups?.includes(groupId) || queued > 0) return false;
     }

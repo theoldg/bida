@@ -342,23 +342,30 @@ describe("sameData", () => {
 
 /**
  * Pins what `groupRows`' unsynced count (lib/hooks.ts) leans on: an op leaving
- * the `pending` index wakes a read of that index, not only one entering it.
+ * the `[groupId+pending]` range wakes a count of it, not only one entering it,
+ * and another group's op wakes it to the same answer.
  */
-describe("a live read of an index range", () => {
-  it("is woken by a row leaving the range", async () => {
+describe("a live count of a compound index range", () => {
+  it("is woken by a row leaving the range, as an op the server accepted does", async () => {
     const local = new Dexie("live-range");
-    local.version(1).stores({ ops: "id, pending" });
+    local.version(1).stores({ ops: "id, [groupId+pending]" });
     await local.open();
-    await local.table("ops").put({ id: "a", pending: 1, groupId: "g" });
+    await local.table("ops").bulkPut([
+      { id: "a", pending: 1, groupId: "g" },
+      { id: "b", pending: 1, groupId: "g" },
+      { id: "c", pending: 1, groupId: "other" },
+    ]);
 
     const counts: number[] = [];
-    const sub = liveQuery(() => local.table("ops").where("pending").equals(1)
-      .filter((o: { groupId: string }) => o.groupId === "g").count())
+    const sub = liveQuery(() => local.table("ops").where("[groupId+pending]").equals(["g", 1]).count())
       .subscribe((n) => counts.push(n), () => {});
     await settle();
-    await local.table("ops").put({ id: "a", pending: 0, groupId: "g" });
+    // How sync marks one accepted (lib/db/sync.ts).
+    await local.table("ops").update("a", { seq: 7, pending: 0 });
     await settle();
-    expect(counts).toEqual([1, 0]);
+    await local.table("ops").put({ id: "d", pending: 1, groupId: "g" });
+    await settle();
+    expect(counts.filter((n, i) => n !== counts[i - 1])).toEqual([2, 1, 2]);
 
     sub.unsubscribe();
     local.close();

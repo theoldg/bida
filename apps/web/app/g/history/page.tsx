@@ -13,7 +13,7 @@ import { useCatchUp } from "@/lib/catch-up";
 import { copy } from "@/lib/copy";
 import { plural } from "@/lib/format";
 import { parseEntrySource, route } from "@/lib/group-link";
-import { historyReads, useClaimGate, useGroupData } from "@/lib/hooks";
+import { historyOps, useClaimGate, useGroupData } from "@/lib/hooks";
 
 /** How much of a long feed is drawn before asking. The rest comes in one tap,
  *  which is why the button can say exactly how many it is. */
@@ -34,21 +34,13 @@ function HistoryScreen() {
   const unclaimed = useClaimGate(groupId, data);
   const [shown, setShown] = useState(PAGE);
 
-  const reads = historyReads(groupId);
-  const allMembers = useLive("historyMembers", reads.historyMembers, [groupId]);
-  // Once per answer, not per render: a 10,000-entry group's feed is a tenth of a
-  // second on a slow phone.
-  const memberById = useMemo(() => new Map((allMembers ?? []).map((m) => [m.id, m])), [allMembers]);
+  // Removed members and deleted entries included: a deleted entry is half the
+  // reason to open history, and a member who left is still in their own past.
+  const { memberById, expenseById, settlementById } = data;
 
-  const loaded = useLive("historyOps", reads.historyOps, [groupId]);
+  const loaded = useLive("historyOps", historyOps(groupId), [groupId]);
   // The group's feed is where what's new gets seen; one entry's history isn't.
   const fresh = useCatchUp(entryId ? undefined : groupId, loaded) ?? new Set<string>();
-
-  const allExpenses = useLive("historyExpenses", reads.historyExpenses, [groupId]);
-  const expenseById = useMemo(() => new Map((allExpenses ?? []).map((e) => [e.id, e])), [allExpenses]);
-
-  const allSettlements = useLive("historySettlements", reads.historySettlements, [groupId]);
-  const settlementById = useMemo(() => new Map((allSettlements ?? []).map((s) => [s.id, s])), [allSettlements]);
 
   // One id, both tables (ADR-0010). **Looked up in the maps that keep the
   // deleted ones** — the alive-only lists would title every deleted entry

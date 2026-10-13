@@ -135,6 +135,9 @@ export interface GroupData {
   guard: (draft: OpDraft) => RegisteredInvariant | undefined;
   /** For the deleted entry's screen; everything else reads the live arrays. */
   withTombstones: GroupState;
+  /** Every entry, deleted ones included — history's, whose subject may be gone. */
+  expenseById: Map<string, Expense>;
+  settlementById: Map<string, Settlement>;
   pendingOps: number;
   loading: boolean;
 }
@@ -176,8 +179,8 @@ function groupRows(groupId: string | undefined) {
       d.members.where("groupId").equals(groupId).toArray(),
       d.expenses.where("groupId").equals(groupId).toArray(),
       d.settlements.where("groupId").equals(groupId).toArray(),
-      // By the index: the few waiting, not the whole log.
-      d.ops.where("pending").equals(1).filter((o) => o.groupId === groupId).count(),
+      // By the index alone: an import leaves thousands waiting.
+      d.ops.where("[groupId+pending]").equals([groupId, 1]).count(),
       d.rates.where("groupId").equals(groupId).toArray(),
     ]);
     return { group, members, expenses, settlements, rates, pending };
@@ -225,31 +228,27 @@ function derive(rows: GroupRows): Derived {
     transfers: settleUp(balances.byMember),
     guard: (draft) => wouldViolate(withTombstones, draft),
     withTombstones,
+    expenseById: new Map(Object.entries(withTombstones.expenses)),
+    settlementById: new Map(Object.entries(withTombstones.settlements)),
     pendingOps: rows.pending,
   };
   derived.set(rows, out);
   return out;
 }
 
-/** Kept apart from `groupRows`, so a screen that never opens history doesn't read every op. */
-export function historyReads(groupId: string | undefined) {
-  return {
-    // Every member, removed ones included: the alive-only map would erase them
-    // from their own past.
-    historyMembers: async () => (groupId ? db().members.where("groupId").equals(groupId).toArray() : []),
-    historyOps: async () => (groupId ? opsForGroup(groupId) : []),
-    // Deleted ones included: a deleted entry is half the reason to open history.
-    historyExpenses: async () => (groupId ? db().expenses.where("groupId").equals(groupId).toArray() : []),
-    historySettlements: async () => (groupId ? db().settlements.where("groupId").equals(groupId).toArray() : []),
-  };
+/**
+ * History's one read of its own: every op, kept apart from `groupRows` so a
+ * screen that never opens history doesn't read the log. Its members and entries,
+ * deleted ones included, are the group's read (`memberById`, `expenseById`).
+ */
+export function historyOps(groupId: string | undefined) {
+  return async () => (groupId ? opsForGroup(groupId) : []);
 }
 
 /** Readies a group's screens before one is opened (lib/db/live.ts). */
 export function warmGroup(groupId: string, { history = false } = {}): void {
   keepWarm("groupData", groupRows(groupId), [groupId]);
-  if (!history) return;
-  const reads: Record<string, () => Promise<unknown>> = historyReads(groupId);
-  for (const [name, read] of Object.entries(reads)) keepWarm(name, read, [groupId]);
+  if (history) keepWarm("historyOps", historyOps(groupId), [groupId]);
 }
 
 export function useGroupData(groupId: string | undefined): GroupData {
@@ -268,6 +267,7 @@ export function useGroupData(groupId: string | undefined): GroupData {
         expenses: [], settlements: [], rates: {}, currencies: [],
         balances: EMPTY_REPORT, transfers: [], me: undefined,
         guard: () => undefined, withTombstones: emptyGroupState(), pendingOps: 0, loading: true,
+        expenseById: new Map(), settlementById: new Map(),
       };
     }
     return { ...derive(rows), me, loading: false };
@@ -295,14 +295,37 @@ export function useClaimGate(groupId: string | undefined, data: GroupData): bool
   return unclaimed;
 }
 
+/** What the list itself reads; each row's figures are its group's own read (`useGroupFigures`). */
 export interface GroupSummary {
   group: Group;
-  memberCount: number;
-  entryCount: number;
-  netMinor: number | undefined;
   lastActivity: number;
   me: string | undefined;
   newCount: number;
+}
+
+export interface GroupFigures {
+  memberCount: number;
+  entryCount: number;
+  netMinor: number | undefined;
+}
+
+/**
+ * A row's figures, from the very read the group's screens make: a save wakes
+ * that group's read alone, Dexie answers it once for the ledger and the list
+ * row together, and `derive` works it out once per answer for both — where a
+ * list read of every table re-read and re-added every group on any change.
+ */
+export function useGroupFigures(groupId: string, me: string | undefined): GroupFigures | undefined {
+  const rows = useLive("groupData", groupRows(groupId), [groupId]);
+  return useMemo(() => {
+    if (!rows) return undefined;
+    const { members, expenses, settlements, balances } = derive(rows);
+    return {
+      memberCount: members.length,
+      entryCount: expenses.length + settlements.length,
+      netMinor: me ? balances.byMember[me] ?? 0 : undefined,
+    };
+  }, [rows, me]);
 }
 
 /**
@@ -334,14 +357,9 @@ export function warmGroupsList(): void {
 
 async function groupSummaries(): Promise<GroupSummary[]> {
   const d = db();
-  // Each table whole and bucketed here: a constant number of round trips.
-  const [groups, device, members, expenses, settlements, rates, keys] = await Promise.all([
+  const [groups, device, keys] = await Promise.all([
     d.groups.toArray(),
     d.device.get("device"),
-    d.members.toArray(),
-    d.expenses.toArray(),
-    d.settlements.toArray(),
-    d.rates.toArray(),
     d.groupKeys.toArray(),
   ]);
   const newCount = async (groupId: string): Promise<number> => {
@@ -351,45 +369,21 @@ async function groupSummaries(): Promise<GroupSummary[]> {
     return unseenRevisions(ops, key.seenSeq, device.nodeId, Date.now() - CATCH_UP_MS)
       .revisions.length;
   };
-  const byGroup = <T extends { groupId: string; deletedAt?: number | null }>(rows: T[]) => {
-    const map = new Map<string, T[]>();
-    for (const row of rows) {
-      if (row.deletedAt) continue;
-      const bucket = map.get(row.groupId);
-      if (bucket) bucket.push(row); else map.set(row.groupId, [row]);
-    }
-    return map;
-  };
   // An edit, a delete or a back-dated expense is activity too.
   const lastChanged = async (group: Group): Promise<number> => {
     const newest = await d.ops.where("[groupId+hlc]")
       .between([group.id, Dexie.minKey], [group.id, Dexie.maxKey]).last();
     return newest ? parseHlc(newest.hlc).physical : group.createdAt;
   };
-  const m = byGroup(members), e = byGroup(expenses), s = byGroup(settlements);
-  const r = byGroup(rates);
 
+  // This list is "your groups", not every group the device has synced.
   const left = new Set(device?.leftGroups ?? []);
-  const out: GroupSummary[] = [];
-  for (const group of groups) {
-    // This list is "your groups", not every group the device has synced.
-    if (left.has(group.id)) continue;
-    const live = {
-      m: m.get(group.id) ?? [], e: e.get(group.id) ?? [], s: s.get(group.id) ?? [],
-      r: r.get(group.id) ?? [],
-    };
-    const balances = computeBalances(stateOf(group, live.m, live.e, live.s, live.r));
-    const me = device?.meByGroup[group.id];
-    out.push({
-      group,
-      memberCount: live.m.length,
-      entryCount: live.e.length + live.s.length,
-      netMinor: me ? balances.byMember[me] ?? 0 : undefined,
-      me,
-      newCount: await newCount(group.id),
-      lastActivity: await lastChanged(group),
-    });
-  }
+  const out = await Promise.all(groups.filter((group) => !left.has(group.id)).map(async (group) => ({
+    group,
+    me: device?.meByGroup[group.id],
+    newCount: await newCount(group.id),
+    lastActivity: await lastChanged(group),
+  })));
   return out.sort((a, b) => b.lastActivity - a.lastActivity);
 }
 

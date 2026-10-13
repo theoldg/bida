@@ -131,7 +131,7 @@ export function Banner({ children, icon }: { children: ReactNode; icon?: IconNam
 const SKELETON_WIDTHS = ["62%", "44%", "78%", "51%", "69%", "38%"];
 
 /** The no-break space keeps the line box, so the bar is as tall as its words. */
-function SkelText({ width }: { width: number | string }) {
+export function SkelText({ width }: { width: number | string }) {
   return <><span className="skel skeltext" style={{ width }} />{"\u00a0"}</>;
 }
 

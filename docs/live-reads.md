@@ -83,6 +83,16 @@ the rest. It costs nothing until what it reads changes, so **a group's read
 leaves out the device row**, which every save and pull rewrites — who you are
 is `useDevice`'s.
 
+**A group is read once, by the one query every screen of it makes**
+(`groupRows`): the ledger, its history — whose removed members and deleted
+entries are in it (`memberById`, `expenseById`), history reading only the op
+log on top — and the group's row on the list (`useGroupFigures`). Dexie's own
+cache answers identical live queries with one read; every save is an explicit
+transaction, which drops that cache, so a save in a 10,000-entry group costs
+one read of it rather than one per screen. The list's own read is the groups,
+their last op and what is new — never every table whole, which any change
+re-read in full.
+
 **An answer that says what the last one said is the last one** (`sameData`):
 the same object, so a screen opened onto a remembered answer doesn't draw
 everything again when its own read lands, and a group's balances are worked

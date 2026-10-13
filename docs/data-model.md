@@ -336,7 +336,7 @@ would want its own columns.
 
 | Store | Key | Notes |
 |---|---|---|
-| `ops` | `id` | indexes on `groupId`, `entityId`, `hlc`, `pending`, `[groupId+hlc]` |
+| `ops` | `id` | indexes on `groupId`, `entityId`, `hlc`, `pending`, `[groupId+hlc]`, `[groupId+pending]` |
 | `groups`, `members`, `expenses`, `settlements`, `attachments` | `id` | materialised, rebuildable from `ops` |
 | `rates` | `[groupId+id]` | the retired exchange registry, `id` being the currency code |
 | `identities` | `[groupId+id]` | one row per device per group, `id` being the device's node id |
@@ -350,7 +350,9 @@ cursor — so a phone's log refills a server copy that was wiped for sealing
 ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). v10 refolds
 every cached `receipt` row from its ops, for a fold that learned to read some
 of them as parts (`RECEIPT_MODE_SINCE`) — a cache is refolded only when a pull
-brings ops.
+brings ops. v11 adds `[groupId+pending]`, so a group's waiting ops are counted
+and pushed by the index rather than by walking its log — an import leaves
+thousands.
 
 The materialised stores are a **cache**: if a migration gets confusing, drop
 them and re-fold from `ops`. Never migrate materialised data by hand — which is

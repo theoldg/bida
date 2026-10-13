@@ -163,6 +163,9 @@ class BidaDb extends Dexie {
         if (folded && folded.split.mode !== "receipt") await tx.table<Expense>("expenses").put(folded);
       }
     });
+    // A group's waiting ops counted by the index alone, never a walk of every
+    // unpushed op: an import leaves thousands.
+    this.version(11).stores({ ops: "id, groupId, entityId, hlc, pending, [groupId+hlc], [groupId+pending]" });
   }
 }
 

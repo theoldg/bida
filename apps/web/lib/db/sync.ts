@@ -229,7 +229,8 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   const key = await d.groupKeys.get(groupId);
   if (!key) return undefined;
 
-  const queued = await d.ops.where("groupId").equals(groupId).and((op) => op.pending === 1).toArray();
+  // By the index: the waiting ops, never a walk of the whole log.
+  const queued = await d.ops.where("[groupId+pending]").equals([groupId, 1]).toArray();
   const rounds = queued.length > 0 ? chunk(queued, PUSH_CHUNK) : [[] as StoredOp[]];
   // Skipping is safe only because the op is still on the server; a new build
   // re-pulls from the earliest skipped op, once per deploy.
@@ -517,7 +518,7 @@ export async function applyStashes(): Promise<void> {
 }
 
 async function hasPending(groupId: string): Promise<boolean> {
-  return (await db().ops.where("groupId").equals(groupId).and((op) => op.pending === 1).count()) > 0;
+  return (await db().ops.where("[groupId+pending]").equals([groupId, 1]).count()) > 0;
 }
 
 const written = new Set<string>();

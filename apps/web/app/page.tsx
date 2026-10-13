@@ -8,7 +8,7 @@ import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { Avatar, signClass } from "@/components/bits";
 import { FitLine } from "@/components/fit-line";
 import { Icon } from "@/components/icons";
-import { Empty, SkeletonRows } from "@/components/chrome";
+import { Empty, SkelText, SkeletonRows } from "@/components/chrome";
 import { FirstFrames, HomeFrame } from "@/components/home-frame";
 import { InstallOfferCard } from "@/components/install";
 import { useGroupActions } from "@/components/group-actions";
@@ -22,7 +22,7 @@ import { groupMeta } from "@/lib/row-meta";
 import { JoiningFrame } from "@/components/joining";
 import { firstFrameMarked } from "@/lib/first-frame";
 import { useResumeLastGroup } from "@/lib/launch";
-import { useArrivingGroups, useGroupSummaries, warmGroup, type GroupSummary } from "@/lib/hooks";
+import { useArrivingGroups, useGroupFigures, useGroupSummaries, warmGroup, type GroupSummary } from "@/lib/hooks";
 
 export default function GroupsPage() {
   const router = useRouter();
@@ -86,7 +86,11 @@ const never = () => () => {};
 const WARM_GROUPS = 10;
 
 function GroupRow({ summary }: { summary: GroupSummary }) {
-  const { group, memberCount, entryCount, netMinor, lastActivity, newCount } = summary;
+  const { group, me, lastActivity, newCount } = summary;
+  // Answered at once from memory once read; on a first launch the figures fill
+  // in after the row (lib/hooks.ts).
+  const figures = useGroupFigures(group.id, me);
+  const netMinor = figures?.netMinor;
   const actions = useGroupActions(group.id);
   const { hold, menu } = useLongPressMenu([...actions.copyLink, actions.forget], actions.asking);
 
@@ -99,12 +103,19 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
           {/* The new count leads, where neither the ladder nor the ellipsis reaches it. */}
           <FitLine className="rmeta" leadClassName="rnew"
             lead={newCount > 0 ? plural(newCount, copy.noun.newChange) : undefined}
-            options={groupMeta({ people: memberCount, entries: entryCount, when: ago(lastActivity) })} />
+            options={figures
+              ? groupMeta({ people: figures.memberCount, entries: figures.entryCount, when: ago(lastActivity) })
+              : [ago(lastActivity)]} />
         </div>
         {/* The menu has closed and the clipboard says nothing, so the copy answers here. */}
         <div className={`ramt flipfig${actions.copied ? " copied" : ""}`}>
           <div className="amtface">
-            {netMinor === undefined ? (
+            {!figures ? (
+              <>
+                <div className="big"><SkelText width={64} /></div>
+                <div className="sm"><SkelText width={44} /></div>
+              </>
+            ) : netMinor === undefined ? (
               <>
                 <div className="big muted">{copy.none}</div>
                 <div className="sm">{copy.groups.whoAreYou}</div>
