@@ -88,6 +88,8 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   const head = !showReceipt && members.length >= 3 ? spec : null;
   const inCount = members.filter((m) => included.has(m.id)).length;
   const headState = inCount === 0 ? "none" : inCount === members.length ? "all" : "some";
+  // The denominator a share is a fraction of, which no row says.
+  const partCount = head?.mode === "shares" ? Object.values(head.weights).reduce((a, b) => a + b, 0) : null;
 
   function toggleAll() {
     if (head) onChange(toggleEveryone(head, members.map((m) => m.id)));
@@ -226,10 +228,14 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
         </div>
         {head ? (
           <div className="splithead">
-            <span className="splitcount" aria-hidden="true"><b>{inCount}</b> {copy.split.everyone.of(members.length)}</span>
+            <span className="splitcount" aria-hidden="true">
+              {partCount === null ? null : <><b>{partCount}</b> {partCount === 1 ? copy.noun.part.one : copy.noun.part.many} · </>}
+              <b>{inCount}</b> {copy.split.everyone.of(members.length)}
+            </span>
             <button type="button" className="allmark" onClick={toggleAll}
               role="checkbox" aria-checked={headState === "all" ? true : headState === "some" ? "mixed" : false}
-              aria-label={`${copy.split.everyone.count(inCount, members.length)}. ${headLabel()}`}>
+              aria-label={`${partCount === null ? "" : `${plural(partCount, copy.noun.part)}, `}${
+                copy.split.everyone.count(inCount, members.length)}. ${headLabel()}`}>
               <span className={`allbox ${headState}`}>
                 {headState === "none" ? null : <Icon name={headState === "all" ? "check" : "minus"} size={11} />}
               </span>

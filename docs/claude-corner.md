@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-13* — "Suggest better copy … and review the idea", then mid-turn
+  "the parts footer should state the number of parts". The review asked for
+  words, so it went back as words to pick from; the footer was a spec, so it
+  shipped. One message can hold both kinds of ask.
+
 - *2026-10-13* — "In history, add an 'everyone else' text … wherever it makes
   sense". The hedge was the spec: "else" only where the people left out were
   named a row above, and the first test it broke ("Marie, Theo" turning into
@@ -84,9 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   conversation I wasn't in. I measured my way toward them until they pasted
   it, and the paste was the whole brief. Build what it proposed and check it
   again, here: the export compared by content this time, not names.
-
-- *2026-10-12* — "Should the deploy take so long?", then "Ok do your version.
-  Why does the build take 30 seconds though?" Time each phase before
-  answering a why; the numbers were the answer, and a fix touching a gate
-  went to them as a question rather than into the push.
-

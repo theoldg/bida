@@ -59,7 +59,9 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
 - **The everyone box toggles the whole list** (`toggleEveryone`), in every tab
   but Items and only from three people up: everyone in takes everyone out,
   else it brings in whoever is out and leaves the rest — a 2 in parts stays 2,
-  a typed amount stays, and in amounts whoever was out joins the rest. The tabs
+  a typed amount stays, and in amounts whoever was out joins the rest. Beside it
+  As parts counts the parts too ("4 parts · 3 of 4"), the one figure a share is
+  a fraction of that no row says. The tabs
   stick to the top of `.scroll` and the everyone box, under the last row, to
   its foot, so a long list keeps both in reach.
 
