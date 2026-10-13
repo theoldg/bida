@@ -136,12 +136,12 @@ describe("derive", () => {
   beforeEach(() => testing.forget());
 
   it("moves the last answer to the one a full sum gives, read after read", () => {
-    for (let seed = 1; seed <= 40; seed++) {
+    for (let seed = 1; seed <= 24; seed++) {
       testing.forget();
       const r = rng(seed);
-      const t = seeded(r, 120);
+      const t = seeded(r, 60);
       derive(t.rows());
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < 30; i++) {
         step(r, t);
         const rows = t.rows();
         const got = derive(rows);

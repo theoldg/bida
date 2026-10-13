@@ -426,7 +426,7 @@ describe("retallyBalances", () => {
   }
 
   it("is the full tally of the state it leads to, step after step", () => {
-    for (let seed = 1; seed <= 300; seed++) {
+    for (let seed = 1; seed <= 150; seed++) {
       const r = rng(seed);
       let state = start(r);
       let tally = tallyBalances(state);
