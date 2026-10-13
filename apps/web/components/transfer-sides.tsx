@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { Member } from "@bida/core";
 import { ChoiceDialog } from "./dialog";
 import { Icon } from "./icons";
+import { You } from "./bits";
 import { copy } from "../lib/copy";
 
 /**
@@ -21,8 +22,9 @@ import { copy } from "../lib/copy";
  * the list: picking them swaps the sides, the only sane reading of "send this
  * to the person who is sending it".
  */
-export function TransferSides({ members, from, to, onChange }: {
+export function TransferSides({ members, me, from, to, onChange }: {
   members: Member[];
+  me: string | undefined;
   from: string;
   to: string;
   onChange: (sides: { fromMember: string; toMember: string }) => void;
@@ -45,7 +47,7 @@ export function TransferSides({ members, from, to, onChange }: {
       <button type="button" className="tside" onClick={() => setPicking(which)}
         aria-label={which === "from" ? copy.form.sentBy : copy.form.receivedBy}>
         <span className="eyebrow">{which === "from" ? copy.entry.from : copy.entry.to}</span>
-        <span className={"who" + swapClass}>{member?.name ?? copy.none}</span>
+        <SideName name={member?.name ?? copy.none} you={!!member && member.id === me} className={swapClass} />
       </button>
     );
   };
@@ -79,6 +81,7 @@ export function TransferSides({ members, from, to, onChange }: {
           options={members.map((m) => ({
             value: m.id,
             label: m.name,
+            you: m.id === me,
             note: (picking === "from" ? m.id === to : m.id === from) && from !== to
               ? copy.form.otherSide : undefined,
           }))}
@@ -87,5 +90,17 @@ export function TransferSides({ members, from, to, onChange }: {
         />
       ) : null}
     </div>
+  );
+}
+
+/**
+ * A side's name, with "(you)" after yours. The tag never takes the ellipsis —
+ * a long name gives way first — or half a card would hide which side you are.
+ */
+export function SideName({ name, you, className = "" }: { name: string; you: boolean; className?: string }) {
+  return (
+    <span className={"who" + className}>
+      <span className="whoname">{name}</span>{you ? <You /> : null}
+    </span>
   );
 }

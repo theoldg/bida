@@ -408,6 +408,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
             {transfer ? (
               <TransferSides
                 members={data.members}
+                me={data.me}
                 from={draft.fromMember}
                 to={draft.toMember}
                 onChange={(sides) => patch(sides)}

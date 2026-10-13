@@ -886,8 +886,10 @@ button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 .tside { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;
   gap: 5px; padding: 13px 8px; position: relative }
 button.tside:active { background: var(--press) }
-.tside .who { font-size: 13px; font-weight: 600; max-width: 100%; overflow: hidden;
-  text-overflow: ellipsis; white-space: nowrap }
+.tside .who { display: flex; align-items: baseline; font-size: 13px; font-weight: 600; max-width: 100%; white-space: nowrap }
+.tside .whoname { min-width: 0; overflow: hidden; text-overflow: ellipsis }
+/* A flex item's leading space collapses, so the gap is drawn. */
+.tside .youtag { flex: none; padding-left: .5ch }
 .tside .eyebrow { font-size: 9.5px; margin-bottom: 2px }
 .tside .who.swap-a { animation: swapdip .22s ease-in }
 .tside .who.swap-b { animation: swapdip2 .22s ease-in }

@@ -12,6 +12,7 @@ import {
 import { Card, Eyebrow, KV, You, signClass } from "@/components/bits";
 import { FitLine, FitTitle } from "@/components/fit-line";
 import { MemberBill } from "@/components/member-bill";
+import { SideName } from "@/components/transfer-sides";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { Icon } from "@/components/icons";
 import { useDeleteEntry } from "@/components/delete-entry";
@@ -476,12 +477,12 @@ function TransferDetail({ settlement, data }: { settlement: Settlement; data: Gr
       <div className="card transfer">
         <span className="tside">
           <span className="eyebrow">{copy.entry.from}</span>
-          <span className="who">{from?.name ?? copy.none}</span>
+          <SideName name={from?.name ?? copy.none} you={!!from && from.id === data.me} />
         </span>
         <span className="tswap" aria-hidden="true"><Icon name="arrow" size={18} /></span>
         <span className="tside">
           <span className="eyebrow">{copy.entry.to}</span>
-          <span className="who">{to?.name ?? copy.none}</span>
+          <SideName name={to?.name ?? copy.none} you={!!to && to.id === data.me} />
         </span>
       </div>
       {settlement.note ? (

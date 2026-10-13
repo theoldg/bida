@@ -42,8 +42,9 @@ would say "you" about a payment, and they end in the ledger card's chevron.
 
 **On an entry, your name carries "you" and the screen ends in your balance.** A
 small, faint `(you)` follows your name wherever the entry prints it: the one
-payer on the paid-by line, a payer row, a split row. A transfer gets neither;
-its two names and an arrow already say it. The rows themselves stay uncoloured. Under the split, unless you neither paid nor had
+payer on the paid-by line, a payer row, a split row, a transfer's side (on its
+form and its picker too, a long name taking the ellipsis before the tag). A
+transfer gets no balance; its two names and an arrow already say it. The rows themselves stay uncoloured. Under the split, unless you neither paid nor had
 a share, is the ledger row's figure, signed and coloured as it is there:
 `Your balance +CRD 40.00`. When two of the card's numbers made it, it opens
 folded to that figure, a chevron after the label as on your bill's row, and
