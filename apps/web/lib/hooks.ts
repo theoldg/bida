@@ -2,7 +2,7 @@
 // Doc: docs/live-reads.md#a-save-moves-a-few-entries
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Dexie from "dexie";
 import {
   CATCH_UP_MS, emptyGroupState, parseHlc, unseenRevisions, type BalanceReport, type Group,
@@ -11,7 +11,7 @@ import { db, type DeviceRecord } from "./db/dexie";
 import { keepWarm, useLive } from "./db/live";
 import { opsForGroup } from "./db/fold";
 import { getDevice, getMe } from "./db/device";
-import { applyStash, stashSettled } from "./db/sync";
+import { applyStash, pullProgress, stashSettled, watchPullProgress } from "./db/sync";
 import { writeClipboardText } from "./clipboard";
 import { copy } from "./copy";
 import { derive, type GroupData, type GroupRows } from "./derive";
@@ -313,6 +313,18 @@ interface SyncHealth {
  * that isn't there.
  */
 const FAILURES_BEFORE_WARNING = 2;
+
+/**
+ * How much of a group's log a pull in pages has fetched, in whole percent —
+ * a render per percent, not per page — or undefined when none is walking it.
+ */
+export function usePullPercent(groupId: string | undefined): number | undefined {
+  const percent = () => {
+    const walk = groupId ? pullProgress(groupId) : undefined;
+    return walk ? Math.floor((100 * walk.done) / walk.total) : undefined;
+  };
+  return useSyncExternalStore(watchPullProgress, percent, () => undefined);
+}
 
 export function useSyncHealth(groupId: string | undefined): SyncHealth {
   const key = useLive("syncHealth", async () => {

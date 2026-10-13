@@ -255,15 +255,18 @@ app.post("/api/groups/:id/ops", async (c) => {
 
   const { assigned, latestSeq } = await acceptOps(c.env.DB, groupId, incoming, since, now);
   const pushedIds = new Set(incoming.map((op) => op.id));
-  const page = await pullPage(c.env.DB, groupId, since, Math.max(latestSeq, group.last_op_seq));
+  const head = Math.max(latestSeq, group.last_op_seq);
+  const page = await pullPage(c.env.DB, groupId, since, head);
 
   // `latestSeq` is the page's end, never the group's: a build from before paging
-  // takes it as its cursor, and so walks the log a page per sync.
+  // takes it as its cursor, and so walks the log a page per sync. `head` is the
+  // group's, for a join to say how far it has got.
   return c.json({
     assigned,
     ops: page.ops.filter((op) => !pushedIds.has(op.id)),
     latestSeq: page.upTo,
     more: page.more,
+    head,
   });
 });
 
@@ -295,7 +298,7 @@ app.get("/api/groups/:id/ops", async (c) => {
 
   const since = Number(c.req.query("since") ?? "0") || 0;
   const page = await pullPage(c.env.DB, groupId, since, group.last_op_seq);
-  return c.json({ ops: page.ops, latestSeq: page.upTo, more: page.more });
+  return c.json({ ops: page.ops, latestSeq: page.upTo, more: page.more, head: group.last_op_seq });
 });
 
 app.delete("/api/groups/:id", async (c) => {

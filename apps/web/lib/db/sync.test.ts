@@ -6,7 +6,7 @@ import { addExpense, addMember, createGroup, forgetGroup, markEditsSeen, saveGro
 import { getDevice, updateDevice } from "./device";
 import {
   IDLE_MS, SWEEP_MS, TICK_MS, groupOnScreen, planTick, pullWholeGroup, startSyncLoop, syncAll,
-  syncGroup,
+  pullProgress, syncGroup, watchPullProgress, type PullProgress,
 } from "./sync";
 import { VERSION } from "../version";
 import { stubPage } from "./page.test-helper";
@@ -849,7 +849,9 @@ describe("a pull in pages", () => {
       const pushed = new Set(body.ops.map((op) => op.id));
       const upTo = Math.min(body.since + page, log.length);
       const ops = log.filter((op) => op.seq! > body.since && op.seq! <= upTo && !pushed.has(op.id));
-      return new Response(JSON.stringify({ assigned, ops, latestSeq: upTo, more: upTo < log.length }));
+      return new Response(JSON.stringify({
+        assigned, ops, latestSeq: upTo, more: upTo < log.length, head: log.length,
+      }));
     }));
     return requests;
   }
@@ -882,6 +884,41 @@ describe("a pull in pages", () => {
     // A join's later pages are the group's past too, not news.
     expect(key?.seenSeq).toBe(7);
     expect(await db().expenses.where("groupId").equals(groupId).count()).toBe(7);
+  });
+
+  it("counts the pages for /join, from where the run started to the head", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    await db().ops.where("groupId").equals(groupId).modify({ pending: 0 });
+    await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 1 });
+    const log = await serverOps(groupId, Array.from({ length: 7 }, (_, i) => peer(groupId, theo, i + 1)));
+    pagingServer(log, 3);
+    const seen: (PullProgress | undefined)[] = [];
+    const stop = watchPullProgress(() => seen.push(pullProgress(groupId)));
+
+    await syncGroup(groupId);
+    stop();
+
+    // Seqs 2..7 in pages ending at 4 and 7; full before the rebuild, then gone.
+    expect(seen).toEqual([{ done: 3, total: 6 }, { done: 6, total: 6 }, undefined]);
+  });
+
+  it("says nothing of a pull that fits one page", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    await db().ops.where("groupId").equals(groupId).modify({ pending: 0 });
+    await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 0 });
+    const log = await serverOps(groupId, Array.from({ length: 3 }, (_, i) => peer(groupId, theo, i + 1)));
+    pagingServer(log, 3);
+    const seen: unknown[] = [];
+    const stop = watchPullProgress(() => seen.push(pullProgress(groupId)));
+
+    await syncGroup(groupId);
+    stop();
+
+    expect(seen).toEqual([]);
   });
 
   it("keeps the pages it got when a later one fails, and starts from there next time", async () => {

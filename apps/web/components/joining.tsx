@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Body, Empty, Screen, Scroll, TopBar } from "@/components/chrome";
 import { copy } from "@/lib/copy";
 import { route } from "@/lib/group-link";
+import { WriteBusy } from "./scan-bar";
 
 /**
  * The one frame a first join shows from the link to "Which one are you?".
@@ -11,9 +12,12 @@ import { route } from "@/lib/group-link";
  * waiting screen, the list's skeletons, the ledger's and then the question.
  *
  * The app's name, not "Join a group": this is where a stranger meets bida.
+ *
+ * A group pulled in pages counts them in the import's bar, docked where
+ * "Continue as" lands next.
  */
-export function JoiningFrame({ children, className, inert }: {
-  children?: ReactNode; className?: string; inert?: boolean;
+export function JoiningFrame({ children, className, inert, percent }: {
+  children?: ReactNode; className?: string; inert?: boolean; percent?: number;
 }) {
   return (
     <Screen className={className} inert={inert}><Body>
@@ -21,6 +25,12 @@ export function JoiningFrame({ children, className, inert }: {
       <Scroll>
         <Empty title={copy.join.joining.title}>{children}</Empty>
       </Scroll>
+      {percent === undefined ? null : (
+        <div className="pad whodock">
+          <WriteBusy percent={percent} label={copy.join.joining.fetching(percent)}
+            box="btn-pair pair-p" button="btn btn-lg" />
+        </div>
+      )}
     </Body></Screen>
   );
 }

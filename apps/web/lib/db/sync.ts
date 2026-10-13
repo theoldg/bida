@@ -34,6 +34,8 @@ interface PushPullResponse {
   latestSeq: number;
   /** The log goes on past `latestSeq`; ask again from there. */
   more?: boolean;
+  /** Where the group's log ends, for saying how far a walk has got. */
+  head?: number;
 }
 
 interface PushPullResult {
@@ -220,8 +222,8 @@ export function syncGroup(groupId: string): Promise<SyncOutcome | undefined> {
   const already = inFlight.get(groupId);
   if (already && !stale.has(already)) return already;
   const run: Promise<SyncOutcome | undefined> = (already
-    ? already.catch(() => undefined).then(() => syncGroupOnce(groupId))
-    : syncGroupOnce(groupId)
+    ? already.catch(() => undefined).then(() => syncGroupWalked(groupId))
+    : syncGroupWalked(groupId)
   ).finally(() => { if (inFlight.get(groupId) === run) inFlight.delete(groupId); });
   inFlight.set(groupId, run);
   return run;
@@ -232,6 +234,36 @@ const stale = new WeakSet<Promise<unknown>>();
 function markInFlightStale(): void {
   for (const run of inFlight.values()) stale.add(run);
   if (running) stale.add(running);
+}
+
+/**
+ * How far a run walking the log in pages has got — seqs past where it started,
+ * of those up to the head — for `/join` to count rather than shrug. Only once a
+ * page says there is more, so a pull of one page says nothing; and until the
+ * run ends, since the rebuild after its last page is what a join waits on too.
+ */
+export interface PullProgress { done: number; total: number }
+
+const walking = new Map<string, PullProgress>();
+const walkWatchers = new Set<() => void>();
+
+export function pullProgress(groupId: string): PullProgress | undefined {
+  return walking.get(groupId);
+}
+
+export function watchPullProgress(listener: () => void): () => void {
+  walkWatchers.add(listener);
+  return () => { walkWatchers.delete(listener); };
+}
+
+function walked(groupId: string, progress: PullProgress | undefined): void {
+  if (progress) walking.set(groupId, progress);
+  else if (!walking.delete(groupId)) return;
+  for (const listener of walkWatchers) listener();
+}
+
+function syncGroupWalked(groupId: string): Promise<SyncOutcome | undefined> {
+  return syncGroupOnce(groupId).finally(() => walked(groupId, undefined));
 }
 
 async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> {
@@ -252,6 +284,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   let since = rewinding
     ? Math.max(0, Math.min(key.lastSeq, key.unreadable!.fromSeq - 1))
     : key.lastSeq;
+  const from = since;
   let pushed = 0;
   let pulledCount = 0;
   // Every round pushes the next chunk, if any, and pulls the next page, until
@@ -275,7 +308,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
       await recordFailure(groupId, err);
       throw err;
     }
-    const { response: { assigned, latestSeq, more }, unreadable, retryAt } = sealed;
+    const { response: { assigned, latestSeq, more, head }, unreadable, retryAt } = sealed;
     for (const op of pending) pushedIds.add(op.id);
     // An earlier round's push comes back in a later page when the phone was behind.
     const pulled = sealed.pulled.filter((op) => !pushedIds.has(op.id));
@@ -318,6 +351,10 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     behind = more === true && latestSeq > since;
     since = Math.max(latestSeq, since);
     rewinding = false;
+    // The last page too, once counting: the rebuild waits at full, not short.
+    if (head !== undefined && head > from && (behind || walking.has(groupId))) {
+      walked(groupId, { done: since - from, total: head - from });
+    }
     pushed += pending.length;
     pulledCount += pulled.length;
   }

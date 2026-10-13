@@ -9,7 +9,7 @@ import { saveGroupKey } from "@/lib/db/commands";
 import { db } from "@/lib/db/dexie";
 import { useLive } from "@/lib/db/live";
 import { syncGroup } from "@/lib/db/sync";
-import { useDevice, useSyncHealth } from "@/lib/hooks";
+import { useDevice, usePullPercent, useSyncHealth } from "@/lib/hooks";
 import { handOverToGroup } from "@/lib/launch";
 import { copy } from "@/lib/copy";
 import { isKeylessFragment, parseJoinLink, route } from "@/lib/group-link";
@@ -68,6 +68,7 @@ function JoinScreen() {
   );
 
   const { rejected } = useSyncHealth(link ? link.groupId : undefined);
+  const percent = usePullPercent(link ? link.groupId : undefined);
   const device = useDevice();
   const gone = device?.deletedGroups?.includes(link?.groupId ?? "") ?? false;
   const claimed = link && device ? !!device.meByGroup[link.groupId] : undefined;
@@ -107,5 +108,10 @@ function JoinScreen() {
     );
   }
 
-  return <JoiningFrame>{slow && !group ? copy.join.joining.body : null}</JoiningFrame>;
+  // Counting pages is an answer: "offline, or nobody has synced" would be wrong.
+  return (
+    <JoiningFrame percent={group ? undefined : percent}>
+      {slow && !group && percent === undefined ? copy.join.joining.body : null}
+    </JoiningFrame>
+  );
 }

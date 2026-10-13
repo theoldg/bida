@@ -129,7 +129,9 @@ control filling, not a track inside it, and it hands over to the spinner only
 if the model is slower than usual; an answer that beats it never shows one.
 An import of fifty entries or more takes the same box in place of its
 "Continue as", the wash standing at how much is written rather than sweeping
-(`WriteBusy`) — a wait whose length is known, so it is counted, not guessed.
+(`WriteBusy`) — a wait whose length is known, so it is counted, not guessed —
+and so does a join of a group long enough to come in pages, where that button
+will stand.
 Three registers, so where it sits changes its size and almost nothing else:
 an ink block where the screen exists for it (`/g/scan`) and on the Items tab,
 where it is likewise the only thing to do, and chip scale — on paper, so it

@@ -137,14 +137,14 @@ and all it gets.
 ```jsonc
 // → { "ops": [ /* unsynced SealedOp[], no seq */ ], "since": 412 }
 // ← { "assigned": { "<opId>": 913 }, "ops": [ /* 412 < seq ≤ 912, unseen */ ],
-//     "latestSeq": 912, "more": true }
+//     "latestSeq": 912, "more": true, "head": 2400 }
 ```
 A push carries up to two hundred queued ops, oldest HLC first — a group's
 `create` leads, or a joiner holds its entries and no group — and a phone with
 more sends rounds until its queue is empty: what got through stays through. **A pull is a page** (`pullPage`):
-500 seqs or ~512 KB, `latestSeq` its end and `more` while the log goes on, and
-the phone asks again — its next round riding along — storing each page as it
-lands. A ten-thousand-op log in one answer was past the free plan's 10 ms of
+500 seqs or ~512 KB, `latestSeq` its end, `more` while the log goes on and `head`
+where it ends — what `/join`'s bar counts — and the phone asks again, its next
+round riding along, storing each page as it lands. A ten-thousand-op log in one answer was past the free plan's 10 ms of
 CPU, and on a slow link past the phone's patience, retried from nothing forever.
 `latestSeq` is never the head: a build from before paging takes it as its
 cursor, and walks the log a page per sync. Accepting is idempotent on `Op.id`, which is what makes retry

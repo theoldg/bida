@@ -552,6 +552,7 @@ export const copy = {
     },
     joining: {
       title: "Joining…",
+      fetching: (percent: number) => `Downloading… ${percent}%`,
       body: "Taking a while. Either this phone is offline, or whoever sent the link hasn’t been online since making the group. It carries on by itself.",
     },
     deleted: {
