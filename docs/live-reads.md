@@ -93,6 +93,11 @@ one read of it rather than one per screen. The list's own read is the groups,
 their last op and what is new — never every table whole, which any change
 re-read in full.
 
+Dexie opens with `cache: "immutable"`: every reader of a query is handed the
+answer Dexie read, frozen, rather than a deep clone each — cloning 10,000
+entries was a third of a second of every screen opened onto a group. **Never
+write to a row a read returned**; a frozen one throws.
+
 **An answer that says what the last one said is the last one** (`sameData`):
 the same object, so a screen opened onto a remembered answer doesn't draw
 everything again when its own read lands, and a group's balances are worked

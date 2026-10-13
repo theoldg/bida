@@ -256,7 +256,8 @@ export function byWhen(a: Whenever, b: Whenever): number {
   return startOfLocalDay(b.occurredAt) - startOfLocalDay(a.occurredAt) || withinDay(a, b);
 }
 
-function withinDay(a: Whenever, b: Whenever): number {
+/** `byWhen` for two entries on the same day. */
+export function withinDay(a: Whenever, b: Whenever): number {
   if (!a.dateOnly !== !b.dateOnly) return a.dateOnly ? -1 : 1;
   const time = a.dateOnly ? 0 : b.occurredAt - a.occurredAt;
   return time || ((b.createdAt ?? b.occurredAt) - (a.createdAt ?? a.occurredAt));

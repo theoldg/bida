@@ -106,7 +106,7 @@ export function LedgerRows<T>({ groupId, items, row, opens = true, windowed = fa
 
     // Undrawn slots are only height: where a run sits and how tall it is come
     // from the arithmetic, and the DOM answers for the rest.
-    const at = new Map(keys.map((k, i) => [k, i]));
+    const at = win?.indexOf ?? new Map(keys.map((k, i) => [k, i]));
     const runTop = (run: string[], slots: HTMLElement[]) => win
       ? box.getBoundingClientRect().top - box.scrollTop + win.listTop() + win.offsets[at.get(run[0]!)!]!
       : slots[0]?.getBoundingClientRect().top ?? 0;
@@ -178,6 +178,8 @@ const SAMPLE_MS = 100;
 
 interface Window {
   offsets: number[];
+  /** Each slot's index by its key. */
+  indexOf: Map<string, number>;
   /** Drawn at all — on screen, or filled — ascending. */
   drawn: number[];
   /** Drawn as itself rather than a skeleton. */
@@ -353,6 +355,7 @@ function useWindow<T>(
   const filled = (i: number) => items[i]!.kind === "day" || items[i]!.key === kept || w.filled.has(items[i]!.key);
   return {
     offsets,
+    indexOf,
     drawn,
     filled,
     listTop,

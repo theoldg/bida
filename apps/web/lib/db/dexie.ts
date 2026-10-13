@@ -131,7 +131,11 @@ class BidaDb extends Dexie {
   notices!: Table<PendingNotices, string>;
 
   constructor() {
-    super(DB_NAME);
+    // A live read's answer is handed out as Dexie read it, frozen, not deep-cloned
+    // for each reader: cloning a 10,000-entry group cost a slow phone a third of a
+    // second on every screen opened onto it. Nothing may write to a row it read;
+    // a frozen one throws rather than corrupting what every other reader holds.
+    super(DB_NAME, { cache: "immutable" });
     // Only indexed fields are declared, so adding an unindexed one needs no version.
     this.version(8).stores({
       ops: "id, groupId, entityId, hlc, pending, [groupId+hlc]",

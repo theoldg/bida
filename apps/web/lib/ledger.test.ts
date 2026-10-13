@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Expense, Settlement } from "@bida/core";
+import { byWhen } from "./format";
 import { entryOf, ledgerItems, ledgerRows, figureMatches, searchLedger, type LedgerRow } from "./ledger";
 
 const at = (d: number, h = 0, min = 0) => new Date(2026, 3, d, h, min).getTime();
@@ -23,6 +24,30 @@ const ids = (rows: LedgerRow[]) => rows.map((r) => entryOf(r).id);
  * fields the comparator wanted, and a new one (`dateOnly`) was never copied.
  */
 describe("ledgerRows", () => {
+  it("orders as a sort by byWhen, expenses first, then id, does — in any input order", () => {
+    let seed = 3;
+    const rand = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const pick = <T>(xs: T[]) => xs[Math.floor(rand() * xs.length)]!;
+    for (let round = 0; round < 40; round++) {
+      const when = () => ({
+        occurredAt: at(1 + Math.floor(rand() * 4), pick([0, 9, 18]), pick([0, 30])),
+        dateOnly: rand() < 0.3 ? true : undefined,
+        createdAt: rand() < 0.5 ? undefined : at(1, 0, Math.floor(rand() * 3)),
+      });
+      const expenses = Array.from({ length: 30 }, (_, i) => expense(`e${Math.floor(rand() * 20)}-${i}`, when()));
+      const settlements = Array.from({ length: 12 }, (_, i) => transfer(`t${Math.floor(rand() * 20)}-${i}`, when()));
+      const rows: LedgerRow[] = [
+        ...expenses.map((e): LedgerRow => ({ row: "expense", expense: e })),
+        ...settlements.map((s): LedgerRow => ({ row: "settlement", settlement: s })),
+      ];
+      const id = (r: LedgerRow) => entryOf(r).id;
+      const want = rows.sort((a, b) => byWhen(entryOf(a), entryOf(b))
+        || (a.row === b.row ? 0 : a.row === "expense" ? -1 : 1)
+        || (id(a) < id(b) ? -1 : id(a) > id(b) ? 1 : 0));
+      expect(ids(ledgerRows(expenses, settlements))).toEqual(ids(want));
+    }
+  });
+
   it("interleaves the two tables by day, newest first", () => {
     const rows = ledgerRows(
       [expense("e-old", { occurredAt: at(2, 9), createdAt: at(2, 9) })],

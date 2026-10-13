@@ -118,7 +118,9 @@ API is reached with `fetch`.
   its title, its payers or its participants; as the whole of its currency or
   kind; or as a number in either of its figures. Results are sectioned by the
   best place a word was found, in that order, under lines drawn like date
-  lines; within a section more words there comes first, then recency. A
+  lines; within a section more words there comes first, then recency. The
+  field answers each keystroke at once and the list follows when it can
+  (`useDeferredValue`), so a keystroke typed mid-search supersedes it. A
   transfer's title is its two names and its note. A query is kept for the way
   back from a result and forgotten by any other arrival, like the ledger's
   position (`openingQuery`), and a way back draws the bar

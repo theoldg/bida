@@ -37,10 +37,12 @@ const REVEAL_MS = 180;
 
 const PRESS_MS = 700;
 
-export function LedgerSearch({ groupId, query, onQuery }: {
+export function LedgerSearch({ groupId, query, onQuery, listed = query }: {
   groupId: string;
   query: string;
   onQuery: (query: string) => void;
+  /** The search the list below shows, which trails `query` while it searches. */
+  listed?: string;
 }) {
   const dock = useRef<HTMLDivElement>(null);
   // Found by position, not a ref: a later sibling's ref isn't attached when this
@@ -98,13 +100,14 @@ export function LedgerSearch({ groupId, query, onQuery }: {
     };
   }, [held]);
 
-  const placed = useRef(query);
+  // With the list it moves, not the field.
+  const placed = useRef(listed);
   useLayoutEffect(() => {
     const box = scroller();
-    if (!box || placed.current === query) return;
-    placed.current = query;
-    box.scrollTop = query === "" ? base(box) : 0;
-  }, [query]);
+    if (!box || placed.current === listed) return;
+    placed.current = listed;
+    box.scrollTop = listed === "" ? base(box) : 0;
+  }, [listed]);
 
   const gliding = useRef<(() => void) | null>(null);
   const stopGlide = () => { gliding.current?.(); gliding.current = null; };

@@ -30,20 +30,6 @@ function living<T extends { deletedAt?: number | null }>(rows: T[] | undefined):
   return (rows ?? []).filter((r) => !r.deletedAt);
 }
 
-/**
- * Each entry valued at the rate it is read at, by one builder: one screen reading
- * the stored `baseAmountMinor` is how screens disagree (ADR-0005).
- */
-function stateOf(
-  group: Group | undefined,
-  members: Member[],
-  expenses: Expense[],
-  settlements: Settlement[],
-  rates: ExchangeRate[] = [],
-): GroupState {
-  return atCurrentRates(stateFromRows({ group, members, expenses, settlements, rates }));
-}
-
 export function useDevice(): DeviceRecord | undefined {
   const [fallback, setFallback] = useState<DeviceRecord>();
   const live = useLive("device", () => db().device.get("device"), []);
@@ -203,17 +189,21 @@ function derive(rows: GroupRows): Derived {
   const members = living(rows.members).sort((a, b) => a.name.localeCompare(b.name));
   const sortedExpenses = sortedByWhen(living(rows.expenses));
   const sortedSettlements = sortedByWhen(living(rows.settlements));
-  const state = stateOf(
-    rows.group, members, sortedExpenses, sortedSettlements, living(rows.rates),
-  );
-  // `stateOf` keys them and loses the sort.
+  // Detection needs the tombstones: a removed member on a live entry is the
+  // point.
+  const withTombstones = stateFromRows(rows);
+  // Each entry valued at the rate it is read at, here and nowhere else: one
+  // screen reading the stored `baseAmountMinor` is how screens disagree
+  // (ADR-0005). Tombstones and all, as balances and currencies read the living
+  // alone: a second state cost a 10,000-entry group a tenth of a second.
+  const state = atCurrentRates({
+    ...withTombstones, rates: Object.fromEntries(living(rows.rates).map((r) => [r.id, r])),
+  });
+  // The state keys them and loses the sort.
   const bySortOrder = <T extends { id: string }>(rows: T[], keyed: Record<string, T>) =>
     rows.map((row) => keyed[row.id] ?? row);
   const balances = computeBalances(state);
   const memberById = new Map((rows.members ?? []).map((m) => [m.id, m]));
-  // Detection needs the tombstones: a removed member on a live entry is the
-  // point.
-  const withTombstones = stateFromRows(rows);
   const out: Derived = {
     group: rows.group,
     members,

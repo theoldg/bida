@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  addsUp, canonicalSplit, convertSplitMode, ownCurrencySplit, resolveEntrySplit, resolveSplit, shareOf, splitParticipants,
+  addsUp, canonicalSplit, fnv1a, FNV_OFFSET, convertSplitMode, ownCurrencySplit, resolveEntrySplit, resolveSplit, shareOf, splitParticipants,
   partsBesideBill, restOf, settleRest, SplitError, toggleEveryone, upgradeReceiptSplit, validateSplit,
 } from "./split.js";
 import type { SplitSpec } from "./types.js";
@@ -368,6 +368,86 @@ describe("property: every split sums to the total", () => {
 
       expect(sum(resolveSplit(total, { mode: "equal", members }).shares)).toBe(total);
       expect(sum(resolveSplit(total, { mode: "shares", weights }).shares)).toBe(total);
+    }
+  });
+});
+
+/**
+ * The apportioning as it stood in BigInt alone, before plain numbers took
+ * every split whose products stay safe: the two must agree to the cent.
+ */
+function bigIntSplit(total: number, weights: Record<string, number>, seed?: string) {
+  const ids = Object.keys(weights).sort();
+  const totalWeight = ids.reduce((a, id) => a + BigInt(weights[id]!), 0n);
+  const neg = total < 0;
+  const abs = BigInt(Math.abs(total));
+  const shares: Record<string, number> = {};
+  const remainders: { id: string; rem: bigint }[] = [];
+  let allocated = 0n;
+  for (const id of ids) {
+    const exact = abs * BigInt(weights[id]!);
+    const floor = exact / totalWeight;
+    shares[id] = Number(neg ? -floor : floor);
+    allocated += floor;
+    remainders.push({ id, rem: exact % totalWeight });
+  }
+  let leftover = abs - allocated;
+  const rank = (id: string) => (seed === undefined ? 0 : fnv1a(FNV_OFFSET, `${seed}:${id}`));
+  remainders.sort((a, b) => (a.rem !== b.rem ? (a.rem > b.rem ? -1 : 1)
+    : rank(a.id) !== rank(b.id) ? rank(a.id) - rank(b.id) : a.id < b.id ? -1 : 1));
+  const remainderAbsorbedBy: string[] = [];
+  for (const { id } of remainders) {
+    if (leftover <= 0n) break;
+    shares[id] = shares[id]! + (neg ? -1 : 1);
+    remainderAbsorbedBy.push(id);
+    leftover -= 1n;
+  }
+  return { shares, remainderAbsorbedBy };
+}
+
+describe("property: plain numbers apportion as BigInt did", () => {
+  let seed = 7;
+  const rand = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const pick = <T>(xs: T[]) => xs[Math.floor(rand() * xs.length)]!;
+
+  it("agrees on everyday totals and weights, either sign, seeded or not", () => {
+    for (let i = 0; i < 3000; i++) {
+      const n = 1 + Math.floor(rand() * 9);
+      const weights: Record<string, number> = {};
+      for (let k = 0; k < n; k++) weights[`m${Math.floor(rand() * 1e6)}`] = pick([0, 1, 1, 2, 3, 7, 100, 12345, 999999]);
+      if (Object.values(weights).every((w) => w === 0)) weights[Object.keys(weights)[0]!] = 1;
+      const total = (rand() < 0.2 ? -1 : 1) * Math.floor(rand() * pick([10, 1000, 1e6, 1e9, 1e12]));
+      const tie = rand() < 0.5 ? undefined : `e${i}`;
+      const got = resolveSplit(total, { mode: "shares", weights }, { tiebreakSeed: tie });
+      expect(got).toEqual(bigIntSplit(total, weights, tie));
+      for (const v of Object.values(got.shares)) expect(Object.is(v, -0)).toBe(false);
+    }
+  });
+
+  it("agrees either side of where the products stop being safe", () => {
+    const edge = Number.MAX_SAFE_INTEGER;
+    const cases: [number, Record<string, number>][] = [
+      [edge, { a: 1 }],
+      [edge, { a: 1, b: 1 }],
+      [Math.floor(edge / 3), { a: 1, b: 1, c: 1 }],
+      [Math.floor(edge / 3) + 1, { a: 1, b: 1, c: 1 }],
+      [Math.floor(edge / 7), { a: 3, b: 4 }],
+      [Math.floor(edge / 7) + 5, { a: 3, b: 4 }],
+      [-Math.floor(edge / 2) - 1, { a: 1, b: 1 }],
+      [12345, { a: edge, b: 1 }],
+      [12345, { a: edge, b: edge, c: 2 }],
+      [999, { a: 1e20, b: 3e20 }],
+    ];
+    for (const [total, weights] of cases) {
+      expect(resolveSplit(total, { mode: "shares", weights }, { tiebreakSeed: "x" }))
+        .toEqual(bigIntSplit(total, weights, "x"));
+    }
+    for (let i = 0; i < 2000; i++) {
+      const weights = { a: 1 + Math.floor(rand() * 50), b: 1 + Math.floor(rand() * 50), c: Math.floor(rand() * 50) };
+      const sum = weights.a + weights.b + weights.c;
+      const total = Math.floor(edge / sum) + Math.floor(rand() * 2000) - 1000;
+      expect(resolveSplit(total, { mode: "shares", weights }, { tiebreakSeed: `s${i}` }))
+        .toEqual(bigIntSplit(total, weights, `s${i}`));
     }
   });
 });

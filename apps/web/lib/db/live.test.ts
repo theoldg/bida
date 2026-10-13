@@ -371,3 +371,47 @@ describe("a live count of a compound index range", () => {
     local.close();
   });
 });
+
+/**
+ * Pins the `cache: "immutable"` lib/db/dexie.ts opens with: readers of one
+ * query share the very answer Dexie read rather than a deep clone each, so a
+ * row read is frozen, and a write of either kind still lands in what they get.
+ */
+describe("the database's live answers", () => {
+  const members = () => db().members.where("groupId").equals("g").toArray();
+  const names = (rows: { name: string }[] | undefined) => rows?.map((m) => m.name).sort();
+
+  it("are one frozen answer for every reader of the same query", async () => {
+    await db().members.bulkPut([{ id: "m1", groupId: "g", name: "Ada" }, { id: "m2", groupId: "g", name: "Bo" }] as never);
+    const got: { name: string }[][] = [[], []];
+    const subs = [0, 1].map((i) => liveQuery(members).subscribe((v) => { got[i] = v; }, () => {}));
+    await settle();
+    expect(names(got[0])).toEqual(["Ada", "Bo"]);
+    expect(got[1]).toBe(got[0]);
+    expect(Object.isFrozen(got[0])).toBe(true);
+    expect(() => { (got[0]![0] as { name: string }).name = "Eve"; }).toThrow(TypeError);
+    expect(() => got[0]!.sort()).toThrow(TypeError);
+    for (const sub of subs) sub.unsubscribe();
+  });
+
+  it("carry a plain write and a transaction's alike, as a save is one", async () => {
+    await db().members.bulkPut([{ id: "m1", groupId: "g", name: "Ada" }, { id: "m2", groupId: "other", name: "Cy" }] as never);
+    const seen: (string[] | undefined)[] = [];
+    const sub = liveQuery(members).subscribe((v) => seen.push(names(v)), () => {});
+    await settle();
+    // Answered from the cache, not read again: Dexie applies the write itself.
+    await db().members.put({ id: "m3", groupId: "g", name: "Bo" } as never);
+    await settle();
+    // An explicit transaction drops the cached answer: read afresh.
+    await db().transaction("rw", db().members, async () => {
+      await db().members.put({ id: "m1", groupId: "g", name: "Ada", deletedAt: 5 } as never);
+      await db().members.put({ id: "m2", groupId: "g", name: "Cy" } as never);
+    });
+    await settle();
+    await db().members.delete("m3");
+    await settle();
+    expect(seen.filter((v, i) => JSON.stringify(v) !== JSON.stringify(seen[i - 1])))
+      .toEqual([["Ada"], ["Ada", "Bo"], ["Ada", "Bo", "Cy"], ["Ada", "Cy"]]);
+    sub.unsubscribe();
+  });
+});

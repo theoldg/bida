@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { memo, useDeferredValue, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   entryEffect, payerList, resolvePayers, splitParticipants,
   type Expense, type Member, type Settlement,
@@ -30,7 +30,7 @@ import { useDeleteEntry } from "@/components/delete-entry";
 import { setLastOpenedGroup } from "@/lib/db/device";
 import { syncGroup } from "@/lib/db/sync";
 import { dayLabel, money, plural } from "@/lib/format";
-import { ledgerItems, searchLedger, type LedgerRow, type SearchContext } from "@/lib/ledger";
+import { ledgerItems, searchContextOf, searchLedger, type LedgerRow } from "@/lib/ledger";
 import { route } from "@/lib/group-link";
 import { useLedgerPosition, yieldPosition } from "@/lib/ledger-position";
 import { awaitRoll, clearDeleted, letRoll, peekDeleted, peekSaved, type LedgerItem } from "@/lib/ledger-motion";
@@ -159,18 +159,17 @@ function Ledger({ data }: { data: GroupData }) {
   const scroll = useRef<HTMLDivElement>(null);
   useLedgerPosition(scroll, groupId);
   const [query, setQuery] = useLedgerQuery(groupId);
-  // One context while the names and currency stand: searchLedger keeps each
-  // row's searched text by it.
-  const searchContext = useMemo((): SearchContext => ({
-    nameOf: (id) => memberById.get(id)?.name,
+  const searchContext = useMemo(() => searchContextOf(memberById, group?.baseCurrency ?? "", {
     kindWord: (kind) => copy.entryKind.label[kind],
     tierLabel: (tier) => copy.group.search.by[tier],
-    base: group?.baseCurrency ?? "",
   }), [memberById, group?.baseCurrency]);
-  const found = useMemo(() => searchLedger(items, query, searchContext), [items, query, searchContext]);
+  // The field answers each keystroke at once and the list follows when it can:
+  // a keystroke typed while 10,000 rows are searched supersedes that search.
+  const shown = useDeferredValue(query);
+  const found = useMemo(() => searchLedger(items, shown, searchContext), [items, shown, searchContext]);
   if (!group) return null;
   // A space alone included: the bar stands in the column on the same test.
-  const searching = query !== "";
+  const searching = shown !== "";
   const { id: gid, baseCurrency: base } = group;
 
   // Every row carries its own effect on your balance, signed and coloured; they
@@ -179,7 +178,7 @@ function Ledger({ data }: { data: GroupData }) {
 
   return (
     <>
-    <LedgerSearch groupId={gid} query={query} onQuery={setQuery} />
+    <LedgerSearch groupId={gid} query={query} onQuery={setQuery} listed={shown} />
     <Scroll ref={scroll}>
       {/* Hidden rather than dropped: the card keeps the figure it has drawn. */}
       <div className="lhead" hidden={searching}>
@@ -194,12 +193,12 @@ function Ledger({ data }: { data: GroupData }) {
       {items.length === 0 ? (
         <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>
       ) : found.length === 0 ? (
-        <Empty title={copy.group.search.none.title}>{copy.group.search.none.body(query.trim())}</Empty>
+        <Empty title={copy.group.search.none.title}>{copy.group.search.none.body(shown.trim())}</Empty>
       ) : null}
 
       {/* Keyed by the search, so a keystroke redraws at once: the rows' fold and
           fade are for an entry that came or went. */}
-      <LedgerRows key={searching ? query : ""} groupId={gid} items={found} windowed row={(entry: LedgerRow) => entry.row === "expense"
+      <LedgerRows key={searching ? shown : ""} groupId={gid} items={found} windowed row={(entry: LedgerRow) => entry.row === "expense"
         ? <ExpenseRow expense={entry.expense} gid={gid} base={base} me={me} memberById={memberById} />
         : <SettlementRow settlement={entry.settlement} gid={gid} base={base} me={me} memberById={memberById} />} />
       <div style={{ height: 88 }} />

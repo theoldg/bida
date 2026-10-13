@@ -137,8 +137,8 @@ export function canonicalSplit(spec: SplitSpec): SplitSpec {
   }
 }
 
-function weightsOf(spec: SplitSpec, participants: Id[]): Map<Id, bigint> {
-  const out = new Map<Id, bigint>();
+function weightsOf(spec: SplitSpec, participants: Id[]): Map<Id, number> {
+  const out = new Map<Id, number>();
   for (const id of participants) {
     let w: number;
     switch (spec.mode) {
@@ -149,42 +149,61 @@ function weightsOf(spec: SplitSpec, participants: Id[]): Map<Id, bigint> {
     if (!Number.isInteger(w) || w < 0) {
       throw new SplitError(`weight for ${id} must be a non-negative integer, got ${w}`);
     }
-    out.set(id, BigInt(w));
+    out.set(id, w);
   }
   return out;
 }
 
 /**
  * Largest remainder. Ties break by `hash32("<seed>:<memberId>")`, then member id.
+ *
+ * In plain numbers whenever `total × Σweights` is a safe integer — then every
+ * product, floor and remainder is exact — and in BigInt only past that: a
+ * balance reads every entry's split, and BigInt made it a slow phone's longest
+ * sum (split.test.ts holds the two to the same cents).
  */
 function distribute(
-  total: bigint,
-  weights: Map<Id, bigint>,
+  total: number,
+  weights: Map<Id, number>,
   seed: string | undefined,
 ): SplitResult {
   const ids = [...weights.keys()].sort();
-  const totalWeight = ids.reduce((a, id) => a + (weights.get(id) ?? 0n), 0n);
-  if (totalWeight <= 0n) {
+  const sum = ids.reduce((a, id) => a + (weights.get(id) ?? 0), 0);
+  const neg = total < 0;
+  const abs = neg ? -total : total;
+  const big = !(Number.isSafeInteger(sum) && Number.isSafeInteger(abs * sum));
+  const bigWeight = big ? ids.reduce((a, id) => a + BigInt(weights.get(id) ?? 0), 0n) : 0n;
+  if (big ? bigWeight <= 0n : sum <= 0) {
     throw new SplitError("split has no positive weights; nobody would owe anything");
   }
 
-  const neg = total < 0n;
-  const abs = neg ? -total : total;
-
   const shares: Record<Id, number> = {};
-  const remainders: { id: Id; rem: bigint }[] = [];
-  let allocated = 0n;
+  const remainders: { id: Id; rem: number | bigint }[] = [];
+  // Never past `abs`, so a number in either arithmetic.
+  let allocated = 0;
 
   for (const id of ids) {
-    const w = weights.get(id) ?? 0n;
-    const exact = abs * w;
-    const floor = exact / totalWeight;
-    shares[id] = Number(neg ? -floor : floor);
+    const w = weights.get(id) ?? 0;
+    let floor: number;
+    let rem: number | bigint;
+    if (big) {
+      const exact = BigInt(abs) * BigInt(w);
+      floor = Number(exact / bigWeight);
+      rem = exact % bigWeight;
+    } else {
+      const exact = abs * w;
+      rem = exact % sum;
+      floor = (exact - rem) / sum;
+    }
+    // `0 - floor`, not `-floor`: a nought share is 0, never -0.
+    shares[id] = neg ? 0 - floor : floor;
     allocated += floor;
-    remainders.push({ id, rem: exact % totalWeight });
+    remainders.push({ id, rem });
   }
 
   let leftover = abs - allocated;
+  const remainderAbsorbedBy: Id[] = [];
+  if (leftover === 0) return { shares, remainderAbsorbedBy };
   const rank = new Map<Id, number>(
     ids.map((id) => [id, seed === undefined ? 0 : hash32(`${seed}:${id}`)]),
   );
@@ -195,12 +214,11 @@ function distribute(
     if (ra !== rb) return ra - rb;
     return a.id < b.id ? -1 : 1;
   });
-  const remainderAbsorbedBy: Id[] = [];
   for (const { id } of remainders) {
-    if (leftover <= 0n) break;
+    if (leftover <= 0) break;
     shares[id] = (shares[id] ?? 0) + (neg ? -1 : 1);
     remainderAbsorbedBy.push(id);
-    leftover -= 1n;
+    leftover -= 1;
   }
 
   return { shares, remainderAbsorbedBy };
@@ -246,7 +264,7 @@ export function resolveSplit(
     return { shares, remainderAbsorbedBy: [] };
   }
 
-  return distribute(BigInt(totalMinor), weightsOf(spec, participants), options.tiebreakSeed);
+  return distribute(totalMinor, weightsOf(spec, participants), options.tiebreakSeed);
 }
 
 interface SplitBearing {
