@@ -76,10 +76,12 @@ whether it is hidden.
 follows every write made elsewhere and a screen comes back as the database is
 now — the groups list, back from an edit, already in its new order rather than
 gliding into it. Screens also ready the ones a tap is likeliest to open: the
-list its first ten groups, the ledger history and the list (`warmGroup`,
+list its first ten groups, the ledger the list (`warmGroup`,
 `warmGroupsList`). A warm read subscribes 400ms late, clear of the next
 screen's own first read, obeys the hidden gate, and is subscribed again with
-the rest. It costs nothing until what it reads changes, so **a group's read
+the rest. History's op log is the exception: warm, every save read all of it
+again, so its read starts when a finger lands on the clock (`warmHistory`, no
+delay) and stays warm only once history has been open. It costs nothing until what it reads changes, so **a group's read
 leaves out the device row**, which every save and pull rewrites — who you are
 is `useDevice`'s.
 

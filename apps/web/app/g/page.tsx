@@ -58,10 +58,11 @@ function GroupScreen() {
     if (groupId) void syncGroup(groupId).catch(() => {});
   }, [groupId]);
 
-  // Every other screen of the group reads what this one does, but history;
-  // and the list is one Back away.
+  // Every other screen of the group reads what this one does; history starts
+  // its own when its button is pressed (`HistoryButton`). The list is one Back
+  // away.
   useEffect(() => {
-    if (groupId) warmGroup(groupId, { history: true });
+    if (groupId) warmGroup(groupId);
     warmGroupsList();
   }, [groupId]);
 

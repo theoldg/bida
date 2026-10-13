@@ -120,15 +120,27 @@ function coolDown(memo: string): void {
 }
 
 /** How a screen readies the read of one it is likely to open next. */
-export function keepWarm<T>(name: string, querier: () => Promise<T>, deps: readonly unknown[]): void {
-  warmUp(`${name} ${JSON.stringify(deps)}`, querier);
+export function keepWarm<T>(
+  name: string, querier: () => Promise<T>, deps: readonly unknown[], { now = false } = {},
+): void {
+  warmUp(`${name} ${JSON.stringify(deps)}`, querier, now);
 }
 
-function warmUp(memo: string, querier: () => Promise<unknown>): void {
-  if (warm.has(memo) || mounted.has(memo)) return;
+/**
+ * `now` is for a tap already on its way to the screen that reads it: no wait,
+ * since the screen's own read is about to start anyway and this one is ahead.
+ */
+function warmUp(memo: string, querier: () => Promise<unknown>, now = false): void {
+  if (mounted.has(memo)) return;
+  const held = warm.get(memo);
+  if (held) {
+    if (now && !held.sub) subscribeWarm(memo, held);
+    return;
+  }
   const w: Warm = { querier: guarded(memo, querier) };
-  w.timer = setTimeout(() => mounted.has(memo) ? coolDown(memo) : subscribeWarm(memo, w), WARM_AFTER_MS);
   warm.set(memo, w);
+  if (now) subscribeWarm(memo, w);
+  else w.timer = setTimeout(() => mounted.has(memo) ? coolDown(memo) : subscribeWarm(memo, w), WARM_AFTER_MS);
   for (const oldest of warm.keys()) {
     if (warm.size <= WARM) break;
     coolDown(oldest);

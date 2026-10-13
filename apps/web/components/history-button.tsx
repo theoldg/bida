@@ -12,6 +12,7 @@ import { db } from "@/lib/db/dexie";
 import { opsForGroup } from "@/lib/db/fold";
 import { useLive } from "@/lib/db/live";
 import { route } from "@/lib/group-link";
+import { warmHistory } from "@/lib/hooks";
 
 /**
  * The ledger's way to its history, and the one place it says what changed on
@@ -36,6 +37,7 @@ export function HistoryButton({ groupId }: { groupId: string }) {
 
   return (
     <Link className="iconbtn histbtn" href={route.history(groupId)}
+      onPointerDown={() => warmHistory(groupId)}
       aria-label={news ? copy.group.historyNew : copy.group.history}>
       <Icon name="clock" size={18} />
       {news ? <span className="histdot" aria-hidden="true" /> : null}

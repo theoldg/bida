@@ -236,9 +236,17 @@ export function historyOps(groupId: string | undefined) {
 }
 
 /** Readies a group's screens before one is opened (lib/db/live.ts). */
-export function warmGroup(groupId: string, { history = false } = {}): void {
+export function warmGroup(groupId: string): void {
   keepWarm("groupData", groupRows(groupId), [groupId]);
-  if (history) keepWarm("historyOps", historyOps(groupId), [groupId]);
+}
+
+/**
+ * History's read, started by the finger landing on its button. Not kept warm
+ * from the ledger: a warm log is read again whole on every save, a quarter of
+ * a 10,000-entry save's time, for a screen most visits never open.
+ */
+export function warmHistory(groupId: string): void {
+  keepWarm("historyOps", historyOps(groupId), [groupId], { now: true });
 }
 
 export function useGroupData(groupId: string | undefined): GroupData {
