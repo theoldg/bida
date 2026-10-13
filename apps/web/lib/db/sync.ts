@@ -30,7 +30,10 @@ export class SyncHttpError extends Error {
 interface PushPullResponse {
   assigned: Record<string, number>;
   ops: SealedOp[];
+  /** The page's end: everything up to it is in this answer or held already. */
   latestSeq: number;
+  /** The log goes on past `latestSeq`; ask again from there. */
+  more?: boolean;
 }
 
 interface PushPullResult {
@@ -120,12 +123,18 @@ async function openPulled(
  */
 export async function pullWholeGroup(groupId: string, secret: string): Promise<Op[]> {
   const crypto = await groupCrypto(groupId, secret);
-  const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/ops?since=0`, {
-    headers: { Authorization: `Bearer ${crypto.token}` },
-  });
-  if (!res.ok) throw new SyncHttpError(res.status, await res.text().catch(() => ""));
-  const body = (await res.json()) as { ops: SealedOp[] };
-  return Promise.all(body.ops.map((op) => openOp(crypto, op)));
+  const ops: Op[] = [];
+  for (let since = 0; ;) {
+    const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/ops?since=${since}`, {
+      headers: { Authorization: `Bearer ${crypto.token}` },
+      signal: AbortSignal.timeout(SYNC_PATIENCE_MS),
+    });
+    if (!res.ok) throw new SyncHttpError(res.status, await res.text().catch(() => ""));
+    const body = (await res.json()) as Omit<PushPullResponse, "assigned">;
+    ops.push(...await Promise.all(body.ops.map((op) => openOp(crypto, op))));
+    if (!body.more || body.latestSeq <= since) return ops;
+    since = body.latestSeq;
+  }
 }
 
 export async function deleteGroupOnServer(groupId: string, secret: string): Promise<void> {
@@ -199,9 +208,10 @@ const inFlight = new Map<string, Promise<SyncOutcome | undefined>>();
 
 /**
  * Not the server's ceiling: a phone back from a fortnight offline shouldn't bet
- * everything on one request.
+ * everything on one request. A round is one row on the server (`BATCH_OPS`), so
+ * an import costs a write per two hundred entries.
  */
-const PUSH_CHUNK = 50;
+const PUSH_CHUNK = 200;
 
 /**
  * Single-flight per group, or opening a group races `syncAll`: every op twice.
@@ -231,7 +241,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
 
   // By the index: the waiting ops, never a walk of the whole log.
   const queued = await d.ops.where("[groupId+pending]").equals([groupId, 1]).toArray();
-  const rounds = queued.length > 0 ? chunk(queued, PUSH_CHUNK) : [[] as StoredOp[]];
+  const rounds = chunk(queued, PUSH_CHUNK);
   // Skipping is safe only because the op is still on the server; a new build
   // re-pulls from the earliest skipped op, once per deploy.
   let rewinding = worthAnotherLook(key.unreadable, Date.now());
@@ -240,8 +250,13 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     : key.lastSeq;
   let pushed = 0;
   let pulledCount = 0;
+  // Every round pushes the next chunk, if any, and pulls the next page, until
+  // neither is left: a page is what one request can carry on a slow link.
+  const pushedIds = new Set<string>();
+  let behind = true;
 
-  for (const pending of rounds) {
+  for (let round = 0; round < rounds.length || behind; round++) {
+    const pending = rounds[round] ?? [];
     let sealed: PushPullResult;
     const sent = started("sync.pushpull");
     try {
@@ -256,7 +271,10 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
       await recordFailure(groupId, err);
       throw err;
     }
-    const { response: { assigned, latestSeq }, pulled, unreadable, retryAt } = sealed;
+    const { response: { assigned, latestSeq, more }, unreadable, retryAt } = sealed;
+    for (const op of pending) pushedIds.add(op.id);
+    // An earlier round's push comes back in a later page when the phone was behind.
+    const pulled = sealed.pulled.filter((op) => !pushedIds.has(op.id));
     sent(`${pending.length} up, ${pulled.length} down`
       + (unreadable.length > 0 ? `, ${unreadable.length} unreadable` : ""));
 
@@ -278,8 +296,9 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
         groupId,
         secret: key.secret,
         lastSeq: Math.max(latestSeq, current.lastSeq),
-        // What a phone pulls on joining is the group's past, not news.
-        seenSeq: current.seenSeq ?? Math.max(latestSeq, current.lastSeq),
+        // What a phone pulls on joining is the group's past, not news — all of
+        // it, so a join's later pages too.
+        seenSeq: current.seenSeq ?? (more ? undefined : Math.max(latestSeq, current.lastSeq)),
         lastSyncedAt: Date.now(),
         failure: undefined,
         unreadable: skipped(rewinding ? undefined : current.unreadable, unreadable, retryAt),
@@ -291,6 +310,8 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     });
     if (!kept) return undefined;
 
+    // A page that moved nothing is a server saying more and meaning none.
+    behind = more === true && latestSeq > since;
     since = Math.max(latestSeq, since);
     rewinding = false;
     pushed += pending.length;

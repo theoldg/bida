@@ -35,24 +35,24 @@ again.
 ## How full can it get
 
 Every group shares the one `hajsik` database, nothing is ever deleted, and the
-caps only ever move one way. Replaying realistic ops into
-[the real schema](../apps/api/migrations/0001_init.sql) cost **~970 bytes per
-op**, and a sealed op is roughly a third larger again (base64 over an IV and a
-tag, minus the two indexes that are gone) — so **500 MB is a few hundred
-thousand ops**. At the ~1.3 ops a lived-in expense ends up costing (the entry,
+caps only ever move one way. An op with a kilobyte of seal cost **~1,440 bytes**
+as a row of `ops` and **~1,080** in a pushed batch of fifty
+([sync.md](sync.md#the-log-is-kept-in-batches)), and since `0004` it is deflated
+before sealing — a plain expense to about two thirds, a scanned bill to a third —
+so **500 MB is several hundred thousand ops**. At the ~1.3 ops a lived-in expense ends up costing (the entry,
 plus edits and the occasional delete), that is hundreds of thousands of
 expenses, or thousands of trip-sized groups.
 
 Nothing else comes close first. Pulls are incremental (`seq > ?`), so the 5M
-daily row reads are unreachable; writes touch three rows per op (row + two
-indexes), leaving ~30k ops/day, which is more entries than this app will see in
-a year.
+daily row reads are unreachable. A write is a row touched, indexes included, and
+a push is one row plus the group's counter whatever it carries, so even an
+import of ten thousand entries is about a hundred of the day's 100k.
 
 **What the log spends its bytes on is receipts.** Whole-entity ops
 ([ADR-0002](decisions/0002-append-only-op-log.md)) repeat every field on every
 edit, which costs about 2.5x and is not the problem. An expense op carrying
-`receiptItems` is four to five times the size of a plain one, and on a measured
-database those ops were three quarters of every byte: editing a scanned bill's
+`receiptItems` was four to five times the size of a plain one (about twice,
+deflated), and on a measured database those ops were three quarters of every byte: editing a scanned bill's
 title repeats its entire item array. Compaction, if it is ever wanted, is one
 rule — drop superseded `receiptItems` from ops the fold has passed — and
 nothing needs doing yet.

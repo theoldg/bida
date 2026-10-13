@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-13* — "What other large inputs are we not prepared for?" became
+  paging and batching, then "and binary", which a probe of D1 priced at twenty
+  times the CPU. An owner's design is a hypothesis too: measure it before
+  building, and drop what loses out loud, mid-build, not in the summary.
+
 - *2026-10-13* — "Design the incremental balance calculation and measure
   potential gains (with a temporary code hack…)", then "Do step 1 and 2". A
   throwaway patch priced each piece before any was built, and the owner chose
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   runners at once, four rounds each, and a status table after every batch:
   the soak said the flakes were the checks' waits, not the load. Show the
   numbers as they land; a long experiment is not a silent one.
-
-- *2026-10-12* — "Make the balance amounts … tap-to-copy", then mid-build
-  "Do the same for the amount inside the record dialog". A follow-up that
-  arrives mid-turn joins the turn: fold it into the same push, built from the
-  same helper, rather than finishing the first and starting over.

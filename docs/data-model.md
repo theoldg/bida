@@ -317,6 +317,15 @@ CREATE TABLE ops (
   sealed TEXT NOT NULL,          -- base64: version byte, IV, AES-GCM ciphertext
   received_at INTEGER NOT NULL); -- our clock; the phone's createdAt is sealed
 CREATE UNIQUE INDEX ops_group_seq ON ops(group_id, seq);
+-- `ops` is read-only since 0004: every push since is one row here (sync.md)
+
+CREATE TABLE op_batches (            -- 0004: a push's ops in one row
+  group_id TEXT NOT NULL,
+  last_seq INTEGER NOT NULL,         -- holds seqs last_seq - n + 1 .. last_seq
+  ids TEXT NOT NULL,                 -- JSON array of the n op ids, in seq order
+  sealed TEXT NOT NULL,              -- JSON array of their seals, same order
+  received_at INTEGER NOT NULL,
+  PRIMARY KEY (group_id, last_seq)) WITHOUT ROWID;
 
 CREATE TABLE scan_hits (             -- 0002: the scan budget, pruned at 24h
   at INTEGER NOT NULL,               -- ms, our clock

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { deflateRawSync } from "node:zlib";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   deriveGroupCrypto, openOp, SealError, sealOp, validateSealedOp, type Op,
 } from "./index.js";
@@ -116,8 +117,8 @@ describe("sealOp / openOp", () => {
     const crypto = await deriveGroupCrypto(SECRET, GROUP);
     const sealed = await sealOp(crypto, op());
     // The version byte is the first, so it is the first base64 character's
-    // top bits: "AQ..." is version 1, "Ag..." is version 2.
-    const future = "Ag" + sealed.sealed.slice(2);
+    // top bits: "AQ..." is version 1, "Ag..." 2, "Aw..." 3.
+    const future = "Aw" + sealed.sealed.slice(2);
     await expect(openOp(crypto, { ...sealed, sealed: future })).rejects.toThrow(/version/);
   });
 
@@ -171,5 +172,90 @@ describe("validateSealedOp", () => {
     expect(() => validateSealedOp({ id: "a", groupId: GROUP })).toThrow(/sealed/);
     expect(() => validateSealedOp({ id: "a", groupId: GROUP, sealed: "AQ", seq: "3" }))
       .toThrow(/seq/);
+  });
+});
+
+describe("compression", () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  /** A scanned bill's worth of repetition, which is what the log spends its bytes on. */
+  const bill = () => op({
+    patch: {
+      title: "Dinner at Da Enzo",
+      receiptItems: Array.from({ length: 40 }, (_, i) => ({
+        id: `item-${i}`, label: `Spaghetti alle vongole ${i}`, priceMinor: 1450 + i, qty: 1,
+      })),
+    },
+  });
+
+  const version = (sealed: { sealed: string }) => Buffer.from(sealed.sealed, "base64")[0];
+
+  /** A stand-in for `CompressionStream` that hands out `bytes` whatever it is given. */
+  function emitting(bytes: Uint8Array) {
+    return class {
+      readable: ReadableStream<Uint8Array>;
+      writable: WritableStream<Uint8Array>;
+      constructor() {
+        const t = new TransformStream<Uint8Array, Uint8Array>({
+          transform() { /* swallowed */ },
+          flush(controller) { controller.enqueue(bytes); },
+        });
+        this.readable = t.readable;
+        this.writable = t.writable;
+      }
+    };
+  }
+
+  it("deflates before sealing, so the wire and the log carry the smaller one", async () => {
+    const crypto = await deriveGroupCrypto(SECRET, GROUP);
+    const deflated = await sealOp(crypto, bill());
+    vi.stubGlobal("CompressionStream", undefined);
+    const plain = await sealOp(crypto, bill());
+    expect(version(deflated)).toBe(2);
+    expect(version(plain)).toBe(1);
+    expect(deflated.sealed.length).toBeLessThan(plain.sealed.length / 3);
+    vi.unstubAllGlobals();
+    expect(await openOp(crypto, deflated)).toEqual(bill());
+  });
+
+  it("still opens what a build before compression sealed", async () => {
+    const crypto = await deriveGroupCrypto(SECRET, GROUP);
+    vi.stubGlobal("CompressionStream", undefined);
+    const old = await sealOp(crypto, op());
+    vi.unstubAllGlobals();
+    expect(await openOp(crypto, old)).toEqual(op());
+  });
+
+  it("seals plain where the browser has no raw deflate", async () => {
+    const crypto = await deriveGroupCrypto(SECRET, GROUP);
+    vi.stubGlobal("CompressionStream", class { constructor() { throw new TypeError("deflate-raw"); } });
+    const sealed = await sealOp(crypto, op());
+    expect(version(sealed)).toBe(1);
+    vi.unstubAllGlobals();
+    expect(await openOp(crypto, sealed)).toEqual(op());
+  });
+
+  it("is a SealError where the browser cannot inflate, so the op is skipped, not fatal", async () => {
+    const crypto = await deriveGroupCrypto(SECRET, GROUP);
+    const sealed = await sealOp(crypto, op());
+    vi.stubGlobal("DecompressionStream", undefined);
+    await expect(openOp(crypto, sealed)).rejects.toThrow(SealError);
+  });
+
+  it("is a SealError for a body that does not inflate", async () => {
+    const crypto = await deriveGroupCrypto(SECRET, GROUP);
+    vi.stubGlobal("CompressionStream", emitting(new TextEncoder().encode("{ not deflate at all")));
+    const sealed = await sealOp(crypto, op());
+    vi.unstubAllGlobals();
+    await expect(openOp(crypto, sealed)).rejects.toThrow(SealError);
+  });
+
+  it("refuses a body that inflates past any honest op, rather than holding it", async () => {
+    const crypto = await deriveGroupCrypto(SECRET, GROUP);
+    vi.stubGlobal("CompressionStream", emitting(new Uint8Array(deflateRawSync(Buffer.alloc(8_000_000)))));
+    const bomb = await sealOp(crypto, op());
+    vi.unstubAllGlobals();
+    expect(bomb.sealed.length).toBeLessThan(20_000);
+    await expect(openOp(crypto, bomb)).rejects.toThrow(/inflates past/);
   });
 });

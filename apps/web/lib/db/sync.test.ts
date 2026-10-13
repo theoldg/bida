@@ -5,7 +5,8 @@ import { formatHlc, createHlcState } from "@bida/core";
 import { addExpense, addMember, createGroup, forgetGroup, markEditsSeen, saveGroupKey } from "./commands";
 import { getDevice, updateDevice } from "./device";
 import {
-  IDLE_MS, SWEEP_MS, TICK_MS, groupOnScreen, planTick, startSyncLoop, syncAll, syncGroup,
+  IDLE_MS, SWEEP_MS, TICK_MS, groupOnScreen, planTick, pullWholeGroup, startSyncLoop, syncAll,
+  syncGroup,
 } from "./sync";
 import { VERSION } from "../version";
 import { stubPage } from "./page.test-helper";
@@ -44,7 +45,7 @@ describe("syncGroup", () => {
     });
     const me = (await db().members.where("groupId").equals(groupId).toArray())[0]!;
     // A fortnight offline: more ops queued than one push is allowed to carry.
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 210; i++) {
       await addExpense(groupId, me.id, {
         description: `tagine ${i}`, occurredAt: 1, amountMinor: 1200, currency: "EUR",
         rateToBase: "1", paidBy: me.id,
@@ -52,7 +53,7 @@ describe("syncGroup", () => {
       });
     }
     const queued = await db().ops.where("groupId").equals(groupId).toArray();
-    expect(queued.length).toBeGreaterThan(100);
+    expect(queued.length).toBeGreaterThan(200);
 
     const rounds: { ops: number; since: number }[] = [];
     let seq = 0;
@@ -66,8 +67,8 @@ describe("syncGroup", () => {
     const outcome = await syncGroup(groupId);
 
     expect(outcome?.pushed).toBe(queued.length);
-    expect(rounds.length).toBe(Math.ceil(queued.length / 50));
-    expect(Math.max(...rounds.map((r) => r.ops))).toBeLessThanOrEqual(50);
+    expect(rounds.length).toBe(Math.ceil(queued.length / 200));
+    expect(Math.max(...rounds.map((r) => r.ops))).toBeLessThanOrEqual(200);
     // Each round carries the cursor the one before it earned, so the second
     // request is not answered with everything the first already stored.
     expect(rounds[1]!.since).toBe(rounds[0]!.ops);
@@ -815,6 +816,139 @@ describe("seenSeq", () => {
     await markEditsSeen(groupId, 3);
     await markEditsSeen(groupId, 1);
     expect((await db().groupKeys.get(groupId))?.seenSeq).toBe(3);
+  });
+});
+
+describe("a pull in pages", () => {
+  beforeEach(wipe);
+  afterEach(() => vi.unstubAllGlobals());
+
+  /**
+   * A server that answers as `pullPage` does: `page` seqs at a time, `latestSeq`
+   * the page's end, `more` while the log goes on — and pushes numbered on.
+   */
+  function pagingServer(log: SealedOp[], page: number) {
+    const requests: { since: number; pushed: number }[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as { ops: SealedOp[]; since: number };
+      requests.push({ since: body.since, pushed: body.ops.length });
+      const assigned: Record<string, number> = {};
+      for (const op of body.ops) {
+        assigned[op.id] = log.length + 1;
+        log.push({ ...op, seq: log.length + 1 });
+      }
+      const pushed = new Set(body.ops.map((op) => op.id));
+      const upTo = Math.min(body.since + page, log.length);
+      const ops = log.filter((op) => op.seq! > body.since && op.seq! <= upTo && !pushed.has(op.id));
+      return new Response(JSON.stringify({ assigned, ops, latestSeq: upTo, more: upTo < log.length }));
+    }));
+    return requests;
+  }
+
+  const peer = (groupId: string, theo: string, seq: number): Op => ({
+    id: `op-${seq}`, groupId, entity: "expense", entityId: `e-${seq}`, kind: "create",
+    patch: {
+      description: `e${seq}`, occurredAt: 1, amountMinor: 1000, currency: "EUR", rateToBase: "1",
+      baseAmountMinor: 1000, paidBy: theo, split: { mode: "equal", members: [theo] },
+    },
+    hlc: formatHlc(createHlcState("peer", Date.now(), seq)),
+    actor: theo, note: null, createdAt: Date.now(), seq,
+  });
+
+  it("asks again from each page's end until the log is through, in one run", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    await db().ops.where("groupId").equals(groupId).modify({ pending: 0 });
+    await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 0 });
+    const log = await serverOps(groupId, Array.from({ length: 7 }, (_, i) => peer(groupId, theo, i + 1)));
+    const requests = pagingServer(log, 3);
+
+    const outcome = await syncGroup(groupId);
+
+    expect(requests.map((r) => r.since)).toEqual([0, 3, 6]);
+    expect(outcome?.pulled).toBe(7);
+    const key = await db().groupKeys.get(groupId);
+    expect(key?.lastSeq).toBe(7);
+    // A join's later pages are the group's past too, not news.
+    expect(key?.seenSeq).toBe(7);
+    expect(await db().expenses.where("groupId").equals(groupId).count()).toBe(7);
+  });
+
+  it("keeps the pages it got when a later one fails, and starts from there next time", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    await db().ops.where("groupId").equals(groupId).modify({ pending: 0 });
+    await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 0 });
+    const log = await serverOps(groupId, Array.from({ length: 5 }, (_, i) => peer(groupId, theo, i + 1)));
+    pagingServer(log, 2);
+    const paging = vi.mocked(fetch);
+    let calls = 0;
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => {
+      if (++calls === 2) return new Response("down", { status: 503 });
+      return paging(url, init);
+    }));
+
+    await expect(syncGroup(groupId)).rejects.toThrow("503");
+    expect((await db().groupKeys.get(groupId))?.lastSeq).toBe(2);
+    expect((await db().groupKeys.get(groupId))?.seenSeq).toBeUndefined();
+
+    await syncGroup(groupId);
+    expect((await db().groupKeys.get(groupId))?.lastSeq).toBe(5);
+    expect(await db().expenses.where("groupId").equals(groupId).count()).toBe(5);
+  });
+
+  it("pushes behind a log it hasn't caught up with, and takes none of its own ops back", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    const mine = await db().ops.where("groupId").equals(groupId).count();
+    await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 0 });
+    const log = await serverOps(groupId, Array.from({ length: 4 }, (_, i) => peer(groupId, theo, i + 1)));
+    const requests = pagingServer(log, 2);
+
+    const outcome = await syncGroup(groupId);
+
+    // The push rides the first request; its ops land past the page, so the
+    // pages after it hand them back, and the phone knows them as its own.
+    expect(requests[0]!.pushed).toBe(mine);
+    expect(outcome).toEqual({ pushed: mine, pulled: 4 });
+    const key = await db().groupKeys.get(groupId);
+    expect(key?.lastSeq).toBe(4 + mine);
+    const left = await db().ops.where("[groupId+pending]").equals([groupId, 1]).count();
+    expect(left).toBe(0);
+  });
+});
+
+describe("pullWholeGroup", () => {
+  beforeEach(wipe);
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("walks every page of the log, for the delete screen to read", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 0 });
+    const log = await serverOps(groupId, Array.from({ length: 5 }, (_, i) => ({
+      id: `op-${i + 1}`, groupId, entity: "member" as const, entityId: `m-${i}`,
+      kind: "create" as const, patch: { name: `Ana ${i}` },
+      hlc: formatHlc(createHlcState("peer", Date.now(), i)), actor: theo, note: null,
+      createdAt: Date.now(), seq: i + 1,
+    })));
+    const asked: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const since = Number(new URL(url, "http://x").searchParams.get("since"));
+      asked.push(String(since));
+      const upTo = Math.min(since + 2, log.length);
+      const ops = log.filter((op) => op.seq! > since && op.seq! <= upTo);
+      return new Response(JSON.stringify({ ops, latestSeq: upTo, more: upTo < log.length }));
+    }));
+
+    const ops = await pullWholeGroup(groupId, "shh");
+
+    expect(asked).toEqual(["0", "2", "4"]);
+    expect(ops.map((op) => op.id)).toEqual(["op-1", "op-2", "op-3", "op-4", "op-5"]);
   });
 });
 

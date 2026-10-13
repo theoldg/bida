@@ -16,7 +16,7 @@ import {
   fetchRegistry, isClientKey, isTricountKey, MAX_REGISTRY_BYTES, openSession,
 } from "./tricount";
 import {
-  acceptOps, deleteGroup, ensureGroup, getGroup, isDeleted, opsSince, type GroupRow,
+  acceptOps, deleteGroup, ensureGroup, getGroup, isDeleted, pullPage, type GroupRow,
 } from "./store";
 import { parseNotify, relay } from "./relay";
 
@@ -253,11 +253,18 @@ app.post("/api/groups/:id/ops", async (c) => {
   const tooLarge = pushTooLarge(incoming);
   if (tooLarge) return c.json({ error: tooLarge.error }, tooLarge.status);
 
-  const { assigned, latestSeq } = await acceptOps(c.env.DB, groupId, incoming, now);
+  const { assigned, latestSeq } = await acceptOps(c.env.DB, groupId, incoming, since, now);
   const pushedIds = new Set(incoming.map((op) => op.id));
-  const pulled = (await opsSince(c.env.DB, groupId, since)).filter((op) => !pushedIds.has(op.id));
+  const page = await pullPage(c.env.DB, groupId, since, Math.max(latestSeq, group.last_op_seq));
 
-  return c.json({ assigned, ops: pulled, latestSeq });
+  // `latestSeq` is the page's end, never the group's: a build from before paging
+  // takes it as its cursor, and so walks the log a page per sync.
+  return c.json({
+    assigned,
+    ops: page.ops.filter((op) => !pushedIds.has(op.id)),
+    latestSeq: page.upTo,
+    more: page.more,
+  });
 });
 
 /** Never registers a group, unlike `POST /ops`. */
@@ -287,8 +294,8 @@ app.get("/api/groups/:id/ops", async (c) => {
   if (group instanceof Response) return group;
 
   const since = Number(c.req.query("since") ?? "0") || 0;
-  const ops = await opsSince(c.env.DB, groupId, since);
-  return c.json({ ops, latestSeq: group.last_op_seq });
+  const page = await pullPage(c.env.DB, groupId, since, group.last_op_seq);
+  return c.json({ ops: page.ops, latestSeq: page.upTo, more: page.more });
 });
 
 app.delete("/api/groups/:id", async (c) => {

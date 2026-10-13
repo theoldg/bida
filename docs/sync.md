@@ -126,21 +126,28 @@ never leaves the phone.
 
 **An op crosses the wire sealed.** What is sent is an envelope —
 `{ id, groupId, sealed, seq }` — where `sealed` is the rest of the op encrypted
-under the other branch of the same derivation (`core/seal.ts`). `id` is the
+under the other branch of the same derivation (`core/seal.ts`) — **deflated
+first** (seal version 2), because ciphertext doesn't compress and a scanned
+bill deflates to a third. A browser without raw deflate seals version 1, plain,
+and one that cannot inflate skips a version 2 as unreadable. `id` is the
 idempotency key and `groupId` the address, so those two are what routing needs
 and all it gets.
 
 **`POST /api/groups/:id/ops`**
 ```jsonc
 // → { "ops": [ /* unsynced SealedOp[], no seq */ ], "since": 412 }
-// ← { "assigned": { "<opId>": 413 }, "ops": [ /* seq > 412, unseen */ ],
-//     "latestSeq": 419 }
+// ← { "assigned": { "<opId>": 913 }, "ops": [ /* 412 < seq ≤ 912, unseen */ ],
+//     "latestSeq": 912, "more": true }
 ```
-A push carries up to fifty queued ops, and a phone with more sends rounds until
-its queue is empty — what got through stays through, rather than a fortnight's
-backlog riding on one request. The accept cuts the batch up again on its own
-side, so no clause outgrows D1's hundred bound parameters whatever the phone
-sends — see the gotcha below. Accepting is idempotent on `Op.id`, which is what makes retry
+A push carries up to two hundred queued ops, and a phone with more sends rounds
+until its queue is empty — what got through stays through, rather than a
+fortnight's backlog riding on one request. **A pull is a page** (`pullPage`):
+500 seqs or ~512 KB, `latestSeq` its end and `more` while the log goes on, and
+the phone asks again — its next round riding along — storing each page as it
+lands. A ten-thousand-op log in one answer was past the free plan's 10 ms of
+CPU, and on a slow link past the phone's patience, retried from nothing forever.
+`latestSeq` is never the head: a build from before paging takes it as its
+cursor, and walks the log a page per sync. Accepting is idempotent on `Op.id`, which is what makes retry
 safe on a flaky connection — a retry re-seals under a fresh IV, so the two ciphertexts differ
 and the id is what says they are one op. **There is no create-group endpoint**:
 a group's first push registers it, storing `sha256(token)` from that request,
@@ -148,7 +155,7 @@ and every later request is checked against it. A `GET` on a never-pushed group
 returns 404 — the creating device must sync once before an invite link is
 pullable.
 
-**`GET /api/groups/:id/ops?since=N`** — the same pull, without a push.
+**`GET /api/groups/:id/ops?since=N`** — the same page, without a push.
 
 **`POST /api/groups/:id/notify`** — `{ notifications: [{ endpoint, body }] }`,
 at most 40 of 4 KiB each, which the sending phone encrypted to other phones and
@@ -158,6 +165,22 @@ meaning not delivered for a reason that isn't the subscription's
 (`apps/api/src/relay.ts`, [notifications.md](notifications.md)). Unlike a push
 it never registers a group. A malformed batch is refused whole; a host that
 isn't a push service is skipped, not refused.
+
+### The log is kept in batches
+
+**A push is one row of `op_batches`** — its ids and seals as two JSON arrays,
+numbered up to `last_seq`, cut at 200 ops or ~1 MB (D1 caps a row at 2 MB). D1
+bills a write per row a statement touches, indexes included: an op in the old
+`ops` table cost three, a row here one (`WITHOUT ROWID`, no second index), so a
+ten-thousand-entry import costs a hundred writes, not thirty thousand of the
+day's hundred thousand. `ops` keeps what came before and is never written again;
+a pull reads both. **Nothing repacks old rows**: a delete is a write too, spent
+from the budget that runs out to save reads that never do.
+
+With no index on an op's id, a re-push is found among the rows past the
+pusher's `since` — enough, because a retry's first answer never arrived, so its
+cursor is still short of the op. The seal stays base64 text, not a BLOB: D1
+hands a BLOB back as an array of numbers, about twenty times the CPU to read.
 
 ### The push has a ceiling
 
@@ -169,14 +192,11 @@ data that gets no further resets
 ([standing-instructions](standing-instructions.md#product)).
 
 So a push is capped three ways (`apps/api/src/push-limits.ts`): **16 MB of
-body**, **5 000 ops**, and **256 KB of ciphertext per op**. The body is refused
-on `content-length` before it is read, and the other two after the envelope
-parses, because a declared length is only the caller's claim. All three answer
-`413`.
+body**, **5 000 ops**, and **256 KB of ciphertext per op**, each a `413`.
 
 Every number sits deliberately far above honest traffic — the largest op anyone
 can produce is an expense repeating a scanned bill's item array, about 30 KiB
-sealed, and the client pushes fifty at a time. They are **abuse ceilings, not
+sealed before deflating, and the client pushes two hundred at a time. They are **abuse ceilings, not
 protocol limits**: a tight one is worse than the flood it prevents, because a
 phone refused a `413` retries the identical body forever and the server cannot
 make an old build chunk differently. That is the same reasoning that keeps D1
@@ -346,10 +366,6 @@ losing edit and who made it, in order, like any other revision. A device that
 has caught up posts what it just pulled, so in practice both changes survive —
 only a save from a snapshot older than the peer's edit loses one. Members, rates
 and identities still merge per field.
-
-`FieldChange.supersededByOpId` from `core/history.ts` marks which later op
-replaced a field, and is tested — but nothing renders it (the owner finds it
-visually noisy). It's there if a future screen wants it.
 
 We never present a conflict-resolution dialog. For an expense splitter that
 would be worse than being briefly wrong — the group can see the history and fix
