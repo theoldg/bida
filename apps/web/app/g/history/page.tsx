@@ -15,8 +15,8 @@ import { plural } from "@/lib/format";
 import { parseEntrySource, route } from "@/lib/group-link";
 import { historyOps, useClaimGate, useGroupData } from "@/lib/hooks";
 
-/** How much of a long feed is drawn before asking. The rest comes in one tap,
- *  which is why the button can say exactly how many it is. */
+/** How much of a long feed is drawn at a time: each tap brings the next page,
+ *  never the rest at once, which in a 10,000-entry group is a freeze. */
 const PAGE = 200;
 
 /**
@@ -121,8 +121,8 @@ function HistoryScreen() {
 
             {rest > 0 ? (
               <button className="btn btn-s" style={{ marginTop: 12 }}
-                onClick={() => setShown(revisions.length)}>
-                {copy.history.more(plural(rest, copy.noun.revision))}
+                onClick={() => setShown((n) => n + PAGE)}>
+                {copy.history.more(String(Math.min(rest, PAGE)))}
               </button>
             ) : null}
 
