@@ -65,21 +65,33 @@ async function wipe() {
 }
 
 /** Every materialised row must equal a cold fold of the whole log. */
+/**
+ * The fold's rows, each stamped as lib/db/fold.ts stamps it: how many ops it
+ * is folded from, and the newest — worked out here again, not borrowed.
+ */
+function stamped<T extends { id: string }>(ops: readonly { entityId: string; hlc: string }[], rows: Record<string, T>) {
+  const rev = (id: string) => {
+    const own = ops.filter((o) => o.entityId === id).map((o) => o.hlc).sort();
+    return `${own.length} ${own.at(-1)}`;
+  };
+  return Object.fromEntries(Object.entries(rows).map(([id, row]) => [id, { ...row, rev: rev(id) }]));
+}
+
 async function assertMaterialisedMatchesLog(groupId: string) {
   const ops = await db().ops.where("groupId").equals(groupId).toArray();
   const folded = foldOps(ops);
 
-  expect(await db().groups.get(groupId)).toEqual(folded.group);
+  expect(await db().groups.get(groupId)).toEqual(stamped(ops, { [groupId]: folded.group! })[groupId]);
   const members = await db().members.where("groupId").equals(groupId).toArray();
-  expect(Object.fromEntries(members.map((m) => [m.id, m]))).toEqual(folded.members);
+  expect(Object.fromEntries(members.map((m) => [m.id, m]))).toEqual(stamped(ops, folded.members));
   const expenses = await db().expenses.where("groupId").equals(groupId).toArray();
-  expect(Object.fromEntries(expenses.map((e) => [e.id, e]))).toEqual(folded.expenses);
+  expect(Object.fromEntries(expenses.map((e) => [e.id, e]))).toEqual(stamped(ops, folded.expenses));
   const settlements = await db().settlements.where("groupId").equals(groupId).toArray();
-  expect(Object.fromEntries(settlements.map((s) => [s.id, s]))).toEqual(folded.settlements);
+  expect(Object.fromEntries(settlements.map((s) => [s.id, s]))).toEqual(stamped(ops, folded.settlements));
   const identities = await db().identities.where("groupId").equals(groupId).toArray();
-  expect(Object.fromEntries(identities.map((i) => [i.id, i]))).toEqual(folded.identities);
+  expect(Object.fromEntries(identities.map((i) => [i.id, i]))).toEqual(stamped(ops, folded.identities));
   const rates = await db().rates.where("groupId").equals(groupId).toArray();
-  expect(Object.fromEntries(rates.map((r) => [r.id, r]))).toEqual(folded.rates);
+  expect(Object.fromEntries(rates.map((r) => [r.id, r]))).toEqual(stamped(ops, folded.rates));
 }
 
 async function trip() {

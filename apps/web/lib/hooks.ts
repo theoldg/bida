@@ -1,14 +1,11 @@
 "use client";
+// Doc: docs/live-reads.md#a-save-moves-a-few-entries
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Dexie from "dexie";
 import {
-  CATCH_UP_MS, atCurrentRates, computeBalances, currenciesInUse, settleUp, emptyGroupState,
-  parseHlc, stateFromRows, unseenRevisions, wouldViolate,
-  type BalanceReport, type CurrencyInUse, type ExchangeRate, type Expense, type Group,
-  type GroupState, type Member, type OpDraft, type RegisteredInvariant,
-  type Settlement, type Transfer,
+  CATCH_UP_MS, emptyGroupState, parseHlc, unseenRevisions, type BalanceReport, type Group,
 } from "@bida/core";
 import { db, type DeviceRecord } from "./db/dexie";
 import { keepWarm, useLive } from "./db/live";
@@ -17,18 +14,16 @@ import { getDevice, getMe } from "./db/device";
 import { applyStash, stashSettled } from "./db/sync";
 import { writeClipboardText } from "./clipboard";
 import { copy } from "./copy";
-import { sortedByWhen } from "./format";
+import { derive, type GroupData, type GroupRows } from "./derive";
 import { tick } from "./haptics";
 import { formatJoinLink, route } from "./group-link";
 
 /**
- * Every screen reads through these. Nothing here writes, and derived money is
- * computed here from the rows, never stored.
+ * Every screen reads through these. Nothing here writes; what a group's rows
+ * add up to is `derive`'s (lib/derive.ts).
  */
 
-function living<T extends { deletedAt?: number | null }>(rows: T[] | undefined): T[] {
-  return (rows ?? []).filter((r) => !r.deletedAt);
-}
+export type { GroupData };
 
 export function useDevice(): DeviceRecord | undefined {
   const [fallback, setFallback] = useState<DeviceRecord>();
@@ -98,36 +93,6 @@ export function useInviteLink(groupId: string | undefined): {
   return { copy, copied, link, failed, clearFailure: () => setFailed(false) };
 }
 
-export interface GroupData {
-  group: Group | undefined;
-  members: Member[];
-  /** Removed ones included: the name matters most exactly when they've left. */
-  memberById: Map<string, Member>;
-  nameOf: (id: string) => string;
-  hasLeft: (id: string) => boolean;
-  expenses: Expense[];
-  settlements: Settlement[];
-  /** The old rate registry: a fallback for `latestRate`. */
-  rates: Record<string, ExchangeRate>;
-  currencies: CurrencyInUse[];
-  balances: BalanceReport;
-  transfers: Transfer[];
-  me: string | undefined;
-  /**
-   * **The only source of a refusal in the app** — a screen deciding for itself is
-   * the drift docs/invariants.md is about. `healGroup` makes the state legal when
-   * it loses.
-   */
-  guard: (draft: OpDraft) => RegisteredInvariant | undefined;
-  /** For the deleted entry's screen; everything else reads the live arrays. */
-  withTombstones: GroupState;
-  /** Every entry, deleted ones included — history's, whose subject may be gone. */
-  expenseById: Map<string, Expense>;
-  settlementById: Map<string, Settlement>;
-  pendingOps: number;
-  loading: boolean;
-}
-
 const EMPTY_REPORT: BalanceReport = {
   byMember: {}, totalSpendMinor: 0, totalIncomeMinor: 0,
   paidMinor: {}, owedMinor: {}, receivedMinor: {}, incomeShareMinor: {}, settledMinor: {},
@@ -155,7 +120,7 @@ function useStashApplied(groupId: string | undefined): boolean {
 
 /** One read for every screen of a group, so the first one opened readies the rest. */
 function groupRows(groupId: string | undefined) {
-  return async () => {
+  return async (): Promise<GroupRows | undefined> => {
     if (!groupId) return undefined;
     const d = db();
     // Not the device row: every save and every pull writes it, and each would
@@ -171,59 +136,6 @@ function groupRows(groupId: string | undefined) {
     ]);
     return { group, members, expenses, settlements, rates, pending };
   };
-}
-
-type GroupRows = NonNullable<Awaited<ReturnType<ReturnType<typeof groupRows>>>>;
-type Derived = Omit<GroupData, "me" | "loading">;
-
-/**
- * By the rows read, not per screen: every screen of a group is handed the same
- * answer (lib/db/live.ts keeps it the same object), so the balances are worked
- * out once rather than again on every screen opened.
- */
-const derived = new WeakMap<GroupRows, Derived>();
-
-function derive(rows: GroupRows): Derived {
-  const known = derived.get(rows);
-  if (known) return known;
-  const members = living(rows.members).sort((a, b) => a.name.localeCompare(b.name));
-  const sortedExpenses = sortedByWhen(living(rows.expenses));
-  const sortedSettlements = sortedByWhen(living(rows.settlements));
-  // Detection needs the tombstones: a removed member on a live entry is the
-  // point.
-  const withTombstones = stateFromRows(rows);
-  // Each entry valued at the rate it is read at, here and nowhere else: one
-  // screen reading the stored `baseAmountMinor` is how screens disagree
-  // (ADR-0005). Tombstones and all, as balances and currencies read the living
-  // alone: a second state cost a 10,000-entry group a tenth of a second.
-  const state = atCurrentRates({
-    ...withTombstones, rates: Object.fromEntries(living(rows.rates).map((r) => [r.id, r])),
-  });
-  // The state keys them and loses the sort.
-  const bySortOrder = <T extends { id: string }>(rows: T[], keyed: Record<string, T>) =>
-    rows.map((row) => keyed[row.id] ?? row);
-  const balances = computeBalances(state);
-  const memberById = new Map((rows.members ?? []).map((m) => [m.id, m]));
-  const out: Derived = {
-    group: rows.group,
-    members,
-    memberById,
-    nameOf: (id) => memberById.get(id)?.name ?? copy.unknown,
-    hasLeft: (id) => !!memberById.get(id)?.deletedAt,
-    expenses: bySortOrder(sortedExpenses, state.expenses),
-    settlements: bySortOrder(sortedSettlements, state.settlements),
-    rates: state.rates,
-    currencies: currenciesInUse(state),
-    balances,
-    transfers: settleUp(balances.byMember),
-    guard: (draft) => wouldViolate(withTombstones, draft),
-    withTombstones,
-    expenseById: new Map(Object.entries(withTombstones.expenses)),
-    settlementById: new Map(Object.entries(withTombstones.settlements)),
-    pendingOps: rows.pending,
-  };
-  derived.set(rows, out);
-  return out;
 }
 
 /**

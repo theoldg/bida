@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { assertBalanced, computeBalances, entryDeltas, entryEffect, netFor } from "./balance.js";
+import {
+  assertBalanced, computeBalances, entryDeltas, entryEffect, netFor, retallyBalances, tallyBalances,
+} from "./balance.js";
 import { foldOps } from "./fold.js";
-import type { Expense, Settlement } from "./types.js";
+import { emptyGroupState, type Expense, type GroupState, type Settlement } from "./types.js";
 import { settleUp, applyTransfers, transfersFor } from "./settle.js";
 import { formatMinor } from "./money.js";
 import { ADA, MARIE, SAM, THEO, marrakechOps, OpBuilder, GROUP } from "./fixtures.test-helper.js";
@@ -328,5 +330,154 @@ describe("entryDeltas", () => {
 
   it("moves nobody on an entry nothing can apportion", () => {
     expect(entryDeltas({ ...income, split: { mode: "exact", amounts: { [THEO]: 1 } } })).toEqual({});
+  });
+});
+
+describe("retallyBalances", () => {
+  const PEOPLE = ["ada", "bo", "cy", "dee", "eli"];
+
+  /** A small seeded generator, so a failure names its seed and replays. */
+  function rng(seed: number) {
+    let a = seed >>> 0;
+    const next = () => {
+      a = (a + 0x6d2b79f5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    const int = (n: number) => Math.floor(next() * n);
+    const pick = <T,>(list: readonly T[]): T => list[int(list.length)]!;
+    const some = (list: readonly string[]) => list.filter(() => next() < 0.5);
+    return { next, int, pick, some };
+  }
+
+  type R = ReturnType<typeof rng>;
+
+  function expense(r: R, id: string): Expense {
+    const amount = r.pick([0, 1, 7, 100, 999, 123_457, 2 ** 40]);
+    const who = r.some(PEOPLE);
+    const split: Expense["split"] = r.pick([
+      () => ({ mode: "equal" as const, members: who }),
+      () => ({ mode: "shares" as const, weights: Object.fromEntries(who.map((m) => [m, r.int(4)])) }),
+      // Summing to the amount half the time: the other half is a problem.
+      () => {
+        const amounts = Object.fromEntries(who.map((m) => [m, r.int(amount + 1)]));
+        if (who.length > 0 && r.next() < 0.5) {
+          const rest = amount - Object.values(amounts).reduce((x, y) => x + y, 0) + amounts[who[0]!]!;
+          amounts[who[0]!] = rest;
+        }
+        return { mode: "exact" as const, amounts };
+      },
+    ])();
+    const payer = r.pick(PEOPLE);
+    const other = r.pick(PEOPLE);
+    const cut = r.int(amount + 1);
+    return {
+      id, groupId: "g", description: id, occurredAt: r.int(1000), amountMinor: amount,
+      currency: "EUR", rateToBase: "1", baseAmountMinor: amount, paidBy: payer,
+      payers: r.next() < 0.3 && other !== payer ? { [payer]: amount - cut, [other]: cut } : null,
+      split, kind: r.next() < 0.2 ? "income" : null,
+      deletedAt: r.next() < 0.15 ? 1 : null,
+    };
+  }
+
+  function transfer(r: R, id: string): Settlement {
+    const amount = r.pick([0, 1, 50, 10_001]);
+    return {
+      id, groupId: "g", fromMember: r.pick(PEOPLE), toMember: r.pick(PEOPLE), amountMinor: amount,
+      currency: "EUR", rateToBase: "1", baseAmountMinor: amount, occurredAt: r.int(1000),
+      deletedAt: r.next() < 0.15 ? 1 : null,
+    };
+  }
+
+  function start(r: R): GroupState {
+    const state = emptyGroupState();
+    // Some members gone: one still named by an entry stays in the report.
+    for (const id of PEOPLE.slice(0, 3)) {
+      state.members[id] = { id, groupId: "g", name: id, colorSeed: 0, deletedAt: r.next() < 0.3 ? 1 : null };
+    }
+    for (let i = 0; i < 12; i++) state.expenses[`e${i}`] = expense(r, `e${i}`);
+    for (let i = 0; i < 4; i++) state.settlements[`s${i}`] = transfer(r, `s${i}`);
+    return state;
+  }
+
+  /** A save, an edit pulled in, a delete or an undelete: a few entries move. */
+  function step(r: R, state: GroupState) {
+    const gone: (Expense | Settlement)[] = [];
+    const come: (Expense | Settlement)[] = [];
+    const next = { ...state, expenses: { ...state.expenses }, settlements: { ...state.settlements } };
+    for (let n = 1 + r.int(4); n > 0; n--) {
+      const onTransfer = r.next() < 0.3;
+      const table = onTransfer ? next.settlements : next.expenses;
+      const ids = Object.keys(table);
+      const id = r.next() < 0.3 || ids.length === 0 ? `${onTransfer ? "s" : "e"}${100 + r.int(1000)}` : r.pick(ids);
+      // An id moving twice in one step counts once, at its first version.
+      if (come.some((c) => c.id === id)) continue;
+      const was = table[id];
+      const now = was && r.next() < 0.4
+        ? { ...was, deletedAt: was.deletedAt ? null : 2 }
+        : onTransfer ? transfer(r, id) : expense(r, id);
+      if (was) gone.push(was);
+      come.push(now);
+      (table as Record<string, Expense | Settlement>)[id] = now;
+    }
+    return { next, gone, come };
+  }
+
+  it("is the full tally of the state it leads to, step after step", () => {
+    for (let seed = 1; seed <= 300; seed++) {
+      const r = rng(seed);
+      let state = start(r);
+      let tally = tallyBalances(state);
+      for (let i = 0; i < 25; i++) {
+        const { next, gone, come } = step(r, state);
+        tally = retallyBalances(tally, gone, come);
+        state = next;
+        // toEqual tells 0 from -0: a stray -0 fails here.
+        expect(tally, `seed ${seed}, step ${i}`).toEqual(tallyBalances(state));
+      }
+      assertBalanced(tally.report);
+    }
+  });
+
+  it("leaves the tally it was given as it was", () => {
+    const r = rng(7);
+    const state = start(r);
+    const tally = tallyBalances(state);
+    const before = structuredClone(tally);
+    const { gone, come } = step(r, state);
+    retallyBalances(tally, gone, come);
+    expect(tally).toEqual(before);
+  });
+
+  it("drops a removed member once nothing names them, and keeps a live one at zero", () => {
+    const state = emptyGroupState();
+    state.members.ada = { id: "ada", groupId: "g", name: "Ada", colorSeed: 0 };
+    state.members.bo = { id: "bo", groupId: "g", name: "Bo", colorSeed: 0, deletedAt: 1 };
+    const pizza: Expense = {
+      id: "e1", groupId: "g", description: "Pizza", occurredAt: 0, amountMinor: 1000, currency: "EUR",
+      rateToBase: "1", baseAmountMinor: 1000, paidBy: "bo", split: { mode: "equal", members: ["ada", "bo"] },
+    };
+    const tally = retallyBalances(tallyBalances(state), [], [pizza]);
+    expect(tally.report.byMember).toEqual({ ada: -500, bo: 500 });
+    const after = retallyBalances(tally, [pizza], [{ ...pizza, deletedAt: 2 }]);
+    expect(after.report.byMember).toEqual({ ada: 0 });
+    expect(after.report.paidMinor).toEqual({ ada: 0 });
+    expect(after.names).toEqual({ ada: 1 });
+  });
+
+  it("names a problem until it is fixed, by entry id", () => {
+    const broken: Expense = {
+      id: "e2", groupId: "g", description: "?", occurredAt: 0, amountMinor: 1000, currency: "EUR",
+      rateToBase: "1", baseAmountMinor: 1000, paidBy: "ada", split: { mode: "exact", amounts: { ada: 1 } },
+    };
+    const other = { ...broken, id: "e1" };
+    const tally = retallyBalances(tallyBalances(emptyGroupState()), [], [broken, other]);
+    expect(tally.report.problems.map((p) => p.expenseId)).toEqual(["e1", "e2"]);
+    const fixed = { ...broken, split: { mode: "exact" as const, amounts: { ada: 1000 } } };
+    const after = retallyBalances(tally, [broken], [fixed]);
+    expect(after.report.problems.map((p) => p.expenseId)).toEqual(["e1"]);
+    expect(after.report.totalSpendMinor).toBe(1000);
   });
 });

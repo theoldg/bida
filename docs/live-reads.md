@@ -103,7 +103,7 @@ write to a row a read returned**; a frozen one throws.
 **An answer that says what the last one said is the last one** (`sameData`):
 the same object, so a screen opened onto a remembered answer doesn't draw
 everything again when its own read lands, and a group's balances are worked
-out once per answer for every screen of it (`derive`, `lib/hooks.ts`).
+out once per answer for every screen of it (`derive`, `lib/derive.ts`).
 
 `ReadErrorBoundary` (app/layout.tsx) catches the rest. `dexie-react-hooks`
 reports a failed read by throwing during render; without a boundary every error
@@ -117,6 +117,27 @@ legitimately has nothing to report has to say `null` — a group with no key row
 
 `pnpm verify stall` drives both halves in a browser; `lib/db/live.test.ts` pins the
 Dexie behaviour itself, so an upgrade that fixes it tells us.
+
+## A save moves a few entries
+
+Every write drops Dexie's cache, so a save hands `derive` (`lib/derive.ts`)
+the whole group again as new objects. Adding all of it up again was half a
+10,000-entry save, so `derive` keeps each group's last answer and moves it by
+what changed. **What changed is the stamp, never the content**: every
+materialised row carries `rev`, how many ops it is folded from and the newest
+(`lib/db/fold.ts`). An entity's ops only grow, so a row whose ops moved has a
+new stamp and one nobody touched keeps its own through a rebuild.
+
+The balances move by `retallyBalances` (core/balance.ts): the changed entries'
+old versions taken out, their new ones put in, in integers — the same
+per-entry code `computeBalances` runs, and a property test holds them equal.
+The sorted lists lose what went and take what came by binary search; the maps
+are copied, not written into; the members' objects are the last answer's, so a
+row's memo holds. **Anything wider is added up from nothing**: the group's row,
+a member or a rate moving (each reaches every entry), more than fifty entries
+(a pull of a long trip, an import), or a row with no stamp, written before
+there were any. On the dev Worker each moved answer is added up again at idle,
+and a difference is a `derive.mismatch` line on `/diag`.
 
 ## Gotchas
 

@@ -6,9 +6,10 @@
 
 /**
  * Fields a content save never carries, whatever the form holds. `id`/`groupId`
- * the fold refuses anyway; these two it would take.
+ * the fold refuses anyway; `createdAt`/`deletedAt` it would take. `rev` is the
+ * row's, not the entity's (lib/db/fold.ts).
  */
-const NOT_CONTENT = new Set(["id", "groupId", "createdAt", "deletedAt"]);
+const NOT_CONTENT = new Set(["id", "groupId", "createdAt", "deletedAt", "rev"]);
 
 /**
  * The entries that actually carry something. A `create` omits fields it would

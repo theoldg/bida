@@ -68,7 +68,7 @@ function guarded<T>(memo: string, querier: () => Promise<T>): () => Promise<T | 
  * A read answered again with what it already had keeps the object it had, so a
  * screen opened onto a remembered answer doesn't draw everything a second time
  * when its own read lands, and what is worked out from an answer is worked out
- * once (`derive`, lib/hooks.ts).
+ * once (`derive`, lib/derive.ts).
  */
 export function sameData(a: unknown, b: unknown): boolean {
   if (a === b) return true;

@@ -24,6 +24,30 @@ function tableFor(kind: EntityKind): Table<Row, string> {
   return t as unknown as Table<Row, string>;
 }
 
+/**
+ * Each row carries `rev`: how many ops it is folded from, and the newest.
+ * An entity's ops only ever grow, so a row whose ops moved has a new one and a
+ * row nobody touched keeps its own through a rebuild — which is how the group's
+ * read tells the few entries a save moved from the thousands it re-read
+ * (`derive`, lib/derive.ts). Never content: `wholeEntity` leaves it out.
+ */
+function revs(ops: readonly StoredOp[]): Map<string, string> {
+  const seen = new Map<string, { n: number; top: string }>();
+  for (const op of ops) {
+    const s = seen.get(op.entityId);
+    if (!s) seen.set(op.entityId, { n: 1, top: op.hlc });
+    else {
+      s.n += 1;
+      if (op.hlc > s.top) s.top = op.hlc;
+    }
+  }
+  return new Map([...seen].map(([id, s]) => [id, `${s.n} ${s.top}`]));
+}
+
+function stamped<T extends { id: string }>(rows: Iterable<T>, rev: Map<string, string>): T[] {
+  return Array.from(rows, (row) => ({ ...row, rev: rev.get(row.id) }));
+}
+
 function rowFor(kind: EntityKind, state: ReturnType<typeof foldOps>, id: string): Row | undefined {
   const bag =
     kind === "group" ? (state.group ? { [state.group.id]: state.group } : {})
@@ -60,7 +84,7 @@ export async function materialise(
     .and((op) => op.groupId === groupId).toArray();
   if (ops.length === 0) return;
   const row = rowFor(kind, foldOps(ops), entityId);
-  if (row) await tableFor(kind).put(row);
+  if (row) await tableFor(kind).put(stamped([row], revs(ops))[0]!);
 }
 
 /**
@@ -92,13 +116,14 @@ export async function rebuild(groupId: string): Promise<void> {
         d.rates.where("groupId").equals(groupId).delete(),
       ]);
 
-      if (state.group) await d.groups.put(state.group);
-      await d.members.bulkPut(Object.values(state.members));
-      await d.expenses.bulkPut(Object.values(state.expenses));
-      await d.settlements.bulkPut(Object.values(state.settlements));
-      await d.attachments.bulkPut(Object.values(state.attachments));
-      await d.identities.bulkPut(Object.values(state.identities));
-      await d.rates.bulkPut(Object.values(state.rates));
+      const rev = revs(rows);
+      if (state.group) await d.groups.put(stamped([state.group], rev)[0]!);
+      await d.members.bulkPut(stamped(Object.values(state.members), rev));
+      await d.expenses.bulkPut(stamped(Object.values(state.expenses), rev));
+      await d.settlements.bulkPut(stamped(Object.values(state.settlements), rev));
+      await d.attachments.bulkPut(stamped(Object.values(state.attachments), rev));
+      await d.identities.bulkPut(stamped(Object.values(state.identities), rev));
+      await d.rates.bulkPut(stamped(Object.values(state.rates), rev));
     },
   );
   done(`${ops} ops`);

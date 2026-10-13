@@ -159,12 +159,12 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   holds that. Forgetting the group is the exit
   ([invariants.md](invariants.md#why-each-is-held-the-way-it-is)).
 - A removed member who still carries a balance is **shown** on the balances
-  tab, marked as departed. `computeBalances` `touch()`es them so the set sums
-  to zero on screen. The row is a moment rather than a resting state, since
+  tab, marked as departed. `computeBalances` keeps them while an entry names
+  them, so the set sums to zero on screen. The row is a moment rather than a resting state, since
   the removal is undone — but only a phone holding both halves of the race can
   undo it, and every other one still has to draw a balance that adds up.
 - **`baseAmountMinor` is re-derived on read**: `atCurrentRates`
-  (`core/rates.ts`) values every entry at its own rate in `stateOf()`, so a merge
+  (`core/rates.ts`) values every entry at its own rate in `derive`, so a merge
   pairing one phone's amount with another's figure still reads consistently. An
   entry with no `rateSource` — written while rates were the group's — is read at
   the old registry's rate until `entriesCarryTheirOwnRate` writes it on. That
@@ -272,7 +272,9 @@ Both **derived on read, never stored.** In base minor units over every entry,
 `balance(member) = Σ(paid) − Σ(share) − Σ(received) + Σ(income share)`, plus
 transfers out and minus transfers in; the set always sums to zero (assert it in
 dev). The income terms are the expense terms with the sign flipped, applied in
-`core/balance.ts` and nowhere else. Settle-up is **the fewest transfers there are**, for
+`core/balance.ts` and nowhere else — and a save moves the last sum by the
+entries it changed rather than adding up again (`retallyBalances`,
+[live-reads.md](live-reads.md#a-save-moves-a-few-entries)). Settle-up is **the fewest transfers there are**, for
 every group shape the app realistically sees. Cut the members into as many
 zero-sum pieces as possible and each piece takes exactly `size − 1` payments,
 so `n − pieces` is the minimum; finding the cut is the NP-hard part, and
@@ -337,7 +339,7 @@ would want its own columns.
 | Store | Key | Notes |
 |---|---|---|
 | `ops` | `id` | indexes on `groupId`, `entityId`, `hlc`, `pending`, `[groupId+hlc]`, `[groupId+pending]` |
-| `groups`, `members`, `expenses`, `settlements`, `attachments` | `id` | materialised, rebuildable from `ops` |
+| `groups`, `members`, `expenses`, `settlements`, `attachments` | `id` | materialised, rebuildable from `ops`; each row stamped with `rev` ([live-reads.md](live-reads.md#a-save-moves-a-few-entries)) |
 | `rates` | `[groupId+id]` | the retired exchange registry, `id` being the currency code |
 | `identities` | `[groupId+id]` | one row per device per group, `id` being the device's node id |
 | `device` | key | who "you" are, theme, HLC state, whether the install nudge is folded, and the ids of groups known to be deleted |

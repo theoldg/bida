@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-13* — "Design the incremental balance calculation and measure
+  potential gains (with a temporary code hack…)", then "Do step 1 and 2". A
+  throwaway patch priced each piece before any was built, and the owner chose
+  from the table. The hack stays in the scratchpad, never in a commit.
+
 - *2026-10-13* — "When I save an entry the summary screen animated the height
   change", and in passing, the balance label moving "ever so slightly". A probe
   measured both on the old build first: 32px of slide, 3px of label. An aside
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "Do the same for the amount inside the record dialog". A follow-up that
   arrives mid-turn joins the turn: fold it into the same push, built from the
   same helper, rather than finishing the first and starting over.
-
-- *2026-10-12* — "Change the … copy back to what it was. I don't care
-  that it's imprecise." An audit's precision fix can be the wrong fix: the
-  owner weighs plain words above exact ones. Revert, and record it as a
-  decision so the next audit doesn't redo it.
