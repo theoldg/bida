@@ -6,7 +6,8 @@ import type { Copy } from "./copy";
  * translated; the shape is `Copy`, so the compiler names anything English has
  * that this lacks. Shown only when /diag's Language says Polski.
  *
- * The owner's conventions: "ty", never "Pan/Pani". A name is never declined
+ * The owner's conventions: "ty", never "Pan/Pani", and capitalised as in a
+ * letter: Ty, Twój, Ciebie, Ci. A name is never declined
  * (a member is whatever they typed): rephrase so it stands in the nominative,
  * "Usunąć: Ana?" rather than "Usunąć Anę?".
  *
@@ -171,17 +172,26 @@ export const pl: Copy = {
   // ------------------------------------------------------------- groups list
 
   groups: {
-    empty: { title: "???", body: "???" },
-    arriving: { title: "???", body: "???" },
-    newGroup: "???",
-    quickSplit: "???",
-    pasteLink: "???",
-    elsewhere: { title: "???", body: () => "???" },
-    about: "???",
-    settings: "???",
-    menu: "???",
-    whoAreYou: "???",
-    copied: "???",
+    empty: {
+      title: "Nic tu nie ma",
+      body: "Wyjazd, mieszkanie, kolacja: wszystko, za co płaci kilka osób.",
+    },
+    arriving: {
+      title: "Pobieranie Twoich grup",
+      body: "To może chwilę potrwać, nie musisz nic robić.",
+    },
+    newGroup: "Nowa grupa",
+    quickSplit: "Podziel paragon",
+    pasteLink: "Wklej link",
+    elsewhere: {
+      title: "Link z innego serwera",
+      body: (host) => `Ta grupa jest na ${host}, więc ta aplikacja jej nie otworzy. Otwórz link tam albo poproś o link z tej aplikacji.`,
+    },
+    about: "O aplikacji",
+    settings: "Ustawienia",
+    menu: "Menu",
+    whoAreYou: "kim jesteś?",
+    copied: "skopiowano",
     youOwe: "???",
     youreOwed: "???",
     settled: "???",
@@ -267,7 +277,7 @@ export const pl: Copy = {
     },
   },
   about: {
-    title: "???",
+    title: "O aplikacji",
     version: "v",
     noAccounts: { title: "???", body: "???" },
     offline: { title: "???", body: "???", bodyInstalled: "???" },
@@ -381,7 +391,7 @@ export const pl: Copy = {
     joining: { title: "???", fetching: () => "???", body: "???" },
     deleted: { title: "???", body: "???" },
   },
-  paste: { title: "???", placeholder: "???", open: "???" },
+  paste: { title: "Link z zaproszeniem", placeholder: "Wklej tutaj", open: "Otwórz" },
   demo: {
     opening: "???",
     title: "???",
@@ -473,7 +483,7 @@ export const pl: Copy = {
   // ------------------------------------------------------------- quick split
 
   quick: {
-    title: "???",
+    title: "Podziel paragon",
     lede: "???",
     who: "???",
     noLines: "???",
