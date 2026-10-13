@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-13* — "When I save an entry the summary screen animated the height
+  change", and in passing, the balance label moving "ever so slightly". A probe
+  measured both on the old build first: 32px of slide, 3px of label. An aside
+  is as real as the ask; "I feel like" is a measurement not yet taken.
+
 - *2026-10-12* — "Fix this flaky test", a phone shot of another session
   calling one sync test a timing flake. Six suites at once failed it, and
   four more with the same sleep; alone it never did. Load first, then read
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   that it's imprecise." An audit's precision fix can be the wrong fix: the
   owner weighs plain words above exact ones. Revert, and record it as a
   decision so the next audit doesn't redo it.
-
-- *2026-10-12* — "Run a few probe checks pretending you want to find
-  something", then "Fix 1 and 2". Probing as a cold reader found a rule the
-  code broke and a status file grown into a changelog; neither was visible
-  from the docs alone. Ask the code if the rule holds.

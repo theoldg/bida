@@ -840,6 +840,7 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .kv.yourbal .v { white-space: nowrap }
 .yourbal > button.kv { width: calc(100% + 30px); margin: 0 -15px; padding: 5px 15px;
   border-radius: var(--r-s) }
+.yourbal > button.kv[aria-expanded="true"] > .v { visibility: hidden }
 .sumrows { display: grid; grid-template-columns: 1fr auto auto; row-gap: 3px; padding: 2px 0 6px;
   font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right;
   animation: billopen .13s ease-out }

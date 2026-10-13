@@ -372,7 +372,9 @@ function YourBalance({ kind, up, down, net, currency }: {
         <span className="k eyebrow">
           {label}<Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />
         </span>
-        <span className="v">{open ? null : <b className={signClass(net)}>{result}</b>}</span>
+        {/* Hidden rather than gone when open: an empty value moves the row's
+            baseline, and the label with it. */}
+        <span className="v"><b className={signClass(net)}>{result}</b></span>
       </button>
       {open ? (
         <div className="sumrows">

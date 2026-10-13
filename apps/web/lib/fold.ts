@@ -14,7 +14,7 @@ import { calmly, glide, glideMs } from "./seek";
  *
  * The entry screen's dock (`.whodock`) rides the foot of a short entry, so
  * any height the fold changes moves it too: `slidingDock` slides it there,
- * once the held padding goes.
+ * once the held padding goes. Only a fold's change slides it (`folding`).
  *
  * Moves only on a press: a fold drawn open (`startOpen`) leaves the list be.
  * `ref` goes on the whole fold — its button and what it opens.
@@ -42,6 +42,7 @@ export function useFold<T extends HTMLElement>(startOpen = false) {
     if (!el || !box || !press) return;
 
     if (open) {
+      foldMoving(box)();
       const view = box.getBoundingClientRect();
       const { top, bottom } = el.getBoundingClientRect();
       const to = scrollTarget(box, revealWhole({ top, bottom }, { top: view.top, bottom: view.bottom }));
@@ -49,6 +50,7 @@ export function useFold<T extends HTMLElement>(startOpen = false) {
       return trip.current ? glide(box, to, () => {}) : undefined;
     }
 
+    const moving = foldMoving(box);
     const lost = Math.max(0, press.height - el.offsetHeight);
     const hold = holdPadding(box, lost);
     box.scrollTop = press.top;
@@ -58,13 +60,37 @@ export function useFold<T extends HTMLElement>(startOpen = false) {
     trip.current = null;
     const target = Math.max(0, Math.min(back, end));
     // The padding held the list's height, so the dock moves only once it goes.
-    const settle = hold.release;
+    const settle = () => { hold.release(); moving(); };
     if (target === box.scrollTop) { settle(); return; }
     const stop = glide(box, target, settle);
     return () => { stop(); settle(); };
   }, [open]);
 
   return { open, toggle, ref };
+}
+
+/**
+ * Scrollers a fold is changing the height of, counted: the dock slides only
+ * for these, so a save or a sync drawing the entry anew just moves it.
+ */
+const folding = new WeakMap<HTMLElement, number>();
+
+/**
+ * Marks `box` as folding until the returned call, and two frames past it: the
+ * resize observer reports a layout after the next frame's own callbacks.
+ */
+function foldMoving(box: HTMLElement): () => void {
+  folding.set(box, (folding.get(box) ?? 0) + 1);
+  let ended = false;
+  return () => {
+    if (ended) return;
+    ended = true;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const n = (folding.get(box) ?? 1) - 1;
+      if (n > 0) folding.set(box, n);
+      else folding.delete(box);
+    }));
+  };
 }
 
 /**
@@ -119,12 +145,14 @@ function viewportKey(): string {
 }
 
 /**
- * The entry screen's dock (`.whodock`) never jumps: a fold opening or closing
- * above it slides it. Whenever the list or the dock changes size, the dock and
- * its last child (the button) are drawn where they were and glide to where
- * they now are: the dock by how far its top moved, the button by whatever more
- * it moved inside it. The entry form doesn't use it: nothing folds there, and
- * Save sliding after a tab or a refusal read as lag.
+ * The entry screen's dock (`.whodock`) never jumps for a fold: one opening or
+ * closing above it slides it. When the list or the dock changes size while a
+ * fold is moving, the dock and its last child (the button) are drawn where
+ * they were and glide to where they now are: the dock by how far its top
+ * moved, the button by whatever more it moved inside it. Any other change —
+ * a save or a sync drawing the entry anew — puts it straight where it goes.
+ * The entry form doesn't use it: nothing folds there, and Save sliding after
+ * a tab or a refusal read as lag.
  *
  * Only size changes move it, so scrolling never does; and a change of the
  * viewport (the keyboard, a rotation) is re-measured, not slid — iOS moves the
@@ -150,7 +178,7 @@ export function slidingDock(dock: HTMLElement | null): (() => void) | undefined 
       // Inside the dock, so the dock's own slide is in both and cancels.
       button: button ? button.getBoundingClientRect().top - top - buttonOff : 0,
     };
-    if (was && was.key === now.key && !calmly()) {
+    if (was && was.key === now.key && folding.has(box) && !calmly()) {
       // From where each is drawn now, which mid-slide is not where it was laid out.
       slide(dock, was.dock + dockOff - now.dock);
       if (button) slide(button, was.button + buttonOff - now.button);

@@ -83,7 +83,8 @@ up. On `/g/payers` the verdict line rides in it with the button, and a Done
 that doesn't add up flashes that line; the entry form and the grid say what is
 wrong the same way, a red band over the button. On the entry screen a fold
 opening above the dock slides it there on the fold's clock rather than jumping
-(`slidingDock`, beside `useFold`); the entry form's Save doesn't slide — nothing
+(`slidingDock`, beside `useFold`) — only a fold: a save or a sync drawing the
+entry anew puts it straight where it goes; the entry form's Save doesn't slide — nothing
 folds there, and a slide after a tab switch read as lag. `/g/scan` is the
 one exception: it holds a picture and the button that picture explains, and at
 the foot the button is a long way from the only thing explaining it, so the two
