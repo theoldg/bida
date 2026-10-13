@@ -43,9 +43,11 @@ Two things: push notifications, built and unchecked on a phone, and the ledger's
 - **A 10,000-entry group on a slow phone** (4× CPU): the ledger opens and
   moves between screens in under a second, drawing only what is near the
   screen ([rows.md](rows.md#the-ledger-draws-what-is-near-the-screen)), and a
-  save lands mid-list in about 3s, read once for every screen of the group
-  ([live-reads.md](live-reads.md)). Still slow there: typing a search, about
-  350ms a keystroke, and the longest freeze of a save, about 700ms.
+  save lands mid-list in about 2–2.7s, read once for every screen of the group
+  ([live-reads.md](live-reads.md)); a search keeps up with typing. Still slow
+  there: a save's longest freeze, up to ~900ms (re-reading and re-deriving the
+  whole group), and history's first open, ~0.7–1s. 5,000 entries are quick on
+  a Pixel 9a (the owner, 2026-10-13).
 
 ### Found by the audit of 2026-10-11, not yet fixed
 

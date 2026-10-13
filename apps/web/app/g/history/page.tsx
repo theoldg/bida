@@ -19,6 +19,19 @@ import { historyOps, useClaimGate, useGroupData } from "@/lib/hooks";
  *  which is why the button can say exactly how many it is. */
 const PAGE = 200;
 
+/**
+ * By the log read, not per visit: an unchanged log is handed back as the same
+ * object (lib/db/live.ts), and a 10,000-entry group's feed cost a slow phone
+ * half a second to work out again on every visit.
+ */
+const feeds = new WeakMap<object, Revision[]>();
+
+function feedOf(ops: Parameters<typeof activityFeed>[0]): Revision[] {
+  let feed = feeds.get(ops);
+  if (!feed) feeds.set(ops, feed = activityFeed(ops));
+  return feed;
+}
+
 export default function HistoryPage() {
   return <QueryBoundary><HistoryScreen /></QueryBoundary>;
 }
@@ -56,7 +69,7 @@ function HistoryScreen() {
       ? (subject.description?.trim() || copy.history.untitled) : copy.group.transfer;
   // **Rendering is paged, never the list**: slicing it would make the count
   // report the slice size as the group's revision total.
-  const feed = useMemo(() => !groupId || !loaded ? [] : entryId ? entityHistory(loaded, entryId) : activityFeed(loaded),
+  const feed = useMemo(() => !groupId || !loaded ? [] : entryId ? entityHistory(loaded, entryId) : feedOf(loaded),
     [groupId, entryId, loaded]);
   // **What the ledger's dot meant goes above a jagged line**, the rest under
   // it. Pulled up rather than marked in place: a phone that was offline lands
