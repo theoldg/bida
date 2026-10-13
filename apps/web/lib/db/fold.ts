@@ -87,6 +87,43 @@ export async function materialise(
   if (row) await tableFor(kind).put(stamped([row], revs(ops))[0]!);
 }
 
+/** Rows to one write: past this, a bulk write is split so `progress` moves. */
+const CHUNK = 500;
+
+/**
+ * `materialise` for a batch of entities: one read of the group's log, one fold
+ * and a bulk write per table, where a read and a write per entity in turn took
+ * an import of ten thousand twenty seconds, nearly all of it waiting. Runs in
+ * the caller's transaction. Each entity comes out exactly as `materialise`
+ * makes it, since an op only touches the entity it names; reading the whole log
+ * is why a save of one or two keeps to `materialise`.
+ */
+export async function materialiseMany(
+  groupId: string, touched: ReadonlyMap<string, EntityKind>,
+  progress?: (written: number) => void,
+): Promise<void> {
+  const ops = await db().ops.where("groupId").equals(groupId).toArray();
+  const state = foldOps(ops);
+  const rev = revs(ops);
+  const byKind = new Map<EntityKind, Row[]>();
+  let none = 0;
+  for (const [entityId, kind] of touched) {
+    const row = rowFor(kind, state, entityId);
+    if (!row) { none += 1; continue; }
+    const rows = byKind.get(kind) ?? [];
+    rows.push({ ...row, rev: rev.get(entityId) } as Row);
+    byKind.set(kind, rows);
+  }
+  for (const [kind, rows] of byKind) {
+    for (let at = 0; at < rows.length; at += CHUNK) {
+      const chunk = rows.slice(at, at + CHUNK);
+      await tableFor(kind).bulkPut(chunk);
+      progress?.(chunk.length);
+    }
+  }
+  if (none > 0) progress?.(none);
+}
+
 /**
  * Throw away a group's materialised rows and fold the whole log again. Needed
  * when ops arrive out of order — folding an older op forward could let an

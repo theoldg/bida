@@ -105,6 +105,11 @@ entry and per field for everything else; `delete` sets
 ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)), but groups
 in production hold them.
 
+A local write materialises what it touched, one entity refolded from its own
+ops at a time — or, past fifty in one batch (an import), all of them from one
+fold of the group's log (`materialiseMany`), since a read and a write each in
+turn was most of a large import.
+
 The fold is pure and total: any subset of ops produces *some* valid state. An
 `update` arriving before its `create` yields a partial entity that completes
 later. Don't throw on out-of-order ops — and since a pulled op can slot in before

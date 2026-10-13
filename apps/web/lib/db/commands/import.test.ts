@@ -177,6 +177,36 @@ describe("a file written as a group", () => {
     expect(Object.fromEntries(settlements.map((s) => [s.id, s]))).toEqual(stamped(ops, folded.settlements));
   });
 
+  it("leaves the same rows when the batch is big enough to write in bulk", async () => {
+    // Past `MANY`, append.ts reads the log once rather than per entity.
+    const rows = Array.from({ length: 120 }, (_, i) =>
+      `2026-04-${String(1 + (i % 28)).padStart(2, "0")},Thing ${i},General,30.00,EUR,20.00,-10.00,-10.00`);
+    const big = ["Date,Description,Category,Cost,Currency,Ada,Sam,Theo", "", ...rows, "",
+      "2026-09-18,Total balance, , ,EUR,2400.00,-1200.00,-1200.00", ""].join("\n");
+    const { groupId } = await importGroup(plan(big), { name: "Long", myName: "Sam" });
+    const ops = await db().ops.where("groupId").equals(groupId).toArray();
+    const folded = foldOps(ops);
+    const expenses = await db().expenses.where("groupId").equals(groupId).toArray();
+    expect(expenses).toHaveLength(120);
+    expect(Object.fromEntries(expenses.map((e) => [e.id, e]))).toEqual(stamped(ops, folded.expenses));
+    const members = await db().members.where("groupId").equals(groupId).toArray();
+    expect(Object.fromEntries(members.map((m) => [m.id, m]))).toEqual(stamped(ops, folded.members));
+    expect(await db().groups.get(groupId)).toEqual(stamped(ops, { [groupId]: folded.group! })[groupId]);
+    expect(await byName(groupId)).toEqual({ Ada: 240000, Sam: -120000, Theo: -120000 });
+  });
+
+  it("says how far the write has got, its ops then its rows, to the last", async () => {
+    const heard: [number, number][] = [];
+    const { groupId } = await importGroup(plan(FILE), {
+      name: "Rome", myName: "Sam", progress: (done, total) => heard.push([done, total]),
+    });
+    const ops = await db().ops.where("groupId").equals(groupId).toArray();
+    const total = ops.length + new Set(ops.map((o) => o.entityId)).size;
+    expect(heard.every(([, t]) => t === total)).toBe(true);
+    expect(heard.map(([d]) => d)).toEqual([...heard.map(([d]) => d)].sort((a, b) => a - b));
+    expect(heard.at(-1)).toEqual([total, total]);
+  });
+
   it("stores a key, so the group has an invite link like any other", async () => {
     const { groupId, secret } = await importGroup(plan(FILE), { name: "Rome", myName: "Sam" });
     expect((await db().groupKeys.get(groupId))?.secret).toBe(secret);

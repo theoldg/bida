@@ -5,13 +5,21 @@ import {
 import { started } from "../../diag";
 import { db, type StoredOp } from "../dexie";
 import { getDevice } from "../device";
-import { materialise } from "../fold";
+import { materialise, materialiseMany } from "../fold";
 import { scheduleSync } from "../sync";
 
 /**
  * The one write. Every command in this directory ends here, and nothing else
  * in the app appends to the log, advances the clock or touches Dexie's tables.
  */
+
+/**
+ * Past this many entities, one read of the group's log beats a read each. A
+ * save touches one or two; a heal a handful; an import thousands.
+ */
+const MANY = 50;
+/** Ops to one write, so an import's `progress` moves while its log is stored. */
+const CHUNK = 500;
 
 /**
  * Append ops and materialise what they touched, atomically.
@@ -23,13 +31,20 @@ import { scheduleSync } from "../sync";
  * concerns is worked out here, against the log just before and just after, and
  * kept for `syncGroup` to send once the ops land. Never for a heal, an import
  * or a member — only a command somebody made is news (docs/notifications.md).
+ *
+ * A batch of more than `MANY` entities is materialised in bulk
+ * (`materialiseMany`): an import. `progress` hears how much of such a batch is
+ * written — its ops, then its rows — for a write long enough to watch.
  */
 export async function appendOps(
   groupId: Id,
   actor: Id,
   drafts: readonly OpDraft[],
   now = Date.now(),
-  { notify = false }: { notify?: boolean } = {},
+  { notify = false, progress }: {
+    notify?: boolean;
+    progress?: (done: number, total: number) => void;
+  } = {},
 ): Promise<Op[]> {
   const d = db();
   // Every write the person makes, timed: a save that sits behind somebody
@@ -64,17 +79,32 @@ export async function appendOps(
       }
 
       if (notify) await keepNotices(groupId, actor, written, now);
-      await d.ops.bulkPut(written);
+
+      // Dedupe: two ops in one command often touch the same entity.
+      const touched = new Map<Id, EntityKind>();
+      for (const op of written) touched.set(op.entityId, op.entity);
+      const total = written.length + touched.size;
+      let done = 0;
+      const moved = (n: number) => progress?.(done += n, total);
+
+      for (let at = 0; at < written.length; at += CHUNK) {
+        const chunk = written.slice(at, at + CHUNK);
+        await d.ops.bulkPut(chunk);
+        moved(chunk.length);
+      }
       await d.device.put({
         ...device,
         hlcPhysical: clock.physical,
         hlcCounter: clock.counter,
       });
 
-      // Dedupe: two ops in one command often touch the same entity.
-      const touched = new Map<Id, EntityKind>();
-      for (const op of written) touched.set(op.entityId, op.entity);
-      for (const [entityId, kind] of touched) await materialise(groupId, kind, entityId);
+      if (touched.size > MANY) await materialiseMany(groupId, touched, moved);
+      else {
+        for (const [entityId, kind] of touched) {
+          await materialise(groupId, kind, entityId);
+          moved(1);
+        }
+      }
 
       return written;
     },

@@ -28,6 +28,8 @@ export interface ImportGroupInput {
   myName: string;
   /** The rates a plan in several currencies needs (`lib/import/rates.ts`). */
   rateFor?: RateFor;
+  /** How far the write has got, for a plan long enough to watch (`appendOps`). */
+  progress?: (done: number, total: number) => void;
 }
 
 /**
@@ -84,7 +86,7 @@ export async function importGroup(
     ...plan.transfers.map((t) => transferDraft(t, ids, plan.currency, now, input.rateFor)),
   ];
 
-  await appendOps(groupId, me, drafts, now);
+  await appendOps(groupId, me, drafts, now, { progress: input.progress });
   await setMe(groupId, me);
   return { groupId, memberId: me, secret };
 }
