@@ -290,10 +290,14 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   // Every round pushes the next chunk, if any, and pulls the next page, until
   // neither is left: a page is what one request can carry on a slow link.
   const pushedIds = new Set<string>();
+  // A push whose answer was lost (a reload, a timeout) comes back in a page
+  // while still queued here. The server looks for a re-push only past the
+  // cursor, which that page just moved beyond it: sent again, it is stored twice.
+  const pulledIds = new Set<string>();
   let behind = true;
 
   for (let round = 0; round < rounds.length || behind; round++) {
-    const pending = rounds[round] ?? [];
+    const pending = (rounds[round] ?? []).filter((op) => !pulledIds.has(op.id));
     let sealed: PushPullResult;
     const sent = started("sync.pushpull");
     try {
@@ -312,6 +316,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     for (const op of pending) pushedIds.add(op.id);
     // An earlier round's push comes back in a later page when the phone was behind.
     const pulled = sealed.pulled.filter((op) => !pushedIds.has(op.id));
+    for (const op of pulled) pulledIds.add(op.id);
     sent(`${pending.length} up, ${pulled.length} down`
       + (unreadable.length > 0 ? `, ${unreadable.length} unreadable` : ""));
 

@@ -145,8 +145,7 @@ more sends rounds until its queue is empty: what got through stays through. **A 
 500 seqs or ~512 KB, `latestSeq` its end, `more` while the log goes on and `head`
 where it ends — what `/join`'s bar counts — and the phone asks again, its next
 round riding along, storing each page as it lands. A ten-thousand-op log in one answer was past the free plan's 10 ms of
-CPU, and on a slow link past the phone's patience, retried from nothing forever.
-`latestSeq` is never the head: a build from before paging takes it as its
+CPU. `latestSeq` is never the head: a build from before paging takes it as its
 cursor, and walks the log a page per sync. Accepting is idempotent on `Op.id`, which is what makes retry
 safe on a flaky connection — a retry re-seals under a fresh IV, so the two ciphertexts differ
 and the id is what says they are one op. **There is no create-group endpoint**:
@@ -178,9 +177,10 @@ a pull reads both. **Nothing repacks old rows**: a delete is a write too, spent
 from the budget that runs out to save reads that never do.
 
 With no index on an op's id, a re-push is found among the rows past the
-pusher's `since` — enough, because a retry's first answer never arrived, so its
-cursor is still short of the op. The seal stays base64 text, not a BLOB: D1
-hands a BLOB back as an array of numbers, about twenty times the CPU to read.
+pusher's `since`, since a lost answer leaves the cursor short of the op — until
+a page in the same run carries it past, so a run drops from its later rounds
+what a page brought back (a reload mid-import stored 48 twice). The seal stays
+base64 text: D1 hands a BLOB back as an array of numbers, ~20× the CPU to read.
 
 ### The push has a ceiling
 

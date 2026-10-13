@@ -945,6 +945,39 @@ describe("a pull in pages", () => {
     expect(await db().expenses.where("groupId").equals(groupId).count()).toBe(5);
   });
 
+  it("doesn't push again what a page shows already landed", async () => {
+    const { groupId } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    const me = (await db().members.where("groupId").equals(groupId).toArray())[0]!;
+    for (let i = 0; i < 210; i++) {
+      await addExpense(groupId, me.id, {
+        description: `tagine ${i}`, occurredAt: 1, amountMinor: 1200, currency: "EUR",
+        rateToBase: "1", paidBy: me.id, split: { mode: "equal", members: [me.id] },
+      });
+    }
+    // The last-written op went up before a reload swallowed the answer: the
+    // server holds it, the phone still queues it — for the second round.
+    const queued = await db().ops.where("groupId").equals(groupId).sortBy("hlc");
+    const landed = queued.at(-1)!;
+    const log = await serverOps(groupId, [{ ...landed, seq: 1 }]);
+    const requests = pagingServer(log, 500);
+    const sent = vi.mocked(fetch);
+    const ids: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => {
+      ids.push(...(JSON.parse(init.body as string) as { ops: SealedOp[] }).ops.map((op) => op.id));
+      return sent(url, init);
+    }));
+
+    await syncGroup(groupId);
+
+    expect(requests.length).toBe(2);
+    expect(ids).toHaveLength(queued.length - 1);
+    expect(ids).not.toContain(landed.id);
+    expect(log.filter((op) => op.id === landed.id)).toHaveLength(1);
+    expect(await db().ops.get(landed.id)).toMatchObject({ seq: 1, pending: 0 });
+  });
+
   it("pushes behind a log it hasn't caught up with, and takes none of its own ops back", async () => {
     const { groupId, memberId: theo } = await createGroup({
       name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
