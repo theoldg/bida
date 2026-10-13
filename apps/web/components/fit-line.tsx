@@ -4,9 +4,44 @@
 import { useLayoutEffect, useRef, useState, type DependencyList, type ReactNode, type RefObject } from "react";
 import { fitIndex, styleOf, textWidth } from "../lib/fit";
 import { copy } from "../lib/copy";
+import { Icon, type IconName } from "./icons";
 
 /** Between `lead` and the rung — the separator `copy.group.metaLine` puts between facts. */
 const SEP = copy.group.metaLine("", "");
+
+/**
+ * A rung that opens on an icon and a figure, the ledger's "👥5", before its
+ * words: `spoken` is what a screen reader hears in place of the two.
+ */
+export interface CountRung { icon: IconName; count: number; spoken: string; rest: string }
+export type Rung = string | CountRung;
+
+/** The count's icon and its gap to the figure, as `.ways` draws them on the ledger. */
+const COUNT_ICON = 12;
+const COUNT_GAP = 3;
+
+function rungText(rung: Rung): string {
+  return typeof rung === "string" ? rung : `${rung.count}${SEP}${rung.rest}`;
+}
+
+function rungWidth(rung: Rung, style: ReturnType<typeof styleOf>): number {
+  const text = textWidth(rungText(rung), style);
+  // No canvas measures 0 and must stay 0: "it all fits".
+  return typeof rung === "string" || text === 0 ? text : text + COUNT_ICON + COUNT_GAP;
+}
+
+function RungView({ rung }: { rung: Rung | undefined }) {
+  if (rung === undefined) return null;
+  if (typeof rung === "string") return <>{rung}</>;
+  return <>
+    <span className="fitcount" style={{ gap: COUNT_GAP }}>
+      <Icon name={rung.icon} size={COUNT_ICON} />
+      <span aria-hidden="true">{rung.count}</span>
+      <span className="vh">{rung.spoken}</span>
+    </span>
+    {SEP}{rung.rest}
+  </>;
+}
 
 /**
  * One line that would rather say less than be cut off: given wordings longest
@@ -26,7 +61,7 @@ const SEP = copy.group.metaLine("", "");
  * still holds a name of any length.
  */
 export function FitLine({ options, className, lead, leadClassName, icon, trail, body }: {
-  options: readonly string[];
+  options: readonly Rung[];
   className?: string;
   lead?: string;
   leadClassName?: string;
@@ -40,7 +75,7 @@ export function FitLine({ options, className, lead, leadClassName, icon, trail, 
   const trailRef = useRef<HTMLSpanElement>(null);
   const [at, setAt] = useState(0);
   // The array is rebuilt every render; its contents are what changes rarely.
-  const key = `${lead ?? ""}\n${options.join("\n")}`;
+  const key = `${lead ?? ""}\n${options.map(rungText).join("\n")}`;
 
   useRefit(ref, (el) => {
     const style = styleOf(el);
@@ -53,13 +88,13 @@ export function FitLine({ options, className, lead, leadClassName, icon, trail, 
     // Unmeasured stays 0 ("show everything"); a lead that fills the box
     // leaves 1px, so the leanest rung, not the richest.
     const room = box <= 0 ? 0 : Math.max(1, box - taken);
-    setAt(fitIndex(options.map((o) => textWidth(o, style)), room));
+    setAt(fitIndex(options.map((o) => rungWidth(o, style)), room));
   }, [key]); // `key` is `options`
 
   const shown = <>
     {icon ? <span ref={iconRef} className="fiticon">{icon}</span> : null}
     {lead ? <><b ref={leadRef} className={leadClassName}>{lead}</b>{SEP}</> : null}
-    {options[Math.min(at, options.length - 1)] ?? ""}
+    <RungView rung={options[Math.min(at, options.length - 1)]} />
     {trail ? <span ref={trailRef} className="fittrail">{trail}</span> : null}
   </>;
   return (

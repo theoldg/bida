@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-13* — "Change the “4 people” small text in the group list to the
+  icon + number that the ledger uses". The ask pointed at its own spec again:
+  copy the ledger's glyph, size and gap, then crop both shots side by side
+  rather than trust that they match.
+
 - *2026-10-13* — "What does Staś mode say about the project", then
   "Wdyt about…", then the finished wording. Three questions were one design
   meeting; each answer checked the claim it made first (does `/diag` send
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   pick and asked; their reply was a better design ("a single row … for Y").
   A question can be the owner thinking aloud: answer briefly, then build what
   comes back without asking again.
-
-- *2026-10-12* — "Change the app icon to have four teeth … like the receipt
-  icon in the home screen. Any questions?" The ask pointed at its own spec, so
-  none were owed: count the reference's teeth, match them, regenerate, and
-  name what stayed (badge, banner) for them to veto.

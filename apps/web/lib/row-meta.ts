@@ -1,4 +1,5 @@
 // Doc: docs/rows.md#a-row-says-less-rather-than-being-cut-off
+import type { Rung } from "../components/fit-line";
 import { copy } from "./copy";
 import { plural } from "./format";
 
@@ -26,16 +27,17 @@ export function transferMeta(note: string | null | undefined): string[] {
  * A group list row's line. "N new changes" rides ahead of it as `FitLine`'s
  * `lead`, on every rung, and the time is the last thing standing: both say
  * whether to open the group, the counts only what is inside it. People go
- * before entries — the roster barely moves; the entry count is the activity.
+ * before entries — the roster barely moves; the entry count is the activity —
+ * and are the ledger's icon and figure, "👥4", so a head count reads one way.
  */
 export function groupMeta({ people, entries, when }: {
   people: number;
   entries: number;
   /** Already worded, `ago(lastActivity)`. */
   when: string;
-}): string[] {
-  const count = plural(entries, copy.noun.entry);
-  return [joined(joined(plural(people, copy.noun.person), count), when), joined(count, when), when];
+}): Rung[] {
+  const rest = joined(plural(entries, copy.noun.entry), when);
+  return [{ icon: "users", count: people, spoken: plural(people, copy.noun.person), rest }, rest, when];
 }
 
 /**

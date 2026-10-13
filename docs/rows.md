@@ -148,7 +148,8 @@ first and wraps it onto a clipped second line. Lines with more than two facts us
 `FitLine`, which takes several wordings longest first and renders the longest
 that measures under the box (`lib/row-meta.ts` owns the order). A group list
 row's line is that ladder with a fixed bold lead: "N new changes" is never
-dropped, then people go, then entries, and the time is last standing — the lead and the time
+dropped, then people — the ledger's "👥4", since a rung may open on an icon and a figure
+(`CountRung`) — then entries, and the time is last standing — the lead and the time
 say whether to open the group, the counts only what is in it.
 
 A ledger row is always the same height, whether or not it carries a second

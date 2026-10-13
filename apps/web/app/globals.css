@@ -819,6 +819,8 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 .entryhistbody:active { background-image: linear-gradient(var(--press), var(--press));
   transition-duration: 0s }
 .fiticon { display: inline-flex; vertical-align: middle; margin-right: 5px; color: var(--muted) }
+.fitcount { display: inline-flex; align-items: center; vertical-align: top; height: 1.5em;
+  font-variant-numeric: tabular-nums }
 .fittrail { display: inline-flex; vertical-align: middle; margin-left: 3px; color: var(--muted) }
 .deletedband { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px;
   background: var(--ink); color: var(--paper); border-radius: var(--r-m) }

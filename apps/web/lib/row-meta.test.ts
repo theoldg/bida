@@ -17,7 +17,7 @@ describe("transferMeta", () => {
 describe("groupMeta", () => {
   it("drops people, then entries, and keeps the time", () => {
     expect(groupMeta({ people: 9, entries: 61, when: "2d ago" })).toEqual([
-      "9 people · 61 entries · 2d ago",
+      { icon: "users", count: 9, spoken: "9 people", rest: "61 entries · 2d ago" },
       "61 entries · 2d ago",
       "2d ago",
     ]);
@@ -25,7 +25,7 @@ describe("groupMeta", () => {
 
   it("counts one the singular way", () => {
     expect(groupMeta({ people: 1, entries: 1, when: "just now" })[0])
-      .toBe("1 person · 1 entry · just now");
+      .toEqual({ icon: "users", count: 1, spoken: "1 person", rest: "1 entry · just now" });
   });
 });
 
