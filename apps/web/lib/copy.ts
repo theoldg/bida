@@ -134,6 +134,7 @@ export const copy = {
     named: (group: string) => `Import ${group}`,
     act: "Create the group",
     failed: (why: string) => `Couldn’t import that file: ${why}`,
+    writing: (percent: number) => `Importing… ${percent}%`,
     noRates: (codes: string) => `bida couldn’t look up any ${codes} rates. Try again in a while`,
     noRatesOffline: "this phone can’t reach the internet to look up the rates",
 

@@ -47,7 +47,8 @@ Two things: push notifications, built and unchecked on a phone, and the ledger's
   once, then moved by the entries it changed rather than added up again
   ([live-reads.md](live-reads.md#a-save-moves-a-few-entries)); a search keeps
   up with typing. Still slow there: the save's whole re-read of the group, and
-  history's first open, ~0.7–1s. A group whose rows predate the `rev` stamp is
+  history's first open, ~0.7–1s, and an import of that size, ~14s with its
+  button a bar ([import-export.md](import-export.md#bringing-a-group-onto-the-phone)). A group whose rows predate the `rev` stamp is
   added up whole until its next pull rebuilds it. 5,000 entries are quick on a
   Pixel 9a (the owner, 2026-10-13).
 

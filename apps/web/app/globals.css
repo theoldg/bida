@@ -959,6 +959,9 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
   background: var(--press); animation: scanfill 2s linear forwards }
 .pair-p .scanbar { background: var(--press-i) }
 @keyframes scanfill { to { transform: scaleX(1) } }
+/* A wait that knows how far it has got (`WriteBusy`): set, not swept. */
+.scanbar.measured { animation: none; transition: transform .2s linear }
+.pair-busy[role="progressbar"] .btn { font-variant-numeric: tabular-nums }
 .action { font-size: 13px; font-weight: 700; color: var(--ink); text-decoration: underline;
   text-underline-offset: 3px; text-decoration-thickness: 1px }
 .action:disabled { color: var(--muted); text-decoration-color: var(--rule) }

@@ -127,6 +127,9 @@ over the three seconds a scan usually takes — the one wait in the app whose
 length we can guess, so it is drawn rather than shrugged at. The bar *is* the
 control filling, not a track inside it, and it hands over to the spinner only
 if the model is slower than usual; an answer that beats it never shows one.
+An import of fifty entries or more takes the same box in place of its
+"Continue as", the wash standing at how much is written rather than sweeping
+(`WriteBusy`) — a wait whose length is known, so it is counted, not guessed.
 Three registers, so where it sits changes its size and almost nothing else:
 an ink block where the screen exists for it (`/g/scan`) and on the Items tab,
 where it is likewise the only thing to do, and chip scale — on paper, so it

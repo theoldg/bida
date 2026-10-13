@@ -6,9 +6,10 @@ import { copy } from "../lib/copy";
 import type { LiveScan } from "../lib/scan/live";
 
 /**
- * How a reading in flight is drawn. Its own file because the scan control and
- * the type-a-bill dialog both use it, and the control renders that dialog —
- * beside the control it would be a cycle.
+ * How a wait on a button is drawn: a reading in flight, and an import being
+ * written. Its own file because the scan control and the type-a-bill dialog
+ * both use it, and the control renders that dialog — beside the control it
+ * would be a cycle.
  */
 
 /**
@@ -73,6 +74,27 @@ export function ScanBusy({ live, box, button = "btn", onFlashEnd }: {
         {spinning ? <span className="spinner" aria-hidden="true" /> : null}
         {copy.scan.reading}
       </button>
+    </div>
+  );
+}
+
+/**
+ * The same box and wash for a wait that can say how far it has got — an
+ * import's write: the bar stands at `percent` rather than sweeping at the
+ * usual pace, and the label says the number, so it is not `aria-hidden`.
+ */
+export function WriteBusy({ percent, label, box, button = "btn" }: {
+  percent: number;
+  label: string;
+  box: string;
+  button?: string;
+}) {
+  return (
+    <div className={`${box} pair-busy`} role="progressbar" aria-valuemin={0} aria-valuemax={100}
+      aria-valuenow={percent} aria-label={label}>
+      <span className="scanbar measured" aria-hidden="true"
+        style={{ transform: `scaleX(${percent / 100})` }} />
+      <button type="button" className={button} disabled>{label}</button>
     </div>
   );
 }

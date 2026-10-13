@@ -4,6 +4,7 @@ import { useRef, useState, type ReactNode } from "react";
 import { AddName, type AddNameHandle } from "./name-adder";
 import { Icon } from "./icons";
 import { Scroll } from "./chrome";
+import { WriteBusy } from "./scan-bar";
 import { copy } from "../lib/copy";
 
 /** One name to pick from. On `/new` the id *is* the name — nothing is written
@@ -29,7 +30,7 @@ export interface Who {
  * above it. That is why the picker draws the screen's `Scroll` itself.
  * `.btn-lg`, like Create and Save (docs/design-system.md).
  */
-export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onContinue, after }: {
+export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onContinue, after, progress }: {
   people: readonly Who[];
   /** Whoever is already selected — a group re-opened from its invite link
       preselects the name this phone last claimed. */
@@ -44,6 +45,11 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
   onContinue: (id: string) => void | Promise<void>;
   /** Drawn in the scroller under the list — a failure to report. */
   after?: ReactNode;
+  /**
+   * A write long enough to watch, an import's: the button becomes its bar, in
+   * its place and its size, so nothing on the screen moves.
+   */
+  progress?: { percent: number; label: string };
 }) {
   const [busy, setBusy] = useState(false);
   // Whoever the add row just filed. On `/g/claim` the row arrives via a Dexie
@@ -101,9 +107,15 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
       {/* Outside the scroller, so its rubber-band never moves the button. On
           `/g/claim` the "Have the app?" dock follows it. */}
       <div className="pad whodock">
-        <button className="btn btn-p btn-lg" onClick={() => void proceed()} disabled={busy || !chosen}>
-          {chosen ? copy.claim.continueAs(chosen.name) : copy.claim.pickFirst}
-        </button>
+        {progress ? (
+          // The scan button's wait, so a long write looks like the one other.
+          <WriteBusy percent={progress.percent} label={progress.label}
+            box="btn-pair pair-p" button="btn btn-lg" />
+        ) : (
+          <button className="btn btn-p btn-lg" onClick={() => void proceed()} disabled={busy || !chosen}>
+            {chosen ? copy.claim.continueAs(chosen.name) : copy.claim.pickFirst}
+          </button>
+        )}
       </div>
     </>
   );

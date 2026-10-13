@@ -15,6 +15,12 @@ import { lookUpRates, RatesUnavailableError } from "@/lib/import/rates";
 import { useRefusal } from "@/lib/refusal";
 
 /**
+ * Past this many entries the write is long enough to watch: ten thousand are
+ * about fourteen seconds of IndexedDB, whatever the phone's speed.
+ */
+const WATCHED = 50;
+
+/**
  * What `/import` read, before anything is written: the counts to check
  * against the source, the group's name, then which person you are.
  *
@@ -44,7 +50,10 @@ export default function ImportPlanPage() {
   const others = otherCurrencies(plan);
 
   /** Rates first, when the file needs any: nothing is written unless every currency has one. */
-  async function create(me: string): Promise<string> {
+  async function create(me: string, progress: (done: number, total: number) => void): Promise<string> {
+    const watched = plannedCount(plan) >= WATCHED;
+    // The bar from the tap, empty while the rates are looked up.
+    if (watched) progress(0, 1);
     let rateFor;
     if (ratesWanted(plan).length > 0) {
       try {
@@ -54,7 +63,9 @@ export default function ImportPlanPage() {
         throw new Error(err.offline ? words.noRatesOffline : words.noRates(err.currencies.join(", ")));
       }
     }
-    return (await importGroup(plan, { name: name.trim(), myName: me, rateFor })).groupId;
+    return (await importGroup(plan, {
+      name: name.trim(), myName: me, rateFor, progress: watched ? progress : undefined,
+    })).groupId;
   }
 
   /** The group's name is the one thing the file cannot tell us, so it is asked. */
@@ -75,7 +86,8 @@ export default function ImportPlanPage() {
         onAdd={(who) => setPendingImport({ name, plan: { ...plan, members: [...plan.members, who] } })}
         onBack={() => setAsking(false)}
         create={create}
-        failedText={words.failed} />
+        failedText={words.failed}
+        writing={words.writing} />
     );
   }
 

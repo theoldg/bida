@@ -17,7 +17,7 @@ import { route } from "../lib/group-link";
  *
  * **A failure stays on this step**, under the button that retries it.
  */
-export function CreateAs({ title, names, picked: first, onAdd, onBack, create, failedText }: {
+export function CreateAs({ title, names, picked: first, onAdd, onBack, create, failedText, writing }: {
   title: string;
   /** The names the group will be written with. */
   names: readonly string[];
@@ -26,19 +26,32 @@ export function CreateAs({ title, names, picked: first, onAdd, onBack, create, f
   /** Files a name typed here into that list. */
   onAdd: (name: string) => void;
   onBack: () => void;
-  /** Writes the group with `me` as its actor, and says its id. */
-  create: (me: string) => Promise<string>;
+  /**
+   * Writes the group with `me` as its actor, and says its id. A write long
+   * enough to watch says how far it has got, which turns the button into a bar.
+   */
+  create: (me: string, progress: (done: number, total: number) => void) => Promise<string>;
   failedText: (why: string) => string;
+  /** What the bar says, at a percentage. */
+  writing?: (percent: number) => string;
 }) {
   const router = useRouter();
   const [picked, setPicked] = useState(first);
   const [failed, setFailed] = useState<string>();
+  const [percent, setPercent] = useState<number>();
 
   async function save(me: string) {
     setFailed(undefined);
+    // A render per whole percent, not per entry: an import reports thousands.
+    let shown = -1;
+    const progress = (done: number, total: number) => {
+      const now = total > 0 ? Math.floor((100 * done) / total) : 0;
+      if (now !== shown) setPercent(shown = now);
+    };
     try {
-      router.replace(route.group(await create(me)));
+      router.replace(route.group(await create(me, progress)));
     } catch (err) {
+      setPercent(undefined);
       setFailed(errorText(err));
     }
   }
@@ -59,6 +72,7 @@ export function CreateAs({ title, names, picked: first, onAdd, onBack, create, f
             return { id: who, name: who };
           }}
           onContinue={save}
+          progress={percent === undefined || !writing ? undefined : { percent, label: writing(percent) }}
           after={failed ? <div className="pad"><Failure>{failedText(failed)}</Failure></div> : null} />
       </Body>
     </Screen>

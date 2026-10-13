@@ -43,7 +43,7 @@ Seven pieces, each in the layer that owns it:
 | `lib/import/tricount.ts` | The link: the key out of whatever was pasted, a throwaway RSA public key the handshake wants, and one POST to `/api/tricount`. The private half is dropped where it is made, since nothing in that protocol signs anything |
 | `core/import-shape.ts` | Each planned row as written: currency, rate, split mode and id, checked to read back as the plan ([below](#writing-a-plan)) |
 | `lib/import/rates.ts` | A CSV's other currencies priced: one lookup per currency per day, six at a time, before anything is written. The plan screen says so under the readout, and a currency with no rate at all is the import's failure, named |
-| `lib/db/commands/import.ts` | The plan as **one `appendOps` batch** under one actor: a hundred rows are not a hundred things somebody did a millisecond apart, and one batch is also the only atomic shape |
+| `lib/db/commands/import.ts` | The plan as **one `appendOps` batch** under one actor: a hundred rows are not a hundred things somebody did a millisecond apart, and one batch is also the only atomic shape. Past fifty entries the batch is materialised in bulk and watched: "Continue as" becomes the scan button's bar, at how much is written — ten thousand take about fourteen seconds, nearly all of it IndexedDB's |
 
 **History says an entry was imported**, since every row shares the import's
 moment and author ("Ada imported this expense from Tricount", and "Imported
