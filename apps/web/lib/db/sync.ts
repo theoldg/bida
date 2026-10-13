@@ -241,6 +241,10 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
 
   // By the index: the waiting ops, never a walk of the whole log.
   const queued = await d.ops.where("[groupId+pending]").equals([groupId, 1]).toArray();
+  // In the order they were written, not the index's (random ids): a group's
+  // `create` goes up first, so a phone joining mid-import has the group to
+  // open rather than thousands of entries in nothing.
+  queued.sort((a, b) => (a.hlc < b.hlc ? -1 : a.hlc > b.hlc ? 1 : 0));
   const rounds = chunk(queued, PUSH_CHUNK);
   // Skipping is safe only because the op is still on the server; a new build
   // re-pulls from the earliest skipped op, once per deploy.

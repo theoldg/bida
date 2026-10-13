@@ -56,10 +56,12 @@ describe("syncGroup", () => {
     expect(queued.length).toBeGreaterThan(200);
 
     const rounds: { ops: number; since: number }[] = [];
+    const sent: string[] = [];
     let seq = 0;
     vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
       const body = JSON.parse(init.body as string) as { ops: { id: string }[]; since: number };
       rounds.push({ ops: body.ops.length, since: body.since });
+      sent.push(...body.ops.map((op) => op.id));
       const assigned = Object.fromEntries(body.ops.map((op) => [op.id, ++seq]));
       return new Response(JSON.stringify({ assigned, ops: [], latestSeq: seq }));
     }));
@@ -72,6 +74,13 @@ describe("syncGroup", () => {
     // Each round carries the cursor the one before it earned, so the second
     // request is not answered with everything the first already stored.
     expect(rounds[1]!.since).toBe(rounds[0]!.ops);
+    // In the order they were written, so the group's own `create` is in the
+    // first round, not wherever its random id sorts.
+    const hlcOf = new Map(queued.map((op) => [op.id, op.hlc]));
+    const order = sent.map((id) => hlcOf.get(id)!);
+    expect(order).toEqual([...order].sort());
+    const create = queued.find((op) => op.entity === "group" && op.kind === "create")!;
+    expect(sent.indexOf(create.id)).toBeLessThan(200);
     // And the whole queue is through: nothing was dropped between rounds.
     const left = await db().ops.where("groupId").equals(groupId)
       .and((op) => op.pending === 1).toArray();

@@ -139,9 +139,9 @@ and all it gets.
 // ← { "assigned": { "<opId>": 913 }, "ops": [ /* 412 < seq ≤ 912, unseen */ ],
 //     "latestSeq": 912, "more": true }
 ```
-A push carries up to two hundred queued ops, and a phone with more sends rounds
-until its queue is empty — what got through stays through, rather than a
-fortnight's backlog riding on one request. **A pull is a page** (`pullPage`):
+A push carries up to two hundred queued ops, oldest HLC first — a group's
+`create` leads, or a joiner holds its entries and no group — and a phone with
+more sends rounds until its queue is empty: what got through stays through. **A pull is a page** (`pullPage`):
 500 seqs or ~512 KB, `latestSeq` its end and `more` while the log goes on, and
 the phone asks again — its next round riding along — storing each page as it
 lands. A ten-thousand-op log in one answer was past the free plan's 10 ms of
