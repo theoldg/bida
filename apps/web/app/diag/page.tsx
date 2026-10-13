@@ -4,11 +4,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { Icon } from "@/components/icons";
 import { writeClipboardText } from "@/lib/clipboard";
 import { copy } from "@/lib/copy";
 import { db } from "@/lib/db/dexie";
 import { pullNotes, type PullNote } from "@/lib/db/stash";
 import { format, handoff, loadedAt, otherPages, timeline } from "@/lib/diag";
+import { useFold } from "@/lib/fold";
 import { route } from "@/lib/group-link";
 import { useFlash } from "@/lib/hooks";
 import { ownKey } from "@/lib/scan/key";
@@ -43,6 +45,7 @@ export default function DiagPage() {
       <Body>
         <TopBar title={copy.diag.title} back={route.groups()} />
         <Scroll>
+          <WhatIsThis />
           {/* Stuck to the top, not a `Foot`: `env(safe-area-inset-bottom)` reads
               0 on Android often enough to cut a foot button in half. */}
           <div className="diag-act">
@@ -77,6 +80,24 @@ export default function DiagPage() {
         </Scroll>
       </Body>
     </Screen>
+  );
+}
+
+/**
+ * Above the sticky bar, so it scrolls away once the report is being read; folded,
+ * in the balances' idiom, because whoever pastes reports already knows.
+ */
+function WhatIsThis() {
+  const { open, toggle, ref: fold } = useFold<HTMLDivElement>();
+  const { ask, lead, tail } = copy.diag.what;
+  return (
+    <div ref={fold} className="installfold diag-what">
+      <button type="button" aria-expanded={open} onClick={toggle}>
+        <Icon name="chev" size={10} className={`kvchev${open ? " on" : ""}`} />
+        {ask}
+      </button>
+      {open ? <p>{lead}<strong>{copy.diag.copyAll}</strong>{tail}</p> : null}
+    </div>
   );
 }
 

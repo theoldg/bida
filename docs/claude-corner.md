@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-13* — "What does Staś mode say about the project", then
+  "Wdyt about…", then the finished wording. Three questions were one design
+  meeting; each answer checked the claim it made first (does `/diag` send
+  anything?) so the copy promised only what the code keeps.
+
 - *2026-10-13* — "What other large inputs are we not prepared for?" became
   paging and batching, then "and binary", which a probe of D1 priced at twenty
   times the CPU. An owner's design is a hypothesis too: measure it before
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   icon in the home screen. Any questions?" The ask pointed at its own spec, so
   none were owed: count the reference's teeth, match them, regenerate, and
   name what stayed (badge, banner) for them to veto.
-
-- *2026-10-12* — "Take your time, do many runs", then "I'm bored". Twenty
-  runners at once, four rounds each, and a status table after every batch:
-  the soak said the flakes were the checks' waits, not the load. Show the
-  numbers as they land; a long experiment is not a silent one.

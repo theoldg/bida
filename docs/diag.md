@@ -102,7 +102,9 @@ head got. `/install` and `keepCarried` add `keepNote`s beside them. Secrets are 
 
 Read it at **`/diag`** — long-press the app's name on the groups list. It is
 linked from nowhere; a diagnostics screen earns no room in a menu a person
-reads. The last five pages' timelines are kept in `localStorage`, each under
+reads. Whoever lands here by accident gets a fold at its head, **What is this
+page?**, saying whose screen it is and that the report leaves the phone only
+when someone copies it — true because `lib/diag.ts` sends nothing; keep it so. The last five pages' timelines are kept in `localStorage`, each under
 its address (not a table — this has to work on the launch where IndexedDB is
 the broken thing), because the launch that hung is the launch you killed the
 app to escape, and a paste's `/join` is a page of its own beside the list.

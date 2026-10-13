@@ -70,6 +70,14 @@ export const copy = {
 
   diag: {
     title: "Diagnostics",
+    // For whoever long-pressed the wordmark by accident: a screen of numbers
+    // reads as surveillance until it says whose it is and where it goes.
+    what: {
+      ask: "What is this page?",
+      lead: "This is a hidden screen I use to fix bugs in the app. The report below stays"
+        + " on your phone, nothing sends it anywhere. If something breaks, tap ",
+      tail: " and send it to me. Also, congratulations, you’ve found Staś mode!",
+    },
     reading: "Reading…",
     copyAll: "Copy the report",
     copied: "Copied",

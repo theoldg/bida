@@ -493,8 +493,8 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .settings .seg button svg { margin-block: -2px }
 .settings .seg button:disabled { color: var(--muted); opacity: .5 }
 .notwho { margin-top: 14px }
-.notwho p { font-size: 12px; line-height: 1.55; color: var(--ink-2); margin-top: 6px; padding-left: 16px }
-.notwho p strong { color: var(--ink); font-weight: 600 }
+.notwho p, .diag-what p { font-size: 12px; line-height: 1.55; color: var(--ink-2); margin-top: 6px; padding-left: 16px }
+.notwho p strong, .diag-what p strong { color: var(--ink); font-weight: 600 }
 .keyinput { font-family: var(--f-mono); font-size: 12.5px; font-weight: 500 }
 .keyrow.locked { background: var(--card-2); border-color: var(--rule-soft) }
 .keyrow.locked .keyinput { color: var(--ink-2); -webkit-text-fill-color: var(--ink-2); opacity: 1 }
@@ -1141,6 +1141,7 @@ dialog.scrim::backdrop { background: transparent }
 
 /* Copy buttons held at the top, not a `Foot`: Android often reads the bottom
    safe area as 0 and cuts a bottom button off. */
+.diag-what { padding: 12px 16px }
 .diag-act { position: sticky; top: 0; z-index: 1; padding: 10px 16px;
   background: var(--card); border-bottom: 1px solid var(--rule) }
 .diag-act .hint:first-child { margin-top: 0; margin-bottom: 9px }
