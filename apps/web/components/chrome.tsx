@@ -11,6 +11,7 @@ import { route } from "../lib/group-link";
 import { useBackButton } from "../lib/back-button";
 import { retryLive, useStalled } from "../lib/db/live";
 import { goUp, goBack } from "../lib/nav";
+import { EmbeddedBanner } from "./embedded";
 import { KeylessLink } from "./keyless-link";
 import { walkFields } from "./viewport";
 import { Icon, type IconName } from "./icons";
@@ -22,6 +23,7 @@ export function Screen({ children, className, inert }: { children: ReactNode; cl
     <div className={`app${className ? ` ${className}` : ""}`} inert={inert}>
       {/* Here, because the read that stalled could belong to any screen. */}
       <StallNotice />
+      <EmbeddedBanner />
       {children}
     </div>
   );

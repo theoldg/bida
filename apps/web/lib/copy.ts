@@ -330,15 +330,12 @@ const en = {
   },
 
   embedded: {
-    title: "Open bida in your browser",
-    why: (app: string | undefined) =>
-      `${app ?? "This app"} opens links in a browser of its own. Nothing you do here is kept.`,
-    /** Written twice: the menu is an ellipsis on iOS and a kebab on Android. */
-    how: {
-      ios: "Tap the ⋯ menu, then “Open in Safari”.",
-      android: "Tap the ⋮ menu, then “Open in external browser”.",
-    },
-    orPaste: "Can’t find it? Copy this link and paste it into your browser.",
+    title: (app: string | undefined) => `One-off visit in ${app ? `${app}’s` : "this app’s"} browser.`,
+    detail: "We recommend opening in your main browser.",
+    /** Android's: the button hands the page to the default browser. */
+    open: "Open in browser",
+    /** iOS's: no page can open Safari, so say which button does. */
+    how: "Tap the ⋯ menu, then “Open in Safari”.",
   },
 
   update: {

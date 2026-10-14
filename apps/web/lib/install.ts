@@ -4,6 +4,7 @@
  */
 
 import { keepNote } from "./diag";
+import { looksEmbedded } from "./embedded";
 import { formatInvites, type CarriedGroup } from "./group-link";
 import { signal } from "./signal";
 
@@ -20,11 +21,16 @@ interface InstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-/** Pure, so the awkward combinations are testable without a browser. */
+/**
+ * Pure, so the awkward combinations are testable without a browser. An in-app
+ * browser has no way to install, so nothing is offered there (docs/ios.md).
+ */
 export function offerFrom(
-  { standalone, hasPrompt, ios }: { standalone: boolean; hasPrompt: boolean; ios: boolean },
+  { standalone, hasPrompt, ios, embedded = false }:
+  { standalone: boolean; hasPrompt: boolean; ios: boolean; embedded?: boolean },
 ): InstallOffer {
   if (standalone) return "installed";
+  if (embedded) return "none";
   if (hasPrompt) return "ready";
   return ios ? "manual" : "none";
 }
@@ -64,10 +70,13 @@ export const subscribeInstall = subscribe;
 /** A string, not an object: `useSyncExternalStore` compares snapshots by identity. */
 export function installOffer(): InstallOffer {
   if (typeof window === "undefined") return "none";
+  const standalone = installed || isStandalone();
+  const ios = looksIos(navigator.userAgent, navigator.platform, navigator.maxTouchPoints);
   return offerFrom({
-    standalone: installed || isStandalone(),
+    standalone,
     hasPrompt: captured !== undefined,
-    ios: looksIos(navigator.userAgent, navigator.platform, navigator.maxTouchPoints),
+    ios,
+    embedded: looksEmbedded({ ua: navigator.userAgent, ios, standalone }),
   });
 }
 

@@ -1,11 +1,12 @@
 "use client";
+// Doc: docs/ios.md#the-in-app-browser--a-one-off-visit
 
-import { useSyncExternalStore, type ReactNode } from "react";
-import { Body, Screen, Scroll, TopBar } from "./chrome";
-import { CopyLink } from "./copy-link";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
-import { embeddedApp, looksEmbedded } from "../lib/embedded";
+import { formatJoinLink } from "../lib/group-link";
+import { useGroupSecret } from "../lib/hooks";
+import { embeddedApp, intentLink, looksEmbedded } from "../lib/embedded";
 import { isStandalone, looksIos } from "../lib/install";
 
 const never = () => () => {};
@@ -19,53 +20,65 @@ function embedded(): boolean {
 }
 
 /**
- * The app, or the way out of the in-app browser it was opened in — never both
- * (`lib/embedded.ts`).
- *
- * **Everything is behind this**, sync and service worker included: a webview's
- * storage is unreachable later, so a group joined there is a key that dies
- * and a claim made twice (docs/ios.md).
- *
- * **Refusing is the whole design**: a webview has no Add to Home Screen and a
- * page can't send itself to a real browser (`intent://` is Android-only). So
- * the screen names the app, says what to press, and hands over the link.
- *
- * False on the server and through hydration, so the export stays one HTML
- * file and the first client render decides.
+ * In an in-app browser (`lib/embedded.ts`)? False on the server and through
+ * hydration, so the export stays one HTML file and the first client render
+ * decides.
  */
-export function EmbeddedGate({ children }: { children: ReactNode }) {
-  return useSyncExternalStore(never, embedded, () => false) ? <Escape /> : <>{children}</>;
+export function useEmbedded(): boolean {
+  return useSyncExternalStore(never, embedded, () => false);
 }
 
 /**
- * Set like `BadLinkNotice` — the app can't do it, here's the fix. No back
- * arrow: there is nowhere back to.
- *
- * The badge is the menu glyph the line below says to tap, turned on its side
- * for iOS, so it always matches the sentence. Only the instruction is in ink;
- * the link below covers an app that moved or renamed the item.
+ * Its children only outside an in-app browser: the service worker, which
+ * would precache the whole app into a storage nothing comes back to.
  */
-function Escape() {
-  const { embedded: page } = copy;
-  const ios = onIos();
-  const app = embeddedApp(navigator.userAgent);
+export function NotEmbedded({ children }: { children: ReactNode }) {
+  return useEmbedded() ? null : <>{children}</>;
+}
+
+/** Across screens, so moving on doesn't fold it back. */
+let unfolded = false;
+
+/**
+ * Atop every screen in an in-app browser (`Screen`): the app runs, its edits
+ * sync, but nothing outside this webview can see the groups it holds — so it
+ * says so, and folds open on the way out.
+ *
+ * **The way out differs by platform.** Android takes an `intent:` link, which
+ * the system hands to the default browser; on iOS no page can open Safari, so
+ * the line names the button that does. The demo, the install and notification
+ * offers stand down while this shows (`DemoCard`, `offerFrom`).
+ */
+export function EmbeddedBanner() {
+  const [open, setOpen] = useState(unfolded);
+  if (!useEmbedded()) return null;
+  const toggle = () => { unfolded = !open; setOpen(!open); };
   return (
-    <Screen>
-      <Body>
-        <TopBar title={<span className="brand">{copy.app.name}</span>} />
-        <Scroll>
-          <div className="pad keyless">
-            <div className="keyless-badge">
-              <Icon name="more" size={20} className={ios ? "lying" : undefined} />
-            </div>
-            <h2>{page.title}</h2>
-            <p>{page.why(app)}</p>
-            <p className="escapehow">{ios ? page.how.ios : page.how.android}</p>
-            <div className="escapelink"><CopyLink link={window.location.href} /></div>
-            <p className="escapepaste">{page.orPaste}</p>
-          </div>
-        </Scroll>
-      </Body>
-    </Screen>
+    <div className="banner webview">
+      <button type="button" className="webviewhead" aria-expanded={open} onClick={toggle}>
+        <Icon name="info" size={15} style={{ flex: "none" }} />
+        <span>{copy.embedded.title(embeddedApp(navigator.userAgent))}</span>
+        <Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />
+      </button>
+      {open ? <WayOut /> : null}
+    </div>
+  );
+}
+
+/**
+ * On a group's screen, that group's invite rather than the address: past the
+ * join, the address holds only the id, and the browser it opens in has no key.
+ */
+function WayOut() {
+  const id = new URLSearchParams(location.search).get("id") ?? undefined;
+  const secret = useGroupSecret(id);
+  const href = id && secret ? formatJoinLink({ groupId: id, secret }) : location.href;
+  return (
+    <div className="webviewbody">
+      <p>{copy.embedded.detail}</p>
+      {onIos()
+        ? <p className="webviewhow">{copy.embedded.how}</p>
+        : <a className="btn btn-s" href={intentLink(href)}>{copy.embedded.open}</a>}
+    </div>
   );
 }

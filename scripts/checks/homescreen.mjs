@@ -367,51 +367,67 @@ report(!oneVisited.some((url) => new URL(url).pathname === "/join")
   "one named group skips the join screen and is already claimed", oneVisited.join(" "));
 
 // ---- the in-app browser --------------------------------------------------
+const BANNER = "One-off visit in";
 const IN_APP_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15"
   + " (KHTML, like Gecko) Mobile/15E148 Instagram 339.0.3.12.106";
-const webview = await newPhone(browser, { userAgent: IN_APP_UA, permissions: ["clipboard-read", "clipboard-write"] });
+const webview = await newPhone(browser, { userAgent: IN_APP_UA });
 const webviewPage = await webview.newPage();
 await webviewPage.goto(`${base}/join${fragment}`);
-const refused = await webviewPage.getByText("Open bida in your browser")
-  .waitFor({ timeout: PATIENCE }).then(() => true, () => false);
-report(refused && await joined(webviewPage).count() === 0,
-  "an in-app browser is turned round rather than joined in");
-report(await webviewPage.getByText("Instagram").count() > 0,
-  "named, so the person knows which app has them");
-report(await webviewPage.getByText("Open in Safari").count() > 0
-  && await webviewPage.getByText("⋯", { exact: false }).count() > 0,
-  "and told which button to press, and what it says underneath");
-report(await webviewPage.locator(".escapelink .linkbox .selectable").textContent()
-  .catch(() => null) === `${base}/join${fragment}`,
-  "and handed the link it arrived with, to paste into a real browser");
-report(await webviewPage.locator(".escapelink .linkbox").evaluate((box) => {
-  const state = box.querySelector(".linkboxstate").getBoundingClientRect();
-  const link = box.querySelector(".selectable").getBoundingClientRect();
-  return box.scrollWidth <= box.clientWidth && Math.abs(state.top - link.top) < link.height;
-}).catch(() => false), "on one line that fits the screen, the copy state beside it");
-report((await secretsHeld(webviewPage).catch(() => [])).length === 0,
-  "nothing is written to a storage nobody can get back to");
+report(await joined(webviewPage).waitFor({ timeout: PATIENCE }).then(() => true, () => false)
+  && await webviewPage.getByText(`${BANNER} Instagram’s browser.`).count() === 1,
+  "an in-app browser joins, under a banner naming the app that has them");
+await webviewPage.getByText(BANNER).click();
+report(await webviewPage.getByText("We recommend opening in your main browser.").count() === 1
+  && await webviewPage.getByText("Open in Safari", { exact: false }).count() === 1,
+  "which unfolds to say where to go, and on iOS which button gets there");
 
-// Some in-app browsers have no `navigator.clipboard`, and a throw here takes the
-// page down.
-const dry = await newPhone(browser, { userAgent: IN_APP_UA });
-const dryPage = await dry.newPage();
+await webviewPage.goto(`${base}/demo`);
+await webviewPage.waitForURL(/\/g\/claim\?id=/, { timeout: PATIENCE });
+await webviewPage.locator("button.row").filter({ hasText: "Luke" }).first().click();
+await webviewPage.getByRole("button", { name: "Continue as Luke" }).click();
+await webviewPage.waitForSelector(".rows .row:not(.skelrow)", { timeout: PATIENCE });
+report(await webviewPage.getByText(BANNER).count() === 1
+  && await webviewPage.locator(".demomark").count() === 0,
+  "the demo runs there too, its own card standing down for the banner");
+await webview.close();
+
+// Android's way out is a link. Past the join the address holds only the id, so
+// a group's screen hands over the invite instead.
+const ANDROID_IN_APP_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/AP2A; wv) AppleWebKit/537.36"
+  + " (KHTML, like Gecko) Version/4.0 Chrome/126.0.0.0 Mobile Safari/537.36"
+  + " [FB_IAB/Orca-Android;FBAV/460.0.0.48.109;]";
+const droid = await newPhone(browser, { userAgent: ANDROID_IN_APP_UA });
+const droidPage = await droid.newPage();
 const crashes = [];
-dryPage.on("pageerror", (e) => crashes.push(e.message.split("\n")[0]));
-await dryPage.addInitScript(() => {
+droidPage.on("pageerror", (e) => crashes.push(e.message.split("\n")[0]));
+// Some in-app browsers have no `navigator.clipboard`.
+await droidPage.addInitScript(() => {
   Object.defineProperty(navigator, "clipboard", { get: () => undefined, configurable: true });
 });
-await dryPage.goto(`${base}/join${fragment}`);
-const escaped = await dryPage.getByText("Open bida in your browser").first()
-  .waitFor({ timeout: PATIENCE }).then(() => true, () => false);
-report(escaped && crashes.length === 0,
-  "a webview with no clipboard still gets the way out, not an error page", crashes.join(" "));
-report(await dryPage.locator(".escapelink .linkbox .selectable").textContent()
-  .catch(() => null) === `${base}/join${fragment}`,
-  "with the link still there to be taken by hand");
-await dry.close();
+await droidPage.goto(`${base}/join${fragment}`);
+await joined(droidPage).waitFor({ timeout: PATIENCE }).catch(() => {});
+await droidPage.getByText(`${BANNER} Messenger’s browser.`).click()
+  .catch(() => crashes.push("no Messenger banner"));
+const intentOf = () => droidPage.getByRole("link", { name: "Open in browser" }).getAttribute("href")
+  .catch(() => null);
+const host_ = new URL(base).host;
+report(await intentOf() === `intent://${host_}/join${fragment}#Intent;scheme=http;end`,
+  "on Android it unfolds to a link out, carrying the key in front of the intent", await intentOf());
+// The join saves the key before it waits on a sync, which nothing here answers.
+for (let i = 0; i < 40 && (await secretsHeld(droidPage).catch(() => [])).length === 0; i++) {
+  await droidPage.waitForTimeout(100);
+}
+await droidPage.goto(`${base}/g/members?id=${groupId}`);
+await droidPage.getByText(BANNER).click().catch(() => {});
+// The key is read from the database, a moment after the fold opens.
+await droidPage.waitForFunction(() => document.querySelector(".webviewbody a")?.href.includes("/join#"),
+  null, { timeout: PATIENCE }).catch(() => {});
+report(await intentOf() === `intent://${host_}/join${fragment}#Intent;scheme=http;end`,
+  "and on a group's screen, past the join, it still carries the invite", await intentOf());
+report(crashes.length === 0, "with no clipboard, and no error page", crashes.join(" "));
+await droid.close();
 
-// A false positive locks somebody out, so prove the lookalikes.
+// A false positive tells a real browser nothing is kept, so prove the lookalikes.
 const NEAR_MISSES = [
   ["the home-screen app", `${IPHONE.replace(" Version/17.5", "").replace(" Safari/604.1", "")}`, true],
   ["Brave", `${IPHONE} Brave/1.67`, false],
@@ -423,7 +439,7 @@ for (const [name, ua, installed] of NEAR_MISSES) {
   if (installed) await asInstalledApp(nearPage);
   await nearPage.goto(`${base}/`);
   await nearPage.waitForTimeout(600);
-  report(await nearPage.getByText("Open bida in your browser").count() === 0,
+  report(await nearPage.getByText(BANNER).count() === 0,
     `${name} is not mistaken for one`);
   await near.close();
 }

@@ -21,7 +21,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 | **The tip jar** | `/g/tip` off the balances screen, `/tip` off `/about` ([product.md](product.md#the-mvp)) |
 | **Deletable** | `/delete-my-data`, from an invite link, for everybody in the group ([import-export.md](import-export.md#deleting-a-group)) |
 | **Searchable** | The ledger's search bar ([frontend.md](frontend.md#the-ledgers-search)) |
-| **Installable** | Install and join work on a real iPhone, names included; Android offered, in-app browsers refused ([ios.md](ios.md), [pwa.md](pwa.md)) |
+| **Installable** | Install and join work on a real iPhone, names included; Android offered, in-app browsers a one-off visit under a banner ([ios.md](ios.md), [pwa.md](pwa.md)) |
 | **Demoable** | `bida.bid/demo`, a keyless group that cannot sync, linked from nowhere ([product.md](product.md), [sync.md](sync.md#the-demo-group-has-no-key)) |
 | **Exportable** | One Splitwise-shaped CSV; Tricount imports it, and the share sheet hands it over from an iOS home-screen app ([import-export.md](import-export.md#getting-a-group-off-the-phone)) |
 | **Importable** | A CSV or a Tricount link into a new group; the CSV round trip is driven and a real Tricount link works ([import-export.md](import-export.md#bringing-a-group-onto-the-phone)) |

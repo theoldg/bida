@@ -18,12 +18,10 @@ import { tick } from "../lib/haptics";
  * **Except where there is no clipboard at all** (`lib/clipboard.ts`), which is
  * a real in-app browser and not a hypothetical: then there is nothing for a
  * tap to do, so this is a box of text that says to hold it rather than a
- * button that answers a press with nothing. Both screens below are the last
- * thing the app can offer the person, so the link has to stay takeable.
+ * button that answers a press with nothing. It is the last thing the claim
+ * can offer the person, so the link has to stay takeable.
  *
- * Shared by the two screens that can only hand the person a link and a place
- * to put it: "Have the app?" on a claim in an iOS tab (`use-in-app.tsx`), and
- * the way out of an in-app browser (`embedded.tsx`).
+ * For "Have the app?" on a claim in an iOS tab (`use-in-app.tsx`).
  */
 export function CopyLink({ link }: { link: string }) {
   const { inApp } = copy.claim;

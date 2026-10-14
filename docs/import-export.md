@@ -326,9 +326,8 @@ own decimal mark, because it is typed into a bank app.
 A browser can also have **no clipboard at all** (in-app browsers such as
 Messenger's). `navigator.clipboard` is then `undefined`, so
 `navigator.clipboard.writeText(…)` throws before there is a promise to reject,
-and a rejection handler does not catch it. The way out of an in-app browser
-(`components/embedded.tsx`) copies the link on arrival and renders *outside*
-`ReadErrorBoundary`, so there it is Next's "Application error".
+and a rejection handler does not catch it. `CopyLink` copies the link on
+arrival, and a throw there takes the screen down to its error boundary.
 
 So writing goes through **one door**, `lib/clipboard.ts`, where a missing
 clipboard is the same *no* as a refused one — the shape every caller already

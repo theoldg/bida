@@ -2,7 +2,7 @@
 
 *For: anyone touching joining, installing or storage on iPhone. **Status:
 [the design](#the-design) is built and [A](#a-in-detail) works on a real
-iPhone.** Not yet tried on a phone: the in-app browser refusal —
+iPhone.** Not yet tried on a phone: the in-app browser's banner and its way out —
 [the phone checklist](on-a-phone.md) is how to spend
 one.*
 
@@ -30,9 +30,10 @@ that holds, and every iOS browser is WebKit, so none of it is Safari's alone:
    share sheet to install from, storage nothing can reach back into, and a
    claim made there is made again the moment the link is opened properly. It
    is the commonest way an invite is tapped, and the setting that turns it off
-   goes back on at the app's next update — so the app refuses to run in one
-   ([below](#the-in-app-browser--refused)). Android's WebView is the same dead
-   end, which is the one part of this doc that is not iOS's alone.
+   goes back on at the app's next update — so the app runs there as a one-off
+   visit, under a banner saying so ([below](#the-in-app-browser--a-one-off-visit)).
+   Android's WebView is the same dead end, which is the one part of this doc
+   that is not iOS's alone.
 5. **A home-screen app cannot download a file.** As of iOS 18.4 an
    `<a download>` or a `Content-Disposition: attachment` does not fail — it
    replaces the app with a full-screen "Open in …" that has **no way back**, so
@@ -74,7 +75,7 @@ into tab use, not to lock the casual one out.
 | A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | **Works on iPhone**, from `/install` and from an ordinary page with the names along — so it is the manifest that carries. Paste link stays for groups joined after the install |
 | B | **Ask before joining**, a full screen of Add to home screen / Continue in Safari | Rejected: A carries every group from any page, so the banner asks, and a question here stands between a newcomer and the group |
 | C | **The claim screen offers the link** — [*Have the app?*](#gclaim--have-the-app) — so the app is one Paste away | Built: the regular's whole path, and the newcomer's if A fails |
-| D | **Hard gate** — no group in an iOS tab at all | Rejected: breaks the casual check, and a tab user loses little. A webview is gated, and is not this: a tab is somewhere a person can be served, and a webview is not |
+| D | **Hard gate** — no group in an iOS tab at all | Rejected: breaks the casual check, and a tab user loses little. A webview was gated once, for the same wrong reason: what it loses is a second claim and a key the chat still holds |
 | E | **Server hand-off** (tab parks the key, app collects it) | Rejected: nothing links the two sides without a code the person types, which is worse than paste — and a key on the server undoes [ADR-0036](decisions/0036-the-server-cannot-read-a-group.md) |
 | F | **Shortcuts / URL schemes / QR / share target** | Rejected: none of them open a web app, the camera opens Safari too, and iOS has no Web Share Target |
 | H | **Detecting the installed app from the tab** | Impossible: no shared storage or cookies, and no `getInstalledRelatedApps` on iOS. The tab must serve both people |
@@ -266,28 +267,35 @@ It is for the regular, whom the tab cannot tell apart from a newcomer (H), so
 it shows to everyone in a tab. A regular who picks a name in the tab anyway
 has claimed twice.
 
-### The in-app browser — refused
+### The in-app browser — a one-off visit
 
-The app does not run in a webview: `EmbeddedGate` in the layout draws the way
-out instead of the screen, and the worker, the sync loop and the carry sit
-behind it too (`lib/embedded.ts`, `components/embedded.tsx`). There is nothing
-else to offer — a webview has no Add to Home Screen, and no page can send
-itself to a real browser (no scheme, no universal link; Android's `intent://`
-is the only one of its kind and is Android's alone). So the screen names the
-app where its agent says so, **names the button** — tap ⋯, then *Open in
-Safari*; ⋮, then *Open in external browser* — and hands over the link under
-it for when an app has moved that item or renamed it. The badge above the line
-is that same menu, turned on its side for iOS, so it is never the wrong shape.
-Both sentences are written out in `copy.embedded`: the glyph and the item
-differ by platform, so there is nothing in them to assemble.
+The app runs in a webview, under a banner atop every screen (`EmbeddedBanner`,
+drawn by `Screen`): *One-off visit in Messenger's browser.*, folding open on
+*We recommend opening in your main browser.* and the way there. What is done
+there syncs like anywhere else; what is lost is the key on that webview, which
+the invite in the chat still holds, and a second claim when the link is opened
+properly — one more "started editing from a new device" in history. The
+install and notification offers stand down there (`offerFrom` → `none`, since
+a webview cannot install), so does the demo's card, which the banner already
+covers, and so does the service worker, which would precache the app into a
+storage nothing comes back to. Wording is in `copy.embedded`.
 
-**Detection is built to be wrong in one direction.** Refusing a real browser
-costs somebody the app; letting a webview through costs one confusing join. So
-a browser that names itself is believed before anything else is read — which
-is what keeps Brave and DuckDuckGo, whose agents are Safari's but for a token,
-out of it. Past that: a named app (`Instagram`, `FBAN`…), Android's `; wv)`,
-or an iOS page with no `Safari/` token. Chrome Custom Tabs carries no `wv` and
-is rightly let through: it is Chrome, storage and menus and all.
+**The way out differs by platform.** Android takes **Open in browser**, an
+`intent:` link the system hands to the default browser (`intentLink`): Android
+reads the intent from the last `#`, so the page's own fragment rides in front
+of it and a join link's key comes along, never reaching a server. On a group's
+screen it carries that group's invite, since past the join the address holds
+only the id. iOS has no such link — no page can open Safari — so the fold names
+the button instead: tap ⋯, then *Open in Safari*.
+
+**Detection is built to be wrong in one direction.** Catching a real browser
+costs it the install offer and a banner that is wrong about it; letting a
+webview through costs one confusing join. So a browser that names itself is
+believed before anything else is read — which is what keeps Brave and
+DuckDuckGo, whose agents are Safari's but for a token, out of it. Past that: a
+named app (`Instagram`, `FBAN`…), Android's `; wv)`, or an iOS page with no
+`Safari/` token. Chrome Custom Tabs carries no `wv` and is rightly let
+through: it is Chrome, storage and menus and all.
 
 `pnpm verify homescreen` drives both halves, the near misses included.
 

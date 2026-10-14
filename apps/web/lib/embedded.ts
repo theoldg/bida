@@ -1,7 +1,8 @@
-// Doc: docs/ios.md#the-in-app-browser--refused
+// Doc: docs/ios.md#the-in-app-browser--a-one-off-visit
 /**
- * The in-app browser — Instagram's, Messenger's — which the app refuses to run
- * in (`components/embedded.tsx`). The bar is proof, not suspicion.
+ * The in-app browser — Instagram's, Messenger's — which the app runs in under
+ * a banner saying so (`components/embedded.tsx`). The bar is proof, not
+ * suspicion.
  */
 
 /**
@@ -62,4 +63,16 @@ export function looksEmbedded(
   if (IN_APP.some(([token]) => token.test(ua))) return true;
   if (/;\s*wv[;)]/.test(ua)) return true;
   return ios && !/Safari\//.test(ua);
+}
+
+/**
+ * Android's way out: an `intent:` link, which the system hands to the default
+ * browser. Android reads the intent from the *last* `#`, so the page's own
+ * fragment rides in front of it — a join link's key comes along and still
+ * never reaches a server. iOS has nothing like it.
+ */
+export function intentLink(href: string): string {
+  const url = new URL(href);
+  const scheme = url.protocol.slice(0, -1);
+  return `intent://${url.host}${url.pathname}${url.search}${url.hash}#Intent;scheme=${scheme};end`;
 }

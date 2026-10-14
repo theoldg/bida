@@ -239,11 +239,11 @@ first: none may show the tutorial (`/install` is its route too), no screen at
 all, or a pressable control while `/install` stands in; the newcomer and the
 reopen never show the list either.
 
-**The in-app browser**, last: a webview is turned round rather than joined in,
-named, handed the link it arrived with, and writes nothing. Then the half that
-matters more — the home-screen app, Brave and DuckDuckGo, whose agents are the
-ones a webview's most resembles, each proved *not* refused
-([ios.md](ios.md#the-in-app-browser--refused)).
+**The in-app browser**, last: a webview joins under a banner naming the app,
+unfolding to the button to press (iOS) or an `intent:` link carrying the
+invite, past the join too (Android). Then the half that matters more: the
+home-screen app, Brave and DuckDuckGo each draw *no* banner
+([ios.md](ios.md#the-in-app-browser--a-one-off-visit)).
 
 It needs no server beyond the static export: what it asserts is which URL each end reaches.
 

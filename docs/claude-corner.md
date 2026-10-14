@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-14* — "Should we relax the in-app browser restrictions?", then
+  the copy, workshopped over two turns. The owner's phrasing beat both my
+  drafts once its snags were named; the build waited only for the words, and
+  the shot showed the banner before the summary described it.
+
 - *2026-10-14* — "Add the search row back … dig it up from the history." The
   commit that took it out also cut its browser check, down to the glide it
   asserted; restoring the check with the code is half of digging it up.
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   change", and in passing, the balance label moving "ever so slightly". A probe
   measured both on the old build first: 32px of slide, 3px of label. An aside
   is as real as the ask; "I feel like" is a measurement not yet taken.
-
-- *2026-10-12* — "Fix this flaky test", a phone shot of another session
-  calling one sync test a timing flake. Six suites at once failed it, and
-  four more with the same sleep; alone it never did. Load first, then read
-  what each wait was standing in for.

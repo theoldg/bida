@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { embeddedApp, looksEmbedded } from "./embedded";
+import { embeddedApp, intentLink, looksEmbedded } from "./embedded";
 
 const IOS = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)";
 const DROID = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko)";
@@ -8,11 +8,12 @@ const ios = (ua: string) => looksEmbedded({ ua, ios: true, standalone: false });
 const droid = (ua: string) => looksEmbedded({ ua, ios: false, standalone: false });
 
 /**
- * The half that matters. A webview let through costs one person one confusing
- * join; a real browser refused costs them the app entirely, so these are the
- * cases to break the detector on first.
+ * The half that matters. A webview let through costs one person a group their
+ * browser never sees; a real browser caught takes away its install offer and
+ * tells it, wrongly, that nothing is kept — so these are the cases to break
+ * the detector on first.
  */
-describe("browsers it must never refuse", () => {
+describe("browsers it must never mistake for one", () => {
   it("lets iOS Safari through", () => {
     expect(ios(`${IOS} Version/17.5 Mobile/15E148 Safari/604.1`)).toBe(false);
   });
@@ -41,8 +42,8 @@ describe("browsers it must never refuse", () => {
 
   /**
    * The one that would be self-inflicted: an iOS home-screen web app drops the
-   * `Safari/` token exactly as a webview does, so the app would refuse to run
-   * in the place the whole install flow exists to get people to.
+   * `Safari/` token exactly as a webview does, so the app would call itself a one-off
+   * visit in the place the whole install flow exists to get people to.
    */
   it("lets the home-screen app through, which has no Safari token either", () => {
     expect(looksEmbedded({ ua: `${IOS} Mobile/15E148`, ios: true, standalone: true })).toBe(false);
@@ -59,12 +60,12 @@ describe("browsers it must never refuse", () => {
   });
 });
 
-describe("webviews it must refuse", () => {
+describe("webviews it must catch", () => {
   it("knows the iOS ones by their missing Safari token", () => {
     expect(ios(`${IOS} Mobile/15E148 Instagram 339.0.3.12.106`)).toBe(true);
     expect(ios(`${IOS} Mobile/15E148 [FBAN/FBIOS;FBDV/iPhone14,3;FBMD/iPhone]`)).toBe(true);
     expect(ios(`${IOS} Mobile/15E148 [FBAN/MessengerForiOS;FBAV/441.0]`)).toBe(true);
-    // Nameless, and refused all the same — the structural signal is the floor.
+    // Nameless, and caught all the same — the structural signal is the floor.
     expect(ios(`${IOS} Mobile/15E148`)).toBe(true);
   });
 
@@ -76,7 +77,7 @@ describe("webviews it must refuse", () => {
     })).toBe(true);
   });
 
-  it("refuses an app that puts the Safari token back, on its own token", () => {
+  it("catches an app that puts the Safari token back, on its own token", () => {
     expect(ios(`${IOS} Mobile/15E148 GSA/348.0 Safari/604.1`)).toBe(true);
   });
 });
@@ -94,5 +95,18 @@ describe("naming the app, for the screen that asks them to leave", () => {
   it("names nothing for a bare webview, or for a real browser", () => {
     expect(embeddedApp(`${IOS} Mobile/15E148`)).toBeUndefined();
     expect(embeddedApp(`${IOS} Version/17.5 Mobile/15E148 Safari/604.1`)).toBeUndefined();
+  });
+});
+
+describe("the way out on Android", () => {
+  it("keeps the fragment, which holds the key, in front of the intent", () => {
+    // Android's parser splits at the last `#`, so the key is part of the URL it opens.
+    expect(intentLink("https://bida.bid/join#abc.def")).toBe(
+      "intent://bida.bid/join#abc.def#Intent;scheme=https;end");
+  });
+
+  it("keeps the path and query, and the scheme it came in on", () => {
+    expect(intentLink("http://localhost:3000/g?id=x")).toBe(
+      "intent://localhost:3000/g?id=x#Intent;scheme=http;end");
   });
 });

@@ -4,6 +4,7 @@
 import { isDemo } from "@bida/core";
 import { copy } from "../lib/copy";
 import { NoticeDialog } from "./dialog";
+import { useEmbedded } from "./embedded";
 import { Icon } from "./icons";
 
 /**
@@ -17,10 +18,12 @@ import { Icon } from "./icons";
  *
  * **It doesn't fold or dismiss** — the one fact looking around can't reveal,
  * that nothing here syncs, stays true the whole visit. The way out is Clear
- * the demo, in the group menu. Renders nothing for other groups.
+ * the demo, in the group menu. Renders nothing for other groups, nor under an
+ * in-app browser's banner, which already says nothing here is kept.
  */
 export function DemoCard({ groupId }: { groupId: string }) {
-  if (!isDemo(groupId)) return null;
+  const embedded = useEmbedded();
+  if (!isDemo(groupId) || embedded) return null;
   return (
     <div className="padtop">
       <div className="card demomark">

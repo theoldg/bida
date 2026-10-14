@@ -20,6 +20,11 @@ describe("what the browser lets us offer", () => {
     expect(offerFrom({ standalone: false, hasPrompt: false, ios: true })).toBe("manual");
     expect(offerFrom({ standalone: false, hasPrompt: false, ios: false })).toBe("none");
   });
+
+  it("offers nothing in an in-app browser, which can't install", () => {
+    expect(offerFrom({ standalone: false, hasPrompt: false, ios: true, embedded: true })).toBe("none");
+    expect(offerFrom({ standalone: false, hasPrompt: true, ios: false, embedded: true })).toBe("none");
+  });
 });
 
 describe("spotting iOS", () => {
