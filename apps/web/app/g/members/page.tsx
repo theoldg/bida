@@ -12,7 +12,6 @@ import { InviteButton } from "@/components/invite";
 import { AddName } from "@/components/name-adder";
 import { copy } from "@/lib/copy";
 import { addMember, claimIdentity, removeMember } from "@/lib/db/commands";
-import { plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 
@@ -87,7 +86,7 @@ function MembersScreen() {
     setAsk(refused
       ? {
         kind: "blocked", name, entries: blocking,
-        body: copy.members.blockedBody(plural(blocking.length, copy.noun.entry)),
+        body: copy.members.blockedBody(blocking.length),
       }
       : { kind: "remove", id: memberId, name });
   }

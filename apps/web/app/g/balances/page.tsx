@@ -14,7 +14,7 @@ import { SyncBanner } from "@/components/sync-banner";
 import { hasClipboard, writeClipboardText } from "@/lib/clipboard";
 import { copy } from "@/lib/copy";
 import { recordSettlement } from "@/lib/db/commands";
-import { figure, money, plural } from "@/lib/format";
+import { figure, money } from "@/lib/format";
 import { useFold } from "@/lib/fold";
 import { route } from "@/lib/group-link";
 import { tick } from "@/lib/haptics";
@@ -120,7 +120,7 @@ function Balances({ data }: { data: GroupData }) {
         <div className="pad">
           <Card style={{ borderLeft: "2px solid var(--debit)" }}>
             <div style={{ fontSize: 12.5, color: "var(--debit)", fontWeight: 600 }}>
-              {copy.group.unsplittable(plural(balances.problems.length, copy.noun.expense))}
+              {copy.group.unsplittable(balances.problems.length)}
             </div>
             <p style={{ fontSize: 11.5, color: "var(--ink-2)", margin: "5px 0 0" }}>
               {copy.group.unsplittableWhy(balances.problems[0]!.reason)}

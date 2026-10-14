@@ -17,9 +17,19 @@ import type { Copy } from "./copy";
  * alike paragon · invite link "link z zaproszeniem", but the menu's button is
  * "Kopiuj link" · group grupa · history historia · people and members osoby ·
  * split podział, podzielić · scan skan, skanuj · amount kwota · currency waluta
- * · rate kurs · title tytuł · note notatka · date data. Undecided: you owe,
- * you're owed, you're square, and any past tense that agrees with a name.
+ * · rate kurs · title tytuł · note notatka · date data. You owe "masz do
+ * oddania", you're owed "należy Ci się". Undecided: any past tense that agrees
+ * with a name. A verb may change with a count (`byCount`): rearranging a
+ * sentence to dodge one reads worse.
  */
+const rules = new Intl.PluralRules("pl");
+
+/** A verb agrees with its count as the noun does: 1 czeka, 3 czekają, 5 czeka. */
+function byCount(n: number, one: string, few: string, many: string): string {
+  const form = rules.select(n);
+  return form === "one" ? one : form === "few" ? few : many;
+}
+
 export const pl: Copy = {
   app: { name: "bida", description: "???", invite: "???", banner: "???" },
   act: {
@@ -141,7 +151,6 @@ export const pl: Copy = {
   noun: {
     change: { one: "zmiana", few: "zmiany", many: "zmian" },
     entry: { one: "wpis", few: "wpisy", many: "wpisów" },
-    expense: { one: "wydatek", few: "wydatki", many: "wydatków" },
     item: { one: "pozycja", few: "pozycje", many: "pozycji" },
     part: { one: "część", few: "części", many: "części" },
     person: { one: "osoba", few: "osoby", many: "osób" },
@@ -193,9 +202,9 @@ export const pl: Copy = {
     menu: "Menu",
     whoAreYou: "kim jesteś?",
     copied: "skopiowano",
-    youOwe: "???",
-    youreOwed: "???",
-    settled: "???",
+    youOwe: "masz do oddania",
+    youreOwed: "należy Ci się",
+    settled: "rozliczone",
   },
   notify: {
     offer: { title: "???", body: "???", act: "???" },
@@ -433,72 +442,82 @@ export const pl: Copy = {
   // ------------------------------------------------------------- the group
 
   group: {
-    noGroup: "???",
-    offlineIdle: "???",
-    offlinePending: () => "???",
-    rejected: "???",
-    unreachableIdle: "???",
-    unreachablePending: () => "???",
-    hasLeft: "???",
-    youTag: "???",
-    balances: "???",
-    history: "???",
-    historyNew: "???",
-    people: "???",
-    copyLink: "???",
-    export: "???",
-    menu: "???",
-    linkTitle: "???",
-    linkBody: "???",
-    addEntry: "???",
-    empty: { title: "???", body: "???" },
+    noGroup: "Brak grupy",
+    offlineIdle: "Brak sieci: możesz nie widzieć najnowszych zmian.",
+    offlinePending: (waiting) => `Brak sieci: ${waiting} do wysłania.`,
+    rejected: "Link na tym telefonie nie otwiera tej grupy. Otwórz ponownie link z zaproszeniem.",
+    unreachableIdle: "Brak połączenia z serwerem: możesz nie widzieć najnowszych zmian.",
+    unreachablePending: (waiting) => `Brak połączenia z serwerem: ${waiting} do wysłania.`,
+    hasLeft: "poza grupą",
+    youTag: "(Ty)",
+    balances: "Salda",
+    history: "Historia",
+    historyNew: "Historia, nowe zmiany",
+    people: "Osoby",
+    copyLink: "Kopiuj link",
+    export: "Eksportuj dane",
+    menu: "Menu grupy",
+    linkTitle: "Link z zaproszeniem",
+    linkBody: "Kopiowanie nie zadziałało: przytrzymaj link, aby go skopiować.",
+    addEntry: "Dodaj wpis",
+    empty: { title: "Nic tu jeszcze nie ma", body: "Dotknij +, aby dodać pierwszy wpis." },
     search: {
-      field: "???",
-      clear: "???",
+      field: "Szukaj",
+      clear: "Wyczyść wyszukiwanie",
       by: {
-        title: "???",
-        payer: "???",
-        participant: "???",
-        currency: "???",
-        kind: "???",
-        amount: "???",
+        title: "w tytule",
+        payer: "wśród płacących",
+        participant: "wśród uczestników",
+        currency: "w walucie",
+        kind: "w rodzaju",
+        amount: "w kwocie",
       },
-      none: { title: "???", body: () => "???" },
+      none: { title: "Nic nie znaleziono", body: (query) => `Żaden wpis nie pasuje do „${query}”.` },
     },
-    untitled: "???",
-    notYours: "???",
-    groupHistory: "???",
-    you: { owe: "???", owed: "???", square: "???" },
+    untitled: "Bez tytułu",
+    notYours: "nie dotyczy Cię",
+    groupHistory: "Historia grupy",
+    you: { owe: "Masz do oddania", owed: "Należy Ci się", square: "Jesteś kwita" },
     morePayers: (n) => `+${n}`,
-    sharedBy: () => "???",
+    sharedBy: (people) => `podział: ${people}`,
     metaLine: (a, b) => `${a} · ${b}`,
-    transfer: "???",
-    incomeTag: "???",
+    transfer: "Przelew",
+    incomeTag: "wpływ",
     paidTo: (from, to) => `${from} → ${to}`,
-    unsplittable: () => "???",
-    unsplittableWhy: () => "???",
-    suggestedReimbursements: "???",
-    allSquare: "???",
-    recordTitle: "???",
-    notWho: { ask: "???", lead: "???", term: "???", owe: "???", owed: "???" },
+    unsplittable: (n) => `${n} ${byCount(n, "wydatek nie dał", "wydatki nie dały", "wydatków nie dało")} się podzielić`,
+    unsplittableWhy: (reason) => `${reason}: pominięto w saldach.`,
+    suggestedReimbursements: "Proponowane zwroty",
+    allSquare: "Wszystko rozliczone",
+    recordTitle: "Zapisać ten zwrot?",
+    // Bolek and Lolek decline, so the example can; a member's name never does.
+    notWho: {
+      ask: "Jak to jest liczone?",
+      lead: "Jest ich jak najmniej.",
+      term: "",
+      owe: " Na przykład jeżeli masz oddać Bolkowi 10 złotych, a Bolek ma oddać Lolkowi 10 złotych, "
+        + "to lepiej, żeby Lolek dostał bezpośrednio od Ciebie.",
+      owed: " Na przykład jeżeli Bolek ma oddać Lolkowi 10 złotych, a Lolek ma oddać Tobie 10 złotych, "
+        + "to lepiej, żeby Bolek oddał bezpośrednio Tobie.",
+    },
   },
 
   // ------------------------------------------------------------- people
 
   members: {
-    title: "???",
-    addPlaceholder: "???",
-    taken: () => "???",
-    removeLabel: () => "???",
-    whoChange: "???",
-    removeTitle: () => "???",
-    removeBody: "???",
-    blockedTitle: () => "???",
-    blockedBody: () => "???",
-    lastBody: "???",
-    forget: "???",
-    forgetTitle: "???",
-    forgetBody: "???",
+    title: "Osoby",
+    addPlaceholder: "Dodaj osobę",
+    taken: (name) => `${name} już tu jest.`,
+    removeLabel: (name) => `Usuń: ${name}`,
+    whoChange: "Zmień, kim jesteś",
+    removeTitle: (name) => `Usunąć: ${name}?`,
+    removeBody: "Nie występuje w żadnym wpisie.",
+    blockedTitle: (name) => `Nie można usunąć: ${name}`,
+    // The locative plural is one form from two up: "w 2 wpisach", "w 5 wpisach".
+    blockedBody: (n) => (n === 1 ? "Występuje w jednym wpisie." : `Występuje w ${n} wpisach.`),
+    lastBody: "Najpierw dodaj kogoś innego.",
+    forget: "Zapomnij grupę",
+    forgetTitle: "Zapomnieć tę grupę?",
+    forgetBody: "Link z zaproszeniem ją przywróci.",
   },
 
   // ------------------------------------------------------------- quick split

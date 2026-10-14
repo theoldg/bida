@@ -194,7 +194,6 @@ const en = {
   noun: {
     change: { one: "change", many: "changes" } as Noun,
     entry: { one: "entry", many: "entries" } as Noun,
-    expense: { one: "expense", many: "expenses" } as Noun,
     item: { one: "item", many: "items" } as Noun,
     part: { one: "part", many: "parts" } as Noun,
     person: { one: "person", many: "people" } as Noun,
@@ -658,7 +657,7 @@ const en = {
     incomeTag: "income",
     paidTo: (from: string, to: string) => `${from} → ${to}`,
 
-    unsplittable: (n: string) => `${n} couldn’t be split`,
+    unsplittable: (n: number) => (n === 1 ? "1 expense couldn’t be split" : `${n} expenses couldn’t be split`),
     unsplittableWhy: (reason: string) => `${reason}: left out of the balances.`,
     suggestedReimbursements: "Suggested reimbursements",
     allSquare: "Everyone’s square",
@@ -685,7 +684,7 @@ const en = {
     removeTitle: (name: string) => `Remove ${name}?`,
     removeBody: "They aren’t involved in any entry.",
     blockedTitle: (name: string) => `Can’t remove ${name}`,
-    blockedBody: (entries: string) => `Named on ${entries}.`,
+    blockedBody: (n: number) => (n === 1 ? "Named on 1 entry." : `Named on ${n} entries.`),
     lastBody: "Add somebody else first.",
     forget: "Forget group",
     forgetTitle: "Forget this group?",

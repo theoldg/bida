@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-14* — "Feel free to change verbs with counts", after a draft that
+  had bent every sentence around them. Dodging a rule of grammar is a guess at
+  the owner's taste; one sentence asking the cost of the plain form would have
+  saved the round.
+
 - *2026-10-13* — "Let's start a polish translation … Any questions?" The ADR
   had left the door open (a second object, same shape), so the build was
   small; the questions were Polish's own: gendered verbs, declined names, three
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-12* — "Show the delete animation and number roll … Any
   questions?" Headless looked fine, so the owner's phone was the evidence:
   make the check fail the way the phone did before trusting the fix.
-
-- *2026-10-12* — "Could switching screens be even snappier with like
-  prefetches?" The ask named a fix; a frame-by-frame probe named the cause, a
-  wait no prefetch touches. Measure before building the remedy offered, and
-  at size: 600 entries slowed every screen, which no small group showed.
