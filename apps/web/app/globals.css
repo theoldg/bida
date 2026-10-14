@@ -1185,10 +1185,10 @@ dialog.scrim::backdrop { background: transparent }
   text-align: left; font: inherit; color: inherit }
 .webviewhead span { flex: 1; min-width: 0 }
 .webviewhead .kvchev { color: inherit; opacity: .7 }
-/* The prose hangs under the title, past the icon; the button centres on the banner. */
+/* The prose hangs under the title, past the icon; the button is the install banner's, full width. */
 .webviewbody { padding: 0 16px 12px }
 .webviewbody p { padding-left: 24px; line-height: 1.45; font-weight: 400 }
-.webviewbody .btn { display: flex; width: fit-content; margin: 9px auto 0; padding: 7px 16px; font-size: 12.5px }
+.webviewbody .btn { margin-top: 11px }
 .webviewbody p.webviewhow { margin-top: 6px; font-weight: 600 }
 .stall { display: flex; align-items: center; gap: 9px; padding: 9px 16px; flex: none;
   font-size: 12.5px; font-weight: 500;

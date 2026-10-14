@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-14* — "Match the “open in browser” button's style to the install
+  banner", landing as another session centred it. Both were `btn btn-s`; one
+  override line made the difference, and full width also centres, so the
+  rebase kept their layout and dropped the line.
+
 - *2026-10-14* — "Missing password" in Brave, then "both buttons", then "after
   i delete a group". I blamed Messenger first; "both buttons" pointed at the
   one path they share, and the bug was ours, sitting in a rule borrowed from
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   sense". The hedge was the spec: "else" only where the people left out were
   named a row above, and the first test it broke ("Marie, Theo" turning into
   it) drew the other edge — two names are as short.
-
-- *2026-10-13* — "Change the “4 people” small text in the group list to the
-  icon + number that the ledger uses". The ask pointed at its own spec again:
-  copy the ledger's glyph, size and gap, then crop both shots side by side
-  rather than trust that they match.
