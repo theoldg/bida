@@ -283,9 +283,12 @@ storage nothing comes back to. Wording is in `copy.embedded`.
 **The way out differs by platform.** Android takes **Open in browser**, an
 `intent:` link the system hands to the default browser (`intentLink`): Android
 reads the intent from the last `#`, so the page's own fragment rides in front
-of it and a join link's key comes along, never reaching a server. On a group's
-screen it carries that group's invite, since past the join the address holds
-only the id. iOS has no such link — no page can open Safari — so the fold names
+of it, never reaching a server. What rides there is an icon launch's carry,
+`/install?handover#…` (`route.handover`): every key the webview holds and who
+it is in each, the screen's group first. The tab it opens takes them as an
+icon would (`launchPlan`) and opens that group, nobody asked "Which one are
+you?" twice. The address alone won't do — past the join it holds only the id,
+and landed on "missing its password" — so the link waits for the keys' read. iOS has no such link — no page can open Safari — so the fold names
 the button instead: tap ⋯, then *Open in Safari*.
 
 **Detection is built to be wrong in one direction.** Catching a real browser

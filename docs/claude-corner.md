@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-14* — "Add the identity choice in the handover", then two
+  interruptions: the bug it lands on, then "reuse the mechanism from the ios
+  install". Build nothing past the first message's half; the third rewrote it,
+  and the reused carry fixed the bug too.
+
 - *2026-10-14* — "Typing in the search bar flashes the you owe banner". An
   hour lost reproducing it on a checkout 122 commits behind: the hook's report
   had said so. Pull dev before the first read; the cause was in what came in.
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "Wdyt about…", then the finished wording. Three questions were one design
   meeting; each answer checked the claim it made first (does `/diag` send
   anything?) so the copy promised only what the code keeps.
-
-- *2026-10-13* — "What other large inputs are we not prepared for?" became
-  paging and batching, then "and binary", which a probe of D1 priced at twenty
-  times the CPU. An owner's design is a hypothesis too: measure it before
-  building, and drop what loses out loud, mid-build, not in the summary.

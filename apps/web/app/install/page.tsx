@@ -11,7 +11,7 @@ import { getDevice } from "@/lib/db/device";
 import { db } from "@/lib/db/dexie";
 import { keepNote } from "@/lib/diag";
 import { firstFrameMarked, markLaunched } from "@/lib/first-frame";
-import { launchPlan, launchedOnto } from "@/lib/launch";
+import { handOverToGroup, launchPlan, launchedOnto } from "@/lib/launch";
 import { syncGroup } from "@/lib/db/sync";
 import { copy } from "@/lib/copy";
 import { formatJoinLink, parseInvites, route, type CarriedGroup } from "@/lib/group-link";
@@ -24,7 +24,8 @@ import { formatJoinLink, parseInvites, route, type CarriedGroup } from "@/lib/gr
  * In a tab it is an ordinary page: every page's manifest carries the tab's
  * groups (`manifestScript`), and the fragment carries them again for an iOS
  * that bookmarks the URL instead. Launched *as* the icon, this is where they
- * land — `start_url` is always `/install#…`.
+ * land — `start_url` is always `/install#…`. So does a browser tab opened by
+ * an in-app browser's way out (`route.handover`), which carries them the same way.
  */
 export default function InstallPage() {
   // Parsed on the client only — there is no window during the export's
@@ -34,7 +35,8 @@ export default function InstallPage() {
 
   useEffect(() => setInvites(parseInvites(window.location.hash)), []);
 
-  useLaunchedFromHomeScreen(offer === "installed" ? invites : undefined);
+  const handover = useSyncExternalStore(never, isHandover, () => false);
+  useLaunchedFromHomeScreen(offer === "installed" || handover ? invites : undefined, handover);
   const hydrating = useSyncExternalStore(never, () => false, () => true);
   const marked = useSyncExternalStore(never, firstFrameMarked, () => false);
 
@@ -46,14 +48,17 @@ export default function InstallPage() {
   // leave: it wears the frame the launch is heading for. Unmarked — a reload
   // here — that is the list, where it goes.
   if (offer === "installed") return marked ? <FirstFrames /> : <ListSkeleton />;
-  return <Tutorial />;
+  return handover ? <ListSkeleton /> : <Tutorial />;
 }
 
 const never = () => () => {};
+const isHandover = () => new URLSearchParams(location.search).has("handover");
 
 /**
  * An icon launch: the groups the tab held, and who it was in each, carried out
- * as `launchPlan` (lib/launch.ts) says. A member the tab had named is claimed
+ * as `launchPlan` (lib/launch.ts) says. A `handover` is the same carry from an
+ * in-app browser, and lands in the group it was opened from rather than
+ * spending a launch. A member the tab had named is claimed
  * before sync — the icon is a device of its own — since the claim is an op
  * riding the next push.
  *
@@ -67,7 +72,7 @@ const never = () => () => {};
  * router drops the fragment when it falls back to a full load
  * (docs/ios.md#gotchas).
  */
-function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined): void {
+function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined, handover: boolean): void {
   const router = useRouter();
   useEffect(() => {
     if (!invites) return;
@@ -77,11 +82,11 @@ function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined): void {
       const held = new Set(keys.map((key) => key.groupId));
       const plan = launchPlan(invites, held, new Set(device.leftGroups ?? []), device.meByGroup);
       if (cancelled) return;
-      keepNote("install.app", `${invites.length} groups, ${invites.filter((i) => i.me).length} named; `
+      keepNote(handover ? "install.handover" : "install.app", `${invites.length} groups, ${invites.filter((i) => i.me).length} named; `
         + `${held.size} keys held → ${plan.kind === "save"
           ? `save ${plan.fresh.length} fresh, claim ${plan.naming.length}` : plan.kind}`);
       // Before leaving, whichever way: no later launch of this icon is a first join.
-      markLaunched();
+      if (!handover) markLaunched();
       if (plan.kind === "join") { location.replace(formatJoinLink(plan.invite)); return; }
       if (plan.kind === "save") {
         for (const invite of plan.fresh) await saveGroupKey(invite.groupId, invite.secret);
@@ -93,11 +98,13 @@ function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined): void {
       if (cancelled) return;
       // Reopens the last group, if there is one: a launch that saved a key is
       // still a launch, and its frame was the ledger (`firstFrame`).
-      launchedOnto();
+      const first = invites[0];
+      if (handover && first) handOverToGroup(first.groupId);
+      else launchedOnto();
       router.replace(route.groups());
     })();
     return () => { cancelled = true; };
-  }, [invites, router]);
+  }, [invites, handover, router]);
 }
 
 /** Beside `copy.install.page.steps`, one each: the buttons as Safari draws them. */

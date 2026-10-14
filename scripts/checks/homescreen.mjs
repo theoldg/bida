@@ -2,7 +2,7 @@
 // Doc: docs/browser-checks.md#pnpm-verify-homescreen--the-invite-that-rides-onto-the-home-screen
 import {
   ensureBuild, serveExport, launch, newPhone, newGroup, openGroupsList, asInstalledApp, PATIENCE, reporter,
-  readStore, readDevice, untilDevice,
+  readStore, readDevice, putDevice, untilDevice,
 } from "../lib/harness.mjs";
 
 ensureBuild();
@@ -391,8 +391,8 @@ report(await webviewPage.getByText(BANNER).count() === 1
   "the demo runs there too, its own card standing down for the banner");
 await webview.close();
 
-// Android's way out is a link. Past the join the address holds only the id, so
-// a group's screen hands over the invite instead.
+// Android's way out is a link, carrying every group the webview holds and who
+// it is in each, as an icon launch carries them: the address holds only the id.
 const ANDROID_IN_APP_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/AP2A; wv) AppleWebKit/537.36"
   + " (KHTML, like Gecko) Version/4.0 Chrome/126.0.0.0 Mobile Safari/537.36"
   + " [FB_IAB/Orca-Android;FBAV/460.0.0.48.109;]";
@@ -406,26 +406,36 @@ await droidPage.addInitScript(() => {
 });
 await droidPage.goto(`${base}/join${fragment}`);
 await joined(droidPage).waitFor({ timeout: PATIENCE }).catch(() => {});
+// The join saves the key before it waits on a sync, which nothing here answers.
+for (let i = 0; i < 40 && (await secretsHeld(droidPage).catch(() => [])).length === 0; i++) {
+  await droidPage.waitForTimeout(100);
+}
+// Who this phone is, as a claim would have left it; the sync it needs isn't here.
+await putDevice(droidPage, { ...(await readDevice(droidPage)), meByGroup: { [groupId]: "m-bo" } });
+await droidPage.goto(`${base}/g/members?id=${groupId}`);
 await droidPage.getByText(`${BANNER} Messenger’s browser.`).click()
   .catch(() => crashes.push("no Messenger banner"));
 const intentOf = () => droidPage.getByRole("link", { name: "Open in browser" }).getAttribute("href")
   .catch(() => null);
 const host_ = new URL(base).host;
-report(await intentOf() === `intent://${host_}/join${fragment}#Intent;scheme=http;end`,
-  "on Android it unfolds to a link out, carrying the key in front of the intent", await intentOf());
-// The join saves the key before it waits on a sync, which nothing here answers.
-for (let i = 0; i < 40 && (await secretsHeld(droidPage).catch(() => [])).length === 0; i++) {
-  await droidPage.waitForTimeout(100);
-}
-await droidPage.goto(`${base}/g/members?id=${groupId}`);
-await droidPage.getByText(BANNER).click().catch(() => {});
-// The key is read from the database, a moment after the fold opens.
-await droidPage.waitForFunction(() => document.querySelector(".webviewbody a")?.href.includes("/join#"),
-  null, { timeout: PATIENCE }).catch(() => {});
-report(await intentOf() === `intent://${host_}/join${fragment}#Intent;scheme=http;end`,
-  "and on a group's screen, past the join, it still carries the invite", await intentOf());
+const carriedOut = `/install?handover${fragment}.m-bo`;
+report(await intentOf() === `intent://${host_}${carriedOut}#Intent;scheme=http;end`,
+  "on Android it unfolds to a link out, carrying the key and who this phone is in front of the intent",
+  await intentOf());
 report(crashes.length === 0, "with no clipboard, and no error page", crashes.join(" "));
 await droid.close();
+
+// The browser it opens in takes the carry as an icon launch does, and lands in the group.
+const chrome = await newPhone(browser);
+const chromePage = await chrome.newPage();
+await chromePage.goto(`${base}${carriedOut}`);
+await chromePage.waitForURL((url) => url.pathname === "/g", { timeout: PATIENCE }).catch(() => {});
+report(new URL(chromePage.url()).pathname === "/g"
+  && (await secretsHeld(chromePage)).join(" ") === fragment.slice(1)
+  && (await namesHeld(chromePage))[groupId] === "m-bo",
+  "and the browser it opens holds the key, is already that member, and opens the group",
+  chromePage.url());
+await chrome.close();
 
 // A false positive tells a real browser nothing is kept, so prove the lookalikes.
 const NEAR_MISSES = [

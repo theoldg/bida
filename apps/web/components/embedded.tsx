@@ -4,8 +4,9 @@
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
-import { formatJoinLink } from "../lib/group-link";
-import { useGroupSecret } from "../lib/hooks";
+import { heldInvites } from "../lib/db/commands";
+import { useLive } from "../lib/db/live";
+import { route } from "../lib/group-link";
 import { embeddedApp, intentLink, looksEmbedded } from "../lib/embedded";
 import { isStandalone, looksIos } from "../lib/install";
 
@@ -66,19 +67,22 @@ export function EmbeddedBanner() {
 }
 
 /**
- * On a group's screen, that group's invite rather than the address: past the
- * join, the address holds only the id, and the browser it opens in has no key.
+ * Every group this webview holds, and who it is in each, carried as an icon
+ * launch carries them (`route.handover`), this screen's group first: the
+ * address holds only the id past the join, so it would land on "missing its
+ * password". No link until the keys are read, for the same reason.
  */
 function WayOut() {
   const id = new URLSearchParams(location.search).get("id") ?? undefined;
-  const secret = useGroupSecret(id);
-  const href = id && secret ? formatJoinLink({ groupId: id, secret }) : location.href;
+  const groups = useLive("wayOut", () => heldInvites(id), [id]);
+  const href = !groups ? undefined
+    : groups.length ? `${location.origin}${route.handover(groups)}` : location.href;
   return (
     <div className="webviewbody">
       <p>{copy.embedded.detail}</p>
       {onIos()
         ? <p className="webviewhow">{copy.embedded.how}</p>
-        : <a className="btn btn-s" href={intentLink(href)}>{copy.embedded.open}</a>}
+        : href ? <a className="btn btn-s" href={intentLink(href)}>{copy.embedded.open}</a> : null}
     </div>
   );
 }
