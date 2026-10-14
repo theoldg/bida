@@ -290,6 +290,8 @@ each, the screen's group first. The tab it opens takes them as an icon would
 from a route of its own, since `/install`'s export is the tutorial, which
 painted before any script and could stay. The address alone won't do — past the join it holds only the id,
 and landed on "missing its password" — so the link waits for the keys' read.
+That group alone un-forgets, its invite having just been tapped: a browser
+that once forgot it would otherwise open it keyless, on the same screen.
 
 iOS has no such link — no page can open Safari — so the fold names the button
 instead: tap ⋯, then *Open in Safari*, which opens the address as it stands.

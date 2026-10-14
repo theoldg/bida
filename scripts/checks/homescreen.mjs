@@ -470,6 +470,23 @@ report(new URL(safariPage.url()).pathname === "/g"
 await safari.close();
 await chrome.close();
 
+// A browser that once forgot the group: the way out was a tap on that group's
+// invite just now, so it un-forgets as the invite would, and never lands keyless.
+const forgot = await newPhone(browser);
+const forgotPage = await forgot.newPage();
+await openGroupsList(forgotPage, base);
+await untilDevice(forgotPage, (device) => !!device);
+await putDevice(forgotPage, { ...(await readDevice(forgotPage)), leftGroups: [groupId] });
+await forgotPage.goto(`${base}${carriedOut}`);
+await forgotPage.waitForURL((url) => url.pathname === "/g", { timeout: PATIENCE }).catch(() => {});
+report(new URL(forgotPage.url()).pathname === "/g"
+  && (await secretsHeld(forgotPage)).join(" ") === fragment.slice(1)
+  && (await namesHeld(forgotPage))[groupId] === "m-bo"
+  && !(await readDevice(forgotPage)).leftGroups?.includes(groupId),
+  "and one that had forgotten the group takes it back, as that member, rather than open it keyless",
+  forgotPage.url());
+await forgot.close();
+
 // A false positive tells a real browser nothing is kept, so prove the lookalikes.
 const NEAR_MISSES = [
   ["the home-screen app", `${IPHONE.replace(" Version/17.5", "").replace(" Safari/604.1", "")}`, true],

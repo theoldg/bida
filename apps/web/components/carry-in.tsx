@@ -24,7 +24,9 @@ import { handOverToGroup, launchPlan, launchedOnto } from "../lib/launch";
  * the group it was opened from, the first carried.
  *
  * **Nothing here un-forgets**: `saveGroupKey` would undo a `forgetGroup`, and
- * a forgotten group's key is erased, so `leftGroups` is what says no.
+ * a forgotten group's key is erased, so `leftGroups` is what says no — but for
+ * a handover's first group, whose invite was tapped a moment ago, which
+ * un-forgets as that invite would on `/join`. Otherwise it opens keyless.
  *
  * **`location.replace`, not the router**, for the hand-off to `/join`: Next's
  * router drops the fragment when it falls back to a full load
@@ -36,6 +38,10 @@ export function useCarryIn(invites: CarriedGroup[] | undefined, { handover = fal
     if (!invites) return;
     let cancelled = false;
     void (async () => {
+      const first = invites[0];
+      if (handover && first && (await getDevice()).leftGroups?.includes(first.groupId)) {
+        await saveGroupKey(first.groupId, first.secret);
+      }
       const [keys, device] = await Promise.all([db().groupKeys.toArray(), getDevice()]);
       const held = new Set(keys.map((key) => key.groupId));
       const plan = launchPlan(invites, held, new Set(device.leftGroups ?? []), device.meByGroup);
@@ -54,7 +60,6 @@ export function useCarryIn(invites: CarriedGroup[] | undefined, { handover = fal
         for (const invite of [...plan.fresh, ...plan.naming]) syncGroup(invite.groupId).catch(() => {});
       }
       if (cancelled) return;
-      const first = invites[0];
       if (handover && first) handOverToGroup(first.groupId);
       else launchedOnto();
       router.replace(route.groups());

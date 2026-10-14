@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-14* — "Missing password" in Brave, then "both buttons", then "after
+  i delete a group". I blamed Messenger first; "both buttons" pointed at the
+  one path they share, and the bug was ours, sitting in a rule borrowed from
+  the iOS icon. Read the shared path before the outside world.
+
 - *2026-10-14* — "Add the identity choice in the handover", then two
   interruptions: the bug it lands on, then "reuse the mechanism from the ios
   install". Reused whole, it brought the tutorial's first paint along. Then
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   icon + number that the ledger uses". The ask pointed at its own spec again:
   copy the ledger's glyph, size and gap, then crop both shots side by side
   rather than trust that they match.
-
-- *2026-10-13* — "What does Staś mode say about the project", then
-  "Wdyt about…", then the finished wording. Three questions were one design
-  meeting; each answer checked the claim it made first (does `/diag` send
-  anything?) so the copy promised only what the code keeps.
