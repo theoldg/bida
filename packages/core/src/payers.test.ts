@@ -121,16 +121,16 @@ describe("settlementInvolves / memberInvolved", () => {
 });
 
 describe("expenseInvolves — receipt involvement", () => {
-  it("counts somebody marked present who was assigned nothing", () => {
-    // Owing zero is an outcome, not absence: removing them would leave their id in the grid.
+  it("leaves alone somebody only ticked as there", () => {
+    // Owing zero with no line is no stake: the grid drops them once removed.
     const e = expense({
       split: { mode: "equal", members: [BOB] },
       paidBy: BOB,
       receiptInvolved: [BOB, ALICE],
     });
 
-    expect(expenseInvolves(e, ALICE)).toBe(true);
-    expect(memberInvolved({ expenses: [e], settlements: [] }, ALICE)).toBe(true);
+    expect(expenseInvolves(e, ALICE)).toBe(false);
+    expect(memberInvolved({ expenses: [e], settlements: [] }, ALICE)).toBe(false);
   });
 
   it("counts a per-item assignment, for grids saved before both were stored", () => {

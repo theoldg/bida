@@ -109,14 +109,14 @@ export function resolvePayers(expense: PayerBearing): Record<Id, number> {
 }
 
 /**
- * Whether a member has a stake in this expense: paid, in the split, or marked
- * present on its receipt — the last even at zero cost, or the grid would read
- * back an id the member list no longer has.
+ * Whether a member has a stake in this expense: paid, in the split, or on a
+ * line of its receipt — the last even at zero cost, since an item and its
+ * promo can cancel out. Only ticked as there is no stake: the grid drops
+ * whoever has gone from its chips.
  */
 export function expenseInvolves(expense: Expense, memberId: Id): boolean {
   return payerList(expense).includes(memberId)
     || splitParticipants(expense.split).includes(memberId)
-    || (expense.receiptInvolved?.includes(memberId) ?? false)
     || (expense.receiptAssignments?.some((row) => row.includes(memberId)) ?? false);
 }
 

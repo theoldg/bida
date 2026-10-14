@@ -30,7 +30,7 @@ opaque background restated wherever a row state sets one (`tr.part td` outranks
 the scroller is `width: 100%` plus `position: sticky; left: 0` — inside a
 scroller that is the *visible* width, so it is one screenful, pinned; a sentence
 in a `colSpan` cell would wrap at the table's width instead.
-The last chip still lit is disabled: somebody is always there.
+The last chip still lit is disabled: somebody is always there. A member removed since the bill was saved has no chip, and leaves it.
 Everyone starts at the table and **nothing starts assigned**: ticking what you
 had is the work, so the grid asks for it rather than handing you a bill already
 split evenly to untick your way out of. **A tap on the line itself — the name

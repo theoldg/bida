@@ -101,7 +101,10 @@ export function WhoHadWhat({
     seeded.current = true;
     const saved = draft.receiptInvolved && draft.receiptAssignments?.length === items.length
       ? draft.receiptAssignments : null;
-    setInvolved(new Set(saved ? draft.receiptInvolved : people.map((m) => m.id)));
+    // Somebody removed since was only ticked as there — a line would have kept
+    // them (`expenseInvolves`) — so they leave the bill with their chip.
+    const here = people.map((m) => m.id);
+    setInvolved(new Set(saved ? (draft.receiptInvolved ?? []).filter((id) => here.includes(id)) : here));
     const rows = saved ? saved.map((row) => new Set(row)) : items.map(() => new Set<string>());
     // Written straight away; history reads it as the same bill (`printedBill`).
     const split = unfoldAll(items, draft.currency);

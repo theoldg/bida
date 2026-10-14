@@ -95,12 +95,14 @@ rate; a `group` rate that is another currency's row is healed again. Tombstoned
 entries too, so a restore brings nothing with it. A currency with no registry row needs nothing: each entry is already
 read at its own rate.
 
-**Being on a receipt is being involved.** "Who was there" is a person saying
-they were at the meal; ending up assigned no line and owing zero is an outcome,
-not an absence. `receiptInvolved` and `receiptAssignments` therefore join
-`payerList` and `splitParticipants` in `expenseInvolves`, which makes the
-removal refuse *and* the healer put them back from a single edit — the whole
-point of the guard and its healer being one declaration.
+**A line on a receipt is being involved; being there is not.** A line is a
+stake even at zero — an item and its promo can cancel out — so
+`receiptAssignments` joins `payerList` and `splitParticipants` in
+`expenseInvolves`, which makes the removal refuse *and* the healer put them
+back from a single edit — the whole point of the guard and its healer being one
+declaration. Somebody only ticked in "who was there" owes nothing and is free
+to go: the grid drops removed members from its chips, so they leave the bill
+with them, including when the tick and the removal race.
 
 **A phone whose member was removed puts them back.** Removal is refused while
 anybody is named on a live entry, but that needs both facts on one phone — so

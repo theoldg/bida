@@ -34,7 +34,6 @@ function references(state: GroupState): Reference[] {
     const members = new Set([
       ...payerList(e),
       ...splitParticipants(e.split),
-      ...(e.receiptInvolved ?? []),
       ...(e.receiptAssignments ?? []).flat(),
     ]);
     // Money names them, so the tombstone is what gives way.
@@ -125,7 +124,7 @@ function hostileOps(): Op[] {
       rateToBase: MAD_RATE, baseAmountMinor: 461, occurredAt: at, createdAt: at,
     }, at + 7000),
     op("identity", "deadphone", "create", { memberId: ADA, claimedAt: at }, at + 8000),
-    op("expense", "e-nomad", "update", { receiptInvolved: [THEO, ADA] }, at + 9000),
+    op("expense", "e-nomad", "update", { receiptInvolved: [THEO, ADA], receiptAssignments: [[THEO], [ADA]] }, at + 9000),
   ];
 }
 

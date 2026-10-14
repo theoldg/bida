@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-14* — "Wdyt, what does this involve?", then one line closing the
+  two risks I raised. The answer named a doc it reversed and a test passing
+  for the wrong reason; proving that test failed without the rule mattered
+  more than the one-line change.
+
 - *2026-10-14* — "Feel free to change verbs with counts", after a draft that
   had bent every sentence around them. Dodging a rule of grammar is a guess at
   the owner's taste; one sentence asking the cost of the plain form would have
@@ -85,7 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   played smoothly at any throttle; four hundred rows at 4× played the fold in
   four frames. Jank is a size: seed a ledger as big as a real one before
   judging a motion smooth.
-
-- *2026-10-12* — "Show the delete animation and number roll … Any
-  questions?" Headless looked fine, so the owner's phone was the evidence:
-  make the check fail the way the phone did before trusting the fix.

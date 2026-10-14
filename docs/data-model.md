@@ -144,9 +144,9 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   the tombstone is the half that gives way. It is lifted with an ordinary
   `deletedAt: null`, and history says the entry is why rather than naming the phone that noticed. The
   sync engine runs it, right after the merge that could have caused it — a
-  local write is refused before it lands, so nothing else can. Being named on a
-  receipt's "who was there" counts as being involved, even where it costs
-  nothing. Without this a departed member's balance has no way out: the
+  local write is refused before it lands, so nothing else can. Being on a line of a
+  receipt counts as being involved, even where it nets to nothing; being
+  only ticked as there does not. Without this a departed member's balance has no way out: the
   transfer form refuses the name the settle-up row opens with.
 - **A member's id is their name** — `memberIdFor(groupId, name)`, so two phones
   adding "Ana" offline write one member rather than two people nothing on

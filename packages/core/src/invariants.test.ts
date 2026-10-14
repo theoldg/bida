@@ -234,24 +234,31 @@ describe("entriesCarryTheirOwnRate", () => {
 });
 
 describe("liveEntriesNameLiveMembers", () => {
-  it("puts back somebody stranded only by a receipt", () => {
-    // Marked present, assigned nothing, owing nothing — and removed anyway.
-    const ops: Op[] = [
-      ...marrakechOps(),
-      {
-        id: "op-receipt", groupId: GROUP, entity: "expense", entityId: "e-nomad",
-        kind: "update", patch: { receiptInvolved: [THEO, ADA] },
-        hlc: formatHlc(createHlcState("phonea", 1_743_700_000_000)),
-        actor: THEO, note: null, createdAt: 1_743_700_000_000, seq: null,
-      },
-      {
-        id: "op-remove", groupId: GROUP, entity: "member", entityId: ADA, kind: "delete",
-        patch: {}, hlc: formatHlc(createHlcState("phoneb", 1_743_800_000_000)),
-        actor: MARIE, note: null, createdAt: 1_743_800_000_000, seq: null,
-      },
-    ];
+  // Ada removed after one phone put her on Nomad's receipt, and on nothing else.
+  const onlyOnReceipt = (receipt: Record<string, unknown>): Op[] => [
+    ...marrakechOps().filter((o) => o.entity !== "expense" || o.entityId === "e-nomad"),
+    {
+      id: "op-receipt", groupId: GROUP, entity: "expense", entityId: "e-nomad",
+      kind: "update", patch: { split: { mode: "equal", members: [THEO] }, ...receipt },
+      hlc: formatHlc(createHlcState("phonea", 1_743_700_000_000)),
+      actor: THEO, note: null, createdAt: 1_743_700_000_000, seq: null,
+    },
+    {
+      id: "op-remove", groupId: GROUP, entity: "member", entityId: ADA, kind: "delete",
+      patch: {}, hlc: formatHlc(createHlcState("phoneb", 1_743_800_000_000)),
+      actor: MARIE, note: null, createdAt: 1_743_800_000_000, seq: null,
+    },
+  ];
 
+  it("puts back somebody stranded only by a receipt line", () => {
+    // On a line, owing nothing — an item and its promo cancel out.
+    const ops = onlyOnReceipt({ receiptInvolved: [THEO, ADA], receiptAssignments: [[THEO], [ADA]] });
     expect(liveEntriesNameLiveMembers.detect(foldOps(ops)).map((m) => m.id)).toEqual([ADA]);
+  });
+
+  it("lets go of somebody only ticked as there", () => {
+    const ops = onlyOnReceipt({ receiptInvolved: [THEO, ADA], receiptAssignments: [[THEO], [THEO]] });
+    expect(liveEntriesNameLiveMembers.detect(foldOps(ops))).toEqual([]);
   });
 
   it("leaves alone an ordinary departure", () => {
