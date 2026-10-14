@@ -492,7 +492,7 @@ export const pl: Copy = {
     // Bolek and Lolek decline, so the example can; a member's name never does.
     notWho: {
       ask: "Jak to jest liczone?",
-      lead: "Jest ich jak najmniej.",
+      lead: "Jest jak najmniej przelewów.",
       term: "",
       owe: " Na przykład jeżeli masz oddać Bolkowi 10 złotych, a Bolek ma oddać Lolkowi 10 złotych, "
         + "to lepiej, żeby Lolek dostał bezpośrednio od Ciebie.",
