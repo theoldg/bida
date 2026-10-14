@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Dexie from "dexie";
 import {
-  CATCH_UP_MS, emptyGroupState, parseHlc, unseenRevisions, type BalanceReport, type Group,
+  CATCH_UP_MS, emptyGroupState, isDemo, parseHlc, unseenRevisions, type BalanceReport, type Group,
 } from "@bida/core";
 import { db, type DeviceRecord } from "./db/dexie";
 import { keepWarm, useLive } from "./db/live";
@@ -130,8 +130,9 @@ function groupRows(groupId: string | undefined) {
       d.members.where("groupId").equals(groupId).toArray(),
       d.expenses.where("groupId").equals(groupId).toArray(),
       d.settlements.where("groupId").equals(groupId).toArray(),
-      // By the index alone: an import leaves thousands waiting.
-      d.ops.where("[groupId+pending]").equals([groupId, 1]).count(),
+      // By the index alone: an import leaves thousands waiting. The demo's
+      // have no key to leave with, so none of them is waiting for anything.
+      isDemo(groupId) ? 0 : d.ops.where("[groupId+pending]").equals([groupId, 1]).count(),
       d.rates.where("groupId").equals(groupId).toArray(),
     ]);
     return { group, members, expenses, settlements, rates, pending };

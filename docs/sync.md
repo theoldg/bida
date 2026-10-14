@@ -280,8 +280,8 @@ half way keeps its lock. The rule is the app's, not sync's: `lib/db/visible.ts`
 early when there is no key row.** So a group created without `saveGroupKey` is
 *structurally* incapable of reaching the server: there is no flag to flip and
 no path to disable. That absence is the whole of the demo group
-([product.md](product.md#the-mvp)) — it is otherwise an ordinary group of
-ordinary ops, and nothing downstream of the fold knows the difference.
+([product.md](product.md#the-mvp)) — otherwise ordinary ops, told apart only by
+the "Offline" banner: `groupRows` counts none as waiting, for there is nowhere to go.
 
 This is load-bearing, not tidiness. `POST /ops` registers any unseen group id
 and has no budget, the D1 log gets no further resets

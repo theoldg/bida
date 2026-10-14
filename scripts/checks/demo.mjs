@@ -114,6 +114,12 @@ await page.waitForFunction(
 );
 report(await page.getByText("Droid oil").count() > 0,
   "the demo takes an entry of your own, like any other group");
+await ctx.setOffline(true);
+const offline = await page.waitForSelector("text=Offline", { timeout: PATIENCE })
+  .then((el) => el.innerText(), () => "");
+report(offline.length > 0 && !offline.includes("waiting"),
+  "and offline, the banner counts none of it as waiting: it has nowhere to go", offline);
+await ctx.setOffline(false);
 
 await openMenu();
 await menuItem("Clear the demo").click();

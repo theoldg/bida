@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-14* — "Don't count the demo group's edits in the offline banner".
+  One line, one fix; the check went offline in the demo first and read
+  "16 changes waiting", so the passing run meant something.
+
 - *2026-10-14* — "Should we relax the in-app browser restrictions?", then
   the copy, workshopped over two turns. The owner's phrasing beat both my
   drafts once its snags were named; the build waited only for the words, and
@@ -84,8 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   potential gains (with a temporary code hack…)", then "Do step 1 and 2". A
   throwaway patch priced each piece before any was built, and the owner chose
   from the table. The hack stays in the scratchpad, never in a commit.
-
-- *2026-10-13* — "When I save an entry the summary screen animated the height
-  change", and in passing, the balance label moving "ever so slightly". A probe
-  measured both on the old build first: 32px of slide, 3px of label. An aside
-  is as real as the ask; "I feel like" is a measurement not yet taken.
