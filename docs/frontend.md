@@ -141,7 +141,7 @@ blank figure, is the one exception, and `rules` enforces both halves.
 switch, which writes `bida.lang` and reloads, since `copy` is picked once as the
 app loads. That load is a hydration mismatch: the export is prerendered
 in English, so React finds text it did not write (error #418) and renders the
-page again on the client; shipping Polish means choosing it before React runs. A Polish sentence can't always take a value English hands it (a name
+page again on the client; shipping Polish means choosing it before React runs. Every page is a client component (`rules`): a server one is prerendered in English and never drawn again, so no switch reaches it. A Polish sentence can't always take a value English hands it (a name
 in another case, a past tense with a gender), so a string that needs a
 different argument changes its signature in both files.
 

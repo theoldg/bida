@@ -1,3 +1,4 @@
+"use client";
 // Doc: docs/product.md#the-mvp
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { TipJar } from "@/components/tip-jar";

@@ -190,6 +190,16 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
   }
 }
 
+// A server page is prerendered once, in English, and never drawn again on the
+// phone, so the language switch can't reach it (frontend.md). A layout may
+// still read `copy` for its metadata, which is the link preview's.
+for (const file of sources(join(ROOT, "apps/web/app"))) {
+  if (file.endsWith("layout.tsx")) continue;
+  if (!/^\s*["']use client["']/.test(readFileSync(file, "utf8").replace(/^(\s*\/\/.*\n)*/, ""))) {
+    fail(file, `not "use client" — a server page stays in English whatever the language (frontend.md)`);
+  }
+}
+
 // No em dashes in the copy, permanently — the owner's call: they read as
 // LLM-written. A literal that is only the dash is `copy.none`.
 for (const file of [COPY_FILE, join(ROOT, "apps/web/lib/copy-pl.ts")]) {
@@ -209,5 +219,5 @@ console.log(problems.length
   : "rules: core is pure, refusals come from the registry, a bill is priced in one place, "
     + "every live read watched, every /g screen checks its id, the demo holds no key, "
     + "back goes through nav, one door to the clipboard, no browser dialogs, "
-    + "no stray copy, no em dash in copy");
+    + "no stray copy, no server page, no em dash in copy");
 process.exit(problems.length ? 1 : 0);

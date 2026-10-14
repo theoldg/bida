@@ -1,3 +1,4 @@
+"use client";
 // Doc: docs/navigation.md#routing
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -16,9 +17,6 @@ import { VERSION } from "@/lib/version";
  *
  * **Six claims, no pitch**: whoever is here already has the app. Email and
  * source sit above them on one line; the build number is in the bar's corner.
- *
- * A server component. `AboutOffline` (depends on the phone) and `AboutDelete`
- * (names the host) draw themselves.
  */
 export default function AboutPage() {
   const { feedback, privacy, guarantees } = copy.about;
