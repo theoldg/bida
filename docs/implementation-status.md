@@ -55,10 +55,14 @@ Three things: push notifications, built and unchecked on a phone, the ledger's w
 - **Polish is being translated with the owner, a section at a time**
   ([frontend.md](frontend.md#every-word-in-libcopyts)): `lib/copy-pl.ts`,
   `"???"` where not yet done, reached only from `/diag`. Undecided before it
-  ships: how a phone gets it; notifications, which the sender's phone writes in
-  its own language (ADR-0037), where the owner would rather each went in the
-  recipient's; whether a past tense agrees with a name's gender; and the scan's
-  model-written messages, still English.
+  ships: how a phone gets it, and whether a past tense agrees with a name's
+  gender. **Needs thought, flagged by the owner: text one phone writes and
+  another reads**, which lands in the writer's language, not the reader's:
+  notifications (ADR-0037), where the owner would rather each went in the
+  recipient's; the scan's translate toggle, whose "In English" labels the model
+  wrote, and the English words it adds to a title ("Lidl - barbecue"); its
+  failure messages; a recorded settle-up's note (`copy.form.reimbursement`);
+  and the tip's entry title (`copy.tip.split.entryTitle`).
 
 ### Found by the audit of 2026-10-11, not yet fixed
 
