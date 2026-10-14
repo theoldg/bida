@@ -346,6 +346,32 @@ async function onLedger() {
   await page.close();
 }
 
+// ---- 11. Discard puts the browser's guard down too ----------------------
+// A form loaded as a page of its own goes back across a document, which the
+// browser's own "Leave site?" guards: answered Discard, it must not ask again.
+for (const [name, from, open, type] of [
+  ["the entry form", `/g?id=${group}`, `/g/entry/edit?id=${group}`,
+    (page) => page.locator("#what").click().then(() => page.keyboard.type("Half"))],
+  ["/new", "/", "/new", (page) => page.locator("#g-name").click().then(() => page.keyboard.type("Trip"))],
+]) {
+  const page = await ctx.newPage();
+  await page.goto(`${base}${from}`);
+  await page.waitForSelector(".fab, .empty, .rows, .starttile, .grouprow, a[href='/new']");
+  await page.goto(`${base}${open}`);
+  await type(page);
+  const asked = [];
+  page.on("dialog", (dialog) => { asked.push(dialog.type()); void dialog.accept(); });
+  await arrow(page);
+  await page.waitForSelector(".scrim[open]");
+  await page.locator(".scrim .drow button").nth(1).click();
+  await page.waitForURL((url) => !url.pathname.startsWith(open.split("?")[0]), { timeout: 4000 })
+    .then(() => {}, () => {});
+  report(asked.length === 0 && !new URL(page.url()).pathname.startsWith(open.split("?")[0]),
+    `Discard on ${name}, a page of its own, leaves without the browser asking again`,
+    `${asked.join(" ")} at ${page.url()}`);
+  await page.close();
+}
+
 // ---- 4. the ledger comes back where it was left, only on the way back ----
 // A row straddling the top edge must come back to the pixel by the arrow, the
 // device's back and Save; a tap in from the list opens at the top.

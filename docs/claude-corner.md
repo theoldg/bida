@@ -39,6 +39,7 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-14* — "Missing password" in Brave, then "both buttons", then "after
   i delete a group". I blamed Messenger; the bug was ours, in the path both
   share. Then "it finished long ago": my own wait on the push hung, not it.
+  Then a Brave dialog after Discard: the reproduction came before the fix.
 
 - *2026-10-14* — "Add the identity choice in the handover", then two
   interruptions: the bug it lands on, then "reuse the mechanism from the ios

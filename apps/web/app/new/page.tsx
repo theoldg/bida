@@ -93,21 +93,22 @@ export default function NewGroupPage() {
   // A group typed here is only state, so leaving throws it away — worth the
   // same "discard?" the entry form asks, and the browser's on reload.
   const typed = name.trim().length > 0 || people.length > 0 || draft !== null;
-  useEffect(() => {
-    if (!typed) return;
-    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [typed]);
 
   /**
    * Discard was answered, so this screen has stopped guarding the way out.
-   * **Every asking screen must put its guard down before going**: the entry form
-   * gets it free by clearing its draft, but this list lives in `useState` and
-   * `typed` stays true, so a traversal asked for twice would ask "discard?"
-   * again (lib/nav.ts, lib/back-button.ts).
+   * **Every asking screen must put its guard down before going** — the
+   * browser's too, or a way back that leaves the page asks "Leave site?" after
+   * "discard?". The entry form's draft goes only with the screen, and this
+   * list lives in `useState` where `typed` stays true, so a traversal asked
+   * for twice would ask "discard?" again (lib/nav.ts, lib/back-button.ts).
    */
   const leaving = useRef(false);
+  useEffect(() => {
+    if (!typed) return;
+    const warn = (e: BeforeUnloadEvent) => { if (!leaving.current) e.preventDefault(); };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [typed]);
 
   function leave() {
     leaving.current = true;

@@ -243,7 +243,8 @@ on a real phone; `pnpm verify nav` drives each one it can.
   like a fresh blank form. The draft goes in the unmount, behind a `leaving`
   ref — which every screen that asks puts down first, since `mayLeave` is read
   again on the way out and would answer the app's own leaving with a second
-  "discard?".
+  "discard?". Its `beforeunload` reads the same ref: a way back across a page
+  load would otherwise follow Discard with the browser's own "Leave site?".
 - **Don't reach for `traverseTo`.** WebKit folds it into one still pending for
   the same key and never settles one it dropped, so telling late from lost
   takes a timeout a slow phone overruns. `goUp` reads the entries and calls

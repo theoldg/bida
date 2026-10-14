@@ -84,15 +84,19 @@ function EditEntryScreen() {
     }, seedKey);
   }, [groupId, entryId, seedKey, wantedKind, prefillTitle, data.loading, data.group, data.members, data.me, data.expenses, data.settlements]);
 
-  // Nothing is stored, so let the browser warn as for any half-filled form.
+  const leaving = useRef(false);
+
+  // Nothing is stored, so let the browser warn as for any half-filled form —
+  // but not once Discard has answered: going back may leave the page.
   useEffect(() => {
     if (!groupId) return;
-    const warn = (e: BeforeUnloadEvent) => { if (isDraftDirty(groupId)) e.preventDefault(); };
+    const warn = (e: BeforeUnloadEvent) => {
+      if (!leaving.current && isDraftDirty(groupId)) e.preventDefault();
+    };
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [groupId]);
 
-  const leaving = useRef(false);
   /**
    * **The draft goes when the screen does, not before**: a swallowed traversal is
    * repaired a breath later, and a cleared draft in that gap reads as a fresh
