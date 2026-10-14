@@ -289,8 +289,16 @@ each, the screen's group first. The tab it opens takes them as an icon would
 (`useCarryIn`) and opens that group, nobody asked "Which one are you?" twice —
 from a route of its own, since `/install`'s export is the tutorial, which
 painted before any script and could stay. The address alone won't do — past the join it holds only the id,
-and landed on "missing its password" — so the link waits for the keys' read. iOS has no such link — no page can open Safari — so the fold names
-the button instead: tap ⋯, then *Open in Safari*.
+and landed on "missing its password" — so the link waits for the keys' read.
+
+iOS has no such link — no page can open Safari — so the fold names the button
+instead: tap ⋯, then *Open in Safari*, which opens the address as it stands.
+So in a webview **the address keeps the same carry** in its fragment, on every
+screen but those whose fragment is their own (`KeepInAddress`), and a page
+opened with one goes to `/handover` from the head, before it paints
+(`handoverScript`). It rests on the host passing the address it shows, which
+none is bound to. The price: the host's own *Copy link* now copies the keys
+and who this phone is, and whoever opens it is claimed as that person.
 
 **Detection is built to be wrong in one direction.** Catching a real browser
 costs it the install offer and a banner that is wrong about it; letting a

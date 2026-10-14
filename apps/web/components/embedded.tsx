@@ -1,12 +1,12 @@
 "use client";
 // Doc: docs/ios.md#the-in-app-browser--a-one-off-visit
 
-import { useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { heldInvites } from "../lib/db/commands";
 import { useLive } from "../lib/db/live";
-import { route } from "../lib/group-link";
+import { formatInvites, route } from "../lib/group-link";
 import { embeddedApp, intentLink, looksEmbedded } from "../lib/embedded";
 import { isStandalone, looksIos } from "../lib/install";
 
@@ -56,6 +56,7 @@ export function EmbeddedBanner() {
   const toggle = () => { unfolded = !open; setOpen(!open); };
   return (
     <div className="banner webview">
+      <KeepInAddress />
       <button type="button" className="webviewhead" aria-expanded={open} onClick={toggle}>
         <Icon name="info" size={15} style={{ flex: "none" }} />
         <span>{copy.embedded.title(embeddedApp(navigator.userAgent))}</span>
@@ -66,6 +67,33 @@ export function EmbeddedBanner() {
   );
 }
 
+/** What this webview holds, this screen's group first (`heldInvites`). */
+function useCarry() {
+  const id = new URLSearchParams(location.search).get("id") ?? undefined;
+  return useLive("wayOut", () => heldInvites(id), [id]);
+}
+
+/**
+ * iOS's way out is the host app's *Open in Safari*, which opens the address
+ * as it stands — past the join, a group's id and nothing more. So the address
+ * keeps the carry in its fragment, which never reaches a server, and the page
+ * Safari opens hands it to `/handover` before it paints (`handoverFrom`). Not
+ * on the screens whose fragment is their own.
+ */
+function KeepInAddress() {
+  const groups = useCarry();
+  useEffect(() => {
+    if (!groups?.length || OWN_FRAGMENT.test(location.pathname)) return;
+    const hash = `#${formatInvites(groups)}`;
+    if (location.hash !== hash) {
+      history.replaceState(history.state, "", location.pathname + location.search + hash);
+    }
+  });
+  return null;
+}
+
+const OWN_FRAGMENT = /^\/(join|install|handover)(\.html)?$/;
+
 /**
  * Every group this webview holds, and who it is in each, carried as an icon
  * launch carries them (`route.handover`), this screen's group first: the
@@ -73,8 +101,7 @@ export function EmbeddedBanner() {
  * password". No link until the keys are read, for the same reason.
  */
 function WayOut() {
-  const id = new URLSearchParams(location.search).get("id") ?? undefined;
-  const groups = useLive("wayOut", () => heldInvites(id), [id]);
+  const groups = useCarry();
   const href = !groups ? undefined
     : groups.length ? `${location.origin}${route.handover(groups)}` : location.href;
   return (

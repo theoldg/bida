@@ -13,6 +13,7 @@ import { preview } from "@/lib/preview";
 import { arrivalScript } from "@/lib/diag";
 import { firstFrameScript } from "@/lib/first-frame";
 import { manifestScript, type WebManifest } from "@/lib/install";
+import { handoverScript } from "@/lib/group-link";
 import { CarryToHomeScreen } from "@/components/install";
 import { NotEmbedded } from "@/components/embedded";
 import { readFileSync } from "node:fs";
@@ -75,6 +76,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preload" href="/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2"
           crossOrigin="anonymous" />
         <script dangerouslySetInnerHTML={{ __html: manifestScript(manifest) }} />
+        {/* An in-app browser's address opened in Safari, before anything paints (lib/group-link.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: handoverScript }} />
       </head>
       <body>
         <ThemeScript />

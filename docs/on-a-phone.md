@@ -62,8 +62,10 @@ screen` block says which manifest each load got and which URL the icon opened.
   there replaces the app with a screen that has no way back.
 - **An invite opened in Instagram or Messenger** joins under a banner naming
   the app — and Chrome, Brave and DuckDuckGo on iOS get *no* banner, their
-  agents being Safari's but for a token. On Android, **Open in browser** must
-  land in Chrome on the same group: the one claim here no engine can test.
+  agents being Safari's but for a token. Pick a name, move to another screen,
+  then leave: Android's **Open in browser**, and iOS's ⋯ → *Open in Safari*,
+  must each land on that group as that name, never asked again — what the host
+  app does with the link is the one claim here no engine can test.
 
 **Notifications** ([notifications.md](notifications.md)) — headless Chromium
 refuses push registration outright, permission granted or not.

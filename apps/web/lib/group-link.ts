@@ -47,6 +47,20 @@ export function formatInvites(links: readonly CarriedGroup[]): string {
   return links.map((link) => `${link.groupId}.${link.secret}${link.me ? `.${link.me}` : ""}`).join("~");
 }
 
+/**
+ * A page opened with a carry in its fragment — the address an in-app browser
+ * kept for iOS's *Open in Safari* (components/embedded.tsx) — goes to
+ * `/handover` with it. Inlined in the head, so self-contained, and run before
+ * paint: the screen under it would say the link is missing its password.
+ */
+export function handoverFrom(path: string, hash: string): string | undefined {
+  if (/^\/(join|install|handover)(\.html)?$/.test(path)) return undefined;
+  const group = "[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)?";
+  return new RegExp(`^#${group}(~${group})*$`).test(hash) ? `/handover${hash}` : undefined;
+}
+
+export const handoverScript = `try{var h=(${handoverFrom})(location.pathname,location.hash);if(h)location.replace(h)}catch(e){}`;
+
 /** Malformed groups drop out. */
 export function parseInvites(input: string): CarriedGroup[] {
   return fragmentOf(input).split("~").flatMap((part): CarriedGroup[] => {

@@ -33,8 +33,8 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 
 - *2026-10-14* — "Add the identity choice in the handover", then two
   interruptions: the bug it lands on, then "reuse the mechanism from the ios
-  install". Reused whole, it brought the tutorial's first paint along: "it
-  flashed the ios install screen". Reuse the logic, not the route.
+  install". Reused whole, it brought the tutorial's first paint along. Then
+  "is it 100% guaranteed?" — the honest no named the iOS gap, and "do it".
 
 - *2026-10-14* — "Typing in the search bar flashes the you owe banner". An
   hour lost reproducing it on a checkout 122 commits behind: the hook's report

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  entryParent, formParent, isKeylessFragment, parseInvites, parseJoinLink, readPastedLink,
+  entryParent, formParent, handoverFrom, isKeylessFragment, parseInvites, parseJoinLink, readPastedLink,
   parseEntrySource, route,
 } from "./group-link";
 
@@ -152,5 +152,24 @@ describe("the install tutorial's own link", () => {
     expect(parseInvites("#g1.shh.m-1.extra")).toEqual([]);
     // A join link is sent to other people: it never names who someone is.
     expect(parseJoinLink("/join#g1.shh.m-1")).toBeNull();
+  });
+});
+
+describe("an in-app browser's address, opened in Safari", () => {
+  it("hands the carry to /handover from any screen", () => {
+    expect(handoverFrom("/g/members", "#g1.shh.m-1")).toBe("/handover#g1.shh.m-1");
+    expect(handoverFrom("/", "#g1.shh~g2.psst.m-2")).toBe("/handover#g1.shh~g2.psst.m-2");
+  });
+
+  it("leaves the screens whose fragment is their own", () => {
+    for (const path of ["/join", "/install", "/handover", "/join.html"]) {
+      expect(handoverFrom(path, "#g1.shh")).toBeUndefined();
+    }
+  });
+
+  it("leaves a fragment that is no carry: none, a bare id, rubbish", () => {
+    for (const hash of ["", "#", "#g1", "#g1.", "#g1.shh.m-1.extra", "#g1.shh~", "#g 1.shh"]) {
+      expect(handoverFrom("/g", hash)).toBeUndefined();
+    }
   });
 });

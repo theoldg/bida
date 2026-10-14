@@ -423,6 +423,11 @@ const carriedOut = `/handover${fragment}.m-bo`;
 report(await intentOf() === `intent://${host_}${carriedOut}#Intent;scheme=http;end`,
   "on Android it unfolds to a link out, carrying the key and who this phone is in front of the intent",
   await intentOf());
+// iOS has no such link: *Open in Safari* opens the address, so the address keeps the carry.
+const kept = await droidPage.waitForFunction((hash) => location.hash === hash, `${fragment}.m-bo`,
+  { timeout: PATIENCE }).then(() => true, () => false);
+report(kept && new URL(droidPage.url()).pathname === "/g/members",
+  "and the address keeps the same carry, for the host's own Open in Safari", droidPage.url());
 report(crashes.length === 0, "with no clipboard, and no error page", crashes.join(" "));
 await droid.close();
 
@@ -440,6 +445,29 @@ report(new URL(chromePage.url()).pathname === "/g"
 const handoverFrames = await framesSeen(chromePage, "handover");
 report(handoverFrames.frames > 0 && handoverFrames.tutorial === 0 && handoverFrames.blank === 0,
   "wearing \"Joining…\" from the first frame, never the iOS tutorial", JSON.stringify(handoverFrames));
+
+// Safari opening that address takes the carry before the screen under it paints.
+const safari = await iphone();
+const safariPage = await safari.newPage();
+await safariPage.addInitScript(() => {
+  const look = () => {
+    // Only on the screen it was opened at: no server here sends the group, so /g says it at the end.
+    if (location.pathname === "/g/members" && document.body?.textContent?.includes("missing its password")) {
+      sessionStorage.setItem("keyless", "1");
+    }
+    requestAnimationFrame(look);
+  };
+  requestAnimationFrame(look);
+});
+await safariPage.goto(`${base}/g/members?id=${groupId}${fragment}.m-bo`);
+await safariPage.waitForURL((url) => url.pathname === "/g", { timeout: PATIENCE }).catch(() => {});
+report(new URL(safariPage.url()).pathname === "/g"
+  && (await secretsHeld(safariPage)).join(" ") === fragment.slice(1)
+  && (await namesHeld(safariPage))[groupId] === "m-bo"
+  && await safariPage.evaluate(() => !sessionStorage.getItem("keyless")),
+  "and Safari, opening the address, lands in the group as that member, never on \"missing its password\"",
+  safariPage.url());
+await safari.close();
 await chrome.close();
 
 // A false positive tells a real browser nothing is kept, so prove the lookalikes.
