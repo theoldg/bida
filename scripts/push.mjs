@@ -22,6 +22,8 @@
  *    on the verdict: the failures pinned to the run, and any flaky check.
  *
  * `pnpm push --watch [sha]` skips to step 5, for a watch that was cut off.
+ * `pnpm push --no-watch` stops before it, so a session can hand the watch to a
+ * background monitor and keep talking (docs/testing.md#watching-a-push).
  * Exit 0 is green; anything else is the session's to act on
  * (docs/testing.md#where-each-check-runs).
  */
@@ -175,6 +177,7 @@ async function ship() {
 
 const [, , flag, arg] = process.argv;
 const sha = flag === "--watch" ? (arg ?? git("rev-parse", "HEAD")) : await ship();
+if (flag === "--no-watch") stop(0, `\npush: ${sha.slice(0, 7)} is on ${TARGET} — now \`pnpm push --watch\``);
 const red = report(await watch(sha));
 say(red ? "\nwatch: red — this push is yours to fix" : "\nwatch: green");
 process.exit(red ? 1 : 0);

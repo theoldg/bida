@@ -37,9 +37,8 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   rebase kept their layout and dropped the line.
 
 - *2026-10-14* — "Missing password" in Brave, then "both buttons", then "after
-  i delete a group". I blamed Messenger first; "both buttons" pointed at the
-  one path they share, and the bug was ours, sitting in a rule borrowed from
-  the iOS icon. Read the shared path before the outside world.
+  i delete a group". I blamed Messenger; the bug was ours, in the path both
+  share. Then "it finished long ago": my own wait on the push hung, not it.
 
 - *2026-10-14* — "Add the identity choice in the handover", then two
   interruptions: the bug it lands on, then "reuse the mechanism from the ios

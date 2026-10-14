@@ -92,6 +92,23 @@ failure spills only the stages that failed and names the `pnpm run <stage>`
 that reproduces each alone. Nothing stops at the first failure, so one run
 tells you everything that is broken.
 
+### Watching a push
+
+Two calls in one response, so the turn can end while the run goes on:
+`pnpm push --no-watch` in the foreground — the bump, the hook and the push,
+under a minute — then the watch under the Monitor tool, whose lines wake you:
+
+```
+command: pnpm push --watch 2>&1 | grep --line-buffered '^watch:'
+timeout_ms: 1800000
+```
+
+`watch: green` is done. `watch: red` → `pnpm push --watch <sha>` in the
+foreground prints a finished run's failures at once (the filter drops them);
+a monitor expiring first is the same command under a new one. **Never wait on
+it yourself** — a foreground loop holds back every notice, and
+`pgrep -f "pnpm push"` matches its own command line forever.
+
 ## Unit tests
 
 `packages/core` gets real coverage; the bar is in

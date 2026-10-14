@@ -17,8 +17,10 @@ session` prints it), then the doc your task points at.
    choice ([standing-instructions](docs/standing-instructions.md#workflow)).
    No pull requests; `main` moves only by the owner's hand.
 2. **Push with `pnpm push` at every checkpoint.** It bumps the version, pushes
-   `HEAD:dev` and watches the run. Run it in the background and start the next
-   task once it prints `watch:` — and don't end a turn before then: a cloud
+   `HEAD:dev` and watches the run. Push in the foreground, watch under the
+   Monitor tool, exactly as [testing.md](docs/testing.md#watching-a-push)
+   gives it — never a wait of your own — and talk or work on while it runs; a
+   turn can end once the push lands, not before: a cloud
    session's stop check refuses a turn whose commits haven't reached GitHub. A newer push cancels a `verify` still running,
    since its own run covers both. Red is yours to fix; the session is done when
    the last push is green ([testing.md](docs/testing.md#where-each-check-runs)).
