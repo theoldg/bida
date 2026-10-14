@@ -185,8 +185,10 @@ export function LedgerSearch({ groupId, query, onQuery, listed = query }: {
   });
 
   return (
+    // Standing in the column follows the list, not the field: a frame ahead,
+    // the bar pushed the list down onto the foot of the head it was covering.
     <div className="searchdock" ref={dock} role="search"
-      data-held={held ? "" : undefined} data-searching={query ? "" : undefined}>
+      data-held={held ? "" : undefined} data-searching={listed ? "" : undefined}>
       <div className="searchclip">
         <div className="searchbar" ref={bar}>
           <label className="field">

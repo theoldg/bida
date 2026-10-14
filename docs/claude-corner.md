@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-14* — "Typing in the search bar flashes the you owe banner". An
+  hour lost reproducing it on a checkout 122 commits behind: the hook's report
+  had said so. Pull dev before the first read; the cause was in what came in.
+
 - *2026-10-14* — "Don't count the demo group's edits in the offline banner".
   One line, one fix; the check went offline in the demo first and read
   "16 changes waiting", so the passing run meant something.
@@ -83,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   paging and batching, then "and binary", which a probe of D1 priced at twenty
   times the CPU. An owner's design is a hypothesis too: measure it before
   building, and drop what loses out loud, mid-build, not in the summary.
-
-- *2026-10-13* — "Design the incremental balance calculation and measure
-  potential gains (with a temporary code hack…)", then "Do step 1 and 2". A
-  throwaway patch priced each piece before any was built, and the owner chose
-  from the table. The hack stays in the scratchpad, never in a commit.

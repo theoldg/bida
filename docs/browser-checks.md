@@ -323,9 +323,9 @@ again when let go of empty, but not when a drag is what let go; kept for the
 way back from a result and blank on a tap in; drawn where the list is put
 back from the first frame of a way back from an entry; and a list too short
 to scroll lent the room, again on the way back. The moves are **recorded frame by frame, not sampled** — a
-fling must draw the bar part-way, a cleared search must never — since each is
-over in a dozen frames. With the rate limit taken out, both fling assertions
-fail.
+fling must draw the bar part-way, a cleared search must never, a first letter
+must bare no head while a slowed list catches up — since each is over in a
+dozen frames. With the rate limit taken out, both fling assertions fail.
 
 ## Writing a check that holds
 

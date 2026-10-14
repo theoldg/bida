@@ -126,7 +126,8 @@ API is reached with `fetch`.
   best place a word was found, in that order, under lines drawn like date
   lines; within a section more words there comes first, then recency. The
   field answers each keystroke at once and the list follows when it can
-  (`useDeferredValue`), so a keystroke typed mid-search supersedes it. A
+  (`useDeferredValue`), so a keystroke typed mid-search supersedes it; the bar
+  stands in the column on the list's query, not the field's. A
   transfer's title is its two names and its note. A query is kept for the way
   back from a result and forgotten by any other arrival, like the ledger's
   position (`openingQuery`), and a way back draws the bar
@@ -232,3 +233,7 @@ figure-free.
   it to the DOM in a layout effect or a frame callback. A layout effect runs
   before its parent's and before a later sibling's ref is attached, so one
   reading either waits for the frame callback or finds the element in the DOM.
+- **Whatever moves with a deferred list must read the deferred value.** The
+  bar stood in the column on the field's query, a render ahead of the list it
+  sits over, and pushed the list down onto the you-owe card it had covered —
+  on a phone, for a frame or three each time a search began.

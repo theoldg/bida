@@ -244,8 +244,26 @@ for (const keys of [false, true]) {
 {
   await summon(page);
   await until(page, (s) => s.caret && s.top === s.base);
+  // The list follows the field a render late (`useDeferredValue`), and on a
+  // slow phone a frame or more late: nothing of the head may show meanwhile.
+  const cpu = await short.newCDPSession(page);
+  await cpu.send("Emulation.setCPUThrottlingRate", { rate: 6 });
+  await page.evaluate(() => {
+    window.__peeks = 0;
+    const tick = () => {
+      const head = document.querySelector(".mysum");
+      const foot = document.querySelector(".searchbar").getBoundingClientRect().bottom;
+      if (document.querySelector(".searchdock input").value && head?.checkVisibility()
+        && head.getBoundingClientRect().bottom > foot + 1) window.__peeks++;
+      window.__watch = requestAnimationFrame(tick);
+    };
+    tick();
+  });
   await field(page).fill("passage");
   let now = await until(page, (s) => s.labels.length === 1 && s.top === 0 && s.shown === 1);
+  const peeks = await page.evaluate(() => { cancelAnimationFrame(window.__watch); return window.__peeks; });
+  await cpu.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+  report(peeks === 0, "the first letter shows nothing of the head while the list catches up", `${peeks} frames with the you-owe card under the bar`);
   const hits = now.titles.length;
   report(hits > 0 && now.titles.every((t) => /passage/i.test(t)) && now.labels.length === 1,
     "typing narrows the rows, under one line saying where the word was found", say(now));
