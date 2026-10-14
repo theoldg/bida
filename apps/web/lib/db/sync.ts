@@ -568,7 +568,8 @@ async function runSyncAll(): Promise<void> {
   }
 }
 
-async function byRecency<T extends { groupId: string }>(keys: T[]): Promise<T[]> {
+/** The order `syncAll` starts groups in, newest change first; their requests then race. */
+export async function byRecency<T extends { groupId: string }>(keys: T[]): Promise<T[]> {
   const ops = db().ops;
   const newest = await Promise.all(keys.map(async (key) =>
     (await ops.where("[groupId+hlc]").between([key.groupId, ""], [key.groupId, "\uffff"]).last())?.hlc ?? ""));

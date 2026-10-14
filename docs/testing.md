@@ -177,3 +177,7 @@ total spend 963,14 · transfers theo→marie 105,62 · sam→marie 111,47 · ada
   run still committing and asked nothing. Await the run itself — `syncAll()`
   and `syncGroup()` are single-flight, so a second call joins the first — or
   `stubPage().parked` (`lib/db/page.test-helper.ts`).
+- **Requests started at once reach `fetch` in any order.** Each group first
+  derives its keys through `crypto.subtle`, on the thread pool, which finishes
+  them as it likes; one in six loaded runs asked the older group first. Assert
+  the order work starts in (`byRecency`), and only the set it arrives as.

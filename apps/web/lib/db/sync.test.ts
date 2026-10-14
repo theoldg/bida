@@ -5,7 +5,7 @@ import { formatHlc, createHlcState } from "@bida/core";
 import { addExpense, addMember, createGroup, forgetGroup, markEditsSeen, saveGroupKey } from "./commands";
 import { getDevice, updateDevice } from "./device";
 import {
-  IDLE_MS, SWEEP_MS, TICK_MS, groupOnScreen, planTick, pullWholeGroup, startSyncLoop, syncAll,
+  IDLE_MS, SWEEP_MS, TICK_MS, byRecency, groupOnScreen, planTick, pullWholeGroup, startSyncLoop, syncAll,
   pullProgress, syncGroup, watchPullProgress, type PullProgress,
 } from "./sync";
 import { VERSION } from "../version";
@@ -731,12 +731,33 @@ describe("syncAll", () => {
     expect(fetchMock).toHaveBeenCalled();
   });
 
-  it("asks for every group at once, the most recently changed first", async () => {
+  // A later millisecond: two writes in one tie on the wall clock, and the tie
+  // falls to their random node ids.
+  async function nextMs() {
+    const now = Date.now();
+    while (Date.now() <= now) await new Promise((r) => setTimeout(r, 1));
+  }
+
+  // The order requests *start* in, not the order they reach `fetch`: each first
+  // derives its group's keys on the thread pool, which finishes them in any order.
+  it("starts the most recently changed group first", async () => {
+    const made = [];
+    for (const name of ["Marrakech", "Lisbon", "Porto", "Fes"]) {
+      made.push(await createGroup({ name, baseCurrency: "EUR", myName: "Theo" }));
+      await nextMs();
+    }
+    // The oldest group, changed last: its newest op counts, not its birth.
+    const [first, ...rest] = made;
+    await addExpense(first!.groupId, first!.memberId, {
+      description: "Riad", occurredAt: 1, amountMinor: 100, currency: "EUR",
+      rateToBase: "1", paidBy: first!.memberId, split: { mode: "equal", members: [first!.memberId] },
+    });
+    const order = (await byRecency(await db().groupKeys.toArray())).map((k) => k.groupId);
+    expect(order).toEqual([first!.groupId, ...rest.reverse().map((g) => g.groupId)]);
+  });
+
+  it("asks for every group at once", async () => {
     const older = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
-    // A later millisecond: two groups made in one tie on the wall clock, and
-    // the tie falls to their random node ids.
-    const made = Date.now();
-    while (Date.now() <= made) await new Promise((r) => setTimeout(r, 1));
     const newer = await createGroup({ name: "Lisbon", baseCurrency: "EUR", myName: "Theo" });
     await db().ops.toCollection().modify({ pending: 0 });
     const asked: string[] = [];
@@ -757,7 +778,7 @@ describe("syncAll", () => {
 
     await syncAll();
 
-    expect(asked).toEqual([newer.groupId, older.groupId]);
+    expect([...asked].sort()).toEqual([newer.groupId, older.groupId].sort());
     expect(most).toBe(2);
   });
 
