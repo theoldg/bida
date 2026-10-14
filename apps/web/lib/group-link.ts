@@ -40,7 +40,7 @@ export interface CarriedGroup extends JoinLink {
 
 /**
  * Several groups in one fragment, `<id>.<secret>[.<member>]~…`, read only by
- * `/install` — an icon's launch, or the in-app browser's way out. A `/join` link stays one group and never names a member: it is
+ * `/install` and `/handover` (`useCarryIn`). A `/join` link stays one group and never names a member: it is
  * what people send each other.
  */
 export function formatInvites(links: readonly CarriedGroup[]): string {
@@ -126,11 +126,8 @@ export const route = {
   /** The phone's invites ride in the fragment: iOS writes the home-screen bookmark from this URL. */
   install: (links: readonly CarriedGroup[] = []) =>
     `/install${links.length ? `#${formatInvites(links)}` : ""}`,
-  /**
-   * The in-app browser's way out: the same carry, opened in a browser tab
-   * rather than an icon, landing in the first group.
-   */
-  handover: (links: readonly CarriedGroup[]) => `/install?handover#${formatInvites(links)}`,
+  /** The in-app browser's way out: the same carry, taken in by a browser tab. */
+  handover: (links: readonly CarriedGroup[]) => `/handover#${formatInvites(links)}`,
   import: () => "/import",
   importPlan: () => "/import/plan",
   /** Linked from nowhere on purpose: the URL is the whole door. */

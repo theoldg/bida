@@ -262,7 +262,8 @@ const watchFrames = (page, run) => page.addInitScript((run) => {
     if (document.body) {
       count("frames");
       const install = location.pathname === "/install";
-      if (install && [...document.querySelectorAll(".ownframe")].some(shown)) count("tutorial");
+      const carrying = install || location.pathname === "/handover";
+      if (carrying && [...document.querySelectorAll(".ownframe")].some(shown)) count("tutorial");
       // Not while the document is still parsing: a starved machine paints a
       // frame before the parser reaches the app, which no phone keeps on screen.
       if (document.readyState !== "loading" && ![...document.querySelectorAll(".app .topbar")].some(shown)) {
@@ -418,7 +419,7 @@ await droidPage.getByText(`${BANNER} Messenger’s browser.`).click()
 const intentOf = () => droidPage.getByRole("link", { name: "Open in browser" }).getAttribute("href")
   .catch(() => null);
 const host_ = new URL(base).host;
-const carriedOut = `/install?handover${fragment}.m-bo`;
+const carriedOut = `/handover${fragment}.m-bo`;
 report(await intentOf() === `intent://${host_}${carriedOut}#Intent;scheme=http;end`,
   "on Android it unfolds to a link out, carrying the key and who this phone is in front of the intent",
   await intentOf());
@@ -428,6 +429,7 @@ await droid.close();
 // The browser it opens in takes the carry as an icon launch does, and lands in the group.
 const chrome = await newPhone(browser);
 const chromePage = await chrome.newPage();
+await watchFrames(chromePage, "handover");
 await chromePage.goto(`${base}${carriedOut}`);
 await chromePage.waitForURL((url) => url.pathname === "/g", { timeout: PATIENCE }).catch(() => {});
 report(new URL(chromePage.url()).pathname === "/g"
@@ -435,6 +437,9 @@ report(new URL(chromePage.url()).pathname === "/g"
   && (await namesHeld(chromePage))[groupId] === "m-bo",
   "and the browser it opens holds the key, is already that member, and opens the group",
   chromePage.url());
+const handoverFrames = await framesSeen(chromePage, "handover");
+report(handoverFrames.frames > 0 && handoverFrames.tutorial === 0 && handoverFrames.blank === 0,
+  "wearing \"Joining…\" from the first frame, never the iOS tutorial", JSON.stringify(handoverFrames));
 await chrome.close();
 
 // A false positive tells a real browser nothing is kept, so prove the lookalikes.

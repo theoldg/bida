@@ -284,10 +284,11 @@ storage nothing comes back to. Wording is in `copy.embedded`.
 `intent:` link the system hands to the default browser (`intentLink`): Android
 reads the intent from the last `#`, so the page's own fragment rides in front
 of it, never reaching a server. What rides there is an icon launch's carry,
-`/install?handover#…` (`route.handover`): every key the webview holds and who
-it is in each, the screen's group first. The tab it opens takes them as an
-icon would (`launchPlan`) and opens that group, nobody asked "Which one are
-you?" twice. The address alone won't do — past the join it holds only the id,
+`/handover#…` (`route.handover`): every key the webview holds and who it is in
+each, the screen's group first. The tab it opens takes them as an icon would
+(`useCarryIn`) and opens that group, nobody asked "Which one are you?" twice —
+from a route of its own, since `/install`'s export is the tutorial, which
+painted before any script and could stay. The address alone won't do — past the join it holds only the id,
 and landed on "missing its password" — so the link waits for the keys' read. iOS has no such link — no page can open Safari — so the fold names
 the button instead: tap ⋯, then *Open in Safari*.
 
