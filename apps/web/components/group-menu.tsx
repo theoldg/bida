@@ -44,7 +44,10 @@ export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData 
   const actions: SheetAction[] = [
     ...group.copyLink,
     { label: copy.group.people, icon: "users", onSelect: () => router.push(route.members(groupId)) },
-    { label: copy.group.search.menu, icon: "search", onSelect: summonLedgerSearch },
+    // An empty ledger has nothing to find, and no first row to glide under the bar.
+    ...(data.expenses.length + data.settlements.length > 0
+      ? [{ label: copy.group.search.menu, icon: "search", onSelect: summonLedgerSearch } as const]
+      : []),
     { label: copy.group.export, icon: "share", onSelect: () => void exportData() },
     // The phone's, not the group's: the same screen the groups list opens.
     { label: copy.groups.settings, icon: "sliders", onSelect: () => router.push(route.settings()) },

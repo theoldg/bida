@@ -201,6 +201,45 @@ await page.waitForSelector(".skelveil", { state: "detached" });
   report(partWay(seen) > 0, "as the scroll's: it leaves part by part", `${partWay(seen)} frames part-way of ${seen.length}`);
 }
 
+// ---- 2b. the caret taken half-way, and the menu opened over it -----------
+// The menu takes the caret, and must not be closed by the list moving for it,
+// nor hand the caret back on its way out: each would raise the keyboard again.
+for (const keys of [false, true]) {
+  const how = keys ? "with the keyboard up" : "with the keyboard down";
+  const { base: at, height } = await read(page);
+  await scrollTo(page, at - height / 2);
+  await until(page, (s) => s.shown === 0.5);
+  await field(page).focus();
+  const caught = await until(page, (s) => s.caret && s.top === s.base && s.shown === 1);
+  report(caught.top === caught.base && caught.shown === 1, `the caret in a half-out bar glides the list to the base state, ${how}`, say(caught));
+  if (keys) {
+    await page.evaluate(() => {
+      Object.defineProperty(window.visualViewport, "height", { configurable: true, get: () => window.innerHeight - 336 });
+      window.visualViewport.dispatchEvent(new Event("resize"));
+    });
+    await page.waitForFunction(() => document.documentElement.hasAttribute("data-kb"), null, { timeout: PATIENCE });
+  }
+  const left = await read(page);
+  await page.locator(".topbar .iconbtn[aria-haspopup='menu']").click();
+  await settle(page, 700);
+  let now = await read(page);
+  const open = await page.locator("[role=menu]").isVisible();
+  report(open && now.top === left.top && !now.caret,
+    `the group menu opened over the caret stays open, and the list stays put, ${how}`, `open ${open}, ${say(now)}`);
+  await page.keyboard.press("Escape");
+  await settle(page, 300);
+  now = await read(page);
+  report(!now.caret && now.top === left.top, `closed, it leaves the caret out of the field, ${how}`, say(now));
+  if (keys) {
+    await page.evaluate(() => {
+      delete window.visualViewport.height;
+      window.visualViewport.dispatchEvent(new Event("resize"));
+    });
+  }
+  await scrollTo(page, 0);
+  await until(page, (s) => !s.on);
+}
+
 // ---- 3. a search, cleared -------------------------------------------------
 {
   await summon(page);
@@ -320,6 +359,11 @@ await short.close();
   const tall = await ctx.newPage();
   tall.on("pageerror", (e) => report(false, "uncaught page error", e.message));
   await newGroup(tall, base, { name: "Trip", me: "Ana", members: ["Bo"] });
+  await tall.locator(".topbar .iconbtn[aria-haspopup='menu']").click();
+  await tall.locator("[role=menu]").waitFor();
+  const offered = await tall.locator(".rowmenu-item:has(use[href='#i-search'])").count();
+  report(offered === 0, "an empty group's menu offers no search", `${offered} search rows`);
+  await tall.keyboard.press("Escape");
   // One row: an empty ledger has no first row to bring to the bar's foot.
   await tall.locator("a.fab:not(.fab-2)").click();
   await tall.locator("input.amount").fill("12");

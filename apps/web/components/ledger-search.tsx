@@ -129,6 +129,7 @@ export function LedgerSearch({ groupId, query, onQuery, listed = query }: {
 
   const driving = useRef(false);
   const pressed = useRef(0);
+  const holding = useRef(false);
   useEffect(() => {
     const box = scroller();
     if (!box) return;
@@ -141,20 +142,28 @@ export function LedgerSearch({ groupId, query, onQuery, listed = query }: {
     const press = (e: PointerEvent) => {
       if (e.target instanceof Element && e.target.closest("a, button")) pressed.current = Date.now();
     };
+    // A press anywhere still down: the menu it opens would be closed by the glide.
+    const hold = (e: PointerEvent) => {
+      holding.current = e.type === "pointerdown" && e.target instanceof Element && e.target.closest("a, button") !== null;
+    };
     box.addEventListener("touchmove", drive, { passive: true });
     box.addEventListener("wheel", drive, { passive: true });
     box.addEventListener("pointerdown", press, { passive: true });
+    const edges = ["pointerdown", "pointerup", "pointercancel"] as const;
+    for (const type of edges) document.addEventListener(type, hold, { capture: true, passive: true });
     return () => {
       box.removeEventListener("touchmove", drive);
       box.removeEventListener("wheel", drive);
       box.removeEventListener("pointerdown", press);
+      for (const type of edges) document.removeEventListener(type, hold, { capture: true });
     };
   }, []);
 
-  const letGo = () => {
+  const letGo = (e: React.FocusEvent) => {
     setFocused(false);
     const box = scroller();
-    if (!box || query !== "" || driving.current || Date.now() - pressed.current < PRESS_MS) return;
+    // The caret taken by something else — a menu's first item — was taken, not let go of.
+    if (!box || query !== "" || driving.current || holding.current || e.relatedTarget || Date.now() - pressed.current < PRESS_MS) return;
     if (box.scrollTop === 0 || box.scrollTop > base(box) + 1) return;
     glideTo(box, 0);
   };
@@ -186,7 +195,13 @@ export function LedgerSearch({ groupId, query, onQuery, listed = query }: {
               placeholder={copy.group.search.field} aria-label={copy.group.search.field}
               inputMode="search" enterKeyHint="search" autoCapitalize="none" autoCorrect="off"
               autoComplete="off" spellCheck={false}
-              onFocus={() => { stopGlide(); setFocused(true); }} onBlur={letGo}
+              onFocus={(e) => {
+                stopGlide();
+                setFocused(true);
+                // Taken from a bar the scroll has only part out: the rest of the way, as the menu's.
+                const box = scroller();
+                if (box && e.currentTarget.value === "" && box.scrollTop < base(box) - 1) glideTo(box, base(box));
+              }} onBlur={letGo}
               onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) e.currentTarget.blur(); }} />
             {query ? (
               <button type="button" className="searchclear" aria-label={copy.group.search.clear}

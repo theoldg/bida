@@ -110,12 +110,16 @@ API is reached with `fetch`.
   pixel the rows travel over the last bar's height before the base state —
   no faster than the whole bar in 180ms, so a fling gets a slide — and
   **Search** in the group menu, which puts the caret in it and glides the list
-  to the base state (`summonLedgerSearch`). The
+  to the base state (`summonLedgerSearch`); the caret put in a bar the scroll
+  has only part out glides there too. An empty ledger's menu has no Search:
+  there is no first row to bring under the bar. The
   search's *base state* is the whole ledger with its first row directly under
   the bar, which is also where clearing a search returns (`searchBase`; a list
   too short to scroll there is lent the room once the bar is out, until it is back at its head). The
   caret pins nothing: a drag on the list lets go of the field, and let go of
-  empty any other way at the base state, the list glides back to its head. Every word
+  empty any other way at the base state, the list glides back to its head —
+  unless something took the caret (a menu's first item) or a press is still
+  down, since that glide is a scroll and a scroll closes the menu it opened. Every word
   typed must be found somewhere on a row (`searchLedger`, lib/ledger.ts): in
   its title, its payers or its participants; as the whole of its currency or
   kind; or as a number in either of its figures. Results are sectioned by the

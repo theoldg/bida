@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FlipCheck, Icon, type IconName } from "./icons";
 import { clickGuard } from "../lib/click-guard";
 import { note, tracePress } from "../lib/press-trace";
+import { isTyping } from "../lib/viewport";
 
 /** A working click comes ~5ms after the lift, so this is only spent on a press that brings none. */
 const CLICK_GRACE_MS = 150;
@@ -65,7 +66,8 @@ export function RowMenu({ anchor, actions, onClose }: {
   // Tab act on the page behind.
   const opener = useRef<Element | null>(null);
   useEffect(() => {
-    opener.current = document.activeElement;
+    // Never a field: given back, it would raise the keyboard this put down.
+    opener.current = isTyping(document.activeElement) ? null : document.activeElement;
     return () => {
       const back = opener.current;
       // The action may have unmounted the row, or opened a dialog that takes focus after this —

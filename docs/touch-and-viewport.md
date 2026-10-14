@@ -157,4 +157,4 @@ fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
   (`MenuButton`) — it was opened from and cannot be one, so it does that by hand: it focuses its first item once it
   has been positioned — a `visibility: hidden` element cannot take focus, and
   `preventScroll`, because a scroll is what closes it — and hands focus back to
-  the row on the way out.
+  the row on the way out, though never to a field, whose keyboard it put down.
