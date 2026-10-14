@@ -5,13 +5,14 @@
  * What is found is `searchLedger`'s, and unit-tested (`lib/ledger.test.ts`).
  * This is the other half, which no unit test reaches: where the bar is, and
  * where the list is put under it (components/ledger-search.tsx) — away at the
- * head, out with the scroll a pixel for a pixel, standing in the column over
+ * head, out with the scroll a pixel for a pixel, out whole from the group
+ * menu with the list glided to the base state, standing in the column over
  * results, back at the base state when cleared, and away again when let go of.
  *
  * Every wait is on the state itself — the scroller's offset, how much of the
  * bar is drawn — since each move is a glide or a slide on the app's own clock.
  */
-import { onePhone, newPhone, openDemo, PATIENCE, settle } from "../lib/harness.mjs";
+import { onePhone, newPhone, newGroup, openDemo, PATIENCE, settle } from "../lib/harness.mjs";
 
 const { base, close, browser, report, finish } = await onePhone();
 
@@ -129,12 +130,10 @@ const partWay = (seen) => seen.filter((v) => v > 0.02 && v < 0.98).length;
 
 const scrollTo = (page, y) => page.evaluate((to) => { document.querySelector(".scroll").scrollTop = to; }, y);
 const field = (page) => page.locator(".searchbar input");
-/** The only way in: scrolled out at the base state, and the caret put in it. */
 const summon = async (page) => {
-  const { base: at } = await read(page);
-  await scrollTo(page, at);
-  await until(page, (s) => s.shown === 1 && s.top === at);
-  await field(page).focus();
+  await page.locator(".topbar .iconbtn[aria-haspopup='menu']").click();
+  // By its icon: the word is copy's to change.
+  await page.locator(".rowmenu-item:has(use[href='#i-search'])").click();
 };
 const say = (state) => JSON.stringify(state);
 
@@ -183,19 +182,22 @@ await page.waitForSelector(".skelveil", { state: "detached" });
   report(partWay(seen) > 0, "and it slides away behind a fling back", `${partWay(seen)} frames part-way of ${seen.length}`);
 }
 
-// ---- 2. the caret, and letting go -----------------------------------------
+// ---- 2. the menu's door, and letting go -----------------------------------
 {
+  await watch(page);
   await summon(page);
   let now = await until(page, (s) => s.caret && s.top === s.base && s.shown === 1);
   report(now.caret && now.top === now.base && now.top > 0 && now.shown === 1 && now.gap === 0,
-    "the caret in the bar at the base state holds it out whole", say(now));
+    "Search in the menu puts the caret in the bar and glides the list to the base state", say(now));
+  let seen = await watched(page);
+  report(partWay(seen) > 0, "the bar eases out for it", `${partWay(seen)} frames part-way of ${seen.length}`);
 
   // The confirm key lets go; empty at the base state, the list goes home.
   await watch(page);
   await page.keyboard.press("Enter");
   now = await until(page, (s) => s.top === 0 && !s.on);
   report(now.top === 0 && !now.on && !now.caret, "let go of empty, the list glides back to its head and the bar goes with it", say(now));
-  const seen = await watched(page);
+  seen = await watched(page);
   report(partWay(seen) > 0, "as the scroll's: it leaves part by part", `${partWay(seen)} frames part-way of ${seen.length}`);
 }
 
@@ -311,6 +313,32 @@ await page.waitForSelector(".skelveil", { state: "detached" });
   report(now.query === "" && now.head, "and back from an entry opened there, it is still blank", say(now));
 }
 await short.close();
+
+// ---- 7. a list too short to scroll ----------------------------------------
+{
+  const ctx = await newPhone(browser);
+  const tall = await ctx.newPage();
+  tall.on("pageerror", (e) => report(false, "uncaught page error", e.message));
+  await newGroup(tall, base, { name: "Trip", me: "Ana", members: ["Bo"] });
+  // One row: an empty ledger has no first row to bring to the bar's foot.
+  await tall.locator("a.fab:not(.fab-2)").click();
+  await tall.locator("input.amount").fill("12");
+  await tall.locator("#what").fill("Taxi");
+  await tall.getByRole("button", { name: "Save" }).click();
+  await tall.waitForURL(/\/g\?id=/);
+  await tall.waitForSelector(".rows a.row");
+  // The saved row's wash is the list's to finish first.
+  await tall.waitForFunction(() => !document.querySelector(".rows .saved"), null, { timeout: PATIENCE });
+  await tall.waitForSelector(".skelveil", { state: "detached" });
+  await summon(tall);
+  let now = await until(tall, (s) => s.caret && s.top === s.base && s.top > 0 && s.shown === 1);
+  report(now.caret && now.top === now.base && now.top > 0 && now.room && now.shown === 1,
+    "a list too short to scroll is lent the room to reach the base state", say(now));
+  await tall.keyboard.press("Enter");
+  now = await until(tall, (s) => s.top === 0 && !s.on && !s.room);
+  report(now.top === 0 && !now.on && !now.room, "and gives it back once it is at its head with the bar away", say(now));
+  await ctx.close();
+}
 
 await browser.close();
 close();

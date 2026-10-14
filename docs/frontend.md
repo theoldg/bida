@@ -106,9 +106,11 @@ API is reached with `fetch`.
 `components/ledger-search.tsx` is a bar under the
   top bar, placed by one rule: held — the caret in it, or a query typed — it
   is out whole, and otherwise it is where the scroll puts it (`shownAt`,
-  lib/ledger-search.ts). One door brings it out: the scroll, a pixel of it for each
+  lib/ledger-search.ts). Two doors bring it out: the scroll, a pixel of it for each
   pixel the rows travel over the last bar's height before the base state —
-  no faster than the whole bar in 180ms, so a fling gets a slide. The
+  no faster than the whole bar in 180ms, so a fling gets a slide — and
+  **Search** in the group menu, which puts the caret in it and glides the list
+  to the base state (`summonLedgerSearch`). The
   search's *base state* is the whole ledger with its first row directly under
   the bar, which is also where clearing a search returns (`searchBase`; a list
   too short to scroll there is lent the room once the bar is out, until it is back at its head). The

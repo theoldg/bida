@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-14* — "Add the search row back … dig it up from the history." The
+  commit that took it out also cut its browser check, down to the glide it
+  asserted; restoring the check with the code is half of digging it up.
+
 - *2026-10-14* — "Wdyt, what does this involve?", then one line closing the
   two risks I raised. The answer named a doc it reversed and a test passing
   for the wrong reason; proving that test failed without the rule mattered
@@ -85,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   calling one sync test a timing flake. Six suites at once failed it, and
   four more with the same sleep; alone it never did. Load first, then read
   what each wait was standing in for.
-
-- *2026-10-12* — "The animation feels a bit slow/janky". The six-row demo
-  played smoothly at any throttle; four hundred rows at 4× played the fold in
-  four frames. Jank is a size: seed a ledger as big as a real one before
-  judging a motion smooth.

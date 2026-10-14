@@ -636,6 +636,8 @@ const en = {
     search: {
       field: "Search",
       clear: "Clear search",
+      /** The group menu's row, which brings the bar out wherever the list is. */
+      menu: "Search",
       by: {
         title: "by title", payer: "by payer", participant: "by participant",
         currency: "by currency", kind: "by kind", amount: "by amount",

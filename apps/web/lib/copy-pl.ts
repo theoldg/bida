@@ -464,6 +464,7 @@ export const pl: Copy = {
     search: {
       field: "Szukaj",
       clear: "Wyczyść wyszukiwanie",
+      menu: "Szukaj",
       by: {
         title: "w tytule",
         payer: "wśród płacących",

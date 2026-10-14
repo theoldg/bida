@@ -2,6 +2,7 @@
 // Doc: docs/frontend.md#the-ledgers-search
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { copy } from "@/lib/copy";
 import { yieldPosition } from "@/lib/ledger-position";
 import { keepQuery, openingQuery, shownAt } from "@/lib/ledger-search";
@@ -36,6 +37,14 @@ function searchBase(box: HTMLElement, bar: number): number {
 const REVEAL_MS = 180;
 
 const PRESS_MS = 700;
+
+/** The mounted bar's way in from the group menu. */
+let summon: (() => void) | null = null;
+
+/** The group menu's **Search**: the caret in the bar, and the list glided to the base state. */
+export function summonLedgerSearch(): void {
+  summon?.();
+}
 
 export function LedgerSearch({ groupId, query, onQuery, listed = query }: {
   groupId: string;
@@ -149,6 +158,22 @@ export function LedgerSearch({ groupId, query, onQuery, listed = query }: {
     if (box.scrollTop === 0 || box.scrollTop > base(box) + 1) return;
     glideTo(box, 0);
   };
+
+  useEffect(() => {
+    summon = () => {
+      const box = scroller();
+      const input = field.current;
+      if (!box || !input) return;
+      // Out before the caret: away, the bar is not drawn and can't hold one.
+      // And all of it in the tap's own turn, or iOS keeps its keyboard down.
+      flushSync(() => setFocused(true));
+      input.focus({ preventScroll: true });
+      if (document.activeElement !== input) { setFocused(false); return; }
+      // Over a search already up, its results are where they should be.
+      if (input.value === "") glideTo(box, base(box));
+    };
+    return () => { summon = null; };
+  });
 
   return (
     <div className="searchdock" ref={dock} role="search"

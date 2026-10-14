@@ -27,7 +27,7 @@ expenses you'd looked at rather than climbing out.
   pressed into from it** — the balances (`/g/balances`) from the "you owe" card
   at its head, History from a clock beside the menu (`components/history-button.tsx`,
   standing alone because its dot is how the ledger says what changed elsewhere),
-  and the invite link, People, Export, Settings and "Forget group" from one
+  and the invite link, People, Search, Export, Settings and "Forget group" from one
   top-bar menu (`components/group-menu.tsx`). Three icons is the ceiling for a
   top bar and the group outgrew it. **Settings is the phone's, not the
   group's** — one screen from both kebabs: light/dark, how much it is
