@@ -24,10 +24,15 @@ export function formatJoinLink(link: JoinLink, origin?: string): string {
   return `${base}/join#${link.groupId}.${link.secret}`;
 }
 
-/** A whole URL or just the fragment; null on anything unexpected. */
+/**
+ * A whole URL or just the fragment; null on anything unexpected. **Fields past
+ * the ones read here are ignored, never refused**, here and in `parseInvites`:
+ * a link outlives the build that wrote it, and a phone still running an older
+ * build from its cache must open whatever a newer one sends (docs/pwa.md).
+ */
 export function parseJoinLink(input: string): JoinLink | null {
-  const [groupId, secret, ...rest] = fragmentOf(input).split(".");
-  return rest.length === 0 && isToken(groupId) && isToken(secret) ? { groupId, secret } : null;
+  const [groupId, secret] = fragmentOf(input).split(".");
+  return isToken(groupId) && isToken(secret) ? { groupId, secret } : null;
 }
 
 /**
@@ -55,7 +60,7 @@ export function formatInvites(links: readonly CarriedGroup[]): string {
  */
 export function handoverFrom(path: string, hash: string): string | undefined {
   if (/^\/(join|install|handover)(\.html)?$/.test(path)) return undefined;
-  const group = "[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)?";
+  const group = "[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)+";
   return new RegExp(`^#${group}(~${group})*$`).test(hash) ? `/handover${hash}` : undefined;
 }
 
@@ -64,8 +69,8 @@ export const handoverScript = `try{var h=(${handoverFrom})(location.pathname,loc
 /** Malformed groups drop out. */
 export function parseInvites(input: string): CarriedGroup[] {
   return fragmentOf(input).split("~").flatMap((part): CarriedGroup[] => {
-    const [groupId, secret, me, ...rest] = part.split(".");
-    if (rest.length || !isToken(groupId) || !isToken(secret) || (me !== undefined && !isToken(me))) return [];
+    const [groupId, secret, me] = part.split(".");
+    if (!isToken(groupId) || !isToken(secret) || (me !== undefined && !isToken(me))) return [];
     return [{ groupId, secret, ...(me ? { me } : {}) }];
   });
 }

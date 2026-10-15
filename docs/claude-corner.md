@@ -31,10 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
-- *2026-10-15* — "Should we try the x-safari thingy?", then "propose a design
-  before shipping", then four rounds on screenshots, two interrupting a tool
-  call mid-flight. The stop hook wanted a push the owner hadn't approved: a
-  stash kept both. Ship was its own message.
+- *2026-10-15* — "Plenty of bugs … what kind of a mess is this?", after six
+  commits in two days on one escape hatch. Three symptoms, one cause: a step
+  kept in memory, lost to the full load a deploy forces. Forcing every tap to
+  be one reproduced all three in a single check before any fix.
 
 - *2026-10-14* — "Match the “open in browser” button's style to the install
   banner", landing as another session centred it. Both were `btn btn-s`; one

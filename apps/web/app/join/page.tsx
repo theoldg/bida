@@ -10,7 +10,6 @@ import { db } from "@/lib/db/dexie";
 import { useLive } from "@/lib/db/live";
 import { syncGroup } from "@/lib/db/sync";
 import { useDevice, usePullPercent, useSyncHealth } from "@/lib/hooks";
-import { handOverToGroup } from "@/lib/launch";
 import { copy } from "@/lib/copy";
 import { isKeylessFragment, parseJoinLink, route } from "@/lib/group-link";
 
@@ -42,7 +41,7 @@ function JoinScreen() {
     let cancelled = false;
     setKeySaved(false);
     setSlow(false);
-    router.prefetch(route.groups());
+    router.prefetch(route.group(link.groupId));
     router.prefetch(route.claim(link.groupId));
     (async () => {
       await saveGroupKey(link.groupId, link.secret);
@@ -73,10 +72,12 @@ function JoinScreen() {
   const gone = device?.deletedGroups?.includes(link?.groupId ?? "") ?? false;
   const claimed = link && device ? !!device.meByGroup[link.groupId] : undefined;
 
+  // Straight to the screen, by address: a full load on the way — the first tap
+  // after a deploy is one — lands on it all the same. Back from it climbs to
+  // the list (`settleFloor`, lib/back-button.ts), which is never visited.
   useEffect(() => {
     if (!link || !group || claimed === undefined) return;
-    handOverToGroup(link.groupId, { claim: !claimed });
-    router.replace(route.groups());
+    router.replace(claimed ? route.group(link.groupId) : route.claim(link.groupId));
   }, [link, group, claimed, router]);
 
   if (link === null && keyless) {

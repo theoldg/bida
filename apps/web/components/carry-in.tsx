@@ -10,7 +10,7 @@ import { syncGroup } from "../lib/db/sync";
 import { keepNote } from "../lib/diag";
 import { markLaunched } from "../lib/first-frame";
 import { formatJoinLink, route, type CarriedGroup } from "../lib/group-link";
-import { handOverToGroup, launchPlan, launchedOnto } from "../lib/launch";
+import { launchPlan, launchedOnto } from "../lib/launch";
 
 /**
  * Groups carried in from another storage, and who that one was in each, taken
@@ -20,7 +20,7 @@ import { handOverToGroup, launchPlan, launchedOnto } from "../lib/launch";
  * op riding the next push.
  *
  * A launch reopens the last group, and a spent fragment is still a launch, so
- * **`lib/launch.ts` answers it, not this hook**. A `handover` instead lands in
+ * **`lib/launch.ts` answers it, not this hook**. A `handover` instead goes to
  * the group it was opened from, the first carried.
  *
  * **Nothing here un-forgets**: `saveGroupKey` would undo a `forgetGroup`, and
@@ -60,8 +60,10 @@ export function useCarryIn(invites: CarriedGroup[] | undefined, { handover = fal
         for (const invite of [...plan.fresh, ...plan.naming]) syncGroup(invite.groupId).catch(() => {});
       }
       if (cancelled) return;
-      if (handover && first) handOverToGroup(first.groupId);
-      else launchedOnto();
+      // A handover goes straight to its group by address, so a full load on the
+      // way still lands there; `useClaimGate` asks anyone it didn't name.
+      if (handover && first) { router.replace(route.group(first.groupId)); return; }
+      launchedOnto();
       router.replace(route.groups());
     })();
     return () => { cancelled = true; };

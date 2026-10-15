@@ -188,6 +188,13 @@ The assertion worth having is the quiet one: `groupKeys` stays empty
 change that would start pushing tourists into a D1 that gets no further resets,
 and nothing else would notice, because the demo would carry on looking perfect.
 
+## `pnpm verify join` — every way in, across a full load
+
+Every way into a group, on the real Worker, with **every in-app tap a full
+page load**, as the first tap after a deploy is: a newcomer's invite, the same
+invite from a phone last in another group, and an in-app browser's way out by
+address and by copied link — each on its screen, asking "who are you" once.
+
 ## `pnpm verify homescreen` — the invite that rides onto the home screen
 
 One step of this cannot be checked anywhere but an iPhone: which URL WebKit
@@ -196,8 +203,8 @@ writes into the bookmark when someone taps Add to Home Screen
 that step can be, and all of it looks fine in jsdom — so the check wears an
 iPhone's user agent and drives both ends.
 
-The tab end: a join that is not stopped to ask about installing; no page's
-HTML carrying a manifest; the banner — on the groups list, and at a ledger's head — the first landing on a `/install` whose
+The tab end: a join not stopped to ask about installing; no page's HTML
+carrying a manifest; the banner — on the list and a ledger — landing on a `/install` whose
 fragment is every group the tab holds and who it is in each, the top of the
 list first; the claim list's "Have the app?" card holding the group's link;
 every page's head — `/`, a group, its members, not only the tutorial — holding
@@ -206,24 +213,18 @@ groups and whose URLs are all absolute (a blob has no base to resolve a
 relative one against); and a browser that installs by itself — Android — given
 the one static manifest.
 
-It also asks Chromium's own install machinery what it would take, over CDP's
-`Page.getAppManifest` — the same question Safari asks WebKit when the share
-sheet opens, and it is answered from the DOM as it stands rather than from what
-was in the head at load. Chromium is not WebKit and cannot say what iOS
-bookmarks, but it is a second implementation of the same parse and the only one
-that can be run here. A deliberately relative `start_url` follows, and must come
-back refused: every URL in a blob manifest has to be absolute, because a blob
-has no base to resolve against, and that is the one mistake this approach
-invites — without that control the green above would mean nothing.
+It also asks Chromium's install machinery over CDP's `Page.getAppManifest` —
+a second implementation of the parse WebKit runs, if not WebKit — and a
+deliberately relative `start_url` must come back refused, the one mistake a
+blob manifest invites, or the green above would mean nothing.
 
 **A head that predates a change** is checked as a pair, because the reload that
 mends it is gated on the shell being precached ([ios.md](ios.md#a-in-detail)):
 a warm phone's stale head is mended by a row tap on the list, and a phone with
 no service worker at all — a first visit, mid-precache — keeps its stale head
-through the same tap. Both count document requests, and the move is a row tap
-rather than the back arrow on purpose: the arrow *traverses* (`lib/nav.ts`),
-and a cross-document traversal rebuilds the head by itself, which would pass
-with the reload switched off.
+through the same tap. Both count document requests after a row tap, not the
+back arrow: a cross-document traversal rebuilds the head by itself, which would
+pass with the reload switched off.
 
 The app end (`asInstalledApp`): a launch on one invite nobody has named hands
 it to `/join`; a launch whose secrets are already on the phone doesn't — the
@@ -239,13 +240,11 @@ first: none may show the tutorial (`/install` is its route too), no screen at
 all, or a pressable control while `/install` stands in; the newcomer and the
 reopen never show the list either.
 
-**The in-app browser**, last: a webview joins under a banner naming the app,
-unfolding to the button to press and the link to paste as text (iOS) or an
-`intent:` link (Android), each carrying its groups and who it is in each, which a tab opens straight into. Then the half that matters more: the
-home-screen app, Brave and DuckDuckGo each draw *no* banner
-([ios.md](ios.md#the-in-app-browser--a-one-off-visit)).
-
-It needs no server beyond the static export: what it asserts is which URL each end reaches.
+**The in-app browser**, last: a banner naming the app, unfolding to the link
+to paste (iOS) or an `intent:` link (Android), each carrying its groups and
+who it is in each — and *no* banner in the home-screen app, Brave or DuckDuckGo
+([ios.md](ios.md#the-in-app-browser--a-one-off-visit)). No server beyond the
+static export: what it asserts is which URL each end reaches.
 
 ## `pnpm verify offline` — the built app with the network cut
 
@@ -253,7 +252,8 @@ An offline-first data layer is not enough: if the precache misses the payloads
 Next fetches on every tap, a phone with no signal gets a wall of
 `1:"$Sreact.fragment"`. So this seeds a group online, lets the service worker
 install, pulls the plug, and walks every screen, saving an expense on the way
-([pwa.md](pwa.md)). Then the deploys, on levers the server holds: one arriving
+([pwa.md](pwa.md)) — before the plug, an invite's page must come from the
+server and not the cache, and after it, from the cache. Then the deploys, on levers the server holds: one arriving
 over a dying signal with an asset missing must fail to install rather than
 activate with holes; one arriving by itself is taken at once only by a page
 untouched on the groups list — a page in use is offered the reload, an

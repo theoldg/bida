@@ -7,9 +7,8 @@ import { WriteBusy } from "./scan-bar";
 
 /**
  * The one frame a first join shows from the link to "Which one are you?".
- * `/join` draws it, then the groups list while it pushes the group, then
- * `/g/claim` while its read answers — three routes, one screen, rather than a
- * waiting screen, the list's skeletons, the ledger's and then the question.
+ * `/join` draws it, then `/g/claim` while its read answers — two routes, one
+ * screen, rather than a waiting screen, a skeleton and then the question.
  *
  * The app's name, not "Join a group": this is where a stranger meets bida.
  *

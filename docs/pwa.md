@@ -83,7 +83,13 @@ nothing else in the export ends in `.txt` — so a real `.txt` asset would need 
 carve-out in both.
 
 Everything precached is served cache-first, so a launch and every tap after it
-paint without waiting on the network. The list and the cache name are stamped in
+paint without waiting on the network — **except the two pages a link from
+outside opens**, `/join` and `/handover`, which are fetched fresh while online
+and taken from the cache only when that fails (`FROM_OUTSIDE`). A phone runs
+whatever build it last cached, and a link can be newer than that: a build from
+before `/handover` opened an in-app browser's way out as a group with no key.
+Their readers also ignore fields they don't know (`parseJoinLink`), so the
+offline fallback opens a newer link too. The list and the cache name are stamped in
 after the build by `apps/web/scripts/precache.mjs` — nothing to drift, no
 `CACHE_VERSION` to bump. A new build copies each `/_next/static/` file an
 earlier one already cached (the name is the content) and fetches only the rest:

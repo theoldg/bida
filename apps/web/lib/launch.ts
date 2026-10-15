@@ -16,25 +16,18 @@ import type { CarriedGroup } from "./group-link";
  */
 
 /**
- * What brought the app to the list, spent on the first decision:
- *
- * - **A group handed over** by `/join`: the router folds two calls in one tick
- *   into the last, so `/join` goes back and the list *pushes* the group.
- * - **A launch** from `/install`, the iOS icon's `start_url`.
- * - **Nothing**, and the browser is asked instead (`isLaunch`).
+ * A launch from `/install`, the iOS icon's `start_url`, spent on the first
+ * decision; otherwise the browser is asked (`isLaunch`), which a full load onto
+ * the list answers the same way, so losing this costs nothing. **Nothing else is
+ * handed to the list in memory**: a full load between two screens — the first
+ * tap after a deploy is one — would drop it, so `/join` and `/handover` go
+ * straight to the group by address instead.
  */
-let arrival: { kind: "group"; href: string } | { kind: "launch" } | undefined;
+let launched = false;
 let resumed = false;
 
-/**
- * `claim` goes straight to `/g/claim`, where `useClaimGate` would send it anyway.
- */
-export function handOverToGroup(groupId: string, { claim = false } = {}): void {
-  arrival = { kind: "group", href: claim ? route.claim(groupId) : route.group(groupId) };
-}
-
 export function launchedOnto(): void {
-  arrival = { kind: "launch" };
+  launched = true;
 }
 
 /**
@@ -52,25 +45,17 @@ export function resumeGroupId(
   return id;
 }
 
-/** `joining`: the list keeps drawing `/join`'s frame until the push lands. */
-export function useResumeLastGroup(): { deciding: boolean; joining: boolean } {
+export function useResumeLastGroup(): { deciding: boolean } {
   const router = useRouter();
   // Read rather than spent in the initialiser, which React may run twice.
-  const [came] = useState(() => arrival);
-  const [deciding, setDeciding] = useState(() => came !== undefined || isLaunch());
+  const [deciding, setDeciding] = useState(() => launched || isLaunch());
 
   useEffect(() => {
     if (!deciding) return;
-    arrival = undefined;
+    launched = false;
     resumed = true;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
-    // Pushed, so this list stays underneath it.
-    if (came?.kind === "group") {
-      router.push(came.href);
-      timer = setTimeout(() => setDeciding(false), 2000);
-      return () => clearTimeout(timer);
-    }
     void (async () => {
       const device = await getDevice();
       const last = device.lastOpenedGroupId;
@@ -84,7 +69,7 @@ export function useResumeLastGroup(): { deciding: boolean; joining: boolean } {
       timer = setTimeout(() => setDeciding(false), 2000);
     })();
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [deciding, came, router]);
+  }, [deciding, router]);
 
   // Before paint: a launch arriving marked yet not deciding would otherwise hide
   // this very frame (lib/first-frame.ts).
@@ -98,7 +83,7 @@ export function useResumeLastGroup(): { deciding: boolean; joining: boolean } {
     void setLeftOnList();
   }, [deciding]);
 
-  return { deciding, joining: deciding && came?.kind === "group" };
+  return { deciding };
 }
 
 /**

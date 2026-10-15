@@ -235,7 +235,7 @@ lose. `pnpm verify homescreen` holds both.
 
 Android is on the ledger for the same reason iOS is, and it is not about
 eviction: `lib/launch.ts` reopens the group you were last in, and `/join`
-pushes the group over the list, so the list is a screen most people never
+opens the group itself, so the list is a screen most people never
 linger on. Chrome's own mini-infobar is suppressed (`preventDefault`, so we can
 draw the button ourselves), so without the ledger card the regular Android
 user — joined by a link, launching straight into their group — would be offered

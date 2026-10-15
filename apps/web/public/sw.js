@@ -104,6 +104,22 @@ function asAsked(res) {
   return new Response(res.body, { status: res.status, statusText: res.statusText, headers: res.headers });
 }
 
+/**
+ * The two pages a link from outside opens — an invite, an in-app browser's way
+ * out. Fetched fresh when online, so a link runs the build that wrote it and
+ * not whatever this phone last cached, which may predate the link's format;
+ * the cache answers only when the network can't (docs/pwa.md).
+ */
+const FROM_OUTSIDE = /^\/(join|handover)(\.html)?$/;
+
+async function fresh(request, fallback) {
+  try {
+    const res = await fetch(request);
+    if (res.ok) return res;
+  } catch {}
+  return fallback();
+}
+
 async function cacheFirst(cacheKey, request, clientId) {
   const previous = await previousFor(clientId);
   if (previous) {
@@ -376,7 +392,8 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     // A miss with no network: the front door beats the browser's error page.
-    event.respondWith(cacheFirst(url.pathname, request).catch(() => lookup("/")));
+    const cached = () => cacheFirst(url.pathname, request).catch(() => lookup("/"));
+    event.respondWith(FROM_OUTSIDE.test(url.pathname) ? fresh(request, cached) : cached());
     return;
   }
 

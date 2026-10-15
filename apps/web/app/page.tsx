@@ -19,7 +19,6 @@ import { copy } from "@/lib/copy";
 import { ago, money, plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { groupMeta } from "@/lib/row-meta";
-import { JoiningFrame } from "@/components/joining";
 import { firstFrameMarked } from "@/lib/first-frame";
 import { useResumeLastGroup } from "@/lib/launch";
 import { useArrivingGroups, useGroupFigures, useGroupSummaries, warmGroup, type GroupSummary } from "@/lib/hooks";
@@ -30,7 +29,7 @@ export default function GroupsPage() {
   // Keys held whose groups haven't landed yet: a freshly installed icon's.
   const arriving = useArrivingGroups();
   // Until a launch decides whether to reopen the last group, the list stays unanswered.
-  const { deciding: resuming, joining } = useResumeLastGroup();
+  const { deciding: resuming } = useResumeLastGroup();
   const hydrating = useSyncExternalStore(never, () => false, () => true);
   const marked = useSyncExternalStore(never, firstFrameMarked, () => true);
   const diagHold = useHold(() => router.push(route.diag()));
@@ -49,9 +48,6 @@ export default function GroupsPage() {
   }, [groups]);
   const rows = useMemo(() => (groups ?? []).map((summary) =>
     ({ key: summary.group.id, kind: "row" as const, row: summary })), [groups]);
-
-  // `/join` is only passing through this list.
-  if (joining) return <JoiningFrame />;
 
   return (
     <>

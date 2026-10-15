@@ -12,10 +12,18 @@ ensureBuild();
 let swRevision = null;
 let swOnce = false;
 const blocked = new Set();
+// A page the server has moved on from: what an invite opens must be this one.
+let newerJoin = false;
 
 const { base, close } = await serveExport({
   async intercept(path, res) {
     if (blocked.has(path)) { res.writeHead(503); res.end(); return true; }
+    if (newerJoin && /^\/join(\.html)?$/.test(path)) {
+      const html = await readFile(join(OUT, "join.html"), "utf8");
+      res.writeHead(200, { "content-type": "text/html" });
+      res.end(html.replace("<head>", '<head><meta name="newer-build">'));
+      return true;
+    }
     if (path === "/sw.js" && swRevision) {
       const src = await readFile(join(OUT, "sw.js"), "utf8");
       res.writeHead(200, { "content-type": "text/javascript" });
@@ -57,6 +65,14 @@ await page.goto(`${base}/`);
 const controlled = await page.waitForFunction(() => !!navigator.serviceWorker.controller, null,
   { timeout: PATIENCE }).then(() => true, () => false);
 report(controlled, "service worker controls the page");
+
+// An invite runs the build that is up, not the one this phone cached, which may
+// not read the link (docs/pwa.md).
+newerJoin = true;
+await page.goto(`${base}/join#g0.s0`);
+report(await page.locator('meta[name="newer-build"]').count() === 1,
+  "an invite's page comes from the network while online, not the cache");
+newerJoin = false;
 
 // ---- pull the plug ------------------------------------------------------
 await ctx.setOffline(true);
@@ -102,6 +118,7 @@ async function tap(label, act, expect) {
   }
 }
 
+await tap("an invite's page, from the cache", () => page.goto(`${base}/join#g0.s0`), "text=Joining…");
 await tap("groups list loads", () => openGroupsList(page, base), ".rows a.row");
 await tap("tap a group", () => page.locator("a.row").first().click(), ".daylabel");
 await tap("tap an entry", async () => {

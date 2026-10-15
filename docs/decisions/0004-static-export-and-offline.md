@@ -16,6 +16,9 @@ to a server. Every route is static and known at build time.
 
 **The service worker precaches the entire export and serves all of it
 cache-first** — so a launch and every tap after it paint without the network.
+The one exception is the pages a link from outside opens (`/join`,
+`/handover`): network first while online, since a link may be newer than the
+build this phone cached ([pwa.md](../pwa.md)).
 
 - The file list and a content-addressed revision are **stamped in at build time**
   by `apps/web/scripts/precache.mjs`, from what is actually on disk. The

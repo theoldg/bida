@@ -149,9 +149,14 @@ describe("the install tutorial's own link", () => {
     const named = { groupId: "g1", secret: "shh", me: "m-1" };
     expect(route.install([named, { groupId: "g2", secret: "psst" }])).toBe("/install#g1.shh.m-1~g2.psst");
     expect(parseInvites("#g1.shh.m-1~g2.psst")).toEqual([named, { groupId: "g2", secret: "psst" }]);
-    expect(parseInvites("#g1.shh.m-1.extra")).toEqual([]);
     // A join link is sent to other people: it never names who someone is.
-    expect(parseJoinLink("/join#g1.shh.m-1")).toBeNull();
+    expect(parseJoinLink("/join#g1.shh.m-1")).toEqual({ groupId: "g1", secret: "shh" });
+  });
+
+  it("ignores fields it does not know, so an older build opens a newer build's link", () => {
+    expect(parseInvites("#g1.shh.m-1.later")).toEqual([{ groupId: "g1", secret: "shh", me: "m-1" }]);
+    expect(parseJoinLink("/join#g1.shh.later.still")).toEqual({ groupId: "g1", secret: "shh" });
+    expect(handoverFrom("/g", "#g1.shh.m-1.later")).toBe("/handover#g1.shh.m-1.later");
   });
 });
 
@@ -168,7 +173,7 @@ describe("an in-app browser's address, opened in Safari", () => {
   });
 
   it("leaves a fragment that is no carry: none, a bare id, rubbish", () => {
-    for (const hash of ["", "#", "#g1", "#g1.", "#g1.shh.m-1.extra", "#g1.shh~", "#g 1.shh"]) {
+    for (const hash of ["", "#", "#g1", "#g1.", "#g1.shh.", "#g1.shh~", "#g 1.shh"]) {
       expect(handoverFrom("/g", hash)).toBeUndefined();
     }
   });
