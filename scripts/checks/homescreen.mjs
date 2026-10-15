@@ -379,8 +379,13 @@ report(await joined(webviewPage).waitFor({ timeout: PATIENCE }).then(() => true,
   "an in-app browser joins, under a banner naming the app that has them");
 await webviewPage.getByText(BANNER).click();
 report(await webviewPage.getByText("We recommend opening in your main browser.").count() === 1
-  && await webviewPage.getByText("Open in Safari", { exact: false }).count() === 1,
+  && await webviewPage.getByText("“Open in browser”", { exact: false }).count() === 1,
   "which unfolds to say where to go, and on iOS which button gets there");
+// Messenger's has no clipboard, so the link is text to hold, carrying what Android's link does.
+const toPaste = await webviewPage.locator(".webviewlink").textContent().catch(() => null);
+report(await webviewPage.locator(".webviewlink button").count() === 0
+  && toPaste?.startsWith(`${base}/handover${fragment}`),
+  "and the link to paste, carrying the key, as text rather than a copy button", toPaste ?? "");
 
 await webviewPage.goto(`${base}/demo`);
 await webviewPage.waitForURL(/\/g\/claim\?id=/, { timeout: PATIENCE });

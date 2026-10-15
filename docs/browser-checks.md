@@ -240,8 +240,8 @@ all, or a pressable control while `/install` stands in; the newcomer and the
 reopen never show the list either.
 
 **The in-app browser**, last: a webview joins under a banner naming the app,
-unfolding to the button to press (iOS) or an `intent:` link carrying its
-groups and who it is in each (Android), which a tab opens straight into. Then the half that matters more: the
+unfolding to the button to press and the link to paste as text (iOS) or an
+`intent:` link (Android), each carrying its groups and who it is in each, which a tab opens straight into. Then the half that matters more: the
 home-screen app, Brave and DuckDuckGo each draw *no* banner
 ([ios.md](ios.md#the-in-app-browser--a-one-off-visit)).
 

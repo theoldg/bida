@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-15* — "Should we try the x-safari thingy?", then "propose a design
+  before shipping", then four rounds on screenshots, two interrupting a tool
+  call mid-flight. The stop hook wanted a push the owner hadn't approved: a
+  stash kept both. Ship was its own message.
+
 - *2026-10-14* — "Match the “open in browser” button's style to the install
   banner", landing as another session centred it. Both were `btn btn-s`; one
   override line made the difference, and full width also centres, so the
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "the parts footer should state the number of parts". The review asked for
   words, so it went back as words to pick from; the footer was a spec, so it
   shipped. One message can hold both kinds of ask.
-
-- *2026-10-13* — "In history, add an 'everyone else' text … wherever it makes
-  sense". The hedge was the spec: "else" only where the people left out were
-  named a row above, and the first test it broke ("Marie, Theo" turning into
-  it) drew the other edge — two names are as short.

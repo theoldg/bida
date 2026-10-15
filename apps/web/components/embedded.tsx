@@ -47,8 +47,9 @@ let unfolded = false;
  *
  * **The way out differs by platform.** Android takes an `intent:` link, which
  * the system hands to the default browser; on iOS no page can open Safari, so
- * the line names the button that does. The demo, the install and notification
- * offers stand down while this shows (`DemoCard`, `offerFrom`).
+ * the line names the button that does, and the link is there to copy by hand.
+ * The demo, the install and notification offers stand down while this shows
+ * (`DemoCard`, `offerFrom`).
  */
 export function EmbeddedBanner() {
   const [open, setOpen] = useState(unfolded);
@@ -74,7 +75,7 @@ function useCarry() {
 }
 
 /**
- * iOS's way out is the host app's *Open in Safari*, which opens the address
+ * iOS's way out is the host app's *Open in browser*, which opens the address
  * as it stands — past the join, a group's id and nothing more. So the address
  * keeps the carry in its fragment, which never reaches a server, and the page
  * Safari opens hands it to `/handover` before it paints (`handoverFrom`). Not
@@ -99,6 +100,9 @@ const OWN_FRAGMENT = /^\/(join|install|handover)(\.html)?$/;
  * launch carries them (`route.handover`), this screen's group first: the
  * address holds only the id past the join, so it would land on "missing its
  * password". No link until the keys are read, for the same reason.
+ *
+ * On iOS the link is text, not a copy button: Messenger's webview has no
+ * clipboard (`lib/clipboard.ts`), so it is selected whole by a hold.
  */
 function WayOut() {
   const groups = useCarry();
@@ -107,9 +111,23 @@ function WayOut() {
   return (
     <div className="webviewbody">
       <p>{copy.embedded.detail}</p>
-      {onIos()
-        ? <p className="webviewhow">{copy.embedded.how}</p>
-        : href ? <a className="btn btn-s" href={intentLink(href)}>{copy.embedded.open}</a> : null}
+      {onIos() ? (
+        <>
+          <p className="webviewhow">{withMenu(copy.embedded.how)}</p>
+          {href ? <>
+            <p className="webviewhow webviewor">{copy.embedded.orCopy}</p>
+            <div className="linkbox webviewlink"><span className="selectable">{href}</span></div>
+          </> : null}
+        </>
+      ) : href ? <a className="btn btn-s" href={intentLink(href)}>{copy.embedded.open}</a> : null}
     </div>
   );
+}
+
+/** The copy's `⋯` drawn as the button it names, so the eye finds it in the host's bar. */
+function withMenu(line: string): ReactNode {
+  const [before, ...after] = line.split("⋯");
+  return after.length
+    ? <>{before}<span className="menuchip" role="img" aria-label="⋯"><Icon name="more" size={14} style={{ transform: "rotate(90deg)" }} /></span>{after.join("⋯")}</>
+    : line;
 }

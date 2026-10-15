@@ -49,7 +49,7 @@ export function formatInvites(links: readonly CarriedGroup[]): string {
 
 /**
  * A page opened with a carry in its fragment — the address an in-app browser
- * kept for iOS's *Open in Safari* (components/embedded.tsx) — goes to
+ * kept for iOS's *Open in browser* (components/embedded.tsx) — goes to
  * `/handover` with it. Inlined in the head, so self-contained, and run before
  * paint: the screen under it would say the link is missing its password.
  */

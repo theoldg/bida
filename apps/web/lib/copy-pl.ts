@@ -252,7 +252,7 @@ export const pl: Copy = {
       after: { ask: "???", answer: () => "???" },
     },
   },
-  embedded: { title: () => "???", detail: "???", open: "???", how: "???" },
+  embedded: { title: () => "???", detail: "???", open: "???", how: "???", orCopy: "???" },
   update: { title: "???", act: "???" },
 
   // ----------------------------------------------------------------- about

@@ -334,8 +334,9 @@ const en = {
     detail: "We recommend opening in your main browser.",
     /** Android's: the button hands the page to the default browser. */
     open: "Open in browser",
-    /** iOS's: no page can open Safari, so say which button does. */
-    how: "Tap the ⋯ menu, then “Open in Safari”.",
+    /** iOS's: no page can open Safari, so say which button does (its `⋯` is drawn as one), and hand over the link. */
+    how: "Tap ⋯, then “Open in browser”.",
+    orCopy: "Or copy and paste the link:",
   },
 
   update: {

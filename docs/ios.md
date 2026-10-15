@@ -293,9 +293,13 @@ and landed on "missing its password" — so the link waits for the keys' read.
 That group alone un-forgets, its invite having just been tapped: a browser
 that once forgot it would otherwise open it keyless, on the same screen.
 
-iOS has no such link — no page can open Safari — so the fold names the button
-instead: tap ⋯, then *Open in Safari*, which opens the address as it stands.
-So in a webview **the address keeps the same carry** in its fragment, on every
+iOS has no such link — no page can open Safari, and `x-safari-https:` is
+ignored by Meta's webviews — so the fold names the button instead: tap ⋯
+(drawn as a button), then *Open in browser*, which opens the address as it
+stands. Under it, *Or copy and paste the link*: the same `/handover#…` as
+Android's, as text a hold selects whole, since Messenger's webview has no
+clipboard to copy it into for them.
+In a webview **the address keeps the same carry** in its fragment, on every
 screen but those whose fragment is their own (`KeepInAddress`), and a page
 opened with one goes to `/handover` from the head, before it paints
 (`handoverScript`). It rests on the host passing the address it shows, which

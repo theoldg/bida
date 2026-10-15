@@ -1189,7 +1189,15 @@ dialog.scrim::backdrop { background: transparent }
 .webviewbody { padding: 0 16px 12px }
 .webviewbody p { padding-left: 24px; line-height: 1.45; font-weight: 400 }
 .webviewbody .btn { margin-top: 11px }
-.webviewbody p.webviewhow { margin-top: 6px; font-weight: 600 }
+/* The steps are centred over the link they lead to; the prose above stays hung. */
+.webviewbody p.webviewhow { margin-top: 6px; padding-left: 0; text-align: center; font-weight: 600 }
+.webviewbody p.webviewor { margin-top: 2px; font-weight: 400 }
+.menuchip { display: inline-flex; align-items: center; justify-content: center; width: 26px;
+  height: 20px; margin: 0 2px; vertical-align: -4px; border: 1px solid currentColor;
+  border-radius: var(--r-s) }
+/* A hold takes the whole link, as nothing can copy it for the person. */
+.webviewlink { margin-top: 6px }
+.webviewlink > .selectable { -webkit-user-select: all; user-select: all }
 .stall { display: flex; align-items: center; gap: 9px; padding: 9px 16px; flex: none;
   font-size: 12.5px; font-weight: 500;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge) }
