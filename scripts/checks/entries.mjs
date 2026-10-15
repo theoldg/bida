@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Doc: docs/browser-checks.md#pnpm-verify-entries--the-form-is-wired-to-the-commands
+// Doc: docs/checks-forms.md#pnpm-verify-entries--the-form-is-wired-to-the-commands
 import { onePhone, PATIENCE, pick, newGroup, openGroupsList, settle }
   from "../lib/harness.mjs";
 import { PHOTO, stubScan } from "../lib/receipts.mjs";

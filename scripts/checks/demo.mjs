@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Doc: docs/browser-checks.md#pnpm-verify-demo--the-demo-group-and-the-key-it-must-not-have
+// Doc: docs/checks-ways-in.md#pnpm-verify-demo--the-demo-group-and-the-key-it-must-not-have
 import {
   onePhone, newPhone, openDemo, PATIENCE, readStore, readDevice, putDevice,
 } from "../lib/harness.mjs";

@@ -35,7 +35,7 @@ them tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 | ↳ [design-review.md](design-review.md) | Polishing a screen: open findings, and those ruled intended |
 | [hosting.md](hosting.md) | Deploying, or worrying about cost |
 | [testing.md](testing.md) | Running the gate or writing a unit test — then one of: |
-| ↳ [browser-checks.md](browser-checks.md) | Writing, fixing or reading a browser check |
+| ↳ [browser-checks.md](browser-checks.md) | Writing, fixing or reading a browser check — its table names the area doc each check is in |
 | ↳ [shots.md](shots.md) | Photographing screens, and the README's pictures |
 | ↳ [on-a-phone.md](on-a-phone.md) | An iPhone in hand: what no headless browser can check |
 | [drive.md](drive.md) | **Looking at the app yourself** — one screen's shot, a bug, a feature to stress |

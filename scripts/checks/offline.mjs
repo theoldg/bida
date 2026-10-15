@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Doc: docs/browser-checks.md#pnpm-verify-offline--the-built-app-with-the-network-cut
+// Doc: docs/checks-storage.md#pnpm-verify-offline--the-built-app-with-the-network-cut
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { asInstalledApp, ensureBuild, OUT, PATIENCE, serveExport, launch, newPhone, openGroupsList,

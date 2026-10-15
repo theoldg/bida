@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Doc: docs/browser-checks.md#pnpm-verify-homescreen--the-invite-that-rides-onto-the-home-screen
+// Doc: docs/checks-ways-in.md#pnpm-verify-homescreen--the-invite-that-rides-onto-the-home-screen
 import {
   ensureBuild, serveExport, launch, newPhone, newGroup, openGroupsList, asInstalledApp, PATIENCE, reporter,
   readStore, readDevice, putDevice, untilDevice,

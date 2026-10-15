@@ -3,7 +3,7 @@
 *For: anyone adding a route, a link or a way off a screen. Part of the
 [frontend](frontend.md) docs; the argument for a route per screen is
 [ADR-0007](decisions/0007-a-screen-is-a-route.md), and `pnpm verify nav`
-([browser-checks.md](browser-checks.md#pnpm-verify-nav--where-the-back-arrow-goes-and-what-it-leaves-behind))
+([browser-checks.md](checks-moving.md#pnpm-verify-nav--where-the-back-arrow-goes-and-what-it-leaves-behind))
 holds what this doc promises.*
 
 Every route, then the rules every screen keeps, what a launch opens, and how

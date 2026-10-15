@@ -153,7 +153,7 @@ the icon opened, and `install.app` what it did with it
 ([diag.md](diag.md)).
 
 `pnpm verify homescreen` covers everything around that step in the engine that is
-actually to hand ([browser-checks.md](browser-checks.md#pnpm-verify-homescreen--the-invite-that-rides-onto-the-home-screen)),
+actually to hand ([browser-checks.md](checks-ways-in.md#pnpm-verify-homescreen--the-invite-that-rides-onto-the-home-screen)),
 Android included: it must get the static `start_url: "/"`, since it shares
 storage and needs none of this.
 

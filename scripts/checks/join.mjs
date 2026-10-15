@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Doc: docs/browser-checks.md#pnpm-verify-join--every-way-in-across-a-full-load
+// Doc: docs/checks-ways-in.md#pnpm-verify-join--every-way-in-across-a-full-load
 import {
   ensureBuild, serveWorker, launch, newPhone, newGroup, PATIENCE, reporter, readDevice,
 } from "../lib/harness.mjs";

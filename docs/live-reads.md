@@ -2,7 +2,7 @@
 
 *For: anyone reading from Dexie, or chasing a screen that sits on its skeleton
 rows. Part of the [frontend](frontend.md) docs. `pnpm verify stall`
-([browser-checks.md](browser-checks.md#pnpm-verify-stall--a-read-of-this-phones-database-that-dies))
+([browser-checks.md](checks-storage.md#pnpm-verify-stall--a-read-of-this-phones-database-that-dies))
 drives what this doc describes, and [`/diag`](diag.md) is how a phone reports
 it.*
 

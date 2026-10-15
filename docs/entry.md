@@ -126,7 +126,7 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
   caret back, a dialog submits its card. What asks for `"next"`: the entry
   form's amount, `/new`'s group name, and each row but the last of a column of
   figures — the split editor's "as amounts" and "as parts", and `/g/payers`;
-  `pnpm verify keyboard` walks each column ([browser-checks.md](browser-checks.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)).
+  `pnpm verify keyboard` walks each column ([browser-checks.md](checks-forms.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)).
 - **The currency picker offers the group's own currencies first** — the base
   one, then whatever the ledger is written in, most spent-in first, then the
   short common list (`lib/currencies.ts`, `currencyChoices`), then "Other…" for

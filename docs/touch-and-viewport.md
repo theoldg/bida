@@ -113,7 +113,7 @@ fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
   under a list of people or a form: a sibling of `.scroll` rather than its last
   row, so the keys lift it with them and the scroller above it shrinks by as
   much. That scroller pays no keyboard room of its own — the dock is it.
-  `pnpm verify keyboard` holds the docked ones ([browser-checks.md](browser-checks.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)). **A gap with nobody typing is not a keyboard** and is
+  `pnpm verify keyboard` holds the docked ones ([browser-checks.md](checks-forms.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)). **A gap with nobody typing is not a keyboard** and is
   never paid as one (`lib/viewport.ts`): the difference between the two
   viewports is a keyboard only while something has the caret; otherwise a
   browser that reports the two differently gets permanent padding at the foot
