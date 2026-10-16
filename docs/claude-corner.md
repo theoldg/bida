@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-16* — "It skipped me past identity claim into an all-grey group",
+  a /diag from the demo. The trace showed a re-seed restoring a claim; grey
+  meant "not yours" on every row, so the claim named nobody — someone the
+  visitor had added. The check reproduced it red before the fix.
+
 - *2026-10-16* — "Propose a cheap way to make it more desktop friendly", then
   a tool call rejected mid-read: a screenshot was coming, and "propose" meant
   words first. Of my three steps the shot dropped one — inset dividers would
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-14* — "Don't count the demo group's edits in the offline banner".
   One line, one fix; the check went offline in the demo first and read
   "16 changes waiting", so the passing run meant something.
-
-- *2026-10-14* — "Should we relax the in-app browser restrictions?", then
-  the copy, workshopped over two turns. The owner's phrasing beat both my
-  drafts once its snags were named; the build waited only for the words, and
-  the shot showed the banner before the summary described it.

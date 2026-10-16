@@ -202,6 +202,23 @@ const fourth = (await readStore(page, "ops")).filter((op) => op.groupId === "dem
 report(fourth.map((op) => op.id).sort().join() === third.map((op) => op.id).sort().join(),
   "while a visit on the seed it already holds rewrites nothing");
 
+// ---- a claim on someone the visitor added does not outlive the re-seed --
+// The claim screen's "add yourself" makes a fifth member, whom the new story
+// does not have: keeping that answer skipped the question into a ledger where
+// every row was "not yours".
+const device = await readDevice(page);
+await putDevice(page, {
+  ...device, demoSeed: "some-older-build",
+  meByGroup: { ...device.meByGroup, demodemodemo: "added-by-the-visitor" },
+});
+await page.goto(`${base}/demo`);
+await page.waitForFunction(
+  () => location.pathname === "/g/claim" || document.querySelector(".rows .row:not(.skelrow)"),
+  null, { timeout: PATIENCE },
+);
+report(new URL(page.url()).pathname === "/g/claim",
+  "and a re-seed asks again of a visitor who had claimed someone it no longer holds", page.url());
+
 await browser.close();
 close();
 finish();

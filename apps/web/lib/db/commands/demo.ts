@@ -26,12 +26,16 @@ import { claimIdentity, eraseGroupLocally } from "./groups";
  */
 export async function openDemo(now = Date.now()): Promise<Id> {
   const stamp = demoStamp();
+  const cast = demoCast();
   // Who the visitor said they were, kept across a re-seed: a new build is not
-  // a reason to ask again. Member ids derive from names, so it still exists.
+  // a reason to ask again. Member ids derive from names, so one of the four
+  // still exists — but someone the visitor added does not, and a claim on
+  // nobody skips the question into a ledger where no row is yours.
   let kept: Id | undefined;
 
   if ((await getDevice()).demoSeed !== stamp && await db().groups.get(DEMO_GROUP_ID)) {
-    kept = (await getDevice()).meByGroup[DEMO_GROUP_ID];
+    const was = (await getDevice()).meByGroup[DEMO_GROUP_ID];
+    kept = Object.values(cast.ids).find((id) => id === was);
     // Erase rather than fold over the old: seed entity ids move between versions,
     // so anything the last story had would survive as a stray row.
     await clearDemo();
@@ -40,7 +44,7 @@ export async function openDemo(now = Date.now()): Promise<Id> {
     // Unstamped until the last step lands: a tab that dies between steps
     // leaves a half-told story, which the next visit then erases and retells.
     await updateDevice({ demoSeed: undefined });
-    for (const step of demoTimeline(demoCast(), now)) {
+    for (const step of demoTimeline(cast, now)) {
       await appendOps(DEMO_GROUP_ID, step.by, step.ops, step.at);
     }
     await updateDevice({ demoSeed: stamp });

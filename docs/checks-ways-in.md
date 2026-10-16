@@ -96,7 +96,8 @@ clearing a demo somebody has added an entry to takes the whole group off the pho
 down again — entry for entry, and without the one that was added. A demo
 address copied from any `/g` screen opens the demo on a second, fresh phone
 rather than "bad link", and does not re-seed it on the phone that cleared it;
-a cleared demo asks again who you are, a re-seeded one keeps the answer. The dialog
+a cleared demo asks again who you are, a re-seeded one keeps the answer — unless
+it named someone the visitor added, whom the new story lacks. The dialog
 that offers it has to name this server's own `/demo`, host and all: the host is
 the browser's to supply, so an unwired one would read as a bare path.
 
