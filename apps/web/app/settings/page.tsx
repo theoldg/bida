@@ -2,7 +2,7 @@
 // Doc: docs/navigation.md#routing
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { setDark, useDark } from "@/components/dark-mode";
 import { Icon, type IconName } from "@/components/icons";
@@ -101,22 +101,26 @@ const BELLS = { off: { icon: "bell-off", iconSize: 13 }, own: { icon: "bell", ic
  *
  * **The tapped answer is drawn chosen at once**, and held until the device
  * says so: nothing is disabled meanwhile, since a control dimming while it
- * saves reads as every other option flickering. A tap while one is in flight
- * is ignored; a refused prompt puts the old answer back.
+ * saves reads as every other option flickering. Only the prompt is waited on
+ * — the subscription follows by itself (`keepLevel`) — and a refused prompt
+ * puts the old answer back.
  */
 function Notifications() {
   const installed = useInstallOffer() === "installed";
   const state = usePushPermission();
   const device = useDevice();
   const [pending, setPending] = useState<NotifyLevel | null>(null);
-  if (!installed || state === "unsupported" || !device) return null;
+  const kept = device ? notifyLevel(state, device.notify) : null;
+  // Let go once the live device shows it, not when the write resolves: the
+  // read lags the write, and the old answer would flash between.
+  useEffect(() => { if (pending !== null && kept === pending) setPending(null); }, [pending, kept]);
+  if (!installed || state === "unsupported" || !kept) return null;
   const { notify } = copy.settings;
-  const level = pending ?? notifyLevel(state, device.notify);
+  const level = pending ?? kept;
   const blocked = state === "denied" && pending === null;
   const choose = (next: NotifyLevel) => {
-    if (pending !== null) return;
     setPending(next);
-    void setNotifyLevel(next).finally(() => setPending(null));
+    void setNotifyLevel(next).then((ok) => { if (!ok) setPending(null); });
   };
   return (
     <Choice title={notify.title} chosen={level} disabled={blocked}

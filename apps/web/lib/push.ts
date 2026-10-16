@@ -151,8 +151,8 @@ async function subscription(reg: ServiceWorkerRegistration): Promise<PushSubscri
 }
 
 /**
- * One change at a time, in the order asked: a start's reconcile beside a Settings
- * tap would write the level it read over the one just chosen.
+ * One reconcile at a time, in the order asked: one that read the level before a
+ * Settings tap would otherwise publish it after the tap's own.
  */
 let turn: Promise<unknown> = Promise.resolve();
 function inTurn(task: () => Promise<void>): Promise<void> {
@@ -180,55 +180,57 @@ async function publish(want: DevicePush | null, now = Date.now()): Promise<void>
 
 /**
  * **`requestPermission` comes first, before any await**: iOS shows the prompt
- * only inside the tap's own turn.
+ * only inside the tap's own turn. True when the level was kept.
  */
-export async function turnOnNotifications(level: NotifyScope = "own"): Promise<void> {
-  if (!supported()) return;
+export async function turnOnNotifications(level: NotifyScope = "own"): Promise<boolean> {
+  if (!supported()) return false;
   const answer = await Notification.requestPermission();
   asked = true;
-  return inTurn(async () => {
-    try {
-      if (answer !== "granted") return;
-      await updateDevice({ notify: level });
-      const reg = await registration();
-      const sub = reg ? await subscription(reg) : null;
-      await publish(pushAt(sub?.toJSON() ?? null, level));
-    } catch (err) {
-      keepNote("push.subscribe", String(err));
-    } finally {
-      for (const listener of listeners) listener();
-    }
-  });
+  if (answer === "granted") return keepLevel(level);
+  for (const listener of listeners) listener();
+  return false;
 }
 
 /**
  * Off keeps the browser's subscription and writes `null`, so turning back on asks
  * nothing. Without permission, nothing may be awaited ahead of the prompt.
  */
-export async function setNotifyLevel(level: NotifyLevel): Promise<void> {
-  if (!supported()) return;
+export async function setNotifyLevel(level: NotifyLevel): Promise<boolean> {
+  if (!supported()) return false;
   if (level !== "off" && Notification.permission !== "granted") return turnOnNotifications(level);
-  return inTurn(async () => {
-    try {
-      await updateDevice({ notify: level });
-      const reg = level === "off" ? null : await registration();
-      const sub = reg ? await subscription(reg) : null;
-      await publish(pushAt(sub?.toJSON() ?? null, level));
-    } catch (err) {
-      keepNote("push.level", String(err));
-    } finally {
-      for (const listener of listeners) listener();
-    }
-  });
+  return keepLevel(level);
 }
 
 /**
- * Every start, and after a claim: Safari rotates a subscription without saying, a
- * new VAPID key needs a fresh one, a revoked permission means `null`.
+ * **The level is kept at once and the subscription follows**, as a reconcile:
+ * the browser's half can take seconds, or the full cut-off where it never
+ * answers, and a tap waiting on it reads as a frozen control.
  */
+async function keepLevel(level: NotifyLevel): Promise<boolean> {
+  try {
+    await updateDevice({ notify: level });
+  } catch (err) {
+    keepNote("push.level", String(err));
+    return false;
+  } finally {
+    for (const listener of listeners) listener();
+  }
+  void reconcilePush();
+  return true;
+}
+
+/**
+ * Every start, after a claim and after a level is chosen: Safari rotates a
+ * subscription without saying, a new VAPID key needs a fresh one, a revoked
+ * permission means `null`. It reads the level when its turn comes, so one
+ * waiting covers every ask behind it — five taps behind a hung call are one
+ * reconcile, not five cut-offs.
+ */
+let waiting: Promise<void> | null = null;
 export async function reconcilePush(): Promise<void> {
   if (!supported()) return;
-  return inTurn(async () => {
+  waiting ??= inTurn(async () => {
+    waiting = null;
     try {
       const reg = await registration();
       if (!reg) return;
@@ -240,4 +242,5 @@ export async function reconcilePush(): Promise<void> {
       keepNote("push.reconcile", String(err));
     }
   });
+  return waiting;
 }

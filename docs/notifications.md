@@ -58,8 +58,9 @@ it is still missing after.
   `scope: "all"` when Settings says All (Just me leaves it out, which reads as
   "own"). **Settings** (`/settings`, installed app only) offers Off · Just me ·
   All, kept on the device as `notify`; choosing one without permission is the
-  tap that asks. Off writes `null` and keeps the browser's subscription, so
-  turning back on asks nothing. The VAPID
+  tap that asks. The level is kept at once and a reconcile carries it to the
+  identities after, so the control never waits on the browser. Off writes
+  `null` and keeps the browser's subscription, so turning back on asks nothing. The VAPID
   public key comes from `GET /api/push/key`, since one build serves both
   Workers. Every start and every claim runs `reconcilePush`, which rewrites a
   rotated or new-key subscription, writes `null` for a revoked permission or
@@ -103,9 +104,9 @@ it is still missing after.
 - **The large `icon` is a transparent PNG** (`notify-blank.png`). The app's
   icon there repeats the badge, and with none Android draws a grey letter
   avatar of the host name.
-- **Push state changes one at a time** (`inTurn`, `lib/push.ts`). Each reads
-  the level, waits on the network, then writes, so a start's reconcile beside a
-  Settings tap would write the level it read over the one just chosen. So
-  every browser push call is cut off at 10 s (`answered`): the iOS Simulator,
-  its worker not in control, never answers `pushManager`, and one hung turn
-  swallowed every Settings tap after it — a `push.*` line in `/diag` names it.
+- **Reconciles run one at a time** (`inTurn`, `lib/push.ts`). Each reads the
+  level, waits on the network, then writes, so two side by side would write
+  the level the first read over the one just chosen. One waiting covers every
+  ask behind it, and every browser push call is cut off at 10 s (`answered`):
+  the iOS Simulator never answers `getSubscription`, worker in control or not
+  — a `push.reconcile` line in `/diag` names the call.

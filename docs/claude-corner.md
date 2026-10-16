@@ -31,15 +31,15 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-16* — "The notification toggle freezes", a /diag pasted: its
+  order held the cause, a hung call queuing every tap. My cut-off fixed the
+  hang, not the wait — "works but janky and slow". The level should never
+  have waited on the browser at all.
+
 - *2026-10-16* — "I had to click back twice", two /diag pastes from a
   simulator. The reports held it: a list restored by Back reloading for its
   manifest, read as a launch. Playwright turns the page cache off; turning it
   back on reproduced it before the one-line fix.
-
-- *2026-10-16* — "The notification toggle freezes on the simulator", with a
-  /diag pasted. The trace held it: one `notify` write before Settings was ever
-  opened, nothing after. The card's tap had hung; Settings only queued behind
-  it. Read the diag's order before the screen named in the report.
 
 - *2026-10-16* — "Disable the home screen in in-app browsers, if you can
   guarantee it never breaks navigation." The honest no came with the 25 ways

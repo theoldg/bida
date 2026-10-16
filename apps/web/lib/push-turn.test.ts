@@ -37,41 +37,43 @@ describe("push state changes", () => {
     const tapped = setNotifyLevel("all");
     // The tap's own ask answers at once, so left alone it writes first — and
     // the reconcile, released after, writes what it read before the tap.
-    await Promise.race([tapped, new Promise((ok) => setTimeout(ok, 50))]);
+    expect(await tapped).toBe(true);
     release();
-    await Promise.all([reconciling, tapped]);
+    await reconciling;
 
     const device = await getDevice();
     expect(device.notify).toBe("all");
-    const mine = await db().identities.get([groupId, device.nodeId]);
-    expect(mine?.push?.scope).toBe("all");
+    await vi.waitFor(async () => {
+      const mine = await db().identities.get([groupId, device.nodeId]);
+      expect(mine?.push?.scope).toBe("all");
+    });
   });
 
-  it("lets the next tap through when the browser never answers", async () => {
+  it("keeps a tap's level at once, whatever the browser does after", async () => {
     await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
     vi.stubGlobal("window", { PushManager: class {}, Notification: {} });
     vi.stubGlobal("Notification", { permission: "granted" });
-    // The iOS Simulator, its worker never in control: the first ask hangs for good.
+    // The iOS Simulator: its push manager never answers.
     let asks = 0;
     vi.stubGlobal("navigator", {
       serviceWorker: {
-        getRegistration: async () => ({
-          pushManager: { getSubscription: () => asks++ === 0 ? new Promise(() => {}) : Promise.resolve(null) },
-        }),
+        getRegistration: async () => ({ pushManager: { getSubscription: () => { asks++; return new Promise(() => {}); } } }),
       },
     });
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({}))));
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     try {
-      const hung = setNotifyLevel("own");
+      expect(await setNotifyLevel("own")).toBe(true);
       await vi.waitFor(() => expect(asks).toBe(1));
-      const tapped = setNotifyLevel("all");
+      // Three taps behind the hung call: each kept at once, one reconcile for all.
+      for (const level of ["all", "off", "all"] as const) expect(await setNotifyLevel(level)).toBe(true);
+      expect((await getDevice()).notify).toBe("all");
       await vi.advanceTimersByTimeAsync(10_000);
-      await Promise.all([hung, tapped]);
+      await vi.waitFor(() => expect(asks).toBe(2));
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(asks).toBe(2);
     } finally {
       vi.useRealTimers();
     }
-    expect(asks).toBe(2);
-    expect((await getDevice()).notify).toBe("all");
   });
 });
