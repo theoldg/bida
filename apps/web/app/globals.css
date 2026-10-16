@@ -299,11 +299,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 a { color: inherit; text-decoration: none }
 
 /* ---- the shell: header, scrolling middle, fixed footer ---- */
-/* iOS paints body's background behind a home-screen app's status bar; paper
-   under the card-coloured bar draws a seam. */
-@media (max-width: 560px) {
-  body { background: var(--card) }
-}
+/* Body wears the card: past 560px the column runs borderless into it, and on
+   iOS body is also what's painted behind a home-screen app's status bar. */
+body { background: var(--card) }
 /* Body's colour still comes blurred and dimmed; a fixed element at least 6px
    tall within 4px of the top gives the bar its colour unblurred (iOS 27, by
    hand). A real element: a pseudo's hit-test answers with its host. */
@@ -317,7 +315,7 @@ a { color: inherit; text-decoration: none }
    `dvh` because iOS's collapsing toolbar eats `vh`. */
 .app { background: var(--card); height: 100dvh; max-height: 100%; overflow: hidden;
   display: flex; flex-direction: column;
-  position: relative; max-width: 560px; margin: 0 auto; box-shadow: var(--shadow-s) }
+  position: relative; max-width: 560px; margin: 0 auto }
 /* What a launch will show, marked before paint (lib/first-frame.ts): the route's
    own frame steps aside for the one `FirstFrames` drew for that answer. */
 .firstframe, html[data-frame] .ownframe { display: none }

@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-16* — "Propose a cheap way to make it more desktop friendly", then
+  a tool call rejected mid-read: a screenshot was coming, and "propose" meant
+  words first. Of my three steps the shot dropped one — inset dividers would
+  have fought the full-width day bands.
+
 - *2026-10-16* — "Does this make sense, to get rid of the top-bar blur?", a
   test on iOS 27 that contradicted our Gotcha's "always". Their phone outranks
   the doc: the build is their finding plus the doc rewritten, checked by them.
@@ -82,7 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the copy, workshopped over two turns. The owner's phrasing beat both my
   drafts once its snags were named; the build waited only for the words, and
   the shot showed the banner before the summary described it.
-
-- *2026-10-14* — "Add the search row back … dig it up from the history." The
-  commit that took it out also cut its browser check, down to the glide it
-  asserted; restoring the check with the code is half of digging it up.
