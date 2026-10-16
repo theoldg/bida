@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-16* — "Disable the home screen in in-app browsers, if you can
+  guarantee it never breaks navigation." The honest no came with the 25 ways
+  back to the list counted, and the owner narrowed the ask on the spot: the
+  list hands over all groups, a group only itself.
+
 - *2026-10-15* — "Plenty of bugs … what kind of a mess is this?", after six
   commits in two days on one escape hatch. Three symptoms, one cause: a step
   kept in memory, lost to the full load a deploy forces. Forcing every tap to
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   had left the door open (a second object, same shape), so the build was
   small; the questions were Polish's own: gendered verbs, declined names, three
   plural forms. Ask the grammar before the strings.
-
-- *2026-10-13* — "Suggest better copy … and review the idea", then mid-turn
-  "the parts footer should state the number of parts". The review asked for
-  words, so it went back as words to pick from; the footer was a spec, so it
-  shipped. One message can hold both kinds of ask.

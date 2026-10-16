@@ -68,10 +68,13 @@ export function EmbeddedBanner() {
   );
 }
 
-/** What this webview holds, this screen's group first (`heldInvites`). */
+/**
+ * A group's screens carry that group alone, so the host's own *Copy link*
+ * gives away no other; the rest carry every group this webview holds.
+ */
 function useCarry() {
   const id = new URLSearchParams(location.search).get("id") ?? undefined;
-  return useLive("wayOut", () => heldInvites(id), [id]);
+  return useLive("wayOut", async () => (await heldInvites(id)).filter((g) => !id || g.groupId === id), [id]);
 }
 
 /**
@@ -96,10 +99,10 @@ function KeepInAddress() {
 const OWN_FRAGMENT = /^\/(join|install|handover)(\.html)?$/;
 
 /**
- * Every group this webview holds, and who it is in each, carried as an icon
- * launch carries them (`route.handover`), this screen's group first: the
- * address holds only the id past the join, so it would land on "missing its
- * password". No link until the keys are read, for the same reason.
+ * The carry (`useCarry`), and who this webview is in each group, as an icon
+ * launch carries them (`route.handover`): the address holds only the id past
+ * the join, so it would land on "missing its password". No link until the
+ * keys are read, for the same reason.
  *
  * On iOS the link is text, not a copy button: Messenger's webview has no
  * clipboard (`lib/clipboard.ts`), so it is selected whole by a hold.

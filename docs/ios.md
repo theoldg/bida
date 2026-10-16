@@ -284,8 +284,8 @@ storage nothing comes back to. Wording is in `copy.embedded`.
 `intent:` link the system hands to the default browser (`intentLink`): Android
 reads the intent from the last `#`, so the page's own fragment rides in front
 of it, never reaching a server. What rides there is an icon launch's carry,
-`/handover#…` (`route.handover`): every key the webview holds and who it is in
-each, the screen's group first. The tab it opens takes them as an icon would
+`/handover#…` (`route.handover`): the screen's group and who the webview is
+in it — every group it holds from a screen of no group, the list's. The tab it opens takes them as an icon would
 (`useCarryIn`) and opens that group, nobody asked "Which one are you?" twice —
 from a route of its own, since `/install`'s export is the tutorial, which
 painted before any script and could stay. The address alone won't do — past the join it holds only the id,
@@ -303,8 +303,9 @@ In a webview **the address keeps the same carry** in its fragment, on every
 screen but those whose fragment is their own (`KeepInAddress`), and a page
 opened with one goes to `/handover` from the head, before it paints
 (`handoverScript`). It rests on the host passing the address it shows, which
-none is bound to. The price: the host's own *Copy link* now copies the keys
-and who this phone is, and whoever opens it is claimed as that person.
+none is bound to. The price: the host's own *Copy link* now copies the key
+and who this phone is, and whoever opens it is claimed as that person — one
+group's on a group's screens, every group's on the list.
 
 **Detection is built to be wrong in one direction.** Catching a real browser
 costs it the install offer and a banner that is wrong about it; letting a

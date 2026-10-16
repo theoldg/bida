@@ -397,8 +397,8 @@ report(await webviewPage.getByText(BANNER).count() === 1
   "the demo runs there too, its own card standing down for the banner");
 await webview.close();
 
-// Android's way out is a link, carrying every group the webview holds and who
-// it is in each, as an icon launch carries them: the address holds only the id.
+// Android's way out is a link, carrying the screen's group and who the webview
+// is in it, as an icon launch carries it: the address holds only the id.
 const ANDROID_IN_APP_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/AP2A; wv) AppleWebKit/537.36"
   + " (KHTML, like Gecko) Version/4.0 Chrome/126.0.0.0 Mobile Safari/537.36"
   + " [FB_IAB/Orca-Android;FBAV/460.0.0.48.109;]";
@@ -416,8 +416,15 @@ await joined(droidPage).waitFor({ timeout: PATIENCE }).catch(() => {});
 for (let i = 0; i < 40 && (await secretsHeld(droidPage).catch(() => [])).length === 0; i++) {
   await droidPage.waitForTimeout(100);
 }
+// A second group, which a group's screen leaves behind and the list carries.
+await droidPage.goto(`${base}/join#${flat}`);
+for (let i = 0; i < 40 && (await secretsHeld(droidPage).catch(() => [])).length < 2; i++) {
+  await droidPage.waitForTimeout(100);
+}
 // Who this phone is, as a claim would have left it; the sync it needs isn't here.
-await putDevice(droidPage, { ...(await readDevice(droidPage)), meByGroup: { [groupId]: "m-bo" } });
+await putDevice(droidPage, {
+  ...(await readDevice(droidPage)), meByGroup: { [groupId]: "m-bo", [flatId]: "m-cem" },
+});
 await droidPage.goto(`${base}/g/members?id=${groupId}`);
 await droidPage.getByText(`${BANNER} Messenger’s browser.`).click()
   .catch(() => crashes.push("no Messenger banner"));
@@ -426,13 +433,19 @@ const intentOf = () => droidPage.getByRole("link", { name: "Open in browser" }).
 const host_ = new URL(base).host;
 const carriedOut = `/handover${fragment}.m-bo`;
 report(await intentOf() === `intent://${host_}${carriedOut}#Intent;scheme=http;end`,
-  "on Android it unfolds to a link out, carrying the key and who this phone is in front of the intent",
-  await intentOf());
+  "on Android it unfolds to a link out, carrying that group's key alone and who this phone is in it,"
+  + " in front of the intent", await intentOf());
 // iOS has no such link: *Open in Safari* opens the address, so the address keeps the carry.
 const kept = await droidPage.waitForFunction((hash) => location.hash === hash, `${fragment}.m-bo`,
   { timeout: PATIENCE }).then(() => true, () => false);
 report(kept && new URL(droidPage.url()).pathname === "/g/members",
   "and the address keeps the same carry, for the host's own Open in Safari", droidPage.url());
+await openGroupsList(droidPage, base);
+await droidPage.getByText(`${BANNER} Messenger’s browser.`).waitFor({ timeout: PATIENCE }).catch(() => {});
+await droidPage.waitForFunction(() => location.hash.includes("~"), null, { timeout: PATIENCE }).catch(() => {});
+const listCarry = new URL(droidPage.url()).hash.slice(1);
+report(sameGroups(listCarry, `${fragment.slice(1)}.m-bo~${flat}.m-cem`),
+  "and the list carries every group it holds", droidPage.url());
 report(crashes.length === 0, "with no clipboard, and no error page", crashes.join(" "));
 await droid.close();
 
