@@ -57,7 +57,7 @@ under it — set apart by nothing but its own bold lead-in (`strong`).
 | `--brand` | **Equal to `--ink`.** Buttons, active tabs, the focus ring |
 | `--credit` / `--debit` | **The only two hues in the app.** Money owed to you / by you |
 | `--hl`, `--hl-edge`, `--hl-ink` | A neutral wash: your own rows, and pending sync |
-| `--press` | The wash under a thumb. Composited, not a background |
+| `--press` | The wash under a thumb, and half of it under a hovering mouse. Composited, not a background |
 | `--press-i` | The same wash for a control that is already ink: the primary button, the FAB |
 | `--draw-bg`, `--draw-rule`, `--draw-ink` | The scan screen's drawing, and only that. Palette values in light; lifted off them in dark, where a picture has to sit further from its ground than text does |
 | `--draw-paper` | The bill half of that drawing, which has no outline to hold its shape. Darker than the ground in light, lighter in dark — white paper on a near-white ground is a receipt that vanishes, teeth and all |

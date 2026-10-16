@@ -41,6 +41,9 @@
   border: 0 solid;
 }
 
+/* Thin, in the ruling's colour: past 560px the scrollbar is all that marks the column's edge. */
+* { scrollbar-width: thin; scrollbar-color: var(--rule) transparent }
+
 html {
   /* iOS grows text in landscape otherwise, which moves the fixed bottom bar. */
   -webkit-text-size-adjust: 100%;
@@ -272,6 +275,23 @@ a.row, button.row, .fab, .btn, .iconbtn, .tlink, .setlink, .seg button, a.card, 
 .itemfold, a.chip, button.chip, .action, .starttile, .field:has(> .pick), a.field,
 .formhead .field {
   transition: background-image .2s ease;
+}
+/* A mouse gets half a press on hover; a finger never sees it. Before `:active`,
+   which wins the tie. */
+@media (hover: hover) and (pointer: fine) {
+  a.row, button.row, .fab, .btn:not(:disabled), .iconbtn, .tlink, .setlink, .seg button, a.card,
+  button.card, .itemfold, a.chip, button.chip, .action:not(:disabled), .starttile { cursor: pointer }
+  a.row:hover, button.row:hover, .fab:hover, .iconbtn:hover,
+  .tlink:hover, .setlink:hover, .seg button:hover, a.card:hover, button.card:hover, .itemfold:hover,
+  a.chip:hover, button.chip:hover, .btn:hover:not(:disabled), .starttile:hover,
+  .field:has(> .pick:hover), a.field:hover, .action:hover:not(:disabled) {
+    background-image: linear-gradient(color-mix(in srgb, var(--press) 55%, transparent),
+      color-mix(in srgb, var(--press) 55%, transparent));
+  }
+  .btn-p:hover:not(:disabled), .fab:not(.fab-2):hover, .start-p:hover {
+    background-image: linear-gradient(color-mix(in srgb, var(--press-i) 55%, transparent),
+      color-mix(in srgb, var(--press-i) 55%, transparent));
+  }
 }
 a.row:active, button.row:active, .fab:active, .iconbtn:active,
 .tlink:active, .setlink:active, .seg button:active, a.card:active, button.card:active, .itemfold:active,
