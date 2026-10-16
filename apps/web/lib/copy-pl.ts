@@ -31,7 +31,7 @@ function byCount(n: number, one: string, few: string, many: string): string {
 }
 
 export const pl: Copy = {
-  app: { name: "bida", description: "???", invite: "???", banner: "???" },
+  app: { name: "bida", description: "???", invite: "???", split: "???", banner: "???" },
   act: {
     add: "Dodaj",
     back: "Wróć",

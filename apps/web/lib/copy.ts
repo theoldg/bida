@@ -41,6 +41,8 @@ const en = {
     description: "Split things. Mostly bills.",
     /** The group's name can't be had here (docs/pwa.md). */
     invite: "Join the group",
+    /** A quick split's link: what it opens can't be had here either. */
+    split: "Bill split details",
     banner: "bida, split things, mostly bills: a receipt split between Ana and Ben",
   },
 

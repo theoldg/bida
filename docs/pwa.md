@@ -55,7 +55,7 @@ built by `lib/preview.ts`. They are static and say nothing about the group,
 which they could not anyway: the secret is in the fragment and never leaves the
 phone. `/join`, where every invite lands, swaps only the card's title for
 `copy.app.invite` — the banner already says the name — and keeps "bida" in the
-tab. `metadataBase` is pinned to
+tab; `/split`, a quick split's link, does the same with `copy.app.split`. `metadataBase` is pinned to
 `https://bida.bid` because a crawler has no page to resolve a relative URL
 against and the build is byte-identical on both Workers
 ([hosting.md](hosting.md#dev-and-production)). **There must be no `og:url`** —
