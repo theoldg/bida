@@ -281,7 +281,10 @@ properly — one more "started editing from a new device" in history. The
 install and notification offers stand down there (`offerFrom` → `none`, since
 a webview cannot install), so does the demo's card, which the banner already
 covers, and so does the service worker, which would precache the app into a
-storage nothing comes back to. Wording is in `copy.embedded`.
+storage nothing comes back to. Wording is in `copy.embedded`. **A quick split's
+link (`/split`) wears none**: it holds nothing on the phone, and its fragment —
+its own, so never written over by the carry below — is already the whole way
+out, which any *Open in browser* opens as it stands.
 
 **The way out differs by platform.** Android takes **Open in browser**, an
 `intent:` link the system hands to the default browser (`intentLink`): Android

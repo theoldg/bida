@@ -16,7 +16,8 @@ import { route } from "@/lib/group-link";
 import { useFlash } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
 import {
-  clearQuickPeople, quickLinkSecret, quickMessage, quickShares, quickSharedSplit, useQuickPeople,
+  clearQuickPeople, markQuickLinkSent, quickLinkSecret, quickLinkSent, quickMessage, quickShares,
+  quickSharedSplit, useQuickPeople,
 } from "@/lib/quick";
 import { useScanCredential } from "@/lib/scan/credential";
 import { formatSplitLink, shareSplit } from "@/lib/split-link";
@@ -42,8 +43,6 @@ export default function QuickResultPage() {
   // The message, shown to be held by hand, when the clipboard wouldn't take it.
   const [failed, setFailed] = useState<string>();
   const [notShared, setNotShared] = useState<"offline" | "unsent">();
-  // The secret the server holds a copy under.
-  const [shared, setShared] = useState<string>();
   // Done is the end of the split and the end of the split is the end of the
   // bill: unless it went out as a link, leaving loses the evening's
   // arithmetic. Worth one question.
@@ -69,9 +68,12 @@ export default function QuickResultPage() {
 
   async function hand() {
     if (sending) return;
+    const text = quickMessage(split, formatSplitLink(secret));
+    // Already on the server: the clipboard is all that is left, and it needs
+    // no network — so this works offline, and sends nothing twice.
+    if (quickLinkSent(secret)) return copyAgain(text);
     // Said at once, and nothing copied: a link to a split that isn't there yet.
     if (navigator.onLine === false) return setNotShared("offline");
-    const text = quickMessage(split, formatSplitLink(secret));
     setSending(true);
     // The secret is this phone's, so the link exists before the upload does —
     // and it has to be written now, inside the tap: Safari refuses a
@@ -79,12 +81,25 @@ export default function QuickResultPage() {
     const [copying, sent] = await Promise.allSettled([writeClipboardText(text), shareSplit(secret, split)]);
     setSending(false);
     if (sent.status !== "fulfilled" || sent.value !== "shared") return setNotShared("unsent");
-    setShared(secret);
-    if (copying.status === "fulfilled") setCopied(true);
+    markQuickLinkSent(secret);
+    landed(copying.status === "fulfilled", text);
+  }
+
+  async function copyAgain(text: string) {
+    try {
+      await writeClipboardText(text);
+      landed(true, text);
+    } catch {
+      landed(false, text);
+    }
+  }
+
+  function landed(ok: boolean, text: string) {
+    if (ok) return setCopied(true);
     // The clipboard can be refused or absent (lib/clipboard.ts). An inert-looking
     // button is worse than none, so show the text instead, as
     // `components/invite.tsx` does.
-    else setFailed(text);
+    setFailed(text);
   }
 
   function done() {
@@ -130,7 +145,7 @@ export default function QuickResultPage() {
             {/* The way out, in the secondary register: the act this screen
                 exists for is the one above it. */}
             <button type="button" className="btn btn-s"
-              onClick={() => (shared === secret ? done() : setAsking(true))}>
+              onClick={() => (quickLinkSent(secret) ? done() : setAsking(true))}>
               {copy.quick.done}
             </button>
           </div>

@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { memberIdFor, readSharedSplit } from "@bida/core";
 import { blankDraft, type EntryDraft } from "./draft";
 import {
-  clearQuickPeople, quickLinkSecret, quickMessage, quickShares, quickSharedSplit, type QuickPerson,
+  clearQuickPeople, markQuickLinkSent, quickLinkSecret, quickLinkSent, quickMessage, quickShares,
+  quickSharedSplit, type QuickPerson,
 } from "./quick";
 
 /**
@@ -93,6 +94,21 @@ describe("what the link carries", () => {
     expect(quickLinkSecret({ ...split, title: "Bar Zahra, again" })).not.toBe(first);
     clearQuickPeople();
     expect(quickLinkSecret(split)).not.toBe(first);
+  });
+
+  it("remembers the link was sent until the figures move", () => {
+    clearQuickPeople();
+    const { totalMinor, shares } = quickShares(bill(), PEOPLE);
+    const split = quickSharedSplit("Bar Zahra", totalMinor, shares, "EUR");
+    const secret = quickLinkSecret(split);
+    expect(quickLinkSent(secret)).toBe(false);
+    markQuickLinkSent(secret);
+    expect(quickLinkSent(quickLinkSecret(split))).toBe(true);
+    const moved = quickLinkSecret({ ...split, title: "Bar Zahra, again" });
+    expect(quickLinkSent(moved)).toBe(false);
+    // An old link marked late marks nothing: the server has the new one or none.
+    markQuickLinkSent(secret);
+    expect(quickLinkSent(moved)).toBe(false);
   });
 });
 

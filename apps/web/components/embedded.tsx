@@ -50,10 +50,14 @@ let unfolded = false;
  * the line names the button that does, and the link is there to copy by hand.
  * The demo, the install and notification offers stand down while this shows
  * (`DemoCard`, `offerFrom`).
+ *
+ * **Not on a quick split's link** (`/split`): it holds nothing on the phone,
+ * so there is nothing to lose here, and its address is already the whole
+ * way out — any *Open in browser* opens the split as it stands.
  */
 export function EmbeddedBanner() {
   const [open, setOpen] = useState(unfolded);
-  if (!useEmbedded()) return null;
+  if (!useEmbedded() || NOTHING_HELD.test(location.pathname)) return null;
   const toggle = () => { unfolded = !open; setOpen(!open); };
   return (
     <div className="banner webview">
@@ -96,7 +100,9 @@ function KeepInAddress() {
   return null;
 }
 
-const OWN_FRAGMENT = /^\/(join|install|handover)(\.html)?$/;
+const OWN_FRAGMENT = /^\/(join|install|handover|split)(\.html)?$/;
+
+const NOTHING_HELD = /^\/split(\.html)?$/;
 
 /**
  * The carry (`useCarry`), and who this webview is in each group, as an icon

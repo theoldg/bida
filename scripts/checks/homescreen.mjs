@@ -421,6 +421,13 @@ await webviewPage.waitForSelector(".rows .row:not(.skelrow)", { timeout: PATIENC
 report(await webviewPage.getByText(BANNER).count() === 1
   && await webviewPage.locator(".demomark").count() === 0,
   "the demo runs there too, its own card standing down for the banner");
+// A quick split's link holds nothing on the phone, and its fragment is its key:
+// no banner, and the carry kept in the address must not write over it.
+await webviewPage.goto(`${base}/split#7f2kq9x0m3v8n1zc`);
+await webviewPage.waitForSelector(".keyless", { timeout: PATIENCE });
+report(await webviewPage.getByText(BANNER).count() === 0
+  && await webviewPage.evaluate(() => location.hash) === "#7f2kq9x0m3v8n1zc",
+  "a quick split's link wears no banner, and keeps its own fragment for Open in browser");
 await webview.close();
 
 // Android's way out is a link, carrying the screen's group and who the webview

@@ -60,7 +60,8 @@ ciphertext. Kept for good, like a group's log; the bearer is what
 copied is the bill's name and total, a line per person, and the link
 (`quickMessage`), written inside the tap — Safari refuses a clipboard written
 after an await — while the upload runs beside it; the check comes up only once
-both landed, and an offline phone copies nothing. `/split` draws it read-only, as the answer screen does.
+both landed. Once one has, pressing again only copies — offline too — and
+until then an offline phone copies nothing. `/split` draws it read-only, as the answer screen does.
 
 **One credential per phone, not per bill**, minted on first need and kept in
 the device store. A fresh id per split would write a row for every bill

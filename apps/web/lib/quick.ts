@@ -134,7 +134,7 @@ export function quickMessage(split: SharedSplit, link: string): string {
 
 // ------------------------------------------------------------- the link
 
-let link: { figures: string; secret: string } | undefined;
+let link: { figures: string; secret: string; sent: boolean } | undefined;
 
 /**
  * The secret this split's link is made of. **One per set of figures**: a
@@ -144,6 +144,19 @@ let link: { figures: string; secret: string } | undefined;
  */
 export function quickLinkSecret(split: SharedSplit): string {
   const figures = JSON.stringify(split);
-  if (link?.figures !== figures) link = { figures, secret: newGroupSecret() };
+  if (link?.figures !== figures) link = { figures, secret: newGroupSecret(), sent: false };
   return link.secret;
+}
+
+/**
+ * Whether the server already holds this link's split. Kept with the secret
+ * rather than on the screen, so a trip back to the grid and forward again,
+ * with nothing changed, doesn't send it twice.
+ */
+export function quickLinkSent(secret: string): boolean {
+  return link?.secret === secret && link.sent;
+}
+
+export function markQuickLinkSent(secret: string): void {
+  if (link?.secret === secret) link.sent = true;
 }
