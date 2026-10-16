@@ -459,7 +459,7 @@ const en = {
     backup: "Make sure this is what you want, and consider backing up via the “export data” button.",
     ask: {
       title: "Which group?",
-      body: "Paste the group’s invite link:",
+      body: "Paste the group’s invite link, or a quick split’s link:",
       placeholder: "https://bida.bid/join#…",
       paste: "Paste link",
       act: "Find this group",
@@ -472,6 +472,7 @@ const en = {
       refused: "The server refused that link: its password does not match the group.",
       unreadable: "That link opened nothing this app can read.",
       offline: "Couldn’t reach the server. Check your connection and try again.",
+      noSplit: "There’s no split at that link. Nothing of it is here to delete.",
     },
     found: {
       title: "This is what will be deleted",
@@ -488,6 +489,18 @@ const en = {
       act: "Delete for everyone",
     },
     failed: "The deletion didn’t go through, and nothing was deleted. Try again.",
+    /** A quick split's link pasted instead (ADR-0035): one row, nobody's group. */
+    split: {
+      rows: { people: "People", total: "Total" },
+      act: "Delete this split",
+      other: "Delete something else",
+      sure: {
+        title: (name: string) => `Delete ${name}?`,
+        body: "The server’s copy goes now, and the link stops opening it.",
+        act: "Delete",
+      },
+      done: (name: string) => `${name} is gone from the server.`,
+    },
     done: {
       title: "Deleted",
       body: (name: string) => `${name} is gone from the server, and off this phone.`,

@@ -7,9 +7,11 @@ import { Icon } from "@/components/icons";
 import { copy } from "@/lib/copy";
 import { deleteGroupEverywhere, previewGroup, type GroupPreview, type PreviewProblem }
   from "@/lib/db/erase";
-import { stamp } from "@/lib/format";
+import type { SharedSplit } from "@bida/core";
+import { bare, stamp } from "@/lib/format";
 import { readPastedLink, route, type JoinLink } from "@/lib/group-link";
 import { readClipboardText } from "@/lib/paste";
+import { deleteSharedSplit, fetchSplit, readPastedSplit } from "@/lib/split-link";
 
 /**
  * `/delete-my-data` — the hosted service's way to ask for a group to be
@@ -27,17 +29,21 @@ import { readClipboardText } from "@/lib/paste";
  * **Three deliberate frictions** — finding the link, typing the name, a final
  * dialog — because the act is irreversible, unbacked, and taken by one person
  * for everybody.
+ *
+ * **A quick split's link is taken too** (ADR-0035): one sealed row, nobody's
+ * group, so it is shown and asked about once, with no name to type.
  */
 export default function DeleteMyDataPage() {
   const c = copy.deleteData;
   const [typed, setTyped] = useState("");
   const [looking, setLooking] = useState(false);
-  const [problem, setProblem] = useState<PreviewProblem | "bad" | { host: string }>();
+  const [problem, setProblem] = useState<PreviewProblem | "bad" | "noSplit" | { host: string }>();
   const [found, setFound] = useState<{ link: JoinLink; preview: GroupPreview }>();
+  const [foundSplit, setFoundSplit] = useState<{ secret: string; split: SharedSplit }>();
   const [name, setName] = useState("");
   const [sure, setSure] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [deleted, setDeleted] = useState<string>();
+  const [deleted, setDeleted] = useState<{ name: string; split: boolean }>();
 
   async function paste() {
     // `undefined` is a refused read: the person dismissing iOS's paste prompt,
@@ -52,6 +58,16 @@ export default function DeleteMyDataPage() {
     if (looking) return;
     setProblem(undefined);
     setFound(undefined);
+    setFoundSplit(undefined);
+    const asSplit = readPastedSplit(typed, window.location.origin);
+    if (asSplit?.kind === "elsewhere") return setProblem({ host: asSplit.host });
+    if (asSplit) {
+      setLooking(true);
+      const fetched = await fetchSplit(asSplit.secret);
+      setLooking(false);
+      if (fetched.kind === "split") return setFoundSplit({ secret: asSplit.secret, split: fetched.split });
+      return setProblem(fetched.kind === "none" ? "noSplit" : fetched.kind);
+    }
     const pasted = readPastedLink(typed.trim(), window.location.origin);
     // A link for another deployment is the one refusal that is not this
     // person's mistake: their group is real, it is simply somewhere else, and
@@ -66,6 +82,21 @@ export default function DeleteMyDataPage() {
     setFound({ link: pasted.link, preview: answer.preview });
   }
 
+  async function destroySplit() {
+    if (!foundSplit) return;
+    setFailed(false);
+    try {
+      await deleteSharedSplit(foundSplit.secret);
+    } catch {
+      setSure(false);
+      return setFailed(true);
+    }
+    setSure(false);
+    setDeleted({ name: splitName(foundSplit.split), split: true });
+    setFoundSplit(undefined);
+    setTyped("");
+  }
+
   async function destroy() {
     if (!found) return;
     setFailed(false);
@@ -76,7 +107,7 @@ export default function DeleteMyDataPage() {
       return setFailed(true);
     }
     setSure(false);
-    setDeleted(found.preview.name);
+    setDeleted({ name: found.preview.name, split: false });
     setFound(undefined);
     setTyped("");
   }
@@ -89,8 +120,9 @@ export default function DeleteMyDataPage() {
           <div className="pad about">
             <section className="aboutsect">
               <h4>{c.done.title}</h4>
-              <p>{c.done.body(deleted)}</p>
-              <p>{c.done.rest}</p>
+              {deleted.split ? <p>{c.split.done(deleted.name)}</p> : (
+                <><p>{c.done.body(deleted.name)}</p><p>{c.done.rest}</p></>
+              )}
               <div className="aboutlinks">
                 <a className="aboutlink" href={route.groups()}>
                   <Icon name="back" size={14} />{c.done.back}
@@ -110,8 +142,8 @@ export default function DeleteMyDataPage() {
         <div className="pad about">
           {/* The warnings lead, above the field, and stay up while the link is
               being found: they are the screen, and the field is what it ends
-              with. */}
-          <section className="aboutsect">
+              with. They are a group's, so a split found goes without them. */}
+          {foundSplit ? null : <section className="aboutsect">
             <p><strong>{c.lede}</strong></p>
             <ul className="warnlist">
               {c.warnings.map((line) => (
@@ -119,9 +151,12 @@ export default function DeleteMyDataPage() {
               ))}
             </ul>
             <p>{c.backup}</p>
-          </section>
+          </section>}
 
-          {found ? (
+          {foundSplit ? (
+            <FoundSplit split={foundSplit.split} onAsk={() => setSure(true)}
+              onOther={() => { setFoundSplit(undefined); setTyped(""); }} />
+          ) : found ? (
             <Found found={found} name={name} setName={setName}
               onAsk={() => setSure(true)} onOther={() => { setFound(undefined); setTyped(""); }} />
           ) : (
@@ -154,8 +189,16 @@ export default function DeleteMyDataPage() {
               {failed ? <p className="failure">{c.failed}</p> : null}
             </section>
           )}
+          {foundSplit && failed ? <p className="failure">{c.failed}</p> : null}
         </div>
       </Scroll>
+
+      {sure && foundSplit ? (
+        <ConfirmDialog title={c.split.sure.title(splitName(foundSplit.split))} confirm={c.split.sure.act}
+          danger onConfirm={() => destroySplit()} onClose={() => setSure(false)}>
+          <p>{c.split.sure.body}</p>
+        </ConfirmDialog>
+      ) : null}
 
       {sure && found ? (
         <ConfirmDialog title={c.sure.title(found.preview.name)} confirm={c.sure.act} danger
@@ -217,6 +260,33 @@ function Found({ found, name, setName, onAsk, onOther }: {
       <div className="drow">
         <button className="btn btn-s" onClick={onOther}>{c.other}</button>
         <button className="btn btn-d" disabled={!matches} onClick={onAsk}>{c.act}</button>
+      </div>
+    </section>
+  );
+}
+
+const splitName = (split: SharedSplit) => split.title || copy.quick.message.untitled;
+
+/** A quick split as its link opens it: enough to know it is the one meant. */
+function FoundSplit({ split, onAsk, onOther }: {
+  split: SharedSplit;
+  onAsk: () => void;
+  onOther: () => void;
+}) {
+  const c = copy.deleteData;
+  return (
+    <section className="aboutsect">
+      <h4>{c.found.title}</h4>
+      <p><strong>{splitName(split)}</strong></p>
+      <div className="card">
+        <div className="kv"><span className="k">{c.split.rows.people}</span>
+          <span className="v">{split.people.length}</span></div>
+        <div className="kv"><span className="k">{c.split.rows.total}</span>
+          <span className="v">{bare(split.totalMinor, split.currency)}</span></div>
+      </div>
+      <div className="drow">
+        <button className="btn btn-s" onClick={onOther}>{c.split.other}</button>
+        <button className="btn btn-d" onClick={onAsk}>{c.split.act}</button>
       </div>
     </section>
   );

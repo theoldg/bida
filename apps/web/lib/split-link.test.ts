@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { handoverFrom } from "./group-link";
-import { formatSplitLink, parseSplitLink } from "./split-link";
+import { formatSplitLink, parseSplitLink, readPastedSplit } from "./split-link";
 
 /** A split link is one token in a fragment (ADR-0035): short, and nobody's carry. */
 
@@ -21,5 +21,23 @@ describe("a split link", () => {
 
   it("is not taken for a carry and sent to /handover", () => {
     expect(handoverFrom("/split", "#7f2kq9x0m3v8n1zc")).toBeUndefined();
+  });
+});
+
+describe("a pasted split link", () => {
+  it("is a whole /split URL from this server", () => {
+    expect(readPastedSplit(" https://bida.bid/split#7f2kq9x0m3v8n1zc ", "https://bida.bid"))
+      .toEqual({ kind: "split", secret: "7f2kq9x0m3v8n1zc" });
+  });
+
+  it("names another deployment's by host", () => {
+    expect(readPastedSplit("https://hajsik-dev.hajsik-api.workers.dev/split#7f2kq9x0m3v8n1zc", "https://bida.bid"))
+      .toEqual({ kind: "elsewhere", host: "hajsik-dev.hajsik-api.workers.dev" });
+  });
+
+  it("is nothing for an invite, a bare secret or a split with no secret", () => {
+    for (const text of ["https://bida.bid/join#abc.def", "7f2kq9x0m3v8n1zc", "https://bida.bid/split"]) {
+      expect(readPastedSplit(text, "https://bida.bid")).toBeNull();
+    }
   });
 });

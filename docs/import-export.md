@@ -86,7 +86,9 @@ before the button is the real group, named, counted and dated
 (`lib/db/erase.ts`). Then four deliberate frictions: typing the address to get
 here, finding the link, typing the group's name, and a dialog that names the
 group again. What is deleted is the server's copy, for everybody, plus this
-phone's.
+phone's. **A quick split's link is taken too** ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)):
+its name, people and total, then one dialog — no name to type and no group
+warnings, since it is one sealed row and nobody's ledger.
 
 **The other phones learn from the 410.** Their next sync erases the group there
 too and drops it off their list, wherever the app happened to be standing; the

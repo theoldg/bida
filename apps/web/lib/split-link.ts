@@ -74,3 +74,33 @@ export async function fetchSplit(secret: string): Promise<Fetched> {
     throw err;
   }
 }
+
+/**
+ * A pasted split link, as `/delete-my-data` reads one. Only a whole `/split`
+ * URL counts, and another deployment's is named by host, as an invite's is
+ * (`readPastedLink`): the row lives there.
+ */
+export function readPastedSplit(
+  text: string, origin: string,
+): { kind: "split"; secret: string } | { kind: "elsewhere"; host: string } | null {
+  let url: URL;
+  try {
+    url = new URL(text.trim());
+  } catch {
+    return null;
+  }
+  const secret = url.pathname === "/split" ? parseSplitLink(url.hash) : null;
+  if (!secret) return null;
+  return url.origin === origin ? { kind: "split", secret } : { kind: "elsewhere", host: url.host };
+}
+
+/** Off the server for good, for whoever holds the link. Throws on anything short of done. */
+export async function deleteSharedSplit(secret: string): Promise<void> {
+  const crypto = await deriveSplitCrypto(secret);
+  const res = await fetch(`/api/splits/${crypto.id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${crypto.token}` },
+    signal: AbortSignal.timeout(PATIENCE_MS),
+  });
+  if (!res.ok) throw new Error(`deleting a split: ${res.status}`);
+}
