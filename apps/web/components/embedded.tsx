@@ -15,7 +15,7 @@ const never = () => () => {};
 const onIos = () =>
   looksIos(navigator.userAgent, navigator.platform, navigator.maxTouchPoints);
 
-function embedded(): boolean {
+export function embedded(): boolean {
   if (typeof window === "undefined") return false;
   return looksEmbedded({ ua: navigator.userAgent, ios: onIos(), standalone: isStandalone() });
 }

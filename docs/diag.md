@@ -56,6 +56,10 @@ cover. They are one number on a phone that is behaving, and when they are not,
 the difference is the strip at the foot of every screen that gets reported as
 "the bottom is cut off" (see [touch-and-viewport.md](touch-and-viewport.md#the-screen-and-the-keyboard-over-it)).
 
+Above it, `in-app:` is the detector's verdict, then the `agent:` and
+`referrer:` it had to go on: a host app's browser no engine here can run, so a
+miss there is read off a phone ([ios.md](ios.md#the-in-app-browser--a-one-off-visit)).
+
 A **`menus and dialogs`** block sits in the head, not down in the timeline
 where its lines are written: one per overlay that has closed, from every page
 kept, holding every press, lift, cancel and click the phone sent while it was

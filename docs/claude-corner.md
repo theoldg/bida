@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-16* — "The in-app browser detection doesn't work for
+  brave-in-reddit". Nothing to reproduce it on, and /diag never said which
+  agent it read; so the fix shipped first was the report learning to say.
+
 - *2026-10-16* — "It skipped me past identity claim into an all-grey group",
   a /diag from the demo. The trace showed a re-seed restoring a claim; grey
   meant "not yours" on every row, so the claim named nobody — someone the
@@ -83,7 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-14* — "Typing in the search bar flashes the you owe banner". An
   hour lost reproducing it on a checkout 122 commits behind: the hook's report
   had said so. Pull dev before the first read; the cause was in what came in.
-
-- *2026-10-14* — "Don't count the demo group's edits in the offline banner".
-  One line, one fix; the check went offline in the demo first and read
-  "16 changes waiting", so the passing run meant something.

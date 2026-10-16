@@ -4,12 +4,14 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { embedded } from "@/components/embedded";
 import { Icon } from "@/components/icons";
 import { writeClipboardText } from "@/lib/clipboard";
 import { copy, lang } from "@/lib/copy";
 import { db } from "@/lib/db/dexie";
 import { pullNotes, type PullNote } from "@/lib/db/stash";
 import { format, handoff, loadedAt, otherPages, timeline } from "@/lib/diag";
+import { embeddedApp } from "@/lib/embedded";
 import { useFold } from "@/lib/fold";
 import { route } from "@/lib/group-link";
 import { useFlash } from "@/lib/hooks";
@@ -265,6 +267,11 @@ async function collect(): Promise<string> {
   say("lang", lang);
   say("scan key", await scanKeyLine);
   say("display", matchMedia("(display-mode: standalone)").matches ? "installed" : "browser");
+  // What the in-app detector read and made of it — no engine to hand runs the
+  // host apps, so a phone's report is the only way to see a miss.
+  say("in-app", embedded() ? `yes, ${embeddedApp(navigator.userAgent) ?? "unnamed"}` : "no");
+  say("agent", navigator.userAgent);
+  say("referrer", document.referrer || "none");
   say("screen", screenLine());
   say("online", String(navigator.onLine));
   say("worker", navigator.serviceWorker?.controller ? "controlling" : "none");
