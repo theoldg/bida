@@ -17,7 +17,7 @@ import {
   type InstallOffer,
 } from "../lib/install";
 import { pushPermission, pushState, subscribePushState, turnOnNotifications, type PushState } from "../lib/push";
-import { resumeHintId, type LedgerBanner } from "../lib/first-frame";
+import { DESKTOP, resumeHintId, type LedgerBanner } from "../lib/first-frame";
 
 export function useInstallOffer(): InstallOffer {
   return useSyncExternalStore(subscribeInstall, installOffer, () => "none" as const);
@@ -171,6 +171,8 @@ type Due = "notify" | "manual" | "ready";
 function useDueOffer(): Due | null {
   const offer = useInstallOffer();
   const push = usePushState();
+  const desktop = useSyncExternalStore(never, () => matchMedia(DESKTOP).matches, () => false);
+  if (desktop) return null;
   if (offer === "installed" && push === "ask") return "notify";
   return offer === "manual" || offer === "ready" ? offer : null;
 }

@@ -18,6 +18,7 @@ interface Env {
   touch?: number;
   push?: boolean;
   permission?: NotificationPermission;
+  desktop?: boolean;
 }
 
 /** Run the script before paint in a made-up browser; the marks it leaves on `<html>`. */
@@ -37,7 +38,7 @@ function marks(env: Env): Record<string, string> {
     { pathname: env.path ?? "/", hash: env.hash ?? "" },
     { getItem: (key: string) => storage[key] ?? null },
     nav,
-    () => ({ matches: env.standalone ?? false }),
+    (query: string) => ({ matches: query.includes("display-mode") ? env.standalone ?? false : env.desktop ?? false }),
     win,
     win.Notification,
     { documentElement: { dataset } },
@@ -48,6 +49,7 @@ function marks(env: Env): Record<string, string> {
 /** The banner the ledger's real cards would draw. */
 function banner(env: Env): string {
   if (env.hint === DEMO_GROUP_ID) return "demo";
+  if (env.desktop) return "";
   const offer = offerFrom({
     standalone: env.standalone ?? false, hasPrompt: false,
     ios: looksIos(env.ua ?? "Android", env.platform ?? "Linux", env.touch ?? 5),
@@ -113,8 +115,9 @@ describe("firstFrameScript", () => {
     ];
     const perms: (NotificationPermission | undefined)[] = ["default", "granted", "denied"];
     for (const hint of ["g1", DEMO_GROUP_ID]) for (const standalone of [false, true])
-      for (const u of uas) for (const push of [false, true]) for (const permission of perms) {
-        const env = { hint, standalone, push, permission, ...u };
+      for (const u of uas) for (const push of [false, true]) for (const permission of perms)
+      for (const desktop of [false, true]) {
+        const env = { hint, standalone, push, permission, desktop, ...u };
         expect(marks(env).banner, JSON.stringify(env)).toBe(banner(env));
       }
     expect(marks({ path: "/install", standalone: true }).banner).toBeUndefined();

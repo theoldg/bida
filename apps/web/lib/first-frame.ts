@@ -89,21 +89,25 @@ export function firstFrame(
  */
 export function ledgerBanner(
   id: string, demo: string, standalone: boolean, ios: boolean, push: boolean,
-  permission: string | undefined,
+  permission: string | undefined, desktop: boolean,
 ): LedgerBanner {
   if (id === demo) return "demo";
+  if (desktop) return undefined;
   if (standalone) return push && permission === "default" ? "notify" : undefined;
   return ios ? "manual" : undefined;
 }
 
 export type LedgerBanner = "demo" | "notify" | "manual" | undefined;
 
+/** A mouse for the main pointer: a desktop, where nobody wants an icon or a buzz, so neither is offered. */
+export const DESKTOP = "(hover: hover) and (pointer: fine)";
+
 /**
  * Marks `<html data-frame="<FirstFrame>">`, and on a ledger
  * `data-banner="<LedgerBanner>"` for its folded card (globals.css). Taken off
  * by `clearFirstFrame` once the launch has landed.
  */
-export const firstFrameScript = `try{var N=navigator,n=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0],d=document.documentElement,s=matchMedia("(display-mode: standalone)").matches||N.standalone===true,h=localStorage.getItem("${HINT}"),f=(${firstFrame})(location.pathname,n?n.type:undefined,s,h,localStorage.getItem("${LAUNCHED}")==="1",location.hash);if(f){d.dataset.frame=f;if(f==="ledger")d.dataset.banner=(${ledgerBanner})(h,${JSON.stringify(DEMO_GROUP_ID)},s,/iPad|iPhone|iPod/.test(N.userAgent)||(N.platform==="MacIntel"&&N.maxTouchPoints>1),"serviceWorker"in N&&"PushManager"in window&&"Notification"in window,window.Notification?Notification.permission:undefined)||""}}catch(e){}`;
+export const firstFrameScript = `try{var N=navigator,n=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0],d=document.documentElement,s=matchMedia("(display-mode: standalone)").matches||N.standalone===true,h=localStorage.getItem("${HINT}"),f=(${firstFrame})(location.pathname,n?n.type:undefined,s,h,localStorage.getItem("${LAUNCHED}")==="1",location.hash);if(f){d.dataset.frame=f;if(f==="ledger")d.dataset.banner=(${ledgerBanner})(h,${JSON.stringify(DEMO_GROUP_ID)},s,/iPad|iPhone|iPod/.test(N.userAgent)||(N.platform==="MacIntel"&&N.maxTouchPoints>1),"serviceWorker"in N&&"PushManager"in window&&"Notification"in window,window.Notification?Notification.permission:undefined,matchMedia(${JSON.stringify(DESKTOP)}).matches)||""}}catch(e){}`;
 
 /** Whether this load was marked: read once, by the screens that draw `FirstFrames`. */
 export function firstFrameMarked(): boolean {

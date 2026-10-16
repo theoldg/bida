@@ -46,6 +46,8 @@ worth the standing ask, and installing is what ends it. The title is its
 disclosure, and `installNudgeCollapsed` (or `notifyNudgeCollapsed`) on the
 device record remembers the fold. The same card sits atop each real group's
 ledger (`LedgerInstall`), folded on every visit and remembering nothing.
+Neither offer is made on a desktop — a mouse for the main pointer (`DESKTOP`,
+`lib/first-frame.ts`), where nobody wants an icon or a buzz.
 
 **A link to this app is nearly always sent in a chat**, so `metadata` in the
 layout also carries Open Graph and Twitter tags for the card a chat app draws,

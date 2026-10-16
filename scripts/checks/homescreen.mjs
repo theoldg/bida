@@ -271,6 +271,13 @@ if (androidFolded) await androidOffer(androidPage).click();
 report(androidFolded && await androidAdd.waitFor({ timeout: 2000 }).then(() => true, () => false),
   "a group's ledger offers Android the same card, folded");
 
+// ---- ...and a desktop nothing, prompt or not -------------------------------
+const desk = await newPhone(browser, { viewport: { width: 1280, height: 800 }, isMobile: false, hasTouch: false });
+const deskPage = await desk.newPage();
+await newGroup(deskPage, base, { name: "Lyon", me: "Ines", members: ["Jo"] });
+await openGroupsList(deskPage, base);
+report(!(await offerInstall(deskPage)), "a desktop's groups list offers no install, even with Chrome's prompt in hand");
+
 const watchFrames = (page, run) => page.addInitScript((run) => {
   const count = (key) => {
     const at = `frames.${run}.${key}`;
