@@ -32,8 +32,8 @@ Four things: push notifications, built and unchecked on a phone, the ledger's wi
 ([design-review.md](design-review.md)).
 
 - **A quick split goes out as a link** (ADR-0035), built, driven against a
-  local Worker, and migrated on both D1s (`0005_splits.sql`, 2026-10-16);
-  untried on a phone, and production serves it once `main` moves.
+  local Worker, migrated on both D1s (`0005_splits.sql`) and working on a
+  real phone (the owner, 2026-10-16); production serves it once `main` moves.
 
 - **Push notifications are built and work on dev**
   ([notifications.md](notifications.md), ADR-0037): an edit from an incognito
