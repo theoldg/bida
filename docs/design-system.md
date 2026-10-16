@@ -51,7 +51,7 @@ under it — set apart by nothing but its own bold lead-in (`strong`).
 
 | Token | Role |
 |---|---|
-| `--paper`, `--card`, `--card-2/3` | Grounds. Near-neutral greys, both themes. The page itself is `--card`, so past 560px the column runs borderless into it |
+| `--paper`, `--card`, `--card-2/3` | Grounds. Near-neutral greys, both themes. The page itself is `--card`, so past 640px the column runs borderless into it |
 | `--ink`, `--ink-2`, `--muted` | Text, three levels |
 | `--rule`, `--rule-soft` | Hairlines — the ruling |
 | `--brand` | **Equal to `--ink`.** Buttons, active tabs, the focus ring |

@@ -41,7 +41,7 @@
   border: 0 solid;
 }
 
-/* Thin, in the ruling's colour: past 560px the scrollbar is all that marks the column's edge. */
+/* Thin, in the ruling's colour: past 640px the scrollbar is all that marks the column's edge. */
 * { scrollbar-width: thin; scrollbar-color: var(--rule) transparent }
 
 html {
@@ -319,7 +319,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 a { color: inherit; text-decoration: none }
 
 /* ---- the shell: header, scrolling middle, fixed footer ---- */
-/* Body wears the card: past 560px the column runs borderless into it, and on
+/* Body wears the card: past 640px the column runs borderless into it, and on
    iOS body is also what's painted behind a home-screen app's status bar. */
 body { background: var(--card) }
 /* Body's colour still comes blurred and dimmed; a fixed element at least 6px
@@ -335,7 +335,7 @@ body { background: var(--card) }
    `dvh` because iOS's collapsing toolbar eats `vh`. */
 .app { background: var(--card); height: 100dvh; max-height: 100%; overflow: hidden;
   display: flex; flex-direction: column;
-  position: relative; max-width: 560px; margin: 0 auto }
+  position: relative; max-width: var(--col); margin: 0 auto }
 /* What a launch will show, marked before paint (lib/first-frame.ts): the route's
    own frame steps aside for the one `FirstFrames` drew for that answer. */
 .firstframe, html[data-frame] .ownframe { display: none }
@@ -942,14 +942,16 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .tipacts { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 6px }
 
 /* ---- nav, fab, buttons ---- */
-:root { --fab-foot: max(20px, calc(env(safe-area-inset-bottom) + 8px)); --fab: 60px }
-.fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: var(--fab-foot); width: var(--fab); height: var(--fab);
+:root { --fab-foot: max(20px, calc(env(safe-area-inset-bottom) + 8px)); --fab: 60px;
+  /* The column's width, and so the fixed FAB's inset off a wider screen's edge. */
+  --col: 640px; --fab-right: max(16px, calc(50vw - var(--col) / 2 + 16px)) }
+.fab { position: fixed; right: var(--fab-right); bottom: var(--fab-foot); width: var(--fab); height: var(--fab);
   border-radius: var(--r-s); background: var(--brand); color: var(--brand-ink); display: grid;
   place-items: center; z-index: 4 }
-.fab-2 { right: calc(max(16px, 50vw - 264px) + var(--fab) + 10px); background: var(--card); color: var(--ink);
+.fab-2 { right: calc(var(--fab-right) + var(--fab) + 10px); background: var(--card); color: var(--ink);
   border: 1.5px solid var(--ink) }
 .fab-w { width: auto; gap: 7px; padding: 0 14px; grid-auto-flow: column;
-  right: max(16px, calc(50vw - 264px));
+  right: var(--fab-right);
   font-size: 12.5px; font-weight: 600; letter-spacing: -.01em }
 .fabclear { height: calc(var(--fab-foot) + var(--fab) + 16px) }
 .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-s);
