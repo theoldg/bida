@@ -1,6 +1,7 @@
 // Doc: docs/sync.md#the-protocol
 import { fromBase64, toBase64 } from "./bytes.js";
 import { validateOp, type Op } from "./ops.js";
+import { readSharedSplit, type SharedSplit } from "./shared-split.js";
 import type { Id } from "./types.js";
 import { webCrypto } from "./webcrypto.js";
 
@@ -155,22 +156,8 @@ export async function sealOp(crypto: GroupCrypto, op: Op): Promise<SealedOp> {
     note: op.note ?? null,
     createdAt: op.createdAt,
   };
-  const json = utf8.encode(JSON.stringify(body));
-  const deflate = codec("CompressionStream");
-  // Compressed before sealing, because ciphertext doesn't compress: the server
-  // stores, and every phone pulls, the smaller one.
-  const plain = deflate ? await through(deflate, json) : json;
-  const iv = getCrypto().getRandomValues(new Uint8Array(IV_BYTES));
-  const ct = await getCrypto().subtle.encrypt(
-    { name: "AES-GCM", iv, additionalData: aad(op.id, op.groupId) },
-    crypto.key,
-    plain,
-  );
-  const packed = new Uint8Array(1 + IV_BYTES + ct.byteLength);
-  packed[0] = deflate ? DEFLATED : PLAIN;
-  packed.set(iv, 1);
-  packed.set(new Uint8Array(ct), 1 + IV_BYTES);
-  return { id: op.id, groupId: op.groupId, sealed: toBase64(packed), seq: op.seq ?? null };
+  const sealed = await seal(crypto.key, aad(op.id, op.groupId), body);
+  return { id: op.id, groupId: op.groupId, sealed, seq: op.seq ?? null };
 }
 
 /**
@@ -182,7 +169,39 @@ export async function sealOp(crypto: GroupCrypto, op: Op): Promise<SealedOp> {
  */
 export async function openOp(crypto: GroupCrypto, input: SealedOp): Promise<Op> {
   const sealed = validateSealedOp(input);
-  const packed = fromBase64(sealed.sealed);
+  const body = await open(crypto.key, aad(sealed.id, sealed.groupId), sealed.sealed);
+  if (typeof body !== "object" || body === null) throw new SealError("sealed op body isn't an object");
+  try {
+    return validateOp({
+      ...(body as Record<string, unknown>),
+      id: sealed.id,
+      groupId: sealed.groupId,
+      seq: sealed.seq ?? null,
+    });
+  } catch (err) {
+    throw new SealError(`sealed op opened to one this build cannot read: ${(err as Error).message}`);
+  }
+}
+
+/** `value` as JSON, deflated where the browser can, under `key` with `additionalData`. */
+async function seal(key: KeyHandle, additionalData: Uint8Array, value: unknown): Promise<string> {
+  const json = utf8.encode(JSON.stringify(value));
+  const deflate = codec("CompressionStream");
+  // Compressed before sealing, because ciphertext doesn't compress: the server
+  // stores, and every phone pulls, the smaller one.
+  const plain = deflate ? await through(deflate, json) : json;
+  const iv = getCrypto().getRandomValues(new Uint8Array(IV_BYTES));
+  const ct = await getCrypto().subtle.encrypt({ name: "AES-GCM", iv, additionalData }, key, plain);
+  const packed = new Uint8Array(1 + IV_BYTES + ct.byteLength);
+  packed[0] = deflate ? DEFLATED : PLAIN;
+  packed.set(iv, 1);
+  packed.set(new Uint8Array(ct), 1 + IV_BYTES);
+  return toBase64(packed);
+}
+
+/** The JSON `seal` sealed, or a `SealError` for anything wrong with it. */
+async function open(key: KeyHandle, additionalData: Uint8Array, sealed: string): Promise<unknown> {
+  const packed = fromBase64(sealed);
   if (!packed) throw new SealError("sealed op isn't base64");
   if (packed.length <= 1 + IV_BYTES) throw new SealError("sealed op is too short to be one");
   const version = packed[0];
@@ -190,12 +209,8 @@ export async function openOp(crypto: GroupCrypto, input: SealedOp): Promise<Op> 
   let plain: ArrayBuffer;
   try {
     plain = await getCrypto().subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv: packed.slice(1, 1 + IV_BYTES),
-        additionalData: aad(sealed.id, sealed.groupId),
-      },
-      crypto.key,
+      { name: "AES-GCM", iv: packed.slice(1, 1 + IV_BYTES), additionalData },
+      key,
       packed.slice(1 + IV_BYTES),
     );
   } catch {
@@ -212,23 +227,52 @@ export async function openOp(crypto: GroupCrypto, input: SealedOp): Promise<Op> 
       throw new SealError("sealed op opened to something that doesn't inflate");
     }
   }
-  let body: unknown;
   try {
-    body = JSON.parse(new TextDecoder().decode(json));
+    return JSON.parse(new TextDecoder().decode(json));
   } catch {
     throw new SealError("sealed op opened to something that isn't JSON");
   }
-  if (typeof body !== "object" || body === null) throw new SealError("sealed op body isn't an object");
-  try {
-    return validateOp({
-      ...(body as Record<string, unknown>),
-      id: sealed.id,
-      groupId: sealed.groupId,
-      seq: sealed.seq ?? null,
-    });
-  } catch (err) {
-    throw new SealError(`sealed op opened to one this build cannot read: ${(err as Error).message}`);
-  }
+}
+
+// --------------------------------------------------------------- a shared split
+
+/**
+ * What a phone needs for one shared split (ADR-0035), every part of it derived
+ * from the link's secret: the row's address and the bearer that may remove it,
+ * which the server receives, and the key, which it never does.
+ */
+export interface SplitCrypto {
+  /** 32 hex characters: the row's key, and all the server learns of the link. */
+  id: string;
+  token: string;
+  key: KeyHandle;
+}
+
+/** The salt a group id fills for a group: 5 characters, which no group id is. */
+const SPLIT_SALT = "split";
+
+export async function deriveSplitCrypto(secret: string): Promise<SplitCrypto> {
+  const [id, auth, content] = await Promise.all([
+    hkdf(secret, SPLIT_SALT, "split-id"),
+    hkdf(secret, SPLIT_SALT, "split-auth"),
+    hkdf(secret, SPLIT_SALT, "split-content"),
+  ]);
+  const key = await getCrypto().subtle.importKey(
+    "raw", new Uint8Array(content), { name: "AES-GCM" }, false, ["encrypt", "decrypt"],
+  );
+  return { id: hex(new Uint8Array(id).slice(0, 16)), token: hex(new Uint8Array(auth)), key };
+}
+
+/** The address is the AAD, so a body can't be moved onto another split's row. */
+export function sealSplit(crypto: SplitCrypto, split: SharedSplit): Promise<string> {
+  return seal(crypto.key, utf8.encode(`split\n${crypto.id}`), split);
+}
+
+/** A `SealError` for anything that isn't a split this build can draw. */
+export async function openSplit(crypto: SplitCrypto, sealed: string): Promise<SharedSplit> {
+  const split = readSharedSplit(await open(crypto.key, utf8.encode(`split\n${crypto.id}`), sealed));
+  if (!split) throw new SealError("sealed split opened to one this build cannot draw");
+  return split;
 }
 
 function aad(id: string, groupId: string): Uint8Array {

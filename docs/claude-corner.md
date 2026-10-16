@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-16* — "Propose a design for link sharing": three rounds of words
+  before "Build it" — the fragment too long, KV lost to D1, the text option
+  dropped. Mid-build the text came back as a summary around the link:
+  dropped meant "not instead of the link", not "no words".
+
 - *2026-10-16* — "The in-app browser detection doesn't work for
   brave-in-reddit". Nothing to reproduce it on, and /diag never said which
   agent it read; so the fix shipped first was the report learning to say.
@@ -83,7 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   interruptions: the bug it lands on, then "reuse the mechanism from the ios
   install". Reused whole, it brought the tutorial's first paint along. Then
   "is it 100% guaranteed?" — the honest no named the iOS gap, and "do it".
-
-- *2026-10-14* — "Typing in the search bar flashes the you owe banner". An
-  hour lost reproducing it on a checkout 122 commits behind: the hook's report
-  had said so. Pull dev before the first read; the cause was in what came in.

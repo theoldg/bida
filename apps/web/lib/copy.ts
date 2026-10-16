@@ -408,7 +408,7 @@ const en = {
         { k: "number", v: "42" },
         { k: "contents", v: "AQz8k…w==" },
       ],
-      key: "The key that decodes the contents is part of the secret link, and it never reaches the server. I can see how many groups there are, and how many edits each one has had. That’s it.",
+      key: "The key that decodes the contents is part of the secret link, and it never reaches the server. I can see how many groups there are, how many edits each one has had, and how many quick splits were sent as links. That’s it.",
       scanTitle: "Receipt scanning leaves your phone.",
       scan: "Receipt photos are sent to Google’s Vertex AI to be read. Google doesn’t use them to train its models. For a day afterwards, the server remembers that this group scanned something, and a salted hash of your IP address: never the photo, never the raw address, only enough to keep the rate limits fair.",
       ownKeyPointer: "If you want to send your own requests to Google directly, see",
@@ -695,7 +695,7 @@ const en = {
 
   quick: {
     title: "Quick split",
-    lede: "Take a photo of the bill, then tap who had what. It ends in text to paste, and nothing is kept.",
+    lede: "Take a photo of the bill, then tap who had what. It ends in a link to send.",
     who: "Who’s splitting",
     noLines: "That receipt has no lines on it. There’s nothing to assign.",
     discardTitle: "Discard this split?",
@@ -706,15 +706,20 @@ const en = {
     backTitle: "Discard this receipt?",
     backBody: "You’ll have to scan it again.",
     split: "The split",
-    copy: "Copy the split",
+    copy: "Copy link",
     copied: "Copied",
-    fallbackTitle: "The split",
-    fallbackBody: "Copying didn’t work: hold the text to copy it.",
-    summary: {
-      line: (label: string, amount: string) => `${label}: ${amount}`,
-      item: (label: string, amount: string) => `  ${label}: ${amount}`,
-      count: (label: string, count: string) => `${label} ×${count}`,
-      total: "Total",
+    fallbackTitle: "The link",
+    fallbackBody: "Copying didn’t work: hold the link to copy it.",
+    notShared: {
+      title: "Not sent",
+      offline: "This phone is offline. Try again once you’re back.",
+      unsent: "The split didn’t reach bida, so the copied link won’t open yet. Try again.",
+    },
+    /** `/split`, where the link lands. Its bar is `split`, over the bill's name. */
+    landing: {
+      none: "There’s no split at this link. A chat may have cut it short: ask for it again.",
+      offline: "Couldn’t reach bida. Check your connection and try again.",
+      unreadable: "That link opened nothing this version of bida can read.",
     },
   },
 

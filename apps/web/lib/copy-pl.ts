@@ -539,12 +539,8 @@ export const pl: Copy = {
     copied: "???",
     fallbackTitle: "???",
     fallbackBody: "???",
-    summary: {
-      line: (label, amount) => `${label}: ${amount}`,
-      item: (label, amount) => `  ${label}: ${amount}`,
-      count: (label, count) => `${label} ×${count}`,
-      total: "???",
-    },
+    notShared: { title: "???", offline: "???", unsent: "???" },
+    landing: { none: "???", offline: "???", unreadable: "???" },
   },
 
   // ------------------------------------------------------------- one entry

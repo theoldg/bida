@@ -22,6 +22,7 @@ export * from "./names.js";
 export * from "./bytes.js";
 export * from "./chunk.js";
 export * from "./seal.js";
+export * from "./shared-split.js";
 export * from "./when.js";
 export * from "./demo.js";
 export * from "./webpush.js";

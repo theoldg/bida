@@ -313,8 +313,8 @@ and its foot vouched for it.
 
 ## The clipboard
 
-Four screens hand a string over — the invite link, a quick split, the CSV,
-the `/diag` report — and every one of them was written for a clipboard that
+Four screens hand a string over — the invite link, a quick split's link, the
+CSV, the `/diag` report — and every one of them was written for a clipboard that
 **refuses**: `writeText` rejects on an insecure context or a denied
 permission, and the answer is to put the text on screen to be read instead
 (`InviteFallback`, and the same shape on the other three). A fifth hands over

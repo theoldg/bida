@@ -219,7 +219,7 @@ Both scroll with what is under them; neither is pinned — pinned on the ledger,
 the rows the screen is for would start a third of the way down.
 
 **The groups list**, shown only once the tab holds a group. An empty home is
-someone looking around: Quick split stores nothing and is the right way to try
+someone looking around: Quick split needs no group and is the right way to try
 bida, and a visitor won't install an app sight unseen. Once a group is in the
 tab, "Safari may forget it" is true and worth saying at the top rather than the
 foot. The fold is the device's and outlives the visit: a warning someone who

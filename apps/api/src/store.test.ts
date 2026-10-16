@@ -1,10 +1,9 @@
-import { readFileSync } from "node:fs";
-import { DatabaseSync } from "node:sqlite";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   BATCH_OPS, PAGE_CHARS, PAGE_OPS, acceptOps, deleteGroup, ensureGroup, getGroup, isDeleted, pullPage,
 } from "./store";
 import { chunk, type SealedOp } from "@bida/core";
+import { fakeD1 } from "./d1.test-helper";
 
 /**
  * The store against real SQLite with the real migrations. What matters: a
@@ -12,48 +11,6 @@ import { chunk, type SealedOp } from "@bida/core";
  * and a seq must never be visible before its row — so `batch` is transactional
  * like D1's, and the accept tests look at what another caller sees mid-batch.
  */
-
-type Row = Record<string, unknown>;
-
-function fakeD1(): D1Database {
-  const sqlite = new DatabaseSync(":memory:");
-  for (const file of ["0001_init.sql", "0003_group_tombstone.sql", "0004_op_batches.sql"]) {
-    sqlite.exec(readFileSync(new URL(`../migrations/${file}`, import.meta.url), "utf8"));
-  }
-  // D1 binds at most 100; SQLite thousands. Without this the fake passes a
-  // clause that fails on the phone with the biggest queue.
-  const D1_MAX_BOUND_PARAMS = 100;
-  const bound = (args: unknown[]) => {
-    if (args.length > D1_MAX_BOUND_PARAMS) {
-      throw new Error(`too many SQL variables: ${args.length} > ${D1_MAX_BOUND_PARAMS}`);
-    }
-    return args as never[];
-  };
-  const prepare = (sql: string, args: unknown[] = []) => ({
-    bind: (...next: unknown[]) => prepare(sql, next),
-    first: async () => (sqlite.prepare(sql).get(...bound(args)) ?? null) as Row | null,
-    all: async () => ({ results: sqlite.prepare(sql).all(...bound(args)) as Row[] }),
-    run: async () => { sqlite.prepare(sql).run(...bound(args)); },
-  });
-  return {
-    sqlite,
-    prepare,
-    // D1 batches are one transaction; `acceptOps` depends on it, so a loose fake
-    // would pass a broken store.
-    batch: async (stmts: { all: () => Promise<{ results: Row[] }> }[]) => {
-      sqlite.exec("BEGIN");
-      try {
-        const out = [];
-        for (const s of stmts) out.push(await s.all());
-        sqlite.exec("COMMIT");
-        return out;
-      } catch (err) {
-        sqlite.exec("ROLLBACK");
-        throw err;
-      }
-    },
-  } as unknown as D1Database;
-}
 
 const NOW = 1_700_000_000_000;
 const sealed = (id: string, size = 4) => ({ id, groupId: "g1", sealed: "A".repeat(size), seq: null });

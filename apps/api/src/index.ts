@@ -19,6 +19,7 @@ import {
   acceptOps, deleteGroup, ensureGroup, getGroup, isDeleted, pullPage, type GroupRow,
 } from "./store";
 import { parseNotify, relay } from "./relay";
+import { MAX_SPLIT_SEALED, deleteSplit, getSplit, isSplitId, putSplit } from "./splits";
 
 /** Ops arrive and leave sealed; nothing here can read one (ADR-0036). */
 type Env = {
@@ -307,6 +308,49 @@ app.delete("/api/groups/:id", async (c) => {
   if (group instanceof Response) return group;
 
   await deleteGroup(c.env.DB, groupId, Date.now());
+  return c.json({ deleted: true });
+});
+
+/**
+ * A quick split handed over as a link (ADR-0035). The id and the bearer are
+ * both derived from the link's secret, which never arrives; the body is sealed.
+ */
+app.put("/api/splits/:id", async (c) => {
+  const id = c.req.param("id");
+  if (!isSplitId(id)) return c.json({ error: "not a split id" }, 400);
+  const token = bearerToken(c.req.header("Authorization") ?? null);
+  if (!token) return c.json({ error: "missing bearer token" }, 401);
+
+  const oversized = declaredTooLarge(c.req.header("content-length") ?? null, MAX_SPLIT_SEALED + 1024);
+  if (oversized) return c.json({ error: "split too large" }, 413);
+  const body = await jsonBody<{ sealed?: unknown }>(c);
+  if (body instanceof Response) return body;
+  if (typeof body.sealed !== "string" || body.sealed.length === 0) return c.json({ error: "sealed must be a string" }, 400);
+  if (body.sealed.length > MAX_SPLIT_SEALED) return c.json({ error: "split too large" }, 413);
+
+  const stored = await putSplit(c.env.DB, id, await sha256Hex(token), body.sealed, Date.now());
+  if (stored === "wrong token") return c.json({ error: "wrong token" }, 403);
+  return c.json({ stored: true });
+});
+
+/** No bearer: the id is the link's, and what it fetches is ciphertext. */
+app.get("/api/splits/:id", async (c) => {
+  const id = c.req.param("id");
+  if (!isSplitId(id)) return c.json({ error: "not a split id" }, 400);
+  const sealed = await getSplit(c.env.DB, id);
+  if (!sealed) return c.json({ error: "no such split" }, 404);
+  return c.json({ sealed });
+});
+
+/** From `/delete-my-data`, which takes the link as a group's takes the invite. */
+app.delete("/api/splits/:id", async (c) => {
+  const id = c.req.param("id");
+  if (!isSplitId(id)) return c.json({ error: "not a split id" }, 400);
+  const token = bearerToken(c.req.header("Authorization") ?? null);
+  if (!token) return c.json({ error: "missing bearer token" }, 401);
+  const gone = await deleteSplit(c.env.DB, id, await sha256Hex(token));
+  if (gone === "unknown") return c.json({ error: "no such split" }, 404);
+  if (gone === "wrong token") return c.json({ error: "wrong token" }, 403);
   return c.json({ deleted: true });
 });
 

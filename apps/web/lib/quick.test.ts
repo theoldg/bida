@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { memberIdFor } from "@bida/core";
+import { memberIdFor, readSharedSplit } from "@bida/core";
 import { blankDraft, type EntryDraft } from "./draft";
-import { quickShares, quickSummaryText, type QuickPerson } from "./quick";
+import { clearQuickPeople, quickLinkSecret, quickShares, quickSharedSplit, type QuickPerson } from "./quick";
 
 /**
  * A quick split's arithmetic is the receipt grid's, read as money rather than
@@ -70,37 +70,26 @@ describe("what each person owes", () => {
   });
 });
 
-describe("the text it hands over", () => {
-  it("is the merchant, the total, and everybody's own lines", () => {
-    const draft = bill();
-    const { totalMinor, shares } = quickShares(draft, PEOPLE);
-    expect(quickSummaryText(draft.description, totalMinor, shares, draft.currency)).toBe(
-      [
-        "Bar Zahra: 38.80",
-        "",
-        "Ana: 20.10",
-        "  Tagine: 18.00",
-        "  Mint tea ×1/3: 2.10",
-        "Bo: 16.60",
-        "  Couscous: 14.50",
-        "  Mint tea ×1/3: 2.10",
-        "Cy: 2.10",
-        "  Mint tea ×1/3: 2.10",
-      ].join("\n"),
-    );
-  });
-
-  it("says Total where the scan read no name", () => {
-    const draft = bill({ description: "" });
-    const { totalMinor, shares } = quickShares(draft, PEOPLE);
-    expect(quickSummaryText("", totalMinor, shares, draft.currency).split("\n")[0])
-      .toBe("Total: 38.80");
-  });
-
-  it("names a deduction the way the bill printed it", () => {
+describe("what the link carries", () => {
+  it("is the figures on the screen, and nothing they were worked out from", () => {
     const draft = bill({ receiptDiscounts: [{ label: "2 for 1", amount: "3.00" }] });
     const { totalMinor, shares } = quickShares(draft, PEOPLE);
-    const text = quickSummaryText(draft.description, totalMinor, shares, draft.currency);
-    expect(text).toContain("2 for 1: -");
+    const split = quickSharedSplit(` ${draft.description} `, totalMinor, shares, draft.currency);
+    expect(split.title).toBe("Bar Zahra");
+    expect(split.people.map((p) => p.name)).toEqual(["Ana", "Bo", "Cy"]);
+    expect(sum(split.people)).toBe(split.totalMinor);
+    // Read back as any phone reads it: whole, and with no person id in it.
+    expect(readSharedSplit(JSON.parse(JSON.stringify(split)))).toEqual(split);
+    expect(JSON.stringify(split)).not.toContain(ANA.id);
+  });
+
+  it("is one link per set of figures, and a new one once they move", () => {
+    const { totalMinor, shares } = quickShares(bill(), PEOPLE);
+    const split = quickSharedSplit("Bar Zahra", totalMinor, shares, "EUR");
+    const first = quickLinkSecret(split);
+    expect(quickLinkSecret(JSON.parse(JSON.stringify(split)))).toBe(first);
+    expect(quickLinkSecret({ ...split, title: "Bar Zahra, again" })).not.toBe(first);
+    clearQuickPeople();
+    expect(quickLinkSecret(split)).not.toBe(first);
   });
 });

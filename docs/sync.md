@@ -374,8 +374,8 @@ it in one tap.
 ## Gotchas
 
 - **A second path to the server is a second place to forget the seal.** Anything
-  that ships an op has to go through `pushPullGroup`, or the claim on `/about`
-  quietly stops being true.
+  that ships an op goes through `pushPullGroup`, and a quick split's link through
+  `sealSplit` (ADR-0035), or the claim on `/about` quietly stops being true.
 - **Never garbage-collect ops.** They are the history feature. If the log ever
   got genuinely large the answer is snapshotting, and that's a new ADR.
 - `createdAt` is display-only. Sort by it and conflicts start resolving

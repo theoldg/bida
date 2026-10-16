@@ -52,7 +52,7 @@
 
 - **Receipt parsing and itemized splitting.** Extracts line items from receipt photos. Grid-like UI for assigning who-had-what.
 
-- **Quick split.** Run a scan and assign items without creating a group. Screenshot the summary or copy a text version.
+- **Quick split.** Run a scan and assign items without creating a group. Screenshot the summary or send it as a link.
 
 - **Notifications.** When your balance changes.
 

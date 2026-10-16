@@ -327,6 +327,12 @@ CREATE TABLE op_batches (            -- 0004: a push's ops in one row
   received_at INTEGER NOT NULL,
   PRIMARY KEY (group_id, last_seq)) WITHOUT ROWID;
 
+CREATE TABLE splits (                -- 0005: a quick split sent as a link (ADR-0035)
+  id TEXT PRIMARY KEY,               -- derived from the link secret, never sent
+  token_hash TEXT NOT NULL,          -- sha256 of the derived token, as for a group
+  sealed TEXT NOT NULL,              -- base64: version byte, IV, AES-GCM ciphertext
+  created_at INTEGER NOT NULL) WITHOUT ROWID;
+
 CREATE TABLE scan_hits (             -- 0002: the scan budget, pruned at 24h
   at INTEGER NOT NULL,               -- ms, our clock
   caller TEXT NOT NULL,              -- the :id a scan was billed to

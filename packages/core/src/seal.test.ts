@@ -1,7 +1,8 @@
 import { deflateRawSync } from "node:zlib";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  deriveGroupCrypto, openOp, SealError, sealOp, validateSealedOp, type Op,
+  deriveGroupCrypto, deriveSplitCrypto, openOp, openSplit, SealError, sealOp, sealSplit,
+  validateSealedOp, type Op, type SharedSplit,
 } from "./index.js";
 
 /**
@@ -257,5 +258,65 @@ describe("compression", () => {
     vi.unstubAllGlobals();
     expect(bomb.sealed.length).toBeLessThan(20_000);
     await expect(openOp(crypto, bomb)).rejects.toThrow(/inflates past/);
+  });
+});
+
+describe("a shared split", () => {
+  const LINK = "7f2kq9x0m3v8n1zc";
+  const split: SharedSplit = {
+    title: "Trattoria da Mario",
+    currency: "EUR",
+    totalMinor: 4200,
+    people: [
+      { name: "Ana", minor: 2200, lines: [{ label: "Margherita", count: { n: 1, d: 1 }, minor: 2200 }] },
+      { name: "Bo", minor: 2000, lines: [
+        { label: "Calzone", count: { n: 1, d: 2 }, minor: 2100 },
+        { label: "", extra: "discount", count: { n: 1, d: 1 }, minor: -100 },
+      ] },
+    ],
+  };
+
+  it("round-trips", async () => {
+    const crypto = await deriveSplitCrypto(LINK);
+    expect(await openSplit(crypto, await sealSplit(crypto, split))).toEqual(split);
+  });
+
+  it("gives the server an address and a token, neither of them the secret, and nothing readable", async () => {
+    const crypto = await deriveSplitCrypto(LINK);
+    expect(crypto.id).toMatch(/^[0-9a-f]{32}$/);
+    expect(crypto.token).toHaveLength(64);
+    expect(crypto.token.startsWith(crypto.id)).toBe(false);
+    for (const derived of [crypto.id, crypto.token]) expect(derived).not.toContain(LINK);
+    const sealed = await sealSplit(crypto, split);
+    expect(sealed).not.toContain("Trattoria");
+    expect(Buffer.from(sealed, "base64").toString("latin1")).not.toContain("Margherita");
+  });
+
+  it("is the same address on every phone, and another link's is another", async () => {
+    expect((await deriveSplitCrypto(LINK)).id).toBe((await deriveSplitCrypto(LINK)).id);
+    expect((await deriveSplitCrypto("0000000000000000")).id).not.toBe((await deriveSplitCrypto(LINK)).id);
+  });
+
+  it("can't be opened with another link, or moved onto another split's row", async () => {
+    const mine = await deriveSplitCrypto(LINK);
+    const theirs = await deriveSplitCrypto("0000000000000000");
+    const sealed = await sealSplit(mine, split);
+    await expect(openSplit(theirs, sealed)).rejects.toThrow(SealError);
+    await expect(openSplit({ ...mine, id: theirs.id }, sealed)).rejects.toThrow(SealError);
+  });
+
+  it("is a SealError for a sealed body that isn't a split", async () => {
+    const crypto = await deriveSplitCrypto(LINK);
+    const notSplit = await sealSplit(crypto, { title: "x" } as unknown as SharedSplit);
+    await expect(openSplit(crypto, notSplit)).rejects.toThrow(/cannot draw/);
+  });
+
+  it("seals plain where the browser has no raw deflate", async () => {
+    const crypto = await deriveSplitCrypto(LINK);
+    vi.stubGlobal("CompressionStream", class { constructor() { throw new TypeError("deflate-raw"); } });
+    const sealed = await sealSplit(crypto, split);
+    vi.unstubAllGlobals();
+    expect(Buffer.from(sealed, "base64")[0]).toBe(1);
+    expect(await openSplit(crypto, sealed)).toEqual(split);
   });
 });

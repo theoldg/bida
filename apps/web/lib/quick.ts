@@ -1,10 +1,8 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { memberIdFor, receiptExtras } from "@bida/core";
-import { copy } from "./copy";
+import { memberIdFor, newGroupSecret, receiptExtras, type SharedSplit } from "@bida/core";
 import { receiptBill, type EntryDraft } from "./draft";
-import { bare, countText } from "./format";
 import { billLabels, receiptTotalMinor, type MemberLine } from "./scan/items";
 import { signal } from "./signal";
 
@@ -14,8 +12,9 @@ import { signal } from "./signal";
  *
  * No op, so no actor, no identity and nothing to sync. The bill is an ordinary
  * `EntryDraft`, so the scan and the who-had-what grid are reused unchanged.
- * What lives here is what a draft has no room for: who is splitting. What this
- * phone scans with is `lib/scan/credential.ts`.
+ * What lives here is what a draft has no room for: who is splitting, and the
+ * secret its link is made of. What this phone scans with is
+ * `lib/scan/credential.ts`.
  */
 
 /** Somebody at the table. Keyed like a member, by their name (ADR-0034). */
@@ -57,6 +56,7 @@ export function removeQuickPerson(id: string): void {
 
 export function clearQuickPeople(): void {
   people = EMPTY;
+  link = undefined;
   emit();
 }
 
@@ -101,25 +101,30 @@ export function quickShares(
 }
 
 /**
- * The whole answer as text, for the clipboard. Plain lines, no columns — chat
- * apps aren't monospaced. Bare figures: a currency read off a photo is worse
- * than none (ADR-0035).
+ * The answer as a link carries it (`lib/split-link.ts`): the figures on this
+ * screen, frozen, and nothing they were worked out from.
  */
-export function quickSummaryText(
+export function quickSharedSplit(
   title: string,
   totalMinor: number,
   shares: readonly QuickShare[],
   currency: string,
-): string {
-  const words = copy.quick.summary;
-  const head = words.line(title.trim() || words.total, bare(totalMinor, currency));
-  const body = shares.map((share) => [
-    words.line(share.name, bare(share.minor, currency)),
-    ...share.lines.map((line) => {
-      const count = line.extra ? null : countText(line.count);
-      const label = line.extra ? line.label || copy.items.extra[line.extra] : line.label;
-      return words.item(count ? words.count(label, count) : label, bare(line.minor, currency));
-    }),
-  ].join("\n"));
-  return [head, "", ...body].join("\n");
+): SharedSplit {
+  return { title: title.trim(), currency, totalMinor, people: shares.map((s) => ({ ...s })) };
+}
+
+// ------------------------------------------------------------- the link
+
+let link: { figures: string; secret: string } | undefined;
+
+/**
+ * The secret this split's link is made of. **One per set of figures**: a
+ * second press sends the same link, so its upload is a no-op, and a grid
+ * changed since mints a new one, since the old link already says what it
+ * said. Held with the people, and forgotten with them.
+ */
+export function quickLinkSecret(split: SharedSplit): string {
+  const figures = JSON.stringify(split);
+  if (link?.figures !== figures) link = { figures, secret: newGroupSecret() };
+  return link.secret;
 }

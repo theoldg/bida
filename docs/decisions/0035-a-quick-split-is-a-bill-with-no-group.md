@@ -1,6 +1,6 @@
 # 0035 — A quick split is a bill with no group
 
-**Status:** Accepted · 2026-09-12
+**Status:** Accepted · 2026-09-12 · handed over as a link 2026-10-16
 
 **Context.** Splitting a restaurant bill with people you will never share a
 ledger with is the app's most common act among its least committed users, and
@@ -20,7 +20,7 @@ op, so it needs no actor, so it never asks who you are — the question
 [0003](0003-link-only-access.md) makes every `/g` route ask. It is held in the
 same in-memory draft store as every other half-typed entry and discarded the
 same way, with the same warning. Three routes take it — who and the bill, the
-grid, the answer — and it ends by handing you text.
+grid, the answer — and it ends by handing you a link.
 
 **It answers who owes what for this bill, and refuses every question after
 it.** No payer, no balance, no settle-up, no correcting it tomorrow. Those are
@@ -40,9 +40,26 @@ it the way a group's first sync does: an empty `POST …/ops`, which is already
 the call that writes an id and a secret hash on first sight (`ensureGroup`).
 **No API change** — the endpoint that spends money stays read-only, which is
 where a rate limit would go and not something to widen first. The row holds an
-id, a hash and a timestamp; no op is ever pushed under it, so **the server
-learns strictly less about a quick split than about a group**. The credential
+id, a hash and a timestamp, and no op is ever pushed under it. The credential
 is deliberately not in `groupKeys`, the table the sync engine walks.
+
+**The answer goes out as a link to a sealed copy**, `bida.bid/split#<secret>`,
+the secret shaped like a group's (`newGroupSecret`, 16 characters). One HKDF
+over it gives the row's address, a bearer and an AES-GCM key
+(`deriveSplitCrypto`); the server is handed the first two and stores
+`sha256(bearer)`, exactly as for a group ([0036](0036-the-server-cannot-read-a-group.md)),
+so it can count splits and never read one. What is sealed is the figures as
+this phone drew them (`SharedSplit`) — never the bill and grid behind them,
+whose cents re-derive only from ids minted off the scan credential, which a
+link would carry to everyone it reaches. `PUT /api/splits/:id` writes the one
+row of `splits` once, idempotent on the address and capped at the push's 256 KB
+per op, which a 120-line bill among twelve doesn't approach even undeflated;
+`GET` hands it to anyone holding the address, since what it fetches is
+ciphertext. Kept for good, like a group's log; the bearer is what
+`DELETE` checks, so a split can be taken off the server by whoever holds its link. Copying
+writes the link inside the tap — Safari refuses a clipboard written after an
+await — while the upload runs beside it, and the check comes up only once both
+landed. `/split` draws it read-only, as the answer screen does.
 
 **One credential per phone, not per bill**, minted on first need and kept in
 the device store. A fresh id per split would write a row for every bill
@@ -76,6 +93,9 @@ would disagree within a month.
   again.** The seam is the draft: it is already the shape `addExpense` takes.
   What stops it is not the code but two questions — who paid, and who you are —
   that this flow exists to avoid.
+- **The server learns that a split was sent**, when, its size, and the IPs
+  that sent and opened it — the shape a group already leaks, and never what
+  is in it. The privacy section on `/about` counts it.
 - One empty row per phone accumulates in D1, holding nothing. A sweep of
   `last_op_seq = 0` rows is available if that ever matters.
 - **A quick split's scans are linkable to each other server-side**, by that
@@ -100,11 +120,13 @@ would disagree within a month.
   outlives a form, and losing one at the table is a real annoyance — but it is
   the only screen in the app that would remember what you half-typed, and
   "nothing half-typed is kept" is worth more than one retyped roster.
-- **Handing the answer over as a link or an image.** A link has to carry the
-  bill somewhere — a server (the privacy cost this feature otherwise avoids) or
-  a fragment somebody can forward — and an image is a second drawing surface
-  outside the monospace system, downloaded through the one mechanism an
-  installed PWA is worst at. Text on the clipboard is what the invite link
-  already taught us to do ([0008](0008-hand-rolled-interface.md)).
+- **Handing the answer over as text, or as an image.** Text was the first
+  build: a wall of lines in a chat, where a link opens the same screen the
+  table looked at. An image is a second drawing surface outside the monospace
+  system, downloaded through the one mechanism an installed PWA is worst at.
+- **The whole answer in the link's fragment**, with no server at all — a
+  15-line bill is ~600 characters of link after deflating, too long to send.
+- **An expiring copy** (Workers KV's TTL) — a split is kept like a group,
+  and D1 is the store this project already reasons about.
 - **A currency picker.** One more control on a screen asked to be minimal, for
   a symbol nothing in the flow computes with.

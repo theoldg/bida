@@ -24,11 +24,12 @@ The one endpoint that spends actual money is the scan, and its budget is
 advertised to users online, and its traffic is strangers' — so every ceiling on
 this page is a threat surface and not only a capacity estimate. The numbers
 above are what a *few hundred honest requests* need; what matters is what one
-unfriendly caller can spend of them. Two endpoints take a body without
-costing money and are therefore the ones to reason about: the scan, which has a
-budget, and the push, which has ceilings on one request and, by decision rather
-than by oversight, no counter across many
-([sync.md](sync.md#the-push-has-a-ceiling)). The public repo also makes both
+unfriendly caller can spend of them. Three endpoints take a body and are
+therefore the ones to reason about: the scan, which has a budget; the push,
+which has ceilings on one request and, by decision rather than by oversight,
+no counter across many ([sync.md](sync.md#the-push-has-a-ceiling)); and a quick
+split's link, one row per write under the push's per-op ceiling and the same
+decision ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)). The public repo also makes both
 shapes readable, so read the reasoning there before proposing the counter
 again.
 

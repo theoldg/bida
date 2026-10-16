@@ -28,8 +28,15 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Three things: push notifications, built and unchecked on a phone, the ledger's windowing experiment, and Polish. The visual review is closed
+Four things: push notifications, built and unchecked on a phone, the ledger's windowing experiment, Polish, and a quick split's link. The visual review is closed
 ([design-review.md](design-review.md)).
+
+- **A quick split goes out as a link** (ADR-0035), built and driven against
+  a local Worker. **Migration `0005_splits.sql` is not applied** to either D1 —
+  until the owner runs `pnpm db:migrate:dev` (and `db:migrate` before a
+  release), sending one says it didn't reach bida. Open: the copied message
+  wrapping the link in a short summary, being worked out with the owner, and
+  `/delete-my-data` taking a split's link — `DELETE /api/splits/:id` is built.
 
 - **Push notifications are built and work on dev**
   ([notifications.md](notifications.md), ADR-0037): an edit from an incognito

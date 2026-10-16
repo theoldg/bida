@@ -55,8 +55,10 @@ server is now what holds confidentiality rather than just access.
 - **No rotation, no recovery.** There is no key to change without changing the
   link, and a link nobody kept was already an unrecoverable group
   ([0003](0003-link-only-access.md)).
-- One `sealOp`/`openOp` pair in `lib/db/sync.ts` is the whole boundary. A second
-  path to the server would be a second place to forget.
+- One `sealOp`/`openOp` pair in `lib/db/sync.ts` is the whole boundary for a
+  group, and `sealSplit`/`openSplit` the one for a quick split's link
+  ([0035](0035-a-quick-split-is-a-bill-with-no-group.md)), both on one `seal`
+  in `core/seal.ts`. A third path to the server would be a third place to forget.
 
 ## Rejected
 
