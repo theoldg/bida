@@ -316,8 +316,9 @@ webview through costs one confusing join. So a browser that names itself is
 believed before anything else is read — which is what keeps Brave and
 DuckDuckGo, whose agents are Safari's but for a token, out of it. Past that: a
 named app (`Instagram`, `FBAN`…), Android's `; wv)`, or an iOS page with no
-`Safari/` token. Chrome Custom Tabs carries no `wv` and is rightly let
-through: it is Chrome, storage and menus and all.
+`Safari/` token. A Custom Tab carries no `wv` and is rightly let through: it
+is the default browser, storage and menus and all — Brave's, opened from
+Reddit, showed Brave's own group list, under the host's toolbar.
 
 `pnpm verify homescreen` drives both halves, the near misses included.
 
