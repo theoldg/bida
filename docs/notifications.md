@@ -105,4 +105,7 @@ it is still missing after.
   avatar of the host name.
 - **Push state changes one at a time** (`inTurn`, `lib/push.ts`). Each reads
   the level, waits on the network, then writes, so a start's reconcile beside a
-  Settings tap would write the level it read over the one just chosen.
+  Settings tap would write the level it read over the one just chosen. So
+  every browser push call is cut off at 10 s (`answered`): the iOS Simulator,
+  its worker not in control, never answers `pushManager`, and one hung turn
+  swallowed every Settings tap after it — a `push.*` line in `/diag` names it.

@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-16* — "The notification toggle freezes on the simulator", with a
+  /diag pasted. The trace held it: one `notify` write before Settings was ever
+  opened, nothing after. The card's tap had hung; Settings only queued behind
+  it. Read the diag's order before the screen named in the report.
+
 - *2026-10-16* — "Disable the home screen in in-app browsers, if you can
   guarantee it never breaks navigation." The honest no came with the 25 ways
   back to the list counted, and the owner narrowed the ask on the spot: the
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   had bent every sentence around them. Dodging a rule of grammar is a guess at
   the owner's taste; one sentence asking the cost of the plain form would have
   saved the round.
-
-- *2026-10-13* — "Let's start a polish translation … Any questions?" The ADR
-  had left the door open (a second object, same shape), so the build was
-  small; the questions were Polish's own: gendered verbs, declined names, three
-  plural forms. Ask the grammar before the strings.

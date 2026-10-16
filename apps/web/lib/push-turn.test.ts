@@ -46,4 +46,32 @@ describe("push state changes", () => {
     const mine = await db().identities.get([groupId, device.nodeId]);
     expect(mine?.push?.scope).toBe("all");
   });
+
+  it("lets the next tap through when the browser never answers", async () => {
+    await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    vi.stubGlobal("window", { PushManager: class {}, Notification: {} });
+    vi.stubGlobal("Notification", { permission: "granted" });
+    // The iOS Simulator, its worker never in control: the first ask hangs for good.
+    let asks = 0;
+    vi.stubGlobal("navigator", {
+      serviceWorker: {
+        getRegistration: async () => ({
+          pushManager: { getSubscription: () => asks++ === 0 ? new Promise(() => {}) : Promise.resolve(null) },
+        }),
+      },
+    });
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({}))));
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const hung = setNotifyLevel("own");
+      await vi.waitFor(() => expect(asks).toBe(1));
+      const tapped = setNotifyLevel("all");
+      await vi.advanceTimersByTimeAsync(10_000);
+      await Promise.all([hung, tapped]);
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(asks).toBe(2);
+    expect((await getDevice()).notify).toBe("all");
+  });
 });

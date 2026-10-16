@@ -109,6 +109,23 @@ async function serverKey(): Promise<Uint8Array | null> {
   }
 }
 
+/**
+ * Safari has been seen never answering a push call — the iOS Simulator, its
+ * worker not yet in control — and every change waits behind the one before it,
+ * so one hung call would swallow every tap after it. Named, for `/diag`.
+ */
+function answered<T>(call: string, work: Promise<T>, ms = 10_000): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<never>((_, fail) => {
+    timer = setTimeout(() => fail(new Error(`${call} never answered`)), ms);
+  });
+  return Promise.race([work, late]).finally(() => clearTimeout(timer));
+}
+
+function registration(): Promise<ServiceWorkerRegistration | undefined> {
+  return answered("getRegistration", navigator.serviceWorker.getRegistration());
+}
+
 function sameBytes(a: ArrayBuffer | null, b: Uint8Array): boolean {
   if (!a || a.byteLength !== b.length) return false;
   const view = new Uint8Array(a);
@@ -121,16 +138,16 @@ function sameBytes(a: ArrayBuffer | null, b: Uint8Array): boolean {
  * churn an op per group.
  */
 async function subscription(reg: ServiceWorkerRegistration): Promise<PushSubscription | null> {
-  const current = await reg.pushManager.getSubscription();
+  const current = await answered("getSubscription", reg.pushManager.getSubscription());
   const key = await serverKey();
   if (!key) return current;
   const made = current?.options.applicationServerKey;
   if (current && (!made || sameBytes(made, key))) return current;
-  await current?.unsubscribe();
-  return reg.pushManager.subscribe({
+  if (current) await answered("unsubscribe", current.unsubscribe());
+  return answered("subscribe", reg.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: key as Uint8Array<ArrayBuffer>,
-  });
+  }));
 }
 
 /**
@@ -173,7 +190,7 @@ export async function turnOnNotifications(level: NotifyScope = "own"): Promise<v
     try {
       if (answer !== "granted") return;
       await updateDevice({ notify: level });
-      const reg = await navigator.serviceWorker.getRegistration();
+      const reg = await registration();
       const sub = reg ? await subscription(reg) : null;
       await publish(pushAt(sub?.toJSON() ?? null, level));
     } catch (err) {
@@ -194,7 +211,7 @@ export async function setNotifyLevel(level: NotifyLevel): Promise<void> {
   return inTurn(async () => {
     try {
       await updateDevice({ notify: level });
-      const reg = level === "off" ? null : await navigator.serviceWorker.getRegistration();
+      const reg = level === "off" ? null : await registration();
       const sub = reg ? await subscription(reg) : null;
       await publish(pushAt(sub?.toJSON() ?? null, level));
     } catch (err) {
@@ -213,7 +230,7 @@ export async function reconcilePush(): Promise<void> {
   if (!supported()) return;
   return inTurn(async () => {
     try {
-      const reg = await navigator.serviceWorker.getRegistration();
+      const reg = await registration();
       if (!reg) return;
       // And Settings' "off" is kept off however the browser stands.
       const level = (await getDevice()).notify ?? "own";
