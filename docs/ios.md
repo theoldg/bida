@@ -110,7 +110,10 @@ precached (`shellIsWarm`, [pwa.md](pwa.md)). Unlike the
 update's own reload, which on a ledger waits for a minute's absence, this one
 fires as soon as the screen allows: a newcomer needs the new head now. From cache it is a flash, once; before the shell
 is cached it would be a network load racing the worker's own fetches, so it
-waits for the next reloadable screen.
+waits for the next reloadable screen. It is `location.reload()`, never a
+`replace` of the same address, which loads as a fresh `navigate`: the list
+Back restores from the page cache is stale the moment a group was joined
+since, and its reload, read as a launch, reopened the group just left.
 
 **Every launch of the icon** (`app/install/page.tsx`) — `start_url` is this
 route for the life of the bookmark, not just the first time. Its export is

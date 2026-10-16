@@ -183,6 +183,25 @@ await heldPage.evaluate(() => { window.__afterTheReload = true; });
 await heldPage.waitForTimeout(1500);
 report(await heldPage.evaluate(() => !!window.__afterTheReload), "once — the rebuilt head is not stale");
 
+// ---- a list restored by Back, its head stale ------------------------------
+// The list left for another page waits in the page cache with the head it had;
+// back on it, it reloads for the group made since — and that reload must not
+// read as a launch, which would reopen the group Back just left.
+const cached = await launch({ bfcache: true });
+const backTab = await newPhone(cached, { userAgent: IPHONE });
+const backPage = await backTab.newPage();
+await backPage.goto(`${base}/`);
+await backPage.evaluate(() => navigator.serviceWorker.ready);
+const backId = await newGroup(backPage, base, { name: "Back", me: "Ivo", members: ["Jan"] });
+await headSettled(backPage);
+await backPage.goBack();
+await headSettled(backPage);
+await backPage.waitForTimeout(1500);
+report(new URL(backPage.url()).pathname === "/" && !!backId,
+  "Back onto a list restored with a stale head reloads it there, not into the group just left",
+  backPage.url().replace(base, ""));
+await cached.close();
+
 // ---- but never before the shell is cached --------------------------------
 // On a first visit the reload would race the precache.
 const cold = await iphone({ serviceWorkers: "block" });

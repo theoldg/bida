@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-16* — "I had to click back twice", two /diag pastes from a
+  simulator. The reports held it: a list restored by Back reloading for its
+  manifest, read as a launch. Playwright turns the page cache off; turning it
+  back on reproduced it before the one-line fix.
+
 - *2026-10-16* — "The notification toggle freezes on the simulator", with a
   /diag pasted. The trace held it: one `notify` write before Settings was ever
   opened, nothing after. The card's tap had hung; Settings only queued behind
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   two risks I raised. The answer named a doc it reversed and a test passing
   for the wrong reason; proving that test failed without the rule mattered
   more than the one-line change.
-
-- *2026-10-14* — "Feel free to change verbs with counts", after a draft that
-  had bent every sentence around them. Dodging a rule of grammar is a guess at
-  the owner's taste; one sentence asking the cost of the plain form would have
-  saved the round.

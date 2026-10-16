@@ -144,7 +144,14 @@ function freePort() {
  */
 export const PATIENCE = 30_000;
 
-export const launch = () => chromium.launch(EXECUTABLE ? { executablePath: EXECUTABLE } : {});
+/**
+ * `bfcache` turns back on the page cache Playwright switches off, for a Back
+ * that restores a page rather than loading it — as Safari's always can.
+ */
+export const launch = ({ bfcache = false } = {}) => chromium.launch({
+  ...(EXECUTABLE ? { executablePath: EXECUTABLE } : {}),
+  ...(bfcache ? { ignoreDefaultArgs: ["--disable-back-forward-cache"] } : {}),
+});
 
 /** Nothing can emulate `display-mode`, so the query itself is answered. */
 export async function asInstalledApp(page) {

@@ -63,7 +63,10 @@ function KeepCarried() {
     const typing = document.activeElement?.matches("input, textarea, [contenteditable]");
     if (typing || document.visibilityState !== "visible" || reloading) return;
     reloading = true;
-    location.replace(location.href);
+    // A reload, not a `replace` of the same address: that loads as a fresh
+    // `navigate`, and on the list one is a launch — a list restored by Back
+    // reopened the group just left (lib/launch.ts).
+    location.reload();
   }, [groups, pathname]);
   return null;
 }

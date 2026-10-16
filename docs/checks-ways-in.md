@@ -55,7 +55,10 @@ no service worker at all — a first visit, mid-precache — keeps its stale hea
 through the same tap. Both count document requests, and the move is a row tap
 rather than the back arrow on purpose: the arrow *traverses* (`lib/nav.ts`),
 and a cross-document traversal rebuilds the head by itself, which would pass
-with the reload switched off.
+with the reload switched off. The one traversal that keeps its head is Back
+onto a page restored from the page cache, which Playwright switches off and
+`launch({ bfcache: true })` turns back on: a list left for a new group must
+reload there and stay the list, not reopen the group as a launch would.
 
 The app end (`asInstalledApp`): a launch on one invite nobody has named hands
 it to `/join`; a launch whose secrets are already on the phone doesn't — the
