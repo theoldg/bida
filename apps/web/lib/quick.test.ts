@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { memberIdFor, readSharedSplit } from "@bida/core";
 import { blankDraft, type EntryDraft } from "./draft";
-import { clearQuickPeople, quickLinkSecret, quickShares, quickSharedSplit, type QuickPerson } from "./quick";
+import {
+  clearQuickPeople, quickLinkSecret, quickMessage, quickShares, quickSharedSplit, type QuickPerson,
+} from "./quick";
 
 /**
  * A quick split's arithmetic is the receipt grid's, read as money rather than
@@ -91,5 +93,32 @@ describe("what the link carries", () => {
     expect(quickLinkSecret({ ...split, title: "Bar Zahra, again" })).not.toBe(first);
     clearQuickPeople();
     expect(quickLinkSecret(split)).not.toBe(first);
+  });
+});
+
+describe("the message it copies", () => {
+  const LINK = "https://bida.bid/split#7f2kq9x0m3v8n1zc";
+
+  it("is the bill and its total, what each person owes, then the link", () => {
+    const { totalMinor, shares } = quickShares(bill(), PEOPLE);
+    expect(quickMessage(quickSharedSplit("Bar Zahra", totalMinor, shares, "EUR"), LINK)).toBe([
+      "Bar Zahra: 38.80",
+      "Ana: 20.10",
+      "Bo: 16.60",
+      "Cy: 2.10",
+      "",
+      `Who had what: ${LINK}`,
+    ].join("\n"));
+  });
+
+  it("says Bill split where the scan read no name", () => {
+    const { totalMinor, shares } = quickShares(bill(), PEOPLE);
+    expect(quickMessage(quickSharedSplit(" ", totalMinor, shares, "EUR"), LINK).split("\n")[0])
+      .toBe("Bill split: 38.80");
+  });
+
+  it("keeps somebody at the table who ordered nothing", () => {
+    const { totalMinor, shares } = quickShares(bill({ receiptAssignments: [[ANA.id], [BO.id], [ANA.id]] }), PEOPLE);
+    expect(quickMessage(quickSharedSplit("Bar Zahra", totalMinor, shares, "EUR"), LINK)).toContain("\nCy: 0.00\n");
   });
 });

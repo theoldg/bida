@@ -706,10 +706,16 @@ const en = {
     backTitle: "Discard this receipt?",
     backBody: "You’ll have to scan it again.",
     split: "The split",
-    copy: "Copy link",
+    copy: "Copy the split",
     copied: "Copied",
-    fallbackTitle: "The link",
-    fallbackBody: "Copying didn’t work: hold the link to copy it.",
+    fallbackTitle: "The split",
+    fallbackBody: "Copying didn’t work: hold the text to copy it.",
+    /** What is copied: who owes what, then the link to the lines behind it. */
+    message: {
+      line: (label: string, amount: string) => `${label}: ${amount}`,
+      untitled: "Bill split",
+      link: (url: string) => `Who had what: ${url}`,
+    },
     notShared: {
       title: "Not sent",
       offline: "This phone is offline. Try again once you’re back.",

@@ -539,6 +539,11 @@ export const pl: Copy = {
     copied: "???",
     fallbackTitle: "???",
     fallbackBody: "???",
+    message: {
+      line: (label, amount) => `${label}: ${amount}`,
+      untitled: "???",
+      link: (url) => `??? ${url}`,
+    },
     notShared: { title: "???", offline: "???", unsent: "???" },
     landing: { none: "???", offline: "???", unreadable: "???" },
   },

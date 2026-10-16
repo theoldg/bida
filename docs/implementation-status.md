@@ -34,9 +34,8 @@ Four things: push notifications, built and unchecked on a phone, the ledger's wi
 - **A quick split goes out as a link** (ADR-0035), built and driven against
   a local Worker. **Migration `0005_splits.sql` is not applied** to either D1 —
   until the owner runs `pnpm db:migrate:dev` (and `db:migrate` before a
-  release), sending one says it didn't reach bida. Open: the copied message
-  wrapping the link in a short summary, being worked out with the owner, and
-  `/delete-my-data` taking a split's link — `DELETE /api/splits/:id` is built.
+  release), sending one says it didn't reach bida. Open: `/delete-my-data`
+  taking a split's link — `DELETE /api/splits/:id` is built.
 
 - **Push notifications are built and work on dev**
   ([notifications.md](notifications.md), ADR-0037): an edit from an incognito

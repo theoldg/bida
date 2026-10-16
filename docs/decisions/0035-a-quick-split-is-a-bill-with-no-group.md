@@ -20,7 +20,7 @@ op, so it needs no actor, so it never asks who you are — the question
 [0003](0003-link-only-access.md) makes every `/g` route ask. It is held in the
 same in-memory draft store as every other half-typed entry and discarded the
 same way, with the same warning. Three routes take it — who and the bill, the
-grid, the answer — and it ends by handing you a link.
+grid, the answer — and it ends by handing you a few lines of text and a link.
 
 **It answers who owes what for this bill, and refuses every question after
 it.** No payer, no balance, no settle-up, no correcting it tomorrow. Those are
@@ -56,10 +56,11 @@ row of `splits` once, idempotent on the address and capped at the push's 256 KB
 per op, which a 120-line bill among twelve doesn't approach even undeflated;
 `GET` hands it to anyone holding the address, since what it fetches is
 ciphertext. Kept for good, like a group's log; the bearer is what
-`DELETE` checks, so a split can be taken off the server by whoever holds its link. Copying
-writes the link inside the tap — Safari refuses a clipboard written after an
-await — while the upload runs beside it, and the check comes up only once both
-landed. `/split` draws it read-only, as the answer screen does.
+`DELETE` checks, so a split can be taken off the server by whoever holds its link. What is
+copied is the bill's name and total, a line per person, and the link
+(`quickMessage`), written inside the tap — Safari refuses a clipboard written
+after an await — while the upload runs beside it; the check comes up only once
+both landed, and an offline phone copies nothing. `/split` draws it read-only, as the answer screen does.
 
 **One credential per phone, not per bill**, minted on first need and kept in
 the device store. A fresh id per split would write a row for every bill
@@ -120,9 +121,9 @@ would disagree within a month.
   outlives a form, and losing one at the table is a real annoyance — but it is
   the only screen in the app that would remember what you half-typed, and
   "nothing half-typed is kept" is worth more than one retyped roster.
-- **Handing the answer over as text, or as an image.** Text was the first
-  build: a wall of lines in a chat, where a link opens the same screen the
-  table looked at. An image is a second drawing surface outside the monospace
+- **Handing the answer over as text alone, or as an image.** Text alone was
+  the first build: every line of the bill as a wall in a chat, where a link
+  opens the screen the table looked at. An image is a second drawing surface outside the monospace
   system, downloaded through the one mechanism an installed PWA is worst at.
 - **The whole answer in the link's fragment**, with no server at all — a
   15-line bill is ~600 characters of link after deflating, too long to send.

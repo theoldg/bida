@@ -15,7 +15,9 @@ import { bare } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useFlash } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
-import { clearQuickPeople, quickLinkSecret, quickShares, quickSharedSplit, useQuickPeople } from "@/lib/quick";
+import {
+  clearQuickPeople, quickLinkSecret, quickMessage, quickShares, quickSharedSplit, useQuickPeople,
+} from "@/lib/quick";
 import { useScanCredential } from "@/lib/scan/credential";
 import { formatSplitLink, shareSplit } from "@/lib/split-link";
 
@@ -26,8 +28,9 @@ import { formatSplitLink, shareSplit } from "@/lib/split-link";
  * watched while tapping are the totals here. Each row opens onto that
  * person's lines.
  *
- * It ends by handing it over as a link (`lib/split-link.ts`): the figures,
- * sealed on this phone and stored under an address the server can't read.
+ * It ends by handing it over as a few lines of text around a link
+ * (`lib/split-link.ts`): the figures, sealed on this phone and stored under an
+ * address the server can't read.
  */
 export default function QuickResultPage() {
   const router = useRouter();
@@ -36,7 +39,7 @@ export default function QuickResultPage() {
   const draft = useDraft(cred?.id);
   const [copied, setCopied] = useFlash();
   const [sending, setSending] = useState(false);
-  // The link, shown to be held by hand, when the clipboard wouldn't take it.
+  // The message, shown to be held by hand, when the clipboard wouldn't take it.
   const [failed, setFailed] = useState<string>();
   const [notShared, setNotShared] = useState<"offline" | "unsent">();
   // The secret the server holds a copy under.
@@ -68,20 +71,20 @@ export default function QuickResultPage() {
     if (sending) return;
     // Said at once, and nothing copied: a link to a split that isn't there yet.
     if (navigator.onLine === false) return setNotShared("offline");
-    const link = formatSplitLink(secret);
+    const text = quickMessage(split, formatSplitLink(secret));
     setSending(true);
     // The secret is this phone's, so the link exists before the upload does —
     // and it has to be written now, inside the tap: Safari refuses a
     // clipboard written after an await. The upload runs beside it.
-    const [copying, sent] = await Promise.allSettled([writeClipboardText(link), shareSplit(secret, split)]);
+    const [copying, sent] = await Promise.allSettled([writeClipboardText(text), shareSplit(secret, split)]);
     setSending(false);
     if (sent.status !== "fulfilled" || sent.value !== "shared") return setNotShared("unsent");
     setShared(secret);
     if (copying.status === "fulfilled") setCopied(true);
     // The clipboard can be refused or absent (lib/clipboard.ts). An inert-looking
-    // button is worse than none, so show the link instead, as
+    // button is worse than none, so show the text instead, as
     // `components/invite.tsx` does.
-    else setFailed(link);
+    else setFailed(text);
   }
 
   function done() {
@@ -145,8 +148,8 @@ export default function QuickResultPage() {
         <NoticeDialog title={copy.quick.fallbackTitle} onClose={() => setFailed(undefined)}>
           <p>{copy.quick.fallbackBody}</p>
           {/* `.selectable` because the app turns selection off everywhere
-              else — this is the link somebody has to be able to take. */}
-          <p className="selectable invitelink">{failed}</p>
+              else — this is the text somebody has to be able to take. */}
+          <p className="selectable quicktext">{failed}</p>
         </NoticeDialog>
       ) : null}
 

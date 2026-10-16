@@ -2,7 +2,9 @@
 
 import { useSyncExternalStore } from "react";
 import { memberIdFor, newGroupSecret, receiptExtras, type SharedSplit } from "@bida/core";
+import { copy } from "./copy";
 import { receiptBill, type EntryDraft } from "./draft";
+import { bare } from "./format";
 import { billLabels, receiptTotalMinor, type MemberLine } from "./scan/items";
 import { signal } from "./signal";
 
@@ -111,6 +113,23 @@ export function quickSharedSplit(
   currency: string,
 ): SharedSplit {
   return { title: title.trim(), currency, totalMinor, people: shares.map((s) => ({ ...s })) };
+}
+
+/**
+ * What the button copies: the bill and its total, what each person owes, and
+ * the link to the lines behind it. Plain lines, no columns — chat apps aren't
+ * monospaced. Bare figures: a currency read off a photo is worse than none
+ * (ADR-0035).
+ */
+export function quickMessage(split: SharedSplit, link: string): string {
+  const words = copy.quick.message;
+  const figure = (minor: number) => bare(minor, split.currency);
+  return [
+    words.line(split.title || words.untitled, figure(split.totalMinor)),
+    ...split.people.map((p) => words.line(p.name, figure(p.minor))),
+    "",
+    words.link(link),
+  ].join("\n");
 }
 
 // ------------------------------------------------------------- the link
