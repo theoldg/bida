@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-16* — "Does this make sense, to get rid of the top-bar blur?", a
+  test on iOS 27 that contradicted our Gotcha's "always". Their phone outranks
+  the doc: the build is their finding plus the doc rewritten, checked by them.
+
 - *2026-10-16* — "The notification toggle freezes", a /diag pasted: its
   order held the cause, a hung call queuing every tap. My cut-off fixed the
   hang, not the wait — "works but janky and slow". The level should never
@@ -82,8 +86,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-14* — "Add the search row back … dig it up from the history." The
   commit that took it out also cut its browser check, down to the glide it
   asserted; restoring the check with the code is half of digging it up.
-
-- *2026-10-14* — "Wdyt, what does this involve?", then one line closing the
-  two risks I raised. The answer named a doc it reversed and a test passing
-  for the wrong reason; proving that test failed without the rule mattered
-  more than the one-line change.

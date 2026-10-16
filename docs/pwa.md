@@ -22,9 +22,9 @@ export first; the precache leaves the banner out. iOS ignores
 manifest `display` entirely; `appleWebApp.statusBarStyle` is its lever, and it
 is `"default"` so the page starts below the status bar (Gotcha below). The strip
 that leaves above the page is painted from **body's background**, so at phone
-width body wears the shell's own `--card` (the dev build, its green bar): iOS 26
-lays a scrim under the status bar, and a seam there is an edge for it to reveal
-(Gotcha below).
+width body wears the shell's own `--card`, and the installed app adds a fixed
+6px `.statusbar` strip of it at the top: that, not body, is what takes iOS's
+blur off the bar (Gotcha below).
 `viewport-fit: cover` stays for the home indicator and a landscape notch, which
 is why the `env(safe-area-inset-*)` padding matters.
 
@@ -171,6 +171,9 @@ deploy: untouched, in use, and on a group through a quick and a long absence.
   in both. To tell layers apart, give each a unique colour and reinstall.
 - **Never `black-translucent` on iOS 26** (WebKit bug 301108): an unreachable
   strip at the foot and a blur over the top bar. `"default"` avoids both.
-- **iOS 26 dims the top of the page under the status bar, always.** What is
-  ours is what it falls on: match body's background to the bar at phone width
-  (`.app`), or the scrim reads as a band.
+- **The installed iPhone app blurs and dims under the status bar** unless a
+  `position: fixed` element at least 6px tall sits within 4px of the top: then
+  the bar wears its colour, unblurred. Body's background colours it but keeps
+  the blur, and both status-bar meta tags are ignored (iOS 27, found by hand).
+  Any fixed layer reaching the top — a dialog's scrim, the photo zoom — takes
+  the bar over while open.

@@ -47,8 +47,9 @@ screen` block says which manifest each load got and which URL the icon opened.
 
 **The chrome** — none of it exists in a headless viewport.
 
-- The strip above the page under iOS 26's scrim: a band with an edge means the
-  body's background and the bar under it have come apart.
+- The installed app's status bar: the top bar's colour, flat. A blur or a
+  band means `.statusbar` stopped counting — each iOS moves the rule
+  ([pwa.md](pwa.md#gotchas)).
 - The FABs clear the home indicator.
 - **Tap Reload for a new build, then look at the bottom strip.** The FAB in
   place with the start pair slid lower is `dvh` disagreeing with the ICB;

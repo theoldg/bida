@@ -96,6 +96,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <NotEmbedded><RegisterServiceWorker /></NotEmbedded>
         <StartSync />
         <CarryToHomeScreen />
+        {/* The installed iPhone app's status bar takes this strip's colour, unblurred (globals.css). */}
+        <div className="statusbar" aria-hidden="true" />
         {/* Every screen, including the two that carry no QueryBoundary. */}
         <ReadErrorBoundary>{children}</ReadErrorBoundary>
       </body>

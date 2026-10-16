@@ -304,6 +304,14 @@ a { color: inherit; text-decoration: none }
 @media (max-width: 560px) {
   body { background: var(--card) }
 }
+/* Body's colour still comes blurred and dimmed; a fixed element at least 6px
+   tall within 4px of the top gives the bar its colour unblurred (iOS 27, by
+   hand). A real element: a pseudo's hit-test answers with its host. */
+.statusbar { display: none }
+@media (display-mode: standalone) and (max-width: 560px) {
+  .statusbar { display: block; position: fixed; top: 0; left: 0; right: 0; height: 6px;
+    background: var(--card); z-index: 4 }
+}
 
 /* `height`, not `min-height`, or the document scrolls instead of .scroll.
    `dvh` because iOS's collapsing toolbar eats `vh`. */
