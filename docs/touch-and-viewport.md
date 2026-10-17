@@ -112,7 +112,9 @@ fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
   too, for the screens that pin an act, and so does `.whodock`, the act docked
   under a list of people or a form: a sibling of `.scroll` rather than its last
   row, so the keys lift it with them and the scroller above it shrinks by as
-  much. That scroller pays no keyboard room of its own — the dock is it.
+  much. That scroller pays no keyboard room of its own — the dock is it —
+  only a few px of air past its last row, the add row, whose input carries a
+  `scroll-margin` so scrolling the caret into view brings its box and plus too.
   `pnpm verify keyboard` holds the docked ones ([browser-checks.md](checks-forms.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)). **A gap with nobody typing is not a keyboard** and is
   never paid as one (`lib/viewport.ts`): the difference between the two
   viewports is a keyboard only while something has the caret; otherwise a

@@ -59,7 +59,9 @@ There is no keyboard in a headless browser, so one is faked where the app reads
 it — `visualViewport.height` — and everything after that is the app's own:
 `gapOf` calls the gap a keyboard, `--kb` is paid, and the scroll is the one
 `components/viewport.tsx` makes. The assertion is what a thumb cares about, the
-field *and* the act still above the top of the keys. The list is ten people
+field *and* the act still above the top of the keys, and the add row's whole
+box clear of the dock — the caret in view while its box and plus sat under the
+dock passed every check. The list is ten people
 deep on every screen on purpose: three fit above a keyboard whatever the scroll
 does, and a check that passes with the fix deleted is worse than none — with
 the dock's `--kb` padding gone, all five assertions fail.

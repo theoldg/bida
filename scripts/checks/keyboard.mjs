@@ -72,10 +72,18 @@ async function closeKeyboard() {
   await scrollSettled();
 }
 
+/** What the row keeps between itself and the dock: flush reads as cut off. */
+const AIR = 8;
+
 async function clears(label, actSelector) {
   const seen = await page.evaluate((selector) => {
     const input = document.querySelector(".addname");
     const act = document.querySelector(selector);
+    // The row's whole box, against the foot of the scroller it lives in: a
+    // field in view whose box and plus are cut off by the dock still reads as
+    // clipped.
+    const row = input?.closest(".addrow");
+    const scroll = input?.closest(".scroll");
     if (!input || !act) return { missing: !input ? "add row" : selector };
     const kb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--kb"));
     // The foot of what is visible, not the shell's foot less `--kb`, which would
@@ -86,13 +94,15 @@ async function clears(label, actSelector) {
       kb, up: document.documentElement.hasAttribute("data-kb"),
       act: Math.round(keys - act.getBoundingClientRect().bottom),
       field: Math.round(keys - input.getBoundingClientRect().bottom),
+      row: row && scroll
+        ? Math.round(scroll.getBoundingClientRect().bottom - row.getBoundingClientRect().bottom) : 0,
     };
   }, actSelector);
   // `data-kb`, not `--kb`: Android pays none.
-  const ok = !seen.missing && seen.up && seen.act >= 0 && seen.field >= 0;
+  const ok = !seen.missing && seen.up && seen.act >= 0 && seen.field >= 0 && seen.row >= AIR;
   report(ok, label, seen.missing
     ? `no ${seen.missing} on this screen`
-    : `keys ${seen.up ? "up" : "NOT SEEN"}, ${seen.kb}px paid, act ${seen.act}px above them, field ${seen.field}px`);
+    : `keys ${seen.up ? "up" : "NOT SEEN"}, ${seen.kb}px paid, act ${seen.act}px above them, field ${seen.field}px, row ${seen.row}px clear`);
 }
 
 // ---- creating a group ---------------------------------------------------

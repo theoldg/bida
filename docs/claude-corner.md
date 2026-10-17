@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-17* — "The keyboard is too tight against the add someone row", a
+  screenshot of /quick. The check had asserted the caret above the keys, and
+  it was; the box around it was what got cut. Measuring the box turned all
+  six docked screens red at once: a thumb sees the field, not its caret.
+
 - *2026-10-17* — "Something about it is not great", of two buttons. I named
   three faults and rebuilt all three; the answers kept the arrangement, put
   the old button back and cut my new line. Fix what was felt, show it, and
@@ -83,8 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   banner", landing as another session centred it. Both were `btn btn-s`; one
   override line made the difference, and full width also centres, so the
   rebase kept their layout and dropped the line.
-
-- *2026-10-14* — "Missing password" in Brave, then "both buttons", then "after
-  i delete a group". I blamed Messenger; the bug was ours, in the path both
-  share. Then "it finished long ago": my own wait on the push hung, not it.
-  Then a Brave dialog after Discard: the reproduction came before the fix.

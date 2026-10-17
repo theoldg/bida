@@ -475,6 +475,9 @@ html[data-banner="manual"] .ghost-manual { display: block }
   padding-bottom: calc(var(--kb) + max(12px, env(safe-area-inset-bottom))) }
 .appbody > .whodock:has(+ .inappdock) { padding-bottom: calc(var(--kb) + 14px) }
 .scroll:has(+ .whodock) { flex: 0 1 auto; padding-bottom: 0; scroll-padding-bottom: 0 }
+/* With the keys up the add row is the last thing above the dock, so room to
+   scroll it clear of the dock rather than flush on it. */
+:root[data-kb] .scroll:has(+ .whodock) { padding-bottom: 14px }
 .itemscroll:has(+ .whodock) { flex: 0 1 auto }
 .inappdock { flex: none; padding: 10px 16px max(12px, env(safe-area-inset-bottom)) }
 :root[data-kb] .inappdock { display: none }
@@ -546,6 +549,9 @@ html[data-banner="manual"] .ghost-manual { display: block }
 /* The 32px plus borrows the row's padding to make a thumb-sized target. */
 .addrow .iconbtn { position: relative }
 .addrow .iconbtn::before { content: ""; position: absolute; inset: -8px }
+/* The caret is brought into view, not the box around it: without this the
+   input lands on the scroller's foot, its box and plus under the dock. */
+.addname { scroll-margin-block: 30px }
 .addrow.editing { margin: 6px 16px 10px; padding: 10px 11px; width: auto;
   background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-s) }
 /* In a list the box is always there, transparent, and margin + border +
