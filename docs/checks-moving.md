@@ -17,7 +17,12 @@ Each section is a move a thumb makes: the walk in, every door into a group
 pushed from `/` so the list stays under the ledger; the balance card and the
 arrow back off balances; an entry opened off the ledger, and the Save that
 returns to it; the tip jar's form, unwinding past the tip screen too; the quick
-split, pushed onto the list; a cold load with nothing behind it, where the arrow
+split, pushed onto the list, reading a bill with nobody named and refusing its
+grid to one, a Forward onto that grid handed back after Bo is removed, and the
+flow left mid-read and by a `history.back()` no screen is asked about, keeping
+nothing for the next visit — walked in from the list, since a `goto` empties
+memory and would pass with the bill kept, and with the layout's clear taken out
+both of those fail; a cold load with nothing behind it, where the arrow
 puts the parent in this screen's place; the press guard on a half-typed form,
 cancelled outright, the dialog its whole answer; the dialog the platform shuts
 with no `cancel`, and the taps it was given as `/diag` records them; a

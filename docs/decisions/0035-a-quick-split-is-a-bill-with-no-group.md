@@ -86,11 +86,16 @@ would disagree within a month.
   them as the answer. They add to the bill's printed total by construction.
 - **A reload loses it**, as it loses any draft. The cost is the names again and
   one more photo, and the alternative was a second kind of persistence for the
-  one flow with nothing at stake.
+  one flow with nothing at stake. **So does leaving, by any way out** — the
+  `/quick` layout's unmount drops the bill and the names, so an iOS swipe no
+  screen is asked about, or a scan answering after Discard, leaves nothing
+  for the next visit.
   Back from the grid costs nothing: `/quick` is where the people change, so it
   keeps the bill and the ticks and goes on to the grid again.
 - **No bill, no quick split.** It is scan-first by construction: an even split
-  among people with no receipt is arithmetic, not a screen.
+  among people with no receipt is arithmetic, not a screen. The names may come
+  before the photo or while it is read; only the grid needs two, and a scan
+  stays on `/quick` rather than carrying anybody off a name half typed.
 - **Nothing can be reopened, and turning one into a group means typing it
   again.** The seam is the draft: it is already the shape `addExpense` takes.
   What stops it is not the code but two questions — who paid, and who you are —

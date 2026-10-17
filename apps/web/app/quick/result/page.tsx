@@ -10,13 +10,13 @@ import { FlipLabel } from "@/components/icons";
 import { MemberBill } from "@/components/member-bill";
 import { writeClipboardText } from "@/lib/clipboard";
 import { copy } from "@/lib/copy";
-import { clearDraft, useDraft } from "@/lib/draft";
+import { useDraft } from "@/lib/draft";
 import { bare, figure } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useFlash } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
 import {
-  clearQuickPeople, markQuickLinkSent, quickLinkSecret, quickLinkSent, quickMessage, quickShares,
+  markQuickLinkSent, quickLinkSecret, quickLinkSent, quickMessage, quickShares,
   quickSharedSplit, useQuickPeople,
 } from "@/lib/quick";
 import { useScanCredential } from "@/lib/scan/credential";
@@ -49,14 +49,14 @@ export default function QuickResultPage() {
   const [asking, setAsking] = useState(false);
 
   const ready = draft !== undefined && (draft.receiptItems?.length ?? 0) > 0;
-  // Leaving on purpose throws the split away too, and "left" and "arrived with
-  // nothing" are the same state one tick apart. **Mark the way out**, or the
-  // redirect below wins the race and sends anybody leaving back to the start.
-  const leaving = useRef(false);
   // A reload loses a quick split — it is a draft, and no draft in this app
   // outlives its screens. Start again rather than show an empty answer.
+  // Once, unwinding, as the grid does.
+  const sent = useRef(false);
   useEffect(() => {
-    if (cred && !ready && !leaving.current) router.replace(route.quick());
+    if (!cred || ready || sent.current) return;
+    sent.current = true;
+    goUp(route.quick(), (to) => router.replace(to));
   }, [cred, ready, router]);
 
   if (!cred || !draft || !ready) return <Blank title={copy.quick.split} />;
@@ -103,11 +103,8 @@ export default function QuickResultPage() {
   }
 
   function done() {
-    leaving.current = true;
-    if (cred) clearDraft(cred.id);
-    clearQuickPeople();
     // Unwind rather than push: the flow behind this screen is over, and nothing
-    // in it survives the clearing above.
+    // in it survives leaving it (quick/layout.tsx).
     goUp(route.groups(), (to) => router.replace(to));
   }
 

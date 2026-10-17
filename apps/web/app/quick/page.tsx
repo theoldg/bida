@@ -14,20 +14,22 @@ import { copy } from "@/lib/copy";
 import { plural } from "@/lib/format";
 import { printedCount } from "@/lib/scan/items";
 import { db } from "@/lib/db/dexie";
-import { blankDraft, clearDraft, getDraft, seedDraft, useDraft } from "@/lib/draft";
+import { blankDraft, getDraft, seedDraft, useDraft } from "@/lib/draft";
 import { route } from "@/lib/group-link";
 import { useDevice } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
 import { useRefusal } from "@/lib/refusal";
-import { addQuickPerson, clearQuickPeople, removeQuickPerson, useQuickPeople } from "@/lib/quick";
+import { addQuickPerson, removeQuickPerson, useQuickPeople } from "@/lib/quick";
 import { registerScanCredential, useScanCredential } from "@/lib/scan/credential";
 import { usePrefetch } from "@/lib/prefetch";
 
 /**
  * A bill split with people who are not a group (ADR-0035): who is splitting,
- * and the camera. Naming people first makes the grid ready the moment the
- * model answers. Opens on `/g/scan`'s drawing, split between the people named
- * here so it fills in as they are added.
+ * and the camera, in either order — names can be typed while the model reads.
+ * Only the grid needs two people. A scan never leaves this screen: the way on
+ * is the grid's button, so nobody is taken off a name half typed. Opens on
+ * `/g/scan`'s drawing, split between the people named here so it fills in as
+ * they are added.
  *
  * Nothing here is written anywhere; names and draft live in memory, and
  * leaving throws both away.
@@ -46,9 +48,9 @@ export default function QuickPage() {
   // leaving with work unsaved (components/name-adder.tsx).
   const [typing, setTyping] = useState<string | null>(null);
   /**
-   * A scan refused: a name still unfiled, or fewer than two people. The grid it
-   * opens holds only the listed people, so either would give a bill nobody can
-   * split. The add row's plus fixes both, so it blooms (lib/refusal.ts).
+   * The grid refused: a name still unfiled, or fewer than two people. It holds
+   * only the listed people, so either would give a bill nobody can split. The
+   * add row's plus fixes both, so it blooms (lib/refusal.ts).
    */
   const refusal = useRefusal();
 
@@ -83,23 +85,22 @@ export default function QuickPage() {
     if (!cred) return;
     // A bill with no lines on it cannot be divided by what people had, and
     // this flow has nothing else to be — so it says so here rather than
-    // sending anyone on to an empty grid.
-    if ((getDraft(cred.id)?.receiptItems?.length ?? 0) === 0) { setNoLines(true); return; }
-    setNoLines(false);
-    router.push(route.quickItems());
+    // offering an empty grid.
+    setNoLines((getDraft(cred.id)?.receiptItems?.length ?? 0) === 0);
   });
 
-  // A bill already read: Back from the grid lands here to change who is
-  // splitting, and the way forward is the grid again, not another photo.
+  // A bill already read, by a scan just now or before a Back from the grid:
+  // the way forward is the grid, not another photo.
   const bill = draft?.receiptItems ?? [];
   const ticked = (draft?.receiptAssignments ?? []).some((row) => row.length > 0);
-  const typed = people.length > 0 || typing !== null || bill.length > 0;
+  const reading = scan.live?.state === "scanning";
+  const typed = people.length > 0 || typing !== null || bill.length > 0 || reading;
 
   /** The grid holds only the listed people, so one unfiled or alone can't split. */
-  const refuse = () => {
-    if (typing !== null || people.length < 2) { refusal.refuse(); return true; }
-    return false;
-  };
+  function toGrid() {
+    if (typing !== null || people.length < 2) refusal.refuse();
+    else router.push(route.quickItems());
+  }
 
   /**
    * Discard was answered, so this screen has stopped guarding the way out —
@@ -107,14 +108,13 @@ export default function QuickPage() {
    */
   const leaving = useRef(false);
 
+  // Throwing the split away is the layout's, on the way out (quick/layout.tsx).
   function leave() {
     leaving.current = true;
-    if (cred) clearDraft(cred.id);
-    clearQuickPeople();
     goUp(route.groups(), (to) => router.replace(to));
   }
 
-  /** May we leave? Not with a split on the screen — ask, and stay put. */
+  /** May we leave? Not with a split on the screen, or one being read — ask, and stay put. */
   function mayLeave() {
     if (leaving.current) return true;
     if (typed) { setAsking(true); return false; }
@@ -158,17 +158,19 @@ export default function QuickPage() {
             docked (`.whodock`), so a long table of them scrolls above it. */}
         <div className="pad whodock" style={{ paddingTop: 18 }}>
           {bill.length > 0 ? (
-            // Back from the grid: what replaces the bill, and the way on at the
-            // foot where the grid's Done was. A rescan asks nothing —
-            // its ticks were made against the old bill.
+            // A bill read: what replaces it, and the way on at the foot, where
+            // the grid's Done stands. A rescan asks nothing — its ticks were
+            // made against the old bill.
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div>
-                <ScanPair scan={scan} register="s" overBill={true} disabled={refusal.live} refuse={refuse} />
+                <ScanPair scan={scan} register="s" overBill={true} />
                 {scan.refusal ? <Failure>{scan.refusal} {copy.quick.keptOld}</Failure> : null}
               </div>
+              {/* Held while a rescan reads: the grid would be of the bill about
+                  to be replaced, and the "Reading…" above says why. */}
               <button type="button" className="btn btn-p btn-lg"
-                style={{ justifyContent: "space-between" }} disabled={refusal.live}
-                onClick={() => { if (!refuse()) router.push(route.quickItems()); }}>
+                style={{ justifyContent: "space-between" }} disabled={refusal.live || reading}
+                onClick={toGrid}>
                 <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <Icon name="users" size={16} />
                   {ticked ? copy.scan.editWhoHadWhat : copy.scan.assignWhoHadWhat}
@@ -181,9 +183,8 @@ export default function QuickPage() {
             </div>
           ) : (
             <>
-              {/* Always tappable: an unfiled name or fewer than two people blooms the
-                  plus beside "Add someone" instead. */}
-              <ScanPair scan={scan} register="lg" disabled={refusal.live} refuse={refuse} />
+              {/* Needs nobody named: only the grid does. */}
+              <ScanPair scan={scan} register="lg" />
 
               {/* No "try again" beside either message: the control above is
                   still enabled, and it is the retry. */}

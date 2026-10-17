@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-17* — "Do you like it?", then "maybe just never auto-jump", then
+  "make it rock solid". Freeing the scan opened a hole the old gate had hidden:
+  a read in flight with nobody named left unasked, and its answer greeted the
+  next visit. Each fix was deleted once to watch its check go red.
+
 - *2026-10-17* — "The keyboard is too tight against the add someone row", a
   screenshot of /quick. The check had asserted the caret above the keys, and
   it was; the box around it was what got cut. Measuring the box turned all
@@ -83,8 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   commits in two days on one escape hatch. Three symptoms, one cause: a step
   kept in memory, lost to the full load a deploy forces. Forcing every tap to
   be one reproduced all three in a single check before any fix.
-
-- *2026-10-14* — "Match the “open in browser” button's style to the install
-  banner", landing as another session centred it. Both were `btn btn-s`; one
-  override line made the difference, and full width also centres, so the
-  rebase kept their layout and dropped the line.

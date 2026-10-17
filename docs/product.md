@@ -35,8 +35,8 @@ ledger you cannot take elsewhere is a ledger somebody else owns.
    row did to your balance, signed and coloured; rows you're not in faded back;
    your net on top ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
-**A bill with no group.** Quick split: name who is at the table, photograph
-the receipt, assign the lines, and send the answer as a link. It writes no
+**A bill with no group.** Quick split: photograph the receipt, name who is at
+the table, assign the lines, and send the answer as a link. It writes no
 op, and the link holds a sealed copy of the answer — the one thing here that is not a ledger
 ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
 

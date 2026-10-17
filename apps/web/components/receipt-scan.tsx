@@ -207,7 +207,7 @@ export function useReceiptScan(
  * the doors replace it, so they say so, and leave the ink to that primary.
  */
 export function ScanPair({
-  scan, register, overBill = false, typeIn = true, flash = "", onFlashEnd, disabled: held = false, refuse,
+  scan, register, overBill = false, typeIn = true, flash = "", onFlashEnd,
 }: {
   scan: ReceiptScan;
   register: "lg" | "s" | "xs";
@@ -215,13 +215,8 @@ export function ScanPair({
   typeIn?: boolean;
   flash?: string;
   onFlashEnd?: (e: React.AnimationEvent) => void;
-  /** Spent for the length of the screen's own refusal flash, as Save is. */
-  disabled?: boolean;
-  /** The screen's veto at the press; true keeps every door shut. */
-  refuse?: () => boolean;
 }) {
-  const { live } = scan;
-  const disabled = scan.disabled || held;
+  const { live, disabled } = scan;
   const busy = live?.state === "scanning";
   // So pressing doesn't wait on Cloudflare. Keyed on `busy`: a scan spends the token.
   useEffect(() => { if (!disabled && !busy) warmTurnstile(); }, [disabled, busy]);
@@ -229,7 +224,6 @@ export function ScanPair({
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
   const box = `btn-pair${register === "xs" ? " pair-xs" : overBill ? "" : " pair-p"}${flash}`;
   const again = register === "xs" || overBill;
-  const open = (door: () => void) => () => { if (!refuse?.()) door(); };
 
   // A door left beside "Reading…" would invite a second reading.
   if (busy && live) {
@@ -238,16 +232,16 @@ export function ScanPair({
 
   return (
     <div className={box} onAnimationEnd={onFlashEnd}>
-      <button type="button" className={half} disabled={disabled} onClick={open(scan.openCamera)}>
+      <button type="button" className={half} disabled={disabled} onClick={scan.openCamera}>
         <Icon name="cam" size={icon} />
         {again ? copy.scan.rescan : copy.scan.snap}
       </button>
-      <button type="button" className={half} disabled={disabled} onClick={open(scan.openLibrary)}>
+      <button type="button" className={half} disabled={disabled} onClick={scan.openLibrary}>
         <Icon name="image" size={icon} />
         {copy.scan.upload}
       </button>
       {typeIn ? (
-        <button type="button" className={half} disabled={disabled} onClick={open(scan.openTyping)}>
+        <button type="button" className={half} disabled={disabled} onClick={scan.openTyping}>
           <Icon name="edit" size={icon} />
           {again ? copy.scan.typeIn.asText : copy.scan.typeIn.open}
         </button>

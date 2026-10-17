@@ -84,8 +84,8 @@ ground and border together, rather than colouring its label: that chip, the two 
 a field: a red line around unchanged grey writing is the smallest signal in the
 app for the biggest thing it has to say. A label alone is smaller still, and a `--brand` or `--rule-soft`
 frame left around a red block reads as half a refusal. The
-add row's plus fills for the same reason — what Create and a quick split's scan
-pair point at over a name nobody has filed is 15px of glyph in a 32px box, far
+add row's plus fills for the same reason — what Create and a quick split's way
+to the grid point at over a name nobody has filed is 15px of glyph in a 32px box, far
 too little ink to be seen going red, so the ground goes instead. **A refusal
 blooms what has to change**, and on that row that is the plus only while a good
 name is waiting to be pressed in; when the field is the problem the whole row

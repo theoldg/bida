@@ -6,6 +6,7 @@
  */
 import { ensureBuild, launch, newPhone, openDemo, openGroupsList, reporter, serveExport, settle, untilDevice }
   from "../lib/harness.mjs";
+import { PHOTO, stubScan } from "../lib/receipts.mjs";
 
 ensureBuild();
 const { base, close } = await serveExport();
@@ -179,15 +180,95 @@ async function onLedger() {
 }
 
 // ---- 5. the quick split -------------------------------------------------
+// Walked in from the list every time, never `goto`: a quick split lives in
+// memory, so a load would pass every "nothing was kept" below with it kept.
 {
   const page = await (await phone()).newPage();
+  const intoQuick = async () => {
+    await page.locator("a[href='/quick']").click();
+    await page.waitForURL(/\/quick$/);
+    await page.waitForSelector(".addname");
+  };
+  const upload = () => page.locator('input[aria-label="Upload a receipt photo"]')
+    .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
+  const name = async (who) => {
+    await page.getByLabel("Add someone").fill(who);
+    await page.getByLabel("Add someone").press("Enter");
+  };
+  const toGrid = page.getByRole("button", { name: /Assign who had what/ });
+  const named = () => page.locator(".rows .row:not(.addrow) .rtitle").count();
+
   await page.goto(`${base}/`);
   await page.waitForSelector(".starttile");
-  await page.locator("a[href='/quick']").click();
-  await page.waitForURL(/\/quick$/);
+  await intoQuick();
   await is(page, "/quick is pushed onto the list", { i: 1, urls: ["/", "/quick"] });
   await arrow(page);
   await is(page, "and its arrow goes back to the list", { i: 0, urls: ["/", "/quick"] });
+
+  // A bill is read with nobody named, and only the grid asks for two.
+  await stubScan(page, "two-for-one");
+  await intoQuick();
+  await upload();
+  await toGrid.waitFor();
+  await is(page, "a quick split reads a bill with nobody named, and stays", { i: 1, urls: ["/", "/quick"] });
+  await name("Ana");
+  await toGrid.click();
+  await settle(page, 150);
+  report(await page.locator(".addrow[class*='flash-'], .addrow [class*='flash-']").count() > 0,
+    "and with one person its grid is refused, pointing at the add row");
+  await is(page, "and goes nowhere", { i: 1, urls: ["/", "/quick"] });
+  await settle(page, 900);
+  await name("Bo");
+  await toGrid.click();
+  await is(page, "and with two it opens", { i: 2, urls: ["/", "/quick", "/quick/items"] });
+
+  // Forward onto the grid after somebody left the list behind it.
+  await arrow(page);
+  await is(page, "the grid's arrow goes back to /quick", { i: 1, urls: ["/", "/quick", "/quick/items"] });
+  await page.getByRole("button", { name: "Remove Bo" }).click();
+  await page.evaluate(() => history.forward());
+  await is(page, "Forward onto a grid for one hands back, unwinding",
+    { i: 1, urls: ["/", "/quick", "/quick/items"] });
+
+  // Leaving while the bill is still being read asks, and the answer that lands
+  // afterwards is not waiting on the next visit.
+  await page.getByRole("button", { name: "Remove Ana" }).click();
+  await toGrid.waitFor();
+  await arrow(page);
+  await page.getByRole("button", { name: "Discard" }).click();
+  await is(page, "a bill with nobody named still asks before going", { i: 0, urls: ["/", "/quick", "/quick/items"] });
+  let answer;
+  const answered = new Promise((done) => { answer = done; });
+  // Registered over the stub, so it runs first and hands the request on late.
+  await stubScan(page, "two-for-one");
+  await page.route("**/api/groups/*/scan", async (route) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    answer();
+    await route.fallback();
+  });
+  await intoQuick();
+  await upload();
+  await page.locator(".pair-busy").waitFor();
+  await arrow(page);
+  const asked = await page.getByRole("button", { name: "Discard" })
+    .waitFor({ timeout: 3000 }).then(() => true, () => false);
+  report(asked, "leaving while a bill is read, with nobody named, asks first");
+  if (asked) await page.getByRole("button", { name: "Discard" }).click();
+  await page.waitForURL((url) => url.pathname === "/");
+  await answered;
+  await settle(page, 300);
+  await intoQuick();
+  report(await toGrid.count() === 0 && await page.locator(".btn-pair").count() === 1,
+    "and the bill it read after is not there on the next visit");
+
+  // A way out no screen is asked about (an iOS edge swipe) still throws it away.
+  await name("Cy");
+  await page.evaluate(() => history.back());
+  await page.waitForURL((url) => url.pathname === "/");
+  await page.waitForSelector(".starttile");
+  await intoQuick();
+  report(await named() === 0, "a quick split left without being asked keeps nobody for next time",
+    `${await named()} still named`);
   await page.close();
 }
 
@@ -423,7 +504,7 @@ for (const [name, from, open, type] of [
 
   await tap();
   await page.waitForURL(/\/g\/entry\?/);
-  await page.goBack();
+  await page.evaluate(() => history.back());
   await back();
   got = await place();
   report(got.entry === left.entry && got.offset === left.offset,
