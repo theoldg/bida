@@ -89,7 +89,8 @@ kinds, no schema change, nothing on the log that nobody looked at.
 (`/g/entry/bill`, `/quick/bill`, `components/bill-editor.tsx`): a card per
 item — a name, a count, a price — and no model in between. It is for the bill
 nobody photographed, and for fixing the one a photograph misread. The door says
-**"Type"** with no bill held and **"Edit items"** over one, and the screen opens
+**"Type"**, with a bill held or not — short, since three doors share a phone's
+width — and the screen opens
 on the bill held, folded back to the lines it was printed as, each one's
 translation under its name for as long as the name is the one it translates.
 **Not on `/g/scan`** (owner's call): that screen is reached by pressing a camera

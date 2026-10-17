@@ -214,7 +214,7 @@ export function ScanPair({
       {typeIn ? (
         <button type="button" className={half} disabled={disabled} onClick={scan.openTyping}>
           <Icon name="edit" size={14} />
-          {overBill ? copy.scan.byHand.again : copy.scan.byHand.open}
+          {copy.scan.byHand.open}
         </button>
       ) : null}
     </div>

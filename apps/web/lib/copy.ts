@@ -930,7 +930,6 @@ const en = {
     library: "Upload a receipt photo",
     byHand: {
       open: "Type",
-      again: "Edit items",
       title: "Bill items",
       name: "Item",
       nameOf: (n: number) => `Item ${n}`,

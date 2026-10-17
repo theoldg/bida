@@ -139,7 +139,7 @@ alike — full width but grey (`overBill`), the ink left to the way into the gri
 The Items tab holds a bill as `/quick` does: what each person came to, then
 "Edit who-had-what", then the doors. Each door names itself ("Scan", "Upload",
 "Type"); the screen around them has already named the job. Over a bill they say
-"Rescan" and "Edit items" for "Scan" and "Type" — and on `/g/scan` and `/quick` it draws what it
+"Rescan" for "Scan", and "Type" stays "Type" — and on `/g/scan` and `/quick` it draws what it
 promises, since that result lands on another screen: a bill of four lines and a
 total, the arrow, and the expense that comes back split by that bill between
 three of the people splitting it. One drawing on both screens
