@@ -191,15 +191,12 @@ function Ledger({ data }: { data: GroupData }) {
       </div>
 
       <div className="searchroom">
-      {items.length === 0 ? (
-        <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>
-      ) : found.length === 0 ? (
-        <Empty title={copy.group.search.none.title}>{copy.group.search.none.body(shown.trim())}</Empty>
-      ) : null}
-
       {/* Keyed by the search, so a keystroke redraws at once: the rows' fold and
           fade are for an entry that came or went. */}
-      <LedgerRows key={searching ? shown : ""} groupId={gid} items={found} windowed row={(entry: LedgerRow) => entry.row === "expense"
+      <LedgerRows key={searching ? shown : ""} groupId={gid} items={found} windowed empty={items.length === 0
+        ? <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>
+        : <Empty title={copy.group.search.none.title}>{copy.group.search.none.body(shown.trim())}</Empty>}
+        row={(entry: LedgerRow) => entry.row === "expense"
         ? <ExpenseRow expense={entry.expense} gid={gid} base={base} me={me} memberById={memberById} />
         : <SettlementRow settlement={entry.settlement} gid={gid} base={base} me={me} memberById={memberById} />} />
       <div style={{ height: 88 }} />

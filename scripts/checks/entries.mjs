@@ -787,6 +787,33 @@ for (const path of ["/g/payers", "/g/entry/items", "/g/entry/edit", "/g/claim"])
     said ? undefined : "a blank that never fills");
 }
 
+// ---- the last entry deleted: the empty state takes its place, never beside it
+const lone = await newGroup(page, base, { name: "Lone", me: "Theo", members: ["Marie"] });
+await page.goto(`${base}/g/entry/edit?id=${lone}`);
+await page.locator("input.amount").fill("10");
+await page.locator("#what").fill("Only");
+await save(1);
+await settle(page, 400);
+await hold(page.locator("a.row").first());
+await tap(deleteItem());
+await page.waitForSelector("dialog[open]");
+await page.evaluate(() => {
+  const w = /** @type {any} */ (window);
+  w.__both = false;
+  // Each frame, as the touch's own hold on the list once kept the row ~300ms under the words.
+  const look = () => {
+    if (document.querySelector(".searchroom .empty") && document.querySelector(".rows a.row")) w.__both = true;
+    if (!w.__done) requestAnimationFrame(look);
+  };
+  requestAnimationFrame(look);
+});
+await tap(page.getByRole("button", { name: "Delete" }).last());
+await page.waitForSelector(".searchroom .empty", { timeout: PATIENCE });
+await settle(page, 400);
+report(await page.evaluate(() => { const w = /** @type {any} */ (window); w.__done = true; return !w.__both; })
+  && await page.locator(".rows a.row").count() === 0,
+  "the last entry deleted by a tap leaves the empty state, never drawn above the row still going");
+
 await browser.close();
 close();
 finish();

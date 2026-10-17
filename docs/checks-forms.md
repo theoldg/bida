@@ -31,6 +31,8 @@ first still chooses nothing. Then the tap every *other* phone sends, whole,
 which asks **where that tap's own `mousedown` landed** rather than whether the
 dialog it opened survived: a dialog's card is centred, so a menu halfway down
 the screen drops the stray press harmlessly on the card and would hide the bug.
+Last, a group's only entry is deleted by those taps, watched frame by frame for
+the empty state drawn above the row still going.
 
 A tap on the Record card's figure is read back off the clipboard, which must
 hold the bare number ([import-export.md](import-export.md#the-clipboard)).

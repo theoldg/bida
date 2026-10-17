@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-17* — "Fix the flash that happens on deleting the last entry".
+  A click showed it for one frame; a phone's tap for 260ms, since the tap on
+  the dialog counted as a finger on the list. Drive a "flash" by touch, frame
+  by frame, before deciding it is small.
+
 - *2026-10-17* — "Adding an item to an already split bill accepts saving
   without assignment!" The cause was ten commits ahead of my clone: pull
   before tracing, or a bug in code you can't see reads as no bug. The fix
@@ -83,8 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-16* — "The in-app browser detection doesn't work for
   brave-in-reddit". Nothing to reproduce it on, and /diag never said which
   agent it read; so the fix shipped first was the report learning to say.
-
-- *2026-10-16* — "It skipped me past identity claim into an all-grey group",
-  a /diag from the demo. The trace showed a re-seed restoring a claim; grey
-  meant "not yours" on every row, so the claim named nobody — someone the
-  visitor had added. The check reproduced it red before the fix.

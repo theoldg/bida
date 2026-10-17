@@ -61,15 +61,12 @@ export default function GroupsPage() {
       {/* Only once there is a group to lose. */}
       {lead ? <InstallOfferCard groupId={lead.group.id} /> : null}
 
-      {groups && groups.length === 0 && arriving !== undefined ? (
-        arriving > 0 ? (
+      <LedgerRows opens={false} items={rows} row={(summary: GroupSummary) => <GroupRow summary={summary} />}
+        empty={!groups || arriving === undefined ? null : arriving > 0 ? (
           <Empty title={copy.groups.arriving.title}>{copy.groups.arriving.body}</Empty>
         ) : (
           <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
-        )
-      ) : null}
-
-      <LedgerRows opens={false} items={rows} row={(summary: GroupSummary) => <GroupRow summary={summary} />} />
+        )} />
 
     </HomeFrame>
     </>

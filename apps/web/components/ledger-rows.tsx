@@ -18,12 +18,15 @@ import { calmly, glide } from "@/lib/seek";
 /**
  * `windowed`: only the rows near the screen are drawn, the rest kept as their
  * height (docs/rows.md#the-ledger-draws-what-is-near-the-screen). The groups
- * list is never long enough to need it.
+ * list is never long enough to need it. `empty` stands where the rows were once
+ * none is drawn — not once `items` is empty, which it is while the last row is
+ * still on screen.
  */
-export function LedgerRows<T>({ groupId, items, row, opens = true, windowed = false }: {
+export function LedgerRows<T>({ groupId, items, row, empty, opens = true, windowed = false }: {
   groupId?: string;
   items: LedgerItem<T>[];
   row: (row: T) => ReactNode;
+  empty?: ReactNode;
   opens?: boolean;
   windowed?: boolean;
 }) {
@@ -50,8 +53,11 @@ export function LedgerRows<T>({ groupId, items, row, opens = true, windowed = fa
     const box = scroller();
     if (!box) return;
     const m = motion.current;
-    const down = () => { m.touching = true; };
-    const up = () => { m.touching = false; m.scrolled = Date.now(); };
+    // A row's menu and its dialog live inside the scroller, but a tap on them
+    // moves no list: counted, the row a Delete took stayed for STILL_MS.
+    const onList = (e: Event) => !(e.target instanceof Element && e.target.closest("dialog, .rowmenu, .rowmenu-veil"));
+    const down = (e: Event) => { if (onList(e)) m.touching = true; };
+    const up = (e: Event) => { m.touching = false; if (onList(e)) m.scrolled = Date.now(); };
     const moved = () => { m.scrolled = Date.now(); };
     box.addEventListener("touchstart", down, { passive: true });
     box.addEventListener("touchend", up, { passive: true });
@@ -156,6 +162,8 @@ export function LedgerRows<T>({ groupId, items, row, opens = true, windowed = fa
   );
 
   return (
+    <>
+    {drawing.length === 0 ? empty : null}
     <div className="rows lrows" ref={root}>
       {win
         ? segmentsOf(win.offsets, win.drawn).map((seg) => isGap(seg)
@@ -163,6 +171,7 @@ export function LedgerRows<T>({ groupId, items, row, opens = true, windowed = fa
           : slotOf(drawing[seg.at]!, seg.at, win.filled(seg.at)))
         : drawing.map((item, i) => slotOf(item, i, true))}
     </div>
+    </>
   );
 }
 

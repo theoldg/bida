@@ -98,6 +98,8 @@ line, whose band is its own edge, and under the last row.
   is the line above the row beneath, so it stays, rides up on that row and
   lands on the line above — two lines closing into one. The last row takes no
   motion: it is gone and the empty state is up at once — too rare to earn one.
+  The empty state is `LedgerRows`' to draw, once it draws no row: decided off
+  the live read, it stood above a row the list was still holding.
   **Deleted on its own screen**, the entry is gone from the live read before
   the ledger is back, so the ledger draws it where it was (`markDeleted`, off
   `withTombstones`), puts the list back as it was left — never scrolling, the
@@ -110,7 +112,8 @@ line, whose band is its own edge, and under the last row.
   past it. No flash: the history clock's dot already says it came. **Above what
   you are reading, it grows the list upward instead** — the view is held by
   hand, nothing under your eye moves, and nothing animates. A list moving
-  under a finger or still gliding takes no change until 300ms after it stops.
+  under a finger or still gliding takes no change until 300ms after it stops —
+  a tap on a row's menu or dialog, inside the scroller, is not such a finger.
   Into an empty ledger (a first pull), rows just appear.
 
 Under reduced motion the movement is instant and only the wash still plays.
