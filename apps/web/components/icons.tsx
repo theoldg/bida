@@ -209,14 +209,19 @@ export function FlipCheck({ name, size = 16, on }: {
 /**
  * The same flip across a whole button label, for actions named in words.
  * Both faces are always drawn; the one facing away is hidden from readers,
- * so the button is named by the visible face.
+ * so the button is named by the visible face. Where an icon is the verb,
+ * `iconSays` is that word to a reader, ahead of the label.
  */
-export function FlipLabel({ label, done, on }: {
-  label: string; done: string; on: boolean;
+export function FlipLabel({ label, done, on, icon, iconSays }: {
+  label: string; done: string; on: boolean; icon?: IconName; iconSays?: string;
 }) {
   return (
     <span className={`flipcheck line${on ? " on" : ""}`}>
-      <span className="flipface" aria-hidden={on}>{label}</span>
+      <span className="flipface" aria-hidden={on}>
+        {icon ? <Icon name={icon} size={16} /> : null}
+        {iconSays ? <span className="vh">{iconSays} </span> : null}
+        {label}
+      </span>
       <span className="checkface" aria-hidden={!on}>
         <Icon name="check" size={16} />
         {done}

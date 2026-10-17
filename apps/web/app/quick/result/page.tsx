@@ -138,7 +138,8 @@ export default function QuickResultPage() {
                 nothing else here can say the clipboard took it. */}
             <button type="button" className="btn btn-p btn-lg" disabled={sending} onClick={() => void hand()}>
               {sending ? <span className="spinner" /> : null}
-              <FlipLabel label={copy.quick.copy} done={copy.quick.copied} on={copied} />
+              <FlipLabel icon="copy" label={copy.quick.copy.label} iconSays={copy.quick.copy.verb}
+                done={copy.quick.copied} on={copied} />
             </button>
           </div>
           <div className="pad" style={{ paddingTop: 8, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>

@@ -720,7 +720,8 @@ const en = {
     doneTitle: "Finished with this split?",
     discardBody: "Nothing about it is kept.",
     split: "The split",
-    copy: "Copy totals and link",
+    /** The copy icon is the verb, and `verb` is it to a reader. */
+    copy: { verb: "Copy", label: "Totals and link" },
     copied: "Copied",
     fallbackTitle: "The split",
     fallbackBody: "Copying didn’t work: hold the text to copy it.",
