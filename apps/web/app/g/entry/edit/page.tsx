@@ -150,8 +150,8 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   leaving: RefObject<boolean>;
 }) {
   const router = useRouter();
-  usePrefetch([route.payers(groupId)]);
-  const scan = useReceiptScan(groupId, useScanAs(groupId));
+  usePrefetch([route.payers(groupId), route.bill(groupId, via)]);
+  const scan = useReceiptScan(groupId, useScanAs(groupId), undefined, route.bill(groupId, via));
   const saveTo = formParent(groupId, draft.entryId, via);
   const base = group.baseCurrency;
   const kind = draft.kind;

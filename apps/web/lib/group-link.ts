@@ -165,6 +165,8 @@ export const route = {
   scan: (groupId: string) => withGroup("/g/scan", groupId),
   /** Carries the form's own `via`, so a detour here doesn't change where saving lands. */
   items: (groupId: string, via?: EntrySource) => withGroup("/g/entry/items", groupId) + viaParam(via),
+  /** The bill typed by hand, a detour off the form like `items`. */
+  bill: (groupId: string, via?: EntrySource) => withGroup("/g/entry/bill", groupId) + viaParam(via),
   history: (groupId: string, entryId?: string, via?: EntrySource) =>
     withGroup("/g/history", groupId) + entryParam(entryId) + viaParam(via),
   tip: (groupId: string) => withGroup("/g/tip", groupId),
@@ -180,6 +182,7 @@ export const route = {
   /** No id: a quick split lives in memory (ADR-0035). */
   quick: () => "/quick",
   quickItems: () => "/quick/items",
+  quickBill: () => "/quick/bill",
   quickResult: () => "/quick/result",
 };
 

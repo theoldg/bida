@@ -407,7 +407,21 @@ async function start() {
       case "fill": await page.fill(await target(args[0]), typed(args.slice(1)), { strict: true }); break;
       // Keyed one at a time: the amount field regroups per keystroke, which
       // `fill` never exercises.
-      case "type": await page.locator(await target(args[0])).pressSequentially(typed(args.slice(1)), { delay: 20, timeout: 5000 }); break;
+      case "type": {
+        const field = page.locator(await target(args[0]));
+        // A thumb leaves the caret at the end of what is there; a bare focus()
+        // leaves it at the start, so "4" typed into "1" read "41". A field
+        // that selects itself on focus keeps its selection, as on a phone.
+        await field.evaluate((el) => {
+          if (document.activeElement === el) return;
+          el.focus();
+          try {
+            if (el.selectionStart === el.selectionEnd) el.setSelectionRange(el.value.length, el.value.length);
+          } catch { /* no caret on this input type */ }
+        });
+        await field.pressSequentially(typed(args.slice(1)), { delay: 20, timeout: 5000 });
+        break;
+      }
       case "select": await page.selectOption(await target(args[0]), { label: args.slice(1).join(" ") }, { strict: true }); break;
       case "press": for (let i = Math.max(1, Number(args[1] ?? 1)); i > 0; i--) await page.keyboard.press(args[0]); break;
       case "hold": {
@@ -442,7 +456,6 @@ async function start() {
         return say([
           `the next bill this phone reads answers as "${args[0]}" (${fixture.exercises}) — ${fixture.note}`,
           "press the app's own scan or upload button; a scan is a round trip, so read the screen again if it is still working",
-          "the stub answers a typed bill too: press \"Type\" (\"As text\" over a bill), fill the box and press \"Read it\"",
         ]);
       }
       case "file": {

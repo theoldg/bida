@@ -114,9 +114,9 @@ it is tall, so the shape says it is a different kind of thing before the word
 is read.
 
 **One act with three doors is one button cut in three.** Reading a bill starts at
-the camera, at the library or at a box you type it into, and which of those is a
+the camera, at the library or at its items typed by hand, and which of those is a
 detail of the same job — two doors only on `/g/scan`, reached by pressing a
-camera, where a box to write in is not what the picture above it promised: `.btn-pair` is one bordered box with hairlines between
+camera, where typing is not what the picture above it promised: `.btn-pair` is one bordered box with hairlines between
 the doors, the box owning the border as in `.splitbox`. Buttons side by side is
 the shape for *different* jobs, and `.seg` is the app's mode switch — under the split
 editor's tabs it would read "which of these am I in". (The split editor itself
@@ -132,15 +132,14 @@ An import of fifty entries or more takes the same box in place of its
 (`WriteBusy`) — a wait whose length is known, so it is counted, not guessed —
 and so does a join of a group long enough to come in pages, where that button
 will stand.
-Three registers, so where it sits changes its size and almost nothing else:
-an ink block where the screen exists for it (`/g/scan`) and on the Items tab,
-where it is likewise the only thing to do, and chip scale — on paper, so it
-doesn't outweigh what it replaces — to replace a bill already assigned; on
-`/quick` over a bill read, full width but grey, under the ink way on. Each door
-names itself ("Scan", "Upload", "Type"); the screen around them
-has already named the job. Where the doors share a width the words are what has
-to fit; the chip register — content-sized, being `inline-flex`, over a bill
-already read — says "As text" for "Type", the same way it says "Rescan" for "Scan" — and on `/g/scan` and `/quick` it draws what it
+Where it sits changes its size and almost nothing else: an ink block where the
+screen exists for it (`/g/scan`) and on an Items tab with no bill, where it is
+likewise the only thing to do; over a bill held — the Items tab and `/quick`
+alike — full width but grey (`overBill`), the ink left to the way into the grid.
+The Items tab holds a bill as `/quick` does: what each person came to, then
+"Edit who-had-what", then the doors. Each door names itself ("Scan", "Upload",
+"Type"); the screen around them has already named the job. Over a bill they say
+"Rescan" and "Edit items" for "Scan" and "Type" — and on `/g/scan` and `/quick` it draws what it
 promises, since that result lands on another screen: a bill of four lines and a
 total, the arrow, and the expense that comes back split by that bill between
 three of the people splitting it. One drawing on both screens

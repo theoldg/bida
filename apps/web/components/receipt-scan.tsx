@@ -1,21 +1,23 @@
 "use client";
 // Doc: docs/receipt-scanning.md
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef } from "react";
 import { clipAmountToCurrency } from "./amount-input";
 import { copy } from "../lib/copy";
 import { Icon } from "./icons";
 import { getDraft, saveDraft, tabAfterScan } from "../lib/draft";
-import { normalizeScan, readBill, scanCurrency, type ScanMedium, type ScanResult } from "@bida/core";
 import {
-  parseBillText, scanReceipt,
+  normalizeScan, readBill, scanCurrency, type ScanMedium, type ScanResult,
+} from "@bida/core";
+import {
+  scanReceipt,
   ScanKeyError, ScanLimitError, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
   ScanUnreliableError, TurnstileBlockedError,
 } from "../lib/scan";
 import { beginScan, clearScan, failScan, useLiveScan, type LiveScan } from "../lib/scan/live";
 import { unfoldAll } from "../lib/scan/items";
 import { billAsText } from "../lib/scan/text";
-import { BillTextDialog } from "./bill-text-dialog";
 import { ScanBusy } from "./scan-bar";
 import type { ScanAs } from "../lib/scan/credential";
 import { warmTurnstile } from "../lib/scan/turnstile";
@@ -48,7 +50,7 @@ export interface ReceiptScan {
   openCamera: () => void;
   openLibrary: () => void;
   openTyping: () => void;
-  /** The hidden file inputs and the typing dialog. Render once per screen, outside anything a reading rearranges. */
+  /** The hidden file inputs. Render once per screen, outside anything a reading rearranges. */
   inputs: React.ReactNode;
 }
 
@@ -64,7 +66,10 @@ export function useReceiptScan(
   /** Not always the group's own key: a quick split has none (`useScanAs`). Undefined disables the camera. */
   scanAs: ScanAs | undefined,
   onScanned?: () => void,
+  /** The bill typed by hand, a screen of its own; none hides that door. */
+  billHref?: string,
 ): ReceiptScan {
+  const router = useRouter();
   const cameraInput = useRef<HTMLInputElement>(null);
   const libraryInput = useRef<HTMLInputElement>(null);
   const live = useLiveScan(groupId);
@@ -156,18 +161,6 @@ export function useReceiptScan(
     );
   }, [read]);
 
-  const readText = useCallback(async (text: string) => {
-    await read(
-      "text",
-      (sender, currency) => parseBillText(text, sender.id, sender.secret, currency),
-      text,
-    );
-  }, [read]);
-
-  // Here, not in the control that opens it: that control changes shape once a
-  // bill lands, which would remount the box over the bill just read.
-  const [typing, setTyping] = useState(false);
-
   const said = live?.state === "error" ? live.error ?? copy.scan.failed : null;
   const typed = live?.medium === "text";
 
@@ -178,7 +171,7 @@ export function useReceiptScan(
     // The crop model downloads while the camera is up, not after the shutter.
     openCamera: () => { void warmBillFinder(); cameraInput.current?.click(); },
     openLibrary: () => { void warmBillFinder(); libraryInput.current?.click(); },
-    openTyping: () => setTyping(true),
+    openTyping: () => { if (billHref) router.push(billHref); },
     inputs: (
       <>
         <input ref={cameraInput} type="file" accept="image/*" capture="environment"
@@ -187,22 +180,15 @@ export function useReceiptScan(
         <input ref={libraryInput} type="file" accept="image/*"
           style={{ display: "none" }} onChange={(e) => void onPhoto(e)}
           aria-label={copy.scan.library} />
-        {typing ? (
-          <BillTextDialog live={live} refusal={typed ? said : null} onRead={readText}
-            // Read at open: a photograph in between replaces it.
-            initial={(groupId ? getDraft(groupId)?.receiptText : null) ?? ""}
-            onClose={() => setTyping(false)} />
-        ) : null}
       </>
     ),
   };
 }
 
 /**
- * One act with three doors (camera, library, type it), so one box, never
- * buttons side by side. `typeIn={false}` where the tap that got here was the
- * camera. `lg` where the screen exists for scanning, `s` on the Items tab, `xs`
- * beside an assigned bill, where an ink block would outweigh what it replaces.
+ * One act with three doors (camera, library, the items by hand), so one box,
+ * never buttons side by side. `typeIn={false}` where the tap that got here was
+ * the camera. `lg` where the screen exists for scanning, `s` on the Items tab.
  * `overBill` where a read bill is held and a primary under it is the way on:
  * the doors replace it, so they say so, and leave the ink to that primary.
  */
@@ -210,7 +196,7 @@ export function ScanPair({
   scan, register, overBill = false, typeIn = true, flash = "", onFlashEnd,
 }: {
   scan: ReceiptScan;
-  register: "lg" | "s" | "xs";
+  register: "lg" | "s";
   overBill?: boolean;
   typeIn?: boolean;
   flash?: string;
@@ -220,10 +206,8 @@ export function ScanPair({
   const busy = live?.state === "scanning";
   // So pressing doesn't wait on Cloudflare. Keyed on `busy`: a scan spends the token.
   useEffect(() => { if (!disabled && !busy) warmTurnstile(); }, [disabled, busy]);
-  const icon = register === "xs" ? 12 : 14;
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
-  const box = `btn-pair${register === "xs" ? " pair-xs" : overBill ? "" : " pair-p"}${flash}`;
-  const again = register === "xs" || overBill;
+  const box = `btn-pair${overBill ? "" : " pair-p"}${flash}`;
 
   // A door left beside "Reading…" would invite a second reading.
   if (busy && live) {
@@ -233,17 +217,17 @@ export function ScanPair({
   return (
     <div className={box} onAnimationEnd={onFlashEnd}>
       <button type="button" className={half} disabled={disabled} onClick={scan.openCamera}>
-        <Icon name="cam" size={icon} />
-        {again ? copy.scan.rescan : copy.scan.snap}
+        <Icon name="cam" size={14} />
+        {overBill ? copy.scan.rescan : copy.scan.snap}
       </button>
       <button type="button" className={half} disabled={disabled} onClick={scan.openLibrary}>
-        <Icon name="image" size={icon} />
+        <Icon name="image" size={14} />
         {copy.scan.upload}
       </button>
       {typeIn ? (
         <button type="button" className={half} disabled={disabled} onClick={scan.openTyping}>
-          <Icon name="edit" size={icon} />
-          {again ? copy.scan.typeIn.asText : copy.scan.typeIn.open}
+          <Icon name="edit" size={14} />
+          {overBill ? copy.scan.byHand.again : copy.scan.byHand.open}
         </button>
       ) : null}
     </div>

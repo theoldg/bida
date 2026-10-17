@@ -273,8 +273,19 @@ function ReceiptPanel({
 }) {
   if (items && items.length > 0) {
     const involved = members.filter((m) => included.has(m.id));
+    // What it came to first, then the way into the grid, then what replaces
+    // the bill — the order `/quick` holds a read bill in.
     return (
       <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+        {involved.map((m) => (
+          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{m.name}{m.id === me ? <You /> : null}</span>
+            <span className="bignum" style={{ fontSize: 13.5 }}>{money(shares[m.id] ?? 0, currency)}</span>
+          </div>
+        ))}
+        {involved.length > 0 ? (
+          <div className="hairline" style={{ margin: "0 0 -1px" }} />
+        ) : null}
         <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-p${flash}`} onAnimationEnd={onFlashEnd}
           style={{ textDecoration: "none", justifyContent: "space-between" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -286,17 +297,8 @@ function ReceiptPanel({
             <Icon name="chev" size={14} />
           </span>
         </Link>
-        {involved.length > 0 ? (
-          <div className="hairline" style={{ margin: "0 0 -3px" }} />
-        ) : null}
-        {involved.map((m) => (
-          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{m.name}{m.id === me ? <You /> : null}</span>
-            <span className="bignum" style={{ fontSize: 13.5 }}>{money(shares[m.id] ?? 0, currency)}</span>
-          </div>
-        ))}
         <div>
-          <ScanPair scan={scan} register="xs" />
+          <ScanPair scan={scan} register="s" overBill={true} />
           {scan.refusal ? (
             <Failure>{scan.refusal} {copy.scan.keptOld}</Failure>
           ) : null}

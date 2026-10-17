@@ -36,7 +36,7 @@ import { usePrefetch } from "@/lib/prefetch";
  */
 export default function QuickPage() {
   const router = useRouter();
-  usePrefetch([route.quickItems()]);
+  usePrefetch([route.quickItems(), route.quickBill()]);
   const cred = useScanCredential();
   const people = useQuickPeople();
   const draft = useDraft(cred?.id);
@@ -87,7 +87,7 @@ export default function QuickPage() {
     // this flow has nothing else to be — so it says so here rather than
     // offering an empty grid.
     setNoLines((getDraft(cred.id)?.receiptItems?.length ?? 0) === 0);
-  });
+  }, route.quickBill());
 
   // A bill already read, by a scan just now or before a Back from the grid:
   // the way forward is the grid, not another photo.

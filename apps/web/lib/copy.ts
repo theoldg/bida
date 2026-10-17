@@ -927,25 +927,33 @@ const en = {
     camera: "Take a photo of a receipt",
     library: "Upload a receipt photo",
     typeIn: {
-      open: "Type",
-      /** Not "Edit": the grid is the edit people mean. */
-      asText: "As text",
-      title: "The bill as text",
-      /**
-       * Asks for items and no format: naming one teaches people to tidy bills for
-       * the app.
-       */
-      lede: "The items and prices, in any format.",
-      placeholder: "3 chicken skewers at 13\nand 10 beef at 15\nlarge cola 10\ntip 10",
-      field: "The bill, as text",
-      confirm: "Read it",
-      left: (n: number) => `${n} characters left`,
-      full: "That’s the longest bill this will read. Trim it, or photograph it instead.",
       /**
        * In the words the typed prompt reads: "Tax on top" because tax inside the
        * prices is read as none.
        */
       written: { tip: "Tip", tax: "Tax on top", discount: "Discount", total: "Total" },
+    },
+    byHand: {
+      open: "Type",
+      again: "Edit items",
+      title: "Bill items",
+      name: "Item",
+      nameOf: (n: number) => `Item ${n}`,
+      remove: (what: string) => `Remove ${what}`,
+      countOf: (n: number) => `How many of item ${n}`,
+      fewer: (n: number) => `One fewer of item ${n}`,
+      more: (n: number) => `One more of item ${n}`,
+      each: "each",
+      total: "total",
+      eachOf: (n: number) => `Price of one of item ${n}`,
+      priceOf: (n: number) => `Price of item ${n}`,
+      add: "Add an item",
+      none: "Add an item first.",
+      blank: "An item is empty.",
+      noName: "An item has no name.",
+      noPrice: (name: string) => `${name} has no price.`,
+      discardTitle: "Discard these changes?",
+      discardBody: "The bill stays as it was.",
     },
     assignWhoHadWhat: "Assign who had what",
     editWhoHadWhat: "Edit who-had-what",

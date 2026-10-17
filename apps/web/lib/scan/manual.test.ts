@@ -1,0 +1,112 @@
+import { describe, expect, it } from "vitest";
+import type { ReceiptItem } from "@bida/core";
+import {
+  billFromRows, blankRow, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, setCount, setTotal, setUnit,
+} from "./manual";
+import { unfoldAll } from "./items";
+
+const named = (label: string) => ({ ...blankRow(), label });
+
+describe("a row's price", () => {
+  it("multiplies a typed unit by the count, in minor units", () => {
+    const row = setCount(setUnit(named("Beer"), "3.10", "EUR"), 3, "EUR");
+    expect(rowMinor(row, "EUR")).toBe(930);
+    expect(row.totalText).toBe("9.30");
+  });
+
+  it("keeps a typed total exact and shows the unit rounded", () => {
+    const row = setTotal(setCount(named("Salad"), 3, "EUR"), "10.00", "EUR");
+    expect(rowMinor(row, "EUR")).toBe(1000);
+    expect(row.unitText).toBe("3.33");
+  });
+
+  it("steps a single item as one more at its price", () => {
+    const row = setCount(setTotal(named("a"), "12", "EUR"), 4, "EUR");
+    expect(row.by).toBe("unit");
+    expect(row.totalText).toBe("48.00");
+  });
+
+  it("holds the typed figure still when the count moves", () => {
+    const unit = setCount(setCount(setUnit(named("a"), "2", "EUR"), 4, "EUR"), 2, "EUR");
+    expect(unit.unitText).toBe("2");
+    expect(unit.totalText).toBe("4.00");
+    const total = setCount(setTotal(setCount(named("a"), 2, "EUR"), "12", "EUR"), 4, "EUR");
+    expect(total.totalText).toBe("12");
+    expect(total.unitText).toBe("3.00");
+  });
+
+  it("works in currencies without and with three decimals", () => {
+    expect(rowMinor(setCount(setUnit(named("a"), "150", "JPY"), 3, "JPY"), "JPY")).toBe(450);
+    const kwd = setTotal(setCount(named("a"), 3, "KWD"), "1.000", "KWD");
+    expect(rowMinor(kwd, "KWD")).toBe(1000);
+    expect(kwd.unitText).toBe("0.333");
+  });
+
+  it("clamps the count to 1..100", () => {
+    expect(setCount(named("a"), 0, "EUR").count).toBe(1);
+    expect(setCount(named("a"), 500, "EUR").count).toBe(100);
+  });
+});
+
+describe("which rows are lines", () => {
+  it("drops an untouched row and refuses a half-filled one", () => {
+    expect(rowIsEmpty(blankRow())).toBe(true);
+    expect(rowIsBad(blankRow(), "EUR")).toBe(false);
+    expect(rowIsBad(named("Tea"), "EUR")).toBe(true);
+    expect(rowIsBad(setTotal(blankRow(), "3", "EUR"), "EUR")).toBe(true);
+    expect(rowIsBad(setTotal(named("Tea"), "0", "EUR"), "EUR")).toBe(true);
+    expect(rowIsBad(setTotal(named("Tea"), "3", "EUR"), "EUR")).toBe(false);
+  });
+});
+
+describe("rows and the draft's bill", () => {
+  const bill: ReceiptItem[] = unfoldAll([
+    { label: "Soda", labelEn: "Soda", amount: "9.00", quantity: 3 },
+    { label: "Tagine", labelEn: "Lamb stew", amount: "14.50", quantity: null, portionOf: null },
+  ], "EUR").items;
+
+  it("opens folded, and saves back to the same bill untouched", () => {
+    const rows = rowsFromBill(bill, "EUR");
+    expect(rows.map((r) => [r.label, r.count, r.totalText, r.unitText]))
+      .toEqual([["Soda", 3, "9.00", "3.00"], ["Tagine", 1, "14.50", "14.50"]]);
+    const back = billFromRows(rows, { items: bill, assignments: null }, "EUR");
+    expect(back.items).toEqual(bill);
+    expect(back.totalMinor).toBe(2350);
+  });
+
+  it("opens a line that doesn't divide on its printed total", () => {
+    const [salad] = rowsFromBill(unfoldAll([{ label: "Salad", amount: "10.00", quantity: 3 }], "EUR").items, "EUR");
+    expect(salad).toMatchObject({ by: "total", totalText: "10.00", unitText: "3.33" });
+    expect(rowMinor(setCount(salad!, 4, "EUR"), "EUR")).toBe(1000);
+  });
+
+  it("forgets a translation once the label is retyped", () => {
+    const [soda, tagine] = rowsFromBill(bill, "EUR");
+    const back = billFromRows([soda!, { ...tagine!, label: "Couscous" }], { items: bill, assignments: null }, "EUR");
+    expect(back.items.at(-1)).toMatchObject({ label: "Couscous", labelEn: null });
+  });
+
+  it("carries who had a line through a rename, a reprice and a new count", () => {
+    const assignments = [["a"], ["a"], ["a"], ["b", "c"]];
+    const [soda, tagine] = rowsFromBill(bill, "EUR");
+    const rows = [setCount(soda!, 2, "EUR"), setTotal({ ...tagine!, label: "Stew" }, "15", "EUR"), setTotal(named("Bread"), "2", "EUR")];
+    const back = billFromRows(rows, { items: bill, assignments }, "EUR");
+    expect(back.items.map((i) => i.amount)).toEqual(["3.00", "3.00", "15.00", "2.00"]);
+    expect(back.assignments).toEqual([["a"], ["a"], ["b", "c"], []]);
+  });
+
+  it("keeps portions apart while their count holds, and drops them when it moves", () => {
+    const assignments = [["a"], ["b"], ["c"], []];
+    const [soda, tagine] = rowsFromBill(bill, "EUR");
+    expect(billFromRows([soda!, tagine!], { items: bill, assignments }, "EUR").assignments)
+      .toEqual([["a"], ["b"], ["c"], []]);
+    expect(billFromRows([setCount(soda!, 4, "EUR")], { items: bill, assignments }, "EUR").assignments)
+      .toEqual([[], [], [], []]);
+  });
+
+  it("follows a line that moved when one above it was removed", () => {
+    const assignments = [["a"], ["a"], ["a"], ["b"]];
+    const [, tagine] = rowsFromBill(bill, "EUR");
+    expect(billFromRows([tagine!], { items: bill, assignments }, "EUR").assignments).toEqual([["b"]]);
+  });
+});

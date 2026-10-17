@@ -4,7 +4,7 @@
 which of the four scan docs your change needs. All of it is built and deployed;
 [ADR-0016](decisions/0016-receipts.md) holds the UX rulings.*
 
-Photograph a receipt — or [type it in](#typing-a-bill-in) — and get the expense
+Photograph a receipt — or [type its items in](#typing-a-bill-in) — and get the expense
 form filled in. One model call, one
 Worker request, and a form you still have to look at before anything is saved.
 Three screens start one: `/g/scan`, the camera above the ledger's "+", which is
@@ -15,11 +15,11 @@ All three call `useReceiptScan` and wear
 `ScanPair` (`components/receipt-scan.tsx`), so neither the behaviour nor the
 control can drift — one act, three doors, one button cut in three
 ([design-system.md](design-system.md#palette-roles)): photograph it now, pick
-the photograph you already took, or [type it in](#typing-a-bill-in).
+the photograph you already took, or [type the items in](#typing-a-bill-in).
 
 | Read | When you are |
 |---|---|
-| **This file** | Changing how a scan starts, the typed bill, or the control all three screens wear |
+| **This file** | Changing how a scan starts, the bill typed by hand, or the control all three screens wear |
 | [scan-reading.md](scan-reading.md) | Changing the prompt, what a reading returns, or what the app does with it |
 | [who-had-what.md](who-had-what.md) | Changing the grid a bill is divided on, or how extras and discounts spread |
 | [scan-worker.md](scan-worker.md) | Touching the Worker's half — the shared key, the envelope, the budget, Turnstile, trust — or a key of the phone's own |
@@ -87,32 +87,38 @@ kinds, no schema change, nothing on the log that nobody looked at.
 
 ## Typing a bill in
 
-**The scan control's third door**, on every screen that reads a bill but
-`/g/scan`. A box, the
-bill pasted or typed into it however it is written, and the same filled draft
-comes back. It is for the bill nobody photographed — a receipt that arrived as a chat message
-or an email, one already thrown away, one a camera has just failed on twice.
+**The scan control's third door is the bill's items by hand**
+(`/g/entry/bill`, `/quick/bill`, `components/bill-editor.tsx`): a card per
+item — a name, a count, a price — and no model in between. It is for the bill
+nobody photographed, and for fixing the one a photograph misread. The door says
+**"Type"** with no bill held and **"Edit items"** over one, and the screen opens
+on the bill held, folded back to the lines it was printed as, each one's
+translation under its name for as long as the name is the one it translates.
+**Not on `/g/scan`** (owner's call): that screen is reached by pressing a camera
+(`typeIn={false}`).
 
-**Not on `/g/scan`** (owner's call): the ledger FAB that opens that
-screen is a camera and the screen draws a photograph, so it offers two doors
-(`typeIn={false}`). Words go in where the form is already open — the Items tab —
-or on `/quick`, which has no form behind it.
+- **Either price can be typed** beside a count above one; the one typed holds
+  and the other follows, in minor units (`lib/scan/manual.ts`). "One more" is
+  one more at the same price: a single item's price is a unit price, and a
+  printed line opens on its unit price where its count divides it — where it
+  doesn't, on the total printed, so no cent moves.
+- **Done writes the bill whole**; Back with changes asks first. Whoever had a
+  line keeps it through a rename, a new price or a new count (`billFromRows`),
+  the bill's tip, tax and discounts stay, and the amount follows the bill.
+  Payers typed as amounts don't follow: what each paid is a fact, so a bill
+  that moves under them is refused on the form with Paid by blooming
+  ([refusals.md](refusals.md#a-refused-action-points-first)).
+- **Done refuses an empty card, a name with no price and a price with no
+  name** — said by the item's name where it has one — and with no cards at all
+  blooms "Add an item": a bill is never cleared here, since another split tab
+  is how an expense stops being split by items. On `/quick` Done goes back to
+  `/quick`, as a scan stays there.
 
-It is **in** the box and not beside it (owner's call): a reading is a reading
-whichever medium it starts from. What that costs is room: three doors share the
-width of a phone, so the door says **"Type"** at the two full-width registers,
-where a third of 360 pixels holds ten characters or a pencil and not both. At the
-chip register — a bill already read, the control standing among its figures —
-it says **"As text"**, because the box opens on that bill written out (below),
-the way the camera's door says "Scan" in one place and "Rescan" in another —
-not "Edit", which is the word that led to the screen and the grid's own bar
-(`copy.scan.typeIn`).
-
-The box itself is rendered by `useReceiptScan`, never by a screen, and rides
-`scan.inputs` beside the two hidden file inputs. The hook sits at the screen's
-root, where nothing a reading does can move it; owned by the control, it would
-be unmounted by its own answer, since the Items tab draws one shape with no
-bill and another with one.
+**The typed text reading is still built and has no door.** It was this door
+until the hand editor replaced it (owner's call, 2026-10-17). The rest of this
+section is its half that remains — the Worker's, the prompt's and
+`parseBillText`'s — which nothing in the app calls now
+([implementation-status](implementation-status.md#what-is-open)).
 
 Everything after the bytes is shared with a photograph: the same endpoint, the
 same bearer, the same Turnstile token, the same three budget buckets, the same
@@ -175,45 +181,23 @@ is what lets the guard in
 JSON string as it streamed would need a second, subtler check on the hot path.
 A typed bill changes what the model *reads* and never what the request *is*.
 
-**The lede asks for none of this.** "The items and prices, formatted however you
-like" — it names what the Items tab needs and no shape at all, so nobody tidies
-a bill up for the app (`copy.scan.typeIn`).
-
 **The cap is 4,000 characters** (`BILL_TEXT_MAX`, core/scan.ts), which is about
 what the downscaled photo costs in tokens — so typing is never the dearer way to
 read a bill — and well clear of any real one: a sixty-line till roll is about
-1,800. The dialog counts down only in the last fifth of it, because a counter
-nobody is near is fat. The Worker's `MAX_TEXT_BYTES` sits far above that as an
+1,800. The Worker's `MAX_TEXT_BYTES` sits far above that as an
 abuse ceiling on bytes, in the same spirit as the push caps; the character count
 is the number a person is held to.
 
 **The text is kept, on the draft and on the saved expense** (`receiptText`), for
-the reason `receiptItems` is: reopening the box holds what was typed, on this
-phone or another, so correcting a misread bill is editing rather than retyping.
-A photograph replaces it, the way it replaces the grid — what is kept has to
+the reason `receiptItems` is: a reading could be reopened as text and corrected
+rather than retyped. A photograph replaces it, the way it replaces the grid — what is kept has to
 describe the bill actually on the draft — **with its own reading written out**
 (`billAsText`, `lib/scan/text.ts`): a line per item as a person would type it,
 "3 Chicken skewer 39.00", in the English labels, then tip, "Tax on top", each
-deduction with its minus, and the total only where the bill printed one. So a
-photo that misread one line is fixed under "As text" and re-read, not retaken.
-Nothing else shows it: the bill's own lines and
+deduction with its minus, and the total only where the bill printed one.
+Nothing shows it now: the bill's own lines and
 each person's copy of them are the reading, and printing the raw text under them
 would be the same thing twice.
-
-**The dialog takes its state from the reading, not from itself.**
-`scan.live` is the one `LiveScan` the screen behind is also watching, which
-is what makes the bar a clock on the reading: close the box mid-read and the
-draft still fills; open it again and the bar is where the reading actually is. A
-refusal leaves the box standing with the text intact, because unlike a bad
-photograph a bad bill is fixed where it was typed.
-
-**And it is said there and nowhere else.** Whose refusal a reading's is gets
-decided once, in the hook: the surface it was started from carries the sentence
-and the other carries nothing (`ReceiptScan.refusal`, which is null while the
-last reading was typed), so the message never shows twice or outlives the
-box. The mirror holds: a
-photograph refused before the box was opened belongs to the screen that took it,
-and is not repeated over the top of it.
 
 ## What it's made of
 
@@ -230,7 +214,7 @@ the key is the `GEMINI_API_KEY` Worker secret —
 `apps/api/src/scan-body.ts` (four pre-encoded envelopes — two tones by two
 media — and the base64 guard `scan-body.test.ts` attacks) · `apps/web/lib/scan/` — `downscale.ts`,
 `text.ts`, `response.ts`, `scanReceipt()` and `parseBillText()` ·
-`components/bill-text-dialog.tsx`, the box a bill is typed into ·
+`components/bill-editor.tsx` and `lib/scan/manual.ts`, the bill by hand ·
 `components/receipt-scan.tsx`, the hook all three scanning screens
 share — `/g/scan`, the Items tab on `/g/entry/edit`, and `/quick` — with
 the who-had-what grid (`components/who-had-what.tsx`) a tap behind the tab and
@@ -250,11 +234,8 @@ a scan whose draft was discarded on the way out drops its result on arrival.
 `scripts/fixtures/receipts/`; the scan button is then pressed like any other
 control and everything but the round trip to Gemini really runs. It is the only
 way to reach the who-had-what grid outside a real scan —
-[drive.md](drive.md). It answers a typed bill too, the stub being on the URL and
-not on the medium: `click` the Items tab's third door, `fill` the box, press
-**Read it**. What comes back is the fixture rather than a reading of what was
-typed, which is the right trade for a driver — the dialog, the bar, the refusal
-and the draft it fills are all the app's own.
+[drive.md](drive.md) — or through the third door, where the bill is typed in by
+hand and no stub is needed.
 
 ## Gotchas
 

@@ -996,10 +996,6 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .btn-pair.pair-p .btn + .btn { border-left-color: color-mix(in srgb, var(--brand-ink) 26%, transparent) }
 .btn-pair.pair-p .btn:active:not(:disabled) {
   background-image: linear-gradient(var(--press-i), var(--press-i)) }
-.btn-pair.pair-xs { display: inline-flex }
-/* Equal thirds squeeze the glyph out of the longest label. */
-.btn-pair.pair-xs .btn { flex: 0 0 auto; font-size: 10.5px; font-weight: 500;
-  padding: 4.5px 7px; gap: 4px; color: var(--ink-2) }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
   border-top-color: transparent; opacity: .6; animation: spin .7s linear infinite; flex: none }
 @keyframes spin { to { transform: rotate(360deg) } }
@@ -1101,6 +1097,42 @@ dialog.scrim::backdrop { background: transparent }
 /* The busy box's border must not grow the row either. */
 .drow > .btn-pair .btn { padding-top: 11px; padding-bottom: 11px }
 .dlist { margin: 11px -15px -13px; max-height: 52dvh; overflow-y: auto }
+/* ---- the bill typed by hand (components/bill-editor.tsx) ----
+   One card per item, the form's own card. The underlines are lighter than a
+   lone figure's: a page of them is a ruled sheet otherwise. */
+.birows { display: flex; flex-direction: column; gap: 10px; padding-top: 6px }
+.birow { padding: 12px 14px 13px; transition: border-color .15s ease; animation: fadein .15s ease-out }
+/* The card being typed in stands out, so the eye knows whose price it is. */
+.birow:focus-within { border-color: var(--rule) }
+.birow .amountfield { border-bottom-color: color-mix(in srgb, var(--ink) 16%, transparent) }
+.birow .amountfield:focus-within { border-bottom-color: var(--brand) }
+.bihead { display: flex; align-items: center; gap: 12px }
+.biname { flex: 1; min-width: 0 }
+.biname input { width: 100%; min-width: 0; background: transparent; border: 0; outline: none;
+  padding: 2px 0 5px; font: inherit; font-size: 14.5px; font-weight: 600; color: var(--ink) }
+.biname input::placeholder { color: var(--muted); font-weight: 500 }
+.bien { margin-top: 5px; font-size: 12px; color: var(--muted); overflow-wrap: anywhere }
+.bidrop { flex: none; width: 36px; height: 36px; margin: -8px -12px -8px -4px; display: grid;
+  place-items: center; color: var(--muted) }
+.bidrop:active { background: var(--press); color: var(--ink) }
+.binums { display: flex; align-items: center; gap: 14px; margin-top: 12px; min-height: 30px }
+.bistep { margin: 0 0 0 -11px; flex: none }
+.bistep .partsstep:active:not(:disabled) { background: var(--press); transition-duration: 0s }
+.bicount { width: 4ch; justify-content: center; margin: 0 2px }
+.bicount input { width: 100%; min-width: 0; text-align: center; background: transparent; border: 0;
+  outline: none; padding: 0 0 2px; font: inherit; font-size: 14.5px; font-weight: 500; color: var(--ink);
+  font-variant-numeric: tabular-nums }
+.bicount.bump-a input { animation: bibump-a .18s ease-out }
+.bicount.bump-b input { animation: bibump-b .18s ease-out }
+@keyframes bibump-a { 40% { transform: scale(1.25) } }
+@keyframes bibump-b { 40% { transform: scale(1.25) } }
+.biprice { display: flex; align-items: baseline; justify-content: flex-end; gap: 7px; flex: 1 1 0;
+  min-width: 0; font-size: 11.5px; color: var(--muted) }
+.biprice .amountfield { flex: 0 1 92px; min-width: 0 }
+.biprice .splitin { width: 100%; min-width: 0; padding-bottom: 2px }
+.biadd { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 14px;
+  font-size: 13.5px; font-weight: 600; color: var(--ink-2); text-align: left }
+@media (prefers-reduced-motion: reduce) { .birow, .bicount input { animation: none } }
 .drow-pick { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
   padding: 11px 15px; border-top: 1px solid var(--rule-soft) }
 .drow-pick:active:not(:disabled) { background: var(--press) }
@@ -1496,6 +1528,8 @@ dialog.scrim::backdrop { background: transparent }
 /* Controls fill: 15px of glyph is too little ink for a colour change to carry it. */
 .btn-pair.flash-a, .btn.flash-a, .chip.flash-a, .iconbtn.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .btn-pair.flash-b, .btn.flash-b, .chip.flash-b, .iconbtn.flash-b { animation: refuse-fill-b .6s ease-in-out }
+.biadd.flash-a { animation: refuse-fill-a .6s ease-in-out }
+.biadd.flash-b { animation: refuse-fill-b .6s ease-in-out }
 .splitfoot.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .splitfoot.flash-b { animation: refuse-fill-b .6s ease-in-out }
 
@@ -1535,7 +1569,7 @@ dialog.scrim::backdrop { background: transparent }
   .field.flash-a, .field.flash-b,
   .btn-pair.flash-a, .btn-pair.flash-b, .btn.flash-a, .btn.flash-b,
   .chip.flash-a, .chip.flash-b, .iconbtn.flash-a, .iconbtn.flash-b,
-  .splitfoot.flash-a, .splitfoot.flash-b,
+  .splitfoot.flash-a, .splitfoot.flash-b, .biadd.flash-a, .biadd.flash-b,
   .amountfield.flash-a input, .amountfield.flash-b input,
   .field.flash-a input, .field.flash-b input,
   .field.flash-a label, .field.flash-b label,

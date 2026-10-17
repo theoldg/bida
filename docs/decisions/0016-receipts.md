@@ -1,7 +1,7 @@
 # 0016 — A scanned receipt is a split mode of its own
 
 **Status:** Accepted · 2026-08-28 (discounts and tax, 2026-09-12; a bill may be
-typed rather than photographed, 2026-09-19)
+typed rather than photographed, 2026-09-19; typed by hand, 2026-10-17)
 
 **Context.** The owner asked to photograph a bill and assign its lines: *"a
 selection of involved users … then a table with columns as users and rows as
@@ -28,13 +28,14 @@ bill's own weights in it. A receipt is a mode — **"By items"**, because the
 photograph is how the lines got typed in and a mode's name is how the money
 divides — it names itself (`copy.split.mode`), and nothing asks a second field.
 
-**A photograph is how the lines usually got in, and not the only way.** A bill
-may be typed or pasted instead — the same reading, the same envelope with one
-`mimeType` changed, the same arithmetic after it — so nothing in this decision is
-about a camera. What the medium changes is covered in
-[receipt-scanning.md](../receipt-scanning.md#typing-a-bill-in), including the one
-thing it costs: a typed bill puts a caller's own words in front of the shared
-Gemini key, which the envelope used to make impossible.
+**A photograph is how the lines usually got in, and not the only way.** They
+may be typed in by hand, a card per item with no model in between, and edited
+the same way after a scan — so nothing in this decision is about a camera, and
+a misread line is fixed where it is printed rather than only by rescanning.
+A reading of pasted text — the same envelope
+with one `mimeType` changed — is still built in the Worker but has no door
+since the hand editor took its place
+([receipt-scanning.md](../receipt-scanning.md#typing-a-bill-in)).
 
 **The parsed bill lives on the expense, not in the draft.** `receiptItems`,
 `receiptTip`, `receiptInvolved`, `receiptAssignments` and `receiptText` are
@@ -103,8 +104,9 @@ the printed amount and its own eaters; tapping the count only folds and opens
 them as a view, so it is never an edit, and `receiptBreakdown` learns nothing
 new. Portions are marked (`portionOf`), never
 inferred from equal labels, and sum to the printed line exactly, because a
-display control must not move the bill's total. Only a count the receipt
-printed is unfolded: deciding a line was really three is data entry. A run
+display control must not move the bill's total. Only a count the bill states —
+printed, or typed on its items — is unfolded: deciding on the grid that a line
+was really three is data entry, which is the items' screen and not the grid's. A run
 whose portions all went to the same people is shared as the one line it was
 printed as (`receiptBreakdown`), so three 3.50 sodas between three come out
 3.50 each, not 3.49/3.50/3.51 from rounding each portion three ways.

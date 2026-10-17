@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-17* — "Propose a manual item editor", then a round a reply. "The
+  amount field should be editable" meant the count, not the total I'd
+  recoloured: a vague noun over a screenshot is a question. And "wow, a whole
+  new class of refusals": name what a new power breaks before they find it.
+
 - *2026-10-17* — "Do you like it?", then "maybe just never auto-jump", then
   "make it rock solid". Freeing the scan opened a hole the old gate had hidden:
   a read in flight with nobody named left unasked, and its answer greeted the
@@ -83,8 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   guarantee it never breaks navigation." The honest no came with the 25 ways
   back to the list counted, and the owner narrowed the ask on the spot: the
   list hands over all groups, a group only itself.
-
-- *2026-10-15* — "Plenty of bugs … what kind of a mess is this?", after six
-  commits in two days on one escape hatch. Three symptoms, one cause: a step
-  kept in memory, lost to the full load a deploy forces. Forcing every tap to
-  be one reproduced all three in a single check before any fix.

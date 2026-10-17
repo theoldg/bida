@@ -36,8 +36,8 @@ through `/new` costs a command per person ([below](#looking-at-one-screen)).
 | `goto <path>` · `back` · `forward` · `reload` | move around |
 | `click <n>` · `fill <n> <text>` · `select <n> <label>` · `press <Key> [times]` | act on the numbered control the last screen handed you |
 | `"<name>"` for `<n>` | the control printed under that name, ignoring case — `fill "Add someone" Bruno`; a row printed `Ana \| €30.00` answers to `"Ana"`. A name matching two controls is refused, not guessed |
-| `type <n> <text>` | key it in one character at a time — `fill` sets a value in one go, which never runs the amount field's regrouping or its caret |
-| `\n` in a `fill` or `type` | the newline a one-line command cannot hold, written the way the dump writes one back — the box that most wants one is the typed bill's, whose lines are the items |
+| `type <n> <text>` | key it in one character at a time, after what is there as a thumb would — `fill` sets a value in one go, which never runs the amount field's regrouping or its caret |
+| `\n` in a `fill` or `type` | the newline a one-line command cannot hold, written the way the dump writes one back |
 | `hold <n>` | long-press — the only way to the row menus |
 | `offline on\|off` | cut this phone's network, or restore it |
 | `theme light\|dark` | the phone's colour scheme — every screen has both looks to get right |
@@ -65,14 +65,10 @@ right.
 phone rather than the screen — the same family as `offline` — and the scan
 button is still the app's own, pressed by number: the hidden file input opens a
 real chooser, this answers it with a real (1×1) image the client really
-downscales, and only the round trip to Gemini is faked. It arms the Items tab's
-**Type** door as well, the stub being on the URL and not on the medium: `fill`
-the box and press **Read it**, and the fixture comes back rather than a reading
-of what was typed — which still drives the dialog, its bar, its refusal and the
-draft it fills. It is the one way to
-reach the who-had-what grid — by either door, the entry form's or a quick
-split's — since a scanned bill lives in an in-memory draft and cannot be
-seeded by poking storage.
+downscales, and only the round trip to Gemini is faked. With the third door,
+which types a bill in by hand, it is the way to the who-had-what grid — by
+either door, the entry form's or a quick split's — since a bill lives in an
+in-memory draft and cannot be seeded by poking storage.
 
 The bills are `scripts/fixtures/receipts/*.json`, shared with `pnpm shots`, and
 each declares in `exercises` the verdict it is for — `ok`, `rejected`,
