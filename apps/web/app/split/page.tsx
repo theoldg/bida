@@ -8,7 +8,7 @@ import { Icon } from "@/components/icons";
 import { BadLinkNotice } from "@/components/keyless-link";
 import { MemberBill } from "@/components/member-bill";
 import { copy } from "@/lib/copy";
-import { bare } from "@/lib/format";
+import { bare, figure } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { fetchSplit, parseSplitLink, type Fetched } from "@/lib/split-link";
 
@@ -63,19 +63,19 @@ export default function SplitPage() {
   }
 
   const { split } = fetched;
-  const figure = (minor: number) => bare(minor, split.currency);
+  const shown = (minor: number) => bare(minor, split.currency);
   return (
     <Screen><Body>
       <TopBar title={copy.quick.split} sub={split.title || undefined} back={route.groups()} />
       <Scroll>
         <div className="pad" style={{ paddingTop: 2 }}>
-          <span className="bignum" style={{ fontSize: 32 }}>{figure(split.totalMinor)}</span>
+          <span className="bignum" style={{ fontSize: 32 }}>{shown(split.totalMinor)}</span>
         </div>
         <div className="pad" style={{ paddingTop: 2, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
           <Card>
             {split.people.map((share, i) => (
-              <MemberBill key={i} name={share.name} total={figure(share.minor)}
-                lines={share.lines} format={figure} startOpen={true} />
+              <MemberBill key={i} name={share.name} total={shown(share.minor)}
+                lines={share.lines} format={shown} fixed={{ copy: figure(share.minor, split.currency) }} />
             ))}
           </Card>
         </div>

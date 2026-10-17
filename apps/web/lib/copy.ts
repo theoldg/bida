@@ -710,7 +710,7 @@ const en = {
 
   quick: {
     title: "Quick split",
-    lede: "Take a photo of the bill, then tap who had what. It ends in a link to send.",
+    lede: "Take a photo of the bill, then tap who had what.",
     who: "Who’s splitting",
     noLines: "That receipt has no lines on it. There’s nothing to assign.",
     discardTitle: "Discard this split?",
@@ -721,7 +721,7 @@ const en = {
     backTitle: "Discard this receipt?",
     backBody: "You’ll have to scan it again.",
     split: "The split",
-    copy: "Copy the split",
+    copy: "Copy totals and link",
     copied: "Copied",
     fallbackTitle: "The split",
     fallbackBody: "Copying didn’t work: hold the text to copy it.",

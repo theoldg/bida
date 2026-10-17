@@ -11,7 +11,7 @@ import { MemberBill } from "@/components/member-bill";
 import { writeClipboardText } from "@/lib/clipboard";
 import { copy } from "@/lib/copy";
 import { clearDraft, useDraft } from "@/lib/draft";
-import { bare } from "@/lib/format";
+import { bare, figure } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useFlash } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
@@ -26,8 +26,8 @@ import { formatSplitLink, shareSplit } from "@/lib/split-link";
  * What the bill came to, per person — the end of a quick split (ADR-0035).
  *
  * The figures are the grid's own (`receiptBill`, same seed), so the totals
- * watched while tapping are the totals here. Each row opens onto that
- * person's lines.
+ * watched while tapping are the totals here. Each row shows that person's
+ * lines, and a tap on their total copies it.
  *
  * It ends by handing it over as a few lines of text around a link
  * (`lib/split-link.ts`): the figures, sealed on this phone and stored under an
@@ -127,7 +127,7 @@ export default function QuickResultPage() {
                   total={bare(share.minor, draft.currency)}
                   lines={share.lines}
                   format={(minor) => bare(minor, draft.currency)}
-                  startOpen={true} />
+                  fixed={{ copy: figure(share.minor, draft.currency) }} />
               ))}
             </Card>
           </div>

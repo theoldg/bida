@@ -889,6 +889,14 @@ button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 .billgroup { margin: 0 -14px; padding: 0 14px }
 .billgroup > button.kv { width: calc(100% + 28px); margin: 0 -14px;
   padding: 5px 14px; border-radius: var(--r-s) }
+/* A quick split's total, copied by a tap (`member-bill.tsx`). The glyph sits
+   left of the figure, so the totals keep the column the lines' figures make;
+   the press reaches past the figure to the card's edge without moving it. */
+.kv:has(> .copytotal) { align-items: center }
+.kv > .copytotal { display: flex; align-items: center; gap: 5px; flex: none; border: 0;
+  margin: -5px -14px -5px 0; padding: 5px 14px 5px 10px; border-radius: var(--r-s) }
+.kv > .copytotal:active { background: var(--press) }
+.copytotal .flipcheck { color: var(--muted) }
 .billlines { padding: 0 0 8px 10px; animation: billopen .13s ease-out }
 @keyframes billopen { from { opacity: 0; transform: translateY(-2px) } to { opacity: 1; transform: none } }
 @media (prefers-reduced-motion: reduce) { .billlines { animation: none } }

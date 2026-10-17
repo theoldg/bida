@@ -119,8 +119,9 @@ muted, below what was ordered. Nothing is ruled or washed anywhere in it: not
 between the people, not between a person's items and their extras, because a
 name, a figure and a shift to muted ink already say where one thing ends. Each
 line carries a printed bill's dotted leader out to its figure. It is the same
-reading a quick split ends on (ADR-0035), which differs only in starting with
-every row open. Weights and lines come out of one pass, so a row and the lines
+reading a quick split ends on (ADR-0035), where nothing folds — the answer is
+the bill — and each total, the figure somebody types into a bank app, copies
+with a tap, the small copy glyph left of it so totals and lines keep one column. Weights and lines come out of one pass, so a row and the lines
 under it cannot disagree.
 
 ## Gotchas
