@@ -33,6 +33,8 @@ interface EntryCheck {
   receiptSplit: SplitSpec | null;
   effectiveSplit: SplitSpec;
   blocker: string | null;
+  /** The payers don't add up to the amount: their field blooms beside the line. */
+  payersOff: boolean;
   splitProblem: string | null;
   /** A field, not a sentence. */
   amountMissing: boolean;
@@ -112,10 +114,17 @@ export function checkEntry(input: {
       draft.currency, nameOf);
 
   // Said unasked. A missing rate blooms its badge instead.
+  // On the form the line has to say whose figures are off: the bill moving
+  // under a typed table of payers reads as the bill's own problem otherwise.
+  const payerProblem = payerProblemText(payerCheck, draft.currency,
+    draft.kind === "income" ? "income" : "expense");
+  // The bill moved under a typed table: the table is what to fix, so it blooms too.
+  const payersOff = !goneMember && !payerCheck.ok;
   const blocker = goneMember
     ? copy.form.goneMember(nameOf(goneMember))
-    : payerProblemText(payerCheck, draft.currency,
-      draft.kind === "income" ? "income" : "expense");
+    : payerProblem && !payerCheck.ok && payerCheck.problem !== "empty"
+      ? copy.form.offBy(copy.entryKind.payer[draft.kind], payerProblem)
+      : payerProblem;
 
   const amountMissing = amountMinor <= 0;
   // An expense without a name is a row nobody can identify a week later.
@@ -128,7 +137,7 @@ export function checkEntry(input: {
     amountMinor, baseMinor, foreign, rate, rateOk,
     activeTab, canScan, receiptTotal, receiptLocksAmount: receiptTotal !== null,
     receiptSplit, effectiveSplit,
-    blocker, splitProblem, amountMissing, titleMissing, receiptMissing, ready,
+    blocker, payersOff, splitProblem, amountMissing, titleMissing, receiptMissing, ready,
   };
 }
 

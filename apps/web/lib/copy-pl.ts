@@ -615,6 +615,7 @@ export const pl: Copy = {
     noAmount: "???",
     noTitle: "???",
     noScan: "???",
+    offBy: () => "???",
     noItemsGiven: "???",
     goneMember: () => "???",
     nobodyTitle: "???",

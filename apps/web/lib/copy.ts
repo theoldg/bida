@@ -822,6 +822,8 @@ const en = {
     noAmount: "Set the amount",
     noTitle: "Set the title",
     noScan: "Scan the bill, or split it another way",
+    /** A figure that doesn't add up, named by the field holding it. */
+    offBy: (field: string, problem: string) => `${field}: ${problem}`,
     noItemsGiven: "Assign bill items",
     goneMember: (name: string) => `${name} is no longer in the group. Pick somebody else.`,
     nobodyTitle: "Nobody in this group yet",

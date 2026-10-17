@@ -170,7 +170,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   // (lib/entry-check.ts).
   const {
     activeTab, canScan, receiptSplit, effectiveSplit, receiptTotal, receiptLocksAmount,
-    amountMinor, baseMinor, foreign, rate, rateOk, blocker, splitProblem,
+    amountMinor, baseMinor, foreign, rate, rateOk, blocker, payersOff, splitProblem,
     receiptMissing, ready,
     amountMissing, titleMissing,
   } = checkEntry({
@@ -183,7 +183,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     amount: amountMissing, title: titleMissing, receipt: receiptMissing,
     // `rateOk`, not just a rate held: one that overflows the amount is no rate
     // either.
-    rate: !rateOk, blocker: blocker !== null, split: splitProblem !== null,
+    rate: !rateOk, blocker: blocker !== null, split: splitProblem !== null, payers: payersOff,
   };
   /** Off again once nothing is missing, so the words don't come back unasked. */
   const [told, setTold] = useState(false);
@@ -201,7 +201,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     : said === "title" ? copy.form.noTitle
     : null;
   const docked = said !== null;
-  const refusals = useRefusals(missing, (aimed) => !!aimed.rate || !!aimed.amount || !!aimed.title);
+  const refusals = useRefusals(missing, (aimed) => !!aimed.rate || !!aimed.amount || !!aimed.title || !!aimed.payers);
 
   // Merges against the latest saved draft: some handlers patch twice, and a stale
   // closure would let the second clobber the first.
@@ -428,7 +428,8 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
             </div>
 
             {transfer ? null : coPayers.length > 1 ? (
-              <Link href={route.payers(groupId)} className="field payersfield">
+              <Link href={route.payers(groupId)} data-refuse="payers"
+                className={`field payersfield${refusals.flash("payers")}`} onAnimationEnd={refusals.onFlashEnd("payers")}>
                 <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                 <span className="payerlines">
                   {coPayers.map(([id, amount]) => (

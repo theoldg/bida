@@ -34,6 +34,14 @@ function expense(over: Partial<EntryDraft> = {}): EntryDraft {
 }
 
 describe("checkEntry", () => {
+  it("names Paid by and blooms it when the amount moves under typed payers", () => {
+    const c = check(expense({ payers: { [THEO]: 3000, [MARIE]: 2000 } }));
+    expect(c.ready).toBe(false);
+    expect(c.payersOff).toBe(true);
+    expect(c.blocker).toBe(copy.form.offBy("Paid by", `€10.00 ${copy.payers.over}`));
+    expect(check(expense({ payers: { [THEO]: 3000, [MARIE]: 1000 } })).payersOff).toBe(false);
+  });
+
   it("lights Save on an ordinary expense in the group's own currency", () => {
     const c = check(expense());
     expect(c.ready).toBe(true);

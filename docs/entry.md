@@ -93,7 +93,8 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
   per field so a repeat refusal replays. That flash is the only thing that reports a missing amount — `splitProblemText`
   returns `null` for a zero total. What is *wrong* is said in words, live, in
   the Save dock over the button, where no scroll hides it: `blocker` (a removed
-  member, payers that no longer add up to the amount) and `splitProblem` (the
+  member, payers that no longer add up to the amount — prefixed with the
+  field's own label and blooming that row, `payersOff`) and `splitProblem` (the
   split now showing, following its tab). A refused Save flashes them and spends
   the button like any bloom. A split that adds up says nothing — the rows already
   do; `/g/payers` keeps its green "accounted for", having no rest to show it. The dock keeps 9px of its own above its first line, so a

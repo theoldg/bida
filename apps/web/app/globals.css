@@ -1525,6 +1525,8 @@ dialog.scrim::backdrop { background: transparent }
 .field.flash-b { animation: refuse-fill-b .6s ease-in-out }
 .field.flash-a label, .field.flash-a input { animation: refuse-ink-a .6s ease-in-out }
 .field.flash-b label, .field.flash-b input { animation: refuse-ink-b .6s ease-in-out }
+.payersfield.flash-a :is(.fieldlabel, .payerline, .youtag, .pchev) { animation: refuse-ink-a .6s ease-in-out }
+.payersfield.flash-b :is(.fieldlabel, .payerline, .youtag, .pchev) { animation: refuse-ink-b .6s ease-in-out }
 /* Controls fill: 15px of glyph is too little ink for a colour change to carry it. */
 .btn-pair.flash-a, .btn.flash-a, .chip.flash-a, .iconbtn.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .btn-pair.flash-b, .btn.flash-b, .chip.flash-b, .iconbtn.flash-b { animation: refuse-fill-b .6s ease-in-out }
@@ -1573,6 +1575,8 @@ dialog.scrim::backdrop { background: transparent }
   .amountfield.flash-a input, .amountfield.flash-b input,
   .field.flash-a input, .field.flash-b input,
   .field.flash-a label, .field.flash-b label,
+  .payersfield.flash-a :is(.fieldlabel, .payerline, .youtag, .pchev),
+  .payersfield.flash-b :is(.fieldlabel, .payerline, .youtag, .pchev),
   .addrow.flash-a, .addrow.flash-b,
   .addrow.flash-a .addname, .addrow.flash-b .addname,
   .addrow.flash-a .iconbtn, .addrow.flash-b .iconbtn,

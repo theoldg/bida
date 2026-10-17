@@ -53,8 +53,9 @@ receipt" is true of every untouched bill and said unasked reads as a scolding
 for arriving. **A flash alone can be missed, so the entry form's refusal also
 says one thing in words** — one red line over Save, never a stack. Everything
 missing still blooms; the line names the problem a bloom explains worst, least
-obvious first (`REFUSAL_ORDER`, `lib/entry-check.ts`): a rate, the payers, the
-split, the Items step, then the amount and the title, which an empty field
+obvious first (`REFUSAL_ORDER`, `lib/entry-check.ts`): a rate, the payers —
+said as "Paid by: …", their row blooming with it, since a bill typed or read
+again moves the amount under figures somebody typed — the split, the Items step, then the amount and the title, which an empty field
 going red already says. Fix it and the line moves to the next. The payers' and
 split's sentences stand on that line unasked; the rest leave once nothing is
 missing, so a field emptied later is not scolded. Where what is missing is spread over
