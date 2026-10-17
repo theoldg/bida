@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-17* — "Something about it is not great", of two buttons. I named
+  three faults and rebuilt all three; the answers kept the arrangement, put
+  the old button back and cut my new line. Fix what was felt, show it, and
+  let the rest be asked for.
+
 - *2026-10-16* — "Propose a design for link sharing": three rounds of words
   before "Build it" — the fragment too long, KV lost to D1, the text option
   dropped. Mid-build the text came back as a summary around the link:
@@ -83,8 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   i delete a group". I blamed Messenger; the bug was ours, in the path both
   share. Then "it finished long ago": my own wait on the push hung, not it.
   Then a Brave dialog after Discard: the reproduction came before the fix.
-
-- *2026-10-14* — "Add the identity choice in the handover", then two
-  interruptions: the bug it lands on, then "reuse the mechanism from the ios
-  install". Reused whole, it brought the tutorial's first paint along. Then
-  "is it 100% guaranteed?" — the honest no named the iOS gap, and "do it".

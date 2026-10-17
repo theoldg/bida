@@ -87,8 +87,8 @@ would disagree within a month.
 - **A reload loses it**, as it loses any draft. The cost is the names again and
   one more photo, and the alternative was a second kind of persistence for the
   one flow with nothing at stake.
-  Back from the grid costs the photo too — `/quick` can only scan again — so
-  it always asks (`leaving` on the grid), untouched or not.
+  Back from the grid costs nothing: `/quick` is where the people change, so it
+  keeps the bill and the ticks and goes on to the grid again.
 - **No bill, no quick split.** It is scan-first by construction: an even split
   among people with no receipt is arithmetic, not a screen.
 - **Nothing can be reopened, and turning one into a group means typing it

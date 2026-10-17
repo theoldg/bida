@@ -698,6 +698,8 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 /* ---- receipt item assignment ---- */
 .itemchip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
   padding: 4px 10px 4px 4px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card-2) }
+/* Only a key to the initials, so nothing about it says press. */
+.itemchip.flat { border-color: transparent; background: none; padding-left: 0; padding-right: 8px }
 /* One scroller on both axes: nested ones would leave the sticky header nothing
    to stick to. */
 .itemscroll { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--rule-soft) }

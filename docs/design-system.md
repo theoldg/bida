@@ -135,7 +135,8 @@ will stand.
 Three registers, so where it sits changes its size and almost nothing else:
 an ink block where the screen exists for it (`/g/scan`) and on the Items tab,
 where it is likewise the only thing to do, and chip scale — on paper, so it
-doesn't outweigh what it replaces — to replace a bill already assigned. Each door
+doesn't outweigh what it replaces — to replace a bill already assigned; on
+`/quick` back from the grid, full width but grey, under the ink way on. Each door
 names itself ("Scan", "Upload", "Type"); the screen around them
 has already named the job. Where the doors share a width the words are what has
 to fit; the chip register — content-sized, being `inline-flex`, over a bill

@@ -47,7 +47,9 @@ sentence rather than a drawing with nothing said about it yet. The generous
 space is around the line-and-picture pair rather than inside it, so the
 eyebrow under it reads as the next step and not as its caption. It divides its
 bill between the people on that list, so it fills in with their names as they
-are added.
+are added. Come back to it from the grid and the bill is still held: the dock
+is the doors, grey and over the bill (`overBill`), and under them the Items
+tab's own button on to the grid.
 
 The words are `copy.scan.diagram`, but the arithmetic isn't: `lib/scan/diagram.ts`
 sums the shares from the same lines the left-hand card prints, and picks the

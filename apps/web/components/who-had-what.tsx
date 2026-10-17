@@ -36,7 +36,7 @@ const inColumn = (
  * props are what the two differ in.
  */
 export function WhoHadWhat({
-  title, people, draft, save, format, saysCurrency = true, onDone, onBack, leaving,
+  title, people, draft, save, format, saysCurrency = true, onDone, onBack, fixedTable = false,
 }: {
   title: string;
   people: readonly { id: string; name: string }[];
@@ -51,10 +51,11 @@ export function WhoHadWhat({
   onDone: () => void;
   onBack: () => void;
   /**
-   * Asks before every way back: a quick split's screen behind can only scan
-   * again.
+   * A quick split's: who is at the table is edited on the screen behind, so
+   * the chips only name the columns, and Back keeps the ticks for the trip
+   * there and back rather than asking.
    */
-  leaving?: { title: string; body: string };
+  fixedTable?: boolean;
 }) {
   const items = draft.receiptItems ?? [];
   // The draft's, so the saved expense reads the same on every phone. **Never
@@ -104,8 +105,12 @@ export function WhoHadWhat({
     // Somebody removed since was only ticked as there — a line would have kept
     // them (`expenseInvolves`) — so they leave the bill with their chip.
     const here = people.map((m) => m.id);
-    setInvolved(new Set(saved ? (draft.receiptInvolved ?? []).filter((id) => here.includes(id)) : here));
-    const rows = saved ? saved.map((row) => new Set(row)) : items.map(() => new Set<string>());
+    setInvolved(new Set(saved && !fixedTable
+      ? (draft.receiptInvolved ?? []).filter((id) => here.includes(id)) : here));
+    // Somebody taken off the list behind takes their ticks with them.
+    const rows = saved
+      ? saved.map((row) => new Set(fixedTable ? row.filter((id) => here.includes(id)) : row))
+      : items.map(() => new Set<string>());
     // Written straight away; history reads it as the same bill (`printedBill`).
     const split = unfoldAll(items, draft.currency);
     if (split.items.length === items.length) { setAssignments(rows); return; }
@@ -116,7 +121,7 @@ export function WhoHadWhat({
       receiptItems: split.items,
       ...(saved ? { receiptAssignments: widened.map((row) => [...row]) } : {}),
     });
-  }, [people, items, draft, save]);
+  }, [people, items, draft, save, fixedTable]);
 
   const labels = distinctInitials(people);
   const runs = portions(items);
@@ -317,19 +322,24 @@ export function WhoHadWhat({
       if (!refusal.live && !seeking && missing.some(Boolean)) reveal();
       return;
     }
-    // **This screen writes only the raw grid**; the total and split are derived
-    // where needed, so nothing drifts. ADR-0016.
+    keep();
+    onDone();
+  }
+
+  // **This screen writes only the raw grid**; the total and split are derived
+  // where needed, so nothing drifts. ADR-0016.
+  function keep() {
     save({
       ...draft,
       receiptInvolved: [...involved],
       receiptAssignments: assignments.map((row) => [...row]),
       splitTab: "receipt",
     });
-    onDone();
   }
 
   function mayLeave() {
-    if (touched || leaving) { setAsking(true); return false; }
+    if (fixedTable) { keep(); return true; }
+    if (touched) { setAsking(true); return false; }
     return true;
   }
 
@@ -366,9 +376,18 @@ export function WhoHadWhat({
 
         <div className="itemscroll" ref={wrap}>
           <div className="itemhead itemwide">
-            <div className="eyebrow" style={{ marginBottom: 8 }}>{copy.items.whoWasThere}</div>
+            {fixedTable ? null : (
+              <div className="eyebrow" style={{ marginBottom: 8 }}>{copy.items.whoWasThere}</div>
+            )}
             <div className="whostrip">
-              {people.map((m) => (
+              {people.map((m) => fixedTable ? (
+                <span key={m.id} className="itemchip flat">
+                  <span className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>
+                    {labels.get(m.id)}
+                  </span>
+                  {m.name}
+                </span>
+              ) : (
                 <button key={m.id} onClick={() => toggleInvolved(m.id)}
                   aria-pressed={involved.has(m.id)}
                   disabled={involved.size === 1 && involved.has(m.id)}
@@ -587,9 +606,9 @@ export function WhoHadWhat({
       </Body>
 
       {asking ? (
-        <ConfirmDialog title={leaving?.title ?? copy.items.discardTitle} confirm={copy.act.discard}
+        <ConfirmDialog title={copy.items.discardTitle} confirm={copy.act.discard}
           danger={true} onConfirm={discard} onClose={() => setAsking(false)}>
-          <p>{leaving?.body ?? copy.items.discardBody}</p>
+          <p>{copy.items.discardBody}</p>
         </ConfirmDialog>
       ) : null}
     </Screen>

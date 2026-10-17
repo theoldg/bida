@@ -203,12 +203,15 @@ export function useReceiptScan(
  * buttons side by side. `typeIn={false}` where the tap that got here was the
  * camera. `lg` where the screen exists for scanning, `s` on the Items tab, `xs`
  * beside an assigned bill, where an ink block would outweigh what it replaces.
+ * `overBill` where a read bill is held and a primary under it is the way on:
+ * the doors replace it, so they say so, and leave the ink to that primary.
  */
 export function ScanPair({
-  scan, register, typeIn = true, flash = "", onFlashEnd, disabled: held = false, refuse,
+  scan, register, overBill = false, typeIn = true, flash = "", onFlashEnd, disabled: held = false, refuse,
 }: {
   scan: ReceiptScan;
   register: "lg" | "s" | "xs";
+  overBill?: boolean;
   typeIn?: boolean;
   flash?: string;
   onFlashEnd?: (e: React.AnimationEvent) => void;
@@ -224,7 +227,8 @@ export function ScanPair({
   useEffect(() => { if (!disabled && !busy) warmTurnstile(); }, [disabled, busy]);
   const icon = register === "xs" ? 12 : 14;
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
-  const box = `btn-pair${register === "xs" ? " pair-xs" : " pair-p"}${flash}`;
+  const box = `btn-pair${register === "xs" ? " pair-xs" : overBill ? "" : " pair-p"}${flash}`;
+  const again = register === "xs" || overBill;
   const open = (door: () => void) => () => { if (!refuse?.()) door(); };
 
   // A door left beside "Reading…" would invite a second reading.
@@ -236,7 +240,7 @@ export function ScanPair({
     <div className={box} onAnimationEnd={onFlashEnd}>
       <button type="button" className={half} disabled={disabled} onClick={open(scan.openCamera)}>
         <Icon name="cam" size={icon} />
-        {register === "xs" ? copy.scan.rescan : copy.scan.snap}
+        {again ? copy.scan.rescan : copy.scan.snap}
       </button>
       <button type="button" className={half} disabled={disabled} onClick={open(scan.openLibrary)}>
         <Icon name="image" size={icon} />
@@ -245,7 +249,7 @@ export function ScanPair({
       {typeIn ? (
         <button type="button" className={half} disabled={disabled} onClick={open(scan.openTyping)}>
           <Icon name="edit" size={icon} />
-          {register === "xs" ? copy.scan.typeIn.asText : copy.scan.typeIn.open}
+          {again ? copy.scan.typeIn.asText : copy.scan.typeIn.open}
         </button>
       ) : null}
     </div>

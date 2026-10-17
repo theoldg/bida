@@ -11,6 +11,8 @@ import { AddName } from "@/components/name-adder";
 import { ScanPair, useReceiptScan } from "@/components/receipt-scan";
 import { ScanDiagram } from "@/components/scan-diagram";
 import { copy } from "@/lib/copy";
+import { plural } from "@/lib/format";
+import { printedCount } from "@/lib/scan/items";
 import { db } from "@/lib/db/dexie";
 import { blankDraft, clearDraft, getDraft, seedDraft, useDraft } from "@/lib/draft";
 import { route } from "@/lib/group-link";
@@ -87,7 +89,17 @@ export default function QuickPage() {
     router.push(route.quickItems());
   });
 
-  const typed = people.length > 0 || typing !== null || (draft?.receiptItems?.length ?? 0) > 0;
+  // A bill already read: Back from the grid lands here to change who is
+  // splitting, and the way forward is the grid again, not another photo.
+  const bill = draft?.receiptItems ?? [];
+  const ticked = (draft?.receiptAssignments ?? []).some((row) => row.length > 0);
+  const typed = people.length > 0 || typing !== null || bill.length > 0;
+
+  /** The grid holds only the listed people, so one unfiled or alone can't split. */
+  const refuse = () => {
+    if (typing !== null || people.length < 2) { refusal.refuse(); return true; }
+    return false;
+  };
 
   /**
    * Discard was answered, so this screen has stopped guarding the way out —
@@ -145,24 +157,45 @@ export default function QuickPage() {
         {/* The act the screen ends on, under the people it needs first —
             docked (`.whodock`), so a long table of them scrolls above it. */}
         <div className="pad whodock" style={{ paddingTop: 18 }}>
-          {/* Always tappable: an unfiled name or fewer than two people blooms the
-              plus beside "Add someone" instead. */}
-          <ScanPair scan={scan} register="lg"
-            disabled={refusal.live}
-            refuse={() => {
-              if (typing !== null || people.length < 2) { refusal.refuse(); return true; }
-              return false;
-            }} />
+          {bill.length > 0 ? (
+            // Back from the grid: what replaces the bill, and the way on at the
+            // foot where the grid's Done was. A rescan asks nothing —
+            // its ticks were made against the old bill.
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div>
+                <ScanPair scan={scan} register="s" overBill={true} disabled={refusal.live} refuse={refuse} />
+                {scan.refusal ? <Failure>{scan.refusal} {copy.quick.keptOld}</Failure> : null}
+              </div>
+              <button type="button" className="btn btn-p btn-lg"
+                style={{ justifyContent: "space-between" }} disabled={refusal.live}
+                onClick={() => { if (!refuse()) router.push(route.quickItems()); }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Icon name="users" size={16} />
+                  {ticked ? copy.scan.editWhoHadWhat : copy.scan.assignWhoHadWhat}
+                </span>
+                <span style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 500, opacity: .85 }}>
+                  {plural(printedCount(bill), copy.noun.item)}
+                  <Icon name="chev" size={14} />
+                </span>
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Always tappable: an unfiled name or fewer than two people blooms the
+                  plus beside "Add someone" instead. */}
+              <ScanPair scan={scan} register="lg" disabled={refusal.live} refuse={refuse} />
 
-          {/* No "try again" beside either message: the control above is
-              still enabled, and it is the retry. */}
-          {scan.refusal ? <Failure>{scan.refusal}</Failure> : null}
-          {noLines && scan.live?.state !== "scanning"
-            ? <Failure>{copy.quick.noLines}</Failure> : null}
+              {/* No "try again" beside either message: the control above is
+                  still enabled, and it is the retry. */}
+              {scan.refusal ? <Failure>{scan.refusal}</Failure> : null}
+              {noLines && scan.live?.state !== "scanning"
+                ? <Failure>{copy.quick.noLines}</Failure> : null}
 
-          {/* The same disclosure the group's scan screen carries: the photo
-              goes to Google's model, which may train on it. */}
-          <p className="scanterms">{copy.scan.terms}</p>
+              {/* The same disclosure the group's scan screen carries: the photo
+                  goes to Google's model, which may train on it. */}
+              <p className="scanterms">{copy.scan.terms}</p>
+            </>
+          )}
         </div>
       </Body>
 
