@@ -563,6 +563,11 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .addwarn { margin: 0; padding: 0 16px 13px 16px }
 
 .rmark { width: 32px; height: 32px; display: grid; place-items: center; flex: none }
+/* Taking a person off a list: a bare cross in the check's slot, not a boxed
+   button — the row is the thing, the cross only its way out. */
+.rdrop { color: var(--muted); transition: opacity .2s ease }
+.rdrop:active { opacity: .5 }
+@media (hover: hover) and (pointer: fine) { .rdrop { cursor: pointer } .rdrop:hover { color: var(--ink-2) } }
 
 .rmain { min-width: 0; flex: 1 }
 .rtitle { font-size: 13.5px; font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden;

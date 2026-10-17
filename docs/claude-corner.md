@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-17* — "Replace the trashcan … everywhere (new group, who am i, …)".
+  The who-am-I list never had one; the list was the owner's map of where to
+  look, not a promise each stop holds a bin. Three screens moved, one said so.
+
 - *2026-10-17* — "All non-docked buttons travel slightly down when the
   keyboard opens", on both phones. It was this morning's fix for the add row:
   air that came only with the keys. Its check knew only a crowded list; the
@@ -84,7 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   a tool call rejected mid-read: a screenshot was coming, and "propose" meant
   words first. Of my three steps the shot dropped one — inset dividers would
   have fought the full-width day bands.
-
-- *2026-10-16* — "Does this make sense, to get rid of the top-bar blur?", a
-  test on iOS 27 that contradicted our Gotcha's "always". Their phone outranks
-  the doc: the build is their finding plus the doc rewritten, checked by them.

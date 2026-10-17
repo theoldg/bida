@@ -19,7 +19,7 @@ import { useClaimGate, useGroupData } from "@/lib/hooks";
  * People: who is in the group, and which of them this phone is.
  *
  * **Who this phone is is its own button below the list, never a tap on a
- * name** — rows that also carry a trash button are one miss from signing the
+ * name** — rows that also carry a remove cross are one miss from signing the
  * log as someone else. The button opens a `ChoiceDialog` (ADR-0008), and
  * picking writes the claim op (ADR-0003).
  *
@@ -70,7 +70,7 @@ function MembersScreen() {
   // counterparty go, leaving an unbalanced +50 and a settle-up row with a dead id.
   function askRemove(memberId: string, name: string) {
     // A group with nobody in it breaks the entry form (no payer to seed). Your own
-    // row has no trash button, so this is the last *other* member going.
+    // row has no cross, so this is the last *other* member going.
     if (data.members.length <= 1) {
       setAsk({ kind: "blocked", name, body: copy.members.lastBody, entries: [] });
       return;
@@ -109,7 +109,7 @@ function MembersScreen() {
                 <div className="rmain">
                   <div className="rtitle">{m.name}</div>
                 </div>
-                {/* Your row's check and everybody else's trash are the same
+                {/* Your row's check and everybody else's cross are the same
                     slot, so the column reads as one column — including the add
                     row's own control at the foot of the list. */}
                 {m.id === me ? (
@@ -117,9 +117,9 @@ function MembersScreen() {
                     <Icon name="check" size={16} style={{ color: "var(--brand)" }} />
                   </span>
                 ) : (
-                  <button className="iconbtn" aria-label={copy.members.removeLabel(m.name)}
+                  <button className="rmark rdrop" aria-label={copy.members.removeLabel(m.name)}
                     onClick={() => askRemove(m.id, m.name)}>
-                    <Icon name="trash" size={14} />
+                    <Icon name="cross" size={14} />
                   </button>
                 )}
               </div>

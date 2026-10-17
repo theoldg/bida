@@ -141,9 +141,9 @@ export default function QuickPage() {
             {people.map((person) => (
               <div key={person.id} className="row">
                 <div className="rmain"><div className="rtitle">{person.name}</div></div>
-                <button className="iconbtn" aria-label={copy.members.removeLabel(person.name)}
+                <button className="rmark rdrop" aria-label={copy.members.removeLabel(person.name)}
                   onClick={() => removeQuickPerson(person.id)}>
-                  <Icon name="trash" size={14} />
+                  <Icon name="cross" size={14} />
                 </button>
               </div>
             ))}

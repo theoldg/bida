@@ -186,9 +186,9 @@ export default function NewGroupPage() {
             {people.map((who, i) => (
               <div key={`${who}-${i}`} className="row">
                 <div className="rmain"><div className="rtitle">{who}</div></div>
-                <button className="iconbtn" aria-label={copy.members.removeLabel(who)}
+                <button className="rmark rdrop" aria-label={copy.members.removeLabel(who)}
                   onClick={() => setPeople((list) => list.filter((_, at) => at !== i))}>
-                  <Icon name="trash" size={14} />
+                  <Icon name="cross" size={14} />
                 </button>
               </div>
             ))}
