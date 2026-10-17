@@ -8,7 +8,7 @@ import { copy } from "../lib/copy";
 import { Icon } from "./icons";
 import { getDraft, saveDraft, tabAfterScan } from "../lib/draft";
 import {
-  normalizeScan, readBill, scanCurrency, type ScanMedium, type ScanResult,
+  normalizeScan, readBill, scanCurrency, type ScanResult,
 } from "@bida/core";
 import {
   scanReceipt,
@@ -17,7 +17,6 @@ import {
 } from "../lib/scan";
 import { beginScan, clearScan, failScan, useLiveScan, type LiveScan } from "../lib/scan/live";
 import { unfoldAll } from "../lib/scan/items";
-import { billAsText } from "../lib/scan/text";
 import { ScanBusy } from "./scan-bar";
 import type { ScanAs } from "../lib/scan/credential";
 import { warmTurnstile } from "../lib/scan/turnstile";
@@ -26,7 +25,7 @@ import { warmBillFinder } from "../lib/scan/find-bill";
 export type { ScanState } from "../lib/scan/live";
 
 /** Only the model's own refusal is quoted; the rest the app says in its own voice. */
-function scanErrorText(err: unknown, medium: ScanMedium = "photo"): string | null {
+function scanErrorText(err: unknown): string | null {
   if (err instanceof ScanOfflineError) return copy.scan.offline;
   if (err instanceof TurnstileBlockedError) return copy.scan.unverified[err.side];
   // A phone on its own key never reaches a budget of ours.
@@ -36,15 +35,14 @@ function scanErrorText(err: unknown, medium: ScanMedium = "photo"): string | nul
   }
   if (err instanceof ScanUnavailableError) return copy.scan.busy;
   if (err instanceof ScanRejectedError) return err.message;
-  // Two of three ask for a different photo, no help to somebody typing.
-  if (err instanceof ScanUnreliableError) return copy.scan.problem[medium][err.problem];
+  if (err instanceof ScanUnreliableError) return copy.scan.problem[err.problem];
   return null;
 }
 
 export interface ReceiptScan {
   /** Undefined while idle. */
   live: LiveScan | undefined;
-  /** What this screen says under its control. Not `live.error`: a typed bill's refusal stays in its box. */
+  /** What this screen says under its control. */
   refusal: string | null;
   disabled: boolean;
   openCamera: () => void;
@@ -83,17 +81,14 @@ export function useReceiptScan(
   const latestScanAs = useRef(scanAs);
   latestScanAs.current = scanAs;
 
-  /** A photograph and a typed bill share it: two copies would be two rules. */
   const read = useCallback(async (
-    medium: ScanMedium,
     send: (sender: ScanAs, currency: string) => Promise<ScanResult>,
-    typedText: string | null,
   ) => {
     if (!groupId || !latestScanAs.current) return;
     const current = getDraft(groupId);
     if (!current) return;
     const tabAtStart = current.splitTab;
-    beginScan(groupId, medium);
+    beginScan(groupId);
     try {
       const sender = latestScanAs.current;
       await sender.prepare?.();
@@ -135,18 +130,15 @@ export function useReceiptScan(
         receiptTip: bill.extras.tip,
         receiptTax: bill.extras.tax,
         receiptDiscounts: bill.extras.discounts.length > 0 ? bill.extras.discounts : null,
-        // Whatever was kept must describe the bill now on the draft. A
-        // photograph's reading becomes the text, so a misread line is typed
-        // over rather than retaken.
+        // Whatever was kept must describe the bill now on the draft.
         receiptInvolved: null,
         receiptAssignments: null,
-        receiptText: typedText ?? (billAsText(bill, result.total) || null),
         ...(scanTab !== undefined ? { splitTab: scanTab } : {}),
       }));
       clearScan(groupId);
       if (onScreen.current) latestOnScanned.current?.();
     } catch (err) {
-      failScan(groupId, scanErrorText(err, medium));
+      failScan(groupId, scanErrorText(err));
     }
   }, [groupId]);
 
@@ -154,19 +146,14 @@ export function useReceiptScan(
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    await read(
-      "photo",
-      (sender, currency) => scanReceipt(file, sender.id, sender.secret, currency),
-      null,
-    );
+    await read((sender, currency) => scanReceipt(file, sender.id, sender.secret, currency));
   }, [read]);
 
   const said = live?.state === "error" ? live.error ?? copy.scan.failed : null;
-  const typed = live?.medium === "text";
 
   return {
     live,
-    refusal: typed ? null : said,
+    refusal: said,
     disabled: !scanAs,
     // The crop model downloads while the camera is up, not after the shutter.
     openCamera: () => { void warmBillFinder(); cameraInput.current?.click(); },

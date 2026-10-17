@@ -81,16 +81,6 @@ function billWeights(ids: Record<DemoName, Id>): Record<Id, number> {
   return weights;
 }
 
-/**
- * The web's `billAsText` shape, so the box opens on the bill rather than empty.
- */
-function demoBillText(): string {
-  return DEMO_BILL.map(({ labelEn, minor, quantity }) =>
-    [quantity ? String(quantity) : "", labelEn, minorToDecimalString(minor, DEMO_CURRENCY)]
-      .filter(Boolean).join(" "),
-  ).join("\n");
-}
-
 export interface DemoStep {
   by: Id;
   at: number;
@@ -262,7 +252,6 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
         })),
         receiptInvolved: all,
         receiptAssignments: DEMO_BILL.map(({ who }) => who.map((name) => ids[name])),
-        receiptText: demoBillText(),
         receiptEnglish: true,
       },
     }),

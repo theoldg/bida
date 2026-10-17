@@ -380,54 +380,21 @@ describe("readBill, on a bill priced per unit", () => {
   });
 });
 
-/**
- * No stated total: refused on a photo (it's cropped), accepted on a typed bill,
- * which usually has none.
- */
 describe("checkScan, on a bill that states no total", () => {
-  const typed = { ...blank, lineItems: [each("13", 3), each("15", 10), each("17", 2), line("10")] };
+  const unstated = { ...blank, lineItems: [each("13", 3), each("15", 10), each("17", 2), line("10")] };
 
-  it("reads a typed bill by its own lines", () => {
-    expect(checkScan(typed, "EUR", "text")).toBeNull();
+  it("refuses it — a photograph with no total is cropped", () => {
+    expect(checkScan(unstated, "EUR")).toBe("no-total");
   });
 
-  it("still refuses a photograph with no total — that one is cropped", () => {
-    expect(checkScan(typed, "EUR", "photo")).toBe("no-total");
-    expect(checkScan(typed, "EUR")).toBe("no-total");
+  it("reconciles against a total the bill did state", () => {
+    const stated = { ...unstated, total: "233.00" };
+    expect(checkScan(stated, "EUR")).toBeNull();
+    expect(checkScan({ ...stated, total: "999.00" }, "EUR")).toBe("mismatch");
   });
 
-  it("refuses a typed bill with neither a total nor a line", () => {
-    expect(checkScan({ ...blank, tip: "10.00" }, "EUR", "text")).toBe("no-total");
-  });
-
-  it("refuses a typed bill whose lines come to nothing", () => {
-    expect(checkScan({ ...blank, lineItems: [line("0.00")] }, "EUR", "text")).toBe("mismatch");
-  });
-
-  it("refuses a typed bill a discount swallows whole", () => {
-    const result = { ...blank, lineItems: [line("10.00")], discounts: [off("12.00")] };
-    expect(checkScan(result, "EUR", "text")).toBe("mismatch");
-  });
-
-  it("still refuses a line it can't read", () => {
-    const result = { ...blank, lineItems: [line("10.00"), line("17,50 EUR")] };
-    expect(checkScan(result, "EUR", "text")).toBe("unreadable-line");
-  });
-
-  it("still refuses a tip it can't read", () => {
-    expect(checkScan({ ...blank, lineItems: [line("10.00")], tip: "n/a" }, "EUR", "text"))
-      .toBe("unreadable-line");
-  });
-
-  // A derived total agrees with the lines by construction; only a stated one is checked.
-  it("reconciles against a total the bill did state, in either medium", () => {
-    const stated = { ...typed, total: "233.00" };
-    expect(checkScan(stated, "EUR", "text")).toBeNull();
-    expect(checkScan({ ...stated, total: "999.00" }, "EUR", "text")).toBe("mismatch");
-  });
-
-  it("refuses a stated total it cannot read, in either medium", () => {
-    expect(checkScan({ ...typed, total: "abc" }, "EUR", "text")).toBe("no-total");
+  it("refuses a stated total it cannot read", () => {
+    expect(checkScan({ ...unstated, total: "abc" }, "EUR")).toBe("no-total");
   });
 });
 

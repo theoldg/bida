@@ -1,7 +1,7 @@
 // Doc: docs/scan-worker.md
-import { MAX_IMAGE_BYTES, buildScanRequestBody, type ScanMedium, type ScanTone } from "@bida/core";
+import { MAX_IMAGE_BYTES, buildScanRequestBody, type ScanTone } from "@bida/core";
 
-export type { ScanMedium, ScanTone } from "@bida/core";
+export type { ScanTone } from "@bida/core";
 
 /**
  * Cut from core's JSON at a sentinel, so there is no second copy of the prompt.
@@ -10,22 +10,15 @@ export type { ScanMedium, ScanTone } from "@bida/core";
 const SENTINEL = "__RECEIPT_IMAGE__";
 
 function halves(
-  tone: ScanTone, medium: ScanMedium, today: string | undefined,
+  tone: ScanTone, today: string | undefined,
 ): { prefix: Uint8Array; suffix: Uint8Array } {
   const [prefix, suffix] =
-    JSON.stringify(buildScanRequestBody(SENTINEL, tone, medium, today)).split(SENTINEL);
+    JSON.stringify(buildScanRequestBody(SENTINEL, tone, today)).split(SENTINEL);
   const encoder = new TextEncoder();
   return { prefix: encoder.encode(prefix), suffix: encoder.encode(suffix!) };
 }
 
 export { MAX_IMAGE_BYTES };
-
-export const MAX_TEXT_BYTES = 16_000;
-
-export const MAX_BYTES: Record<ScanMedium, number> = {
-  photo: MAX_IMAGE_BYTES,
-  text: MAX_TEXT_BYTES,
-};
 
 const BASE64 = (() => {
   const ok = new Uint8Array(256);
@@ -39,18 +32,15 @@ export class NotBase64Error extends Error {}
 
 /**
  * The alphabet check is a security boundary: the bytes land inside a JSON string,
- * and a quote could inject its own `contents`. That is why typed bills travel
- * base64 too.
+ * and a quote could inject its own `contents`.
  */
 export function wrapPayload(
   bill: ReadableStream<Uint8Array>,
   onRefuse?: (err: NotBase64Error) => void,
   tone: ScanTone = "kind",
-  medium: ScanMedium = "photo",
   today?: string,
 ): ReadableStream<Uint8Array> {
-  const { prefix, suffix } = halves(tone, medium, today);
-  const cap = MAX_BYTES[medium];
+  const { prefix, suffix } = halves(tone, today);
   const reader = bill.getReader();
   const refuse = (why: string): never => {
     const err = new NotBase64Error(why);
@@ -73,7 +63,7 @@ export function wrapPayload(
         return;
       }
       sent += value.length;
-      if (sent > cap) refuse(medium === "text" ? "bill text too large" : "image too large");
+      if (sent > MAX_IMAGE_BYTES) refuse("image too large");
       for (const byte of value) {
         if (!BASE64[byte]) refuse("body is not base64");
       }

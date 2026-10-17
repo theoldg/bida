@@ -31,14 +31,13 @@ divides — it names itself (`copy.split.mode`), and nothing asks a second field
 **A photograph is how the lines usually got in, and not the only way.** They
 may be typed in by hand, a card per item with no model in between, and edited
 the same way after a scan — so nothing in this decision is about a camera, and
-a misread line is fixed where it is printed rather than only by rescanning.
-A reading of pasted text — the same envelope
-with one `mimeType` changed — is still built in the Worker but has no door
-since the hand editor took its place
-([receipt-scanning.md](../receipt-scanning.md#typing-a-bill-in)).
+a misread line is fixed where it is printed rather than only by rescanning
+([receipt-scanning.md](../receipt-scanning.md#typing-a-bill-in)). Pasted text
+read by the model was the third door until then, and is gone: it put a caller's
+own words in front of the shared key.
 
 **The parsed bill lives on the expense, not in the draft.** `receiptItems`,
-`receiptTip`, `receiptInvolved`, `receiptAssignments` and `receiptText` are
+`receiptTip`, `receiptInvolved` and `receiptAssignments` (and `receiptText`, which nothing writes now) are
 ordinary optional fields on `Expense` — together the `Receipt` type, which
 `receiptOf` carries whole between an expense, the draft and a write — travelling in the op's `patch` like `description` — so they
 sync, replay and fold with no change to `Op`, `fold.ts`, the D1 schema or the

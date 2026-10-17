@@ -25,7 +25,7 @@ them tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 | ↳ [diag.md](diag.md) | `/diag`, the flight recorder |
 | [ios.md](ios.md) | Touching joining, installing or storage on iPhone |
 | [notifications.md](notifications.md) | Push notifications: what is said, and how it is kept, sent and shown |
-| [receipt-scanning.md](receipt-scanning.md) | Touching the receipt scan: how one starts, the typed bill — then one of: |
+| [receipt-scanning.md](receipt-scanning.md) | Touching the receipt scan: how one starts, the bill typed by hand — then one of: |
 | ↳ [scan-reading.md](scan-reading.md) | The prompt, and what the app does with a reading |
 | ↳ [who-had-what.md](who-had-what.md) | The grid a bill is divided on; tip, tax and discounts |
 | ↳ [scan-worker.md](scan-worker.md) | The shared key, the envelope, the budget, Turnstile, trust |

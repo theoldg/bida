@@ -54,8 +54,7 @@ export function Dialog({ title, onClose, children }: {
     const field = el.querySelector<HTMLInputElement | HTMLTextAreaElement>(
       "input[data-autofocus], textarea[data-autofocus]",
     );
-    // Never selected in a multi-line box: a typed bill is reopened to be
-    // corrected.
+    // Selected, so typing replaces what is there; never a multi-line box.
     if (field) { field.focus(); if (field instanceof HTMLInputElement) field.select(); }
     else card.current?.focus();
     return () => {

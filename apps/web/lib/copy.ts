@@ -1,6 +1,6 @@
 // Doc: docs/frontend.md#every-word-in-libcopyts
 import type {
-  ExtraKind, ImportRefusalCode, ImportSource, ScanMedium, ScanProblem, SplitSpec,
+  ExtraKind, ImportRefusalCode, ImportSource, ScanProblem, SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 import { chosenLang } from "./lang";
@@ -928,13 +928,6 @@ const en = {
     reading: "Reading…",
     camera: "Take a photo of a receipt",
     library: "Upload a receipt photo",
-    typeIn: {
-      /**
-       * In the words the typed prompt reads: "Tax on top" because tax inside the
-       * prices is read as none.
-       */
-      written: { tip: "Tip", tax: "Tax on top", discount: "Discount", total: "Total" },
-    },
     byHand: {
       open: "Type",
       again: "Edit items",
@@ -966,31 +959,14 @@ const en = {
     terms: "The bill is sent to Google",
     failed: "Couldn’t read that receipt.",
     keptOld: "The old one is still assigned.",
-    /**
-     * Two sets, because the fix depends on the medium: "a flatter photo" is no
-     * help to somebody who typed it.
-     */
     problem: {
-      photo: {
-        "no-total": "I can’t make out the total on that one.",
-        "unreadable-line": "I can’t read every line on that one.",
-        mismatch: "The lines don’t add up to the total. Try a flatter, square-on photo.",
-      },
-      text: {
-        // Not "can't find the total": a typed bill needn't have one. Fires when there
-        // is nothing to price, or a total that won't parse.
-        "no-total": "I can’t work out what that comes to.",
-        "unreadable-line": "I can’t read an amount for every line in that.",
-        // True advice: leaving the total out lets the lines stand (`checkScan`).
-        mismatch: "The lines don’t add up to the total. Check the figures, or leave the total out.",
-      },
-    } satisfies Record<ScanMedium, Record<ScanProblem, string>>,
+      "no-total": "I can’t make out the total on that one.",
+      "unreadable-line": "I can’t read every line on that one.",
+      mismatch: "The lines don’t add up to the total. Try a flatter, square-on photo.",
+    } satisfies Record<ScanProblem, string>,
     offline: "You’re offline: scanning needs a connection.",
     busy: "Gemini’s busy. Try again in a minute.",
-    /**
-     * Waiting doesn't help a spent budget. "Type this one in" means by hand — the
-     * Type button would spend the same budget.
-     */
+    /** Waiting doesn't help a spent budget; typing the items in costs none of it. */
     limit: {
       you: "That’s your readings for now: reading a bill is capped. Fill the form in by hand, or come back later.",
       global: "The shared reading budget is spent. Fill the form in by hand, or try later.",

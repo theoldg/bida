@@ -63,9 +63,7 @@ nothing else would notice.
 
 ```
 phone: capture or pick from library → straighten + crop → downscale → base64 (+ a Turnstile token)
-       — or the typed bill, straight to base64
-  ↓ POST /api/groups/:id/scan   (body = the bill; bearer = group secret;
-                                 X-Input: text for a typed one)
+  ↓ POST /api/groups/:id/scan   (body = the bill; bearer = group secret)
 worker: verify the browser, count the budget, book the scan,
         then wrap the bill in our prompt + schema and add the API key
   ↓
@@ -114,106 +112,20 @@ translation under its name for as long as the name is the one it translates.
   is how an expense stops being split by items. On `/quick` Done goes back to
   `/quick`, as a scan stays there.
 
-**The typed text reading is still built and has no door.** It was this door
-until the hand editor replaced it (owner's call, 2026-10-17). The rest of this
-section is its half that remains — the Worker's, the prompt's and
-`parseBillText`'s — which nothing in the app calls now
-([implementation-status](implementation-status.md#what-is-open)).
-
-Everything after the bytes is shared with a photograph: the same endpoint, the
-same bearer, the same Turnstile token, the same three budget buckets, the same
-`checkScan`, the same rules about what a reading may overwrite. A typed bill
-costs what a photo costs and is counted the same (`parseBillText`,
-`web/lib/scan/index.ts`).
-
-**What it is not is the same question.** A till roll and a WhatsApp message are
-different documents: the photograph's rules (one multiplied amount per line, a
-total required) cannot read "3 chicken at 13, 10 beef at 15", which gives a
-per-unit price and states no total. So:
-
-- **Its own prompt** (`scan-body.ts`), about a third shorter than the
-  photograph's, with no columns, no printer and no merchant in it. The two are
-  held together by the schema and by the conventions neither may disagree about
-  — plain decimal, deductions positive, tax only on top, nothing in capitals —
-  rather than by shared paragraphs (`apps/api/src/scan-body.test.ts`).
-- **A line states its price either way.** `amount` is what the whole line came
-  to; `unitAmount` is the price of one, beside a `quantity`. The model fills
-  whichever the bill gives and never both (neither for a measure — litres of
-  fuel, kilos — which the integer `quantity` would round and `correctOneLine`
-  would then "fix" the printed amount to), and `lineMinor` does the
-  multiplication in integer minor units, where it is tested — asking a model for
-  a figure the page does not hold is what makes it invent one. Only the
-  multiplied one is written out: `readBill` keeps the model's own string for a
-  line the bill priced outright, so `checkScan` can refuse an unreadable one
-  and show what arrived. The grid prints it through `priced` (`lib/format.ts`)
-  rather than as it came, since "cola 10" beside a multiplied "39.00" is one
-  column in two formats — and the string still survives wherever it isn't a
-  figure.
-- **A missing total is ordinary**, not a refusal. See
-  [What a reading is checked against](scan-reading.md#what-a-reading-is-checked-against).
-- **A line with more numbers than the words explain is a refusal, not a
-  guess.** "chicken 2 5 7" gives no word to say which figure is a count and
-  which is a price, so the prompt asks the model to name the ambiguous line in
-  `error` rather than pick an arrangement — the same refusal path as a bill
-  with no prices at all, not a per-line null that `checkScan` would have to
-  catch downstream.
-- **A label is a clean guess, not a transcript.** "3 chicken skewers at 13"
-  then "10 beef at 15" reads as two skewers, not chicken skewers and an
-  unqualified beef — the prompt carries a word the second line dropped but the
-  first made plain ("Chicken skewer", "Beef skewer"), and turns a generic word
-  that plainly names one well-known brand into the brand ("large cola" →
-  "Coca-Cola"). It's the one field this prompt improves rather than
-  transcribes, and the guess stays scoped to what the line itself makes
-  plain — never a dish, brand or detail nothing in the text suggests.
-
-**And almost never a title.** A photographed receipt leads with a merchant's
-name; a typed one leads with the food. Asked to name the expense anyway, a model
-hands back a description of the list — "Skewers", "Barbecue" — which is not a
-name, is worse than the empty field the person is about to type in, and arrives
-on the draft as though it had been read off the bill. So the typed prompt asks
-for a title only where the text plainly names where the money went, and null is
-the expected answer.
-
-**It rides the envelope as base64, in an `inlineData` part with
-`mimeType: "text/plain"`** — which the Worker chooses, never the caller. That
-is what lets the guard in
-[scan-worker.md](scan-worker.md#minimal-cloudflare-quota-the-worker-still-never-touches-the-bytes) stay the one guard: escaping arbitrary text into a
-JSON string as it streamed would need a second, subtler check on the hot path.
-A typed bill changes what the model *reads* and never what the request *is*.
-
-**The cap is 4,000 characters** (`BILL_TEXT_MAX`, core/scan.ts), which is about
-what the downscaled photo costs in tokens — so typing is never the dearer way to
-read a bill — and well clear of any real one: a sixty-line till roll is about
-1,800. The Worker's `MAX_TEXT_BYTES` sits far above that as an
-abuse ceiling on bytes, in the same spirit as the push caps; the character count
-is the number a person is held to.
-
-**The text is kept, on the draft and on the saved expense** (`receiptText`), for
-the reason `receiptItems` is: a reading could be reopened as text and corrected
-rather than retyped. A photograph replaces it, the way it replaces the grid — what is kept has to
-describe the bill actually on the draft — **with its own reading written out**
-(`billAsText`, `lib/scan/text.ts`): a line per item as a person would type it,
-"3 Chicken skewer 39.00", in the English labels, then tip, "Tax on top", each
-deduction with its minus, and the total only where the bill printed one.
-Nothing shows it now: the bill's own lines and
-each person's copy of them are the reading, and printing the raw text under them
-would be the same thing twice.
-
 ## What it's made of
 
-`packages/core/src/scan.ts` — the normaliser, `SCAN_LIMITS` and
-`BILL_TEXT_MAX`, no network ·
+`packages/core/src/scan.ts` — the normaliser and `SCAN_LIMITS`, no network ·
 `apps/api`'s `scan-limits.ts` — the budget, the client key and Turnstile ·
 `apps/web/lib/scan/budget.ts` and `turnstile.ts`, their two halves on the phone
 · `apps/api`'s `POST
-/api/groups/:id/scan` — `X-Input: text` for a typed bill — the same bearer-token
+/api/groups/:id/scan` — the same bearer-token
 check as sync, passing through to
 `GEMINI_MODEL = "gemini-3.1-flash-lite"` (one constant in `packages/core/src/scan-body.ts`;
 the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) and the envelope is
-`apps/api/src/scan-body.ts` (four pre-encoded envelopes — two tones by two
-media — and the base64 guard `scan-body.test.ts` attacks) · `apps/web/lib/scan/` — `downscale.ts`,
-`text.ts`, `response.ts`, `scanReceipt()` and `parseBillText()` ·
+`apps/api/src/scan-body.ts` (an envelope per tone, and the base64 guard
+`scan-body.test.ts` attacks) · `apps/web/lib/scan/` — `downscale.ts`,
+`response.ts` and `scanReceipt()` ·
 `components/bill-editor.tsx` and `lib/scan/manual.ts`, the bill by hand ·
 `components/receipt-scan.tsx`, the hook all three scanning screens
 share — `/g/scan`, the Items tab on `/g/entry/edit`, and `/quick` — with

@@ -86,10 +86,8 @@ describe("bare", () => {
 
 describe("priced", () => {
   it("writes a line's figure the way the column around it is written", () => {
-    // The typed door's ordinary answer: a bill saying "cola 10" gives the
-    // model "10", while the line beside it — three at 13 — is multiplied out
-    // to "39.00" by `lineMinor`. Printed as they arrive, one column holds
-    // both (found driving `pnpm drive` against the `skewers` fixture).
+    // A line read as "10" sits beside one multiplied out to "39.00" by
+    // `lineMinor`. Printed as they arrive, one column holds both.
     expect(priced("10", "EUR")).toBe("10.00");
     expect(priced("39.00", "EUR")).toBe("39.00");
     expect(priced("1234.5", "EUR")).toBe("1,234.50");

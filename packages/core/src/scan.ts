@@ -4,12 +4,11 @@
  */
 
 import { isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money.js";
-import type { ScanMedium } from "./scan-body.js";
 import type { Receipt, ReceiptDiscount } from "./types.js";
 import { sameLocalDay } from "./when.js";
 
 /**
- * A typed bill fills one cost — the line total, or a unit price and `quantity` —
+ * A line fills one cost — the line total, or a unit price and `quantity` —
  * since asking for a figure the bill doesn't hold makes the model invent one.
  */
 export interface ScanLineItem {
@@ -287,12 +286,9 @@ export function billTotalMinor(result: ScanResult, currency: CurrencyCode): numb
 export function checkScan(
   result: ScanResult,
   currency: CurrencyCode,
-  medium: ScanMedium = "photo",
 ): ScanProblem | null {
-  const stated = statesTotal(result);
-  const total = readAmount(result.total, currency);
-  if (stated && total === null) return "no-total";
-  if (!stated && (medium === "photo" || result.lineItems.length === 0)) return "no-total";
+  const total = statesTotal(result) ? readAmount(result.total, currency) : null;
+  if (total === null) return "no-total";
 
   // Before `readBill`, which takes an illegible figure as nothing.
   for (const text of [result.tip, result.tax, ...result.discounts.map((d) => d.amount)]) {
@@ -301,8 +297,6 @@ export function checkScan(
 
   const sum = sumBill(result, currency);
   if (sum === null) return "unreadable-line";
-
-  if (total === null) return sum > 0 ? null : "mismatch";
 
   // Includes a discount bigger than what it comes off.
   if (total <= 0) return "mismatch";
@@ -333,9 +327,6 @@ export const SCAN_LIMITS = {
 } as const;
 
 export type ScanLimitScope = keyof typeof SCAN_LIMITS;
-
-/** About what the downscaled photo costs, so typing is never dearer. */
-export const BILL_TEXT_MAX = 4000;
 
 /** The phone aims well under it, so hitting it means a caller that isn't ours. */
 export const MAX_IMAGE_BYTES = 400_000;

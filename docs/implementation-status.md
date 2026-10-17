@@ -28,14 +28,8 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Five things: push notifications, built and unchecked on a phone, the ledger's windowing experiment, Polish, a quick split's link, and the typed text reading. The visual review is closed
+Four things: push notifications, built and unchecked on a phone, the ledger's windowing experiment, Polish, and a quick split's link. The visual review is closed
 ([design-review.md](design-review.md)).
-
-- **The typed text reading has no door.** The bill's items typed by hand took
-  its place on the scan control (2026-10-17); its Worker half, prompt and
-  `parseBillText` are built and called by nothing
-  ([receipt-scanning.md](receipt-scanning.md#typing-a-bill-in)). The owner's
-  call: remove it, or give it a door again.
 
 - **A quick split goes out as a link** (ADR-0035), built, driven against a
   local Worker, migrated on both D1s (`0005_splits.sql`) and working on a

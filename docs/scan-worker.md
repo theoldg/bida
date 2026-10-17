@@ -65,56 +65,35 @@ path.
 ## The envelope, and who owns it
 
 On the shared path the client sends **the bill and nothing else** — base64 as
-the whole body, `text/plain`: the downscaled JPEG, or the typed bill's own UTF-8.
-The prompt and the response schema live
-in `packages/core/src/scan-body.ts`, because both ends build the same body (a brought key builds it on the phone);
-the Worker streams the bill into its copy (`apps/api/src/scan-body.ts`), so on
-that path a caller decides which bill Gemini reads and which of four envelopes
-we hold it arrives in — never a word of the request.
-
-**Four, because two things about the prompt move**: the tone of a refusal (Staś
-below) and the medium the bill arrived in. Each moves by picking one of two
-constants core holds. What a bill is read *by* — the title rules, the total, the
-tip, the tax, the discounts, the line items — is one shared block whichever pair
-is asked for, and `scan-body.test.ts` holds all four to it byte for byte. A
-typed bill read by different rules would price a split differently depending on
-whether anybody had a camera to hand.
-
-What the medium is allowed to move is only what would be actively wrong about
-the other one: how the bill is attached, the paragraph about reading an amount
-per line (a photograph can shear its own columns; text has no columns left to
-shear), and the refusals — "too blurry, re-shoot it" is useless advice about
-something somebody typed, in either tone.
+the whole body, `text/plain`: the downscaled JPEG. The prompt and the response
+schema live in `packages/core/src/scan-body.ts`, because both ends build the
+same body (a brought key builds it on the phone); the Worker streams the bill
+into its copy (`apps/api/src/scan-body.ts`), so on that path a caller decides
+which photo Gemini reads and which of two envelopes we hold it in — the tone of
+a refusal (Staś, below) — never a word of the request.
 
 That is deliberate, and it is what the endpoint is *for*. A scan credential
 costs one unauthenticated request to mint — `ensureGroup` registers any id on
 first sight, which is what a quick split relies on (below) — so the bearer check
 is a speed bump, not a gate. What keeps our key off the open internet is that
 there is no *request* a caller can compose: not a prompt, not a schema, not a
-second part, not a destination. **What a typed bill changes (owner's ruling):**
-a caller's own words reach the model on our key, so the worst a minted
-credential buys is more than having a picture read. It is
-still confined on every side that matters — the schema is ours, so the only thing
-that can come back is a bill-shaped object (a title under 40 characters, amounts,
-one error sentence); the destination and the model are ours; Turnstile and all
-three buckets apply. A caller cannot write the request, but can put sentences
-inside it.
+second part, not a destination. The worst a minted credential buys is a
+picture read: the schema is ours, so the only thing that can come back is a
+bill-shaped object (a title under 40 characters, amounts, one error sentence);
+the destination and the model are ours; Turnstile and all three buckets apply.
 
 ### Staś mode
 
-One of the two things a caller gets to say about the prompt (the other being the
-medium above), and it says it by picking
+The one thing a caller gets to say about the prompt, and it says it by picking
 one of two paragraphs core holds. `X-Stas: 1` on the scan request swaps
 the refusal wording for the vicious version — send a photo that isn't a
 receipt, or one too blurry to read, and it comes back at *you*, not at the
-photo. Each medium's pair is `PHOTO_REFUSAL` or `TEXT_REFUSAL` (`packages/core/src/scan-body.ts`), both
+photo. The pair is `PHOTO_REFUSAL` (`packages/core/src/scan-body.ts`); both
 still have to say plainly what's wrong so the person knows what to re-shoot, and everything
 else in the prompt is word for word the same, so a mean scan can't also be a
 wrong one (`scan-body.test.ts` checks exactly that). Each tone's envelope is
-pre-encoded per isolate, so each of the four envelopes is two short byte arrays
-and no branch on the hot path. Both
-tones carry a typed bill's own refusal as well, since a roast about a thumb says
-nothing about a wall of text.
+pre-encoded per isolate, so each envelope is two short byte arrays and no
+branch on the hot path.
 
 It is off, and turned on by hand on `/diag` — the hidden diagnostics screen, a
 long-press on the wordmark — which is `localStorage` on that phone
@@ -139,7 +118,7 @@ between its halves. The Worker never parses a body and never holds the bill:
 // apps/api/src/scan-body.ts — the prompt and schema, cut in two at the bill
 const [prefix, suffix] = JSON.stringify(buildScanRequestBody(SENTINEL)).split(SENTINEL);
 // apps/api/src/index.ts — PREFIX, then the caller's bytes, then SUFFIX
-body: wrapPayload(c.req.raw.body, (err) => { refusal.err = err; }, tone, medium),
+body: wrapPayload(c.req.raw.body, (err) => { refusal.err = err; }, tone, today),
 ```
 
 The rules that follow from it:
@@ -151,19 +130,15 @@ The rules that follow from it:
   closes that string and writes its own `contents` — the arbitrary request this
   endpoint exists not to forward. Base64 has neither character, so `wrapPayload`
   rejects every byte outside its alphabet and the hole closes outright.
-  `scan-body.test.ts` is mostly attempts to get a second field past it. **A typed
-  bill travels base64 for this one reason** and no other: it keeps the caller's
-  *bytes* out of the request even while the caller's words reach the model.
+  `scan-body.test.ts` is mostly attempts to get a second field past it.
 - **The client never names the destination.** URL, model and key are Worker-side
   constants. A client-supplied URL would make this an open proxy to anywhere
   with our key attached.
 - **The phone crops and shrinks the photo; the Worker only refuses a big one**
   ([below](#cropping-to-the-bill)). The Worker caps the body at
   `MAX_IMAGE_BYTES` (400 kB, shared from core; the phone aims at 300), refusing on `content-length` before a byte is streamed anywhere, and
-  counting again as it streams for the caller whose header lied. A typed bill has
-  a cap of its own, two orders of magnitude below it (`MAX_TEXT_BYTES`): a body
-  sent as text does not get to spend the image allowance.
-- **One request per reading**, typed or photographed. No automatic retry — a retry doubles both our
+  counting again as it streams for the caller whose header lied.
+- **One request per reading.** No automatic retry — a retry doubles both our
   requests and the shared daily Gemini quota. A failure says so and leaves the
   control enabled — the retry is the same button, not a second one.
 - **Auth authenticates a *secret*, not a membership** — the existing
@@ -335,12 +310,10 @@ Deliberate, for a group of friends under fifty people:
   spends it, and a secret costs one request to mint. What that buys is confined
   twice over: the Worker owns the envelope, so nobody can put their own *request*
   on our key, and the budget above caps what having bills read can cost.
-- **A typed bill puts a caller's own words in front of that key** — a call the
-  owner made knowingly ([The envelope, and who owns it](#the-envelope-and-who-owns-it)).
-  The prompt, the schema, the model and the destination stay ours, so what comes
-  back is a bill-shaped object and not a general-purpose answer; the budget and
-  Turnstile are untouched. Read the paragraph under **The envelope** before
-  widening what a caller may send.
+- **No caller's words reach that key, only a photo.** A typed bill once did,
+  knowingly; it went with its door. Read the paragraph under
+  [The envelope](#the-envelope-and-who-owns-it) before widening what a caller
+  may send.
 - **The bill still leaves the phone readable.** Op bodies are sealed
   ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)), so a receipt
   on its way to Google is **the one thing in the app that doesn't** — a place,

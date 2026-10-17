@@ -78,9 +78,8 @@ Expense {
   receiptItems?, receiptTip?, receiptInvolved?, receiptAssignments?,
                       // the parsed bill behind a `receipt` split, kept so the
                       // who-had-what grid can reopen (ADR-0016)
-  receiptText?,       // the bill as typed, or a photo's reading written out
-                      // in English — so the box reopens holding it
-                      // (receipt-scanning.md#typing-a-bill-in)
+  receiptText?,       // a typed bill's text, from builds that read one; written
+                      // by nothing now, and still read by history
   receiptEnglish?,    // true: the bill is read in English, not as printed —
                       // the grid's translate toggle (ADR-0016)
   deletedAt?

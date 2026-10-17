@@ -57,6 +57,7 @@ export interface Receipt {
   receiptDiscounts?: ReceiptDiscount[] | null;
   receiptInvolved?: Id[] | null;
   receiptAssignments?: Id[][] | null;
+  /** A typed bill's text, from builds that read one. Read by history; written by nothing now. */
   receiptText?: string | null;
   /** Saved so every phone reads the bill alike. Written only when true. */
   receiptEnglish?: boolean | null;

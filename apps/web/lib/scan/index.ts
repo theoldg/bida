@@ -1,6 +1,6 @@
 import {
   AI_STUDIO_URL, buildScanRequestBody, checkScan, correctOneLine,
-  scanCurrency, type ScanLimitScope, type ScanMedium, type ScanProblem, type ScanResult,
+  scanCurrency, type ScanLimitScope, type ScanProblem, type ScanResult,
 } from "@bida/core";
 import { dateInputValue } from "../format";
 import { groupToken } from "../seal";
@@ -9,7 +9,6 @@ import { downscaleToBase64Jpeg } from "./downscale";
 import { ownKey } from "./key";
 import { parseScanResponse } from "./response";
 import { stasMode } from "./stas";
-import { billTextToBase64 } from "./text";
 import { TurnstileBlockedError, turnstileToken } from "./turnstile";
 
 export { TurnstileBlockedError } from "./turnstile";
@@ -65,24 +64,13 @@ export async function scanReceipt(
   /** For a receipt that doesn't name its own. */
   currency: string,
 ): Promise<ScanResult> {
-  return readBill(() => downscaleToBase64Jpeg(photo), "photo", groupId, secret, currency);
-}
-
-/** Everything but the bytes is shared with `scanReceipt`. docs/receipt-scanning.md#typing-a-bill-in. */
-export async function parseBillText(
-  text: string,
-  groupId: string,
-  secret: string,
-  currency: string,
-): Promise<ScanResult> {
-  return readBill(() => Promise.resolve(billTextToBase64(text)), "text", groupId, secret, currency);
+  return readBill(() => downscaleToBase64Jpeg(photo), groupId, secret, currency);
 }
 
 /** Everything downstream may assume the answer adds up. */
 async function readBill(
   /** Run inside the round trip, so a slow resize hides behind the challenge. */
   encode: () => Promise<string>,
-  medium: ScanMedium,
   groupId: string,
   secret: string,
   currency: string,
@@ -94,16 +82,16 @@ async function readBill(
 
   const own = await ownKey();
   const answer = own
-    ? await readOnOwnKey(encode, medium, own)
-    : await readOnSharedKey(encode, medium, groupId, secret);
+    ? await readOnOwnKey(encode, own)
+    : await readOnSharedKey(encode, groupId, secret);
 
   const read = parseScanResponse(answer);
   if (read.error) throw new ScanRejectedError(read.error);
   const billCurrency = scanCurrency(read, currency);
   // A faded digit the unit price and the total both contradict.
   const result = correctOneLine(read, billCurrency);
-  // A photograph with no total is cropped; a typed bill with no total is Tuesday.
-  const problem = checkScan(result, billCurrency, medium);
+  // A photograph with no total is cropped.
+  const problem = checkScan(result, billCurrency);
   if (problem) throw new ScanUnreliableError(problem);
   return result;
 }
@@ -111,7 +99,6 @@ async function readBill(
 /** Nothing passes through us, which is the feature, so there is no fallback through the Worker. */
 async function readOnOwnKey(
   encode: () => Promise<string>,
-  medium: ScanMedium,
   key: string,
 ): Promise<unknown> {
   const billBase64 = await encode();
@@ -122,7 +109,7 @@ async function readOnOwnKey(
       headers: { "content-type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify(
         buildScanRequestBody(
-          billBase64, stasMode() ? "stas" : "kind", medium, dateInputValue(Date.now()),
+          billBase64, stasMode() ? "stas" : "kind", dateInputValue(Date.now()),
         ),
       ),
     });
@@ -144,7 +131,6 @@ async function readOnOwnKey(
 /** The Worker owns the envelope, counts the cost and refuses an unverified browser. */
 async function readOnSharedKey(
   encode: () => Promise<string>,
-  medium: ScanMedium,
   groupId: string,
   secret: string,
 ): Promise<unknown> {
@@ -169,8 +155,6 @@ async function readOnSharedKey(
         Authorization: `Bearer ${token}`,
         ...(turnstile ? { "X-Turnstile-Token": turnstile } : {}),
         ...(stasMode() ? { "X-Stas": "1" } : {}),
-        // Absent is a photo, so older builds' requests mean what they did.
-        ...(medium === "text" ? { "X-Input": "text" } : {}),
       },
       body: billBase64,
     });

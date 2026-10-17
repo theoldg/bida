@@ -2,7 +2,6 @@
 // Doc: docs/receipt-scanning.md
 
 import { useSyncExternalStore } from "react";
-import type { ScanMedium } from "@bida/core";
 import { signal } from "../signal";
 
 /** Where a scan is: idle, in flight, or refused. */
@@ -23,33 +22,26 @@ export interface LiveScan {
   startedAt: number;
   /** The sweep this scan was given, in seconds — see `sweepSeconds`. */
   seconds: number;
-  /**
-   * Photo or typed bill. Sets the bar's pace and a refusal's wording — "try a
-   * flatter photo" is nonsense about typing.
-   */
-  medium: ScanMedium;
 }
 
 /**
- * How long one sweep lasts: ~3s for a photo, ~2s for a typed bill, jittered.
+ * How long one sweep lasts: ~3s, jittered.
  * **Drawn once per scan, never per mount** — per scan so it doesn't look
  * canned, not per mount so a returning bar keeps its estimate.
  *
  * Keep it tracking real cost (model, Turnstile, two D1 round trips): a bar
  * that fills early and hands to a spinner admits it was guessing.
  */
-function sweepSeconds(medium: ScanMedium): number {
-  return medium === "text" ? 1.8 + Math.random() * 0.4 : 2.8 + Math.random() * 0.4;
+function sweepSeconds(): number {
+  return 2.8 + Math.random() * 0.4;
 }
 
 const scans = new Map<string, LiveScan>();
 const { emit, subscribe } = signal();
 
 /** A scan has just been sent. Clears whatever the last one refused with. */
-export function beginScan(groupId: string, medium: ScanMedium = "photo"): void {
-  scans.set(groupId, {
-    state: "scanning", error: null, startedAt: Date.now(), seconds: sweepSeconds(medium), medium,
-  });
+export function beginScan(groupId: string): void {
+  scans.set(groupId, { state: "scanning", error: null, startedAt: Date.now(), seconds: sweepSeconds() });
   emit();
 }
 
@@ -67,7 +59,6 @@ export function failScan(groupId: string, error: string | null): void {
     error,
     startedAt: live?.startedAt ?? Date.now(),
     seconds: live?.seconds ?? 0,
-    medium: live?.medium ?? "photo",
   });
   emit();
 }

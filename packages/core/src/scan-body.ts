@@ -1,8 +1,7 @@
 // Doc: docs/scan-reading.md#what-the-model-decides-and-what-it-must-not
 /**
- * The bill-reading request: prompt, schema and the bill. **Two prompts, not one
- * with two dialects**: what makes a photo read safely makes typed text
- * unreadable. Tone moves only the refusal paragraph.
+ * The bill-reading request: prompt, schema and the photograph. Tone moves only
+ * the refusal paragraph.
  */
 
 /** Ours to move, never a caller's. */
@@ -17,8 +16,6 @@ export const VERTEX_URL =
 
 export const AI_STUDIO_URL =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-
-export type ScanMedium = "photo" | "text";
 
 /**
  * `kind` jokes about the thumb in the photo, never the person. `stas` aims at the
@@ -156,183 +153,34 @@ const PHOTO_TAIL =
   + "missing lines or report a partial list as if it were complete; set error asking for "
   + "a photo of the whole receipt instead. Otherwise leave error null.";
 
-/* ── A bill somebody typed ───────────────────────────────────────────────── */
-
-const TEXT_LEAD =
-  "Read this bill. It is text somebody typed or pasted — a chat message, an email, a "
-  + "note they made at the table — not a photograph and not a printout, so it has no "
-  + "layout to read and none to trust. It may be a tidy list, one long sentence, or both "
-  + "at once, in any language. Read what the words say and never mind how they are "
-  + "arranged: a line break means nothing in particular, one line can hold several "
-  + "things, and one thing can be spread over several lines. ";
-
-/**
- * A typist writes the unit price, so forbidding multiplication would leave no
- * legal answer; `scan.ts` multiplies.
- */
-const TEXT_ITEMS =
-  "Return every separate thing that was bought as a line item, each with: label — a "
-  + "short, clean name for it, the way it would read on a receipt or a shopping list: "
-  + "capitalized, singular, in the text's own language, not necessarily the exact words "
-  + "used. Fill in a word another line makes plain but this one dropped — \"3 chicken "
-  + "skewers at 13\" then \"10 beef at 15\" is \"Chicken skewer\" and \"Beef skewer\", not "
-  + "\"Beef\" — and where a generic word plainly names one well-known brand and nothing "
-  + "else, name the brand instead of the genre (\"large cola\" is \"Coca-Cola\", not "
-  + "\"Cola\"). Guess only what a person reading the same line would also assume; never "
-  + "invent a dish, a brand or a detail the line gives no reason to pick. "
-  + "labelEn — an English "
-  + "translation of that label, or null if it is already English; quantity — how many, "
-  + "when the text says how many (\"3 chicken\", \"2x beer\", \"beer x4\"), and null when "
-  + "it does not say, never inferred from a thing being mentioned twice, never "
-  + "defaulted to 1, and never a measure such as litres or kilos; and one of two figures. "
-  + "Which figure depends on what the text gives, and both are ordinary. Where it gives "
-  + "what the whole line came to, put that in amount and leave unitAmount null. Where it "
-  + "gives the price of one — \"3 chicken at 13 each\", \"2 beers @ 5\", \"po 13\" — put "
-  + "that price in unitAmount and leave amount null. Fill exactly one of the two, "
-  + "whichever the text actually states, and never both. Do not multiply and do not "
-  + "divide: \"3 chicken at 13 each\" is quantity 3 with unitAmount \"13\" and never an "
-  + "amount of \"39\", and \"3 chicken 39\" is quantity 3 with amount \"39\" and never a "
-  + "unitAmount of \"13\". Where the text plainly gives both, keep the line total: fill "
-  + "amount and leave unitAmount null. "
-  + "A count is not money, and the same figure can be either — only the words around it "
-  + "say which. In \"10 beef (15 each)\" the 10 is how many and the 15 is the price; in "
-  + "\"large cola 10\" the 10 is the price. "
-  + "A line that announces a group and is then broken down is not a line item of its "
-  + "own: \"15 skewers, of which 3 chicken, 10 beef and 2 duck\" is three line items and "
-  + "not four, and its 15 is not an amount. Read the breakdown and leave the "
-  + "announcement out, or the bill is counted twice. ";
-
-/** Asked for a total, the model makes one up, which can't check the lines. */
-const TEXT_TOTAL =
-  "Return total only where the text states one — a figure it calls the total, the sum, "
-  + "the bill or the amount due, or one plainly standing for the whole of it. Where it "
-  + "states none, return null and never add the bill up yourself. Most typed bills have "
-  + "no total: null is the ordinary and correct answer for them, not a fault, not "
-  + "something missing, and never a reason to refuse a bill. ";
-
-const TEXT_EXTRAS =
-  "Return tip where the text names a tip or a service charge apart from the things "
-  + "bought (\"tip 10\", \"napiwek 10\", \"service 4.50\"), else null. Return tax only "
-  + "where it is charged on top of the prices listed — a figure the bill adds to them. "
-  + "Tax already inside those prices, which is most VAT, is not that and must be null, "
-  + "or the bill gets charged for twice. Return discounts as one entry per deduction the "
-  + "text names — a voucher, a loyalty credit, a \"2 for 1\" — each with its label, an "
-  + "English translation of that label (null if it is already English), and the amount "
-  + "that comes off written WITHOUT a minus sign, so \"-8.00\" is \"8.00\". Use an empty "
-  + "list where nothing comes off. A deduction is never a line item, and no line item's "
-  + "amount or unitAmount is ever negative. A percentage the text does not work out is "
-  + "not an amount: return null rather than working it out. ";
-
-/** Asked to name a food list, the model describes it back ("Skewers"). */
-const TEXT_TITLE =
-  "Return title only where the text plainly names where the money went — a restaurant, "
-  + "a bar, a shop, a driver. Otherwise return null, which will usually be the answer: a "
-  + "bill that only lists what was bought has no title, and a description of the list is "
-  + "not one. Do not name it after the food, the occasion or the largest line, and do "
-  + "not turn the list into a category — skewers and a cola is null, not \"Skewers\" and "
-  + "not \"Barbecue\". Where a name is there, take the name and nothing around it (\"Bar "
-  + "Zahra - Sarl M. Benali\" is \"Bar Zahra\"), write it the way a name is written "
-  + "rather than the way a sign shouts it, never in all capitals, keeping the casing a "
-  + "brand uses for itself (\"IKEA\", \"H&M\", \"McDonald's\"), and under 40 characters. ";
-
-const TEXT_NUMBERS =
-  "Write every figure you return in plain decimal notation: '.' as the decimal point, no "
-  + "thousands separator, no currency symbol and no spaces — \"1234.50\" whether the text "
-  + "writes \"1.234,50\", \"1,234.50\" or \"1234,50\", using the text's own language and "
-  + "conventions to tell a decimal point from a thousands mark. Reformat the separators "
-  + "and nothing else. Return currency as an ISO 4217 code only where the text names or "
-  + "symbols one, and null otherwise — never guessed from the language it is written in. "
-  + "Return date as YYYY-MM-DD only where the text gives a date, and null otherwise. Use "
-  + "null for anything the text does not give, and an empty list where there are no line "
-  + "items. Never round, never convert between currencies, and never supply a figure the "
-  + "text does not contain — the one arithmetic you may rely on is that a count and a "
-  + "price of one will be multiplied for you. ";
-
-const TEXT_REFUSAL: Record<ScanTone, string> = {
-  kind:
-    "If the text is not a bill at all, set error to one short pun or joke about what it "
-    + "actually is, still saying plainly that it is not a bill. If it names things bought "
-    + "but gives no prices anywhere, or is plainly only a fragment — a list that stops "
-    + "mid-way, a sentence cut off — set error to one short, slightly humorous sentence "
-    + "saying so: light and self-deprecating, never at the sender's expense, and it still "
-    + "has to say plainly what is missing so they know what to add (e.g. \"Lovely words, "
-    + "but I can't buy anything with them — that's not a bill.\" or \"All the dishes and "
-    + "none of the prices: I'm good, but not that good.\"). Don't guess at the rest of a "
-    + "fragment. The same goes for a line with more numbers than the words explain — "
-    + "\"chicken 2 5 7\" gives no word or symbol to say which figure is a count and which "
-    + "is a price: don't pick an arrangement, set error the same short, light way, naming "
-    + "the line so they know what to add (e.g. \"'chicken 2 5 7' — three numbers and I "
-    + "can't tell which one's the price.\"). A bill with no total is none of these cases: "
-    + "read it and leave total null. Where error is set, leave every other field null or "
-    + "empty; otherwise leave error null.",
-
-  stas:
-    "If the text is not a bill at all, set error to a brutal one- or two-sentence roast "
-    + "of the person who typed it. Go at them, not at the text: their judgement, their "
-    + "competence, their apparent grasp of what a bill is, the sheer confidence it took "
-    + "to type this into a machine that asked for one. Be genuinely cruel about it. "
-    + "Don't hedge, don't soften it, don't apologise, don't be diplomatic, don't "
-    + "compliment anything first, and don't award them points for trying. Say plainly "
-    + "that it is not a bill, in the middle of the insult rather than instead of it. "
-    + "If it names things bought and gives no prices anywhere, or is plainly only a "
-    + "fragment of one, tear into them the same way — their typing, their standards, the "
-    + "fact that they sat there keying this in and never once wondered where the prices "
-    + "had gone — and still say plainly what is missing so they know what to add (e.g. "
-    + "\"You have typed me a shopping list and called it a bill. The paper had numbers on "
-    + "it. Those were the important part.\"). The same goes for a line with more numbers "
-    + "than the words explain — \"chicken 2 5 7\" — tear into them for throwing digits at "
-    + "a machine and expecting it to guess which one's the price, and still name the line "
-    + "so they know what to add (e.g. \"'chicken 2 5 7' — three numbers, zero clues, and "
-    + "you expected me to pick one?\"). Second person, and personal. The one thing "
-    + "you don't touch is what they were born as: no slurs, and nothing about anyone's "
-    + "race, sex, religion, disability or the like — everything else about them is fair "
-    + "game. A bill with no total is none of these cases: read it, leave total null, and "
-    + "keep your opinions about that to yourself. Where error is set, leave every other "
-    + "field null or empty; otherwise leave error null.",
-};
-
 /**
  * A ticket printing "Friday, 9 October" with no year got one from the weekday.
  */
 const dated = (today: string): string => ` Today is ${today}.`;
 
-const PROMPT: Record<ScanMedium, Record<ScanTone, string>> = {
-  photo: {
-    kind: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_CASING + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
-      + ENGLISH + PHOTO_REFUSAL.kind + PHOTO_TAIL,
-    stas: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_CASING + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
-      + ENGLISH + PHOTO_REFUSAL.stas + PHOTO_TAIL,
-  },
-  text: {
-    kind: TEXT_LEAD + TEXT_ITEMS + TEXT_TOTAL + TEXT_EXTRAS + TEXT_TITLE + TEXT_NUMBERS
-      + ENGLISH + TEXT_REFUSAL.kind,
-    stas: TEXT_LEAD + TEXT_ITEMS + TEXT_TOTAL + TEXT_EXTRAS + TEXT_TITLE + TEXT_NUMBERS
-      + ENGLISH + TEXT_REFUSAL.stas,
-  },
-};
-
-const MIME: Record<ScanMedium, string> = {
-  photo: "image/jpeg",
-  text: "text/plain",
+const PROMPT: Record<ScanTone, string> = {
+  kind: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_CASING + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
+    + ENGLISH + PHOTO_REFUSAL.kind + PHOTO_TAIL,
+  stas: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_CASING + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
+    + ENGLISH + PHOTO_REFUSAL.stas + PHOTO_TAIL,
 };
 
 /**
  * In core so both the Worker and the phone build it, and readings can't drift. A
- * caller picks `tone` and `medium`, never a word of the prompt.
+ * caller picks `tone`, never a word of the prompt.
  */
 export function buildScanRequestBody(
   billBase64: string,
   tone: ScanTone = "kind",
-  medium: ScanMedium = "photo",
   today?: string,
 ): unknown {
-  const prompt = PROMPT[medium][tone]
+  const prompt = PROMPT[tone]
     + (today && /^\d{4}-\d{2}-\d{2}$/.test(today) ? dated(today) : "");
   return {
     contents: [{
       role: "user",
       parts: [
-        { inlineData: { mimeType: MIME[medium], data: billBase64 } },
+        { inlineData: { mimeType: "image/jpeg", data: billBase64 } },
         { text: prompt },
       ],
     }],

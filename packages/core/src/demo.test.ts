@@ -96,12 +96,8 @@ describe("demoOps", () => {
     }
   });
 
-  it("writes the cantina bill out, one English line per printed line", () => {
+  it("saves the cantina bill translated", () => {
     const dinner = foldOps(stamp()).expenses["demo-cantina"]!;
-    const lines = dinner.receiptText!.split("\n");
-    expect(lines).toHaveLength(dinner.receiptItems!.length);
-    expect(lines[0]).toBe("2 Jawa juice 24.00");
-    dinner.receiptItems!.forEach((item, i) => expect(lines[i]).toContain(item.amount));
     // Saved translated, as if somebody at the table had tapped the toggle.
     expect(dinner.receiptEnglish).toBe(true);
   });

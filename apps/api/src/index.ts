@@ -5,7 +5,7 @@ import {
 } from "@bida/core";
 import { bearerToken, sha256Hex } from "./auth";
 import {
-  MAX_BYTES, NotBase64Error, type ScanMedium, type ScanTone, wrapPayload,
+  MAX_IMAGE_BYTES, NotBase64Error, type ScanTone, wrapPayload,
 } from "./scan-body";
 import { clientKey, countScans, overLimit, recordScan, turnstileOk } from "./scan-limits";
 import { MAX_NOTIFY_BODY_BYTES, declaredTooLarge, pushTooLarge } from "./push-limits";
@@ -153,11 +153,9 @@ app.post("/api/groups/:id/scan", async (c) => {
   if (full) return c.json({ error: `${full} scan limit reached`, scope: full }, 429);
   await recordScan(c.env.DB, groupId, client, now);
 
-  const medium: ScanMedium = c.req.header("x-input") === "text" ? "text" : "photo";
-
   const declared = Number(c.req.header("content-length") ?? NaN);
   if (!Number.isFinite(declared)) return c.json({ error: "content-length required" }, 411);
-  if (declared > MAX_BYTES[medium]) return c.json({ error: "bill too large" }, 413);
+  if (declared > MAX_IMAGE_BYTES) return c.json({ error: "bill too large" }, 413);
 
   const bill = c.req.raw.body;
   if (!bill) return c.json({ error: "no bill" }, 400);
@@ -173,7 +171,7 @@ app.post("/api/groups/:id/scan", async (c) => {
       method: "POST",
       headers: { "x-goog-api-key": c.env.GEMINI_API_KEY, "content-type": "application/json" },
       body: wrapPayload(
-        bill, (err) => { refusal.err = err; }, tone, medium, new Date().toISOString().slice(0, 10),
+        bill, (err) => { refusal.err = err; }, tone, new Date().toISOString().slice(0, 10),
       ),
       // @ts-expect-error -- required by Workers to stream a request body through
       duplex: "half",

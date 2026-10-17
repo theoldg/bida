@@ -8,9 +8,7 @@ reaches the model is [scan-worker.md](scan-worker.md).*
 ## What the model decides, and what it must not
 
 It reads. It doesn't compute — the one multiplication in the whole reading is
-`lineMinor`'s, here, on figures the bill stated. The table below is the
-photograph's reading; a typed bill answers the same schema by its own prompt,
-and differs in the three places [Typing a bill in](receipt-scanning.md#typing-a-bill-in) names.
+`lineMinor`'s, here, on figures the bill stated.
 
 | It returns | Type |
 |---|---|
@@ -21,7 +19,7 @@ and differs in the three places [Typing a bill in](receipt-scanning.md#typing-a-
 | discounts | every deduction the receipt prints, one entry each — `{ label, labelEn, amount }`, the amount written **without** a minus sign — a loyalty deduction, a voucher, a two-for-one credit, whether it printed against one item or against the whole bill; empty when it takes nothing off |
 | currency | ISO 4217 if legible, else null |
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here. The prompt ends with today's date (the Worker's UTC day, or the phone's on its own key) so a date printed without a year isn't given whichever year its weekday also fits |
-| lineItems | `{ label, labelEn, amount, unitAmount, quantity }[]` — printed label (a label the printer wrapped over several rows is one item), English translation (null if already English), a count only when the bill actually states one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 — and one or both figures, in the same normalized notation as `total`. `amount` is what the whole line came to, which is what a till prints and so always the photograph's answer; `unitAmount` is the price of one, which is how somebody typing writes it ("3 chicken at 13 each"), and `lineMinor` multiplies it by the count. A typed bill fills exactly one; a photograph copies the unit price too where the till prints it, uncorrected, [for one purpose](#one-faded-figure) |
+| lineItems | `{ label, labelEn, amount, unitAmount, quantity }[]` — printed label (a label the printer wrapped over several rows is one item), English translation (null if already English), a count only when the bill actually states one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 — and one or both figures, in the same normalized notation as `total`. `amount` is what the whole line came to, which is what a till prints; `unitAmount` is the price of one, copied beside it where the till prints it, uncorrected, [for one purpose](#one-faded-figure), and `lineMinor` multiplies it by the count only where no `amount` came back |
 | english | whether the bill is written in English — true clears every `labelEn` on it in `readBill`. Asked line by line, the model "translates" an English bill's shorthand ("Chkn wrap" → "Chicken wrap") and the translate toggle turns up with nothing to translate; asked once for the whole bill, it doesn't |
 | error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set. In Staś mode the same sentence, delivered as an insult aimed at the photographer ([scan-worker.md](scan-worker.md#staś-mode)) |
 
@@ -129,19 +127,12 @@ particular misreading to fail.
 
 ### What a reading is checked against
 
-The bar above needs a total that is **evidence**, and only one medium always
-has one. A till roll prints one, so a photograph with none is a cropped
-photograph and is refused. A typed bill usually has none, and demanding one
-would refuse almost every bill anybody types.
-
-So `checkScan` takes the medium, and reconciles only against a figure the bill
-itself stated. Where a typed bill states none, its lines *are* the bill:
-`billTotalMinor` sums them with the extras, `normalizeScan` puts that in the
-amount field, and the sum is not then checked against itself. That is not a
-weaker check but an honest one. The alternative on offer — asking the model for
-a total when the page has none — is worse than no check at all: a model told the
-lines must equal the total closes the gap by adjusting a line, and a bill that
-has been *made* to add up is the one error this function cannot see.
+The bar above needs a total that is **evidence**: a figure the bill itself
+stated. A till roll prints one, so a photograph with none is a cropped
+photograph and is refused (`checkScan`). The model is never asked to supply
+one: a model told the lines must equal the total closes the gap by adjusting a
+line, and a bill that has been *made* to add up is the one error this function
+cannot see.
 
 #### One faded figure
 
@@ -154,7 +145,7 @@ count × unit price disagrees with its amount, one at a time, and takes the
 product only if that alone squares the bill to the cent. **At most one line**,
 and only when exactly one would do; no combinations are searched. The stated
 total is what vouches for the correction, so a bill that already adds up is
-never touched, a typed bill without a total never is, and a weighed line
+never touched, and a weighed line
 ("0.482 kg @ 2.99") has no whole count and is left as printed.
 
 Two conditions of the *phone* are told apart from that, because neither has
