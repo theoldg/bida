@@ -59,8 +59,9 @@ ciphertext. Kept for good, like a group's log; the bearer is what
 `DELETE` checks, so a split can be taken off the server by whoever holds its link. What is
 copied is the bill's name and total, a line per person, and the link
 (`quickMessage`), written inside the tap — Safari refuses a clipboard written
-after an await — while the upload runs beside it; the check comes up only once
-both landed. Once one has, pressing again only copies — offline too — and
+after an await — while the upload runs beside it. The check comes up as soon
+as the clipboard takes it; only an upload that fails speaks, after. Once one
+has landed, pressing again only copies — offline too — and
 until then an offline phone copies nothing. `/split` draws it read-only, as the answer screen does.
 
 **One credential per phone, not per bill**, minted on first need and kept in

@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-17* — "Just say copied instantly … what's the timeout, like 1
+  second?" It was 15. The guess was the owner's picture of the wait, not a
+  number to set: the answer was the button flipping at once and the upload
+  left silent unless it fails, the timeout untouched.
+
 - *2026-10-17* — "Propose a manual item editor", then a round a reply. "The
   amount field should be editable" meant the count, not the total I'd
   recoloured: a vague noun over a screenshot is a question. And "wow, a whole
@@ -83,8 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   simulator. The reports held it: a list restored by Back reloading for its
   manifest, read as a launch. Playwright turns the page cache off; turning it
   back on reproduced it before the one-line fix.
-
-- *2026-10-16* — "Disable the home screen in in-app browsers, if you can
-  guarantee it never breaks navigation." The honest no came with the 25 ways
-  back to the list counted, and the owner narrowed the ask on the spot: the
-  list hands over all groups, a group only itself.

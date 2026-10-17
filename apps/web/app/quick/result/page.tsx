@@ -20,7 +20,7 @@ import {
   quickSharedSplit, useQuickPeople,
 } from "@/lib/quick";
 import { useScanCredential } from "@/lib/scan/credential";
-import { formatSplitLink, shareSplit } from "@/lib/split-link";
+import { formatSplitLink, shareSplit, type Shared } from "@/lib/split-link";
 
 /**
  * What the bill came to, per person — the end of a quick split (ADR-0035).
@@ -67,22 +67,28 @@ export default function QuickResultPage() {
   const secret = quickLinkSecret(split);
 
   async function hand() {
-    if (sending) return;
     const text = quickMessage(split, formatSplitLink(secret));
-    // Already on the server: the clipboard is all that is left, and it needs
-    // no network — so this works offline, and sends nothing twice.
-    if (quickLinkSent(secret)) return copyAgain(text);
+    // On the server, or on its way: the clipboard is all that is left, and it
+    // needs no network — so this works offline, and sends nothing twice.
+    if (quickLinkSent(secret) || sending) return copyAgain(text);
     // Said at once, and nothing copied: a link to a split that isn't there yet.
     if (navigator.onLine === false) return setNotShared("offline");
     setSending(true);
     // The secret is this phone's, so the link exists before the upload does —
     // and it has to be written now, inside the tap: Safari refuses a
-    // clipboard written after an await. The upload runs beside it.
-    const [copying, sent] = await Promise.allSettled([writeClipboardText(text), shareSplit(secret, split)]);
+    // clipboard written after an await. The upload runs beside it, unwatched:
+    // the check says the clipboard took it, and only a failed upload speaks.
+    const copying = copyAgain(text);
+    const sent = shareSplit(secret, split).catch((): Shared => "offline");
+    await copying;
+    const result = await sent;
     setSending(false);
-    if (sent.status !== "fulfilled" || sent.value !== "shared") return setNotShared("unsent");
+    if (result !== "shared") {
+      // The text on screen would hold a link that won't open: this outranks it.
+      setFailed(undefined);
+      return setNotShared("unsent");
+    }
     markQuickLinkSent(secret);
-    landed(copying.status === "fulfilled", text);
   }
 
   async function copyAgain(text: string) {
@@ -133,8 +139,7 @@ export default function QuickResultPage() {
           <div className="pad" style={{ paddingTop: 18 }}>
             {/* The label flips to a check (`FlipLabel`), on the button itself —
                 nothing else here can say the clipboard took it. */}
-            <button type="button" className="btn btn-p btn-lg" disabled={sending} onClick={() => void hand()}>
-              {sending ? <span className="spinner" /> : null}
+            <button type="button" className="btn btn-p btn-lg" onClick={() => void hand()}>
               <FlipLabel icon="copy" label={copy.quick.copy.label} iconSays={copy.quick.copy.verb}
                 done={copy.quick.copied} on={copied} />
             </button>
