@@ -32,9 +32,9 @@ sentence is the same earnestness, compressed.
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
 - *2026-10-17* — "Just say copied instantly … what's the timeout, like 1
-  second?" It was 15. The guess was the owner's picture of the wait, not a
-  number to set: the answer was the button flipping at once and the upload
-  left silent unless it fails, the timeout untouched.
+  second?" It was 15. Then "publish it as the page shows — argue if you
+  dislike it". Its two costs (a row per answer viewed, a slow upload called
+  failed) said in one breath, then built: "argue" is not "wait".
 
 - *2026-10-17* — "Propose a manual item editor", then a round a reply. "The
   amount field should be editable" meant the count, not the total I'd

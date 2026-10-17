@@ -3,6 +3,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import type { SharedSplit } from "@bida/core";
 import { Card } from "@/components/bits";
 import { Blank, Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog, NoticeDialog } from "@/components/dialog";
@@ -16,11 +17,18 @@ import { route } from "@/lib/group-link";
 import { useFlash } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
 import {
-  markQuickLinkSent, quickLinkSecret, quickLinkSent, quickMessage, quickShares,
-  quickSharedSplit, useQuickPeople,
+  markQuickLinkHanded, quickLinkHanded, quickLinkSecret, quickLinkSent, quickMessage, quickShares,
+  quickSharedSplit, sendQuickLink, useQuickPeople,
 } from "@/lib/quick";
 import { useScanCredential } from "@/lib/scan/credential";
-import { formatSplitLink, shareSplit, type Shared } from "@/lib/split-link";
+import { formatSplitLink, shareSplit } from "@/lib/split-link";
+
+/** How long a press waits on an upload still on its way before saying so. */
+const GRACE_MS = 500;
+
+function send(secret: string, split: SharedSplit): Promise<boolean> {
+  return sendQuickLink(secret, async () => (await shareSplit(secret, split)) === "shared");
+}
 
 /**
  * What the bill came to, per person — the end of a quick split (ADR-0035).
@@ -39,7 +47,6 @@ export default function QuickResultPage() {
   const people = useQuickPeople();
   const draft = useDraft(cred?.id);
   const [copied, setCopied] = useFlash();
-  const [sending, setSending] = useState(false);
   // The message, shown to be held by hand, when the clipboard wouldn't take it.
   const [failed, setFailed] = useState<string>();
   const [notShared, setNotShared] = useState<"offline" | "unsent">();
@@ -59,36 +66,44 @@ export default function QuickResultPage() {
     goUp(route.quick(), (to) => router.replace(to));
   }, [cred, ready, router]);
 
-  if (!cred || !draft || !ready) return <Blank title={copy.quick.split} />;
+  const answer = draft && ready ? quickShares(draft, people) : undefined;
+  const title = draft?.description.trim() ?? "";
+  const split = draft && answer
+    ? quickSharedSplit(title, answer.totalMinor, answer.shares, draft.currency) : undefined;
+  const secret = split ? quickLinkSecret(split) : undefined;
 
-  const { totalMinor, shares } = quickShares(draft, people);
-  const title = draft.description.trim();
-  const split = quickSharedSplit(title, totalMinor, shares, draft.currency);
-  const secret = quickLinkSecret(split);
+  // Sent as the answer appears, not when it is asked for, so that copying is
+  // the whole wait. A failed one goes again when the phone is back online.
+  useEffect(() => {
+    if (!split || !secret) return;
+    const again = () => void send(secret, split);
+    again();
+    window.addEventListener("online", again);
+    return () => window.removeEventListener("online", again);
+    // `split` is new every render; `secret` is what changes when it does.
+  }, [secret]);
+
+  if (!cred || !draft || !answer || !split || !secret) return <Blank title={copy.quick.split} />;
+  const { totalMinor, shares } = answer;
 
   async function hand() {
+    if (!split || !secret) return;
     const text = quickMessage(split, formatSplitLink(secret));
-    // On the server, or on its way: the clipboard is all that is left, and it
-    // needs no network — so this works offline, and sends nothing twice.
-    if (quickLinkSent(secret) || sending) return copyAgain(text);
     // Said at once, and nothing copied: a link to a split that isn't there yet.
-    if (navigator.onLine === false) return setNotShared("offline");
-    setSending(true);
+    if (!quickLinkSent(secret) && navigator.onLine === false) return setNotShared("offline");
     // The secret is this phone's, so the link exists before the upload does —
     // and it has to be written now, inside the tap: Safari refuses a
-    // clipboard written after an await. The upload runs beside it, unwatched:
-    // the check says the clipboard took it, and only a failed upload speaks.
+    // clipboard written after an await.
     const copying = copyAgain(text);
-    const sent = shareSplit(secret, split).catch((): Shared => "offline");
+    // Usually landed long ago. If not, it gets a moment more; past that the
+    // check has said copied, and this says the link won't open yet.
+    const timeout = new Promise<false>((resolve) => setTimeout(() => resolve(false), GRACE_MS));
+    const sent = await Promise.race([send(secret, split), timeout]);
     await copying;
-    const result = await sent;
-    setSending(false);
-    if (result !== "shared") {
-      // The text on screen would hold a link that won't open: this outranks it.
-      setFailed(undefined);
-      return setNotShared("unsent");
-    }
-    markQuickLinkSent(secret);
+    if (sent) return markQuickLinkHanded(secret);
+    // The text on screen would hold a link that won't open: this outranks it.
+    setFailed(undefined);
+    setNotShared(navigator.onLine === false ? "offline" : "unsent");
   }
 
   async function copyAgain(text: string) {
@@ -148,7 +163,7 @@ export default function QuickResultPage() {
             {/* The way out, in the secondary register: the act this screen
                 exists for is the one above it. */}
             <button type="button" className="btn btn-s"
-              onClick={() => (quickLinkSent(secret) ? done() : setAsking(true))}>
+              onClick={() => (quickLinkHanded(secret) ? done() : setAsking(true))}>
               {copy.quick.done}
             </button>
           </div>

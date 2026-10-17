@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { memberIdFor, readSharedSplit } from "@bida/core";
 import { blankDraft, type EntryDraft } from "./draft";
 import {
-  clearQuickPeople, markQuickLinkSent, quickLinkSecret, quickLinkSent, quickMessage, quickShares,
-  quickSharedSplit, type QuickPerson,
+  clearQuickPeople, markQuickLinkHanded, quickLinkHanded, quickLinkSecret, quickLinkSent, quickMessage,
+  quickShares, quickSharedSplit, sendQuickLink, type QuickPerson,
 } from "./quick";
 
 /**
@@ -96,19 +96,46 @@ describe("what the link carries", () => {
     expect(quickLinkSecret(split)).not.toBe(first);
   });
 
-  it("remembers the link was sent until the figures move", () => {
+  it("sends a link once, and remembers it until the figures move", async () => {
     clearQuickPeople();
     const { totalMinor, shares } = quickShares(bill(), PEOPLE);
     const split = quickSharedSplit("Bar Zahra", totalMinor, shares, "EUR");
     const secret = quickLinkSecret(split);
+    let sends = 0;
+    const send = () => { sends += 1; return Promise.resolve(true); };
     expect(quickLinkSent(secret)).toBe(false);
-    markQuickLinkSent(secret);
+    // Asked twice while on its way: one upload, one wait.
+    const [a, b] = await Promise.all([sendQuickLink(secret, send), sendQuickLink(secret, send)]);
+    expect([a, b, sends]).toEqual([true, true, 1]);
     expect(quickLinkSent(quickLinkSecret(split))).toBe(true);
+    await sendQuickLink(quickLinkSecret(split), send);
+    expect(sends).toBe(1);
     const moved = quickLinkSecret({ ...split, title: "Bar Zahra, again" });
     expect(quickLinkSent(moved)).toBe(false);
-    // An old link marked late marks nothing: the server has the new one or none.
-    markQuickLinkSent(secret);
+    // An old link landing late marks nothing: the server has the new one or none.
+    await sendQuickLink(secret, send);
     expect(quickLinkSent(moved)).toBe(false);
+  });
+
+  it("tries again after a failed send, and never on a landed one", async () => {
+    clearQuickPeople();
+    const { totalMinor, shares } = quickShares(bill(), PEOPLE);
+    const secret = quickLinkSecret(quickSharedSplit("", totalMinor, shares, "EUR"));
+    expect(await sendQuickLink(secret, () => Promise.resolve(false))).toBe(false);
+    expect(await sendQuickLink(secret, () => Promise.reject(new Error("no")))).toBe(false);
+    expect(quickLinkSent(secret)).toBe(false);
+    expect(await sendQuickLink(secret, () => Promise.resolve(true))).toBe(true);
+    expect(await sendQuickLink(secret, () => Promise.resolve(false))).toBe(true);
+  });
+
+  it("asks Done only until somebody copied it, not merely uploaded it", async () => {
+    clearQuickPeople();
+    const { totalMinor, shares } = quickShares(bill(), PEOPLE);
+    const secret = quickLinkSecret(quickSharedSplit("", totalMinor, shares, "EUR"));
+    await sendQuickLink(secret, () => Promise.resolve(true));
+    expect(quickLinkHanded(secret)).toBe(false);
+    markQuickLinkHanded(secret);
+    expect(quickLinkHanded(secret)).toBe(true);
   });
 });
 

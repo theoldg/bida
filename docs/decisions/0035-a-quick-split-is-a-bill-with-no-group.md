@@ -56,13 +56,16 @@ row of `splits` once, idempotent on the address and capped at the push's 256 KB
 per op, which a 120-line bill among twelve doesn't approach even undeflated;
 `GET` hands it to anyone holding the address, since what it fetches is
 ciphertext. Kept for good, like a group's log; the bearer is what
-`DELETE` checks, so a split can be taken off the server by whoever holds its link. What is
-copied is the bill's name and total, a line per person, and the link
-(`quickMessage`), written inside the tap — Safari refuses a clipboard written
-after an await — while the upload runs beside it. The check comes up as soon
-as the clipboard takes it; only an upload that fails speaks, after. Once one
-has landed, pressing again only copies — offline too — and
-until then an offline phone copies nothing. `/split` draws it read-only, as the answer screen does.
+`DELETE` checks, so a split can be taken off the server by whoever holds its link.
+**It is uploaded as the answer screen opens**, once per set of figures, so
+that pressing copy is only the clipboard: a row for every answer looked at,
+shared or not, bought an instant copy. What is copied is the bill's name and
+total, a line per person, and the link (`quickMessage`), written inside the
+tap — Safari refuses a clipboard written after an await. The check comes up as
+the clipboard takes it; an upload not landed half a second after the press
+says the link won't open yet, and a failed one goes again on the next press
+or when the phone comes back online. Until one has landed, an offline phone
+copies nothing. `/split` draws it read-only, as the answer screen does.
 
 **One credential per phone, not per bill**, minted on first need and kept in
 the device store. A fresh id per split would write a row for every bill

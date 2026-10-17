@@ -134,7 +134,15 @@ export function quickMessage(split: SharedSplit, link: string): string {
 
 // ------------------------------------------------------------- the link
 
-let link: { figures: string; secret: string; sent: boolean } | undefined;
+let link: {
+  figures: string;
+  secret: string;
+  /** On its way or landed; dropped on a failure, so the next ask tries again. */
+  upload?: Promise<boolean>;
+  sent: boolean;
+  /** Copied by somebody, not merely uploaded: what Done asks about. */
+  handed: boolean;
+} | undefined;
 
 /**
  * The secret this split's link is made of. **One per set of figures**: a
@@ -144,19 +152,40 @@ let link: { figures: string; secret: string; sent: boolean } | undefined;
  */
 export function quickLinkSecret(split: SharedSplit): string {
   const figures = JSON.stringify(split);
-  if (link?.figures !== figures) link = { figures, secret: newGroupSecret(), sent: false };
+  if (link?.figures !== figures) {
+    link = { figures, secret: newGroupSecret(), sent: false, handed: false };
+  }
   return link.secret;
 }
 
 /**
- * Whether the server already holds this link's split. Kept with the secret
- * rather than on the screen, so a trip back to the grid and forward again,
- * with nothing changed, doesn't send it twice.
+ * Put this link's split on the server, once. Kept with the secret rather than
+ * on the screen, so a trip back to the grid and forward again, with nothing
+ * changed, doesn't send it twice; asked again while on its way, it is the same
+ * wait. `send` is `shareSplit`, passed in so this stays testable offline.
  */
+export function sendQuickLink(secret: string, send: () => Promise<boolean>): Promise<boolean> {
+  const held = link?.secret === secret ? link : undefined;
+  if (!held) return send();
+  if (held.upload) return held.upload;
+  const upload: Promise<boolean> = send().catch(() => false).then((ok) => {
+    if (ok) held.sent = true;
+    else if (held.upload === upload) held.upload = undefined;
+    return ok;
+  });
+  held.upload = upload;
+  return upload;
+}
+
+/** Whether the server already holds this link's split. */
 export function quickLinkSent(secret: string): boolean {
   return link?.secret === secret && link.sent;
 }
 
-export function markQuickLinkSent(secret: string): void {
-  if (link?.secret === secret) link.sent = true;
+export function quickLinkHanded(secret: string): boolean {
+  return link?.secret === secret && link.handed;
+}
+
+export function markQuickLinkHanded(secret: string): void {
+  if (link?.secret === secret) link.handed = true;
 }
