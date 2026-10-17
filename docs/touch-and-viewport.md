@@ -61,6 +61,12 @@ fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
   folds is the one to watch, since opening a dialog blurs the field that raised
   the keyboard. This is why the press recorder names a dialog's buttons apart
   from its card: the two targets side by side are the only evidence there is.
+- **Two quick taps can both land before a render**, so a handler built on
+  the render's state takes the first one back — a cell that unticked its
+  neighbour, a `+` that counted one. A `useState` takes an updater, a draft is
+  re-read with `getDraft`, and a controlled editor hands its parent a change to
+  apply (`SplitEditor`'s `onChange`, `WhoHadWhat`'s `save`), not a finished
+  value. `pnpm verify entries` clicks inside one frame.
 - **A press tint is only as tall as the element it is on.** Padding that spaces a row of tappables belongs on the tappables, not on the bar around them: held by the parent, the touch feedback is a short band floating inside a taller bar, which reads as a tap that half landed.
 
 ## The screen, and the keyboard over it

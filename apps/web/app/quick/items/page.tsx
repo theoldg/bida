@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
 import { Blank } from "@/components/chrome";
 import { WhoHadWhat } from "@/components/who-had-what";
 import { copy } from "@/lib/copy";
-import { saveDraft, useDraft } from "@/lib/draft";
+import { getDraft, saveDraft, useDraft } from "@/lib/draft";
 import { bare } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useQuickPeople } from "@/lib/quick";
@@ -51,7 +51,7 @@ export default function QuickItemsPage() {
       title={copy.items.title}
       people={people}
       draft={draft}
-      save={(next) => saveDraft(cred.id, next)}
+      save={(change) => saveDraft(cred.id, change(getDraft(cred.id) ?? draft))}
       format={(minor) => bare(minor, draft.currency)}
       saysCurrency={false}
       onDone={() => router.push(route.quickResult())}

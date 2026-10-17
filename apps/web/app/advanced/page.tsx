@@ -129,7 +129,7 @@ function FreeKeyFold() {
   const { key } = copy.advanced;
   return (
     <div className="installfold">
-      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <button type="button" aria-expanded={open} onClick={() => setOpen((was) => !was)}>
         <Icon name="chev" size={10} className={`kvchev${open ? " on" : ""}`} />
         {key.where}
       </button>

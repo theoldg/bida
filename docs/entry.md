@@ -196,7 +196,7 @@ entry keeps the line where Edit was.
 
 ## Gotchas
 
-- **`patch()` on the draft must merge against the latest saved draft, not the
-  `draft` the render closed over**, or two `patch()` calls in one handler both
-  merge onto the same stale closure and the second undoes the first. `patch()`
-  reads `getDraft(groupId)` itself, so a handler may.
+- **A write builds on the latest state, never the render's** — the form's
+  `patch()` and `changeSplit` read `getDraft`;
+  [touch-and-viewport.md](touch-and-viewport.md#a-touch-is-not-a-click)
+  says why.

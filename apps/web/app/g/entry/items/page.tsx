@@ -9,7 +9,7 @@ import { copy } from "@/lib/copy";
 import { money } from "@/lib/format";
 import { parseEntrySource, route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
-import { saveDraft, useDraft } from "@/lib/draft";
+import { getDraft, saveDraft, useDraft } from "@/lib/draft";
 
 /**
  * Who had what, filled from a receipt scan and reopenable later via "Edit
@@ -74,7 +74,7 @@ function ItemsScreen() {
       title={copy.items.title}
       people={data.members}
       draft={draft}
-      save={(next) => saveDraft(groupId, next)}
+      save={(change) => saveDraft(groupId, change(getDraft(groupId) ?? draft))}
       format={(minor) => money(minor, draft.currency)}
       // Both ways off this screen are the way back onto the form, which is
       // where it was opened from: only what has been written down differs.

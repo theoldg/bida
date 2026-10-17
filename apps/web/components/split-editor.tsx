@@ -49,7 +49,11 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   spec: ArithmeticSplit;
   receiptSplit: SplitSpec | null;
   seed: string;
-  onChange: (next: ArithmeticSplit) => void;
+  /**
+   * A change to the split as it now stands, never a finished one: two taps
+   * inside one frame (an iPhone's, quick) would both start from this render's.
+   */
+  onChange: (change: (latest: ArithmeticSplit) => ArithmeticSplit) => void;
   tab: SplitTab;
   onTabChange: (next: SplitTab) => void;
   receipt: ReceiptTabProps | null;
@@ -64,25 +68,26 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     try { shares = resolveSplit(amountMinor, shown, opts).shares; } catch { /* incomplete */ }
   }
 
-  const rest = new Set(restOf(spec));
   const figures = spec.mode === "exact" ? exactFigures(amountMinor, spec, opts) : {};
-  const restShort = amountMinor > 0 && rest.size > 0 && !validateSplit(amountMinor, spec, opts).ok;
-  const rowOf = (id: Id): AmountRow =>
-    rest.has(id) ? "rest" : spec.mode === "exact" && (spec.amounts[id] ?? 0) > 0 ? "typed" : "out";
+  const restShort = amountMinor > 0 && restOf(spec).length > 0 && !validateSplit(amountMinor, spec, opts).ok;
+  const rowIn = (s: ArithmeticSplit, id: Id): AmountRow =>
+    restOf(s).includes(id) ? "rest" : s.mode === "exact" && (s.amounts[id] ?? 0) > 0 ? "typed" : "out";
+  const rowOf = (id: Id) => rowIn(spec, id);
 
   function toggle(memberId: string) {
-    const next = new Set(included);
-    if (next.has(memberId)) next.delete(memberId); else next.add(memberId);
-    const ids = [...next];
-    switch (spec.mode) {
-      case "equal": return onChange({ mode: "equal", members: ids });
-      case "shares": {
-        const weights = { ...spec.weights };
-        if (next.has(memberId)) weights[memberId] = 1; else delete weights[memberId];
-        return onChange({ mode: "shares", weights });
+    onChange((s) => {
+      const next = new Set(splitParticipants(s));
+      if (next.has(memberId)) next.delete(memberId); else next.add(memberId);
+      switch (s.mode) {
+        case "equal": return { mode: "equal", members: [...next] };
+        case "shares": {
+          const weights = { ...s.weights };
+          if (next.has(memberId)) weights[memberId] = 1; else delete weights[memberId];
+          return { mode: "shares", weights };
+        }
+        case "exact": return s;
       }
-      case "exact": return;
-    }
+    });
   }
 
   const head = !showReceipt && members.length >= 3 ? spec : null;
@@ -92,36 +97,42 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   const partCount = head?.mode === "shares" ? Object.values(head.weights).reduce((a, b) => a + b, 0) : null;
 
   function toggleAll() {
-    if (head) onChange(toggleEveryone(head, members.map((m) => m.id)));
+    if (head) onChange((s) => toggleEveryone(s, members.map((m) => m.id)));
   }
 
   function headLabel(): string {
     return headState === "all" ? copy.split.everyone.out : copy.split.everyone.in;
   }
 
-  function setParts(memberId: string, parts: number) {
-    if (spec.mode !== "shares") return;
-    const weights = { ...spec.weights };
-    const next = Math.min(MAX_PARTS, Math.max(0, parts));
-    if (next === 0) delete weights[memberId]; else weights[memberId] = next;
-    onChange({ mode: "shares", weights });
+  function setParts(memberId: string, parts: (was: number) => number) {
+    onChange((s) => {
+      if (s.mode !== "shares") return s;
+      const weights = { ...s.weights };
+      const next = Math.min(MAX_PARTS, Math.max(0, parts(weights[memberId] ?? 0)));
+      if (next === 0) delete weights[memberId]; else weights[memberId] = next;
+      return { mode: "shares", weights };
+    });
   }
 
   function setExact(memberId: string, minor: number) {
-    if (spec.mode !== "exact") return;
-    const amounts = { ...spec.amounts };
-    const others = restOf(spec).filter((id) => id !== memberId);
-    if (minor > 0) amounts[memberId] = minor;
-    else delete amounts[memberId];
-    onChange(exactSpec(amounts, minor > 0 ? others : [...others, memberId]));
+    onChange((s) => {
+      if (s.mode !== "exact") return s;
+      const amounts = { ...s.amounts };
+      const others = restOf(s).filter((id) => id !== memberId);
+      if (minor > 0) amounts[memberId] = minor;
+      else delete amounts[memberId];
+      return exactSpec(amounts, minor > 0 ? others : [...others, memberId]);
+    });
   }
 
   function tapRow(memberId: string) {
-    if (spec.mode !== "exact") return;
-    const amounts = { ...spec.amounts };
-    delete amounts[memberId];
-    const others = restOf(spec).filter((id) => id !== memberId);
-    onChange(exactSpec(amounts, rowOf(memberId) === "out" ? [...others, memberId] : others));
+    onChange((s) => {
+      if (s.mode !== "exact") return s;
+      const amounts = { ...s.amounts };
+      delete amounts[memberId];
+      const others = restOf(s).filter((id) => id !== memberId);
+      return exactSpec(amounts, rowIn(s, memberId) === "out" ? [...others, memberId] : others);
+    });
   }
 
   return (
@@ -159,7 +170,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
             const parts = spec.mode === "shares" ? spec.weights[m.id] ?? 0 : 0;
             const end = spec.mode === "shares" ? (
               <span className="partsend">
-                <button type="button" className="partsstep" onClick={() => setParts(m.id, parts - 1)}
+                <button type="button" className="partsstep" onClick={() => setParts(m.id, (was) => was - 1)}
                   disabled={parts === 0} aria-label={copy.split.fewerParts(m.name)}>
                   <Icon name="minus" size={9} />
                 </button>
@@ -167,8 +178,8 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
                   enterKeyHint={i === members.length - 1 ? "done" : "next"}
                   aria-label={copy.split.partsFor(m.name)}
                   value={parts} placeholder="0"
-                  onChangeValue={(n) => setParts(m.id, n)} />
-                <button type="button" className="partsstep" onClick={() => setParts(m.id, parts + 1)}
+                  onChangeValue={(n) => setParts(m.id, () => n)} />
+                <button type="button" className="partsstep" onClick={() => setParts(m.id, (was) => was + 1)}
                   disabled={parts >= MAX_PARTS} aria-label={copy.split.moreParts(m.name)}>
                   <Icon name="plus" size={9} />
                 </button>

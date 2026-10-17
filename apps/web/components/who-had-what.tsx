@@ -41,7 +41,8 @@ export function WhoHadWhat({
   title: string;
   people: readonly { id: string; name: string }[];
   draft: EntryDraft;
-  save: (draft: EntryDraft) => void;
+  /** A change to the draft as it now stands — quick taps outrun a render. */
+  save: (change: (latest: EntryDraft) => EntryDraft) => void;
   format: (minor: number) => string;
   /**
    * A quick split prints no symbol, so the tip's label must not name one to a
@@ -116,27 +117,32 @@ export function WhoHadWhat({
     if (split.items.length === items.length) { setAssignments(rows); return; }
     const widened = split.from.map((i) => new Set(rows[i]));
     setAssignments(widened);
-    save({
-      ...draft,
+    save((latest) => ({
+      ...latest,
       receiptItems: split.items,
       ...(saved ? { receiptAssignments: widened.map((row) => [...row]) } : {}),
-    });
+    }));
   }, [people, items, draft, save, fixedTable]);
 
   const labels = distinctInitials(people);
   const runs = portions(items);
 
   // Taking somebody out takes back their items, since a hidden column can't be
-  // corrected. The last one there can't be taken away.
+  // corrected. The last one there can't be taken away. Read off a ref for the
+  // same quick taps as the cells': the ticks it takes back depend on the answer.
+  const involvedNow = useRef(involved);
+  involvedNow.current = involved;
   function toggleInvolved(memberId: string) {
-    const adding = !involved.has(memberId);
-    if (!adding && involved.size === 1) return;
+    const was = involvedNow.current;
+    const adding = !was.has(memberId);
+    if (!adding && was.size === 1) return;
     setTouched(true);
-    const nextInvolved = new Set(involved);
+    const nextInvolved = new Set(was);
     if (adding) nextInvolved.add(memberId); else nextInvolved.delete(memberId);
+    involvedNow.current = nextInvolved;
     setInvolved(nextInvolved);
     if (adding) return;
-    setAssignments(assignments.map((row) => {
+    setAssignments((was) => was.map((row) => {
       const next = new Set(row);
       next.delete(memberId);
       return next;
@@ -152,9 +158,12 @@ export function WhoHadWhat({
   const showPortions = (start: number) =>
     setOpen((was) => new Set(was).add(start));
 
+  // Every toggle reads the grid as it now stands, not as this render drew it:
+  // an iPhone's quick taps can land twice before a render, and the second
+  // would undo the first.
   function toggleCell(itemIndex: number, memberId: string) {
     setTouched(true);
-    setAssignments(assignments.map((row, i) => {
+    setAssignments((was) => was.map((row, i) => {
       if (i !== itemIndex) return row;
       const next = new Set(row);
       if (next.has(memberId)) next.delete(memberId); else next.add(memberId);
@@ -167,18 +176,20 @@ export function WhoHadWhat({
    * refuses — there the tap could mean either portion.
    */
   function toggleEveryone(start: number, count: number) {
-    const ids = involvedMembers.map((m) => m.id);
+    const ids = people.filter((m) => involvedNow.current.has(m.id)).map((m) => m.id);
     if (ids.length === 0) return;
     setTouched(true);
-    const everyone = assignments.slice(start, start + count)
-      .every((row) => ids.every((id) => row.has(id)));
-    setAssignments(assignments.map((row, i) =>
-      i < start || i >= start + count ? row : new Set(everyone ? [] : ids)));
+    setAssignments((was) => {
+      const everyone = was.slice(start, start + count)
+        .every((row) => ids.every((id) => row.has(id)));
+      return was.map((row, i) =>
+        i < start || i >= start + count ? row : new Set(everyone ? [] : ids));
+    });
   }
 
   function toggleRun(start: number, count: number, memberId: string, had: boolean) {
     setTouched(true);
-    setAssignments(assignments.map((row, i) => {
+    setAssignments((was) => was.map((row, i) => {
       if (i < start || i >= start + count) return row;
       const next = new Set(row);
       if (had) next.delete(memberId); else next.add(memberId);
@@ -329,12 +340,12 @@ export function WhoHadWhat({
   // **This screen writes only the raw grid**; the total and split are derived
   // where needed, so nothing drifts. ADR-0016.
   function keep() {
-    save({
-      ...draft,
+    save((latest) => ({
+      ...latest,
       receiptInvolved: [...involved],
       receiptAssignments: assignments.map((row) => [...row]),
       splitTab: "receipt",
-    });
+    }));
   }
 
   function mayLeave() {
@@ -344,7 +355,8 @@ export function WhoHadWhat({
   }
 
   function discard() {
-    if (opened.current) save({ ...draft, ...opened.current });
+    const was = opened.current;
+    if (was) save((latest) => ({ ...latest, ...was }));
     onBack();
   }
 
@@ -355,7 +367,7 @@ export function WhoHadWhat({
   const translate = hasTranslation(items, draft.receiptDiscounts) ? (
     <button type="button" className={`iconbtn${english ? " lit" : ""}`}
       // Not a touch: a way of reading the bill, which leaving keeps.
-      onClick={() => save({ ...draft, receiptEnglish: english ? null : true })}
+      onClick={() => save((latest) => ({ ...latest, receiptEnglish: latest.receiptEnglish ? null : true }))}
       aria-pressed={english} title={copy.items.translate[english ? "off" : "on"]}
       aria-label={copy.items.translate[english ? "off" : "on"]}>
       <Icon name="translate" size={17} />
@@ -521,7 +533,7 @@ export function WhoHadWhat({
                       </span>
                       {row.of > 1 && (openDiscounts ? i === 0 : true) ? (
                         <button className={`itemfold${openDiscounts ? " on" : ""}`}
-                          onClick={() => setOpenDiscounts(!openDiscounts)}
+                          onClick={() => setOpenDiscounts((was) => !was)}
                           title={openDiscounts
                             ? copy.items.mergeDiscounts(row.of) : copy.items.splitDiscounts(row.of)}
                           aria-label={openDiscounts
@@ -567,7 +579,7 @@ export function WhoHadWhat({
                       value={draft.receiptTip ?? ""}
                       onChange={(text) => {
                         setTouched(true);
-                        save({ ...draft, receiptTip: text || null });
+                        save((latest) => ({ ...latest, receiptTip: text || null }));
                       }} />
                     <Icon name="edit" size={11} className="tipedit" />
                   </span>

@@ -208,7 +208,7 @@ export function LedgerInstall({ groupId }: { groupId: string }) {
   const due = useDueOffer();
   const [open, setOpen] = useState(false);
   if (isDemo(groupId) || !due) return null;
-  return <DueOffer due={due} groupId={groupId} open={open} onToggle={() => setOpen(!open)} />;
+  return <DueOffer due={due} groupId={groupId} open={open} onToggle={() => setOpen((was) => !was)} />;
 }
 
 /** Never a `<Link>`: the router drops the fragment, which is the invites (docs/ios.md#gotchas). */

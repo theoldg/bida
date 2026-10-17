@@ -14,7 +14,7 @@ import { copy } from "@/lib/copy";
 import { bare, money, payerProblemText } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
-import { draftAmountMinor, saveDraft, useDraft } from "@/lib/draft";
+import { draftAmountMinor, getDraft, saveDraft, useDraft, type EntryDraft } from "@/lib/draft";
 import { tapAmount, tapLabel } from "@/lib/tap-amount";
 import { useRefusal } from "@/lib/refusal";
 
@@ -79,7 +79,8 @@ function PayersScreen() {
 
   // A draft with no `payers` yet means the ordinary one-payer expense; show it
   // as that person holding the whole amount rather than as an empty table.
-  const spec: Record<string, number> = draft.payers ?? { [draft.paidBy]: amountMinor };
+  const specOf = (d: EntryDraft): Record<string, number> => d.payers ?? { [d.paidBy]: draftAmountMinor(d) };
+  const spec = specOf(draft);
   const check = validatePayers(amountMinor, spec);
   addsUp.current = check.ok;
 
@@ -89,10 +90,13 @@ function PayersScreen() {
    * from, `paidBy` unchanged — never an all-zero map.
    */
   function setAmount(memberId: string, minor: number) {
-    const next = { ...spec };
+    // The draft as it now stands: two quick taps can land inside one render.
+    const latest = getDraft(gid) ?? current;
+    const amountMinor = draftAmountMinor(latest);
+    const next = { ...specOf(latest) };
     if (minor > 0) next[memberId] = minor; else delete next[memberId];
     if (Object.values(next).every((v) => (v ?? 0) === 0)) {
-      saveDraft(gid, { ...current, payers: null });
+      saveDraft(gid, { ...latest, payers: null });
       return;
     }
     // One person holding the whole amount is the single payer the form draws
@@ -100,13 +104,13 @@ function PayersScreen() {
     // later change of amount held Save over figures nobody can see.
     const ids = Object.keys(next);
     if (ids.length === 1 && next[ids[0]!] === amountMinor) {
-      saveDraft(gid, { ...current, payers: null, paidBy: ids[0]! });
+      saveDraft(gid, { ...latest, payers: null, paidBy: ids[0]! });
       return;
     }
     // Same rule the fold keeps `paidBy` by (core/payers.ts): the largest
     // contributor is who the entry names outside this screen — the picker,
     // the row's avatar, history's summary line.
-    saveDraft(gid, { ...current, payers: next, paidBy: primaryPayer(next, current.paidBy) });
+    saveDraft(gid, { ...latest, payers: next, paidBy: primaryPayer(next, latest.paidBy) });
   }
 
   /** Leaving throws this screen's edits away, so ask first — as the form does. */
@@ -120,7 +124,7 @@ function PayersScreen() {
 
   function discard() {
     const was = opened.current;
-    if (was) saveDraft(gid, { ...current, payers: was.payers, paidBy: was.paidBy });
+    if (was) saveDraft(gid, { ...(getDraft(gid) ?? current), payers: was.payers, paidBy: was.paidBy });
     goBack(() => router.back(), (to) => router.replace(to));
   }
 
@@ -131,10 +135,12 @@ function PayersScreen() {
    * would look like it did nothing. Done refuses until someone is tapped in.
    */
   function tapRow(memberId: string, fieldId: string) {
-    const tap = tapAmount(spec, memberId, amountMinor);
+    const latest = getDraft(gid) ?? current;
+    const spec = specOf(latest);
+    const tap = tapAmount(spec, memberId, draftAmountMinor(latest));
     if (tap === "edit") { document.getElementById(fieldId)?.focus(); return; }
     const others = Object.keys(spec).some((id) => id !== memberId && (spec[id] ?? 0) > 0);
-    if (tap.set === 0 && !others) { saveDraft(gid, { ...current, payers: {} }); return; }
+    if (tap.set === 0 && !others) { saveDraft(gid, { ...latest, payers: {} }); return; }
     setAmount(memberId, tap.set);
   }
 

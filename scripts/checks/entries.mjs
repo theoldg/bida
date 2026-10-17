@@ -719,7 +719,37 @@ const share = await firstShare.getAttribute("placeholder");
 report(cleared === "" && outRow && sharing && await firstShare.inputValue() === "" && /\d/.test(share),
   "the cross beside a figure clears it and leaves the row out, and the plus brings it back sharing",
   `out: ${outRow}, then sharing ${share}`);
+
+// Taps faster than a render — an iPhone's — each build on the last, not on
+// the split this render drew.
+await page.getByRole("button", { name: "As parts" }).click();
+await settle(page, 80);
+const parts = page.locator("input.partsin").first();
+const partsBefore = Number(await parts.inputValue() || 0);
+await page.evaluate(() => {
+  const more = document.querySelector("button.partsstep[aria-label^='More parts']");
+  more.click(); more.click();
+});
+await settle(page, 80);
+report(Number(await parts.inputValue()) === partsBefore + 2, "two quick + taps add two parts",
+  `${partsBefore} → ${await parts.inputValue()}`);
 await page.getByRole("button", { name: "Evenly" }).click();
+await settle(page, 80);
+const inBefore = await page.locator(".splitrow.inrow").count();
+await page.evaluate(() => {
+  const [one, two] = document.querySelectorAll(".splitrow > button");
+  one.click(); two.click();
+});
+await settle(page, 80);
+const inAfter = await page.locator(".splitrow.inrow").count();
+await page.evaluate(() => {
+  const [one, two] = document.querySelectorAll(".splitrow > button");
+  one.click(); two.click();
+});
+await settle(page, 80);
+report(inAfter === inBefore - 2 && await page.locator(".splitrow.inrow").count() === inBefore,
+  "two quick taps on two people take both out, and put both back",
+  `${inBefore} in → ${inAfter} → ${await page.locator(".splitrow.inrow").count()}`);
 
 await page.locator("#paidby").click();
 await page.getByRole("option", { name: "Multiple people" }).click();
@@ -768,6 +798,21 @@ report(await page.locator(".itemtable tbody tr[class*='flash-'] .itemname").coun
 await settle(page, 900);
 report(await page.locator(".itemtable tbody tr[class*='flash-']").count() === 0,
   "and that flash ends too, so Done comes back");
+
+// Taps faster than a render — an iPhone's — each build on the one before: the
+// third, read off the first's grid, took the second's tick back with it.
+const tapped = await page.evaluate(() => {
+  const [one, two] = [...document.querySelectorAll(".itemtable tbody tr")]
+    .map((tr) => tr.querySelector("button.itemcell")).filter(Boolean);
+  two.click(); one.click(); two.click();
+  // A line's own tap is everybody, then nobody.
+  const line = document.querySelectorAll(".itemtable tbody tr button.itemtext")[1];
+  line.click(); line.click();
+  return new Promise((done) => requestAnimationFrame(() =>
+    done([one, two].map((b) => b.getAttribute("aria-pressed")))));
+});
+report(tapped.join() === "true,false", "taps faster than a render each build on the last",
+  `item 1, item 2 pressed: ${tapped.join(", ")}`);
 
 // ---- a screen whose draft is gone hands back -------------------------
 for (const [name, path] of [["payers", "/g/payers"], ["who had what", "/g/entry/items"]]) {

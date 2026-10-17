@@ -220,8 +220,9 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     patch(changeSplitTab(getDraft(groupId) ?? draft, splitTab));
   }
 
-  function changeSplit(split: ArithmeticSplit) {
-    patch({ splits: withSplit((getDraft(groupId) ?? draft).splits, split) });
+  function changeSplit(change: (latest: ArithmeticSplit) => ArithmeticSplit) {
+    const latest = getDraft(groupId) ?? draft;
+    patch({ splits: withSplit(latest.splits, change(arithmeticSplit(latest))) });
   }
 
   /** Only an expense has Items: any other kind leaves it for Evenly. */
@@ -229,7 +230,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
     if (next === kind) return;
     patch({
       kind: next,
-      ...(activeTab === "receipt" && next !== "expense" ? changeSplitTab(draft, "equal") : {}),
+      ...(activeTab === "receipt" && next !== "expense" ? changeSplitTab(getDraft(groupId) ?? draft, "equal") : {}),
     });
   }
 

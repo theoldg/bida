@@ -58,7 +58,7 @@ let unfolded = false;
 export function EmbeddedBanner() {
   const [open, setOpen] = useState(unfolded);
   if (!useEmbedded() || NOTHING_HELD.test(location.pathname)) return null;
-  const toggle = () => { unfolded = !open; setOpen(!open); };
+  const toggle = () => { unfolded = !unfolded; setOpen(unfolded); };
   return (
     <div className="banner webview">
       <KeepInAddress />
