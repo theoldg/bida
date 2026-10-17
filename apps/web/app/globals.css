@@ -474,10 +474,10 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .appbody > .whodock { flex: none; background: var(--card);
   padding-bottom: calc(var(--kb) + max(12px, env(safe-area-inset-bottom))) }
 .appbody > .whodock:has(+ .inappdock) { padding-bottom: calc(var(--kb) + 14px) }
+/* No room of its own past the last row, keys or not: on a list that fits, the
+   dock sits right under it, and room arriving with the keys pushes the act
+   down under the thumb. The dock's top padding is the air. */
 .scroll:has(+ .whodock) { flex: 0 1 auto; padding-bottom: 0; scroll-padding-bottom: 0 }
-/* With the keys up the add row is the last thing above the dock, so room to
-   scroll it clear of the dock rather than flush on it. */
-:root[data-kb] .scroll:has(+ .whodock) { padding-bottom: 14px }
 .itemscroll:has(+ .whodock) { flex: 0 1 auto }
 .inappdock { flex: none; padding: 10px 16px max(12px, env(safe-area-inset-bottom)) }
 :root[data-kb] .inappdock { display: none }

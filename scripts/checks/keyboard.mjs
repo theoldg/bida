@@ -72,18 +72,17 @@ async function closeKeyboard() {
   await scrollSettled();
 }
 
-/** What the row keeps between itself and the dock: flush reads as cut off. */
+/** What the row keeps between itself and the act: flush reads as cut off. */
 const AIR = 8;
 
 async function clears(label, actSelector) {
   const seen = await page.evaluate((selector) => {
     const input = document.querySelector(".addname");
     const act = document.querySelector(selector);
-    // The row's whole box, against the foot of the scroller it lives in: a
-    // field in view whose box and plus are cut off by the dock still reads as
-    // clipped.
+    // The row's whole box, against the act under it: a field in view whose box
+    // and plus are cut off by the dock still reads as clipped. The dock's own
+    // edge is the colour of the page, so the act is what the row is seen against.
     const row = input?.closest(".addrow");
-    const scroll = input?.closest(".scroll");
     if (!input || !act) return { missing: !input ? "add row" : selector };
     const kb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--kb"));
     // The foot of what is visible, not the shell's foot less `--kb`, which would
@@ -94,8 +93,8 @@ async function clears(label, actSelector) {
       kb, up: document.documentElement.hasAttribute("data-kb"),
       act: Math.round(keys - act.getBoundingClientRect().bottom),
       field: Math.round(keys - input.getBoundingClientRect().bottom),
-      row: row && scroll
-        ? Math.round(scroll.getBoundingClientRect().bottom - row.getBoundingClientRect().bottom) : 0,
+      row: row
+        ? Math.round(act.getBoundingClientRect().top - row.getBoundingClientRect().bottom) : 0,
     };
   }, actSelector);
   // `data-kb`, not `--kb`: Android pays none.
@@ -104,6 +103,47 @@ async function clears(label, actSelector) {
     ? `no ${seen.missing} on this screen`
     : `keys ${seen.up ? "up" : "NOT SEEN"}, ${seen.kb}px paid, act ${seen.act}px above them, field ${seen.field}px, row ${seen.row}px clear`);
 }
+
+/**
+ * On a list short enough to fit, the act sits right under the add row, so any
+ * room the keys give the scroller pushes it down under the thumb.
+ */
+async function stays(label, actSelector, raise) {
+  const top = () => page.evaluate((selector) =>
+    Math.round(document.querySelector(selector).getBoundingClientRect().top), actSelector);
+  const before = await top();
+  const lower = await raise();
+  const after = await top();
+  report(after === before, label, `act at ${before}px, ${after}px with the keys up`);
+  await lower();
+}
+
+// ---- a short list, both ways the keys arrive ----------------------------
+// Tall enough that the list fits above the keys too: one that doesn't is
+// squeezed, and lifts the act whatever the scroller pays.
+const phone = page.viewportSize();
+await page.setViewportSize({ width: phone.width, height: phone.height + KB });
+await page.goto(`${base}/quick`);
+await page.waitForSelector(".addname");
+// A name filed before the split's credential has loaded is dropped, and with
+// no rows the list proves nothing: file each until its row is there.
+for (const [i, who] of CROWD.slice(0, 2).entries()) {
+  const end = Date.now() + PATIENCE;
+  for (;;) {
+    await field().fill(who);
+    await page.keyboard.press("Enter");
+    const filed = await page.waitForFunction(
+      (n) => document.querySelectorAll(".rows .rtitle").length === n, i + 1, { timeout: 500 },
+    ).then(() => true, () => false);
+    if (filed) break;
+    if (Date.now() > end) throw new Error(`${who} was never filed on /quick`);
+  }
+}
+await page.evaluate(() => document.activeElement?.blur?.());
+await stays("a short list — the act stays put as the keys rise", ".btn-pair",
+  async () => { await openKeyboard(); return closeKeyboard; });
+await stays("a short list — and on Android, where the page shrinks", ".btn-pair", shrinkForKeyboard);
+await page.setViewportSize(phone);
 
 // ---- creating a group ---------------------------------------------------
 await page.goto(`${base}/new`);

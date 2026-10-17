@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-17* — "All non-docked buttons travel slightly down when the
+  keyboard opens", on both phones. It was this morning's fix for the add row:
+  air that came only with the keys. Its check knew only a crowded list; the
+  short one, where the act sits on the row, is the one a thumb meets first.
+
 - *2026-10-17* — "So if the grid has the translation toggled on, the
   editable item names should be the English ones, right": a question that was
   the request. The display was the easy half; what a typed name saves was the
@@ -83,8 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-16* — "Does this make sense, to get rid of the top-bar blur?", a
   test on iOS 27 that contradicted our Gotcha's "always". Their phone outranks
   the doc: the build is their finding plus the doc rewritten, checked by them.
-
-- *2026-10-16* — "The notification toggle freezes", a /diag pasted: its
-  order held the cause, a hung call queuing every tap. My cut-off fixed the
-  hang, not the wait — "works but janky and slow". The level should never
-  have waited on the browser at all.

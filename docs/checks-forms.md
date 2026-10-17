@@ -60,11 +60,13 @@ it — `visualViewport.height` — and everything after that is the app's own:
 `gapOf` calls the gap a keyboard, `--kb` is paid, and the scroll is the one
 `components/viewport.tsx` makes. The assertion is what a thumb cares about, the
 field *and* the act still above the top of the keys, and the add row's whole
-box clear of the dock — the caret in view while its box and plus sat under the
+box clear of the act — the caret in view while its box and plus sat under the
 dock passed every check. The list is ten people
 deep on every screen on purpose: three fit above a keyboard whatever the scroll
 does, and a check that passes with the fix deleted is worse than none — with
-the dock's `--kb` padding gone, all five assertions fail.
+the dock's `--kb` padding gone, all five assertions fail. The one short list
+is the opposite case, on a phone tall enough that it fits above the keys: there
+the act must not move at all as they rise, on either fake.
 
 The confirm key is the other half, and it needs no faking — a headless browser
 presses Enter like any other. It walks the columns the fix is really for,
