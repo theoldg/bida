@@ -8,8 +8,9 @@ grid starts from is [scan-reading.md](scan-reading.md).*
 ## The grid
 
 `normalizeScan` uses none of `lineItems`, `tip`, `tax` or `discounts`. `/g/entry/items` does —
-reached by tapping the Items tab's button — "Assign who had what" on a bill
-nobody has been given a line of, "Edit who-had-what" once somebody has —
+reached by tapping the Items tab's button — "Edit who-had-what" once every
+line has somebody (`billAssigned`), "Assign who had what" until then, Save
+refusing on it —
 building the grid that becomes a `receipt` split — its own mode, which is why
 no screen has to ask a second field whether a split came off a bill
 ([ADR-0016](decisions/0016-receipts.md)). The screen is **one scroller**: who

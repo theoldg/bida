@@ -131,9 +131,19 @@ function showsReceipt(draft: EntryDraft): boolean {
     && draft.splitTab === "receipt" && (draft.receiptItems?.length ?? 0) > 0;
 }
 
+/**
+ * Every line has somebody. Asked of the draft, not just "anybody ticked": an
+ * item added in Bill items after the grid comes back with nobody on it.
+ */
+export function billAssigned(draft: Pick<EntryDraft, "receiptItems" | "receiptAssignments">): boolean {
+  const items = draft.receiptItems ?? [];
+  const rows = draft.receiptAssignments ?? [];
+  return items.length > 0 && rows.length === items.length && rows.every((row) => row.length > 0);
+}
+
 /** Null until the grid is filled. Never written into the draft: the grid is the record. */
 export function draftReceiptSplit(draft: EntryDraft): SplitSpec | null {
-  if (!showsReceipt(draft)) return null;
+  if (!showsReceipt(draft) || !billAssigned(draft)) return null;
   const { weights } = receiptBill(
     draft,
     draft.receiptItems ?? [],

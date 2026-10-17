@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-17* — "Adding an item to an already split bill accepts saving
+  without assignment!" The cause was ten commits ahead of my clone: pull
+  before tracing, or a bug in code you can't see reads as no bug. The fix
+  was one question asked in two places, not two answers.
+
 - *2026-10-17* — "Replace the trashcan … everywhere (new group, who am i, …)".
   The who-am-I list never had one; the list was the owner's map of where to
   look, not a promise each stop holds a bin. Three screens moved, one said so.
@@ -83,8 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   a /diag from the demo. The trace showed a re-seed restoring a claim; grey
   meant "not yours" on every row, so the claim named nobody — someone the
   visitor had added. The check reproduced it red before the fix.
-
-- *2026-10-16* — "Propose a cheap way to make it more desktop friendly", then
-  a tool call rejected mid-read: a screenshot was coming, and "propose" meant
-  words first. Of my three steps the shot dropped one — inset dividers would
-  have fought the full-width day bands.

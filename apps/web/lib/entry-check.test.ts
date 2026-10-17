@@ -161,6 +161,20 @@ describe("checkEntry", () => {
       expect(c.receiptMissing).toBe(true);
     });
 
+    it("holds Save on a split bill given an item nobody has", () => {
+      // Bill items keeps who had each line it already had; the one typed in
+      // comes back with nobody, which no split can stand on.
+      const c = check(expense({
+        splitTab: "receipt",
+        receiptItems: [...items, { label: "Wine", amount: "20.00" }],
+        receiptInvolved: [THEO, MARIE],
+        receiptAssignments: [[THEO], [MARIE], []],
+      }));
+      expect(c.receiptSplit).toBeNull();
+      expect(c.ready).toBe(false);
+      expect(c.receiptMissing).toBe(true);
+    });
+
     it("derives the amount and the split once the grid is filled in", () => {
       const c = check(expense({
         amountText: "1.00", // ignored: the bill is what the entry is worth

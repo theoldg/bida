@@ -105,7 +105,9 @@ words would be no correction.
   printed line opens on its unit price where its count divides it — where it
   doesn't, on the total printed, so no cent moves.
 - **Done writes the bill whole**; Back with changes asks first. Whoever had a
-  line keeps it through a rename, a new price or a new count (`billFromRows`),
+  line keeps it through a rename, a new price or a new count (`billFromRows`);
+  a line new here has nobody, so the bill is unassigned again until the grid
+  gives it somebody ([who-had-what.md](who-had-what.md#the-grid)),
   the bill's tip, tax and discounts stay, and the amount follows the bill.
   Payers typed as amounts don't follow: what each paid is a fact, so a bill
   that moves under them is refused on the form with Paid by blooming

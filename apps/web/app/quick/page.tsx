@@ -14,7 +14,7 @@ import { copy } from "@/lib/copy";
 import { plural } from "@/lib/format";
 import { printedCount } from "@/lib/scan/items";
 import { db } from "@/lib/db/dexie";
-import { blankDraft, getDraft, seedDraft, useDraft } from "@/lib/draft";
+import { billAssigned, blankDraft, getDraft, seedDraft, useDraft } from "@/lib/draft";
 import { route } from "@/lib/group-link";
 import { useDevice } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
@@ -92,7 +92,7 @@ export default function QuickPage() {
   // A bill already read, by a scan just now or before a Back from the grid:
   // the way forward is the grid, not another photo.
   const bill = draft?.receiptItems ?? [];
-  const ticked = (draft?.receiptAssignments ?? []).some((row) => row.length > 0);
+  const ticked = !!draft && billAssigned(draft);
   const reading = scan.live?.state === "scanning";
   const typed = people.length > 0 || typing !== null || bill.length > 0 || reading;
 
