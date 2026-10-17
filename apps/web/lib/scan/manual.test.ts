@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ReceiptItem } from "@bida/core";
 import {
-  billFromRows, blankRow, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, setCount, setTotal, setUnit,
+  billFromRows, blankRow, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, setCount, setTotal, setUnit,
 } from "./manual";
 import { unfoldAll } from "./items";
 
@@ -66,7 +66,7 @@ describe("rows and the draft's bill", () => {
   ], "EUR").items;
 
   it("opens folded, and saves back to the same bill untouched", () => {
-    const rows = rowsFromBill(bill, "EUR");
+    const rows = rowsFromBill(bill, "EUR", false);
     expect(rows.map((r) => [r.label, r.count, r.totalText, r.unitText]))
       .toEqual([["Soda", 3, "9.00", "3.00"], ["Tagine", 1, "14.50", "14.50"]]);
     const back = billFromRows(rows, { items: bill, assignments: null }, "EUR");
@@ -75,20 +75,38 @@ describe("rows and the draft's bill", () => {
   });
 
   it("opens a line that doesn't divide on its printed total", () => {
-    const [salad] = rowsFromBill(unfoldAll([{ label: "Salad", amount: "10.00", quantity: 3 }], "EUR").items, "EUR");
+    const [salad] = rowsFromBill(unfoldAll([{ label: "Salad", amount: "10.00", quantity: 3 }], "EUR").items, "EUR", false);
     expect(salad).toMatchObject({ by: "total", totalText: "10.00", unitText: "3.33" });
     expect(rowMinor(setCount(salad!, 4, "EUR"), "EUR")).toBe(1000);
   });
 
   it("forgets a translation once the label is retyped", () => {
-    const [soda, tagine] = rowsFromBill(bill, "EUR");
+    const [soda, tagine] = rowsFromBill(bill, "EUR", false);
     const back = billFromRows([soda!, { ...tagine!, label: "Couscous" }], { items: bill, assignments: null }, "EUR");
     expect(back.items.at(-1)).toMatchObject({ label: "Couscous", labelEn: null });
   });
 
+  it("names each line as the bill is read, with the other name under it until retyped", () => {
+    const printed = rowsFromBill(bill, "EUR", false);
+    expect(printed.map((r) => [r.label, otherName(r)])).toEqual([["Soda", null], ["Tagine", "Lamb stew"]]);
+    const english = rowsFromBill(bill, "EUR", true);
+    expect(english.map((r) => [r.label, otherName(r)])).toEqual([["Soda", null], ["Lamb stew", "Tagine"]]);
+    expect(otherName({ ...english[1]!, label: "Lamb stew " })).toBe("Tagine");
+    expect(otherName({ ...english[1]!, label: "Beef stew" })).toBeNull();
+  });
+
+  it("saves an untouched English name back as both, and a typed one as the only name", () => {
+    const [soda, stew] = rowsFromBill(bill, "EUR", true);
+    expect(billFromRows([soda!, stew!], { items: bill, assignments: null }, "EUR").items).toEqual(bill);
+    const typed = billFromRows([soda!, { ...stew!, label: "Beef stew" }], { items: bill, assignments: null }, "EUR");
+    expect(typed.items.at(-1)).toMatchObject({ label: "Beef stew", labelEn: null });
+    const back = billFromRows([soda!, { ...stew!, label: "Lamb stew" }], { items: bill, assignments: null }, "EUR");
+    expect(back.items.at(-1)).toMatchObject({ label: "Tagine", labelEn: "Lamb stew" });
+  });
+
   it("carries who had a line through a rename, a reprice and a new count", () => {
     const assignments = [["a"], ["a"], ["a"], ["b", "c"]];
-    const [soda, tagine] = rowsFromBill(bill, "EUR");
+    const [soda, tagine] = rowsFromBill(bill, "EUR", false);
     const rows = [setCount(soda!, 2, "EUR"), setTotal({ ...tagine!, label: "Stew" }, "15", "EUR"), setTotal(named("Bread"), "2", "EUR")];
     const back = billFromRows(rows, { items: bill, assignments }, "EUR");
     expect(back.items.map((i) => i.amount)).toEqual(["3.00", "3.00", "15.00", "2.00"]);
@@ -97,7 +115,7 @@ describe("rows and the draft's bill", () => {
 
   it("keeps portions apart while their count holds, and drops them when it moves", () => {
     const assignments = [["a"], ["b"], ["c"], []];
-    const [soda, tagine] = rowsFromBill(bill, "EUR");
+    const [soda, tagine] = rowsFromBill(bill, "EUR", false);
     expect(billFromRows([soda!, tagine!], { items: bill, assignments }, "EUR").assignments)
       .toEqual([["a"], ["b"], ["c"], []]);
     expect(billFromRows([setCount(soda!, 4, "EUR")], { items: bill, assignments }, "EUR").assignments)
@@ -106,7 +124,7 @@ describe("rows and the draft's bill", () => {
 
   it("follows a line that moved when one above it was removed", () => {
     const assignments = [["a"], ["a"], ["a"], ["b"]];
-    const [, tagine] = rowsFromBill(bill, "EUR");
+    const [, tagine] = rowsFromBill(bill, "EUR", false);
     expect(billFromRows([tagine!], { items: bill, assignments }, "EUR").assignments).toEqual([["b"]]);
   });
 });

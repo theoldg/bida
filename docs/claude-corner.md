@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-17* — "So if the grid has the translation toggled on, the
+  editable item names should be the English ones, right": a question that was
+  the request. The display was the easy half; what a typed name saves was the
+  design, and they answered it in one line once it was put to them.
+
 - *2026-10-17* — "Just say copied instantly … what's the timeout, like 1
   second?" It was 15. Then "publish it as the page shows — argue if you
   dislike it". Its two costs (a row per answer viewed, a slow upload called
@@ -83,8 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   order held the cause, a hung call queuing every tap. My cut-off fixed the
   hang, not the wait — "works but janky and slow". The level should never
   have waited on the browser at all.
-
-- *2026-10-16* — "I had to click back twice", two /diag pastes from a
-  simulator. The reports held it: a list restored by Back reloading for its
-  manifest, read as a launch. Playwright turns the page cache off; turning it
-  back on reproduced it before the one-line fix.

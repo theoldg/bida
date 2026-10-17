@@ -1,6 +1,6 @@
 // Doc: docs/receipt-scanning.md#typing-a-bill-in
 import { minorToDecimalString, parseMinor, type ReceiptItem } from "@bida/core";
-import { MAX_PORTIONS, printedBill, unfoldAll } from "./items";
+import { billLabel, MAX_PORTIONS, printedBill, unfoldAll } from "./items";
 
 /**
  * One printed line as the hand editor holds it. Both prices are text, so a
@@ -10,10 +10,11 @@ import { MAX_PORTIONS, printedBill, unfoldAll } from "./items";
 export interface ItemRow {
   key: string;
   label: string;
-  /** Kept only while the label is the one it translates. */
-  labelEn: string | null;
-  /** The label `labelEn` belongs to. */
-  labelWas: string | null;
+  /**
+   * The line's two names as it opened, and which of them the field showed.
+   * Kept only while the field still says `shown`: a typed name is the only one.
+   */
+  was: { label: string; labelEn: string | null; shown: string } | null;
   count: number;
   unitText: string;
   totalText: string;
@@ -27,7 +28,7 @@ const key = () => `r${next++}`;
 
 export function blankRow(): ItemRow {
   return {
-    key: key(), label: "", labelEn: null, labelWas: null, count: 1,
+    key: key(), label: "", was: null, count: 1,
     unitText: "", totalText: "", by: "total", from: null,
   };
 }
@@ -90,8 +91,19 @@ export function rowIsBad(row: ItemRow, currency: string): boolean {
   return minor === null || minor <= 0 || row.label.trim() === "";
 }
 
-/** The draft's bill, folded back into the lines it was printed as. */
-export function rowsFromBill(items: readonly ReceiptItem[], currency: string): ItemRow[] {
+/** The other name, while the field still says the one it opened on. */
+export function otherName(row: ItemRow): string | null {
+  const was = row.was;
+  if (!was || row.label.trim() !== was.shown) return null;
+  const other = was.shown === was.label ? was.labelEn : was.label;
+  return other && other !== was.shown ? other : null;
+}
+
+/**
+ * The draft's bill, folded back into the lines it was printed as, each named
+ * in the language the bill is read in.
+ */
+export function rowsFromBill(items: readonly ReceiptItem[], currency: string, english: boolean): ItemRow[] {
   const { lines } = printedBill(items, null, currency);
   return lines.map((line, i) => {
     const count = Math.max(1, Math.round(line.quantity));
@@ -99,11 +111,11 @@ export function rowsFromBill(items: readonly ReceiptItem[], currency: string): I
     // A line that divides is a price per item, as the bill meant it; one that
     // doesn't keeps its total, which is the figure the bill actually printed.
     const even = minor !== null && minor % count === 0;
+    const shown = billLabel(line, english);
     return derived({
       key: key(),
-      label: line.label,
-      labelEn: line.labelEn,
-      labelWas: line.label,
+      label: shown,
+      was: { label: line.label, labelEn: line.labelEn, shown },
       count,
       unitText: even ? textOf(minor / count, currency) : "",
       totalText: line.amount,
@@ -126,9 +138,10 @@ export function billFromRows(
   const kept = rows.filter((row) => !rowIsEmpty(row) && !rowIsBad(row, currency));
   const printed: ReceiptItem[] = kept.map((row) => {
     const label = row.label.trim();
+    const kept = row.was && label === row.was.shown ? row.was : null;
     return {
-      label,
-      labelEn: row.labelEn && label === row.labelWas ? row.labelEn : null,
+      label: kept ? kept.label : label,
+      labelEn: kept ? kept.labelEn : null,
       amount: minorToDecimalString(rowMinor(row, currency)!, currency),
       quantity: row.count > 1 ? row.count : null,
       portionOf: null,

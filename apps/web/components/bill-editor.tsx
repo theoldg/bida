@@ -15,7 +15,7 @@ import { glide } from "../lib/seek";
 import { getDraft, saveDraft, tabAfterScan, type EntryDraft } from "../lib/draft";
 import { MAX_PORTIONS, receiptTotalMinor } from "../lib/scan/items";
 import {
-  billFromRows, blankRow, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, setCount, setTotal, setUnit,
+  billFromRows, blankRow, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, setCount, setTotal, setUnit,
   type ItemRow,
 } from "../lib/scan/manual";
 
@@ -57,7 +57,7 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
   const currency = draft.currency;
   const before = draft.receiptItems ?? [];
   const [rows, setRows] = useState<ItemRow[]>(() => {
-    const opened = rowsFromBill(before, currency);
+    const opened = rowsFromBill(before, currency, draft.receiptEnglish === true);
     return opened.length > 0 ? opened : [blankRow()];
   });
   const opened = useRef(shapeOf(rows, currency));
@@ -185,10 +185,8 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
               const unitAimed = priceAimed && many && row.by === "unit";
               const totalAimed = priceAimed && !unitAimed;
               const last = i === rows.length - 1;
-              // Shown only while the name is the one it translates: retyped, the
-              // translation is dropped on save (`billFromRows`).
-              const english = row.labelEn && row.label === row.labelWas && row.labelEn !== row.label
-                ? row.labelEn : null;
+              // Gone once the name is retyped, as it is on save (`billFromRows`).
+              const other = otherName(row);
               return (
                 <div key={row.key} className="card birow">
                   <div className="bihead">
@@ -206,7 +204,7 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                       <Icon name="cross" size={12} />
                     </button>
                   </div>
-                  {english ? <div className="bien">{english}</div> : null}
+                  {other ? <div className="bien">{other}</div> : null}
                   <div className="binums">
                     <span className="partsend bistep">
                       <button type="button" className="partsstep" disabled={row.count <= 1}

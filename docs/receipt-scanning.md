@@ -91,8 +91,11 @@ item — a name, a count, a price — and no model in between. It is for the bil
 nobody photographed, and for fixing the one a photograph misread. The door says
 **"Type"**, with a bill held or not — short, since three doors share a phone's
 width — and the screen opens
-on the bill held, folded back to the lines it was printed as, each one's
-translation under its name for as long as the name is the one it translates.
+on the bill held, folded back to the lines it was printed as and named in the
+language the bill is read in, the other name under each while the field still
+says the one it opened on. **A typed name is the line's only name** from then,
+in either reading: a correction that vanished on switching back to the printed
+words would be no correction.
 **Not on `/g/scan`** (owner's call): that screen is reached by pressing a camera
 (`typeIn={false}`).
 
