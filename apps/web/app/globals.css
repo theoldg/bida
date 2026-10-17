@@ -706,7 +706,9 @@ button.chip.kindchip:active { background-image: linear-gradient(var(--press-i), 
 /* Prose that must not travel sideways with the table: `width: 100%` in a
    scroller is the visible width. */
 .itemwide { position: sticky; left: 0; width: 100%; box-sizing: border-box }
-.itemhead { padding: 10px 16px 12px }
+/* On the head, not the sticky row: a stuck row's top border would double the
+   scroller's own. */
+.itemhead { padding: 10px 16px 12px; border-bottom: 1px solid var(--rule) }
 .whostrip { display: flex; flex-wrap: wrap; gap: 6px }
 .itemtotals { padding: 10px 16px 14px }
 .totalstrip { display: flex; flex-direction: column }
