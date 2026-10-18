@@ -1317,8 +1317,6 @@ dialog.scrim::backdrop { background: transparent }
 /* The caret is the focus signal; a ring reads as a box round one digit. */
 .amount:focus-visible { outline: none }
 .amount::placeholder { color: var(--muted); opacity: .35 }
-/* The caret on the "0" reads as a struck-through zero. */
-.amount:focus::placeholder { color: transparent }
 
 /* ---- segmented control ---- */
 .seg { display: flex; background: var(--card-3); border-radius: var(--r-s); padding: 2.5px; gap: 2px }
@@ -1407,6 +1405,10 @@ dialog.scrim::backdrop { background: transparent }
 .amountfield.bad, .amountfield.bad input { border-bottom-color: var(--debit); color: var(--debit) }
 .amountfield.big { border-bottom-width: 2px; padding: 0 9px 2px; border-radius: var(--r-s) var(--r-s) 0 0 }
 .amountfield.big:focus-within { background: var(--card-2) }
+/* A grey "0" under the caret reads as a figure to delete first. An "as amounts"
+   rest keeps its share: that placeholder is worked out, not a prompt. */
+.amountfield input:is([inputmode="decimal"], [inputmode="numeric"]):focus::placeholder {
+  color: transparent }
 /* Sized by a hidden copy of its text in the same cell: `size` overshoots mono
    digits badly. A too-wide number scrolls instead of overflowing. */
 .amountfield.autosize { display: inline-grid; grid-template-columns: minmax(0, max-content); min-width: 0 }
