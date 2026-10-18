@@ -211,7 +211,7 @@ export function MinorAmountInput({
   );
 }
 
-export const MAX_PARTS = 999;
+export const MAX_PARTS = 999_999_999;
 
 export function sanitizeParts(raw: string): string {
   return raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, String(MAX_PARTS).length);

@@ -43,8 +43,9 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
   Which tab is showing lives on the draft alone; a saved entry carries its
   mode, and that is what reopens it.
 - **A count of parts** is typed with the money field's caret and Backspace
-  (`PartsInput`), between − and + drawn small and grey; having parts puts you
-  in, none takes you out, and a tap on the name toggles.
+  (`PartsInput`), between − and + drawn small and grey, up to 999 999 999 — the
+  field widens to six digits, then scrolls; having parts puts you in, none
+  takes you out, and a tap on the name toggles.
 - **An "as amounts" row is typed, sharing or out**: a figure typed, in with
   none (the rest — what the typed figures leave, divided evenly, its share the
   field's grey placeholder on a faint rule), or not in the split (a zero, as

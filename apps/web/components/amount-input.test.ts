@@ -100,7 +100,7 @@ describe("sanitizeParts", () => {
     expect(sanitizeParts("3")).toBe("3");
     expect(sanitizeParts("1.5")).toBe("15");
     expect(sanitizeParts("2,")).toBe("2");
-    expect(sanitizeParts("1 000")).toBe("100");
+    expect(sanitizeParts("1 000")).toBe("1000");
     expect(sanitizeParts("-2")).toBe("2");
   });
 
@@ -110,8 +110,8 @@ describe("sanitizeParts", () => {
     expect(sanitizeParts("")).toBe("");
   });
 
-  it("stops at three digits", () => {
-    expect(sanitizeParts("12345")).toBe("123");
-    expect(Number(sanitizeParts("99999"))).toBe(MAX_PARTS);
+  it("stops at nine digits", () => {
+    expect(sanitizeParts("12345678901")).toBe("123456789");
+    expect(Number(sanitizeParts("99999999999"))).toBe(MAX_PARTS);
   });
 });

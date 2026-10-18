@@ -174,7 +174,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
                   disabled={parts === 0} aria-label={copy.split.fewerParts(m.name)}>
                   <Icon name="minus" size={9} />
                 </button>
-                <PartsInput id={fieldId} className="bignum partsin"
+                <PartsInput id={fieldId} className="bignum partsin" autoSize
                   enterKeyHint={i === members.length - 1 ? "done" : "next"}
                   aria-label={copy.split.partsFor(m.name)}
                   value={parts} placeholder="0"

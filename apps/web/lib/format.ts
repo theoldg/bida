@@ -271,7 +271,7 @@ export function stamp(ts: number, now = Date.now()): string {
 
 /** "3 changes", "3 zmiany", "5 zmian". */
 export function plural(n: number, noun: Noun, speaking = lang): string {
-  return `${n} ${nounFor(n, noun, speaking)}`;
+  return `${groupDigits(String(n))} ${nounFor(n, noun, speaking)}`;
 }
 
 const pluralRules = new Map<string, Intl.PluralRules>();

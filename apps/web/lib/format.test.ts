@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import {
-  ago, bare, byWhen, sortedByWhen, figure, moneyParts, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
+  ago, bare, byWhen, sortedByWhen, figure, moneyParts, clockTime, countText, dayLabel, distinctInitials, graphemes, GROUP, groupDigits,
   initials, plural, priced, rateText, splitProblemText, stamp, usd, whenLabel,
 } from "./format";
 
@@ -437,5 +437,9 @@ describe("plural", () => {
 
   it("falls back to many where a noun has no few", () => {
     expect(plural(3, change, "pl")).toBe("3 changes");
+  });
+
+  it("groups a count as a figure is grouped", () => {
+    expect(plural(124458023, change, "en")).toBe(`124${GROUP}458${GROUP}023 changes`);
   });
 });
