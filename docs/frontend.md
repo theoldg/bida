@@ -179,10 +179,10 @@ A real `<input inputMode="decimal">`. It sanitises as you type (digits, one
 separator — "," and "." both accepted — fraction clipped to the currency's
 exponent, leading zeros stripped), **restores the caret** across its own
 reformatting, and **never autofocuses** — a draft that opens with the keyboard
-up hides the rest of the form before you have looked at it. Its grey "0" goes
-on focus, since under a caret it reads as a figure to delete; a placeholder
-that is worked out (an "as amounts" rest's share) stays, and so do text
-prompts, which some fields open focused on. `MinorAmountInput`
+up hides the rest of the form before you have looked at it. Its grey placeholder
+goes on focus, since under a caret it reads as a figure to delete — an "as
+amounts" share most of all, being nonzero. Text prompts stay: some fields open
+focused on them. `MinorAmountInput`
 holds typed text locally and re-reads the model only on outside change — never
 `value={bare(parseMinor(text))}`, which eats the caret and erases a half-typed
 "12.".

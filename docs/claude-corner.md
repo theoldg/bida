@@ -35,10 +35,10 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   wait for approval". The stop hook asked for a push before the yes came; the
   owner's wait outranks the hook. Say why nothing went up, then end the turn.
 
-- *2026-10-18* — "Should we make placeholders disappear on focus?" Yes for
-  the zeros, the confusion. My one rule also caught "Item", a text field that
-  borrows the money underline and opens focused: its prompt would never show.
-  Photograph the fields a selector catches, not the one you meant.
+- *2026-10-18* — "Should we make placeholders disappear on focus?" I spared the
+  "as amounts" share as information; it was the very field users misread. And
+  my rule caught "Item", a text field that opens focused. Ask which field
+  confused them; photograph every field a selector catches.
 
 - *2026-10-17* — "When i click fast it's buggy", the who-had-what grid on
   an iPhone. Three clicks in one frame reproduced it; the cause was a habit,

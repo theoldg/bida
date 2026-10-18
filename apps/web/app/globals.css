@@ -1385,8 +1385,7 @@ dialog.scrim::backdrop { background: transparent }
 .splitrow:is(.rest, :not(.inrow)) .amountfield:has(.splitin):not(:focus-within) {
   border-bottom-color: color-mix(in srgb, var(--ink) 15%, transparent) }
 .splitrow.rest .splitin::placeholder { color: var(--muted); font-weight: 400 }
-.splitrow.rest .splitin:focus::placeholder { color: var(--muted) }
-.splitrow.rest.short .splitin::placeholder { color: var(--debit); font-weight: 600 }
+.splitrow.rest.short .splitin:not(:focus)::placeholder { color: var(--debit); font-weight: 600 }
 .splitfoot { display: flex; align-items: center; gap: 7px; padding: 8px 12px; font-size: 12px;
   font-weight: 600; border-top: 1px solid var(--rule-soft) }
 .splitfoot.ok { background: var(--credit-bg); color: var(--credit) }
@@ -1403,8 +1402,8 @@ dialog.scrim::backdrop { background: transparent }
 .amountfield.bad, .amountfield.bad input { border-bottom-color: var(--debit); color: var(--debit) }
 .amountfield.big { border-bottom-width: 2px; padding: 0 9px 2px; border-radius: var(--r-s) var(--r-s) 0 0 }
 .amountfield.big:focus-within { background: var(--card-2) }
-/* A grey "0" under the caret reads as a figure to delete first. An "as amounts"
-   rest keeps its share: that placeholder is worked out, not a prompt. */
+/* A grey figure under the caret reads as one to delete first — an "as amounts"
+   share most of all, being nonzero. */
 .amountfield input:is([inputmode="decimal"], [inputmode="numeric"]):focus::placeholder {
   color: transparent }
 /* Sized by a hidden copy of its text in the same cell: `size` overshoots mono
