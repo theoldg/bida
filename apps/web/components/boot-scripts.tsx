@@ -12,6 +12,7 @@ import { arrivalScript } from "@/lib/diag";
 import { firstFrameScript } from "@/lib/first-frame";
 import { manifestScript, type WebManifest } from "@/lib/install";
 import { handoverScript } from "@/lib/group-link";
+import { foreignEntryScript } from "@/lib/nav";
 
 export function HeadScripts({ manifest }: { manifest: WebManifest }) {
   return (
@@ -32,6 +33,8 @@ export function BodyScripts() {
       <script dangerouslySetInnerHTML={{ __html: firstFrameScript }} />
       {/* The URL this load arrived at, before the router can change it (lib/diag.ts). */}
       <script dangerouslySetInnerHTML={{ __html: arrivalScript }} />
+      {/* Back onto an entry an older Next wrote loads it whole (lib/nav.ts). */}
+      <script dangerouslySetInnerHTML={{ __html: foreignEntryScript }} />
     </>
   );
 }

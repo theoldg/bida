@@ -253,6 +253,13 @@ on a real phone; `pnpm verify nav` drives each one it can.
   `history.go` in one tick, outside any event
   ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
+**An entry an older Next wrote is loaded whole.** Next keeps its router's tree
+in `history.state`, and 16 changed its shape: back onto an entry from before a
+reload onto 16 moved the address and not the screen. `foreignEntryScript`
+(`lib/nav.ts`), inline in the layout, sees the old shape first and reloads. A
+Next upgrade wants the same test — reload onto it from a deeper screen, then
+press back.
+
 ## Gotchas
 
 - **The claim gate asks the device, not the screen's read.** A ledger mounted

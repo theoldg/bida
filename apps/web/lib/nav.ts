@@ -153,3 +153,13 @@ export function returnTo(url: string): number | null {
 // Here rather than beside the ledger: the ledger's chunk can arrive after the
 // traversal that brought it.
 if (typeof window !== "undefined") window.addEventListener("popstate", () => markReturn(location.href));
+
+/**
+ * **An entry an older Next wrote is loaded, not restored.** Next keeps its
+ * router's tree in `history.state`: 15 kept it bare, 16 wraps it in `{ tree }`.
+ * Back onto an entry from before a reload onto 16, its router found no tree
+ * and stayed put — the address moved, the screen did not. Such an entry is
+ * loaded whole instead, ahead of Next's own listener; inline in the layout, so
+ * it listens before the router hydrates.
+ */
+export const foreignEntryScript = `addEventListener("popstate",function(e){var s=e.state,t=s&&s.__PRIVATE_NEXTJS_INTERNALS_TREE;if(s&&s.__NA&&!(t&&Array.isArray(t.tree))){e.stopImmediatePropagation();location.reload()}},true)`;

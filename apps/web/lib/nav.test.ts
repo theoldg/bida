@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { goBack, goUp, sameScreen, stepsBackTo, takeOwnTraversal } from "./nav";
+import { foreignEntryScript, goBack, goUp, sameScreen, stepsBackTo, takeOwnTraversal } from "./nav";
 
 const GROUPS = "http://app.invalid/";
 const GROUP = "http://app.invalid/g?id=g1";
@@ -241,5 +241,36 @@ describe("goBack", () => {
       vi.runAllTimers();
     });
     expect(replaced).toEqual([]);
+  });
+});
+
+describe("back onto an entry another Next wrote", () => {
+  /** Runs the inline script against a fake window, then pops onto `state`. */
+  function pop(state: unknown): { reloaded: boolean; nextSaw: boolean } {
+    let listener: ((e: unknown) => void) | undefined;
+    const fake = {
+      reloaded: false,
+      addEventListener: (_: string, l: (e: unknown) => void) => { listener = l; },
+      location: { reload: () => { fake.reloaded = true; } },
+    };
+    new Function("addEventListener", "location", foreignEntryScript)(fake.addEventListener, fake.location);
+    let stopped = false;
+    listener!({ state, stopImmediatePropagation: () => { stopped = true; } });
+    return { reloaded: fake.reloaded, nextSaw: !stopped };
+  }
+
+  it("loads an entry Next 15 wrote, its tree bare, and keeps Next out of it", () => {
+    expect(pop({ __NA: true, __PRIVATE_NEXTJS_INTERNALS_TREE: ["", {}, null, null, true] }))
+      .toEqual({ reloaded: true, nextSaw: false });
+  });
+
+  it("leaves Next 16's own entries to Next", () => {
+    const tree = { tree: ["", {}, null, null, true], renderedSearch: "" };
+    expect(pop({ __NA: true, __PRIVATE_NEXTJS_INTERNALS_TREE: tree }))
+      .toEqual({ reloaded: false, nextSaw: true });
+  });
+
+  it("leaves an entry no router wrote alone", () => {
+    expect(pop(null)).toEqual({ reloaded: false, nextSaw: true });
   });
 });
