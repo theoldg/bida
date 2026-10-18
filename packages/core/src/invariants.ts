@@ -1,10 +1,10 @@
-import { convertMinor, type CurrencyCode, type Rate } from "./money.js";
-import type { EntityKind, OpKind } from "./ops.js";
-import { memberInvolved } from "./payers.js";
-import { rateFor } from "./rates.js";
+import { convertMinor, type CurrencyCode, type Rate } from "./money";
+import type { EntityKind, OpKind } from "./ops";
+import { memberInvolved } from "./payers";
+import { rateFor } from "./rates";
 import {
   alive, type Expense, type GroupState, type Id, type Member, type Settlement,
-} from "./types.js";
+} from "./types";
 
 /**
  * A healer must detect a *state*, not a race; write ordinary ops; be idempotent

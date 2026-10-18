@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { fromBase64Url, toBase64Url } from "./bytes.js";
+import { fromBase64Url, toBase64Url } from "./bytes";
 import {
   encryptPush, importSenderKeys, PUSH_PLAINTEXT_MAX, vapidAuthorization, WebPushError,
-} from "./webpush.js";
+} from "./webpush";
 
 /**
  * RFC 8291 appendix A, byte for byte: if these pass, every push service that

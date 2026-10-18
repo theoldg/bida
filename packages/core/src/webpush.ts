@@ -1,6 +1,6 @@
-import { fromBase64Url, toBase64Url } from "./bytes.js";
-import type { DevicePush } from "./types.js";
-import { webCrypto } from "./webcrypto.js";
+import { fromBase64Url, toBase64Url } from "./bytes";
+import type { DevicePush } from "./types";
+import { webCrypto } from "./webcrypto";
 
 /**
  * Web Push's two pieces of cryptography, on WebCrypto and nothing else

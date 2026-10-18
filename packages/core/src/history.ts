@@ -1,9 +1,9 @@
 // Doc: docs/history.md
-import { compareHlc, parseHlc } from "./hlc.js";
-import type { Op } from "./ops.js";
-import { applyPatch, sortOps } from "./fold.js";
-import { isDemo } from "./demo.js";
-import type { Id } from "./types.js";
+import { compareHlc, parseHlc } from "./hlc";
+import type { Op } from "./ops";
+import { applyPatch, sortOps } from "./fold";
+import { isDemo } from "./demo";
+import type { Id } from "./types";
 
 /**
  * Version history is the op log, so it can't drift from the data (ADR-0002). **A

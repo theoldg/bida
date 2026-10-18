@@ -1,7 +1,7 @@
 // Doc: docs/data-model.md#balances-and-settle-up
-import { resolvePayers } from "./payers.js";
-import { resolveEntrySplit } from "./split.js";
-import { alive, emptyGroupState, type Expense, type GroupState, type Id, type Settlement } from "./types.js";
+import { resolvePayers } from "./payers";
+import { resolveEntrySplit } from "./split";
+import { alive, emptyGroupState, type Expense, type GroupState, type Id, type Settlement } from "./types";
 
 /**
  * Balances are derived on read, never stored: paid − owed, in base minor

@@ -1,7 +1,7 @@
 // Doc: docs/data-model.md#entities
 /** Id generation. Client-side, because ops are created offline. */
 
-import { webCrypto } from "./webcrypto.js";
+import { webCrypto } from "./webcrypto";
 
 /** The slice of WebCrypto we need, so core stays free of DOM lib types. */
 interface CryptoLike {

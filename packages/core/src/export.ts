@@ -1,7 +1,7 @@
 // Doc: docs/import-export.md#the-group-as-a-spreadsheet
-import { entryDeltas } from "./balance.js";
-import { minorToDecimalString } from "./money.js";
-import { alive, type Expense, type GroupState, type Id, type Settlement } from "./types.js";
+import { entryDeltas } from "./balance";
+import { minorToDecimalString } from "./money";
+import { alive, type Expense, type GroupState, type Id, type Settlement } from "./types";
 
 /**
  * A member's cell is `paid − owed`, so rows sum to zero and the foot equals

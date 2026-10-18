@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readSharedSplit, type SharedSplit } from "./index.js";
+import { readSharedSplit, type SharedSplit } from "./index";
 
 /**
  * A link is anybody's to write and outlives the build that wrote it: what

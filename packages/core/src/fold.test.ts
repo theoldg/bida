@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { foldForward, foldOps, sortOps } from "./fold.js";
-import { validateOp, type Op } from "./ops.js";
-import { marrakechOps, GROUP, THEO } from "./fixtures.test-helper.js";
-import { alive } from "./types.js";
-import { RECEIPT_MODE_SINCE } from "./split.js";
-import { createHlcState, formatHlc } from "./hlc.js";
+import { foldForward, foldOps, sortOps } from "./fold";
+import { validateOp, type Op } from "./ops";
+import { marrakechOps, GROUP, THEO } from "./fixtures.test-helper";
+import { alive } from "./types";
+import { RECEIPT_MODE_SINCE } from "./split";
+import { createHlcState, formatHlc } from "./hlc";
 
 function op(partial: Partial<Op> & Pick<Op, "entityId" | "kind" | "hlc">): Op {
   return validateOp({

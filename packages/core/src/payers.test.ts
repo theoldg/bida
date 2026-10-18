@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   entriesInvolving, expenseInvolves, isCoSponsored, memberInvolved, payerList,
   primaryPayer, resolvePayers, settlementInvolves, validatePayers,
-} from "./payers.js";
-import { computeBalances, assertBalanced } from "./balance.js";
-import { emptyGroupState, type Expense, type Member, type Settlement } from "./types.js";
+} from "./payers";
+import { computeBalances, assertBalanced } from "./balance";
+import { emptyGroupState, type Expense, type Member, type Settlement } from "./types";
 
 const BOB = "m-bob";
 const ALICE = "m-alice";

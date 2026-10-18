@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   deriveGroupCrypto, deriveSplitCrypto, openOp, openSplit, SealError, sealOp, sealSplit,
   validateSealedOp, type Op, type SharedSplit,
-} from "./index.js";
+} from "./index";
 
 /**
  * The server must not be able to read a group (ADR-0036): the wire carries an

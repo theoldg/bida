@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   assertBalanced, computeBalances, entryDeltas, entryEffect, netFor, retallyBalances, tallyBalances,
-} from "./balance.js";
-import { foldOps } from "./fold.js";
-import { emptyGroupState, type Expense, type GroupState, type Settlement } from "./types.js";
-import { settleUp, applyTransfers, transfersFor } from "./settle.js";
-import { formatMinor } from "./money.js";
-import { ADA, MARIE, SAM, THEO, marrakechOps, OpBuilder, GROUP } from "./fixtures.test-helper.js";
+} from "./balance";
+import { foldOps } from "./fold";
+import { emptyGroupState, type Expense, type GroupState, type Settlement } from "./types";
+import { settleUp, applyTransfers, transfersFor } from "./settle";
+import { formatMinor } from "./money";
+import { ADA, MARIE, SAM, THEO, marrakechOps, OpBuilder, GROUP } from "./fixtures.test-helper";
 
 /**
  * The figures quoted in docs/testing.md. If this test fails,

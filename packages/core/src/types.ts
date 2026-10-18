@@ -1,5 +1,5 @@
-import type { CurrencyCode, Rate } from "./money.js";
-import type { Hlc } from "./hlc.js";
+import type { CurrencyCode, Rate } from "./money";
+import type { Hlc } from "./hlc";
 
 export type Id = string;
 

@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { foldOps } from "./fold.js";
-import { healDrafts, type OpDraft } from "./invariants.js";
-import { assertBalanced, computeBalances } from "./balance.js";
-import { payerList } from "./payers.js";
-import { splitParticipants } from "./split.js";
-import { rateFor } from "./rates.js";
-import { createHlcState, formatHlc } from "./hlc.js";
-import type { Op } from "./ops.js";
-import { alive, type GroupState } from "./types.js";
-import { ADA, ALL, GROUP, MAD_RATE, MARIE, THEO, marrakechOps } from "./fixtures.test-helper.js";
+import { foldOps } from "./fold";
+import { healDrafts, type OpDraft } from "./invariants";
+import { assertBalanced, computeBalances } from "./balance";
+import { payerList } from "./payers";
+import { splitParticipants } from "./split";
+import { rateFor } from "./rates";
+import { createHlcState, formatHlc } from "./hlc";
+import type { Op } from "./ops";
+import { alive, type GroupState } from "./types";
+import { ADA, ALL, GROUP, MAD_RATE, MARIE, THEO, marrakechOps } from "./fixtures.test-helper";
 
 /**
  * Properties that hold whatever the log says, over merges nobody wrote a

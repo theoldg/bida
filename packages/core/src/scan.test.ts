@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   billTotalMinor, checkScan, correctOneLine, lineMinor, normalizeScan, readBill, receiptExtras, receiptOf, scanCurrency,
   type ScanDiscount, type ScanLineItem, type ScanResult,
-} from "./scan.js";
+} from "./scan";
 
 // A Saturday afternoon, local: the scan's clock in every case below.
 const NOW = new Date(2026, 8, 5, 14, 30, 7, 123).getTime();

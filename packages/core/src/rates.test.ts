@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { foldOps } from "./fold.js";
-import { computeBalances, assertBalanced } from "./balance.js";
-import { atCurrentRates, currenciesInUse, latestRate, rateFor, repriceEntry } from "./rates.js";
-import { emptyGroupState, type ExchangeRate, type GroupState } from "./types.js";
-import { MAD_RATE, marrakechOps, OpBuilder, GROUP, THEO } from "./fixtures.test-helper.js";
+import { foldOps } from "./fold";
+import { computeBalances, assertBalanced } from "./balance";
+import { atCurrentRates, currenciesInUse, latestRate, rateFor, repriceEntry } from "./rates";
+import { emptyGroupState, type ExchangeRate, type GroupState } from "./types";
+import { MAD_RATE, marrakechOps, OpBuilder, GROUP, THEO } from "./fixtures.test-helper";
 
 function row(id: string, rate: string, extra: Partial<ExchangeRate> = {}): ExchangeRate {
   return { id, groupId: GROUP, rate, source: "typed", asOf: 0, ...extra };

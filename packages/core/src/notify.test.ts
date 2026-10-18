@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { computeBalances } from "./balance.js";
-import { foldOps } from "./fold.js";
-import { convertMinor } from "./money.js";
-import { notices, wantsNotice, type Notice } from "./notify.js";
-import type { Op } from "./ops.js";
-import { ADA, GROUP, MARIE, OpBuilder, SAM, THEO } from "./fixtures.test-helper.js";
-import type { SplitSpec } from "./types.js";
+import { computeBalances } from "./balance";
+import { foldOps } from "./fold";
+import { convertMinor } from "./money";
+import { notices, wantsNotice, type Notice } from "./notify";
+import type { Op } from "./ops";
+import { ADA, GROUP, MARIE, OpBuilder, SAM, THEO } from "./fixtures.test-helper";
+import type { SplitSpec } from "./types";
 
 /**
  * Who hears about a command (docs/notifications.md#what-is-said). Each test

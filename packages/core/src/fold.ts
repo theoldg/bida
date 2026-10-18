@@ -1,12 +1,12 @@
 // Doc: docs/sync.md#folding
-import { compareHlc, parseHlc } from "./hlc.js";
-import { IMMUTABLE_FIELDS, WRITE_ONCE_FIELDS, type Op } from "./ops.js";
-import { upgradeReceiptSplit } from "./split.js";
+import { compareHlc, parseHlc } from "./hlc";
+import { IMMUTABLE_FIELDS, WRITE_ONCE_FIELDS, type Op } from "./ops";
+import { upgradeReceiptSplit } from "./split";
 import {
   emptyGroupState,
   type Attachment, type Expense, type Group, type GroupState,
   type Id, type Identity, type Member, type Settlement,
-} from "./types.js";
+} from "./types";
 
 /**
  * State is a deterministic fold over the op log, ordered by HLC — never by

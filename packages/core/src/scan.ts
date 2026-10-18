@@ -3,9 +3,9 @@
  * or reformatting on top: the prompt fixes the shapes.
  */
 
-import { isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money.js";
-import type { Receipt, ReceiptDiscount } from "./types.js";
-import { sameLocalDay } from "./when.js";
+import { isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money";
+import type { Receipt, ReceiptDiscount } from "./types";
+import { sameLocalDay } from "./when";
 
 /**
  * A line fills one cost — the line total, or a unit price and `quantity` —

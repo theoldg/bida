@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   MAX_DRIFT_MS, compareHlc, createHlcState, formatHlc, hlcReceive, hlcSend, isAhead, isHlc,
   parseHlc,
-} from "./hlc.js";
+} from "./hlc";
 
 describe("hlc", () => {
   it("orders lexicographically, which is the whole point", () => {

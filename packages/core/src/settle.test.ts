@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyTransfers, settleUp } from "./settle.js";
+import { applyTransfers, settleUp } from "./settle";
 
 /**
  * The minimum computed independently: recursively peel off every zero-sum

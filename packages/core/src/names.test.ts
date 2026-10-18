@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { colorSeedFor, memberIdFor, nameKey, nameTaken } from "./names.js";
+import { colorSeedFor, memberIdFor, nameKey, nameTaken } from "./names";
 
 describe("nameKey", () => {
   it("ignores what nobody can see", () => {

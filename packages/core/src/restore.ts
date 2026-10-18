@@ -1,5 +1,5 @@
-import { healDrafts, type OpDraft } from "./invariants.js";
-import type { GroupState, Id } from "./types.js";
+import { healDrafts, type OpDraft } from "./invariants";
+import type { GroupState, Id } from "./types";
 
 /**
  * Putting a deleted entry back: the whole entry, as it was when it was deleted

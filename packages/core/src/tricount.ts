@@ -1,8 +1,8 @@
 import {
   at, checkMemberNames, checkStated, ImportError, isRealDay, oneCurrency, strictMinor,
   type ImportPlan, type LocalMoney, type PlannedEntry, type PlannedTransfer,
-} from "./import.js";
-import { exponentOf, isCurrencyCode, minorToDecimalString, type CurrencyCode } from "./money.js";
+} from "./import";
+import { exponentOf, isCurrencyCode, minorToDecimalString, type CurrencyCode } from "./money";
 
 /**
  * A tricount read into the same plan `import.ts` returns from a CSV

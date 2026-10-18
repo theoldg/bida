@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { startOfLocalDay } from "./when.js";
+import { startOfLocalDay } from "./when";
 
 describe("startOfLocalDay", () => {
   const midnight = new Date(2026, 3, 4).getTime();

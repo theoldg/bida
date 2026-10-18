@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { newGroupId, newGroupSecret, newId, newNodeId } from "./ids.js";
+import { newGroupId, newGroupSecret, newId, newNodeId } from "./ids";
 
 /** Ids are never checked against anything, so their shape is their only defence. */
 

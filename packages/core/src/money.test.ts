@@ -3,7 +3,7 @@ import {
   convertMinor, exponentOf, formatMinor, formatMinorParts, isCurrencyCode, minorToDecimalString,
   parseMinor, isValidRate, sanitizeRate, sumMinor,
   formatRate, invertRate, rateFromNumber, RATE_DIGITS, RATE_SHOWN_DIGITS,
-} from "./money.js";
+} from "./money";
 
 describe("exponentOf", () => {
   it("defaults to 2 but knows the exceptions", () => {

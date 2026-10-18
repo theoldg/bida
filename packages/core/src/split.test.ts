@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   addsUp, canonicalSplit, fnv1a, FNV_OFFSET, convertSplitMode, ownCurrencySplit, resolveEntrySplit, resolveSplit, shareOf, splitParticipants,
   partsBesideBill, restOf, settleRest, SplitError, toggleEveryone, upgradeReceiptSplit, validateSplit,
-} from "./split.js";
-import type { SplitSpec } from "./types.js";
+} from "./split";
+import type { SplitSpec } from "./types";
 
 const sum = (r: Record<string, number>) => Object.values(r).reduce((a, b) => a + b, 0);
 

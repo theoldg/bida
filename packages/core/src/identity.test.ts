@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { foldOps } from "./fold.js";
-import { activityFeed, entityHistory } from "./history.js";
-import { validateOp, type Op } from "./ops.js";
-import { createHlcState, formatHlc } from "./hlc.js";
-import { GROUP, MARIE, SAM } from "./fixtures.test-helper.js";
+import { foldOps } from "./fold";
+import { activityFeed, entityHistory } from "./history";
+import { validateOp, type Op } from "./ops";
+import { createHlcState, formatHlc } from "./hlc";
+import { GROUP, MARIE, SAM } from "./fixtures.test-helper";
 
 /**
  * Identity claims are ops (ADR-0003), keyed by the device's HLC node id — the

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { computeBalances } from "./balance.js";
-import { groupToCsv } from "./export.js";
-import { ADA, ALL, GROUP, MARIE, MAD_RATE, OpBuilder, SAM, THEO, marrakechOps } from "./fixtures.test-helper.js";
-import { foldOps } from "./fold.js";
-import { ImportError, otherCurrencies, ratesWanted, readCsvGroup, type ImportPlan } from "./import.js";
-import { convertMinor } from "./money.js";
-import type { Op } from "./ops.js";
-import type { SplitSpec } from "./types.js";
+import { computeBalances } from "./balance";
+import { groupToCsv } from "./export";
+import { ADA, ALL, GROUP, MARIE, MAD_RATE, OpBuilder, SAM, THEO, marrakechOps } from "./fixtures.test-helper";
+import { foldOps } from "./fold";
+import { ImportError, otherCurrencies, ratesWanted, readCsvGroup, type ImportPlan } from "./import";
+import { convertMinor } from "./money";
+import type { Op } from "./ops";
+import type { SplitSpec } from "./types";
 
 const utcDay = (ts: number) => new Date(ts).toISOString().slice(0, 10);
 const EXPORTED_AT = Date.UTC(2026, 8, 18);

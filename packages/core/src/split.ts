@@ -1,5 +1,5 @@
 // Doc: docs/data-model.md#splits--the-only-tricky-arithmetic
-import type { ArithmeticSplit, ArithmeticMode, Id, SplitSpec } from "./types.js";
+import type { ArithmeticSplit, ArithmeticMode, Id, SplitSpec } from "./types";
 
 /**
  * Shares sum to the total exactly, identically on every device — hence

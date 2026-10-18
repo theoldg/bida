@@ -1,7 +1,7 @@
-import { convertMinor, minorToDecimalString } from "./money.js";
-import type { OpDraft } from "./invariants.js";
-import { colorSeedFor, memberIdFor } from "./names.js";
-import type { Id, SplitSpec } from "./types.js";
+import { convertMinor, minorToDecimalString } from "./money";
+import type { OpDraft } from "./invariants";
+import { colorSeedFor, memberIdFor } from "./names";
+import type { Id, SplitSpec } from "./types";
 
 /**
  * The demo group: ordinary ops that never sync, because the caller skips

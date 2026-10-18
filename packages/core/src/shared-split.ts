@@ -1,6 +1,6 @@
 // Doc: docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md
-import { isCurrencyCode, type CurrencyCode } from "./money.js";
-import type { ExtraKind } from "./scan.js";
+import { isCurrencyCode, type CurrencyCode } from "./money";
+import type { ExtraKind } from "./scan";
 
 /**
  * A quick split's answer as a link hands it over (ADR-0035): the figures the

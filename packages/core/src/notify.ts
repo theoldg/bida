@@ -1,9 +1,9 @@
-import { payerList, resolvePayers } from "./payers.js";
-import type { Op } from "./ops.js";
-import { atCurrentRates } from "./rates.js";
-import { canonicalSplit, resolveEntrySplit, splitParticipants } from "./split.js";
-import type { CurrencyCode } from "./money.js";
-import { alive, type DevicePush, type Expense, type GroupState, type Id, type Settlement } from "./types.js";
+import { payerList, resolvePayers } from "./payers";
+import type { Op } from "./ops";
+import { atCurrentRates } from "./rates";
+import { canonicalSplit, resolveEntrySplit, splitParticipants } from "./split";
+import type { CurrencyCode } from "./money";
+import { alive, type DevicePush, type Expense, type GroupState, type Id, type Settlement } from "./types";
 
 /**
  * Who hears about a command, and what about (docs/notifications.md#what-is-said).

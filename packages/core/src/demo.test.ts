@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { computeBalances } from "./balance.js";
+import { computeBalances } from "./balance";
 import {
   DEMO_GROUP_ID, DEMO_NAMES, demoOps, demoStamp, demoTimeline, isDemo, type DemoCast,
-} from "./demo.js";
-import { foldOps } from "./fold.js";
-import { createHlcState, hlcSend, type HlcState } from "./hlc.js";
-import { parseMinor, sumMinor } from "./money.js";
-import type { Op } from "./ops.js";
-import { applyTransfers, settleUp } from "./settle.js";
-import { alive } from "./types.js";
+} from "./demo";
+import { foldOps } from "./fold";
+import { createHlcState, hlcSend, type HlcState } from "./hlc";
+import { parseMinor, sumMinor } from "./money";
+import type { Op } from "./ops";
+import { applyTransfers, settleUp } from "./settle";
+import { alive } from "./types";
 
 /** What a visitor would notice: it folds to its story, the money is legal, and settle-up has work. */
 

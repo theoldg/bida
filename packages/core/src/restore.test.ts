@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { computeBalances } from "./balance.js";
-import { foldOps } from "./fold.js";
-import { ADA, EXPENSES, MARIE, OpBuilder, SAM, THEO, marrakechOps } from "./fixtures.test-helper.js";
-import type { OpDraft } from "./invariants.js";
-import { restoreEntryDrafts } from "./restore.js";
+import { computeBalances } from "./balance";
+import { foldOps } from "./fold";
+import { ADA, EXPENSES, MARIE, OpBuilder, SAM, THEO, marrakechOps } from "./fixtures.test-helper";
+import type { OpDraft } from "./invariants";
+import { restoreEntryDrafts } from "./restore";
 
 /** The Marrakech log, carried on by one more phone. */
 function trip() {

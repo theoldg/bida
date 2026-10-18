@@ -1,9 +1,9 @@
 // Doc: docs/sync.md#the-protocol
-import { fromBase64, toBase64 } from "./bytes.js";
-import { validateOp, type Op } from "./ops.js";
-import { readSharedSplit, type SharedSplit } from "./shared-split.js";
-import type { Id } from "./types.js";
-import { webCrypto } from "./webcrypto.js";
+import { fromBase64, toBase64 } from "./bytes";
+import { validateOp, type Op } from "./ops";
+import { readSharedSplit, type SharedSplit } from "./shared-split";
+import type { Id } from "./types";
+import { webCrypto } from "./webcrypto";
 
 /**
  * End-to-end encryption of the op log (ADR-0036). The link secret never leaves

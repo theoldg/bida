@@ -1,5 +1,5 @@
 // Doc: docs/data-model.md#balances-and-settle-up
-import type { Id } from "./types.js";
+import type { Id } from "./types";
 
 /**
  * Reduce balances to the fewest payments that clear everyone.

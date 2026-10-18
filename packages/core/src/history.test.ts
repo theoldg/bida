@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { activityFeed, entityHistory, groupCreateOf, isImported, rosterOf, unseenRevisions } from "./history.js";
-import { DEMO_GROUP_ID } from "./demo.js";
-import { foldOps } from "./fold.js";
-import { GROUP, MARIE, OpBuilder, SAM, THEO } from "./fixtures.test-helper.js";
+import { activityFeed, entityHistory, groupCreateOf, isImported, rosterOf, unseenRevisions } from "./history";
+import { DEMO_GROUP_ID } from "./demo";
+import { foldOps } from "./fold";
+import { GROUP, MARIE, OpBuilder, SAM, THEO } from "./fixtures.test-helper";
 
 /** The "Souk haul" revision timeline, as the history screen renders it. */
 function soukLog() {

@@ -1,7 +1,7 @@
-import { convertMinor } from "./money.js";
-import { createHlcState, hlcSend, type HlcState } from "./hlc.js";
-import type { Op } from "./ops.js";
-import type { SplitSpec } from "./types.js";
+import { convertMinor } from "./money";
+import { createHlcState, hlcSend, type HlcState } from "./hlc";
+import type { Op } from "./ops";
+import type { SplitSpec } from "./types";
 
 /**
  * The Marrakech trip — the pinned fixture, as ops.

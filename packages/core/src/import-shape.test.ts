@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { computeBalances } from "./balance.js";
-import { readCsvGroup, type ImportPlan, type PlannedEntry } from "./import.js";
-import { rateReproducing, seedFor, shapeEntry, shapeTransfer, type DayRate, type RateFor } from "./import-shape.js";
-import { convertMinor, type CurrencyCode } from "./money.js";
-import { memberIdFor } from "./names.js";
-import { resolveEntrySplit, resolveSplit } from "./split.js";
-import { readTricount } from "./tricount.js";
-import { stateFromRows, type Expense, type Settlement } from "./types.js";
+import { computeBalances } from "./balance";
+import { readCsvGroup, type ImportPlan, type PlannedEntry } from "./import";
+import { rateReproducing, seedFor, shapeEntry, shapeTransfer, type DayRate, type RateFor } from "./import-shape";
+import { convertMinor, type CurrencyCode } from "./money";
+import { memberIdFor } from "./names";
+import { resolveEntrySplit, resolveSplit } from "./split";
+import { readTricount } from "./tricount";
+import { stateFromRows, type Expense, type Settlement } from "./types";
 
 /**
  * Whatever shape is picked, the group written must balance exactly as the plan

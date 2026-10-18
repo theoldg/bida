@@ -1,6 +1,6 @@
 // Doc: docs/data-model.md#co-sponsored-expenses
-import { addsUp, resolveSplit, SplitError, splitParticipants } from "./split.js";
-import type { Expense, Id, Settlement } from "./types.js";
+import { addsUp, resolveSplit, SplitError, splitParticipants } from "./split";
+import type { Expense, Id, Settlement } from "./types";
 
 /**
  * Co-paid expenses ("Bob paid 400 and Alice 100"). The mirror of `split`, via

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ImportError } from "./import.js";
-import { readTricount } from "./tricount.js";
+import { ImportError } from "./import";
+import { readTricount } from "./tricount";
 
 /**
  * The reader against bunq's real shape, trimmed to the fields read. Every test

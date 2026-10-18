@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   INVARIANTS, entriesCarryTheirOwnRate, healDrafts,
   liveEntriesNameLiveMembers, restoreClaimDrafts, wouldViolate, type OpDraft,
-} from "./invariants.js";
-import { foldOps } from "./fold.js";
-import { createHlcState, formatHlc } from "./hlc.js";
-import type { Op } from "./ops.js";
-import { ADA, GROUP, MAD_RATE, MARIE, THEO, marrakechOps } from "./fixtures.test-helper.js";
-import type { GroupState } from "./types.js";
-import { atCurrentRates } from "./rates.js";
-import { computeBalances } from "./balance.js";
+} from "./invariants";
+import { foldOps } from "./fold";
+import { createHlcState, formatHlc } from "./hlc";
+import type { Op } from "./ops";
+import { ADA, GROUP, MAD_RATE, MARIE, THEO, marrakechOps } from "./fixtures.test-helper";
+import type { GroupState } from "./types";
+import { atCurrentRates } from "./rates";
+import { computeBalances } from "./balance";
 
 /**
  * Every registered invariant, held to the five rules in invariants.ts.

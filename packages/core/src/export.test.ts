@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { computeBalances } from "./balance.js";
-import { exportColumns, groupToCsv } from "./export.js";
-import { ADA, GROUP, MARIE, OpBuilder, SAM, THEO, marrakechOps } from "./fixtures.test-helper.js";
-import { foldOps } from "./fold.js";
-import { emptyGroupState, type GroupState } from "./types.js";
+import { computeBalances } from "./balance";
+import { exportColumns, groupToCsv } from "./export";
+import { ADA, GROUP, MARIE, OpBuilder, SAM, THEO, marrakechOps } from "./fixtures.test-helper";
+import { foldOps } from "./fold";
+import { emptyGroupState, type GroupState } from "./types";
 
 /** The options the builder needs, fixed to UTC so the rows are pinned. */
 const utcDay = (ts: number) => new Date(ts).toISOString().slice(0, 10);

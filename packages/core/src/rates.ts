@@ -1,7 +1,7 @@
-import { convertMinor, isValidRate, type CurrencyCode, type Rate } from "./money.js";
+import { convertMinor, isValidRate, type CurrencyCode, type Rate } from "./money";
 import {
   alive, type EntryRateSource, type ExchangeRate, type GroupState, type Id,
-} from "./types.js";
+} from "./types";
 
 /**
  * What an entry is worth in the group's currency. **The rate is the entry's

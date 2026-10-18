@@ -1,5 +1,5 @@
-import { isHlc, type Hlc } from "./hlc.js";
-import type { Id } from "./types.js";
+import { isHlc, type Hlc } from "./hlc";
+import type { Id } from "./types";
 
 /**
  * Nothing is mutated in place: every change is one of these, appended to a

@@ -1,9 +1,9 @@
 // Doc: docs/import-export.md#writing-a-plan
-import { convertMinor, exponentOf, isValidRate, type CurrencyCode, type Rate } from "./money.js";
-import { resolvePayers } from "./payers.js";
-import { FNV_OFFSET, fnv1a, resolveEntrySplit, resolveSplit } from "./split.js";
-import type { PlannedEntry, PlannedTransfer } from "./import.js";
-import type { EntryRateSource, Id, SplitSpec } from "./types.js";
+import { convertMinor, exponentOf, isValidRate, type CurrencyCode, type Rate } from "./money";
+import { resolvePayers } from "./payers";
+import { FNV_OFFSET, fnv1a, resolveEntrySplit, resolveSplit } from "./split";
+import type { PlannedEntry, PlannedTransfer } from "./import";
+import type { EntryRateSource, Id, SplitSpec } from "./types";
 
 /**
  * How a planned row is written: which currency, at what rate, split how. **Every
