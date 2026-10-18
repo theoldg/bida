@@ -44,7 +44,11 @@ to remove more from this list than you add.
   checkpoint rather than once at the end, so a session that dies still leaves
   its finished work behind. Releasing is the owner's act and nobody else's:
   never fast-forward `main`, and never ask them to
-  ([hosting.md](hosting.md#dev-and-production)).
+  ([hosting.md](hosting.md#dev-and-production)). **Except mid-iteration**,
+  *2026-10-18* — "for one off queries usually push without asking unless you
+  believe there's a mistake or knowledge gap, for iterative rounds wait for
+  permission": once the owner is turning versions down, "show me" is not "ship
+  it" — send the photo and wait.
 - **A push deploys — to whichever world the branch owns.** *2026-08-28,
   widened 2026-09-14* — the token is a GitHub Actions repo secret the owner set
   up themselves; never ask them to paste one for a deploy. For a *manual* deploy the owner pastes the token in-session — keep it in a
