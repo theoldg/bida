@@ -294,9 +294,6 @@ function ReceiptPanel({
             <span className="bignum" style={{ fontSize: 13.5 }}>{money(shares[m.id] ?? 0, currency)}</span>
           </div>
         ))}
-        {involved.length > 0 ? (
-          <div className="hairline" style={{ margin: "0 0 -1px" }} />
-        ) : null}
         <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-s${flash}`} onAnimationEnd={onFlashEnd}
           style={{ textDecoration: "none", justifyContent: "space-between" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
