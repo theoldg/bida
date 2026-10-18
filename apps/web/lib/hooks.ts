@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Dexie from "dexie";
 import {
-  CATCH_UP_MS, emptyGroupState, isDemo, parseHlc, unseenRevisions, type BalanceReport, type Group,
+  CATCH_UP_MS, emptyGroupState, isDemo, isQuiet, parseHlc, unseenRevisions, type BalanceReport, type Group,
 } from "@bida/core";
 import { db, type DeviceRecord } from "./db/dexie";
 import { keepWarm, useLive } from "./db/live";
@@ -280,10 +280,13 @@ async function groupSummaries(): Promise<GroupSummary[]> {
     return unseenRevisions(ops, key.seenSeq, device.nodeId, Date.now() - CATCH_UP_MS)
       .revisions.length;
   };
-  // An edit, a delete or a back-dated expense is activity too.
+  // An edit, a delete or a back-dated expense is activity too; plumbing isn't —
+  // forgetting a subscribed group writes `push: null`, and counted, the row
+  // leapt to the top before it folded away.
   const lastChanged = async (group: Group): Promise<number> => {
     const newest = await d.ops.where("[groupId+hlc]")
-      .between([group.id, Dexie.minKey], [group.id, Dexie.maxKey]).last();
+      .between([group.id, Dexie.minKey], [group.id, Dexie.maxKey])
+      .reverse().filter((op) => !isQuiet(op)).first();
     return newest ? parseHlc(newest.hlc).physical : group.createdAt;
   };
 

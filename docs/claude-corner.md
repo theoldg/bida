@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-18* — "When deleting a group, it jumps to the top of the list
+  before animating". The fold was fine; the forget wrote one plumbing op first,
+  and the list read it as activity. A motion bug can be a data bug a frame
+  early: ask what the list saw before asking how it moved.
+
 - *2026-10-18* — "Why do we need to send static txt through the worker that
   sounds dumb". It was a Next bug, fixed in 16; the upgrade was the fix. Then
   "look up more tricks": measure each one before reporting it. Six flags
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-17* — "Add an up/down chevron to the currency picker". refusals.md
   said the other chips carry no mark, on purpose: a one-liner can overrule a
   written rule, and then the rule's sentence goes in the same commit.
-
-- *2026-10-17* — "Fix the flash that happens on deleting the last entry".
-  A click showed it for one frame; a phone's tap for 260ms, since the tap on
-  the dialog counted as a finger on the list. Drive a "flash" by touch, frame
-  by frame, before deciding it is small.

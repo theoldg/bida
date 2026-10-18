@@ -61,6 +61,12 @@ const QUIET_FIELDS: Partial<Record<Op["entity"], ReadonlySet<string>>> = {
   identity: new Set(["push"]),
 };
 
+/** An op that moves only plumbing: no revision, and no activity on the groups list. */
+export function isQuiet(op: Pick<Op, "entity" | "kind" | "patch">): boolean {
+  const quiet = QUIET_FIELDS[op.entity];
+  return !!quiet && op.kind === "update" && Object.keys(op.patch).every((field) => quiet.has(field));
+}
+
 function equalish(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   // A create omits unset fields, so an edit sending `null` isn't a change.

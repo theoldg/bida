@@ -118,8 +118,9 @@ line, whose band is its own edge, and under the last row.
 
 Under reduced motion the movement is instant and only the wash still plays.
 The groups list is the same list: a forgotten group folds out like a deleted
-entry, the last one included in the no-motion rule; a group that turns up just
-appears.
+entry, where it stood — the `push: null` a forget writes is plumbing
+(`isQuiet`), not the activity the list sorts by — the last one included in the
+no-motion rule; a group that turns up just appears.
 
 ## The ledger draws what is near the screen
 

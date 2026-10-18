@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityFeed, entityHistory, groupCreateOf, isImported, rosterOf, unseenRevisions } from "./history";
+import { activityFeed, entityHistory, groupCreateOf, isImported, isQuiet, rosterOf, unseenRevisions } from "./history";
 import { DEMO_GROUP_ID } from "./demo";
 import { foldOps } from "./fold";
 import { GROUP, MARIE, OpBuilder, SAM, THEO } from "./fixtures.test-helper";
@@ -337,5 +337,14 @@ describe("rosterOf", () => {
     const [late, made] = entityHistory(b.ops, "e-dinner");
     expect([...made!.roster].sort()).toEqual([MARIE, THEO].sort());
     expect(late!.roster).toHaveLength(3);
+  });
+});
+
+describe("isQuiet", () => {
+  it("is an update moving only plumbing", () => {
+    expect(isQuiet({ entity: "identity", kind: "update", patch: { push: null } })).toBe(true);
+    expect(isQuiet({ entity: "identity", kind: "update", patch: { push: null, memberId: SAM } })).toBe(false);
+    expect(isQuiet({ entity: "identity", kind: "create", patch: { memberId: SAM, claimedAt: 1 } })).toBe(false);
+    expect(isQuiet({ entity: "expense", kind: "update", patch: { push: null } })).toBe(false);
   });
 });
