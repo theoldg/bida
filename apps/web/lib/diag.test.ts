@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { forget, format, hideSecrets, mark, started, timeline } from "./diag";
+import { forget, format, hideSecrets, mark, noteFrame, noteInput, started, timeline } from "./diag";
 
 /**
  * The recorder has one job — say what the app was waiting for — and two ways
@@ -87,6 +87,57 @@ describe("the flight recorder", () => {
     const rows = timeline();
     expect(rows.length).toBeLessThanOrEqual(400);
     expect(rows.at(-1)?.info).toBe("449");
+  });
+});
+
+/**
+ * What the spans can't see, written down: a frame or an input over 100ms,
+ * saying where its time went.
+ */
+describe("slow frames and inputs", () => {
+  beforeEach(forget);
+  const tap = (name: string, duration: number, interactionId = 7) => ({
+    startTime: 1000, duration, name, processingStart: 1040, processingEnd: 1070,
+    interactionId, target: { tagName: "BUTTON" },
+  });
+
+  it("says where a slow frame's time went, and skips a quick one", () => {
+    noteFrame({ startTime: 500, duration: 90 });
+    noteFrame({
+      startTime: 2000, duration: 220, styleAndLayoutStart: 2160,
+      scripts: [{ duration: 40, invoker: "Window.requestAnimationFrame" }, { duration: 110, invoker: "BUTTON.onclick" }],
+    });
+    expect(timeline()).toEqual([expect.objectContaining({
+      at: 2000, what: "frame.slow", ms: 220, info: "script 150ms, layout 60ms, longest BUTTON.onclick",
+    })]);
+  });
+
+  it("names a whole script by its chunk, not its address", () => {
+    noteFrame({ startTime: 0, duration: 150, scripts: [{ duration: 120, invoker: "https://bida.bid/_next/static/chunks/app/layout-98e1.js" }] });
+    expect(timeline()[0]?.info).toBe("script 120ms, layout 0ms, longest app/layout-98e1.js");
+  });
+
+  it("keeps one line per tap, the longest of its events", () => {
+    noteInput(tap("pointerdown", 104));
+    noteInput(tap("click", 136));
+    noteInput(tap("pointerup", 112));
+    expect(timeline()).toEqual([expect.objectContaining({
+      what: "input.slow", ms: 136, info: "click on BUTTON: waited 40ms, ran 30ms, drew 66ms",
+    })]);
+  });
+
+  it("ignores a lone event and a quick tap", () => {
+    noteInput(tap("pointermove", 300, 0));
+    noteInput(tap("click", 60, 8));
+    expect(timeline()).toEqual([]);
+  });
+
+  it("can't push the spans out, however laggy the scroll", () => {
+    mark("sync.push");
+    for (let i = 0; i < 500; i++) noteFrame({ startTime: 10 + i, duration: 120 });
+    const rows = timeline();
+    expect(rows.filter((e) => e.what === "frame.slow")).toHaveLength(60);
+    expect(rows.some((e) => e.what === "sync.push")).toBe(true);
   });
 });
 

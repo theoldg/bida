@@ -23,6 +23,15 @@ now is why the screen is open. And the timeline is ordered by when things
 **started**, not when they ended, so a long `rebuild` sits above the read it
 was blocking rather than below it.
 
+**What the spans can't see is written down too: any frame or tap over
+100ms.** `frame.slow` says how much of the frame was script and how much
+layout, and whose script ran longest; `input.slow` says how long a tap
+waited, ran and took to draw, one line per tap. They keep a ring of their
+own (60), so a laggy scroll can't push out the spans that explain it, and
+the head's `slow:` line counts them, or says this browser can't measure
+(Safari). It answers "it feels slow" with whether the app or the browser
+spent the time.
+
 **The report reads newest first — the head, then this page, then the pages
 before it, then the home-screen hand-off.** It is pasted from a phone into a
 chat box that will not take all of it, so what just went wrong has to be in the

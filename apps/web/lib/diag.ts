@@ -58,11 +58,125 @@ export function timeline(): DiagEvent[] {
     ms: Math.round(now() - span.at),
     info: `${span.info ? `${span.info} ` : ""}STILL RUNNING`,
   }));
-  return [...events, ...live].sort((a, b) => a.at - b.at || a.seq - b.seq);
+  return [...events, ...slow, ...live].sort((a, b) => a.at - b.at || a.seq - b.seq);
 }
 
 export function loadedAt(): number {
   return startedAt;
+}
+
+/* ---- slow frames and inputs ------------------------------------------- */
+
+/**
+ * What the spans can't see: rendering, layout and the time between a tap and
+ * the screen answering. A frame or an input past this is written down, so a
+ * report from a phone that "feels slow" says whether the app or the browser
+ * spent the time.
+ */
+const SLOW_MS = 100;
+/** Their own ring: a laggy scroll writes one a frame, and would push out the spans that explain it. */
+const SLOW_LIMIT = 60;
+const slow: DiagEvent[] = [];
+let lastInput: { id: number; event: DiagEvent } | undefined;
+
+/** The parts of a `long-animation-frame` entry read here; the DOM lib doesn't type it yet. */
+export interface FrameEntry {
+  startTime: number;
+  duration: number;
+  /** Zero when the frame laid nothing out. */
+  styleAndLayoutStart?: number;
+  scripts?: readonly { duration: number; invoker?: string; sourceFunctionName?: string }[];
+}
+
+/** The parts of an `event` (Event Timing) entry read here. */
+export interface InputEntry {
+  startTime: number;
+  duration: number;
+  name: string;
+  processingStart: number;
+  processingEnd: number;
+  /** Shared by the pointerdown, pointerup and click of one tap; 0 for a lone event. */
+  interactionId?: number;
+  target?: { tagName?: string } | null;
+}
+
+function noteSlow(event: DiagEvent): void {
+  slow.push(event);
+  if (slow.length > SLOW_LIMIT) slow.splice(0, slow.length - SLOW_LIMIT);
+}
+
+const ms = (n: number) => `${Math.max(0, Math.round(n))}ms`;
+
+/** `script 140ms, layout 60ms, longest DIV.onclick`: whose code the frame was spent in. */
+export function noteFrame(frame: FrameEntry): void {
+  if (frame.duration < SLOW_MS) return;
+  const scripts = frame.scripts ?? [];
+  const script = scripts.reduce((sum, s) => sum + s.duration, 0);
+  const layout = frame.styleAndLayoutStart ? frame.startTime + frame.duration - frame.styleAndLayoutStart : 0;
+  const top = [...scripts].sort((a, b) => b.duration - a.duration)[0];
+  // A whole script's invoker is its URL; the chunk's name is what tells two apart.
+  const who = top
+    ? (top.invoker || top.sourceFunctionName || "script").replace(/^https?:\/\/[^/]+\/(_next\/static\/chunks\/)?/, "").slice(0, 60)
+    : undefined;
+  noteSlow({
+    at: Math.round(frame.startTime), what: "frame.slow", ms: Math.round(frame.duration), seq: seq++,
+    info: `script ${ms(script)}, layout ${ms(layout)}${who ? `, longest ${who}` : ""}`,
+  });
+}
+
+/**
+ * `click on BUTTON: waited 80ms, ran 30ms, drew 20ms` — queued behind other
+ * work, slow in its own handler, or slow to paint. One line per tap: its
+ * pointerdown, pointerup and click share an interaction, and the longest speaks.
+ */
+export function noteInput(input: InputEntry): void {
+  if (input.duration < SLOW_MS || !input.interactionId) return;
+  const event: DiagEvent = {
+    at: Math.round(input.startTime), what: "input.slow", ms: Math.round(input.duration), seq: seq++,
+    info: `${input.name} on ${input.target?.tagName ?? "nothing"}: waited ${ms(input.processingStart - input.startTime)}, `
+      + `ran ${ms(input.processingEnd - input.processingStart)}, drew ${ms(input.startTime + input.duration - input.processingEnd)}`,
+  };
+  if (lastInput?.id === input.interactionId) {
+    if ((lastInput.event.ms ?? 0) >= (event.ms ?? 0)) return;
+    const i = slow.indexOf(lastInput.event);
+    if (i >= 0) slow.splice(i, 1);
+  }
+  lastInput = { id: input.interactionId, event };
+  noteSlow(event);
+}
+
+/** For the report's head: a paste cut short still says whether frames were slow. */
+export function slowSummary(): string {
+  if (!watchingSlow) return "not measured: this browser reports neither";
+  const frames = slow.filter((e) => e.what === "frame.slow");
+  const inputs = slow.filter((e) => e.what === "input.slow");
+  const longest = (rows: DiagEvent[]) => rows.length ? `, longest ${Math.max(...rows.map((e) => e.ms ?? 0))}ms` : "";
+  return `${frames.length} frame(s)${longest(frames)}, ${inputs.length} input(s)${longest(inputs)} over ${SLOW_MS}ms`
+    + (slow.length >= SLOW_LIMIT ? `, the last ${SLOW_LIMIT} kept` : "");
+}
+
+let watchingSlow = false;
+
+/**
+ * Idempotent. Chrome reports both, Safari neither yet, and the head says so.
+ * `buffered`, so starting late still hands over what this page already drew.
+ */
+export function watchSlow(): void {
+  if (watchingSlow || typeof window === "undefined") return;
+  const types = typeof PerformanceObserver === "undefined" ? [] : PerformanceObserver.supportedEntryTypes ?? [];
+  const watch = (type: string, note: (entry: never) => void, extra: object = {}) => {
+    if (!types.includes(type)) return;
+    try {
+      const take = (entries: PerformanceEntryList) => { for (const entry of entries) note(entry as never); };
+      const observer = new PerformanceObserver((list) => take(list.getEntries()));
+      observer.observe({ type, buffered: true, ...extra } as PerformanceObserverInit);
+      // Now, not a task later: a cold /diag prints its head straight after.
+      take(observer.takeRecords());
+      watchingSlow = true;
+    } catch { /* costs these lines, nothing else */ }
+  };
+  watch("long-animation-frame", noteFrame);
+  watch("event", noteInput, { durationThreshold: SLOW_MS });
 }
 
 /* ---- surviving the relaunch ------------------------------------------- */
@@ -110,6 +224,7 @@ export function keep(): void {
     localStorage.removeItem("bida.diag.last");
   } catch { /* nothing to clean */ }
   addEventListener("pagehide", save);
+  watchSlow();
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") save();
   });
@@ -118,6 +233,8 @@ export function keep(): void {
 /** Test seam: an empty recorder. */
 export function forget(): void {
   events.length = 0;
+  slow.length = 0;
+  lastInput = undefined;
   seq = 0;
   running.clear();
 }

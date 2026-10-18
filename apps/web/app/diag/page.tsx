@@ -10,7 +10,7 @@ import { writeClipboardText } from "@/lib/clipboard";
 import { copy, lang } from "@/lib/copy";
 import { db } from "@/lib/db/dexie";
 import { pullNotes, type PullNote } from "@/lib/db/stash";
-import { format, handoff, loadedAt, otherPages, timeline } from "@/lib/diag";
+import { format, handoff, loadedAt, otherPages, slowSummary, timeline, watchSlow } from "@/lib/diag";
 import { embeddedApp } from "@/lib/embedded";
 import { useFold } from "@/lib/fold";
 import { route } from "@/lib/group-link";
@@ -273,6 +273,9 @@ async function collect(): Promise<string> {
   say("agent", navigator.userAgent);
   say("referrer", document.referrer || "none");
   say("screen", screenLine());
+  // A /diag opened cold has read nothing, so nothing armed the recorder.
+  watchSlow();
+  say("slow", slowSummary());
   say("online", String(navigator.onLine));
   say("worker", navigator.serviceWorker?.controller ? "controlling" : "none");
   say("stores", await storeLine);
