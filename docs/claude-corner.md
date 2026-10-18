@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-18* — "The Reddit browser escape doesn't work", a /diag and no
+  more. A tap I can't watch can't be fixed by guessing how it failed: put the
+  host's own way out under the button, and say which guess the fix rests on.
+
 - *2026-10-18* — ""Han settled that one at the table" is funny but the UI
   doesn't support deletion notes". A demo line nobody can see is a joke told to
   the log. The demo holds only what a screen shows; a gag the app can't render
@@ -82,8 +86,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-17* — "Replace the trashcan … everywhere (new group, who am i, …)".
   The who-am-I list never had one; the list was the owner's map of where to
   look, not a promise each stop holds a bin. Three screens moved, one said so.
-
-- *2026-10-17* — "All non-docked buttons travel slightly down when the
-  keyboard opens", on both phones. It was this morning's fix for the add row:
-  air that came only with the keys. Its check knew only a crowded list; the
-  short one, where the act sits on the row, is the one a thumb meets first.

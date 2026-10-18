@@ -46,8 +46,9 @@ let unfolded = false;
  * says so, and folds open on the way out.
  *
  * **The way out differs by platform.** Android takes an `intent:` link, which
- * the system hands to the default browser; on iOS no page can open Safari, so
- * the line names the button that does, and the link is there to copy by hand.
+ * the system hands to the default browser, when the host lets it; on iOS no
+ * page can open Safari. Both name the host's button that does, and hand over
+ * the link to copy by hand.
  * The demo, the install and notification offers stand down while this shows
  * (`DemoCard`, `offerFrom`).
  *
@@ -110,33 +111,38 @@ const NOTHING_HELD = /^\/split(\.html)?$/;
  * the join, so it would land on "missing its password". No link until the
  * keys are read, for the same reason.
  *
- * On iOS the link is text, not a copy button: Messenger's webview has no
- * clipboard (`lib/clipboard.ts`), so it is selected whole by a hold.
+ * Android's button is a request the host may drop — Reddit's webview does
+ * nothing with an `intent:` — so the host's own menu and the link follow it
+ * there too, the address keeping the same carry (`KeepInAddress`).
+ *
+ * The link is text, not a copy button: Messenger's webview has no clipboard
+ * (`lib/clipboard.ts`), so it is selected whole by a hold.
  */
 function WayOut() {
   const groups = useCarry();
+  const ios = onIos();
   const href = !groups ? undefined
     : groups.length ? `${location.origin}${route.handover(groups)}` : location.href;
   return (
     <div className="webviewbody">
       <p>{copy.embedded.detail}</p>
-      {onIos() ? (
-        <>
-          <p className="webviewhow">{withMenu(copy.embedded.how)}</p>
-          {href ? <>
-            <p className="webviewhow webviewor">{copy.embedded.orCopy}</p>
-            <div className="linkbox webviewlink"><span className="selectable">{href}</span></div>
-          </> : null}
-        </>
-      ) : href ? <a className="btn btn-s" href={intentLink(href)}>{copy.embedded.open}</a> : null}
+      {!ios && href ? <a className="btn btn-s" href={intentLink(href)}>{copy.embedded.open}</a> : null}
+      <p className="webviewhow">{withMenu(ios ? copy.embedded.how : copy.embedded.howElse, ios)}</p>
+      {href ? <>
+        <p className="webviewhow webviewor">{copy.embedded.orCopy}</p>
+        <div className="linkbox webviewlink"><span className="selectable">{href}</span></div>
+      </> : null}
     </div>
   );
 }
 
-/** The copy's `⋯` drawn as the button it names, so the eye finds it in the host's bar. */
-function withMenu(line: string): ReactNode {
+/**
+ * The copy's `⋯` drawn as the button it names, so the eye finds it in the
+ * host's bar: across on iOS, upright as Android's hosts draw it.
+ */
+function withMenu(line: string, across: boolean): ReactNode {
   const [before, ...after] = line.split("⋯");
   return after.length
-    ? <>{before}<span className="menuchip" role="img" aria-label="⋯"><Icon name="more" size={14} style={{ transform: "rotate(90deg)" }} /></span>{after.join("⋯")}</>
+    ? <>{before}<span className="menuchip" role="img" aria-label="⋯"><Icon name="more" size={14} style={across ? { transform: "rotate(90deg)" } : undefined} /></span>{after.join("⋯")}</>
     : line;
 }

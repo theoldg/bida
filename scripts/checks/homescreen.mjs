@@ -468,6 +468,11 @@ const carriedOut = `/handover${fragment}.m-bo`;
 report(await intentOf() === `intent://${host_}${carriedOut}#Intent;scheme=http;end`,
   "on Android it unfolds to a link out, carrying that group's key alone and who this phone is in it,"
   + " in front of the intent", await intentOf());
+// A host may drop the intent (Reddit's does), so its own menu and the link follow.
+const droidPaste = await droidPage.locator(".webviewlink").textContent().catch(() => null);
+report(await droidPage.getByText("“Open in browser”", { exact: false }).count() === 1
+  && droidPaste === `${base}${carriedOut}`,
+  "and under it, for a host that drops the intent, its own menu and the same link to paste", droidPaste ?? "");
 // iOS has no such link: *Open in Safari* opens the address, so the address keeps the carry.
 const kept = await droidPage.waitForFunction((hash) => location.hash === hash, `${fragment}.m-bo`,
   { timeout: PATIENCE }).then(() => true, () => false);

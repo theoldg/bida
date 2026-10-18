@@ -338,6 +338,8 @@ const en = {
     open: "Open in browser",
     /** iOS's: no page can open Safari, so say which button does (its `⋯` is drawn as one), and hand over the link. */
     how: "Tap ⋯, then “Open in browser”.",
+    /** Android's, under its button, for a host that drops the `intent:`. */
+    howElse: "Nothing? Tap ⋯, then “Open in browser”.",
     orCopy: "Or copy and paste the link:",
   },
 

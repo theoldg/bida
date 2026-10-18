@@ -298,6 +298,9 @@ painted before any script and could stay. The address alone won't do — past th
 and landed on "missing its password" — so the link waits for the keys' read.
 That group alone un-forgets, its invite having just been tapped: a browser
 that once forgot it would otherwise open it keyless, on the same screen.
+The button is a request the host may drop — Reddit's webview does nothing
+with an `intent:` — so under it, *Nothing?* names the host's ⋮ menu and hands
+over the link, as iOS's fold below does.
 
 iOS has no such link — no page can open Safari, and `x-safari-https:` is
 ignored by Meta's webviews — so the fold names the button instead: tap ⋯
