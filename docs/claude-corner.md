@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-18* — "Sometimes shows me empty space instead of skeletons … no
+  need to rewrite the app". The window was fine; only its spacer was blank.
+  Painting the spacer as rows cost one CSS rule and covers any speed. "Not a
+  huge deal" sizes the fix, not the care.
+
 - *2026-10-18* — "When deleting a group, it jumps to the top of the list
   before animating". The fold was fine; the forget wrote one plumbing op first,
   and the list read it as activity. A motion bug can be a data bug a frame
@@ -83,7 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   an iPhone. Three clicks in one frame reproduced it; the cause was a habit,
   not a line, and "look for similar bugs across the whole app" found it in
   the split steppers and payers too. Fix the pattern, not the screen named.
-
-- *2026-10-17* — "Add an up/down chevron to the currency picker". refusals.md
-  said the other chips carry no mark, on purpose: a one-liner can overrule a
-  written rule, and then the rule's sentence goes in the same commit.

@@ -127,9 +127,11 @@ no-motion rule; a group that turns up just appears.
 Only rows near the screen exist (`windowed` on `LedgerRows`, the arithmetic in
 `lib/ledger-window.ts`). A row is one height whatever it carries and a date
 line another, so every slot's place is a sum — the two heights measured off
-the first slots drawn — and an undrawn run is an empty box of its height: the
+the first slots drawn — and an undrawn run is a box of its height: the
 scroller, and the browser's scroll bar, are the whole ledger from the first
-frame. On screen and a screen either side, a row not yet filled is a skeleton;
+frame. The box is painted as skeleton rows in CSS (`.lgap`), since a fast
+fling outruns the skeletons drawn past the screen and the browser paints the
+box before the window hears of the scroll. On screen and a screen either side, a row not yet filled is a skeleton;
 date lines are always drawn. `WINDOW_ROWS` rows are filled around the screen —
 or, once a fling will coast more than a screen, around where it will land
 (`landingOf`: speed × 500ms, iOS's deceleration), so the rows rushing past stay

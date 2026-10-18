@@ -1185,6 +1185,17 @@ dialog.scrim::backdrop { background: transparent }
 .lrows > .lslot:has(+ .lslot > .daylabel) > .row,
 .lrows > .lslot:last-child > .row { border-bottom-color: transparent }
 .lslot[data-leaving] { pointer-events: none }
+/* An undrawn run, painted as `SkeletonRow`s (docs/rows.md). `--lrow` is the
+   measured row; date lines put it out of step, unseen at a fling's speed. */
+.lgap { --skel: var(--card-3); background-repeat: repeat-y;
+  background-image:
+    linear-gradient(transparent 23px, var(--skel) 0 32px, transparent 0),
+    linear-gradient(transparent 38px, var(--skel) 0 45px, transparent 0),
+    linear-gradient(transparent 23px, var(--skel) 0 33px, transparent 0),
+    linear-gradient(transparent 38px, var(--skel) 0 45px, transparent 0),
+    linear-gradient(transparent calc(var(--lrow) - 1px), var(--rule-soft) 0);
+  background-size: 50% var(--lrow), 28% var(--lrow), 54px var(--lrow), 32px var(--lrow), 100% var(--lrow);
+  background-position: 16px 0, 16px 0, right 16px top 0, right 16px top 0, 0 0 }
 /* The row a save just wrote, until brought into view. A colour settling, so
    exempt from the motion clamp. */
 .lslot.saved { position: relative }

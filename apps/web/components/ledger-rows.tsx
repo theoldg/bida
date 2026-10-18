@@ -167,7 +167,8 @@ export function LedgerRows<T>({ groupId, items, row, empty, opens = true, window
     <div className="rows lrows" ref={root}>
       {win
         ? segmentsOf(win.offsets, win.drawn).map((seg) => isGap(seg)
-          ? <div key={`gap:${drawing[seg.first]!.key}`} className="lgap" style={{ height: seg.gap }} aria-hidden="true" />
+          ? <div key={`gap:${drawing[seg.first]!.key}`} className="lgap"
+            style={{ height: seg.gap, ["--lrow" as string]: `${heights.row}px` }} aria-hidden="true" />
           : slotOf(drawing[seg.at]!, seg.at, win.filled(seg.at)))
         : drawing.map((item, i) => slotOf(item, i, true))}
     </div>
