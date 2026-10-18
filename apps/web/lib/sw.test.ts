@@ -19,6 +19,7 @@ interface Sandbox {
   routeWithQuery: (url: URL) => string;
   storeCopies: (cache: unknown, copies: Record<string, string[]>) => Promise<void>;
   previousFor: (clientId: string) => Promise<string | null | undefined>;
+  headFor: (url: URL, request: unknown) => Promise<{ body?: string | null; ok?: boolean }>;
   payloadFor: (url: URL, request: unknown, clientId: string) =>
     Promise<{ body?: string; failed?: boolean; url?: string }>;
   reuseFromEarlierBuilds: (cache: unknown, urls: string[]) => Promise<string[]>;
@@ -109,6 +110,22 @@ describe("the screen a payload URL belongs to", () => {
     expect(routeWithQuery(payload("/g/entry.txt?id=abc&e=xyz&_rsc=1h2x3")))
       .toBe("/g/entry?id=abc&e=xyz");
     expect(routeWithQuery(payload("/g.txt?_rsc=1h2x3"))).toBe("/g");
+  });
+});
+
+describe("a route asked for with HEAD, as Next 16 does before each prefetch", () => {
+  it("is answered from the cache, with no body and no network", async () => {
+    const sandbox = load({ [CACHE_NAME]: { "/g/entry": "<html>" } });
+    let asked = 0;
+    sandbox.fetch = async () => { asked++; return { ok: false }; };
+    const res = await sandbox.headFor(payload("/g/entry?id=abc"), {});
+    expect(res.body).toBeNull();
+    expect(asked).toBe(0);
+  });
+
+  it("goes to the network for what the cache does not hold", async () => {
+    const res = await load({}).headFor(payload("/nowhere"), {});
+    expect(res).toEqual({ ok: false, body: "network" });
   });
 });
 

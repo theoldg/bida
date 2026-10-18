@@ -147,6 +147,17 @@ async function cacheFirst(cacheKey, request, clientId) {
   return res;
 }
 
+/**
+ * In a static export Next 16 asks for a route with HEAD before prefetching it,
+ * to see whether it is redirected. Passed through, every prefetch waited on the
+ * network first, and offline none happened at all.
+ */
+async function headFor(url, request) {
+  const cached = await lookup(url.pathname);
+  if (!cached) return fetch(request);
+  return new Response(null, { status: cached.status, headers: cached.headers });
+}
+
 /** Stores each fetched file again under the names that share its bytes (`COPIES`). */
 async function storeCopies(cache, copies) {
   for (const [url, names] of Object.entries(copies)) {
@@ -391,13 +402,18 @@ self.addEventListener("notificationclick", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-  if (request.method !== "GET") return;
+  if (request.method !== "GET" && request.method !== "HEAD") return;
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
   // The crop model is versioned in its path: the HTTP cache keeps its 2.5 MB across deploys.
   if (url.pathname.startsWith("/scanic/")) return;
+
+  if (request.method === "HEAD") {
+    event.respondWith(headFor(url, request));
+    return;
+  }
 
   // A payload opened as a page is a screenful of RSC: Next 15 navigated to one
   // when a tap's fetch failed, and a history entry from then still can. Sent to

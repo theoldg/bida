@@ -180,3 +180,6 @@ deploy: untouched, in use, and on a group through a quick and a long absence.
   the blur, and both status-bar meta tags are ignored (iOS 27, found by hand).
   Any fixed layer reaching the top — a dialog's scrim, the photo zoom — takes
   the bar over while open.
+- **Next 16 asks for a route with `HEAD` before prefetching it** (a static
+  export only). A worker that answers only `GET` sends each to the network, and
+  offline no prefetch happens; `headFor` answers from the precache.
