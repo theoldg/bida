@@ -297,7 +297,7 @@ function ReceiptPanel({
         {involved.length > 0 ? (
           <div className="hairline" style={{ margin: "0 0 -1px" }} />
         ) : null}
-        <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-p${flash}`} onAnimationEnd={onFlashEnd}
+        <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-s${flash}`} onAnimationEnd={onFlashEnd}
           style={{ textDecoration: "none", justifyContent: "space-between" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Icon name="users" size={16} />

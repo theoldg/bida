@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import { clipAmountToCurrency } from "./amount-input";
 import { copy } from "../lib/copy";
-import { Icon } from "./icons";
+import { Icon, type IconName } from "./icons";
 import { getDraft, saveDraft, tabAfterScan } from "../lib/draft";
 import {
   normalizeScan, readBill, scanCurrency, type ScanResult,
@@ -175,9 +175,10 @@ export function useReceiptScan(
 /**
  * One act with three doors (camera, library, the items by hand), so one box,
  * never buttons side by side. `typeIn={false}` where the tap that got here was
- * the camera. `lg` where the screen exists for scanning, `s` on the Items tab.
- * `overBill` where a read bill is held and a primary under it is the way on:
- * the doors replace it, so they say so, and leave the ink to that primary.
+ * the camera. `lg` where the screen exists for scanning, inked; `s` on the
+ * Items tab, grey, since the entry form's one ink is Save. `overBill` where a
+ * read bill is held and a button above or below it is the way on: the doors
+ * replace it, so they shrink to fit their words, under "Change bill".
  */
 export function ScanPair({
   scan, register, overBill = false, typeIn = true, flash = "", onFlashEnd,
@@ -194,29 +195,29 @@ export function ScanPair({
   // So pressing doesn't wait on Cloudflare. Keyed on `busy`: a scan spends the token.
   useEffect(() => { if (!disabled && !busy) warmTurnstile(); }, [disabled, busy]);
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
-  const box = `btn-pair${overBill ? "" : " pair-p"}${flash}`;
+  const box = `btn-pair${overBill ? " pair-sm" : register === "lg" ? " pair-p" : ""}${flash}`;
+  const titled = (doors: React.ReactNode) => {
+    if (!overBill) return doors;
+    return <div className="billdoors"><span>{copy.scan.changeBill}</span>{doors}</div>;
+  };
 
   // A door left beside "Reading…" would invite a second reading.
   if (busy && live) {
-    return <ScanBusy live={live} box={box} button={half} onFlashEnd={onFlashEnd} />;
+    return titled(<ScanBusy live={live} box={box} button={half} onFlashEnd={onFlashEnd} />);
   }
 
-  return (
+  const door = (icon: IconName, label: string, onClick: () => void) => (
+    <button type="button" className={half} disabled={disabled} onClick={onClick}>
+      <Icon name={icon} size={14} />
+      {label}
+    </button>
+  );
+
+  return titled(
     <div className={box} onAnimationEnd={onFlashEnd}>
-      <button type="button" className={half} disabled={disabled} onClick={scan.openCamera}>
-        <Icon name="cam" size={14} />
-        {overBill ? copy.scan.rescan : copy.scan.snap}
-      </button>
-      <button type="button" className={half} disabled={disabled} onClick={scan.openLibrary}>
-        <Icon name="image" size={14} />
-        {copy.scan.upload}
-      </button>
-      {typeIn ? (
-        <button type="button" className={half} disabled={disabled} onClick={scan.openTyping}>
-          <Icon name="edit" size={14} />
-          {copy.scan.byHand.open}
-        </button>
-      ) : null}
+      {door("cam", copy.scan.snap, scan.openCamera)}
+      {door("image", copy.scan.upload, scan.openLibrary)}
+      {typeIn ? door("edit", overBill ? copy.scan.byHand.edit : copy.scan.byHand.open, scan.openTyping) : null}
     </div>
   );
 }

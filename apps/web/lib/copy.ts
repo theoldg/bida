@@ -923,13 +923,15 @@ const en = {
     },
     lede: "Take a photo to fill in the expense. Split it evenly, or line by line.",
     snap: "Scan",
-    rescan: "Rescan",
     upload: "Upload",
+    /** Beside the doors once a bill is held, which then edit it rather than type one. */
+    changeBill: "Change bill",
     reading: "Reading…",
     camera: "Take a photo of a receipt",
     library: "Upload a receipt photo",
     byHand: {
       open: "Type",
+      edit: "Edit",
       title: "Bill items",
       name: "Item",
       nameOf: (n: number) => `Item ${n}`,
@@ -949,13 +951,14 @@ const en = {
       discardTitle: "Discard these changes?",
       discardBody: "The bill stays as it was.",
     },
-    assignWhoHadWhat: "Assign who had what",
+    assignWhoHadWhat: "Assign who-had-what",
     editWhoHadWhat: "Edit who-had-what",
     /**
-     * True of both paths: only a brought free-tier key trains on the bill, and
-     * `/about` draws the difference.
+     * True of both paths: only a brought free-tier key trains on the image, and
+     * `/about` draws the difference. Images, not the bill: one typed in goes
+     * nowhere.
      */
-    terms: "The bill is sent to Google",
+    terms: "Images are scanned by Google",
     failed: "Couldn’t read that receipt.",
     keptOld: "The old one is still assigned.",
     problem: {

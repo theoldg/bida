@@ -79,7 +79,8 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
   full-width `.btn-lg` ([design-system.md](design-system.md)), because the
   screen has exactly one act; a save failure is said above it. The kind chip sits
   at the top bar's right, a plain chip like the currency's, with the picker's ⇕
-  in it: Save is the form's only ink block ([design-system.md](design-system.md)).
+  in it: Save is the form's only ink block, the Items tab's doors and its way
+  into the grid plain grey ([design-system.md](design-system.md)).
 - **Every field's value starts on one column** (`--label-w`), so a label is a
   word or two: an income's payer is "Paid to", since "Received by" won't fit.
   Several payers are the payer picker's first row, "Multiple people ›"; with

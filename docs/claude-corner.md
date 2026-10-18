@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-18* — "Make the scan and who had what buttons quieter, but not too
+  quiet". An outline, then five fill strengths, and the answer was the grey
+  already beside them: "just make it like Rescan". A sheet of variants is
+  how the plain answer gets found; offer the plainest one in it.
+
 - *2026-10-18* — "Make the upper limit for as parts more like 1000000000".
   "More like" is a size, not a figure: 999 999 999 keeps the field a digit
   cap. A cap a thousand times higher also reached the footer's count, which
@@ -83,7 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   dislike it". Its two costs (a row per answer viewed, a slow upload called
   failed) said in one breath, then built: "argue" is not "wait".
 
-- *2026-10-17* — "Propose a manual item editor", then a round a reply. "The
-  amount field should be editable" meant the count, not the total I'd
-  recoloured: a vague noun over a screenshot is a question. And "wow, a whole
-  new class of refusals": name what a new power breaks before they find it.

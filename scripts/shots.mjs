@@ -243,7 +243,7 @@ async function main() {
       process.stdout.write(`${theme}/quick-people `);
       await page.locator('input[aria-label="Upload a receipt photo"]')
         .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
-      await page.getByRole("button", { name: /Assign who had what/ }).click();
+      await page.getByRole("button", { name: /Assign who-had-what/ }).click();
       await page.waitForURL(/quick\/items/);
       const any = (who, item) => new RegExp(`^${who} (had (all \\d+ )?|shared the \\d+ )${item}`);
       for (const label of [

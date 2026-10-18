@@ -195,7 +195,7 @@ async function onLedger() {
     await page.getByLabel("Add someone").fill(who);
     await page.getByLabel("Add someone").press("Enter");
   };
-  const toGrid = page.getByRole("button", { name: /Assign who had what/ });
+  const toGrid = page.getByRole("button", { name: /Assign who-had-what/ });
   const named = () => page.locator(".rows .row:not(.addrow) .rtitle").count();
 
   await page.goto(`${base}/`);
