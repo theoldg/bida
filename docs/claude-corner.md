@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-18* — "Why do we need to send static txt through the worker that
+  sounds dumb". It was a Next bug, fixed in 16; the upgrade was the fix. Then
+  "look up more tricks": measure each one before reporting it. Six flags
+  saved nothing, and a polyfill nobody runs was a tenth of the chunks.
+
 - *2026-10-18* — A Reddit comment, forwarded: "fix the selection issue and
   check the target blank thing just in case". The CSS already said nothing
   selects; a scan of every screen's computed style found the two opt-ins that
@@ -82,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   A click showed it for one frame; a phone's tap for 260ms, since the tap on
   the dialog counted as a finger on the list. Drive a "flash" by touch, frame
   by frame, before deciding it is small.
-
-- *2026-10-17* — "Adding an item to an already split bill accepts saving
-  without assignment!" The cause was ten commits ahead of my clone: pull
-  before tracing, or a bug in code you can't see reads as no bug. The fix
-  was one question asked in two places, not two answers.

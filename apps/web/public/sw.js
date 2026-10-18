@@ -2,11 +2,17 @@
  * App-shell precache — never the API: Dexie is the offline data layer, and a
  * cached `/api/*` would be a second, disagreeing truth (docs/pwa.md).
  *
- * Both lists are stamped in by `scripts/precache.mjs` from the files on disk.
+ * All three are stamped in by `scripts/precache.mjs` from the files on disk.
  * Never hand-maintain a route list here: it drifts from the app.
  */
 const REVISION = "__PRECACHE_REVISION__";
 const ASSETS = ["__PRECACHE_ASSETS__"];
+/**
+ * `{ [url]: [urls with the same bytes] }`. Next writes one screen's payload
+ * under two names and the root layout's under every screen, so a third of the
+ * export is repeats: each is fetched once and stored under all its names.
+ */
+const COPIES = { __PRECACHE_COPIES__: [] };
 const CACHE_NAME = `bida-shell-${REVISION}`;
 const SHELL_PREFIX = "bida-shell-";
 /** `{ builds: { [clientId]: cacheName | null } }` for open pages on earlier builds. */
@@ -15,17 +21,22 @@ const LEGACY = "bida-legacy";
 const PULLS = "bida-pull";
 
 /**
- * Next fetches an RSC payload (`/g.txt?id=…&_rsc=…`) on every in-app tap. The
- * query is only app state, so payloads are matched on the path alone and the
- * whole app navigates from cache.
+ * Next fetches RSC payloads on every in-app tap: a screen's whole
+ * (`/g.txt?id=…&_rsc=…`) or its pieces (`/g/__next._tree.txt?id=…`). The query
+ * is only app state, so payloads are matched on the path alone and the whole
+ * app navigates from cache.
  */
 function isPayload(url) {
   return url.pathname.endsWith(".txt");
 }
 
-/** `/g.txt` is `/g`; the root's is `/index.txt`. Mirrored in apps/api/src/payload.ts. */
+/**
+ * The screen a payload belongs to: `/g.txt` and `/g/__next.g.__PAGE__.txt` are
+ * both `/g`, and the root's are `/index.txt` and `/__next._tree.txt`.
+ */
 function routeOf(url) {
-  const path = url.pathname.slice(0, -".txt".length);
+  let path = url.pathname.slice(0, -".txt".length);
+  if (/\/__next\.[^/]*$/.test(path)) path = path.slice(0, path.lastIndexOf("/"));
   return path === "/index" ? "/" : path || "/";
 }
 
@@ -136,6 +147,16 @@ async function cacheFirst(cacheKey, request, clientId) {
   return res;
 }
 
+/** Stores each fetched file again under the names that share its bytes (`COPIES`). */
+async function storeCopies(cache, copies) {
+  for (const [url, names] of Object.entries(copies)) {
+    for (const name of names) {
+      const res = await cache.match(url);
+      if (res) await cache.put(name, res);
+    }
+  }
+}
+
 /** Returns the URLs that failed. */
 async function addAll(cache, urls) {
   const failed = [];
@@ -188,6 +209,7 @@ self.addEventListener("install", (event) => {
         await caches.delete(CACHE_NAME);
         throw new Error(`precache incomplete: ${missing.length} of ${ASSETS.length} missing`);
       }
+      await storeCopies(cache, COPIES);
       await self.skipWaiting();
     })(),
   );
@@ -377,10 +399,11 @@ self.addEventListener("fetch", (event) => {
   // The crop model is versioned in its path: the HTTP cache keeps its 2.5 MB across deploys.
   if (url.pathname.startsWith("/scanic/")) return;
 
-  // Offline, Next navigates to the payload URL itself, which served as-is is a
-  // screenful of RSC. Redirect to the route, query kept: `?id=` is the group.
-  // Mirrored in apps/api/src/payload.ts.
-  if (request.mode === "navigate" && isPayload(url)) {
+  // A payload opened as a page is a screenful of RSC: Next 15 navigated to one
+  // when a tap's fetch failed, and a history entry from then still can. Sent to
+  // its screen, query kept (`?id=` is the group); only a screen, so a real
+  // `.txt` like the font licence opens as itself.
+  if (request.mode === "navigate" && isPayload(url) && ASSETS.includes(routeOf(url))) {
     event.respondWith(Response.redirect(routeWithQuery(url), 302));
     return;
   }

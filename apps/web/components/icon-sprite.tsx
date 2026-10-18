@@ -1,0 +1,175 @@
+"use client";
+// Doc: docs/design-system.md
+/**
+ * The sprite every <Icon> points into (icons.tsx). A client component so that
+ * its markup is not serialized into the layout: a server one rode in every
+ * page's RSC payload, inline in its HTML and in each `.txt`, where this one is
+ * a reference and its paths sit once in a hashed chunk that later builds reuse.
+ * The exported HTML still carries it, so the first frame has its icons.
+ */
+const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
+
+/** One bell, which the three notification glyphs are built from. */
+const BELL_BODY = "M6.2 16.2V11a5.8 5.8 0 0111.6 0v5.2l1.6 2.1H4.6z";
+const BELL_CLAPPER = "M10 20.6a2.1 2.1 0 004 0";
+const FRONT_BELL = "translate(-.8 4.8) scale(.74)";
+
+export function IconSprite() {
+  return (
+    <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
+      <defs>
+        <symbol id="i-chev" viewBox="0 0 24 24" {...S} style={{ strokeWidth: "var(--chev-w, 2.2)" }}><path d="M9 6l6 6-6 6" /></symbol>
+        {/* "Opens a picker here", where the chevron says "goes to another screen". */}
+        <symbol id="i-updown" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><path d="M8 9.5l4-4 4 4M8 14.5l4 4 4-4" /></symbol>
+        <symbol id="i-back" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><path d="M15 6l-6 6 6 6" /></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24" {...S} strokeWidth="2.4"><path d="M12 5v14M5 12h14" /></symbol>
+        <symbol id="i-minus" viewBox="0 0 24 24" {...S} strokeWidth="2.4"><path d="M5 12h14" /></symbol>
+        <symbol id="i-cross" viewBox="0 0 24 24" {...S} strokeWidth="2.4"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></symbol>
+        <symbol id="i-cam" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <path d="M3 8.5A2 2 0 015 6.5h2l1.4-2h7.2L17 6.5h2a2 2 0 012 2V18a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+          <circle cx="12" cy="13" r="3.4" />
+        </symbol>
+        <symbol id="i-off" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <path d="M2 3l20 18M5 12.5a11 11 0 014.2-2.6M19 12.5a11 11 0 00-4.6-2.7M8.5 16a6 6 0 016.2-.5" />
+          <circle cx="12" cy="19.5" r=".9" fill="currentColor" stroke="none" />
+        </symbol>
+        {/* Settings, as two rails with a knob each. A cog was drawn here first
+            and a cog is a dozen teeth around a hole: at 15px in a menu row it
+            closed up into a blob. Two lines and two circles survive the size. */}
+        <symbol id="i-sliders" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <path d="M3.5 8.5h10.3M18.2 8.5h2.3M3.5 15.5h4.3M12.2 15.5h8.3" />
+          <circle cx="16" cy="8.5" r="2.2" />
+          <circle cx="10" cy="15.5" r="2.2" />
+        </symbol>
+        <symbol id="i-search" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5 5" /></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24" {...S} strokeWidth="2.4"><path d="M4 12.5l5.5 5.5L20 7" /></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" />
+        </symbol>
+        <symbol id="i-info" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <circle cx="12" cy="12" r="8.5" /><path d="M12 11v5" /><path d="M12 8h.01" />
+        </symbol>
+        <symbol id="i-users" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <circle cx="9" cy="8" r="3.4" />
+          <path d="M2.5 19.5a6.5 6.5 0 0113 0M16 5.2a3.4 3.4 0 010 5.6M18 14.4a6.5 6.5 0 013.5 5.1" />
+        </symbol>
+        {/* One-sided on purpose: a two-headed arrow reads as "square with each
+            other", the opposite of a settle-up row. */}
+        <symbol id="i-arrow" viewBox="0 0 24 24" {...S} strokeWidth="2">
+          <path d="M4 12h14M12.5 6l6 6-6 6" />
+        </symbol>
+        <symbol id="i-sync" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <path d="M20 11a8 8 0 00-14-4.5M4 13a8 8 0 0014 4.5" /><path d="M6 3v3.8h3.8M18 21v-3.8h-3.8" />
+        </symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <path d="M4 7h16M9.5 7V4.8h5V7M6.5 7l.9 12.2A1.8 1.8 0 009.2 21h5.6a1.8 1.8 0 001.8-1.8L17.5 7" />
+        </symbol>
+        <symbol id="i-edit" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <path d="M15.5 4.5l4 4L7 21l-4.5.5.5-4.5z" /><path d="M13.5 6.5l4 4" />
+        </symbol>
+        {/* A dollar sign, for the two screens that ask for money
+            (app/g/tip/page.tsx, app/tip/page.tsx). Not a cup and not a heart: both say "pay the
+            person", and the ask is narrower — it is a bill being paid, which
+            is the whole claim that screen makes. The currency it draws is not
+            the group's, and needn't be: this is the glyph for money itself,
+            the way a "+" is the glyph for another row. */}
+        <symbol id="i-dollar" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <path d="M12 2.8v18.4" />
+          <path d="M16.2 7.1a3.9 3.9 0 00-3.7-2.3h-1.2a3.6 3.6 0 000 7.2h1.4a3.6 3.6 0 010 7.2h-1.4a3.9 3.9 0 01-3.7-2.4" />
+        </symbol>
+        {/* An envelope, for the one address in the app (app/about/page.tsx). */}
+        <symbol id="i-mail" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <rect x="3" y="5.5" width="18" height="13" rx="1.5" /><path d="M3.6 6.8l8.4 6 8.4-6" />
+        </symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <rect x="8.5" y="8.5" width="11.5" height="11.5" rx="1.5" /><path d="M15.5 5.5V5.5A1.5 1.5 0 0014 4H5.5A1.5 1.5 0 004 5.5V14a1.5 1.5 0 001.5 1.5" />
+        </symbol>
+        <symbol id="i-link" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <path d="M9.5 14.5l5-5M8 12.2l-2 2a3.5 3.5 0 004.9 4.9l2.4-2.4M16 11.8l2-2a3.5 3.5 0 00-4.9-4.9l-2.4 2.4" />
+        </symbol>
+        {/* One row becoming two, and back: a rule with arrows pushing apart /
+            pulling together. Legible at 12px, which a forking-branch glyph
+            isn't. */}
+        <symbol id="i-split" viewBox="0 0 24 24" {...S} strokeWidth="2">
+          <path d="M3.5 12h17" />
+          <path d="M12 8.6V2.8M9.3 5.4L12 2.7l2.7 2.7" />
+          <path d="M12 15.4v5.8M9.3 18.6L12 21.3l2.7-2.7" />
+        </symbol>
+        <symbol id="i-merge" viewBox="0 0 24 24" {...S} strokeWidth="2">
+          <path d="M3.5 12h17" />
+          <path d="M12 2.7v5.9M9.3 6L12 8.7l2.7-2.7" />
+          <path d="M12 21.3v-5.9M9.3 18L12 15.3l2.7 2.7" />
+        </symbol>
+        <symbol id="i-share" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <path d="M12 3.5v11" /><path d="M8.5 7l3.5-3.5L15.5 7" />
+          <path d="M6.5 11H5.5a1.5 1.5 0 00-1.5 1.5v6.5A1.5 1.5 0 005.5 20.5h13a1.5 1.5 0 001.5-1.5v-6.5a1.5 1.5 0 00-1.5-1.5h-1" />
+        </symbol>
+        {/* Share turned over: the same tray, the arrow landing in it instead
+            of leaving. A file coming in, for the import screen — not "merge",
+            which is rows folding together and says nothing about a file. */}
+        <symbol id="i-import" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <path d="M12 6v11" /><path d="M8.5 13.5l3.5 3.5 3.5-3.5" />
+          <path d="M6.5 11H5.5a1.5 1.5 0 00-1.5 1.5v6.5A1.5 1.5 0 005.5 20.5h13a1.5 1.5 0 001.5-1.5v-6.5a1.5 1.5 0 00-1.5-1.5h-1" />
+        </symbol>
+        {/* The one everybody's phone already taught them: 文 beside A, the
+            two sharing a baseline and a cap height so it reads as one word
+            rather than two glyphs falling down a diagonal. Both are drawn
+            rather than typed — a <text> element would be at the mercy of
+            whatever font the phone has for Han, and on a phone with none it
+            renders as a box. Strokes, like every other icon. */}
+        <symbol id="i-translate" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <path d="M6.1 6.4v1.5M1.7 9.6h8.8" />
+          <path d="M7.8 9.9L2.3 17.4M4.3 12.3L9.4 17.4" />
+          <path d="M13.1 17.4l4.7-11 4.7 11M15 13.8h5.7" />
+        </symbol>
+        <symbol id="i-image" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <rect x="3" y="4.5" width="18" height="15" rx="2" />
+          <circle cx="8.5" cy="9.5" r="1.6" />
+          <path d="M3 16.5l5.5-5 4 4 3-3 5.5 5.5" />
+        </symbol>
+        {/* Notifications' three answers. The masks cut a gap in what lies
+            behind — the bell under the stroke, the back bell under the front
+            one — in the symbol's own space, never the moved bell's. */}
+        <symbol id="i-bell" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <path d={BELL_BODY} /><path d={BELL_CLAPPER} />
+        </symbol>
+        <symbol id="i-bell-off" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <mask id="m-bell-off" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+            <rect width="24" height="24" fill="#fff" />
+            <path d="M3.5 3.5l17 17" stroke="#000" strokeWidth="5" />
+          </mask>
+          <g mask="url(#m-bell-off)"><path d={BELL_BODY} /><path d={BELL_CLAPPER} /></g>
+          <path d="M3.5 3.5l17 17" />
+        </symbol>
+        {/* Two bells, one behind and up to the right: drawn smaller to fit
+            both, so it is shown a size up beside the other two. */}
+        <symbol id="i-bells" viewBox="0 0 24 24" {...S} strokeWidth="2.4">
+          <mask id="m-bells" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+            <rect width="24" height="24" fill="#fff" />
+            <g transform={FRONT_BELL} stroke="#000" strokeWidth="5.5">
+              <path d={BELL_BODY} fill="#000" /><path d={BELL_CLAPPER} />
+            </g>
+          </mask>
+          <g mask="url(#m-bells)">
+            <g transform="translate(6.9 -1.9) scale(.74)"><path d={BELL_BODY} /><path d={BELL_CLAPPER} /></g>
+          </g>
+          <g transform={FRONT_BELL}><path d={BELL_BODY} /><path d={BELL_CLAPPER} /></g>
+        </symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <circle cx="12" cy="12" r="4.2" />
+          <path d="M12 2.6v2.2M12 19.2v2.2M21.4 12h-2.2M4.8 12H2.6M18.6 5.4l-1.6 1.6M7 17l-1.6 1.6M18.6 18.6L17 17M7 7L5.4 5.4" />
+        </symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <path d="M20.5 14.6A8.8 8.8 0 019.4 3.5a8.8 8.8 0 1011.1 11.1z" />
+        </symbol>
+        {/* The group's own actions, which outgrew the top bar: four icons in a
+            row read as four unrelated guesses, one dot column reads as "there
+            is a menu here". */}
+        <symbol id="i-more" viewBox="0 0 24 24" {...S} strokeWidth="0" fill="currentColor">
+          <circle cx="12" cy="5.2" r="1.85" /><circle cx="12" cy="12" r="1.85" />
+          <circle cx="12" cy="18.8" r="1.85" />
+        </symbol>
+      </defs>
+    </svg>
+  );
+}

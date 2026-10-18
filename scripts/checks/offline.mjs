@@ -59,8 +59,9 @@ for (const [amount, what] of [["4800", "Riad"], ["6200", "Dinner"], ["900", "Tax
 }
 
 await page.goto(`${base}/`);
-await page.waitForFunction(() => navigator.serviceWorker.getRegistration().then((r) => !!r?.active), null,
-  { timeout: PATIENCE });
+// `evaluate`, never `waitForFunction`: that takes a returned promise as truthy
+// and stops waiting at once, which raced the install and lost on a busy runner.
+await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
 await page.goto(`${base}/`);
 const controlled = await page.waitForFunction(() => !!navigator.serviceWorker.controller, null,
   { timeout: PATIENCE }).then(() => true, () => false);
@@ -203,10 +204,14 @@ report(afterFlaky.includes(cacheBefore), "the working cache survives it");
 // Put the lever back *here*: `setOffline` doesn't stop the browser's own `sw.js`
 // check, which would install the forged build once the asset is unblocked.
 swRevision = null;
-await page.waitForFunction(async () => {
-  const reg = await navigator.serviceWorker.getRegistration();
-  return !reg?.installing;
-}, null, { timeout: PATIENCE });
+await page.evaluate(async (patience) => {
+  for (const until = Date.now() + patience; Date.now() < until;) {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg?.installing) return;
+    await new Promise((ok) => setTimeout(ok, 100));
+  }
+  throw new Error("a worker is still installing");
+}, PATIENCE);
 blocked.delete(ASSET_TO_DROP);
 
 await page.close();

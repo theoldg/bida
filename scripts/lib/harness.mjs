@@ -56,7 +56,7 @@ const MIME = {
   ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
   ".json": "application/json", ".webmanifest": "application/manifest+json",
   ".png": "image/png", ".svg": "image/svg+xml", ".ico": "image/x-icon",
-  ".woff2": "font/woff2", ".txt": "text/plain",
+  ".woff2": "font/woff2", ".txt": "text/plain", ".mjs": "text/javascript", ".wasm": "application/wasm",
 };
 
 const isFile = (p) => existsSync(p) && statSync(p).isFile();

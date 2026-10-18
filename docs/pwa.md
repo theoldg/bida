@@ -64,25 +64,21 @@ on iOS then delivers an invite as the bare origin, path and fragment gone.
 Left out, a scraper uses the URL it fetched.
 
 `public/sw.js` precaches the whole export — routes, hashed `/_next/static/`
-chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap —
+chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap: a whole
+route's (`/g.txt`), or its pieces (`/g/__next._tree.txt`, `…__PAGE__.txt`) —
 registered from `components/register-sw.tsx`. **It does not cache `/api/*`** —
 Dexie is the offline data layer, and a second cache over the same data gives
 you two disagreeing sources of truth.
 
-**A payload URL asked for as a *page* is redirected to the page.** When the
-router's fetch of `/g/claim.txt?id=…` fails, Next hands that URL to the browser
-as a plain navigation — and served literally it is a screenful of
-`1:"$Sreact.fragment"` where a screen should be. `sw.js` redirects those back to
-the route, carrying the `?id=` and dropping `_rsc`. A redirect, not the route's
-shell served in place: the app runs at the address it was asked for, and
-`/g.txt` is not a route — back arrows are paths (`lib/nav.ts`), and so is
-`reloadCostsNothing`. So does the Worker (`apps/api/src/payload.ts`), because a
-service worker only sees a page it controls and this one does not claim a first
-visit: the iPhone that has just tapped an invite is on its first load, has no
-worker yet, and is on its way to `/g/claim`
-([ios.md](ios.md), [hosting.md](hosting.md#deploying)). The two hold one rule —
-nothing else in the export ends in `.txt` — so a real `.txt` asset would need a
-carve-out in both.
+**A payload URL asked for as a *page* is redirected to its route.** Next 15's
+router, when a payload fetch failed, handed the browser that fetch's URL —
+`/g/claim.txt?id=…` — as a plain navigation, which served literally is a
+screenful of `1:"$Sreact.fragment"`. Next 16 navigates to the route instead,
+but a phone's history still holds such entries, so `sw.js` redirects a
+document request for a payload of a precached route back to it, carrying the
+`?id=` and dropping `_rsc` — a redirect rather than the shell served in place,
+because back arrows are paths (`lib/nav.ts`). Any other `.txt` passes through:
+the export ships the fonts' licence as one.
 
 Everything precached is served cache-first, so a launch and every tap after it
 paint without waiting on the network — **except the two pages a link from
@@ -93,7 +89,13 @@ before `/handover` opened an in-app browser's way out as a group with no key.
 Their readers also ignore fields they don't know (`parseJoinLink`), so the
 offline fallback opens a newer link too. The list and the cache name are stamped in
 after the build by `apps/web/scripts/precache.mjs` — nothing to drift, no
-`CACHE_VERSION` to bump. A new build copies each `/_next/static/` file an
+`CACHE_VERSION` to bump. Next writes many payloads under two names (`/g.txt`
+and `/g/__next._full.txt`, say); the list fetches each content once and
+`COPIES` stores it under the others, a tenth of the download. A server
+component's output is written into every route's payload, so the layout's icon
+sprite and boot scripts are client components (`icon-sprite.tsx`,
+`boot-scripts.tsx`) and ship once, in a chunk. Next's `noModule` polyfill is
+left out: no browser with a service worker loads it. A new build copies each `/_next/static/` file an
 earlier one already cached (the name is the content) and fetches only the rest:
 routes and payloads name the build, so they always are. The three things that
 make cache-first safe are [ADR-0004](decisions/0004-static-export-and-offline.md). Run `node
@@ -122,10 +124,9 @@ first build with nothing before it. Such a window is then **refused a payload**
 rather than handed this build's. Next answers a build id that is not its own by
 navigating to the *response's* URL, and a response out of a cache carries its
 cache key, which for a payload is a bare path — one file answers every `?id=` —
-so the group id is lost on the way. Refused, the router falls back to the URL
-*it* asked for, and the redirect above turns that back into the route; the cost
-is that the window's next tap is a full load rather than a routed one (Gotcha
-below).
+so the group id is lost on the way. Refused, the router loads the page it was
+headed for itself, `?id=` and all; the cost is that the window's next tap is a
+full load rather than a routed one (Gotcha below).
 
 **The app reloads itself onto a new build where nothing can be lost, never
 mid-use.** `lib/update.ts` hears `controllerchange`: on the groups list,

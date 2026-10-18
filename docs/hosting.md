@@ -146,16 +146,15 @@ is a real multi-page site, one HTML file per route), and a `[[d1_databases]]`
 entry with `binding = "DB"`, `database_name = "hajsik"`, its `database_id`, and
 `migrations_dir = "migrations"`.
 
-Assets are served from the edge without waking the Worker, except for the two
-paths `run_worker_first` names: `/api/*`, the sync API, and `/*.txt`, the RSC
-payloads — one navigated to as a page is redirected to its route rather than
-served as flight data
-([pwa.md](pwa.md), `apps/api/src/payload.ts`). That list is
-exhaustive, not additive (Gotcha below). The dev Worker takes
-everything but `/_next/static/*` for its own reason — the DEV tint — and gets
-both rules along with it. Keep the hashed build output out: it is half of every
-precache, and a deploy refetched through the Worker by each open tab is what
-once spent a fifth of the account's daily request quota in an afternoon.
+Assets are served from the edge without waking the Worker, which is free and
+unmetered, except for what `run_worker_first` names: `/api/*`, the sync API,
+and nothing else. That list is exhaustive, not additive (Gotcha below). The dev
+Worker takes everything but `/_next/static/*` and `/*.txt` for its own reason —
+the DEV tint, which only a page needs. Keep build output out: the chunks are
+half of every precache and the payloads one fetch per in-app tap, and a deploy
+refetched through the Worker by each open tab is what once spent a fifth of the
+account's daily request quota in an afternoon — past the free quota, a path the
+Worker handles answers 429.
 
 **One-time, per Cloudflare account** (a fresh instance on someone else's
 account is [SELFHOSTING.md](../SELFHOSTING.md)):
@@ -323,9 +322,9 @@ Recognise these if you ever propose one:
 - **Wrangler environments inherit nothing.** `[env.dev]` restates `[assets]`
   and the D1 binding in full; a block left out is silently absent.
 - **`run_worker_first` as a list names everything the Worker handles**:
-  everything unnamed goes to the 404 page. Adding `/*.txt` without `/api/*`
-  beside it 404s the whole sync API, silently; `wrangler dev` and one
-  `curl /api/health` catches it.
+  everything unnamed goes to the 404 page. A list without `/api/*` 404s the
+  whole sync API, silently; `wrangler dev` and one `curl /api/health` catches
+  it.
 - `wrangler deploy --dry-run` accepts a bogus `database_id`;
   `wrangler d1 execute --file` swallows `SELECT` output (use `--command`); a
   Workers-only token fails D1 with a generic `code: 10000` — it needs "D1 -
@@ -334,8 +333,6 @@ Recognise these if you ever propose one:
   Say `run deploy`.
 - Cloudflare env vars are runtime-only; `next build` reads the build
   environment, not Worker secrets.
-- **`packages/core` imports siblings with `.js`**, which Next's production
-  webpack resolves only through `extensionAlias` in `next.config.mjs`;
-  `next dev` won't show the failure, the CI build will.
-- **A custom `webpack()` silently turns off Next's build worker**, and the
-  parallel traces with it (~12s); `next.config.mjs` turns both back on by name.
+- **`packages/core` imports siblings without an extension**: Turbopack has no
+  `extensionAlias`, so a `./x.js` that is really `x.ts` fails the build — 400
+  errors at once. `next dev` and the CI build agree now.

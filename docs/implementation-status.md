@@ -28,12 +28,15 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Four things: push notifications, built and unchecked on a phone, the ledger's windowing experiment, Polish, and a quick split's link. The visual review is closed
+Five things: Next 16, unchecked on a phone; push notifications, built and unchecked on a phone, the ledger's windowing experiment, Polish, and a quick split's link. The visual review is closed
 ([design-review.md](design-review.md)).
 
 - **A quick split goes out as a link** (ADR-0035), built, driven against a
   local Worker, migrated on both D1s (`0005_splits.sql`) and working on a
   real phone (the owner, 2026-10-16); production serves it once `main` moves.
+
+- **Next 16 on Turbopack** passes every browser check; untried on a real
+  iPhone, where a payload once opened as a page ([pwa.md](pwa.md)).
 
 - **Push notifications are built and work on dev**
   ([notifications.md](notifications.md), ADR-0037): an edit from an incognito

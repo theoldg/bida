@@ -11,7 +11,6 @@ import { clientKey, countScans, overLimit, recordScan, turnstileOk } from "./sca
 import { MAX_NOTIFY_BODY_BYTES, declaredTooLarge, pushTooLarge } from "./push-limits";
 import { devAsset } from "./dev-env";
 import { pastDay } from "./rate-day";
-import { pageForPayload } from "./payload";
 import {
   fetchRegistry, isClientKey, isTricountKey, MAX_REGISTRY_BYTES, openSession,
 } from "./tricount";
@@ -353,8 +352,6 @@ app.delete("/api/splits/:id", async (c) => {
 });
 
 app.all("*", (c) => {
-  const page = pageForPayload(c.req.raw);
-  if (page) return c.redirect(page, 302);
   return c.env.BIDA_ENV === "dev" ? devAsset(c.env.ASSETS, c.req.raw) : c.env.ASSETS.fetch(c.req.raw);
 });
 

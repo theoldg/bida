@@ -17,9 +17,10 @@ const CACHE_NAME = "bida-shell-__PRECACHE_REVISION__";
 interface Sandbox {
   routeOf: (url: URL) => string;
   routeWithQuery: (url: URL) => string;
+  storeCopies: (cache: unknown, copies: Record<string, string[]>) => Promise<void>;
   previousFor: (clientId: string) => Promise<string | null | undefined>;
   payloadFor: (url: URL, request: unknown, clientId: string) =>
-    Promise<{ redirectedTo?: string; body?: string; failed?: boolean; url?: string }>;
+    Promise<{ body?: string; failed?: boolean; url?: string }>;
   reuseFromEarlierBuilds: (cache: unknown, urls: string[]) => Promise<string[]>;
   pullAhead: (groupId: string) => Promise<string>;
   notePull: (groupId: string, outcome: string) => Promise<void>;
@@ -65,13 +66,10 @@ function load(stored: Caches): Sandbox {
       async keys() { return Object.keys(stored); },
       async delete(name: string) { delete stored[name]; },
     },
-    // Only where it lands matters here, and a relative URL — which is what the
-    // worker redirects to, and what a browser resolves against the worker's own
-    // scope — is one Node's `Response.redirect` refuses to parse.
     Response: Object.assign(
       // Built only to be put in a cache, which keeps the body.
       function Response(this: { body: string }, body: string) { this.body = body; },
-      { redirect: (to: string) => ({ redirectedTo: to }), error: () => ({ failed: true }) },
+      { error: () => ({ failed: true }) },
     ),
     JSON,
     encodeURIComponent,
@@ -89,7 +87,7 @@ const legacy = (builds: Record<string, string | null>) => ({
   "bida-legacy": { "/legacy": JSON.stringify({ builds }) },
 });
 
-describe("the route a payload URL belongs to", () => {
+describe("the screen a payload URL belongs to", () => {
   const { routeOf, routeWithQuery } = load({});
 
   it("drops the .txt", () => {
@@ -97,10 +95,14 @@ describe("the route a payload URL belongs to", () => {
     expect(routeOf(payload("/g/entry/edit.txt"))).toBe("/g/entry/edit");
   });
 
-  it("maps the root's payload back to the root, which `/index` is not", () => {
-    // The same rule as `pageForPayload` in apps/api/src/payload.ts, which is the
-    // one phones with no worker yet pass through. Change one and change the other.
+  it("drops a piece's file name, which names the screen's folder", () => {
+    expect(routeOf(payload("/g/claim/__next.g.claim.__PAGE__.txt"))).toBe("/g/claim");
+    expect(routeOf(payload("/g/entry/__next._tree.txt"))).toBe("/g/entry");
+  });
+
+  it("maps the root's payloads back to the root, which `/index` is not", () => {
     expect(routeOf(payload("/index.txt"))).toBe("/");
+    expect(routeOf(payload("/__next._tree.txt"))).toBe("/");
   });
 
   it("keeps which group the screen is of, and drops the router's cache-buster", () => {
@@ -210,6 +212,19 @@ describe("installing a build over an earlier one", () => {
       ["/g", "/g.txt"],
     );
     expect(left).toEqual(["/g", "/g.txt"]);
+  });
+
+  it("stores a file fetched once under every name that shares its bytes", async () => {
+    const stored: Caches = { [CACHE_NAME]: { "/g.txt": "screen", "/__next._index.txt": "layout" } };
+    const sw = load(stored);
+    await sw.storeCopies(await sw.caches.open(CACHE_NAME), {
+      "/g.txt": ["/g/__next._full.txt"],
+      "/__next._index.txt": ["/g/__next._index.txt", "/new/__next._index.txt"],
+    });
+    expect(stored[CACHE_NAME]).toEqual({
+      "/g.txt": "screen", "/g/__next._full.txt": "screen",
+      "/__next._index.txt": "layout", "/g/__next._index.txt": "layout", "/new/__next._index.txt": "layout",
+    });
   });
 
   it("reads only shell caches, never the legacy record", async () => {

@@ -1,19 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ReadErrorBoundary } from "@/components/chrome";
-import { IconSprite } from "@/components/icons";
+import { IconSprite } from "@/components/icon-sprite";
 import { HoldCaret, MeasureViewport } from "@/components/viewport";
 import { NoLongPress } from "@/components/no-long-press";
 import { NoPinchZoom } from "@/components/no-pinch-zoom";
 import { RegisterServiceWorker } from "@/components/register-sw";
 import { StartSync } from "@/components/start-sync";
-import { ThemeScript } from "@/components/theme";
+import { BodyScripts, HeadScripts } from "@/components/boot-scripts";
 import { copy } from "@/lib/copy";
 import { preview } from "@/lib/preview";
-import { arrivalScript } from "@/lib/diag";
-import { firstFrameScript } from "@/lib/first-frame";
-import { manifestScript, type WebManifest } from "@/lib/install";
-import { handoverScript } from "@/lib/group-link";
+import type { WebManifest } from "@/lib/install";
 import { CarryToHomeScreen } from "@/components/install";
 import { NotEmbedded } from "@/components/embedded";
 import { readFileSync } from "node:fs";
@@ -67,7 +64,7 @@ const manifest = JSON.parse(
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     // `suppressHydrationWarning` covers only this element's attributes, for
-    // `data-theme`, which <ThemeScript /> writes before React runs
+    // `data-theme`, which <ThemeScript /> (in <BodyScripts />) writes before React runs
     // (components/theme.tsx). The export is prerendered light, so a dark phone
     // genuinely disagrees with the server HTML.
     <html lang="en" suppressHydrationWarning>
@@ -75,17 +72,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* The face's Latin file (globals.css), fetched before the CSS asks for it. */}
         <link rel="preload" href="/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2"
           crossOrigin="anonymous" />
-        <script dangerouslySetInnerHTML={{ __html: manifestScript(manifest) }} />
-        {/* An in-app browser's address opened in Safari, before anything paints (lib/group-link.ts). */}
-        <script dangerouslySetInnerHTML={{ __html: handoverScript }} />
+        <HeadScripts manifest={manifest} />
       </head>
       <body>
-        <ThemeScript />
-        {/* Before the body paints: a launch marks the frame it will show, so the
-            route's own exported HTML never flashes first (lib/first-frame.ts). */}
-        <script dangerouslySetInnerHTML={{ __html: firstFrameScript }} />
-        {/* The URL this load arrived at, before the router can change it (lib/diag.ts). */}
-        <script dangerouslySetInnerHTML={{ __html: arrivalScript }} />
+        <BodyScripts />
         <IconSprite />
         <MeasureViewport />
         <HoldCaret />

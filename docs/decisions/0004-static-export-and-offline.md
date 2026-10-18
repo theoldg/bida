@@ -23,10 +23,9 @@ build this phone cached ([pwa.md](../pwa.md)).
 - The file list and a content-addressed revision are **stamped in at build time**
   by `apps/web/scripts/precache.mjs`, from what is actually on disk. The
   hand-written list this replaced had drifted twice.
-- A `.txt` RSC payload is cached under its path with the query ignored: in a
-  static export a route's payload is one file, and its query is only app state.
-  A *document* request for a `.txt` is Next giving up — answer it with the
-  route's own shell, or the user lands on a screenful of `1:"$Sreact.fragment"`.
+- A `.txt` RSC payload — a route's whole, or one of its pieces — is cached under
+  its path with the query ignored: in a static export it is one file, and its
+  query is only app state. Files with identical bytes are fetched once.
 - `/api/*` is never cached. Dexie is the offline data layer; a second cache of
   the sync API would be a second, disagreeing source of truth.
 

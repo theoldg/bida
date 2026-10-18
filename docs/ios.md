@@ -350,9 +350,7 @@ Reddit, showed Brave's own group list, under the host's toolbar.
   opens a box to paste into by hand
   ([lib/paste.ts](../apps/web/lib/paste.ts), `usePasteLink`).
 - **A pasted join link is opened with `location.replace`.** When Next's router
-  gives up and loads a page itself it uses the fetch's URL — no `#`, so "Bad
-  link", and still ending in `.txt`, so a screen of RSC payload; `sw.js` and
-  the Worker (`apps/api/src/payload.ts`) redirect that back to the route. Not
+  gives up and loads a page itself the `#` is gone, so "Bad link". Not
   `assign`: the page left behind sits in WebKit's page cache holding the
   database `/join` waits on.
 - **Safari reads the manifest at page load**, so the HTML carries no link: a

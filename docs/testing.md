@@ -198,3 +198,6 @@ total spend 963,14 · transfers theo→marie 105,62 · sam→marie 111,47 · ada
   derives its keys through `crypto.subtle`, on the thread pool, which finishes
   them as it likes; one in six loaded runs asked the older group first. Assert
   the order work starts in (`byRecency`), and only the set it arrives as.
+- **`page.waitForFunction` takes a returned promise as truthy** and stops
+  waiting at once. `checks/offline` raced the service worker's install that
+  way and lost only on a busy runner; await a promise with `page.evaluate`.

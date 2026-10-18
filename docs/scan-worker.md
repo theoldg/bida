@@ -339,8 +339,9 @@ payer. The photo is not stored at all
 - **scanic's whole-library import 404s under Next.** It loads its ML half with
   a `webpackIgnore`d relative import, resolved against `_next/static/chunks/`
   where no such file is; hence the `scanic/ml` alias. Its ONNX runtime also has
-  a Node-only `new URL(…, import.meta.url)` webpack must not parse
-  (`parser: { url: false }` in `next.config.mjs`). **A missing model is silent
+  a Node-only `new URL(…, import.meta.url)` Turbopack would bundle as a missing
+  asset and fail the build on; `loaders/ort-node-url.cjs` rewrites that one
+  expression, and throws if a new scanic changes it. **A missing model is silent
   by design**, so check `/diag/crop` after touching either.
 
 - **Turnstile cannot be verified by a browser you automate.** Playwright is
