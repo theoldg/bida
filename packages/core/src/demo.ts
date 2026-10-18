@@ -261,7 +261,6 @@ export function demoTimeline(cast: DemoCast, now: number): DemoStep[] {
       kind: "delete",
       // The fold stamps `deletedAt` from the op's `createdAt`.
       patch: {},
-      note: "Han settled that one at the table",
     }),
   ];
 }
