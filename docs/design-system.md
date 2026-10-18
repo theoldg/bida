@@ -265,9 +265,11 @@ in a column of "12.00"s looking like a different kind of number.
    this standing up in a restaurant.
 6. **The app is not a document: nothing selects, the browser never gets a long
    press, no zoom.** `user-select: none` on `body`, `.selectable` to opt back
-   in; `NoLongPress` swallows the touch context menu, except on a row that
-   opts into the app's own small `RowMenu` instead, on a touch hold or a right
-   click (`useHold` in `components/long-press.tsx`, `components/row-menu.tsx`).
+   in — only for text someone may have to copy by hand (a link, a share that
+   failed), since an iOS hold snaps to the nearest selectable text: an entry's
+   title brought the loupe up over the amount under it. `NoLongPress` swallows
+   the touch context menu, except on a row that opts into the app's own small
+   `RowMenu` instead, on a touch hold or a right click (`useHold` in `components/long-press.tsx`, `components/row-menu.tsx`).
    The hold's own finger may slide onto an item and let go rather than lift
    and tap again, as it may in the menus the phone draws itself. A top bar
    whose actions outgrow it opens that same card from a button instead

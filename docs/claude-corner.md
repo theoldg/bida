@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-18* — A Reddit comment, forwarded: "fix the selection issue and
+  check the target blank thing just in case". The CSS already said nothing
+  selects; a scan of every screen's computed style found the two opt-ins that
+  did. The links were already fine; "just in case" wants that said.
+
 - *2026-10-18* — "The Reddit browser escape doesn't work", a /diag and no
   more. A tap I can't watch can't be fixed by guessing how it failed: put the
   host's own way out under the button, and say which guess the fix rests on.
@@ -82,7 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   without assignment!" The cause was ten commits ahead of my clone: pull
   before tracing, or a bug in code you can't see reads as no bug. The fix
   was one question asked in two places, not two answers.
-
-- *2026-10-17* — "Replace the trashcan … everywhere (new group, who am i, …)".
-  The who-am-I list never had one; the list was the owner's map of where to
-  look, not a promise each stop holds a bin. Three screens moved, one said so.

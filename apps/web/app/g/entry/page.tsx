@@ -216,7 +216,7 @@ function EntryScreen() {
           <div className={expense ? "card entryhead" : "entryhead"}>
             {/* The bar already says "Expense". */}
             {title ? (
-              <FitTitle className="entrytitle selectable" text={title} sizes={ENTRY_TITLE_SIZES} />
+              <FitTitle className="entrytitle" text={title} sizes={ENTRY_TITLE_SIZES} />
             ) : null}
             <div className="entryfig">
               <EntryFigure minor={entry.baseAmountMinor} currency={group.baseCurrency} />
@@ -486,7 +486,7 @@ function TransferDetail({ settlement, data }: { settlement: Settlement; data: Gr
         </span>
       </div>
       {settlement.note ? (
-        <p className="selectable" style={{ fontSize: 13, color: "var(--ink-2)", margin: "10px 2px 0" }}>
+        <p style={{ fontSize: 13, color: "var(--ink-2)", margin: "10px 2px 0" }}>
           {settlement.note}
         </p>
       ) : null}
