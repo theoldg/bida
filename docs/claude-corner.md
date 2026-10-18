@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-18* — "Yes, add it, but also audit the prompt for … redundant
+  structures … (don't make any changes yet)". "Yet" fenced the audit, not the
+  sentence already agreed: one built, the rest reported. And the new sentence
+  had to pass the audit it arrived with.
+
 - *2026-10-18* — "Make the scan and who had what buttons quieter, but not too
   quiet". An outline, then five fill strengths, and the answer was the grey
   already beside them: "just make it like Rescan". A sheet of variants is
@@ -82,9 +87,4 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   editable item names should be the English ones, right": a question that was
   the request. The display was the easy half; what a typed name saves was the
   design, and they answered it in one line once it was put to them.
-
-- *2026-10-17* — "Just say copied instantly … what's the timeout, like 1
-  second?" It was 15. Then "publish it as the page shows — argue if you
-  dislike it". Its two costs (a row per answer viewed, a slow upload called
-  failed) said in one breath, then built: "argue" is not "wait".
 

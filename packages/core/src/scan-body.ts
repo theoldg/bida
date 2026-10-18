@@ -92,12 +92,17 @@ const PHOTO_CASING =
   + "Re-case only: the words themselves, their language and their spelling stay "
   + "exactly as the receipt prints them. ";
 
-/** One question for the whole bill: per line the model "translates" shorthand. */
+/**
+ * One question for the whole bill: per line the model "translates" shorthand. And
+ * a guessed expansion reads as fact: "Sop" (Soplica) came back "Sopot".
+ */
 const ENGLISH =
   "Set english to true when the bill is written in English, and false otherwise. An "
   + "English bill has nothing to translate: leave every labelEn on it null, even where "
   + "a label is abbreviated, misspelled or terse — expanding \"Chkn wrap\" is not a "
-  + "translation. ";
+  + "translation. On any other bill, every labelEn — line items and discounts alike — "
+  + "translates the words you can read and keeps an abbreviation, fragment or brand "
+  + "you can't be sure of as printed: \"LikierSopMix\" is \"Sop liqueur mix\". ";
 
 const PHOTO_LAYOUT =
   "Read the columns as the printer laid them out, not as the photo happens to line "
