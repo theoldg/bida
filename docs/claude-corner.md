@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-18* — "Make the expense button non inked, show me a screenshot and
+  wait for approval". The stop hook asked for a push before the yes came; the
+  owner's wait outranks the hook. Say why nothing went up, then end the turn.
+
 - *2026-10-18* — "Should we make placeholders disappear on focus?" Yes for
   the zeros, the confusion. My one rule also caught "Item", a text field that
   borrows the money underline and opens focused: its prompt would never show.
@@ -83,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "make it rock solid". Freeing the scan opened a hole the old gate had hidden:
   a read in flight with nobody named left unasked, and its answer greeted the
   next visit. Each fix was deleted once to watch its check go red.
-
-- *2026-10-17* — "The keyboard is too tight against the add someone row", a
-  screenshot of /quick. The check had asserted the caret above the keys, and
-  it was; the box around it was what got cut. Measuring the box turned all
-  six docked screens red at once: a thumb sees the field, not its caret.

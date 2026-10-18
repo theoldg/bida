@@ -77,9 +77,8 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
 - **Save is the last row of the form, and the kind is the top of it.** One
   full-width `.btn-lg` ([design-system.md](design-system.md)), because the
   screen has exactly one act; a save failure is said above it. The kind chip sits
-  at the top bar's right, inked — the form's second ink block after Save, spent on
-  the one choice that reshapes everything under it, with the picker's ⇕ in it
-  ([design-system.md](design-system.md)).
+  at the top bar's right, a plain chip like the currency's, with the picker's ⇕
+  in it: Save is the form's only ink block ([design-system.md](design-system.md)).
 - **Every field's value starts on one column** (`--label-w`), so a label is a
   word or two: an income's payer is "Paid to", since "Received by" won't fit.
   Several payers are the payer picker's first row, "Multiple people ›"; with
