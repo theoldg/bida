@@ -158,16 +158,12 @@ export default function QuickPage() {
             docked (`.whodock`), so a long table of them scrolls above it. */}
         <div className="pad whodock" style={{ paddingTop: 18 }}>
           {bill.length > 0 ? (
-            // A bill read: what replaces it, and the way on at the foot, where
-            // the grid's Done stands. A rescan asks nothing — its ticks were
-            // made against the old bill.
+            // A bill read: the way on first, what replaces it under it, as on
+            // the Items tab. A rescan asks nothing — its ticks were made
+            // against the old bill.
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div>
-                <ScanPair scan={scan} register="s" overBill={true} />
-                {scan.refusal ? <Failure>{scan.refusal} {copy.quick.keptOld}</Failure> : null}
-              </div>
               {/* Held while a rescan reads: the grid would be of the bill about
-                  to be replaced, and the "Reading…" above says why. */}
+                  to be replaced, and the "Reading…" below says why. */}
               <button type="button" className="btn btn-p btn-lg"
                 style={{ justifyContent: "space-between" }} disabled={refusal.live || reading}
                 onClick={toGrid}>
@@ -180,6 +176,10 @@ export default function QuickPage() {
                   <Icon name="chev" size={14} />
                 </span>
               </button>
+              <div>
+                <ScanPair scan={scan} register="s" overBill={true} />
+                {scan.refusal ? <Failure>{scan.refusal} {copy.quick.keptOld}</Failure> : null}
+              </div>
             </div>
           ) : (
             <>

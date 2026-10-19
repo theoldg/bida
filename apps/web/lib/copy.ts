@@ -926,8 +926,9 @@ const en = {
     lede: "Take a photo to fill in the expense. Split it evenly, or line by line.",
     snap: "Scan",
     upload: "Upload",
-    /** Beside the doors once a bill is held, which then edit it rather than type one. */
-    changeBill: "Change bill",
+    /** The doors once a bill is held, which replace it — and "Edit" rather than type one. */
+    rescan: "Rescan",
+    reupload: "Reupload",
     reading: "Reading…",
     camera: "Take a photo of a receipt",
     library: "Upload a receipt photo",

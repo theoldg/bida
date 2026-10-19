@@ -997,11 +997,9 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 /* A `--rule` hairline across ink is invisible. */
 .btn-pair.pair-p { background: var(--brand); border-color: var(--brand); color: var(--brand-ink) }
 .btn-pair.pair-p .btn + .btn { border-left-color: color-mix(in srgb, var(--brand-ink) 26%, transparent) }
-/* Over a held bill: its label above, the doors shrunk to their words. */
-.billdoors { display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
-  font-size: 12.5px; font-weight: 500; color: var(--muted) }
+/* Over a held bill: a row shorter, under the way on. */
 .btn-pair.pair-sm { color: var(--ink) }
-.btn-pair.pair-sm .btn { flex: none; padding: 7px 10px; font-size: 12.5px; gap: 5px }
+.btn-pair.pair-sm .btn { padding: 7px 6px; font-size: 12.5px; gap: 5px }
 .btn-pair.pair-p .btn:active:not(:disabled) {
   background-image: linear-gradient(var(--press-i), var(--press-i)) }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;

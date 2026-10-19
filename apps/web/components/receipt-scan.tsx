@@ -177,8 +177,8 @@ export function useReceiptScan(
  * never buttons side by side. `typeIn={false}` where the tap that got here was
  * the camera. `lg` where the screen exists for scanning, inked; `s` on the
  * Items tab, grey, since the entry form's one ink is Save. `overBill` where a
- * read bill is held and a button above or below it is the way on: the doors
- * replace it, so they shrink to fit their words, under "Change bill".
+ * read bill is held and a button above it is the way on: the doors replace
+ * it, so they say so ("Rescan") and stand a row shorter, grey under its ink.
  */
 export function ScanPair({
   scan, register, overBill = false, typeIn = true, flash = "", onFlashEnd,
@@ -196,14 +196,9 @@ export function ScanPair({
   useEffect(() => { if (!disabled && !busy) warmTurnstile(); }, [disabled, busy]);
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
   const box = `btn-pair${overBill ? " pair-sm" : register === "lg" ? " pair-p" : ""}${flash}`;
-  const titled = (doors: React.ReactNode) => {
-    if (!overBill) return doors;
-    return <div className="billdoors"><span>{copy.scan.changeBill}</span>{doors}</div>;
-  };
-
   // A door left beside "Reading…" would invite a second reading.
   if (busy && live) {
-    return titled(<ScanBusy live={live} box={box} button={half} onFlashEnd={onFlashEnd} />);
+    return <ScanBusy live={live} box={box} button={half} onFlashEnd={onFlashEnd} />;
   }
 
   const door = (icon: IconName, label: string, onClick: () => void) => (
@@ -213,10 +208,10 @@ export function ScanPair({
     </button>
   );
 
-  return titled(
+  return (
     <div className={box} onAnimationEnd={onFlashEnd}>
-      {door("cam", copy.scan.snap, scan.openCamera)}
-      {door("image", copy.scan.upload, scan.openLibrary)}
+      {door("cam", overBill ? copy.scan.rescan : copy.scan.snap, scan.openCamera)}
+      {door("image", overBill ? copy.scan.reupload : copy.scan.upload, scan.openLibrary)}
       {typeIn ? door("edit", overBill ? copy.scan.byHand.edit : copy.scan.byHand.open, scan.openTyping) : null}
     </div>
   );

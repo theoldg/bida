@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-19* — ""Change bill" should be below the main button … Does that
+  make sense?" The doc already said beneath. Then two redirects mid-build,
+  ending on "try something different": no label, "Rescan". An interrupt is
+  the review; drop the old idea whole, not half-kept.
+
 - *2026-10-18* — "Sometimes shows me empty space instead of skeletons … no
   need to rewrite the app". The window was fine; only its spacer was blank.
   Painting the spacer as rows cost one CSS rule and covers any speed. "Not a
@@ -83,8 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "as amounts" share as information; it was the very field users misread. And
   my rule caught "Item", a text field that opens focused. Ask which field
   confused them; photograph every field a selector catches.
-
-- *2026-10-17* — "When i click fast it's buggy", the who-had-what grid on
-  an iPhone. Three clicks in one frame reproduced it; the cause was a habit,
-  not a line, and "look for similar bugs across the whole app" found it in
-  the split steppers and payers too. Fix the pattern, not the screen named.
