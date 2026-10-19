@@ -294,16 +294,12 @@ function ReceiptPanel({
             <span className="bignum" style={{ fontSize: 13.5 }}>{money(shares[m.id] ?? 0, currency)}</span>
           </div>
         ))}
-        <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-s${flash}`} onAnimationEnd={onFlashEnd}
-          style={{ textDecoration: "none", justifyContent: "space-between" }}>
-          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Icon name="users" size={16} />
-            {included.size === 0 ? copy.scan.assignWhoHadWhat : copy.scan.editWhoHadWhat}
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 500, opacity: .85 }}>
-            {plural(printedCount(items), copy.noun.item)}
-            <Icon name="chev" size={14} />
-          </span>
+        <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-s gridway${flash}`} onAnimationEnd={onFlashEnd}
+          style={{ textDecoration: "none" }}>
+          <Icon name="users" size={16} />
+          <span className="wayname">{included.size === 0 ? copy.scan.assignWhoHadWhat : copy.scan.editWhoHadWhat}</span>
+          <span className="waycount"><span>{plural(printedCount(items), copy.noun.item)}</span></span>
+          <Icon name="chev" size={14} />
         </Link>
         <div>
           <ScanPair scan={scan} register="s" overBill={true} />

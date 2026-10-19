@@ -139,7 +139,8 @@ Items tab and `/quick` alike (`overBill`) — it stays full width but a row
 shorter, beneath the way into the grid: inked on `/quick`, a plain
 `.btn-s` on the Items tab.
 The Items tab holds a bill as `/quick` does: what each person came to, then
-"Edit who-had-what", then the doors. Each door names itself ("Scan", "Upload",
+"Edit who-had-what" (its item count dropped where the line can't hold both),
+then the doors. Each door names itself ("Scan", "Upload",
 "Type"); the screen around them has already named the job. Over a bill they
 say "Rescan", "Reupload" and "Edit", since each replaces or opens the bill held. On `/g/scan` and `/quick` "Type"
 draws what it promises, since that result lands on another screen: a bill of four lines and a

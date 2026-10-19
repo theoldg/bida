@@ -164,17 +164,12 @@ export default function QuickPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {/* Held while a rescan reads: the grid would be of the bill about
                   to be replaced, and the "Reading…" below says why. */}
-              <button type="button" className="btn btn-p btn-lg"
-                style={{ justifyContent: "space-between" }} disabled={refusal.live || reading}
-                onClick={toGrid}>
-                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Icon name="users" size={16} />
-                  {ticked ? copy.scan.editWhoHadWhat : copy.scan.assignWhoHadWhat}
-                </span>
-                <span style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 500, opacity: .85 }}>
-                  {plural(printedCount(bill), copy.noun.item)}
-                  <Icon name="chev" size={14} />
-                </span>
+              <button type="button" className="btn btn-p btn-lg gridway"
+                disabled={refusal.live || reading} onClick={toGrid}>
+                <Icon name="users" size={16} />
+                <span className="wayname">{ticked ? copy.scan.editWhoHadWhat : copy.scan.assignWhoHadWhat}</span>
+                <span className="waycount"><span>{plural(printedCount(bill), copy.noun.item)}</span></span>
+                <Icon name="chev" size={14} />
               </button>
               <div>
                 <ScanPair scan={scan} register="s" overBill={true} />
