@@ -41,6 +41,7 @@ through `/new` costs a command per person ([below](#looking-at-one-screen)).
 | `hold <n>` | long-press — the only way to the row menus |
 | `offline on\|off` | cut this phone's network, or restore it |
 | `theme light\|dark` | the phone's colour scheme — every screen has both looks to get right |
+| `size <w> [h]` | the phone's screen, 390×844 until changed — 360 wide is the narrowest a layout has to hold, and the fold moves with the height |
 | `receipt <name>` · `receipt list` · `receipt off` | hand this phone a canned bill, so the next reading answers with it — a photograph or one typed in |
 | `clipboard` | read what the page copied — how the invite link travels |
 | `file <path>` | answer the next file chooser with a file from disk, once — how an export from Splitwise or anywhere else reaches **Import a group** |
@@ -122,7 +123,7 @@ numbers. Five rules separate it from dumping `innerText`:
   is also recognised by hit-testing the centre of the screen. **The fold is
   asked after the scrim, not before it**, or a row below the screen keeps its
   number with the menu open.
-- **A phone is 844px tall.** What is below the fold is marked a scroll away.
+- **A phone is 844px tall** until `size` says otherwise. What is below the fold is marked a scroll away.
 - **Something on top covers a point, not a control.** A FAB crosses the
   last ledger row; the row is pressable everywhere it isn't. So the hit test
   asks about the middle and the four edges, a press is aimed at whichever

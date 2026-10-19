@@ -435,6 +435,11 @@ async function start() {
       case "wait": await page.waitForTimeout(Number(args[0] ?? 500)); break;
       case "offline": await ctx.setOffline(args[0] !== "off"); break;
       case "theme": await page.emulateMedia({ colorScheme: args[0] === "dark" ? "dark" : "light" }); break;
+      case "size": {
+        const now = page.viewportSize() ?? { width: 390, height: 844 };
+        await page.setViewportSize({ width: Number(args[0] ?? now.width), height: Number(args[1] ?? now.height) });
+        break;
+      }
       case "forget": await ctx.close(); phones.delete(who); return { who, url: "(phone thrown away)", title: "", lines: [], noise: [] };
       case "receipt": {
         const say = (lines) => ({ who, url: page.url().replace(base, ""), title: "", lines, noise: noise.splice(0) });
