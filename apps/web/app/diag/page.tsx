@@ -16,6 +16,7 @@ import { useFold } from "@/lib/fold";
 import { route } from "@/lib/group-link";
 import { useFlash } from "@/lib/hooks";
 import { ownKey } from "@/lib/scan/key";
+import { readingsReport } from "@/lib/scan/log";
 import { setLang, type Lang } from "@/lib/lang";
 import { setStasMode, stasMode } from "@/lib/scan/stas";
 import { VERSION } from "@/lib/version";
@@ -286,6 +287,11 @@ async function collect(): Promise<string> {
   for (const note of [...(pulls ?? [])].reverse()) {
     say("pull ahead", `${new Date(note.at).toISOString()} ${note.group} ${note.outcome}`);
   }
+
+  // What the model read, figure by figure: a refused scan reproduces only on
+  // the phone that shot it.
+  const scans = readingsReport();
+  lines.push("", "scans, newest first:", ...(scans.length ? scans : ["none recorded"]));
 
   const rows = timeline();
 

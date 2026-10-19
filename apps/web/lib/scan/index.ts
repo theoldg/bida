@@ -7,6 +7,7 @@ import { groupToken } from "../seal";
 import { noteScan, overCallerBudget } from "./budget";
 import { downscaleToBase64Jpeg } from "./downscale";
 import { ownKey } from "./key";
+import { keepReading } from "./log";
 import { parseScanResponse } from "./response";
 import { stasMode } from "./stas";
 import { TurnstileBlockedError, turnstileToken } from "./turnstile";
@@ -86,12 +87,16 @@ async function readBill(
     : await readOnSharedKey(encode, groupId, secret);
 
   const read = parseScanResponse(answer);
-  if (read.error) throw new ScanRejectedError(read.error);
+  if (read.error) {
+    keepReading("rejected", read);
+    throw new ScanRejectedError(read.error);
+  }
   const billCurrency = scanCurrency(read, currency);
   // A faded digit the unit price and the total both contradict.
   const result = correctOneLine(read, billCurrency);
   // A photograph with no total is cropped.
   const problem = checkScan(result, billCurrency);
+  keepReading(problem ?? (result === read ? "ok" : "corrected"), read);
   if (problem) throw new ScanUnreliableError(problem);
   return result;
 }

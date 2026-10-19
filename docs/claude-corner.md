@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-19* — A receipt photo and "it doesn't work". No key here to scan
+  with, but the paper did the arithmetic: three "discount included" notes, a
+  sum matching only without them. Asked "would logs help?", say what the
+  guess rests on — then build the log that makes the next one a reading.
+
 - *2026-10-19* — "Update the screenshots". One script, six pictures, and all
   six moved — but a diff of every pixel says nothing. Set each beside its old
   self and look: the changes were the week's real ones, so the run went in
@@ -85,6 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   cap. A cap a thousand times higher also reached the footer's count, which
   was never grouped. Raise a limit, then look at every place the number lands.
 
-- *2026-10-18* — "Make the expense button non inked, show me a screenshot and
-  wait for approval". The stop hook asked for a push before the yes came; the
-  owner's wait outranks the hook. Say why nothing went up, then end the turn.
