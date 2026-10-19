@@ -16,7 +16,7 @@ It reads. It doesn't compute — the one multiplication in the whole reading is
 | total | plain decimal notation, `parseMinor()`-ready: `"42.50"`, `"1234.50"` — the model normalizes whatever separators the receipt prints, never local code. Only ever a figure the bill itself states: null where it states none, and never added up ([what a reading is checked against](#what-a-reading-is-checked-against)) |
 | tip | a separate tip/service-charge line, same normalized notation, or null |
 | tax | tax charged *on top of* the lines, same notation, or null — VAT already inside the printed prices, which most European receipts break out near the foot, is not this and would be counted twice |
-| discounts | every deduction the receipt prints, one entry each — `{ label, labelEn, amount }`, the amount written **without** a minus sign — a loyalty deduction, a voucher, a two-for-one credit, whether it printed against one item or against the whole bill; empty when it takes nothing off |
+| discounts | every deduction the receipt prints, one entry each — `{ label, labelEn, amount }`, the amount written **without** a minus sign — a loyalty deduction, a voucher, a two-for-one credit, whether it printed against one item or against the whole bill; empty when it takes nothing off. A note that a line's price *already includes* a discount ("Uwzgl. opust: -15,00 st. c 42,98") is not one |
 | currency | ISO 4217 if legible, else null |
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here. The prompt ends with today's date (the Worker's UTC day, or the phone's on its own key) so a date printed without a year isn't given whichever year its weekday also fits |
 | lineItems | `{ label, labelEn, amount, unitAmount, quantity }[]` — printed label (a label the printer wrapped over several rows is one item), English translation (null if already English; a shortening it can't be sure of stays as printed — "LikierSopMix" → "Sop liqueur mix", never a guessed "Sopot"), a count only when the bill actually states one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 — and one or both figures, in the same normalized notation as `total`. `amount` is what the whole line came to, which is what a till prints; `unitAmount` is the price of one, copied beside it where the till prints it, uncorrected, [for one purpose](#one-faded-figure), and `lineMinor` multiplies it by the count only where no `amount` came back |
@@ -165,6 +165,10 @@ error to sentence. Anything else falls back to the generic message.
   adding that figure charges the table for it twice, and the bill then misses
   its own printed total. The prompt says so twice, and `checkScan` catches it
   when the model does it anyway.
+- **A discount printed as already included is VAT's twin.** Rossmann notes
+  "Uwzgl. opust: -15,00 st. c 42,98" under a line whose 27,98 is already net;
+  listed in `discounts`, every such note came off a second time and the bill
+  missed its total by their sum. The prompt says so beside the discount rule.
 - **`mismatch` on a bill that plainly adds up means the photo was taken at an
   angle.** The shear pulls the amount column out of line with the labels, and a
   wrapped continuation row ends up taking an amount of its own — one line lost
