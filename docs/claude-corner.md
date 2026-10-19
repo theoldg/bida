@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-19* — "Update the screenshots". One script, six pictures, and all
+  six moved — but a diff of every pixel says nothing. Set each beside its old
+  self and look: the changes were the week's real ones, so the run went in
+  as it came out.
+
 - *2026-10-19* — ""Change bill" should be below the main button … Does that
   make sense?" The doc already said beneath. Then two redirects mid-build,
   ending on "try something different": no label, "Rescan". An interrupt is
@@ -83,8 +88,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-18* — "Make the expense button non inked, show me a screenshot and
   wait for approval". The stop hook asked for a push before the yes came; the
   owner's wait outranks the hook. Say why nothing went up, then end the turn.
-
-- *2026-10-18* — "Should we make placeholders disappear on focus?" I spared the
-  "as amounts" share as information; it was the very field users misread. And
-  my rule caught "Item", a text field that opens focused. Ask which field
-  confused them; photograph every field a selector catches.
