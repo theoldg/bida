@@ -145,6 +145,10 @@ state in the control: the bar is a clock on the scan (a negative
 `animation-delay` puts a remounted bar where the scan actually is), so
 switching tabs or stepping out to the payers editor does not restart it, and
 a scan whose draft was discarded on the way out drops its result on arrival.
+A scan that brought lines back stays there as `landed` until the Items tab's
+way into the grid is on screen to take it and flash
+([refusals.md](refusals.md#not-every-flash-is-a-refusal)): from `/g/scan` it
+lands a screen before that button exists.
 
 ## Driving it without a phone
 

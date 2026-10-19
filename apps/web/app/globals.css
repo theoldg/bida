@@ -1008,6 +1008,12 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
   font-weight: 500; opacity: .85 }
 .gridway .waycount::before { content: ""; height: 100% }
 .gridway .waycount > span { white-space: nowrap }
+/* A scan just brought lines back: the way on fills with ink once, a beat after
+   the form appears. Ink, not `--debit` — nothing is wrong. A colour settling,
+   so exempt from the motion clamp. */
+.gridway.hail { animation: hail .9s ease-in-out .2s }
+@keyframes hail { 15%, 45% { background: var(--brand); border-color: var(--brand); color: var(--brand-ink) } }
+@media (prefers-reduced-motion: reduce) { .gridway.hail { animation-duration: .9s !important } }
 /* Over a held bill: a row shorter, under the way on. */
 .btn-pair.pair-sm { color: var(--ink) }
 .btn-pair.pair-sm .btn { padding: 7px 6px; font-size: 12.5px; gap: 5px }

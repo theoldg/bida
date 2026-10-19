@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { beginScan, clearScan, failScan, getLiveScan } from "./live";
+import { beginScan, clearScan, failScan, getLiveScan, landScan, takeLanded } from "./live";
 
 /**
  * A scan outlives the control that started it.
@@ -37,6 +37,17 @@ describe("a scan in flight", () => {
     beginScan(G);
     clearScan(G);
     expect(getLiveScan(G)).toBeUndefined();
+  });
+
+  it("with lines to divide, points at the grid once, and only for this draft", () => {
+    beginScan(G);
+    landScan(G);
+    expect(takeLanded(G)).toBe(true);
+    expect(takeLanded(G)).toBe(false);
+    expect(getLiveScan(G)).toBeUndefined();
+    landScan(G);
+    clearScan(G); // the draft was thrown away
+    expect(takeLanded(G)).toBe(false);
   });
 
   it("leaves its refusal up, and the next scan clears it", () => {

@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-19* — "Flash 'assign who had what' after scanning … not in quick
+  split". The FAB's scan lands a screen before the button exists, so the
+  flash is a mark left by the scan and taken by the button. Sample frames to
+  see a flash: one shot at a guessed moment says nothing either way.
+
 - *2026-10-19* — A receipt photo and "it doesn't work". No key here to scan
   with, but the paper did the arithmetic: three "discount included" notes, a
   sum matching only without them. Asked "would logs help?", say what the
@@ -84,9 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   quiet". An outline, then five fill strengths, and the answer was the grey
   already beside them: "just make it like Rescan". A sheet of variants is
   how the plain answer gets found; offer the plainest one in it.
-
-- *2026-10-18* — "Make the upper limit for as parts more like 1000000000".
-  "More like" is a size, not a figure: 999 999 999 keeps the field a digit
-  cap. A cap a thousand times higher also reached the footer's count, which
-  was never grouped. Raise a limit, then look at every place the number lands.
-

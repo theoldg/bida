@@ -15,7 +15,7 @@ import {
   ScanKeyError, ScanLimitError, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
   ScanUnreliableError, TurnstileBlockedError,
 } from "../lib/scan";
-import { beginScan, clearScan, failScan, useLiveScan, type LiveScan } from "../lib/scan/live";
+import { beginScan, clearScan, failScan, landScan, takeLanded, useLiveScan, type LiveScan } from "../lib/scan/live";
 import { unfoldAll } from "../lib/scan/items";
 import { ScanBusy } from "./scan-bar";
 import type { ScanAs } from "../lib/scan/credential";
@@ -45,6 +45,8 @@ export interface ReceiptScan {
   /** What this screen says under its control. */
   refusal: string | null;
   disabled: boolean;
+  /** True once per scan that brought lines back; the form's way into the grid flashes on it. */
+  takeLanded: () => boolean;
   openCamera: () => void;
   openLibrary: () => void;
   openTyping: () => void;
@@ -135,7 +137,7 @@ export function useReceiptScan(
         receiptAssignments: null,
         ...(scanTab !== undefined ? { splitTab: scanTab } : {}),
       }));
-      clearScan(groupId);
+      if (receiptItems.length > 0) landScan(groupId); else clearScan(groupId);
       if (onScreen.current) latestOnScanned.current?.();
     } catch (err) {
       failScan(groupId, scanErrorText(err));
@@ -155,6 +157,7 @@ export function useReceiptScan(
     live,
     refusal: said,
     disabled: !scanAs,
+    takeLanded: () => (groupId ? takeLanded(groupId) : false),
     // The crop model downloads while the camera is up, not after the shutter.
     openCamera: () => { void warmBillFinder(); cameraInput.current?.click(); },
     openLibrary: () => { void warmBillFinder(); libraryInput.current?.click(); },

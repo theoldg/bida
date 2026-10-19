@@ -2,6 +2,7 @@
 // Doc: docs/entry.md#the-split-editor
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   exactFigures, resolveSplit, restOf, splitParticipants, toggleEveryone, validateSplit,
   type ArithmeticSplit, type Id, type Member, type SplitSpec,
@@ -282,7 +283,16 @@ function ReceiptPanel({
   shares: Record<string, number>;
   included: Set<string>;
 }) {
-  if (items && items.length > 0) {
+  const held = !!items && items.length > 0;
+  // A scan that brought lines back points at the next step, once, wherever it
+  // started: one from `/g/scan` lands before this panel exists.
+  const [hail, setHail] = useState(false);
+  const landed = scan.live?.state === "landed";
+  useEffect(() => {
+    if (held && landed && scan.takeLanded()) setHail(true);
+  }, [held, landed, scan]);
+
+  if (items && held) {
     const involved = members.filter((m) => included.has(m.id));
     // What it came to first, then the way into the grid, then what replaces
     // the bill — the order `/quick` holds a read bill in.
@@ -294,7 +304,8 @@ function ReceiptPanel({
             <span className="bignum" style={{ fontSize: 13.5 }}>{money(shares[m.id] ?? 0, currency)}</span>
           </div>
         ))}
-        <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-s gridway${flash}`} onAnimationEnd={onFlashEnd}
+        <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-s gridway${flash}${hail ? " hail" : ""}`}
+          onAnimationEnd={(e) => { if (e.animationName === "hail") setHail(false); else onFlashEnd(e); }}
           style={{ textDecoration: "none" }}>
           <Icon name="users" size={16} />
           <span className="wayname">{included.size === 0 ? copy.scan.assignWhoHadWhat : copy.scan.editWhoHadWhat}</span>

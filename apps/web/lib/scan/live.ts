@@ -4,8 +4,8 @@
 import { useSyncExternalStore } from "react";
 import { signal } from "../signal";
 
-/** Where a scan is: idle, in flight, or refused. */
-export type ScanState = "idle" | "scanning" | "error";
+/** Where a scan is: idle, in flight, refused, or back with lines nobody has been shown the way into. */
+export type ScanState = "idle" | "scanning" | "error" | "landed";
 
 /**
  * The scan in flight for a group, or the last one's refusal.
@@ -61,6 +61,29 @@ export function failScan(groupId: string, error: string | null): void {
     seconds: live?.seconds ?? 0,
   });
   emit();
+}
+
+/**
+ * It came back with lines to divide. The form's way into the grid flashes for
+ * it once (`takeLanded`) — not on landing, since a scan from `/g/scan` lands a
+ * screen before that button exists. Gone with the draft, like the rest.
+ */
+export function landScan(groupId: string): void {
+  const live = scans.get(groupId);
+  scans.set(groupId, {
+    state: "landed",
+    error: null,
+    startedAt: live?.startedAt ?? Date.now(),
+    seconds: live?.seconds ?? 0,
+  });
+  emit();
+}
+
+/** True once per landed scan: the caller flashes, and nobody else will. */
+export function takeLanded(groupId: string): boolean {
+  if (scans.get(groupId)?.state !== "landed") return false;
+  clearScan(groupId);
+  return true;
 }
 
 /** Plain read, for code that is not a component. Undefined while nothing has been scanned. */

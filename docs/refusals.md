@@ -124,7 +124,11 @@ animated** — rows painted at full strength and dimmed a beat later flicker, an
 nothing can ease into a row that did not exist a frame ago. Never `--debit`:
 nothing is wrong and nothing is being asked for.
 The same `-a`/`-b` pair restarts it, and it is exempt from the motion clamp on
-the same grounds. A cell that cannot be tapped like its neighbours doesn't look
+the same grounds. Nor is the flash a scan earns by bringing lines back: the
+form's way into the who-had-what grid fills with ink once, a beat after the
+form appears — the next step pointed at, not demanded — whether the scan began
+on `/g/scan` or on the Items tab, never on `/quick`, whose screen is already
+that step. A cell that cannot be tapped like its neighbours doesn't look
 like them either — a run handed out unevenly wears the dot **broken into two
 overlapping squares** on everyone who had any of it, so no cell in that row
 reads as an ordinary assignment. **An empty cell draws nothing** — pale squares
