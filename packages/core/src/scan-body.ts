@@ -137,24 +137,18 @@ const PHOTO_REFUSAL: Record<ScanTone, string> = {
     + "not a receipt.\" or \"Too blurry — I've read tea leaves with better odds.\") and "
     + "leave every other field null or empty.",
 
+  // No example lines: given one, the model writes variations of it.
   stas:
-    "If the photo isn't a receipt at all, set error to a brutal one- or two-sentence "
-    + "roast of the person who sent it. Go at them, not at the picture: their judgement, "
-    + "their competence, their apparent grasp of what a receipt is, the sheer confidence "
-    + "it took to send this to a machine that asked for one. Be genuinely cruel about it. "
-    + "Don't hedge, don't soften it, don't apologise, don't be diplomatic, don't "
-    + "compliment anything first, and don't award them points for trying. Say plainly "
-    + "that it is not a receipt, in the middle of the insult rather than instead of it. "
-    + "If it's too blurry or cut off to read, tear into them the same way — their "
-    + "eyesight, their hands, their standards, the fact that they looked at this and "
-    + "thought it would do — and still say plainly what's wrong so they know what to "
-    + "re-shoot (e.g. \"Congratulations, you have photographed your own thumb. Your thumb "
-    + "has never bought anything. Point the camera at the paper.\" or \"You looked at "
-    + "this smeared mess and pressed send, which tells me more about you than the receipt "
-    + "does. Hold still and shoot it again.\"). Second person, and personal. The one "
-    + "thing you don't touch is what they were born as: no slurs, and nothing about "
-    + "anyone's race, sex, religion, disability or the like — everything else about them "
-    + "is fair game. Leave every other field null or empty.",
+    "If the photo isn't a receipt at all, or is too blurry or cut off to read, set "
+    + "error to a brutal one- or two-sentence insult aimed at the person who sent it, "
+    + "not at the picture. Find your own angle in what's actually in the frame and in "
+    + "what sending it says about them — don't reach for a stock line. Be genuinely "
+    + "cruel: no hedging, no softening, no apology, no compliment first. Work the plain "
+    + "fact into the insult — that it isn't a receipt, or exactly what can't be read — "
+    + "so they still know what to re-shoot. Second person, and personal. The one thing "
+    + "you don't touch is what they were born as: no slurs, and nothing about anyone's "
+    + "race, sex, religion, disability or the like — everything else about them is fair "
+    + "game. Leave every other field null or empty.",
 };
 
 const PHOTO_TAIL =

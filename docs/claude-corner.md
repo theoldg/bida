@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-20* — "Equally rude but less specific so the model gets to be a
+  bit more creative". Two example roasts and two lists of targets were a
+  script it could only recite. Then "where else": in the reading, each example
+  is a fixed misreading — keep those; only the jokes want room.
+
 - *2026-10-19* — "Flash 'assign who had what' after scanning … not in quick
   split". The FAB's scan lands a screen before the button exists, so the
   flash is a mark left by the scan and taken by the button. Sample frames to
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   structures … (don't make any changes yet)". "Yet" fenced the audit, not the
   sentence already agreed: one built, the rest reported. And the new sentence
   had to pass the audit it arrived with.
-
-- *2026-10-18* — "Make the scan and who had what buttons quieter, but not too
-  quiet". An outline, then five fill strengths, and the answer was the grey
-  already beside them: "just make it like Rescan". A sheet of variants is
-  how the plain answer gets found; offer the plainest one in it.
