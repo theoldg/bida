@@ -961,6 +961,7 @@ const en = {
       blank: "A line is empty.",
       noName: "A line has no name.",
       noPrice: (name: string) => `${name} has no price.`,
+      overOff: "The discounts leave nothing to pay.",
       discardTitle: "Discard these changes?",
       discardBody: "The bill stays as it was.",
     },

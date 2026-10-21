@@ -87,6 +87,21 @@ export function setCount(row: ItemRow, count: number, currency: string): ItemRow
   return derived({ ...row, ...single, count: clamped }, currency);
 }
 
+/**
+ * A new item goes after the last item, not under the discounts and charges:
+ * the bill keeps its items first, so that is where it would reopen.
+ */
+export function withItemAdded(rows: readonly ItemRow[], row: ItemRow): ItemRow[] {
+  const at = rows.map((r) => r.kind).lastIndexOf("item") + 1;
+  return [...rows.slice(0, at), row, ...rows.slice(at)];
+}
+
+/** The tip as the bill keeps it: settled, and none for a figure of nothing or one that can't be read. */
+export function keptTip(text: string, currency: string): string | null {
+  const minor = minorOrNull(text, currency);
+  return minor === null || minor <= 0 ? null : minorToDecimalString(minor, currency);
+}
+
 /** A row with nothing typed in it is not a line, and is dropped rather than refused. */
 export function rowIsEmpty(row: ItemRow): boolean {
   return row.label.trim() === "" && row.unitText.trim() === "" && row.totalText.trim() === "";
@@ -134,18 +149,21 @@ export function rowsFromBill(items: readonly ReceiptItem[], currency: string, en
   });
 }
 
+/** A discount or a charge: the lines nobody had. */
+export type ExtraLineKind = Exclude<LineKind, "item">;
+
 /**
- * The bill's discounts and charges, after its items. A charge the bill named
- * nothing — a tax kept before charges had names — opens as `unnamed`, and stays
- * unnamed unless that is retyped.
+ * The bill's discounts and charges, after its items. One the bill named
+ * nothing — a charge kept as a tax before charges had names — opens as its
+ * kind's `unnamed`, and stays unnamed unless that is retyped.
  */
 export function rowsFromExtras(
   extras: Pick<BillExtras, "charges" | "discounts">,
   english: boolean,
-  unnamed: string,
+  unnamed: Record<ExtraLineKind, string>,
 ): ItemRow[] {
-  const rows = (kind: LineKind, lines: readonly ReceiptExtra[]) => lines.map((line): ItemRow => {
-    const shown = billLabel(line, english) || unnamed;
+  const rows = (kind: ExtraLineKind, lines: readonly ReceiptExtra[]) => lines.map((line): ItemRow => {
+    const shown = billLabel(line, english) || unnamed[kind];
     return {
       key: key(), kind, label: shown,
       was: { label: line.label, labelEn: line.labelEn ?? null, shown },

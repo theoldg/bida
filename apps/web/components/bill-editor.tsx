@@ -15,8 +15,8 @@ import { glide } from "../lib/seek";
 import { getDraft, saveDraft, tabAfterScan, type EntryDraft } from "../lib/draft";
 import { MAX_PORTIONS, receiptTotalMinor } from "../lib/scan/items";
 import {
-  billFromRows, blankRow, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, rowsFromExtras, setCount, setTotal,
-  setUnit, type ItemRow, type LineKind,
+  billFromRows, blankRow, keptTip, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, rowsFromExtras, setCount,
+  setTotal, setUnit, withItemAdded, type ItemRow, type LineKind,
 } from "../lib/scan/manual";
 
 const KINDS: readonly LineKind[] = ["item", "discount", "charge"];
@@ -35,7 +35,7 @@ function missingOf(row: ItemRow, currency: string): { name: boolean; price: bool
 
 /** The bill as it would be saved, so leaving untouched never asks. */
 function shapeOf(rows: readonly ItemRow[], tip: string, currency: string): string {
-  return JSON.stringify([settleAmount(tip.trim(), currency), ...rows.filter((r) => !rowIsEmpty(r))
+  return JSON.stringify([keptTip(tip, currency), ...rows.filter((r) => !rowIsEmpty(r))
     .map((r) => [r.kind, r.label.trim(), r.kind === "item" ? r.count : 1, rowMinor(r, currency)])]);
 }
 
@@ -65,7 +65,9 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
     const opened = rowsFromBill(before, currency, english);
     return [
       ...opened.length > 0 ? opened : [blankRow()],
-      ...rowsFromExtras(receiptExtras(draft), english, copy.items.extra.charge),
+      ...rowsFromExtras(receiptExtras(draft), english, {
+        discount: copy.scan.byHand.kind.discount, charge: copy.items.extra.charge,
+      }),
     ];
   });
   const [tip, setTip] = useState(() => settleAmount(draft.receiptTip ?? "", currency));
@@ -100,7 +102,13 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
   // tab is how an expense stops being split by items.
   const empty = !rows.some((row) => row.kind === "item");
   const firstBad = rows.findIndex((row) => missing.get(row.key)!.name || missing.get(row.key)!.price);
-  const blooms = firstBad !== -1 || empty;
+  const bill = billFromRows(rows, { items: [], assignments: null }, currency);
+  const total = receiptTotalMinor(
+    bill.items, { tip: keptTip(tip, currency), charges: bill.charges, discounts: bill.discounts }, currency) ?? 0;
+  // A bill its discounts swallow is worth nothing, which a scan is refused for
+  // too (`checkScan`): it would leave the amount as it was and nobody to share it.
+  const over = !empty && firstBad === -1 && total <= 0;
+  const blooms = firstBad !== -1 || empty || over;
   const stillBlooms = useRef(blooms);
   stillBlooms.current = blooms;
 
@@ -111,9 +119,6 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
   }, [refusal, blooms]);
   useEffect(() => { if (told && !blooms) setTold(false); }, [told, blooms]);
 
-  const bill = billFromRows(rows, { items: [], assignments: null }, currency);
-  const total = receiptTotalMinor(
-    bill.items, { tip: tip || null, charges: bill.charges, discounts: bill.discounts }, currency) ?? 0;
   const changed = shapeOf(rows, tip, currency) !== opened.current;
 
   const change = (key: string, edit: (row: ItemRow) => ItemRow) =>
@@ -121,12 +126,13 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
   function add() {
     const row = blankRow();
     fresh.current = row.key;
-    setRows((all) => [...all, row]);
+    setRows((all) => withItemAdded(all, row));
   }
   const remove = (key: string) => setRows((all) => all.filter((row) => row.key !== key));
 
-  /** What is refused: the missing fields; with no cards at all, "Add an item". */
-  const aimedAt = (row: ItemRow, field: "name" | "price") => !!missing.get(row.key)?.[field];
+  /** What is refused: the missing fields; with no items, "Add an item"; over the bill, every discount. */
+  const aimedAt = (row: ItemRow, field: "name" | "price") => !!missing.get(row.key)?.[field]
+    || (over && field === "price" && row.kind === "discount");
   const flashOn = (row: ItemRow, field: "name" | "price") => (aimedAt(row, field) ? refusal.flash : "");
 
   /** One off screen is scrolled to first: a flash nobody sees is a press that did nothing. */
@@ -155,18 +161,26 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
       return;
     }
     const latest = getDraft(draftKey) ?? draft;
+    const tab = tabAfterScan(latest, latest.splitTab, true);
+    // Nothing to write, so nothing is: not even an older bill's tax moved into
+    // its charges, which is the same bill.
+    if (!changed) {
+      if (tab !== undefined) saveDraft(draftKey, { ...latest, splitTab: tab });
+      onSaved();
+      return;
+    }
+    const kept = keptTip(tip, latest.currency);
     const { items, assignments, discounts, charges } = billFromRows(rows, {
       items: latest.receiptItems ?? [], assignments: latest.receiptAssignments ?? null,
     }, latest.currency);
-    const sum = receiptTotalMinor(items, { tip: tip || null, charges, discounts }, latest.currency);
-    const tab = tabAfterScan(latest, latest.splitTab, true);
+    const sum = receiptTotalMinor(items, { tip: kept, charges, discounts }, latest.currency);
     // Whoever had a line keeps it (`billFromRows`).
     saveDraft(draftKey, {
       ...latest,
       ...(sum !== null && sum > 0 ? { amountText: minorToDecimalString(sum, latest.currency) } : {}),
       receiptItems: items,
       receiptAssignments: assignments,
-      receiptTip: tip || null,
+      receiptTip: kept,
       // Written as a charge now, named or not (`rowsFromExtras`).
       receiptTax: null,
       receiptCharges: charges.length > 0 ? charges : null,
@@ -181,8 +195,12 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
     return true;
   }
 
+  // Where the confirm key adds the next item: after the items, where it lands.
+  const lastItem = rows.map((row) => row.kind).lastIndexOf("item");
+
   const said = !told || !blooms ? null
     : empty ? copy.scan.byHand.none
+    : over ? copy.scan.byHand.overOff
     : rowIsEmpty(rows[firstBad]!) ? copy.scan.byHand.blank
     : missing.get(rows[firstBad]!.key)!.name ? copy.scan.byHand.noName
     : copy.scan.byHand.noPrice(rows[firstBad]!.label.trim());
@@ -202,7 +220,7 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
               // With two prices, the refusal blooms the one that was typed.
               const unitAimed = priceAimed && many && row.by === "unit";
               const totalAimed = priceAimed && !unitAimed;
-              const last = i === rows.length - 1;
+              const last = i === lastItem;
               // Gone once the name is retyped, as it is on save (`billFromRows`).
               const other = otherName(row);
               return (

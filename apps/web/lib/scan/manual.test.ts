@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { ReceiptItem } from "@bida/core";
 import {
-  billFromRows, blankRow, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, rowsFromExtras, setCount, setTotal,
-  setUnit,
+  billFromRows, blankRow, keptTip, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, rowsFromExtras, setCount,
+  setTotal, setUnit, withItemAdded,
 } from "./manual";
 import { unfoldAll } from "./items";
 
@@ -131,6 +131,7 @@ describe("rows and the draft's bill", () => {
 });
 
 describe("a line's kind", () => {
+  const UNNAMED = { discount: "Discount", charge: "Tax" };
   const bill: ReceiptItem[] = unfoldAll([
     { label: "Soda", labelEn: null, amount: "9.00", quantity: 3 },
     { label: "Tagine", labelEn: null, amount: "14.50", quantity: null, portionOf: null },
@@ -141,14 +142,14 @@ describe("a line's kind", () => {
   };
 
   it("opens the discounts, then the charges, after the items, naming an unnamed charge", () => {
-    const rows = rowsFromExtras(extras, true, "Tax");
+    const rows = rowsFromExtras(extras, true, UNNAMED);
     expect(rows.map((r) => [r.kind, r.label, r.totalText])).toEqual([
       ["discount", "2 for 1", "4.00"], ["charge", "Tax", "1.30"], ["charge", "Service", "2.00"],
     ]);
   });
 
   it("saves each kind to its own list, untouched names as they were", () => {
-    const rows = [...rowsFromBill(bill, "EUR", false), ...rowsFromExtras(extras, false, "Tax")];
+    const rows = [...rowsFromBill(bill, "EUR", false), ...rowsFromExtras(extras, false, UNNAMED)];
     const back = billFromRows(rows, { items: bill, assignments: null }, "EUR");
     expect(back.items).toEqual(bill);
     expect(back.discounts).toEqual([{ label: "2 pour 1", labelEn: "2 for 1", amount: "4.00" }]);
@@ -174,5 +175,29 @@ describe("a line's kind", () => {
     expect(billFromRows([charge], { items: [], assignments: null }, "EUR").charges[0]!.amount).toBe("9.00");
     expect(billFromRows([{ ...charge, kind: "item" }], { items: [], assignments: null }, "EUR").items)
       .toHaveLength(3);
+  });
+
+  it("names an unnamed discount as a discount, and keeps it unnamed", () => {
+    const rows = rowsFromExtras({ discounts: [{ label: "", amount: "2.00" }], charges: [] }, false, UNNAMED);
+    expect(rows.map((r) => [r.kind, r.label])).toEqual([["discount", "Discount"]]);
+    expect(billFromRows(rows, { items: [], assignments: null }, "EUR").discounts[0]!.label).toBe("");
+  });
+
+  it("adds an item after the last item, not under the discounts and charges", () => {
+    const rows = [...rowsFromBill(bill, "EUR", false), ...rowsFromExtras(extras, false, UNNAMED)];
+    const added = withItemAdded(rows, blankRow());
+    expect(added.map((r) => r.kind)).toEqual(["item", "item", "item", "discount", "charge", "charge"]);
+    expect(added[2]!.label).toBe("");
+    expect(withItemAdded([], blankRow())).toHaveLength(1);
+  });
+});
+
+describe("the tip as kept", () => {
+  it("settles a figure and drops one that says nothing", () => {
+    expect(keptTip("2.5", "EUR")).toBe("2.50");
+    expect(keptTip("1000", "JPY")).toBe("1000");
+    expect(keptTip(".", "EUR")).toBeNull();
+    expect(keptTip("0", "EUR")).toBeNull();
+    expect(keptTip("", "EUR")).toBeNull();
   });
 });

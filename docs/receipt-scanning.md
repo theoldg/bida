@@ -109,7 +109,8 @@ words would be no correction.
   So a service line read as an item is fixed here, and a bill typed by hand can
   have a voucher. The **tip** sits over the total, off any card, the same field the grid types.
   A card's count survives a change of kind, and an item made a discount and
-  back keeps whoever had it, until Done.
+  back keeps whoever had it, until Done. "Add an item" puts its card after the
+  last item, where the bill reopens it, and so does the last item's confirm key.
 - **Either price can be typed** beside a count above one; the one typed holds
   and the other follows, in minor units (`lib/scan/manual.ts`). "One more" is
   one more at the same price: a single item's price is a unit price, and a
@@ -126,7 +127,9 @@ words would be no correction.
 - **Done refuses an empty card, a name with no price and a price with no
   name** — said by the line's name where it has one — and with no item cards
   blooms "Add an item": a bill is never cleared here, since another split tab
-  is how an expense stops being split by items. On `/quick` Done goes back to
+  is how an expense stops being split by items. Discounts that leave nothing to
+  pay bloom too, as `checkScan` refuses such a scan. Done on a bill left as it
+  opened writes nothing. On `/quick` Done goes back to
   `/quick`, as a scan stays there.
 
 ## What it's made of
