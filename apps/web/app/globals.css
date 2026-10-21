@@ -1123,7 +1123,7 @@ dialog.scrim::backdrop { background: transparent }
 /* ---- the bill typed by hand (components/bill-editor.tsx) ----
    One card per item, the form's own card. The underlines are lighter than a
    lone figure's: a page of them is a ruled sheet otherwise. */
-.birows { display: flex; flex-direction: column; gap: 10px; padding-top: 6px }
+.birows { display: flex; flex-direction: column; gap: 10px; padding-top: 6px; padding-bottom: 1px }
 .birow { padding: 12px 14px 13px; transition: border-color .15s ease; animation: fadein .15s ease-out }
 /* The card being typed in stands out, so the eye knows whose price it is. */
 .birow:focus-within { border-color: var(--rule) }
@@ -1161,11 +1161,14 @@ dialog.scrim::backdrop { background: transparent }
   min-width: 0; font-size: 11.5px; color: var(--muted) }
 .biprice .amountfield { flex: 0 1 92px; min-width: 0 }
 .biprice .splitin { width: 100%; min-width: 0; padding-bottom: 2px }
-/* The tip and what the bill comes to, over Done: their figures end where the
-   cards' do, inside a card's border and padding. */
-.bisum { display: flex; justify-content: flex-end; align-items: baseline; gap: 8px; margin-bottom: 12px;
+/* The tip and what the bill comes to, under the cards: their figures end where the
+   cards' do, inside a card's border and padding. The pair sits as far from "Add"
+   as from Done (16px, measured: the total's line box adds 3 to the list's foot and
+   the dock's 12px top), and close together. */
+.bifoot { display: flex; flex-direction: column; gap: 6px; margin-top: 6px }
+.bisum { display: flex; justify-content: flex-end; align-items: baseline; gap: 8px;
   padding-right: 15px; font-size: 13px; font-weight: 600; color: var(--ink-2) }
-.bisum.bitip { align-items: center; margin-bottom: 8px; padding-right: 9px }
+.bisum.bitip { align-items: center; padding-right: 9px }
 .bitip .itemamountin { width: 84px; font-size: 13px; text-align: right }
 .bisum .num { font-size: 15px; color: var(--ink) }
 .biadd { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 14px;

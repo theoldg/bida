@@ -285,21 +285,24 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
               <Icon name="plus" size={14} />
               {copy.scan.byHand.add}
             </button>
+            {/* The bill's foot, as the grid's tip row: on no line, so on no card, and
+                read after the lines rather than held over Done. */}
+            <div className="bifoot">
+              <label className="bisum bitip">
+                <span>{copy.scan.byHand.tip}</span>
+                <AmountInput className="itemamountin" frame="none" currency={currency} value={tip}
+                  placeholder={bare(0, currency)} enterKeyHint="done" aria-label={copy.items.tipLabel(null)}
+                  onChange={setTip} />
+              </label>
+              <div className="bisum">
+                <span>{copy.scan.byHand.sum}</span>
+                <span className="num">{money(total, currency)}</span>
+              </div>
+            </div>
           </div>
         </Scroll>
 
         <div className="pad whodock" style={{ paddingTop: 12 }}>
-          {/* The bill's foot, as the grid's tip row: on no line, so on no card. */}
-          <label className="bisum bitip">
-            <span>{copy.scan.byHand.tip}</span>
-            <AmountInput className="itemamountin" frame="none" currency={currency} value={tip}
-              placeholder={bare(0, currency)} enterKeyHint="done" aria-label={copy.items.tipLabel(null)}
-              onChange={setTip} />
-          </label>
-          <div className="bisum">
-            <span>{copy.scan.byHand.sum}</span>
-            <span className="num">{money(total, currency)}</span>
-          </div>
           {said ? (
             <div role="status" style={{ marginBottom: 9 }}
               className={`splitfoot bad alone${refusal.flash}`} onAnimationEnd={refusal.onFlashEnd}>

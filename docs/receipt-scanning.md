@@ -87,7 +87,7 @@ kinds, no schema change, nothing on the log that nobody looked at.
 
 **The scan control's third door is the bill's items by hand**
 (`/g/entry/bill`, `/quick/bill`, `components/bill-editor.tsx`): a card per
-item — a name, a count (`×3`), a price — what the lines come to over Done,
+item — a name, a count (`×3`), a price — the tip and the total under the last card,
 and no model in between. It is for the bill
 nobody photographed, and for fixing the one a photograph misread. The door says
 **"Type"**, with a bill held or not — short, since three doors share a phone's
