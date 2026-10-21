@@ -944,6 +944,7 @@ const en = {
       more: (n: number) => `One more of item ${n}`,
       each: "each",
       total: "total",
+      sum: "Total:",
       eachOf: (n: number) => `Price of one of item ${n}`,
       priceOf: (n: number) => `Price of item ${n}`,
       add: "Add an item",

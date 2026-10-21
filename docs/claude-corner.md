@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-21* — "Do you like it?" Mid-iteration it asks for a view, not a
+  build: say yes, then name two flaws seen in the photo. Then "do neither,
+  push it" — the critique was the owner's to take, and declining it is an
+  answer too.
+
 - *2026-10-21* — "The diag screen takes a while to open when there's a lot of
   logs". The guess was the database wait; a profile said layout, every 2s, of
   lines that hadn't changed. Measure before choosing which of the owner's
@@ -85,7 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   check the target blank thing just in case". The CSS already said nothing
   selects; a scan of every screen's computed style found the two opt-ins that
   did. The links were already fine; "just in case" wants that said.
-
-- *2026-10-18* — "The Reddit browser escape doesn't work", a /diag and no
-  more. A tap I can't watch can't be fixed by guessing how it failed: put the
-  host's own way out under the button, and say which guess the fix rests on.

@@ -173,7 +173,7 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.scan.byHand.title} sub={money(total, currency)} back={{ ask: mayLeave }} />
+        <TopBar title={copy.scan.byHand.title} back={{ ask: mayLeave }} />
         <Scroll ref={scroll}>
           <div className="pad birows">
             {rows.map((row, i) => {
@@ -261,7 +261,11 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
           </div>
         </Scroll>
 
-        <div className="pad whodock" style={{ paddingTop: said ? 9 : 18 }}>
+        <div className="pad whodock" style={{ paddingTop: 12 }}>
+          <div className="bisum">
+            <span>{copy.scan.byHand.sum}</span>
+            <span className="num">{money(total, currency)}</span>
+          </div>
           {said ? (
             <div role="status" style={{ marginBottom: 9 }}
               className={`splitfoot bad alone${refusal.flash}`} onAnimationEnd={refusal.onFlashEnd}>
@@ -302,8 +306,12 @@ function CountInput({ count, bump, label, onCount }: {
     setText((t) => (Number(t) === count ? t : String(count)));
   }, [count]);
   return (
-    <span className={`amountfield bicount${bump ? (bump % 2 ? " bump-a" : " bump-b") : ""}`}>
+    // A label, so a tap on the "×" lands in the field too. The input is as
+    // wide as its digits, so the two sit together centred.
+    <label className={`amountfield bicount${bump ? (bump % 2 ? " bump-a" : " bump-b") : ""}`}>
+      <span aria-hidden="true">×</span>
       <input inputMode="numeric" enterKeyHint="next" aria-label={label} value={text}
+        style={{ width: `${Math.max(1, text.length)}ch` }}
         onChange={(e) => {
           const next = e.target.value.replace(/\D/g, "").replace(/^0+/, "").slice(0, 3);
           setText(next);
@@ -311,6 +319,6 @@ function CountInput({ count, bump, label, onCount }: {
         }}
         onFocus={(e) => e.target.select()}
         onBlur={() => setText(String(count))} />
-    </span>
+    </label>
   );
 }

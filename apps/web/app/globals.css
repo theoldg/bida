@@ -1141,8 +1141,9 @@ dialog.scrim::backdrop { background: transparent }
 .binums { display: flex; align-items: center; gap: 14px; margin-top: 12px; min-height: 30px }
 .bistep { margin: 0 0 0 -11px; flex: none }
 .bistep .partsstep:active:not(:disabled) { background: var(--press); transition-duration: 0s }
-.bicount { width: 4ch; justify-content: center; margin: 0 2px }
-.bicount input { width: 100%; min-width: 0; text-align: center; background: transparent; border: 0;
+.bicount { width: 5ch; justify-content: center; margin: 0 2px; font-size: 14.5px; cursor: text }
+.bicount > span { color: var(--muted); margin-right: .1ch }
+.bicount input { max-width: 3ch; min-width: 1ch; text-align: center; background: transparent; border: 0;
   outline: none; padding: 0 0 2px; font: inherit; font-size: 14.5px; font-weight: 500; color: var(--ink);
   font-variant-numeric: tabular-nums }
 .bicount.bump-a input { animation: bibump-a .18s ease-out }
@@ -1153,6 +1154,10 @@ dialog.scrim::backdrop { background: transparent }
   min-width: 0; font-size: 11.5px; color: var(--muted) }
 .biprice .amountfield { flex: 0 1 92px; min-width: 0 }
 .biprice .splitin { width: 100%; min-width: 0; padding-bottom: 2px }
+/* What the lines come to, over Done. */
+.bisum { display: flex; justify-content: flex-end; align-items: baseline; gap: 8px; margin-bottom: 12px;
+  font-size: 13px; font-weight: 600; color: var(--ink-2) }
+.bisum .num { font-size: 15px; color: var(--ink) }
 .biadd { display: flex; align-items: center; gap: 10px; width: 100%; padding: 13px 14px;
   font-size: 13.5px; font-weight: 600; color: var(--ink-2); text-align: left }
 @media (prefers-reduced-motion: reduce) { .birow, .bicount input { animation: none } }
