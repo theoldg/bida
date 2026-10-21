@@ -153,6 +153,9 @@ under it cannot disagree.
   the op log (`upgradeReceiptSplit`). That upgrade also takes unflagged `shares`
   beside a bill written before `RECEIPT_MODE_SINCE`, so a write must flag parts
   typed there (`partsBesideBill`).
+- **An older bill's `receiptTax` is its first charge wherever a bill is read**
+  — ask `receiptExtras`, or history read a bill saved over as a tax gone and a
+  nameless charge come.
 - `validateSplit(0, spec)` reads as **fully allocated**, not incomplete
   (`allocated === total === 0`). The verdict is `splitProblemText`'s
   (`lib/format.ts`), which leaves a zero total to the amount field once rather

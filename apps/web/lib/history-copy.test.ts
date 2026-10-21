@@ -573,6 +573,24 @@ suite("describe", () => {
     ]);
   });
 
+  // `receiptExtras` reads it so, and a bill saved over writes it so.
+  it("reads an older bill's tax as its first charge", async () => {
+    const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
+    const receiptItems = [{ label: "Salad", amount: "4.00" }];
+    await editExpense(groupId, theo, expenseId, { receiptItems, receiptTax: "1.30" });
+    await editExpense(groupId, theo, expenseId, {
+      receiptItems: [...receiptItems, { label: "Bread", amount: "1.50" }],
+      receiptTax: null,
+      receiptCharges: [{ label: "", amount: "1.30" }, { label: "Coperto", amount: "2.00" }],
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.rows).toEqual([
+      { name: "Bread", mark: "+", now: "1.50", item: true },
+      { name: "Coperto", mark: "+", now: "2.00", item: true },
+    ]);
+  });
+
   it("calls a retyped bill that read back the same a retyped bill", async () => {
     const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
     const receiptItems = [{ label: "Salad", amount: "4.00" }];

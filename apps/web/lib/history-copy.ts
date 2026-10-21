@@ -257,15 +257,19 @@ export function describe(
               && typeof (d as { amount: unknown }).amount === "string")
             .map((d) => ({ label: d.label, labelEn: d.labelEn ?? null, amount: `${sign}${d.amount}`, quantity: 1 }));
         const deductions = (state: State) => extras(state, "receiptDiscounts", "−");
-        const charges = (state: State) => extras(state, "receiptCharges", "");
+        // An older bill's tax is its first charge, as `receiptExtras` reads it,
+        // or a bill saved over reads as a tax gone and a nameless charge come.
+        const charges = (state: State): BillLine[] => {
+          const tax = charge(state, "receiptTax");
+          return [...(tax ? [{ label: "", labelEn: null, amount: tax, quantity: 1 }] : []),
+            ...extras(state, "receiptCharges", "")].map((c) => ({ ...c, label: c.label || extra.charge }));
+        };
+        const tip = chargeRow(extra.tip, charge(rev.before, "receiptTip"), charge(rev.after, "receiptTip"));
         const rows: Row[] = [
           ...billRows(bill.was.lines, bill.now.lines, english),
           ...billRows(deductions(rev.before), deductions(rev.after), english),
           ...billRows(charges(rev.before), charges(rev.after), english),
-          ...[
-            chargeRow(extra.charge, charge(rev.before, "receiptTax"), charge(rev.after, "receiptTax")),
-            chargeRow(extra.tip, charge(rev.before, "receiptTip"), charge(rev.after, "receiptTip")),
-          ].filter((r): r is Row => !!r),
+          ...(tip ? [tip] : []),
         ];
         parts.push(rows.length
           ? { what: said.changedReceipt(who), label: named.receipt, rows }
