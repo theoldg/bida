@@ -98,6 +98,15 @@ describe("receiptTotalMinor", () => {
     )).toBe(1500);
   });
 
+  // As `receiptBreakdown` spreads them, so the total and the shares agree.
+  it("counts each extra that reads, while one of them is being typed", () => {
+    expect(receiptTotalMinor(
+      [{ amount: "10.00" }],
+      extras({ tip: ".", charges: [on("2.00"), on("")], discounts: [off("4.00")] }),
+      "EUR",
+    )).toBe(800);
+  });
+
   it("is null when there's a tip but no readable items", () => {
     expect(receiptTotalMinor([], extras({ tip: "1.50" }), "EUR")).toBeNull();
   });

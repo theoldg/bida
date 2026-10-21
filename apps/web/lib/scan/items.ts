@@ -168,8 +168,23 @@ export function receiptTotalMinor(
   for (const item of items) {
     try { total += parseMinor(item.amount, currency); any = true; } catch { /* mid-type: worth nothing */ }
   }
-  if (extras) total += extrasMinor(extras, currency) ?? 0;
+  // Each extra on its own, as `receiptBreakdown` spreads them: a figure being
+  // typed is worth nothing, not every other extra with it.
+  if (extras) total += extrasMinor(readable(extras, currency), currency) ?? 0;
   return any ? total : null;
+}
+
+/** The extras whose figure reads as something — the ones `receiptBreakdown` spreads. */
+function readable(extras: BillExtras, currency: string): BillExtras {
+  const reads = (text: string | null) => {
+    if (!text) return false;
+    try { return parseMinor(text, currency) > 0; } catch { return false; }
+  };
+  return {
+    tip: reads(extras.tip) ? extras.tip : null,
+    charges: extras.charges.filter((c) => reads(c.amount)),
+    discounts: extras.discounts.filter((d) => reads(d.amount)),
+  };
 }
 
 // Unfolding: "Salad ×2 9.00" becomes two rows at half each, with their own
