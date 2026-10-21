@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-21* — "The copy button wash should respect the margin here", then
+  "(or at least have some margin)". The second line widened the first: an inset
+  is enough. A press wash only shows while held, so drive learnt `down` to
+  photograph one rather than guess it from the CSS.
+
 - *2026-10-20* — "Equally rude but less specific so the model gets to be a
   bit more creative". Two example roasts and two lists of targets were a
   script it could only recite. Then "where else": in the reading, each example
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   doesn't support deletion notes". A demo line nobody can see is a joke told to
   the log. The demo holds only what a screen shows; a gag the app can't render
   is the first thing to go.
-
-- *2026-10-18* — "Yes, add it, but also audit the prompt for … redundant
-  structures … (don't make any changes yet)". "Yet" fenced the audit, not the
-  sentence already agreed: one built, the rest reported. And the new sentence
-  had to pass the audit it arrived with.

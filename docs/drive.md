@@ -39,6 +39,7 @@ through `/new` costs a command per person ([below](#looking-at-one-screen)).
 | `type <n> <text>` | key it in one character at a time, after what is there as a thumb would — `fill` sets a value in one go, which never runs the amount field's regrouping or its caret |
 | `\n` in a `fill` or `type` | the newline a one-line command cannot hold, written the way the dump writes one back |
 | `hold <n>` | long-press — the only way to the row menus |
+| `down <n>` · `up` | press a control and keep it pressed — to `shot` its pressed look |
 | `offline on\|off` | cut this phone's network, or restore it |
 | `theme light\|dark` | the phone's colour scheme — every screen has both looks to get right |
 | `size <w> [h]` | the phone's screen, 390×844 until changed — 360 wide is the narrowest a layout has to hold, and the fold moves with the height |

@@ -429,6 +429,14 @@ async function start() {
         await page.click(sel, { button: "right", strict: true, ...(await aim(sel)) });
         break;
       }
+      // A press held for a `shot`: the only way to photograph an `:active` wash.
+      case "down": {
+        const sel = await target(args[0]);
+        await page.hover(sel, { strict: true, ...(await aim(sel)) });
+        await page.mouse.down();
+        break;
+      }
+      case "up": await page.mouse.up(); break;
       case "back": await page.goBack(); break;
       case "forward": await page.goForward(); break;
       case "reload": await page.reload(); break;
