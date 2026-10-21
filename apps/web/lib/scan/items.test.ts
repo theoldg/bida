@@ -12,11 +12,13 @@ import {
 /** Just the weights: the ratio a receipt split saves. */
 const weightsOf = (...args: Parameters<typeof receiptBreakdown>) => receiptBreakdown(...args).weights;
 
-/** The three bill-level lines, named one at a time. */
+/** The bill-level lines, named one kind at a time. */
 const extras = (some: Partial<BillExtras> = {}): BillExtras =>
-  ({ tip: null, tax: null, discounts: [], ...some });
+  ({ tip: null, charges: [], discounts: [], ...some });
 /** One deduction, named or not. */
 const off = (amount: string, label = "") => ({ label, amount });
+/** One charge on top; unnamed is the tax bills kept before charges had names. */
+const on = (amount: string, label = "") => ({ label, amount });
 const table = (...ids: string[]) => new Set(ids);
 
 describe("receiptBreakdown's weights", () => {
@@ -91,7 +93,7 @@ describe("receiptTotalMinor", () => {
   it("adds the tax on and takes the discounts off", () => {
     expect(receiptTotalMinor(
       [{ amount: "10.00" }, { amount: "5.50" }],
-      extras({ tip: "1.50", tax: "2.00", discounts: [off("4.00")] }),
+      extras({ tip: "1.50", charges: [on("2.00")], discounts: [off("4.00")] }),
       "EUR",
     )).toBe(1500);
   });
@@ -250,12 +252,16 @@ describe("which language a bill is read in", () => {
     expect(billLabel({ label: "Cafe" }, true)).toBe("Cafe");
   });
 
-  it("relabels a deduction without touching the tip or the tax", () => {
-    const some = extras({ tip: "3.00", tax: "1.00", discounts: [{ label: "2 pour 1", labelEn: "2 for 1", amount: "4.00" }] });
+  it("relabels the deductions and the charges, and leaves the tip alone", () => {
+    const some = extras({
+      tip: "3.00",
+      charges: [{ label: "Coperto", labelEn: "Cover charge", amount: "1.00" }],
+      discounts: [{ label: "2 pour 1", labelEn: "2 for 1", amount: "4.00" }],
+    });
     const shown = billExtrasIn(some, true);
     expect(shown.discounts.map((d) => d.label)).toEqual(["2 for 1"]);
+    expect(shown.charges.map((c) => c.label)).toEqual(["Cover charge"]);
     expect(shown.tip).toBe("3.00");
-    expect(shown.tax).toBe("1.00");
   });
 
   // What decides whether the toggle is drawn at all: a bill already in English
@@ -455,11 +461,11 @@ describe("bill extras", () => {
     expect(net["a"]! + net["b"]!).toBe(3000);
   });
 
-  it("spreads the tax the same way, and adds it rather than taking it off", () => {
+  it("spreads a charge the same way, and adds it rather than taking it off", () => {
     const weights = weightsOf(
       [{ amount: "30.00" }, { amount: "10.00" }],
       [new Set(["a"]), new Set(["b"])],
-      extras({ tax: "4.00" }),
+      extras({ charges: [on("4.00")] }),
       table("a", "b"),
       "EUR",
       "seed",
@@ -474,7 +480,7 @@ describe("bill extras", () => {
     const one = weightsOf(
       [{ amount: "30.00" }, { amount: "10.00" }],
       [new Set(["a"]), new Set(["b"])],
-      extras({ tip: "4.00", tax: "4.00", discounts: [off("4.00")] }),
+      extras({ tip: "4.00", charges: [on("4.00")], discounts: [off("4.00")] }),
       table("a", "b"), "EUR", "seed",
     );
     // 3:1 throughout — 3000 + 300 + 300 − 300, and a quarter of that for "b".
@@ -506,11 +512,14 @@ describe("bill extras", () => {
     expect(summed).toBe(1000 + 800 + 333 - 400 - 125);
   });
 
-  it("rules the deductions off before the tax and the tip, as a bill does", () => {
-    expect(billCharges(extras({ tip: "1.00", tax: "2.00", discounts: [off("3.00", "Loyalty")] })))
+  it("rules the deductions off before the charges and the tip, as a bill does", () => {
+    const charges = [on("2.00"), on("0.50", "Service")];
+    expect(billCharges(extras({ tip: "1.00", charges, discounts: [off("3.00", "Loyalty")] })))
       .toEqual([
         { kind: "discount", label: "Loyalty", amount: "3.00", seed: "discount0" },
-        { kind: "tax", label: "", amount: "2.00", seed: "tax" },
+        // Unnamed, it keeps the seed it was saved under as a tax.
+        { kind: "charge", label: "", amount: "2.00", seed: "tax" },
+        { kind: "charge", label: "Service", amount: "0.50", seed: "charge1" },
         { kind: "tip", label: "", amount: "1.00", seed: "tip" },
       ]);
     expect(billCharges(null)).toEqual([]);
@@ -521,7 +530,7 @@ describe("bill extras", () => {
   it("adds up to the bill's own total, extras and all", () => {
     const items = [{ amount: "10.00" }, { amount: "3.33" }, { amount: "5.55" }];
     const assignments = [new Set(["a", "b", "c"]), new Set(["b"]), new Set(["a", "c"])];
-    const all = extras({ tip: "1.37", tax: "0.99", discounts: [off("2.22")] });
+    const all = extras({ tip: "1.37", charges: [on("0.99")], discounts: [off("2.22")] });
     const { weights, lines } = receiptBreakdown(
       items, assignments, all, table("a", "b", "c"), "EUR", "seed");
 
@@ -548,7 +557,7 @@ describe("bill extras", () => {
   it("splits an extra evenly while nobody has been assigned anything", () => {
     const weights = weightsOf(
       [{ amount: "10.00" }], [new Set()],
-      extras({ tax: "4.00" }), table("a", "b"), "EUR", "seed",
+      extras({ charges: [on("4.00")] }), table("a", "b"), "EUR", "seed",
     );
     expect(weights["a"]).toBe(200);
     expect(weights["b"]).toBe(200);

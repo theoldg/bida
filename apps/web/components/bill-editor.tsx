@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { minorToDecimalString, receiptExtras } from "@bida/core";
 import { AmountInput } from "./amount-input";
 import { Body, Screen, Scroll, TopBar } from "./chrome";
-import { ConfirmDialog } from "./dialog";
+import { ChoiceDialog, ConfirmDialog } from "./dialog";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { money } from "../lib/format";
@@ -15,9 +15,11 @@ import { glide } from "../lib/seek";
 import { getDraft, saveDraft, tabAfterScan, type EntryDraft } from "../lib/draft";
 import { MAX_PORTIONS, receiptTotalMinor } from "../lib/scan/items";
 import {
-  billFromRows, blankRow, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, setCount, setTotal, setUnit,
-  type ItemRow,
+  billFromRows, blankRow, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, rowsFromExtras, setCount, setTotal,
+  setUnit, type ItemRow, type LineKind,
 } from "../lib/scan/manual";
+
+const KINDS: readonly LineKind[] = ["item", "discount", "charge"];
 
 /**
  * What a row is missing, one field at a time, so the refusal blooms only that
@@ -31,16 +33,18 @@ function missingOf(row: ItemRow, currency: string): { name: boolean; price: bool
   return { name: row.label.trim() === "", price: minor === null || minor <= 0 };
 }
 
-/** The rows as they would be saved, so leaving untouched never asks. */
-function shapeOf(rows: readonly ItemRow[], currency: string): string {
-  return JSON.stringify(rows.filter((r) => !rowIsEmpty(r))
-    .map((r) => [r.label.trim(), r.count, rowMinor(r, currency)]));
+/** The bill as it would be saved, so leaving untouched never asks. */
+function shapeOf(rows: readonly ItemRow[], tip: string, currency: string): string {
+  return JSON.stringify([tip.trim(), ...rows.filter((r) => !rowIsEmpty(r))
+    .map((r) => [r.kind, r.label.trim(), r.kind === "item" ? r.count : 1, rowMinor(r, currency)])]);
 }
 
 /**
  * The bill's lines typed by hand: a name, a count and a price per line, no
  * model in between. With a count above one either price can be typed — the
- * one typed holds and the other follows.
+ * one typed holds and the other follows. A line's kind is picked on its chip:
+ * a discount or a charge has no count, and is nobody's to tick. The tip is
+ * the last card, the same figure the grid types.
  *
  * The rows are this screen's own until Save: the draft gets the bill only
  * whole, and Back with changes asks first, as the form does. Save is never
@@ -57,11 +61,17 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
   const currency = draft.currency;
   const before = draft.receiptItems ?? [];
   const [rows, setRows] = useState<ItemRow[]>(() => {
-    const opened = rowsFromBill(before, currency, draft.receiptEnglish === true);
-    return opened.length > 0 ? opened : [blankRow()];
+    const english = draft.receiptEnglish === true;
+    const opened = rowsFromBill(before, currency, english);
+    return [
+      ...opened.length > 0 ? opened : [blankRow()],
+      ...rowsFromExtras(receiptExtras(draft), english, copy.items.extra.charge),
+    ];
   });
-  const opened = useRef(shapeOf(rows, currency));
+  const [tip, setTip] = useState(draft.receiptTip ?? "");
+  const opened = useRef(shapeOf(rows, tip, currency));
   const [asking, setAsking] = useState(false);
+  const [picking, setPicking] = useState<string | null>(null);
   const [told, setTold] = useState(false);
   const [seeking, setSeeking] = useState(false);
   const refusal = useRefusal();
@@ -86,9 +96,9 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
   }, [rows.length]);
 
   const missing = new Map(rows.map((row) => [row.key, missingOf(row, currency)]));
-  // No cards is no bill, and a bill is not cleared from here: another split
+  // No items is no bill, and a bill is not cleared from here: another split
   // tab is how an expense stops being split by items.
-  const empty = rows.length === 0;
+  const empty = !rows.some((row) => row.kind === "item");
   const firstBad = rows.findIndex((row) => missing.get(row.key)!.name || missing.get(row.key)!.price);
   const blooms = firstBad !== -1 || empty;
   const stillBlooms = useRef(blooms);
@@ -101,8 +111,10 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
   }, [refusal, blooms]);
   useEffect(() => { if (told && !blooms) setTold(false); }, [told, blooms]);
 
-  const total = rows.reduce((sum, row) => sum + (rowIsBad(row, currency) ? 0 : rowMinor(row, currency) ?? 0), 0);
-  const changed = shapeOf(rows, currency) !== opened.current;
+  const bill = billFromRows(rows, { items: [], assignments: null }, currency);
+  const total = receiptTotalMinor(
+    bill.items, { tip: tip || null, charges: bill.charges, discounts: bill.discounts }, currency) ?? 0;
+  const changed = shapeOf(rows, tip, currency) !== opened.current;
 
   const change = (key: string, edit: (row: ItemRow) => ItemRow) =>
     setRows((all) => all.map((row) => (row.key === key ? edit(row) : row)));
@@ -143,17 +155,22 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
       return;
     }
     const latest = getDraft(draftKey) ?? draft;
-    const { items, assignments } = billFromRows(rows, {
+    const { items, assignments, discounts, charges } = billFromRows(rows, {
       items: latest.receiptItems ?? [], assignments: latest.receiptAssignments ?? null,
     }, latest.currency);
-    const sum = receiptTotalMinor(items, receiptExtras(latest), latest.currency);
+    const sum = receiptTotalMinor(items, { tip: tip || null, charges, discounts }, latest.currency);
     const tab = tabAfterScan(latest, latest.splitTab, true);
-    // Whoever had a line keeps it (`billFromRows`); the bill's extras stay.
+    // Whoever had a line keeps it (`billFromRows`).
     saveDraft(draftKey, {
       ...latest,
       ...(sum !== null && sum > 0 ? { amountText: minorToDecimalString(sum, latest.currency) } : {}),
       receiptItems: items,
       receiptAssignments: assignments,
+      receiptTip: tip || null,
+      // Written as a charge now, named or not (`rowsFromExtras`).
+      receiptTax: null,
+      receiptCharges: charges.length > 0 ? charges : null,
+      receiptDiscounts: discounts.length > 0 ? discounts : null,
       ...(tab !== undefined ? { splitTab: tab } : {}),
     });
     onSaved();
@@ -177,7 +194,8 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
         <Scroll ref={scroll}>
           <div className="pad birows">
             {rows.map((row, i) => {
-              const many = row.count > 1;
+              const item = row.kind === "item";
+              const many = item && row.count > 1;
               const n = i + 1;
               const nameAimed = aimedAt(row, "name");
               const priceAimed = aimedAt(row, "price");
@@ -195,10 +213,24 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                       onAnimationEnd={refusal.onFlashEnd}>
                       <input data-row={row.key} value={row.label}
                         autoFocus={i === 0 && before.length === 0}
-                        placeholder={copy.scan.byHand.name} aria-label={copy.scan.byHand.nameOf(n)}
+                        placeholder={copy.scan.byHand.kind[row.kind]} aria-label={copy.scan.byHand.nameOf(n)}
                         enterKeyHint="next" autoCapitalize="sentences" maxLength={80}
                         onChange={(e) => change(row.key, (r) => ({ ...r, label: e.target.value }))} />
                     </span>
+                    {/* An item, which most lines are, says nothing; the others wear their kind. */}
+                    {item ? (
+                      <button type="button" className="bidrop bimore"
+                        aria-label={copy.scan.byHand.kindOf(n, copy.scan.byHand.kind[row.kind])}
+                        onClick={() => setPicking(row.key)}>
+                        <Icon name="more" size={14} />
+                      </button>
+                    ) : (
+                      <button type="button" className="chip kindchip bikind"
+                        aria-label={copy.scan.byHand.kindOf(n, copy.scan.byHand.kind[row.kind])}
+                        onClick={() => setPicking(row.key)}>
+                        {copy.scan.byHand.kind[row.kind]}<Icon name="updown" size={11} className="pickmark" />
+                      </button>
+                    )}
                     <button type="button" className="bidrop" onClick={() => remove(row.key)}
                       aria-label={copy.scan.byHand.remove(row.label.trim() || String(n))}>
                       <Icon name="cross" size={12} />
@@ -206,7 +238,7 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                   </div>
                   {other ? <div className="bien">{other}</div> : null}
                   <div className="binums">
-                    <span className="partsend bistep">
+                    {item ? <span className="partsend bistep">
                       <button type="button" className="partsstep" disabled={row.count <= 1}
                         onClick={() => step(row.key, -1)}
                         aria-label={copy.scan.byHand.fewer(n)}>
@@ -220,7 +252,7 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                         aria-label={copy.scan.byHand.more(n)}>
                         <Icon name="plus" size={10} />
                       </button>
-                    </span>
+                    </span> : null}
                     {many ? (
                       <label className="biprice"
                         {...(unitAimed ? { "data-aimed": "" } : {})}>
@@ -235,6 +267,8 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                     <label className="biprice"
                       {...(totalAimed ? { "data-aimed": "" } : {})}>
                       {many ? <span>{copy.scan.byHand.total}</span> : null}
+                      {/* Typed positive, as it is kept: the kind is the sign. */}
+                      {item ? null : <span className="bisign">{row.kind === "discount" ? "−" : "+"}</span>}
                       <AmountInput className="bignum splitin" currency={currency} value={row.totalText}
                         fieldClassName={totalAimed ? refusal.flash.trim() || undefined : undefined}
                         onAnimationEnd={refusal.onFlashEnd}
@@ -258,6 +292,14 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
               <Icon name="plus" size={14} />
               {copy.scan.byHand.add}
             </button>
+            <div className="card birow bitip">
+              <span className="bitipname">{copy.scan.byHand.tip}</span>
+              <label className="biprice">
+                <AmountInput className="bignum splitin" currency={currency} value={tip}
+                  placeholder="0" enterKeyHint="done" aria-label={copy.items.tipLabel(null)}
+                  onChange={setTip} />
+              </label>
+            </div>
           </div>
         </Scroll>
 
@@ -278,6 +320,16 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
           </button>
         </div>
       </Body>
+
+      {picking ? (
+        <ChoiceDialog title={copy.scan.byHand.kindTitle}
+          value={rows.find((row) => row.key === picking)?.kind ?? "item"}
+          options={KINDS.map((kind) => ({
+            value: kind, label: copy.scan.byHand.kind[kind], note: copy.scan.byHand.kindNote[kind],
+          }))}
+          onPick={(kind) => change(picking, (row) => ({ ...row, kind }))}
+          onClose={() => setPicking(null)} />
+      ) : null}
 
       {asking ? (
         <ConfirmDialog title={copy.scan.byHand.discardTitle} confirm={copy.act.discard}

@@ -4,7 +4,7 @@
  */
 
 import { isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money";
-import type { Receipt, ReceiptDiscount } from "./types";
+import type { Receipt, ReceiptExtra } from "./types";
 import { sameLocalDay } from "./when";
 
 /**
@@ -27,8 +27,8 @@ export interface BillItem {
   quantity: number | null;
 }
 
-/** `amount` is what comes off, written positive. */
-export interface ScanDiscount {
+/** A charge or a deduction; `amount` is written positive either way. */
+export interface ScanExtra {
   label: string;
   labelEn: string | null;
   amount: string;
@@ -42,10 +42,9 @@ export interface ScanResult {
   title: string | null;
   /** Plain decimal, parseMinor()-ready. Not a number. */
   total: string | null;
-  tip: string | null;
-  /** Never VAT already inside the printed lines. */
-  tax: string | null;
-  discounts: ScanDiscount[];
+  /** What the bill adds on top of the lines — never VAT already inside them. */
+  charges: ScanExtra[];
+  discounts: ScanExtra[];
   currency: string | null;
   date: string | null;
   lineItems: ScanLineItem[];
@@ -109,14 +108,15 @@ export function scanCurrency(result: ScanResult, fallback: CurrencyCode): Curren
 
 /** All positive magnitudes; the sign is applied in `receiptBreakdown` only. */
 export interface BillExtras {
+  /** Typed, never scanned: a tip printed on the bill is a charge. */
   tip: string | null;
-  tax: string | null;
-  /** Kept apart so the grid can name each deduction. */
-  discounts: ReceiptDiscount[];
+  /** Kept apart so the bill can name each one. */
+  charges: ReceiptExtra[];
+  discounts: ReceiptExtra[];
 }
 
 /** The order a printed bill rules them off under the items. */
-const EXTRAS = ["discount", "tax", "tip"] as const;
+const EXTRAS = ["discount", "charge", "tip"] as const;
 export type ExtraKind = (typeof EXTRAS)[number];
 
 export interface Bill {
@@ -142,18 +142,17 @@ export function lineMinor(item: ScanLineItem, currency: CurrencyCode): number | 
  * what makes a discount proportional (ADR-0016).
  */
 export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
-  const discounts: ReceiptDiscount[] = [];
-  const keep = (text: string | null, label: string): string | null => {
-    const minor = readAmount(text, currency);
-    if (minor === null || minor >= 0) return text;
-    discounts.push({ label, amount: minorToDecimalString(-minor, currency) });
-    return null;
-  };
-
+  const discounts: ReceiptExtra[] = [];
+  const charges: ReceiptExtra[] = [];
   const en = (labelEn: string | null) => (result.english ? null : labelEn);
 
-  const tip = keep(result.tip, "");
-  const tax = keep(result.tax, "");
+  for (const printed of result.charges) {
+    const minor = readAmount(printed.amount, currency);
+    if (minor === null || minor === 0) continue;
+    (minor < 0 ? discounts : charges).push({
+      label: printed.label, labelEn: en(printed.labelEn), amount: minorToDecimalString(Math.abs(minor), currency),
+    });
+  }
   const items: BillItem[] = [];
   for (const item of result.lineItems) {
     const minor = lineMinor(item, currency);
@@ -182,12 +181,12 @@ export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
     });
   }
 
-  return { items, extras: { tip, tax, discounts } };
+  return { items, extras: { tip: null, charges, discounts } };
 }
 
 export function extrasMinor(extras: BillExtras, currency: CurrencyCode): number | null {
   let net = 0;
-  for (const text of [extras.tip, extras.tax]) {
+  for (const text of [extras.tip, ...extras.charges.map((c) => c.amount)]) {
     if (!text) continue;
     const minor = readAmount(text, currency);
     if (minor === null) return null;
@@ -204,7 +203,8 @@ export function extrasMinor(extras: BillExtras, currency: CurrencyCode): number 
 export function receiptExtras(source: Receipt): BillExtras {
   return {
     tip: source.receiptTip ?? null,
-    tax: source.receiptTax ?? null,
+    // Unnamed: the label is the bill's word, and that bill printed none.
+    charges: [...(source.receiptTax ? [{ label: "", amount: source.receiptTax }] : []), ...source.receiptCharges ?? []],
     discounts: source.receiptDiscounts ?? [],
   };
 }
@@ -215,6 +215,7 @@ export function receiptOf(source: Receipt): { [K in keyof Receipt]-?: NonNullabl
     receiptItems: source.receiptItems ?? null,
     receiptTip: source.receiptTip ?? null,
     receiptTax: source.receiptTax ?? null,
+    receiptCharges: source.receiptCharges ?? null,
     receiptDiscounts: source.receiptDiscounts ?? null,
     receiptInvolved: source.receiptInvolved ?? null,
     receiptAssignments: source.receiptAssignments ?? null,
@@ -291,7 +292,7 @@ export function checkScan(
   if (total === null) return "no-total";
 
   // Before `readBill`, which takes an illegible figure as nothing.
-  for (const text of [result.tip, result.tax, ...result.discounts.map((d) => d.amount)]) {
+  for (const text of [...result.charges, ...result.discounts].map((x) => x.amount)) {
     if (text && readAmount(text, currency) === null) return "unreadable-line";
   }
 

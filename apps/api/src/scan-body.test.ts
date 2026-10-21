@@ -139,7 +139,7 @@ describe("the reading", () => {
   it("asks for every field the schema requires", async () => {
     // `labelEn` is described, not named, so it is left off.
     const fields = [
-      "title", "total", "tip", "tax", "discounts", "currency", "date",
+      "title", "total", "charges", "discounts", "currency", "date",
       "label", "amount", "unitAmount", "quantity", "error",
     ];
     const prompt = promptOf(await wrapped("QUJD"));

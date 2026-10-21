@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 import { describeReading } from "./log";
 
 describe("a kept reading", () => {
-  it("prints every figure the model returned, discounts apart from lines", () => {
+  it("prints every figure the model returned, charges and discounts apart from lines", () => {
     const lines = describeReading({
       at: Date.UTC(2026, 9, 19, 14, 20, 1),
       outcome: "mismatch",
       read: {
-        title: "Rossmann", total: "205.92", tip: null, tax: null, currency: "PLN",
+        title: "Rossmann", total: "205.92", currency: "PLN",
+        charges: [{ label: "Torba", labelEn: "Bag", amount: "0.50" }],
         date: "2026-10-19", english: false, error: null,
         lineItems: [
           { label: "Domol płyn d/pran", labelEn: null, amount: "27.98", unitAmount: "13.99", quantity: 2 },
@@ -20,8 +21,8 @@ describe("a kept reading", () => {
       "10-19 14:20:01  MISMATCH  total 205.92 PLN  2026-10-19  Rossmann",
       "      27.98  2 × 13.99  Domol płyn d/pran",
       "      23.99  Got2b phenomenal",
+      "      +0.50  on   Torba",
       "     -15.00  off  Uwzgl. opust",
-      "  tip —  tax —",
     ]);
   });
 
@@ -30,7 +31,7 @@ describe("a kept reading", () => {
       at: 0,
       outcome: "rejected",
       read: {
-        title: null, total: null, tip: null, tax: null, currency: null, date: null,
+        title: null, total: null, charges: [], currency: null, date: null,
         english: false, error: "Too blurry.", lineItems: [], discounts: [],
       },
     });

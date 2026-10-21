@@ -1,7 +1,8 @@
 # 0016 — A scanned receipt is a split mode of its own
 
 **Status:** Accepted · 2026-08-28 (discounts and tax, 2026-09-12; a bill may be
-typed rather than photographed, 2026-09-19; typed by hand, 2026-10-17)
+typed rather than photographed, 2026-09-19; typed by hand, 2026-10-17; charges
+named and every line's kind correctable, 2026-10-21)
 
 **Context.** The owner asked to photograph a bill and assign its lines: *"a
 selection of involved users … then a table with columns as users and rows as
@@ -111,9 +112,14 @@ printed as (`receiptBreakdown`), so three 3.50 sodas between three come out
 3.50 each, not 3.49/3.50/3.51 from rounding each portion three ways.
 
 **A discount is shared in proportion to what each person ordered**, and so are
-the tip and any tax charged on top: they are one family (`BillExtras`), the
-lines a bill charges for that nobody ordered, and none of them can be ticked
-for. Every deduction is gathered into one list first (`readBill`) wherever it
+the tip and every charge on top — service, tax, a fee: they are one family
+(`BillExtras`), the lines a bill charges for that nobody ordered, and none of
+them can be ticked for. **A line's kind is a person's to correct**: on the typed
+bill each card is an item, a discount or a charge, so a service line read as an
+item, or a voucher on a bill typed by hand, needs no rescan. **The tip is never
+read off a bill**: a printed service charge is a charge, so the tip starts at
+nothing and stays the table's decision, typed on the grid or as the typed
+bill's last card — one field with two doors, convenience over a single home. Every deduction is gathered into one list first (`readBill`) wherever it
 printed — a negative line item, a bill-level credit, a two-for-one — because
 the grid has no way to say who a particular credit belongs to, and inventing
 one is a scope-picking UI on a screen asked to be minimal. They are kept apart
@@ -175,6 +181,9 @@ survive at all ([0023](0023-monospace-monochrome.md)).
 - **A row holding N sub-assignments** instead of unfolding — it makes
   `receiptAssignments` three-dimensional and gives every reader a second case.
 - **A `receiptTipPercent` field** — the items already carry the proportion.
+- **A `kind` on each `receiptItems` line** — every reader of the grid's rows
+  (assignments, portions, counts) would have to skip the extras. They stay
+  lists of their own, and the typed bill moves a line between them.
 - **A scope on each discount** — which lines it came off, picked on the grid.
   It is the honest model and the seam is left at `readBill`, but it buys a
   line-picker dialog for an answer pro rata already gets right whenever the

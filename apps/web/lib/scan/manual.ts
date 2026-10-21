@@ -1,6 +1,12 @@
 // Doc: docs/receipt-scanning.md#typing-a-bill-in
-import { minorToDecimalString, parseMinor, type ReceiptItem } from "@bida/core";
+import { minorToDecimalString, parseMinor, type BillExtras, type ReceiptExtra, type ReceiptItem } from "@bida/core";
 import { billLabel, MAX_PORTIONS, printedBill, unfoldAll } from "./items";
+
+/**
+ * What a line does to the money: an item is had by somebody; a discount and a
+ * charge are nobody's, and come off or go on in proportion (ADR-0016).
+ */
+export type LineKind = "item" | "discount" | "charge";
 
 /**
  * One printed line as the hand editor holds it. Both prices are text, so a
@@ -9,17 +15,19 @@ import { billLabel, MAX_PORTIONS, printedBill, unfoldAll } from "./items";
  */
 export interface ItemRow {
   key: string;
+  kind: LineKind;
   label: string;
   /**
    * The line's two names as it opened, and which of them the field showed.
    * Kept only while the field still says `shown`: a typed name is the only one.
    */
   was: { label: string; labelEn: string | null; shown: string } | null;
+  /** An item's alone; kept through a change of kind, so changing back loses nothing. */
   count: number;
   unitText: string;
   totalText: string;
   by: "unit" | "total";
-  /** The printed line this row was opened from, so its eaters can follow it. */
+  /** The printed item this row was opened from, so its eaters can follow it. */
   from: number | null;
 }
 
@@ -28,7 +36,7 @@ const key = () => `r${next++}`;
 
 export function blankRow(): ItemRow {
   return {
-    key: key(), label: "", was: null, count: 1,
+    key: key(), kind: "item", label: "", was: null, count: 1,
     unitText: "", totalText: "", by: "total", from: null,
   };
 }
@@ -114,6 +122,7 @@ export function rowsFromBill(items: readonly ReceiptItem[], currency: string, en
     const shown = billLabel(line, english);
     return derived({
       key: key(),
+      kind: "item",
       label: shown,
       was: { label: line.label, labelEn: line.labelEn, shown },
       count,
@@ -126,6 +135,27 @@ export function rowsFromBill(items: readonly ReceiptItem[], currency: string, en
 }
 
 /**
+ * The bill's discounts and charges, after its items. A charge the bill named
+ * nothing — a tax kept before charges had names — opens as `unnamed`, and stays
+ * unnamed unless that is retyped.
+ */
+export function rowsFromExtras(
+  extras: Pick<BillExtras, "charges" | "discounts">,
+  english: boolean,
+  unnamed: string,
+): ItemRow[] {
+  const rows = (kind: LineKind, lines: readonly ReceiptExtra[]) => lines.map((line): ItemRow => {
+    const shown = billLabel(line, english) || unnamed;
+    return {
+      key: key(), kind, label: shown,
+      was: { label: line.label, labelEn: line.labelEn ?? null, shown },
+      count: 1, unitText: line.amount, totalText: line.amount, by: "total", from: null,
+    };
+  });
+  return [...rows("discount", extras.discounts), ...rows("charge", extras.charges)];
+}
+
+/**
  * The rows as the draft keeps a bill: unfolded into portions, with whoever had
  * a line still having it if the line kept its count — renaming a dish or
  * fixing its price is no reason to tick it again.
@@ -134,23 +164,34 @@ export function billFromRows(
   rows: readonly ItemRow[],
   before: { items: readonly ReceiptItem[]; assignments: readonly (readonly string[])[] | null },
   currency: string,
-): { items: ReceiptItem[]; assignments: string[][] | null; totalMinor: number } {
-  const kept = rows.filter((row) => !rowIsEmpty(row) && !rowIsBad(row, currency));
-  const printed: ReceiptItem[] = kept.map((row) => {
+): {
+  items: ReceiptItem[];
+  assignments: string[][] | null;
+  totalMinor: number;
+  discounts: ReceiptExtra[];
+  charges: ReceiptExtra[];
+} {
+  const lines = rows.filter((row) => !rowIsEmpty(row) && !rowIsBad(row, currency));
+  const line = (row: ItemRow): ReceiptExtra => {
     const label = row.label.trim();
     const kept = row.was && label === row.was.shown ? row.was : null;
     return {
       label: kept ? kept.label : label,
       labelEn: kept ? kept.labelEn : null,
       amount: minorToDecimalString(rowMinor(row, currency)!, currency),
-      quantity: row.count > 1 ? row.count : null,
-      portionOf: null,
     };
-  });
+  };
+  const extras = (kind: LineKind) => lines.filter((row) => row.kind === kind).map(line);
+  const discounts = extras("discount");
+  const charges = extras("charge");
+  const kept = lines.filter((row) => row.kind === "item");
+  const printed: ReceiptItem[] = kept.map((row) => (
+    { ...line(row), quantity: row.count > 1 ? row.count : null, portionOf: null }
+  ));
   const { items, from } = unfoldAll(printed, currency);
   const totalMinor = kept.reduce((sum, row) => sum + rowMinor(row, currency)!, 0);
 
-  if (!before.assignments) return { items, assignments: null, totalMinor };
+  if (!before.assignments) return { items, assignments: null, totalMinor, discounts, charges };
   const { eaters } = printedBill(before.items, before.assignments, currency);
   const firstOf = new Map<number, number>();
   const assignments = items.map((_, k) => {
@@ -164,7 +205,7 @@ export function billFromRows(
     if (was.length === 1) return [...was[0]!];
     return was.length === countOf(from, from[k]!) ? [...was[k - start]!] : [];
   });
-  return { items, assignments, totalMinor };
+  return { items, assignments, totalMinor, discounts, charges };
 }
 
 function countOf(from: readonly number[], line: number): number {

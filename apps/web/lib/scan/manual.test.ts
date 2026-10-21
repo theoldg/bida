@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { ReceiptItem } from "@bida/core";
 import {
-  billFromRows, blankRow, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, setCount, setTotal, setUnit,
+  billFromRows, blankRow, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, rowsFromExtras, setCount, setTotal,
+  setUnit,
 } from "./manual";
 import { unfoldAll } from "./items";
 
@@ -126,5 +127,52 @@ describe("rows and the draft's bill", () => {
     const assignments = [["a"], ["a"], ["a"], ["b"]];
     const [, tagine] = rowsFromBill(bill, "EUR", false);
     expect(billFromRows([tagine!], { items: bill, assignments }, "EUR").assignments).toEqual([["b"]]);
+  });
+});
+
+describe("a line's kind", () => {
+  const bill: ReceiptItem[] = unfoldAll([
+    { label: "Soda", labelEn: null, amount: "9.00", quantity: 3 },
+    { label: "Tagine", labelEn: null, amount: "14.50", quantity: null, portionOf: null },
+  ], "EUR").items;
+  const extras = {
+    discounts: [{ label: "2 pour 1", labelEn: "2 for 1", amount: "4.00" }],
+    charges: [{ label: "", amount: "1.30" }, { label: "Service", amount: "2.00" }],
+  };
+
+  it("opens the discounts, then the charges, after the items, naming an unnamed charge", () => {
+    const rows = rowsFromExtras(extras, true, "Tax");
+    expect(rows.map((r) => [r.kind, r.label, r.totalText])).toEqual([
+      ["discount", "2 for 1", "4.00"], ["charge", "Tax", "1.30"], ["charge", "Service", "2.00"],
+    ]);
+  });
+
+  it("saves each kind to its own list, untouched names as they were", () => {
+    const rows = [...rowsFromBill(bill, "EUR", false), ...rowsFromExtras(extras, false, "Tax")];
+    const back = billFromRows(rows, { items: bill, assignments: null }, "EUR");
+    expect(back.items).toEqual(bill);
+    expect(back.discounts).toEqual([{ label: "2 pour 1", labelEn: "2 for 1", amount: "4.00" }]);
+    // Still unnamed, so it keeps the seed it was saved under (`billCharges`).
+    expect(back.charges).toEqual([
+      { label: "", labelEn: null, amount: "1.30" }, { label: "Service", labelEn: null, amount: "2.00" },
+    ]);
+  });
+
+  it("drops a line's eaters while it is a discount, and gives them back when it is an item again", () => {
+    const assignments = [["a"], ["a"], ["a"], ["b"]];
+    const [soda, tagine] = rowsFromBill(bill, "EUR", false);
+    const off = billFromRows([soda!, { ...tagine!, kind: "discount" }], { items: bill, assignments }, "EUR");
+    expect(off.items.map((i) => i.label)).toEqual(["Soda", "Soda", "Soda"]);
+    expect(off.discounts.map((d) => d.amount)).toEqual(["14.50"]);
+    const back = billFromRows([soda!, { ...tagine!, kind: "item" }], { items: bill, assignments }, "EUR");
+    expect(back.assignments).toEqual(assignments);
+  });
+
+  it("prices a counted item made a charge at the whole line, and keeps its count to change back", () => {
+    const [soda] = rowsFromBill(bill, "EUR", false);
+    const charge = { ...soda!, kind: "charge" as const };
+    expect(billFromRows([charge], { items: [], assignments: null }, "EUR").charges[0]!.amount).toBe("9.00");
+    expect(billFromRows([{ ...charge, kind: "item" }], { items: [], assignments: null }, "EUR").items)
+      .toHaveLength(3);
   });
 });

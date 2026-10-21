@@ -1138,6 +1138,11 @@ dialog.scrim::backdrop { background: transparent }
 .bidrop { flex: none; width: 36px; height: 36px; margin: -8px -12px -8px -4px; display: grid;
   place-items: center; color: var(--muted) }
 .bidrop:active { background: var(--press); color: var(--ink) }
+/* A line's kind: a discount or a charge wears it; an item's is behind its kebab (`.bidrop`). */
+.bikind { flex: none; margin: -4px 0 }
+.bisign { color: var(--ink-2); font-size: 14.5px }
+.bitip { display: flex; align-items: center; gap: 14px; min-height: 30px }
+.bitipname { flex: none; font-size: 14.5px; font-weight: 600; color: var(--ink) }
 .binums { display: flex; align-items: center; gap: 14px; margin-top: 12px; min-height: 30px }
 .bistep { margin: 0 0 0 -11px; flex: none }
 .bistep .partsstep:active:not(:disabled) { background: var(--press); transition-duration: 0s }

@@ -1,13 +1,13 @@
 # Who had what
 
-*For: anyone changing the grid a bill is divided on, or how its tip, tax and
-discounts spread. Part of the [receipt-scanning](receipt-scanning.md) docs;
+*For: anyone changing the grid a bill is divided on, or how its tip, charges
+and discounts spread. Part of the [receipt-scanning](receipt-scanning.md) docs;
 the UX rulings are [ADR-0016](decisions/0016-receipts.md), and the reading the
 grid starts from is [scan-reading.md](scan-reading.md).*
 
 ## The grid
 
-`normalizeScan` uses none of `lineItems`, `tip`, `tax` or `discounts`. `/g/entry/items` does —
+`normalizeScan` uses none of `lineItems`, `charges` or `discounts`. `/g/entry/items` does —
 reached by tapping the Items tab's button — "Edit who-had-what" once every
 line has somebody (`billAssigned`), "Assign who-had-what" until then, Save
 refusing on it —
@@ -76,20 +76,27 @@ A restored draft opens with every run folded, which is the compact reading of
 it. A line of more than `MAX_PORTIONS` (100) is never split: it stays one row
 wearing its ×N, shared like any other line.
 
-## Tip, tax and discounts
+## Tip, charges and discounts
 
-**Tip, tax and discount are one family — `BillExtras`.** They are the lines a
+**Tip, charge and discount are one family — `BillExtras`.** They are the lines a
 bill charges for that nobody ordered, so none of them can be ticked for on the
 grid: each is spread across everyone at the table in proportion to what they
-*did* order, and the discount is the one that comes off. `readBill` (core)
-gathers every deduction into `discounts` first, wherever it arrived — a
-negative line item, a negative tip, the field itself — so the arithmetic
-downstream sees positive lines and a list of figures that come off, and never a
-sign to get the wrong way round. Only the tip is typed; the other two are read
-off the bill and drawn as rows with no cells (`copy.items.extra`), and a caption
-under them says so — naming only the charges this bill actually has
-(`copy.items.extraNote`). It sits in the table rather than in the footer below
-it, because it explains those rows and the footer's line is what to do next.
+*did* order, and the discount is the one that comes off. A **charge** is what
+the bill adds to its lines — service, tax on top, a tip it printed — kept as a
+named list (`receiptCharges`); an older bill's single unnamed `receiptTax` reads
+as the first of them. `readBill` (core) gathers every deduction into
+`discounts` first, wherever it arrived — a negative line item, a negative
+charge, the field itself — so the arithmetic downstream sees positive lines and
+a list of figures that come off, and never a sign to get the wrong way round.
+**The tip is the table's, never the scan's**: it starts empty, so a printed
+service charge isn't mistaken for a tip already decided, and it is typed on the
+grid or as the last card of the [typed bill](receipt-scanning.md#typing-a-bill-in)
+— one field, two places to reach it. Charges and discounts are drawn on the
+grid as rows with no cells (`copy.items.extra`), and a caption under them says
+so — naming only the kinds this bill actually has (`copy.items.extraNote`). It
+sits in the table rather than in the footer below it, because it explains
+those rows and the footer's line is what to do next. Neither is edited here:
+the typed bill is where a misread one is fixed, or an item read as one.
 
 **The deductions are kept apart, not summed.** They divide identically either
 way, so this is for the reader: "Discounts −9.25" cannot tell a two-for-one
@@ -119,7 +126,7 @@ the number of people on the row — how much of it each of them had.
 The grid is kept on the expense, so the entry screen can read it back:
 `receiptBreakdown` returns the split weights *and* the lines they were summed
 from, and each person's row on a scanned expense opens onto their own copy of
-the bill — "Beer ×2", "Fries ×1 1/2", "Tagine ×1/3", then the tip and the tax,
+the bill — "Beer ×2", "Fries ×1 1/2", "Tagine ×1/3", then the charges and the tip,
 muted, below what was ordered. Nothing is ruled or washed anywhere in it: not
 between the people, not between a person's items and their extras, because a
 name, a figure and a shift to muted ink already say where one thing ends. Each

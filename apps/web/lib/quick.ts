@@ -89,7 +89,11 @@ export function quickShares(
   const assignments = (draft.receiptAssignments ?? []).map((row) => new Set(row));
   const involved = new Set(draft.receiptInvolved ?? []);
   const { weights, lines } = receiptBill(
-    { ...draft, receiptDiscounts: [...billLabels(draft.receiptDiscounts ?? [], english)] },
+    {
+      ...draft,
+      receiptCharges: [...billLabels(draft.receiptCharges ?? [], english)],
+      receiptDiscounts: [...billLabels(draft.receiptDiscounts ?? [], english)],
+    },
     items, assignments, involved,
   );
   return {

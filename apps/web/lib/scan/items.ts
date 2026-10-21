@@ -30,7 +30,9 @@ export function billLabels<T extends Labelled>(lines: readonly T[], english: boo
 }
 
 export function billExtrasIn(extras: BillExtras, english: boolean): BillExtras {
-  return english ? { ...extras, discounts: [...billLabels(extras.discounts, true)] } : extras;
+  return english
+    ? { ...extras, charges: [...billLabels(extras.charges, true)], discounts: [...billLabels(extras.discounts, true)] }
+    : extras;
 }
 
 export function hasTranslation<T extends Labelled>(
@@ -55,9 +57,13 @@ export function billCharges(extras: BillExtras | null): BillCharge[] {
   const off = extras.discounts.map((d, i) => (
     { kind: "discount" as const, label: d.label, amount: d.amount, seed: `discount${i}` }
   ));
-  const on = ([["tax", extras.tax], ["tip", extras.tip]] as const).flatMap(([kind, amount]) =>
-    amount ? [{ kind, label: "", amount, seed: kind }] : []);
-  return [...off, ...on];
+  // An unnamed charge is the one tax bills kept before charges had names, and
+  // keeps the seed it was saved with, or its odd cent could change hands.
+  const on = extras.charges.map((c, i) => (
+    { kind: "charge" as const, label: c.label, amount: c.amount, seed: c.label ? `charge${i}` : "tax" }
+  ));
+  const tip = extras.tip ? [{ kind: "tip" as const, label: "", amount: extras.tip, seed: "tip" }] : [];
+  return [...off, ...on, ...tip];
 }
 
 /**

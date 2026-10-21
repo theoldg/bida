@@ -132,7 +132,7 @@ that step. A cell that cannot be tapped like its neighbours doesn't look
 like them either — a run handed out unevenly wears the dot **broken into two
 overlapping squares** on everyone who had any of it, so no cell in that row
 reads as an ordinary assignment. **An empty cell draws nothing** — pale squares
-read as disabled ones — and a tap inks its square in. The rows nobody ordered (tip, tax,
+read as disabled ones — and a tap inks its square in. The rows nobody ordered (tip, charges,
 discounts) wear a 4px `--rule` **pip** instead: ink, since everyone does carry a
 share, but too small to be a target.
 

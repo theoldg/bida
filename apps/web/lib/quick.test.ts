@@ -43,16 +43,18 @@ describe("what each person owes", () => {
     expect(sum(shares)).toBe(totalMinor);
   });
 
-  it("still adds up with a tip, a tax and a discount on it", () => {
-    // Every awkward one at once: an odd tip to divide three ways, tax on top,
-    // and a deduction that comes off — each spread in proportion to what was
-    // ordered, none of them tickable (ADR-0016).
+  it("still adds up with a tip, charges and a discount on it", () => {
+    // Every awkward one at once: an odd tip to divide three ways, charges on
+    // top — an old bill's tax among them — and a deduction that comes off,
+    // each spread in proportion to what was ordered, none of them tickable
+    // (ADR-0016).
     const { totalMinor, shares } = quickShares(bill({
       receiptTip: "5.55",
       receiptTax: "1.11",
+      receiptCharges: [{ label: "Service", amount: "2.22" }],
       receiptDiscounts: [{ label: "2 for 1", amount: "3.33" }],
     }), PEOPLE);
-    expect(totalMinor).toBe(3880 + 555 + 111 - 333);
+    expect(totalMinor).toBe(3880 + 555 + 111 + 222 - 333);
     expect(sum(shares)).toBe(totalMinor);
   });
 

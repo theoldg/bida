@@ -31,6 +31,11 @@ describe("readSharedSplit", () => {
     expect(read?.people[0]?.lines[0]).toEqual({ label: "", extra: "discount", count: { n: 1, d: 1 }, minor: -200 });
   });
 
+  it("reads an older link's tax as an unnamed charge", () => {
+    const read = readSharedSplit(line({ label: "", extra: "tax", count: { n: 1, d: 1 }, minor: 130 }));
+    expect(read?.people[0]?.lines[0]?.extra).toBe("charge");
+  });
+
   it("cuts a long label or name rather than drawing all of it", () => {
     const read = readSharedSplit(line({ label: "x".repeat(5000) }));
     expect(read?.people[0]?.lines[0]?.label).toHaveLength(200);

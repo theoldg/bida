@@ -52,9 +52,11 @@ export interface Member {
 export interface Receipt {
   receiptItems?: ReceiptItem[] | null;
   receiptTip?: string | null;
-  /** Charged on top of the lines. */
+  /** One tax charged on top, from before charges had names: read as an unnamed charge, written by nothing now. */
   receiptTax?: string | null;
-  receiptDiscounts?: ReceiptDiscount[] | null;
+  /** Service, tax on top, a fee: what the bill adds to the lines. */
+  receiptCharges?: ReceiptExtra[] | null;
+  receiptDiscounts?: ReceiptExtra[] | null;
   receiptInvolved?: Id[] | null;
   receiptAssignments?: Id[][] | null;
   /** A typed bill's text, from builds that read one. Read by history; written by nothing now. */
@@ -95,8 +97,11 @@ export interface Expense extends Receipt {
   deletedAt?: number | null;
 }
 
-/** A positive magnitude, taken off everybody in proportion to what they ordered. ADR-0016. */
-export interface ReceiptDiscount {
+/**
+ * A charge or a discount: a positive magnitude, added to or taken off everybody
+ * in proportion to what they ordered. ADR-0016.
+ */
+export interface ReceiptExtra {
   label: string;
   amount: string;
   labelEn?: string | null;

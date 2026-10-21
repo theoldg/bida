@@ -556,6 +556,7 @@ suite("describe", () => {
         { label: "Bread", amount: "1.50" },
       ],
       receiptTip: "2.00",
+      receiptCharges: [{ label: "Coperto", amount: "1.50" }],
       receiptDiscounts: [{ label: "Happy hour", amount: "1.00" }],
     });
 
@@ -567,7 +568,8 @@ suite("describe", () => {
       { name: "Bread", mark: "+", now: "1.50", item: true },
       { name: "Soup", mark: "−", was: "3.00", item: true },
       { name: "Happy hour", mark: "+", now: "−1.00", item: true },
-      { name: "Tip + service", mark: "+", now: "2.00", item: true },
+      { name: "Coperto", mark: "+", now: "1.50", item: true },
+      { name: "Tip", mark: "+", now: "2.00", item: true },
     ]);
   });
 

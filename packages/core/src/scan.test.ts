@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   billTotalMinor, checkScan, correctOneLine, lineMinor, normalizeScan, readBill, receiptExtras, receiptOf, scanCurrency,
-  type ScanDiscount, type ScanLineItem, type ScanResult,
+  type ScanExtra, type ScanLineItem, type ScanResult,
 } from "./scan";
 
 // A Saturday afternoon, local: the scan's clock in every case below.
 const NOW = new Date(2026, 8, 5, 14, 30, 7, 123).getTime();
 
 const blank: ScanResult = {
-  title: null, total: null, tip: null, tax: null, discounts: [],
+  title: null, total: null, charges: [], discounts: [],
   currency: null, date: null, lineItems: [], english: false, error: null,
 };
 
@@ -82,15 +82,15 @@ describe("normalizeScan", () => {
       .toMatchObject({ description: "Lidl - barbecue" });
   });
 
-  it("omits fields the model couldn't read, tip and line items included", () => {
+  it("omits fields the model couldn't read, charges and line items included", () => {
     expect(normalizeScan(blank, "EUR", NOW)).toEqual({});
   });
 
-  it("doesn't fold tip or line items into the draft patch — the seam is unused today", () => {
+  it("doesn't fold charges or line items into the draft patch — the seam is unused today", () => {
     const result: ScanResult = {
       ...blank,
       total: "50.00",
-      tip: "5.00",
+      charges: [fee("5.00")],
       lineItems: [{ label: "Café", labelEn: "Coffee", amount: "3.50", unitAmount: null, quantity: null }],
     };
     expect(normalizeScan(result, "EUR", NOW)).toEqual({ amountText: "50.00" });
@@ -109,7 +109,10 @@ describe("scanCurrency", () => {
 });
 
 /** A deduction, named. `off("8.00")` is one the receipt didn't label. */
-const off = (amount: string, label = ""): ScanDiscount => ({ label, labelEn: null, amount });
+const off = (amount: string, label = ""): ScanExtra => ({ label, labelEn: null, amount });
+
+/** A charge on top: service, tax, a tip printed on the bill. */
+const fee = (amount: string, label = "Service"): ScanExtra => ({ label, labelEn: null, amount });
 
 /** `label`/`labelEn` play no part in the arithmetic; every line here is a number. */
 const line = (amount: string): ScanLineItem =>
@@ -129,8 +132,8 @@ describe("checkScan", () => {
     expect(checkScan(result, "EUR")).toBeNull();
   });
 
-  it("accepts lines plus a tip that add up to the total", () => {
-    const result = { ...blank, total: "33.00", tip: "3.00", lineItems: [line("12.50"), line("17.50")] };
+  it("accepts lines plus a service charge that add up to the total", () => {
+    const result = { ...blank, total: "33.00", charges: [fee("3.00")], lineItems: [line("12.50"), line("17.50")] };
     expect(checkScan(result, "EUR")).toBeNull();
   });
 
@@ -159,8 +162,8 @@ describe("checkScan", () => {
     expect(checkScan(result, "EUR")).toBe("unreadable-line");
   });
 
-  it("refuses a tip it can't read", () => {
-    expect(checkScan({ ...blank, total: "30.00", tip: "n/a" }, "EUR")).toBe("unreadable-line");
+  it("refuses a charge it can't read", () => {
+    expect(checkScan({ ...blank, total: "30.00", charges: [fee("n/a")] }, "EUR")).toBe("unreadable-line");
   });
 
   it("refuses a discount it can't read", () => {
@@ -188,7 +191,7 @@ describe("checkScan", () => {
   });
 
   it("accepts tax charged on top of the lines", () => {
-    const result = { ...blank, total: "33.00", tax: "3.00", lineItems: [line("12.50"), line("17.50")] };
+    const result = { ...blank, total: "33.00", charges: [fee("3.00", "Sales tax")], lineItems: [line("12.50"), line("17.50")] };
     expect(checkScan(result, "EUR")).toBeNull();
   });
 
@@ -210,17 +213,24 @@ describe("checkScan", () => {
     expect(checkScan(result, "EUR")).toBe("mismatch");
   });
 
-  it("refuses lines that add up only if the tip is ignored", () => {
-    const result = { ...blank, total: "30.00", tip: "3.00", lineItems: [line("12.50"), line("17.50")] };
+  it("refuses lines that add up only if a charge is ignored", () => {
+    const result = { ...blank, total: "30.00", charges: [fee("3.00")], lineItems: [line("12.50"), line("17.50")] };
     expect(checkScan(result, "EUR")).toBe("mismatch");
   });
 });
 
 describe("readBill", () => {
   it("leaves an ordinary bill alone", () => {
-    const bill = readBill({ ...blank, tip: "3.00", lineItems: [line("12.50")] }, "EUR");
+    const bill = readBill({ ...blank, charges: [fee("3.00")], lineItems: [line("12.50")] }, "EUR");
     expect(bill.items).toHaveLength(1);
-    expect(bill.extras).toEqual({ tip: "3.00", tax: null, discounts: [] });
+    expect(bill.extras).toEqual({ tip: null, charges: [fee("3.00")], discounts: [] });
+  });
+
+  // The tip is the table's to type, so a scan never fills it.
+  it("keeps a tip printed on the bill as a charge, named as printed", () => {
+    const bill = readBill({ ...blank, charges: [fee("4.00", "Tip")], lineItems: [line("20.00")] }, "EUR");
+    expect(bill.extras.tip).toBeNull();
+    expect(bill.extras.charges.map((c) => c.label)).toEqual(["Tip"]);
   });
 
   it("moves a negative line out of the items and into the discounts, both names and all", () => {
@@ -246,11 +256,10 @@ describe("readBill", () => {
 
   it("gathers every deduction, wherever it arrived, and keeps them apart", () => {
     const bill = readBill({
-      ...blank, tip: "-1.00", tax: "-2.00", discounts: [off("5.00", "Loyalty")],
+      ...blank, charges: [fee("-1.00"), fee("-2.00", "Tax")], discounts: [off("5.00", "Loyalty")],
       lineItems: [line("30.00"), line("-4.00")],
     }, "EUR");
-    expect(bill.extras.tip).toBeNull();
-    expect(bill.extras.tax).toBeNull();
+    expect(bill.extras.charges).toEqual([]);
     expect(bill.extras.discounts.map((d) => d.amount)).toEqual(["1.00", "2.00", "4.00", "5.00"]);
     expect(bill.extras.discounts.at(-1)!.label).toBe("Loyalty");
   });
@@ -275,14 +284,20 @@ describe("readBill", () => {
 });
 
 describe("receiptExtras", () => {
-  it("reads the three flat fields an entry keeps", () => {
+  it("reads the fields an entry keeps", () => {
     const off = [{ label: "Loyalty", amount: "5.00" }];
-    expect(receiptExtras({ receiptTip: "3.00", receiptDiscounts: off }))
-      .toEqual({ tip: "3.00", tax: null, discounts: off });
+    const on = [{ label: "Service", amount: "2.00" }];
+    expect(receiptExtras({ receiptTip: "3.00", receiptCharges: on, receiptDiscounts: off }))
+      .toEqual({ tip: "3.00", charges: on, discounts: off });
+  });
+
+  it("reads a tax from before charges had names as an unnamed charge, first", () => {
+    expect(receiptExtras({ receiptTax: "1.30", receiptCharges: [{ label: "Service", amount: "2.00" }] }).charges)
+      .toEqual([{ label: "", amount: "1.30" }, { label: "Service", amount: "2.00" }]);
   });
 
   it("is all-null on an expense that was never scanned", () => {
-    expect(receiptExtras({})).toEqual({ tip: null, tax: null, discounts: [] });
+    expect(receiptExtras({})).toEqual({ tip: null, charges: [], discounts: [] });
   });
 });
 
@@ -290,7 +305,7 @@ describe("receiptOf", () => {
   it("names every field, null where the source has none", () => {
     const bill = receiptOf({ receiptTip: "3.00", receiptInvolved: ["a"] });
     expect(bill).toEqual({
-      receiptItems: null, receiptTip: "3.00", receiptTax: null, receiptDiscounts: null,
+      receiptItems: null, receiptTip: "3.00", receiptTax: null, receiptCharges: null, receiptDiscounts: null,
       receiptInvolved: ["a"], receiptAssignments: null, receiptText: null, receiptEnglish: null,
     });
   });
@@ -406,7 +421,7 @@ describe("billTotalMinor", () => {
   it("adds the bill up where it states none", () => {
     const typed = { ...blank, lineItems: [each("13", 3), each("15", 10), each("17", 2), line("10")] };
     expect(billTotalMinor(typed, "EUR")).toBe(23300);
-    expect(billTotalMinor({ ...typed, tip: "10.00" }, "EUR")).toBe(24300);
+    expect(billTotalMinor({ ...typed, charges: [fee("10.00")] }, "EUR")).toBe(24300);
     expect(billTotalMinor({ ...typed, discounts: [off("3.00")] }, "EUR")).toBe(23000);
   });
 
@@ -417,11 +432,11 @@ describe("billTotalMinor", () => {
 });
 
 describe("normalizeScan, on a bill that states no total", () => {
-  // 3 at 13, 10 at 15, 2 at 17, a cola at 10, tip 10, no total written.
+  // 3 at 13, 10 at 15, 2 at 17, a cola at 10, service 10, no total written.
   const typed: ScanResult = {
     ...blank,
     lineItems: [each("13", 3), each("15", 10), each("17", 2), line("10")],
-    tip: "10",
+    charges: [fee("10")],
   };
 
   it("fills the amount from the bill's own lines", () => {
@@ -499,9 +514,9 @@ describe("correctOneLine", () => {
     expect(correctOneLine(result, "EUR")).toBe(result);
   });
 
-  it("counts the tip and the discounts in what the bill must come to", () => {
+  it("counts the charges and the discounts in what the bill must come to", () => {
     const result = {
-      ...blank, total: "10.00", tip: "1.00", discounts: [off("0.98")],
+      ...blank, total: "10.00", charges: [fee("1.00")], discounts: [off("0.98")],
       lineItems: [both("4.96", "2.49", 2), line("5.00")],
     };
     expect(correctOneLine(result, "EUR").lineItems[0]!.amount).toBe("4.98");

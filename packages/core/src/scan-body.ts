@@ -37,9 +37,7 @@ const PHOTO_FIELDS_HEAD =
   + "normalized to plain decimal notation — '.' as the decimal point, no thousands separators, e.g. "
   + "\"1234.50\" whether the receipt prints \"1.234,50\", \"1,234.50\" or \"1234,50\" — "
   + "using the receipt's own locale and currency to tell decimal point from thousands "
-  + "mark; a separate tip or service charge line if one is printed apart from the total, "
-  + "same normalized notation, else null; the ISO 4217 currency code if legible; the "
-  + "date as YYYY-MM-DD if legible. "
+  + "mark; the ISO 4217 currency code if legible; the date as YYYY-MM-DD if legible. "
   + "The title is the merchant's name as printed, with two adjustments. Strip whatever "
   + "isn't the name — a legal form or registered owner, a branch address or store "
   + "number, a slogan, a till or VAT line: \"Bar Zahra - Sarl M. Benali\" is \"Bar "
@@ -51,11 +49,6 @@ const PHOTO_FIELDS_HEAD =
   + "are printed — a bare name beats a wrong guess. "
   + "Keep the whole title under 40 characters, and null if no name is legible and the "
   + "lines say nothing either. "
-  + "Return tax only where it is charged on top of the line items — a figure the "
-  + "receipt adds to them to reach the total. Tax already inside the printed prices, "
-  + "which most VAT-inclusive receipts break out for information near the foot "
-  + "(\"of which VAT 20%\", \"TVA incluse\"), is not that: return null for it, or the "
-  + "bill gets charged for twice. "
   + "Return discounts as one entry per deduction the receipt prints — loyalty "
   + "deductions, vouchers, staff discounts, a \"2 for 1\" or \"buy one get one free\" "
   + "credit — each with its label as printed, an English translation of that label "
@@ -70,6 +63,11 @@ const PHOTO_FIELDS_HEAD =
   + "42.98) — it means the line's printed amount is already the reduced price, and, "
   + "like VAT already inside the prices, listing it gets it taken off twice. Leave such "
   + "a note out of discounts and out of the line items. "
+  + "Return charges the same way: one entry per figure the receipt adds to the line "
+  + "items to reach the total — a service charge, a tip, tax charged on top. Tax already "
+  + "inside the printed prices, which most VAT-inclusive receipts break out for "
+  + "information near the foot (\"of which VAT 20%\", \"TVA incluse\"), is not one: "
+  + "listing it gets the bill charged for twice. "
   + "Also return every line item: its label as "
   + "printed, in the receipt's own language, an English translation of that label (null "
   + "if it's already English), its amount in the same normalized decimal notation as the "
@@ -106,9 +104,9 @@ const ENGLISH =
   "Set english to true when the bill is written in English, and false otherwise. An "
   + "English bill has nothing to translate: leave every labelEn on it null, even where "
   + "a label is abbreviated, misspelled or terse — expanding \"Chkn wrap\" is not a "
-  + "translation. On any other bill, every labelEn — line items and discounts alike — "
-  + "translates the words you can read and keeps an abbreviation, fragment or brand "
-  + "you can't be sure of as printed: \"LikierSopMix\" is \"Sop liqueur mix\". ";
+  + "translation. On any other bill, every labelEn — line items, discounts and charges "
+  + "alike — translates the words you can read and keeps an abbreviation, fragment or "
+  + "brand you can't be sure of as printed: \"LikierSopMix\" is \"Sop liqueur mix\". ";
 
 const PHOTO_LAYOUT =
   "Read the columns as the printer laid them out, not as the photo happens to line "
@@ -170,6 +168,19 @@ const PROMPT: Record<ScanTone, string> = {
     + ENGLISH + PHOTO_REFUSAL.stas + PHOTO_TAIL,
 };
 
+const EXTRAS_SCHEMA = {
+  type: "ARRAY",
+  items: {
+    type: "OBJECT",
+    properties: {
+      label: { type: "STRING" },
+      labelEn: { type: "STRING", nullable: true },
+      amount: { type: "STRING" },
+    },
+    required: ["label", "labelEn", "amount"],
+  },
+};
+
 /**
  * In core so both the Worker and the phone build it, and readings can't drift. A
  * caller picks `tone`, never a word of the prompt.
@@ -196,20 +207,8 @@ export function buildScanRequestBody(
         properties: {
           title: { type: "STRING", nullable: true },
           total: { type: "STRING", nullable: true },
-          tip: { type: "STRING", nullable: true },
-          tax: { type: "STRING", nullable: true },
-          discounts: {
-            type: "ARRAY",
-            items: {
-              type: "OBJECT",
-              properties: {
-                label: { type: "STRING" },
-                labelEn: { type: "STRING", nullable: true },
-                amount: { type: "STRING" },
-              },
-              required: ["label", "labelEn", "amount"],
-            },
-          },
+          charges: EXTRAS_SCHEMA,
+          discounts: EXTRAS_SCHEMA,
           currency: { type: "STRING", nullable: true },
           date: { type: "STRING", nullable: true },
           lineItems: {
@@ -230,7 +229,7 @@ export function buildScanRequestBody(
           error: { type: "STRING", nullable: true },
         },
         required: [
-          "title", "total", "tip", "tax", "discounts", "currency", "date", "lineItems", "english",
+          "title", "total", "charges", "discounts", "currency", "date", "lineItems", "english",
           "error",
         ],
       },

@@ -4,8 +4,7 @@
   "scan": {
     "title": "Chez Lamine",
     "total": "24.00",
-    "tip": null,
-    "tax": null,
+    "charges": [],
     "discounts": [],
     "currency": "EUR",
     "date": null,

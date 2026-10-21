@@ -235,7 +235,7 @@ export function describe(
     const english = rev.after["receiptEnglish"] === true;
     // There is no singular `receiptDiscount` field.
     if ((field("receiptItems") && !reshaped) || field("receiptTip") || field("receiptTax")
-      || field("receiptDiscounts") || field("receiptText")) {
+      || field("receiptCharges") || field("receiptDiscounts") || field("receiptText")) {
       const wasLines = bill.was.lines.length;
       const nowLines = bill.now.lines.length;
       if (nowLines === 0 || wasLines === 0) {
@@ -250,17 +250,20 @@ export function describe(
       } else {
         const extra = copy.items.extra;
         const charge = (state: State, key: string) => text(state[key]) ?? null;
-        const deductions = (state: State): BillLine[] =>
-          (Array.isArray(state["receiptDiscounts"]) ? state["receiptDiscounts"] as unknown[] : [])
+        const extras = (state: State, key: string, sign: string): BillLine[] =>
+          (Array.isArray(state[key]) ? state[key] as unknown[] : [])
             .filter((d): d is { label: string; amount: string; labelEn?: string | null } =>
               !!d && typeof d === "object" && typeof (d as { label: unknown }).label === "string"
               && typeof (d as { amount: unknown }).amount === "string")
-            .map((d) => ({ label: d.label, labelEn: d.labelEn ?? null, amount: `−${d.amount}`, quantity: 1 }));
+            .map((d) => ({ label: d.label, labelEn: d.labelEn ?? null, amount: `${sign}${d.amount}`, quantity: 1 }));
+        const deductions = (state: State) => extras(state, "receiptDiscounts", "−");
+        const charges = (state: State) => extras(state, "receiptCharges", "");
         const rows: Row[] = [
           ...billRows(bill.was.lines, bill.now.lines, english),
           ...billRows(deductions(rev.before), deductions(rev.after), english),
+          ...billRows(charges(rev.before), charges(rev.after), english),
           ...[
-            chargeRow(extra.tax, charge(rev.before, "receiptTax"), charge(rev.after, "receiptTax")),
+            chargeRow(extra.charge, charge(rev.before, "receiptTax"), charge(rev.after, "receiptTax")),
             chargeRow(extra.tip, charge(rev.before, "receiptTip"), charge(rev.after, "receiptTip")),
           ].filter((r): r is Row => !!r),
         ];

@@ -4,8 +4,7 @@
   "scan": {
     "title": "Kiosk Bab Doukkala",
     "total": "12.40",
-    "tip": null,
-    "tax": null,
+    "charges": [],
     "discounts": [],
     "currency": "MAD",
     "date": "2026-04-11",

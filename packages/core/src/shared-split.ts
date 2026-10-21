@@ -41,7 +41,7 @@ const MAX_PEOPLE = 100;
 const MAX_LINES = 1000;
 const MAX_TEXT = 200;
 
-const EXTRAS: readonly string[] = ["discount", "tax", "tip"] satisfies readonly ExtraKind[];
+const EXTRAS: readonly string[] = ["discount", "charge", "tip"] satisfies readonly ExtraKind[];
 
 type Obj = Record<string, unknown>;
 const isObj = (x: unknown): x is Obj => typeof x === "object" && x !== null && !Array.isArray(x);
@@ -83,7 +83,8 @@ function readLine(l: unknown): SharedLine | null {
   const label = text(l["label"]);
   const { n, d } = l["count"];
   if (label === null || !isInt(l["minor"]) || !isInt(n) || !isInt(d) || n <= 0 || d <= 0) return null;
-  const extra = l["extra"];
+  // "tax" is a charge, written by builds from before charges had names.
+  const extra = l["extra"] === "tax" ? "charge" : l["extra"];
   return {
     label,
     ...(typeof extra === "string" && EXTRAS.includes(extra) ? { extra: extra as ExtraKind } : {}),

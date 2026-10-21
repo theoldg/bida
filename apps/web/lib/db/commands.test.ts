@@ -312,7 +312,7 @@ describe("commands", () => {
     expect(Object.keys(update.patch).sort()).toEqual([
       "amountMinor", "attachmentIds", "baseAmountMinor", "categoryId", "currency",
       "dateOnly", "description", "kind", "occurredAt", "paidBy", "payers", "rateSource", "rateToBase",
-      "receiptAssignments", "receiptDiscounts", "receiptEnglish", "receiptInvolved", "receiptItems",
+      "receiptAssignments", "receiptCharges", "receiptDiscounts", "receiptEnglish", "receiptInvolved", "receiptItems",
       "receiptTax", "receiptText", "receiptTip",
       "split", "splitTab",
     ]);

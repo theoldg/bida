@@ -108,7 +108,7 @@ which worked.
 
 A **`scans`** block, in the head too, prints the last three readings exactly as
 the model returned them — each line's amount, count and unit price, each
-discount, tip, tax, the total — under the verdict `checkScan` gave
+charge, discount, the total — under the verdict `checkScan` gave
 (`lib/scan/log.ts`). A refused scan reproduces only with the photo that was
 refused, so which figure the model misread is read off the phone. No sums are
 worked out there; the figures are the evidence.

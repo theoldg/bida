@@ -1,11 +1,16 @@
 {
-  "note": "a restaurant bill that adds up: nine lines, two of them printed with a count, and a tip on top",
+  "note": "a restaurant bill that adds up: nine lines, two of them printed with a count, and a service charge on top",
   "exercises": "ok",
   "scan": {
     "title": "Café Clock",
     "total": "76.50",
-    "tip": "6.00",
-    "tax": null,
+    "charges": [
+      {
+        "label": "Service",
+        "labelEn": null,
+        "amount": "6.00"
+      }
+    ],
     "discounts": [],
     "currency": null,
     "date": null,

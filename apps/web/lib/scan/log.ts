@@ -56,8 +56,9 @@ export function describeReading({ at, outcome, read }: KeptReading): string[] {
         : "";
       return `  ${or(li.amount).padStart(9)}${each}  ${li.label}`;
     }),
+    // Kept before charges were a list, a reading has none.
+    ...(read.charges ?? []).map((c) => `  ${`+${c.amount}`.padStart(9)}  on   ${c.label}`),
     ...read.discounts.map((d) => `  ${`-${d.amount}`.padStart(9)}  off  ${d.label}`),
-    `  tip ${or(read.tip)}  tax ${or(read.tax)}`,
   ];
 }
 

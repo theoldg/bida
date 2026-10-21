@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-21* — "Taking this logic to the extreme, the tip should only be
+  editable in the editor. That's wrong though." One home is a rule for facts,
+  not doors: one field may be typed in two places. And a critique declined
+  ("the top is more header-like") is a decision — build theirs, not yours.
+
 - *2026-10-21* — "Do you like it?" Mid-iteration it asks for a view, not a
   build: say yes, then name two flaws seen in the photo. Then "do neither,
   push it" — the critique was the owner's to take, and declining it is an
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   sounds dumb". It was a Next bug, fixed in 16; the upgrade was the fix. Then
   "look up more tricks": measure each one before reporting it. Six flags
   saved nothing, and a polyfill nobody runs was a tenth of the chunks.
-
-- *2026-10-18* — A Reddit comment, forwarded: "fix the selection issue and
-  check the target blank thing just in case". The CSS already said nothing
-  selects; a scan of every screen's computed style found the two opt-ins that
-  did. The links were already fine; "just in case" wants that said.

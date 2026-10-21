@@ -74,8 +74,8 @@ in-memory draft and cannot be seeded by poking storage.
 
 The bills are `scripts/fixtures/receipts/*.json`, shared with `pnpm shots`, and
 each declares in `exercises` the verdict it is for — `ok`, `rejected`,
-`mismatch`, `busy`. One of them (`two-for-one`) carries two deductions and a
-tax, which are the grid's rows with no cells. That claim is checked against `checkScan` itself by
+`mismatch`, `busy`. One of them (`two-for-one`) carries two deductions and two
+charges, which are the grid's rows with no cells. That claim is checked against `checkScan` itself by
 `lib/scan/fixtures.test.ts` on every `pnpm check`, so a bill that quietly stops
 adding up fails the suite instead of testing nothing. Adding one is a file; the
 test tells you if its arithmetic is wrong.

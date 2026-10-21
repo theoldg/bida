@@ -3,6 +3,7 @@ import type {
   ExtraKind, ImportRefusalCode, ImportSource, ScanProblem, SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
+import type { LineKind } from "./scan/manual";
 import { chosenLang } from "./lang";
 import { pl } from "./copy-pl";
 
@@ -29,7 +30,7 @@ export type Voice = "expense" | "income";
 type Voiced<T> = Record<Voice, T>;
 
 const extraSubject: Record<ExtraKind, string> = {
-  discount: "discount", tax: "tax", tip: "tip",
+  discount: "discounts", charge: "charges", tip: "tip",
 };
 
 const upper = (browser: string | undefined) => browser ?? "This browser";
@@ -936,9 +937,17 @@ const en = {
       open: "Type",
       edit: "Edit",
       title: "Bill items",
-      name: "Item",
-      nameOf: (n: number) => `Item ${n}`,
+      nameOf: (n: number) => `Line ${n}`,
       remove: (what: string) => `Remove ${what}`,
+      kind: { item: "Item", discount: "Discount", charge: "Charge" } satisfies Record<LineKind, string>,
+      kindNote: {
+        item: "Split by who had it",
+        discount: "Taken off everyone, in proportion",
+        charge: "Service or tax on top, added in proportion",
+      } satisfies Record<LineKind, string>,
+      kindTitle: "What is this line?",
+      kindOf: (n: number, kind: string) => `Line ${n}: ${kind}. Change`,
+      tip: "Tip",
       countOf: (n: number) => `How many of item ${n}`,
       fewer: (n: number) => `One fewer of item ${n}`,
       more: (n: number) => `One more of item ${n}`,
@@ -946,11 +955,11 @@ const en = {
       total: "total",
       sum: "Total:",
       eachOf: (n: number) => `Price of one of item ${n}`,
-      priceOf: (n: number) => `Price of item ${n}`,
+      priceOf: (n: number) => `Price of line ${n}`,
       add: "Add an item",
       none: "Add an item first.",
-      blank: "An item is empty.",
-      noName: "An item has no name.",
+      blank: "A line is empty.",
+      noName: "A line has no name.",
       noPrice: (name: string) => `${name} has no price.`,
       discardTitle: "Discard these changes?",
       discardBody: "The bill stays as it was.",
@@ -997,10 +1006,10 @@ const en = {
     whoWasThere: "Who was there",
     wasThere: (name: string) => `${name} was there`,
     wasntThere: (name: string) => `${name} wasn’t there`,
-    extra: { tip: "Tip + service", tax: "Tax", discount: "Discounts" } satisfies Record<ExtraKind, string>,
+    /** What a line is called where the bill named it nothing: an unnamed charge is a tax from before charges had names. */
+    extra: { tip: "Tip", charge: "Tax", discount: "Discounts" } satisfies Record<ExtraKind, string>,
     tipPercent: (percent: number) => `${percent}%`,
-    tipLabel: (currency: string | null) =>
-      currency ? `Tip and service, in ${currency}` : "Tip and service",
+    tipLabel: (currency: string | null) => (currency ? `Tip, in ${currency}` : "Tip"),
     translate: { on: "Show the bill in English", off: "Show the bill as printed" },
     shown: { english: "In English", printed: "As printed" },
     /** Short: "1 of 2" wrapped on the narrowest line on screen. */
@@ -1026,7 +1035,7 @@ const en = {
       const subject = names.length < 2
         ? names.join("")
         : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
-      const verb = names.length === 1 ? "is" : "are";
+      const verb = names.length === 1 && kinds[0] === "tip" ? "is" : "are";
       return `${subject[0]?.toUpperCase() ?? ""}${subject.slice(1)} ${verb} applied proportionally.`;
     },
     discardTitle: "Discard this grid?",

@@ -100,6 +100,16 @@ words would be no correction.
 **Not on `/g/scan`** (owner's call): that screen is reached by pressing a camera
 (`typeIn={false}`).
 
+- **Every line of the bill is a card** and has a kind — **Item**, **Discount**
+  or **Charge** ([who-had-what.md](who-had-what.md#tip-charges-and-discounts)),
+  picked in a `ChoiceDialog`. A discount or a charge wears its kind as a chip
+  beside the name; an item, which most lines are, says nothing and keeps the
+  question behind a kebab, so the others stand out. A discount or a charge has
+  no count and is typed positive, its sign beside the field.
+  So a service line read as an item is fixed here, and a bill typed by hand can
+  have a voucher. The **tip** is the last card, the same field the grid types.
+  A card's count survives a change of kind, and an item made a discount and
+  back keeps whoever had it, until Done.
 - **Either price can be typed** beside a count above one; the one typed holds
   and the other follows, in minor units (`lib/scan/manual.ts`). "One more" is
   one more at the same price: a single item's price is a unit price, and a
@@ -109,12 +119,12 @@ words would be no correction.
   line keeps it through a rename, a new price or a new count (`billFromRows`);
   a line new here has nobody, so the bill is unassigned again until the grid
   gives it somebody ([who-had-what.md](who-had-what.md#the-grid)),
-  the bill's tip, tax and discounts stay, and the amount follows the bill.
+  and the amount follows the bill, charges, discounts and tip included.
   Payers typed as amounts don't follow: what each paid is a fact, so a bill
   that moves under them is refused on the form with Paid by blooming
   ([refusals.md](refusals.md#a-refused-action-points-first)).
 - **Done refuses an empty card, a name with no price and a price with no
-  name** — said by the item's name where it has one — and with no cards at all
+  name** — said by the line's name where it has one — and with no item cards
   blooms "Add an item": a bill is never cleared here, since another split tab
   is how an expense stops being split by items. On `/quick` Done goes back to
   `/quick`, as a scan stays there.

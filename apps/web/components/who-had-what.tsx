@@ -2,7 +2,7 @@
 // Doc: docs/who-had-what.md#the-grid
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { parseMinor, type ExtraKind } from "@bida/core";
+import { parseMinor, receiptExtras, type ExtraKind } from "@bida/core";
 import { AmountInput } from "./amount-input";
 import { Body, Screen, TopBar } from "./chrome";
 import { ConfirmDialog } from "./dialog";
@@ -71,7 +71,7 @@ export function WhoHadWhat({
   // Older bills are split into portions as the grid opens: **keep what was found
   // and put it back on the way out.**
   const opened = useRef<Pick<EntryDraft,
-    "receiptItems" | "receiptTip" | "receiptTax" | "receiptDiscounts"
+    "receiptItems" | "receiptTip" | "receiptTax" | "receiptCharges" | "receiptDiscounts"
     | "receiptInvolved" | "receiptAssignments" | "splitTab"> | null>(null);
   const [touched, setTouched] = useState(false);
   // One refusal blooms every unassigned line; one off screen is scrolled to first
@@ -90,7 +90,7 @@ export function WhoHadWhat({
   if (!opened.current) {
     opened.current = {
       receiptItems: draft.receiptItems, receiptTip: draft.receiptTip,
-      receiptTax: draft.receiptTax, receiptDiscounts: draft.receiptDiscounts,
+      receiptTax: draft.receiptTax, receiptCharges: draft.receiptCharges, receiptDiscounts: draft.receiptDiscounts,
       receiptInvolved: draft.receiptInvolved, receiptAssignments: draft.receiptAssignments,
       splitTab: draft.splitTab,
     };
@@ -276,7 +276,11 @@ export function WhoHadWhat({
     const minor = minorOf(d.amount);
     return minor === null || minor <= 0 ? [] : [{ label: said(d), minor: -minor }];
   });
-  const taxMinor = draft.receiptTax ? minorOf(draft.receiptTax) : null;
+  // An unnamed one is a tax from before charges had names (`receiptExtras`).
+  const charges = receiptExtras(draft).charges.flatMap((c) => {
+    const minor = minorOf(c.amount);
+    return minor === null || minor <= 0 ? [] : [{ label: said(c) || copy.items.extra.charge, minor }];
+  });
   // Display only — never written to the draft.
   const discountTotal = discounts.reduce((sum, d) => sum + d.minor, 0);
   const discountRows = discounts.length > 1 && !openDiscounts
@@ -286,17 +290,17 @@ export function WhoHadWhat({
   const tipMinor = draft.receiptTip ? minorOf(draft.receiptTip) : null;
   const extraKinds: ExtraKind[] = [
     ...(discounts.length > 0 ? ["discount" as const] : []),
-    ...(taxMinor !== null ? ["tax" as const] : []),
+    ...(charges.length > 0 ? ["charge" as const] : []),
     ...(tipMinor !== null && tipMinor > 0 ? ["tip" as const] : []),
   ];
 
-  // A tip is a percentage of what the food came to: discounts off, tax not on —
-  // as a bill prints one.
+  // A tip is a percentage of what the food came to: discounts off, charges not
+  // on — as a bill prints one.
   let tipPercent: number | null = null;
   if (tipMinor !== null) {
     try {
       const ordered = receiptTotalMinor(
-        items, { tip: null, tax: null, discounts: draft.receiptDiscounts ?? [] }, draft.currency) ?? 0;
+        items, { tip: null, charges: [], discounts: draft.receiptDiscounts ?? [] }, draft.currency) ?? 0;
       if (ordered > 0) tipPercent = Math.round((tipMinor / ordered) * 100);
     } catch { /* mid-type */ }
   }
@@ -364,7 +368,7 @@ export function WhoHadWhat({
   // assigned yet.
   const pointClass = point ? (point.n % 2 === 1 ? " point-a" : " point-b") : "";
 
-  const translate = hasTranslation(items, draft.receiptDiscounts) ? (
+  const translate = hasTranslation(items, draft.receiptDiscounts, draft.receiptCharges) ? (
     <button type="button" className={`iconbtn${english ? " lit" : ""}`}
       // Not a touch: a way of reading the bill, which leaving keeps.
       onClick={() => save((latest) => ({ ...latest, receiptEnglish: latest.receiptEnglish ? null : true }))}
@@ -549,13 +553,13 @@ export function WhoHadWhat({
                   ))}
                 </tr>
               ))}
-              {taxMinor !== null ? (
-                <tr>
+              {charges.map((row, i) => (
+                <tr key={`on${i}`}>
                   <td className="itemlabel">
                     <div className="itemrow">
                       <span className="itemtext">
-                        <span className="itemname">{copy.items.extra.tax}</span>
-                        <span className="itemamount">{bare(taxMinor, draft.currency)}</span>
+                        <span className="itemname">{row.label}</span>
+                        <span className="itemamount">{bare(row.minor, draft.currency)}</span>
                       </span>
                     </div>
                   </td>
@@ -563,7 +567,7 @@ export function WhoHadWhat({
                     <td key={m.id}><span className="itemcell ghost"><span className="dot" /></span></td>
                   ))}
                 </tr>
-              ) : null}
+              ))}
               <tr>
                 <td className="itemlabel">
                   <span className="itemname">

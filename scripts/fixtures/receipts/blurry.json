@@ -4,8 +4,7 @@
   "scan": {
     "title": null,
     "total": null,
-    "tip": null,
-    "tax": null,
+    "charges": [],
     "discounts": [],
     "currency": null,
     "date": null,
