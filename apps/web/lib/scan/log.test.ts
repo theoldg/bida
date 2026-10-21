@@ -26,6 +26,17 @@ describe("a kept reading", () => {
     ]);
   });
 
+  it("prints the tip and tax a reading kept before charges were a list", () => {
+    const read = {
+      title: null, total: "12.00", currency: "EUR", date: null, english: false, error: null,
+      lineItems: [], discounts: [], tip: "1.00", tax: "2.00",
+    } as unknown as Parameters<typeof describeReading>[0]["read"];
+    expect(describeReading({ at: 0, outcome: "ok", read }).slice(1)).toEqual([
+      "      +2.00  on   tax",
+      "      +1.00  on   tip",
+    ]);
+  });
+
   it("prints a refusal's sentence instead of fields it left empty", () => {
     const lines = describeReading({
       at: 0,

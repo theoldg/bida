@@ -48,6 +48,12 @@ export function describeReading({ at, outcome, read }: KeptReading): string[] {
   const head = `${when}  ${outcome.toUpperCase()}  total ${or(read.total)} ${or(read.currency)}`
     + `  ${or(read.date)}  ${or(read.title)}`;
   if (read.error) return [head, `  error  ${read.error}`];
+  // Kept before charges were a list, a reading has its tip and tax apart instead.
+  const { tip, tax } = read as { tip?: string | null; tax?: string | null };
+  const charges = [
+    ...read.charges ?? [],
+    ...([["tax", tax], ["tip", tip]] as const).flatMap(([label, amount]) => (amount ? [{ label, amount }] : [])),
+  ];
   return [
     head,
     ...read.lineItems.map((li) => {
@@ -56,8 +62,7 @@ export function describeReading({ at, outcome, read }: KeptReading): string[] {
         : "";
       return `  ${or(li.amount).padStart(9)}${each}  ${li.label}`;
     }),
-    // Kept before charges were a list, a reading has none.
-    ...(read.charges ?? []).map((c) => `  ${`+${c.amount}`.padStart(9)}  on   ${c.label}`),
+    ...charges.map((c) => `  ${`+${c.amount}`.padStart(9)}  on   ${c.label}`),
     ...read.discounts.map((d) => `  ${`-${d.amount}`.padStart(9)}  off  ${d.label}`),
   ];
 }
