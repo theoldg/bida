@@ -85,10 +85,10 @@ the destination and the model are ours; Turnstile and all three buckets apply.
 ### Staś mode
 
 The one thing a caller gets to say about the prompt, and it says it by picking
-one of two paragraphs core holds. `X-Stas: 1` on the scan request swaps
+one of two voices core holds. `X-Stas: 1` on the scan request swaps
 the refusal wording for the vicious version — send a photo that isn't a
 receipt, or one too blurry to read, and it comes back at *you*, not at the
-photo. The pair is `PHOTO_REFUSAL` (`packages/core/src/scan-body.ts`); both
+photo. The pair is `VOICE` (`packages/core/src/scan-body.ts`); both
 still have to say plainly what's wrong so the person knows what to re-shoot, and everything
 else in the prompt is word for word the same, so a mean scan can't also be a
 wrong one (`scan-body.test.ts` checks exactly that). Each tone's envelope is

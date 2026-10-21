@@ -17,7 +17,7 @@ It reads. It doesn't compute — the one multiplication in the whole reading is
 | discounts | every deduction the receipt prints, one entry each — `{ label, labelEn, amount }`, the amount written **without** a minus sign — a loyalty deduction, a voucher, a two-for-one credit, whether it printed against one item or against the whole bill; empty when it takes nothing off. A note that a line's price *already includes* a discount ("Uwzgl. opust: -15,00 st. c 42,98") is not one |
 | charges | every figure the receipt adds to the lines to reach its total, shaped like `discounts` — a service charge, a tip it printed, tax charged *on top*. VAT already inside the printed prices, which most European receipts break out near the foot, is not one and would be counted twice. Never the tip field: that is the table's to type ([who-had-what.md](who-had-what.md#tip-charges-and-discounts)) |
 | currency | ISO 4217 if legible, else null |
-| date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here. The prompt ends with today's date (the Worker's UTC day, or the phone's on its own key) so a date printed without a year isn't given whichever year its weekday also fits |
+| date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here. The date rule carries today's date (the Worker's UTC day, or the phone's on its own key) so a date printed without a year isn't given whichever year its weekday also fits |
 | lineItems | `{ label, labelEn, amount, unitAmount, quantity }[]` — printed label (a label the printer wrapped over several rows is one item), English translation (null if already English; a shortening it can't be sure of stays as printed — "LikierSopMix" → "Sop liqueur mix", never a guessed "Sopot"), a count only when the bill actually states one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 — and one or both figures, in the same normalized notation as `total`. `amount` is what the whole line came to, which is what a till prints; `unitAmount` is the price of one, copied beside it where the till prints it, uncorrected, [for one purpose](#one-faded-figure), and `lineMinor` multiplies it by the count only where no `amount` came back |
 | english | whether the bill is written in English — true clears every `labelEn` on it in `readBill`. Asked line by line, the model "translates" an English bill's shorthand ("Chkn wrap" → "Chicken wrap") and the translate toggle turns up with nothing to translate; asked once for the whole bill, it doesn't |
 | error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set. In Staś mode the same sentence, delivered as an insult aimed at the photographer ([scan-worker.md](scan-worker.md#staś-mode)) |
@@ -180,7 +180,10 @@ error to sentence. Anything else falls back to the generic message.
 - **A rule written for one field governs one field.** A casing rule written
   for the *title* leaves every label in the till's capitals. Where a convention is about how
   a string is written rather than which string it is, give it its own paragraph
-  naming every field it covers (`PHOTO_CASING`).
+  naming every field it covers (LABELS, in the prompt).
+- **Gemini writes a schema's properties alphabetically** unless it carries
+  `propertyOrdering`: `error` came after the fields it empties, `total` after
+  the lines it must not be summed from. `ordered()` lists them in schema order.
 - **A model field that reaches `formatMinor` is a crash waiting to happen.**
   `Intl.NumberFormat` throws on anything but three ASCII letters, the form
   formats on every render — one "€" in the scan's `currency` white-screens the

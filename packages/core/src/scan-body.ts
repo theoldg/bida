@@ -24,159 +24,112 @@ export const AI_STUDIO_URL =
  */
 export type ScanTone = "kind" | "stas";
 
-/* ── A photograph of a receipt ───────────────────────────────────────────── */
-
-const PHOTO_LEAD = "Read this receipt. ";
-
 /**
+ * Numbered sections, because a small model follows a list better than prose. The
+ * photo is checked first, so nothing gets read off a photo that will be refused.
  * **Say how to read, never what it must come to**: told the lines must equal the
  * total, a model adjusts a line.
  */
-const PHOTO_FIELDS_HEAD =
-  "Return a title for the expense (described below); the total "
-  + "normalized to plain decimal notation — '.' as the decimal point, no thousands separators, e.g. "
-  + "\"1234.50\" whether the receipt prints \"1.234,50\", \"1,234.50\" or \"1234,50\" — "
-  + "using the receipt's own locale and currency to tell decimal point from thousands "
-  + "mark; the ISO 4217 currency code if legible; the date as YYYY-MM-DD if legible. "
-  + "The title is the merchant's name as printed, with two adjustments. Strip whatever "
-  + "isn't the name — a legal form or registered owner, a branch address or store "
-  + "number, a slogan, a till or VAT line: \"Bar Zahra - Sarl M. Benali\" is \"Bar "
-  + "Zahra\", \"Hotel Amira, 12 Rue Bab Doukkala\" is \"Hotel Amira\". And when the "
-  + "name alone wouldn't tell somebody what the money went on, add two or three English "
-  + "words for what was bought, after \" - \": \"Lidl - barbecue\", \"Carrefour - "
-  + "breakfast\". Add nothing when the merchant already says it (a restaurant, a café, "
-  + "a taxi), when the lines are too mixed to sum up in a few words, or when no lines "
-  + "are printed — a bare name beats a wrong guess. "
-  + "Keep the whole title under 40 characters, and null if no name is legible and the "
-  + "lines say nothing either. "
-  + "Return discounts as one entry per deduction the receipt prints — loyalty "
-  + "deductions, vouchers, staff discounts, a \"2 for 1\" or \"buy one get one free\" "
-  + "credit — each with its label as printed, an English translation of that label "
-  + "(null if it's already English), and its amount written WITHOUT a minus sign as "
-  + "the amount that comes off (a line reading \"2 FOR 1  -8.00\" has amount "
-  + "\"8.00\"). Use an empty list if the receipt takes nothing off. It doesn't matter "
-  + "whether a deduction is printed against one item or against the whole bill; "
-  + "either way it belongs in this list and not in the line items. "
-  + "A note that only reports a deduction already taken off a line is not one: printed "
-  + "under the item in the label column rather than the amount column, often beside the "
-  + "price before it — \"Uwzgl. opust: -15,00 st. c 42,98\" (discount included, was "
-  + "42.98) — it means the line's printed amount is already the reduced price, and, "
-  + "like VAT already inside the prices, listing it gets it taken off twice. Leave such "
-  + "a note out of discounts and out of the line items. "
-  + "Return charges the same way: one entry per figure the receipt adds to the line "
-  + "items to reach the total — a service charge, a tip, tax charged on top. Tax already "
-  + "inside the printed prices, which most VAT-inclusive receipts break out for "
-  + "information near the foot (\"of which VAT 20%\", \"TVA incluse\"), is not one: "
-  + "listing it gets the bill charged for twice. "
-  + "Also return every line item: its label as "
-  + "printed, in the receipt's own language, an English translation of that label (null "
-  + "if it's already English), its amount in the same normalized decimal notation as the "
-  + "total, and a quantity if the receipt states a count for that line (e.g. \"2x\", a "
-  + "multiplier, a quantity column) — null if no count is printed, don't infer one from "
-  + "repeated lines or guess a default of 1. A measure is not a count: litres of fuel "
-  + "or goods sold by weight leave quantity and unitAmount null. The amount is the "
-  + "total printed against "
-  + "that line — the figure in the receipt's own amount column, already multiplied out "
-  + "where a count is printed (a line reading \"2 ... 18.00\" has amount \"18.00\", not "
-  + "\"9.00\") — never the per-unit price, and never a product you work out yourself. "
-  + "Where the receipt also prints the price of one unit for that line (a row like "
-  + "\"2 x 1.79\" above or beside it), return that as unitAmount, in the same "
-  + "normalized notation; otherwise leave unitAmount null. Copy both figures exactly as "
-  + "printed, even where the quantity times unitAmount doesn't come to the amount: "
-  + "don't correct either one from the other. ";
+const CHECK = "Transcribe this receipt into JSON.\n\n"
+  + "1. CHECK THE PHOTO FIRST\n"
+  + "- Unreadable or incomplete means blurry, cropped, folded or angled so that any line "
+  + "item, or any line above the total, is hidden. Don't return a partial list.\n";
 
-/**
- * Words and spelling are transcribed so the split can be checked against paper.
- */
-const PHOTO_CASING =
-  "A till prints in capitals; a name is not written that way. Case the title and every "
-  + "label as ordinary writing, never in all capitals: \"BAR ZAHRA\" is \"Bar Zahra\", "
-  + "\"POULET ROTI\" is \"Poulet roti\". Keep the casing a brand owns where it is the "
-  + "brand's and not the printer's (\"IKEA\", \"H&M\", \"McDonald's\", \"lululemon\"). "
-  + "Re-case only: the words themselves, their language and their spelling stay "
-  + "exactly as the receipt prints them. ";
-
-/**
- * One question for the whole bill: per line the model "translates" shorthand. And
- * a guessed expansion reads as fact: "Sop" (Soplica) came back "Sopot".
- */
-const ENGLISH =
-  "Set english to true when the bill is written in English, and false otherwise. An "
-  + "English bill has nothing to translate: leave every labelEn on it null, even where "
-  + "a label is abbreviated, misspelled or terse — expanding \"Chkn wrap\" is not a "
-  + "translation. On any other bill, every labelEn — line items, discounts and charges "
-  + "alike — translates the words you can read and keeps an abbreviation, fragment or "
-  + "brand you can't be sure of as printed: \"LikierSopMix\" is \"Sop liqueur mix\". ";
-
-const PHOTO_LAYOUT =
-  "Read the columns as the printer laid them out, not as the photo happens to line "
-  + "them up: a receipt shot at an angle shears them, so an amount can sit lower than "
-  + "the label it belongs to. A label the printer wrapped over two or three rows is "
-  + "still one line item with one amount — join the rows, and don't let a wrapped row "
-  + "that has drifted under the amount column take an amount of its own. Every printed "
-  + "amount belongs to exactly one line item: none dropped, none counted twice. ";
-
-const PHOTO_FIELDS_TAIL =
-  "No line item's amount is negative: a line that only takes money off is a "
-  + "deduction, so leave it out of the list and put it in discounts instead. "
-  + "Use null for anything illegible or absent, "
-  + "and an empty list if there are no line items. Don't compute or guess any amount "
-  + "that isn't printed — only reformat the separators. ";
-
-const PHOTO_REFUSAL: Record<ScanTone, string> = {
+/** The only lines the two tones differ in. */
+const VOICE: Record<ScanTone, string> = {
   kind:
-    "If the photo isn't a receipt at "
-    + "all, set error to one short pun or joke about the picture's actual subject, "
-    + "still saying plainly it's not a receipt. If it's too blurry or cut off to read, "
-    + "set error to one short, slightly "
-    + "humorous sentence saying so — light and self-deprecating, never at the "
-    + "photographer's expense, and it still has to say plainly what's wrong so they know "
-    + "what to re-shoot (e.g. \"Lovely photo, but I can't buy anything with it — that's "
-    + "not a receipt.\" or \"Too blurry — I've read tea leaves with better odds.\") and "
-    + "leave every other field null or empty.",
+    "- Not a receipt: set error to a short pun about what it actually shows, while "
+    + "saying plainly that it isn't a receipt.\n"
+    + "- Unreadable or incomplete: set error to one light, self-deprecating sentence that "
+    + "says what's wrong, so the user knows what to re-shoot. Never joke at the "
+    + "photographer's expense.\n",
 
   // No example lines: given one, the model writes variations of it.
   stas:
-    "If the photo isn't a receipt at all, or is too blurry or cut off to read, set "
-    + "error to a brutal one- or two-sentence insult aimed at the person who sent it, "
-    + "not at the picture. Find your own angle in what's actually in the frame and in "
-    + "what sending it says about them — don't reach for a stock line. Be genuinely "
-    + "cruel: no hedging, no softening, no apology, no compliment first. Work the plain "
-    + "fact into the insult — that it isn't a receipt, or exactly what can't be read — "
-    + "so they still know what to re-shoot. Second person, and personal. The one thing "
-    + "you don't touch is what they were born as: no slurs, and nothing about anyone's "
-    + "race, sex, religion, disability or the like — everything else about them is fair "
-    + "game. Leave every other field null or empty.",
+    "- Not a receipt, or unreadable or incomplete: set error to a brutal one- or "
+    + "two-sentence insult aimed at the person who sent it, not at the picture. Find "
+    + "your own angle in what's actually in the frame and in what sending it says about "
+    + "them — don't reach for a stock line. Be genuinely cruel: no hedging, no "
+    + "softening, no apology, no compliment first. Work the plain fact into the insult — "
+    + "that it isn't a receipt, or exactly what can't be read — so they still know what "
+    + "to re-shoot. Second person, and personal. The one thing you don't touch is what "
+    + "they were born as: no slurs, and nothing about anyone's race, sex, religion, "
+    + "disability or the like — everything else about them is fair game.\n",
 };
 
-const PHOTO_TAIL =
-  " The same applies if the receipt is cropped, "
-  + "folded, or photographed at an angle that hides part of the line-item list, or if the "
-  + "total is visible but any line above it is cut off or unreadable — don't guess at "
-  + "missing lines or report a partial list as if it were complete; set error asking for "
-  + "a photo of the whole receipt instead. Otherwise leave error null.";
+/** A ticket printing "Friday, 9 October" with no year got one from the weekday. */
+const general = (today: string | null): string =>
+  "- In either case, leave every other field null or empty. Otherwise, error is null.\n\n"
+  + "2. GENERAL RULES\n"
+  + "- Amounts: plain decimals with \".\" as the separator and no thousands separators "
+  + "(\"1234.50\"). Only transcribe printed amounts. Never compute or guess one.\n"
+  + "- total: the total the receipt prints, never one you add up.\n"
+  + "- Use null for illegible or absent values and [] for empty lists.\n"
+  + "- currency: ISO 4217 code. date: YYYY-MM-DD."
+  + (today ? ` Today is ${today}.` : "") + "\n"
+  + "- english: true if the receipt is written in English.\n\n";
+
+const READING =
+  "3. READING THE LAYOUT\n"
+  + "Follow the printer's columns, not the photo's alignment. Angled shots shear the "
+  + "columns, so an amount can sit lower than its label. A label wrapped over several "
+  + "rows is one item with one amount. Every printed amount belongs to exactly one "
+  + "entry: none dropped, none duplicated.\n\n"
+  + "4. TITLE\n"
+  + "Use the merchant name only. Drop the legal form, owner, address, store number, "
+  + "slogan and till or VAT lines (\"Bar Zahra - Sarl M. Benali\" → \"Bar Zahra\").\n"
+  + "If the name doesn't reveal what was bought, append \" - \" and 2–3 English words "
+  + "(\"Lidl - barbecue\"). Don't append anything when the merchant type is obvious "
+  + "(restaurant, café, taxi), when the items are too mixed to sum up, or when no lines "
+  + "are printed.\n"
+  + "Keep the title under 40 characters. Use null if no name is legible.\n\n"
+  + "5. LINE ITEMS\n"
+  + "- amount: the line total from the amount column, already multiplied out (\"2 ... "
+  + "18.00\" has amount \"18.00\", not \"9.00\"). Never use the unit price, and never "
+  + "calculate your own product. Never negative.\n"
+  + "- quantity: only if a count is printed for that line. Otherwise null; don't infer "
+  + "it from repeated lines or default to 1. Weights and volumes are measures, not "
+  + "counts (\"0.482 kg\", \"41.3 L\" of fuel), so quantity and unitAmount stay null.\n"
+  + "- unitAmount: only if a per-unit price is printed for that line (a row like \"2 x "
+  + "1.79\" above or beside it).\n"
+  + "- Copy quantity and unitAmount exactly as printed, even if they don't multiply to "
+  + "the amount.\n\n"
+  + "6. DISCOUNTS\n"
+  + "Add one entry per printed deduction (loyalty, voucher, staff, multi-buy credit), "
+  + "whether it applies to one item or the whole bill. Write the amount as a positive "
+  + "number.\n"
+  + "Exclude notes in the label column that only report a discount already reflected in "
+  + "a line's price (e.g. \"discount included, was 42.98\"). Listing them would subtract "
+  + "the discount twice.\n\n"
+  + "7. CHARGES\n"
+  + "Add one entry per amount added on top of the line items to reach the total: "
+  + "service, tip, or tax added on top.\n"
+  + "Exclude tax already included in the prices (e.g. \"of which VAT 20%\").\n\n"
+  + "8. LABELS\n"
+  + "- Case the title and all labels as ordinary writing, never all caps (\"POULET "
+  + "ROTI\" → \"Poulet roti\"). Keep a brand's own casing (\"IKEA\", \"McDonald's\"). "
+  + "Change only the case; keep the wording, language and spelling.\n"
+  + "- labelEn (for items, discounts and charges): null on English receipts, even for "
+  + "abbreviations. On other receipts, translate what you can read and keep "
+  + "abbreviations or brands you're unsure of as printed (\"LikierSopMix\" → \"Sop "
+  + "liqueur mix\").";
 
 /**
- * A ticket printing "Friday, 9 October" with no year got one from the weekday.
+ * Gemini otherwise writes properties alphabetically: `error` after the fields it
+ * empties, `english` after the labels it governs, `total` after summing the lines.
  */
-const dated = (today: string): string => ` Today is ${today}.`;
+const ordered = <T extends Record<string, unknown>>(properties: T) =>
+  ({ type: "OBJECT", properties, propertyOrdering: Object.keys(properties) });
 
-const PROMPT: Record<ScanTone, string> = {
-  kind: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_CASING + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
-    + ENGLISH + PHOTO_REFUSAL.kind + PHOTO_TAIL,
-  stas: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_CASING + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
-    + ENGLISH + PHOTO_REFUSAL.stas + PHOTO_TAIL,
+const LABELLED = {
+  label: { type: "STRING" },
+  labelEn: { type: "STRING", nullable: true },
 };
 
 const EXTRAS_SCHEMA = {
   type: "ARRAY",
   items: {
-    type: "OBJECT",
-    properties: {
-      label: { type: "STRING" },
-      labelEn: { type: "STRING", nullable: true },
-      amount: { type: "STRING" },
-    },
+    ...ordered({ ...LABELLED, amount: { type: "STRING" } }),
     required: ["label", "labelEn", "amount"],
   },
 };
@@ -190,8 +143,8 @@ export function buildScanRequestBody(
   tone: ScanTone = "kind",
   today?: string,
 ): unknown {
-  const prompt = PROMPT[tone]
-    + (today && /^\d{4}-\d{2}-\d{2}$/.test(today) ? dated(today) : "");
+  const prompt = CHECK + VOICE[tone]
+    + general(today && /^\d{4}-\d{2}-\d{2}$/.test(today) ? today : null) + READING;
   return {
     contents: [{
       role: "user",
@@ -203,31 +156,28 @@ export function buildScanRequestBody(
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema: {
-        type: "OBJECT",
-        properties: {
+        ...ordered({
+          error: { type: "STRING", nullable: true },
+          english: { type: "BOOLEAN" },
           title: { type: "STRING", nullable: true },
           total: { type: "STRING", nullable: true },
-          charges: EXTRAS_SCHEMA,
-          discounts: EXTRAS_SCHEMA,
           currency: { type: "STRING", nullable: true },
           date: { type: "STRING", nullable: true },
           lineItems: {
             type: "ARRAY",
             items: {
-              type: "OBJECT",
-              properties: {
-                label: { type: "STRING" },
-                labelEn: { type: "STRING", nullable: true },
+              ...ordered({
+                ...LABELLED,
                 amount: { type: "STRING", nullable: true },
-                unitAmount: { type: "STRING", nullable: true },
                 quantity: { type: "INTEGER", nullable: true },
-              },
+                unitAmount: { type: "STRING", nullable: true },
+              }),
               required: ["label", "labelEn", "amount", "unitAmount", "quantity"],
             },
           },
-          english: { type: "BOOLEAN" },
-          error: { type: "STRING", nullable: true },
-        },
+          discounts: EXTRAS_SCHEMA,
+          charges: EXTRAS_SCHEMA,
+        }),
         required: [
           "title", "total", "charges", "discounts", "currency", "date", "lineItems", "english",
           "error",
@@ -236,4 +186,3 @@ export function buildScanRequestBody(
     },
   };
 }
-

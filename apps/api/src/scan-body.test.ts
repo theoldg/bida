@@ -56,10 +56,10 @@ describe("the envelope", () => {
 
 /** A ticket for "Friday, 9 October" read as 2020: the year comes from today, not the weekday. */
 describe("today's date", () => {
-  it("rides at the end of the prompt it is given to", async () => {
+  it("sits beside the date rule", async () => {
     const body = await new Response(wrapPayload(stream("QUJD"), undefined, "kind", "2026-10-08")).text();
     expect(body).toBe(JSON.stringify(buildScanRequestBody("QUJD", "kind", "2026-10-08")));
-    expect(promptOf(body)).toMatch(/ Today is 2026-10-08\.$/);
+    expect(promptOf(body)).toContain("date: YYYY-MM-DD. Today is 2026-10-08.\n");
   });
 
   it("is left out when absent or not a date", async () => {
@@ -107,7 +107,7 @@ describe("the two tones", () => {
 
   // The one sentence the tones contradict: Staś mode is at the photographer's expense.
   it("spares the photographer in one tone and not the other", async () => {
-    const spare = "never at the photographer's expense";
+    const spare = "Never joke at the photographer's expense";
     expect(promptOf(await wrapped("QUJD", "kind"))).toContain(spare);
     expect(promptOf(await wrapped("QUJD", "stas"))).not.toContain(spare);
   });
@@ -118,11 +118,11 @@ describe("the two tones", () => {
 
   it("changes only how a photo is refused — never how a bill is read", async () => {
     const [kind, stas] = [promptOf(await wrapped("QUJD")), promptOf(await wrapped("QUJD", "stas"))];
-    // Reading instructions before and cropped-receipt rule after must match word
-    // for word, or the tones are two different readers.
-    const marker = "If the photo isn't a receipt at all,";
+    // What counts as unreadable before, and every reading rule after, must match
+    // word for word, or the tones are two different readers.
+    const marker = "- Not a receipt";
     expect(kind.slice(0, kind.indexOf(marker))).toBe(stas.slice(0, stas.indexOf(marker)));
-    const tail = "The same applies if the receipt is cropped,";
+    const tail = "- In either case,";
     expect(kind.slice(kind.indexOf(tail))).toBe(stas.slice(stas.indexOf(tail)));
     expect(kind).not.toBe(stas);
   });
@@ -150,12 +150,14 @@ describe("the reading", () => {
     const prompt = promptOf(await wrapped("QUJD"));
     // Plain decimal, whatever the bill's own separators.
     expect(prompt).toContain("1234.50");
+    // The figure `checkScan` reconciles against is evidence, never a sum.
+    expect(prompt).toContain("total the receipt prints, never one you add up");
     // A deduction is a magnitude; a sign read the wrong way round is a surcharge.
-    expect(prompt).toContain("WITHOUT a minus sign");
+    expect(prompt).toContain("Write the amount as a positive number");
     // Tax only where it sits on top, or the bill is charged for twice.
-    expect(prompt).toContain("charged for twice");
+    expect(prompt).toContain("Exclude tax already included in the prices");
     // A till roll prints everything in capitals; a name isn't a shout.
-    expect(prompt).toContain("all capitals");
+    expect(prompt).toContain("never all caps");
     expect(prompt).toContain("40 characters");
   });
 
@@ -165,9 +167,9 @@ describe("the reading", () => {
    */
   it("asks for the line total as printed", async () => {
     const photo = promptOf(await wrapped("QUJD"));
-    expect(photo).toContain("never a product you work out yourself");
-    expect(photo).toContain("don't correct either one from the other");
-    expect(photo).toContain("a receipt shot at an angle shears them");
+    expect(photo).toContain("never calculate your own product");
+    expect(photo).toContain("even if they don't multiply to the amount");
+    expect(photo).toContain("Angled shots shear the columns");
   });
 
   /**
@@ -177,11 +179,11 @@ describe("the reading", () => {
    */
   it("asks to re-case a label, and to change nothing else about it", async () => {
     const photo = promptOf(await wrapped("QUJD"));
-    expect(photo).toContain("Case the title and every label as ordinary writing");
-    expect(photo).toContain("\"POULET ROTI\" is \"Poulet roti\"");
+    expect(photo).toContain("Case the title and all labels as ordinary writing");
+    expect(photo).toContain("\"POULET ROTI\" → \"Poulet roti\"");
     // Scoped: the words are still the receipt's, whatever case they arrive in.
-    expect(photo).toContain("their language and their spelling stay");
+    expect(photo).toContain("keep the wording, language and spelling");
     // A brand's own casing isn't a printer's.
-    expect(photo).toContain("lululemon");
+    expect(photo).toContain("McDonald's");
   });
 });

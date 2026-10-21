@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-21* — "Simplify, same results", then a rewrite of their own at half
+  the length. Their structure won; the review that helped named which cut lines
+  each fixed a past failure, and they took three of six. Answer a draft line by
+  line, and let "that's obvious" end the line.
+
 - *2026-10-21* — "What did we miss?", then "fix all the easy things". A
   throwaway test made each guess a finding. Easy meant no money call: keeping
   the tip through a rescan looked easy and would double an older scan's
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   make sense?" The doc already said beneath. Then two redirects mid-build,
   ending on "try something different": no label, "Rescan". An interrupt is
   the review; drop the old idea whole, not half-kept.
-
-- *2026-10-18* — "Sometimes shows me empty space instead of skeletons … no
-  need to rewrite the app". The window was fine; only its spacer was blank.
-  Painting the spacer as rows cost one CSS rule and covers any speed. "Not a
-  huge deal" sizes the fix, not the care.
