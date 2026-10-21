@@ -342,8 +342,10 @@ async function onLedger() {
   await page.waitForFunction(() => !document.querySelector("dialog.scrim")).catch(() => {});
 
   await page.goto(`${base}/diag`);
-  await page.waitForSelector("pre");
-  const head = (await page.locator("pre").innerText()).split("---- this page")[0];
+  // The head is the report's first section, and fills in after the timelines.
+  const headPre = page.locator(".diag-report .diag").first();
+  await headPre.filter({ hasText: "version:" }).waitFor();
+  const head = await headPre.innerText();
   const line = head.split("\n").find((l) => l.includes("dialog  ")) ?? "";
   report(/menus and dialogs, newest first:/.test(head),
     "a dialog's presses ride in the head of /diag, where a cut-short paste keeps them");
