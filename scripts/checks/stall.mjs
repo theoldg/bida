@@ -16,12 +16,12 @@ ensureBuild();
  * screen, so the assertion fails rather than a timeout.
  */
 async function diagReport(page) {
-  await page.waitForSelector(".diag");
+  await page.waitForSelector(".diag-report");
   await page.waitForFunction(
-    () => (document.querySelector(".diag")?.textContent ?? "").includes("---- this page"),
+    () => (document.querySelector(".diag-report")?.textContent ?? "").includes("version:"),
     null, { timeout: PATIENCE },
   ).catch(() => {});
-  return (await page.locator(".diag").textContent()) ?? "";
+  return (await page.locator(".diag-report").textContent()) ?? "";
 }
 
 const { base, close } = await serveExport();

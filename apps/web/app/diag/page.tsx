@@ -2,7 +2,7 @@
 // Doc: docs/diag.md
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { embedded } from "@/components/embedded";
 import { Icon } from "@/components/icons";
@@ -26,7 +26,10 @@ import { VERSION } from "@/lib/version";
  * a timer rather than live: a live read would be another line in the log.
  */
 export default function DiagPage() {
-  const [report, setReport] = useState<string>();
+  // The timelines need no database, so they draw at once; the head waits on it.
+  const [head, setHead] = useState<string>();
+  const [logs, setLogs] = useState<string[]>([]);
+  const report = head === undefined ? undefined : `${[head, ...logs].join("\n\n")}\n`;
   const [copied, setCopied] = useFlash();
   // After mount: the static export's first render has no localStorage.
   const [stas, setStas] = useState(false);
@@ -36,8 +39,9 @@ export default function DiagPage() {
   useEffect(() => {
     let alive = true;
     const build = async () => {
+      setLogs(timelines());
       const text = await collect();
-      if (alive) setReport(text);
+      if (alive) setHead(text);
     };
     void build();
     const timer = setInterval(build, 2000);
@@ -93,9 +97,15 @@ export default function DiagPage() {
             </div>
             <Link className="btn btn-s diag-link" href={route.diagCrop()}>{copy.diag.cropLink}</Link>
           </div>
-          {/* One <pre>: it is pasted into a message and diffed against the next
-              one. */}
-          <pre className="diag">{report ?? copy.diag.reading}</pre>
+          {/* A <pre> a section, so a tick redraws only what changed: laying out
+              every kept line again each tick was this screen's whole cost. */}
+          <div className="diag-report">
+            {[head ?? copy.diag.reading, ...logs].map((text, i) => (
+              <pre key={i} className="diag" style={{ "--lines": text.split("\n").length } as CSSProperties}>
+                {text}
+              </pre>
+            ))}
+          </div>
         </Scroll>
       </Body>
     </Screen>
@@ -293,24 +303,28 @@ async function collect(): Promise<string> {
   const scans = readingsReport();
   lines.push("", "scans, newest first:", ...(scans.length ? scans : ["none recorded"]));
 
-  const rows = timeline();
-
   // Up here: a pasted report gets cut short, and this is the block people get
   // asked for.
-  const presses = [...otherPages().flatMap((page) => page.events), ...rows]
+  const presses = [...otherPages().flatMap((page) => page.events), ...timeline()]
     .filter((e) => e.what === "menu.trace" || e.what === "dialog.trace")
     .slice(-6)
     .reverse()
     .map((e) => `${(e.at / 1000).toFixed(2)}s  ${e.what.replace(".trace", "")}  ${e.info ?? ""}`);
   if (presses.length) lines.push("", "menus and dialogs, newest first:", ...presses);
-  const past = otherPages().map((page) =>
-    `---- page ${new Date(page.at).toISOString()} ${page.url} (${page.events.length} events) ----\n\n`
-    + `${format(page.events)}\n\n`).join("");
+  return lines.join("\n");
+}
 
-  /**
-   * A phone pastes the top and stops, so the order is what the first screenful
-   * needs. Secrets masked throughout.
-   */
-  return `${lines.join("\n")}\n\n---- this page (${rows.length} events) ----\n\n${format(rows)}\n\n`
-    + `${past}---- home screen ----\n\n${handoff()}\n`;
+/**
+ * What follows the head. A phone pastes the top and stops, so the order is what
+ * the first screenful needs. Secrets masked throughout.
+ */
+function timelines(): string[] {
+  const rows = timeline();
+  return [
+    `---- this page (${rows.length} events) ----\n\n${format(rows)}`,
+    ...otherPages().map((page) =>
+      `---- page ${new Date(page.at).toISOString()} ${page.url} (${page.events.length} events) ----\n\n`
+      + format(page.events)),
+    `---- home screen ----\n\n${handoff()}`,
+  ];
 }

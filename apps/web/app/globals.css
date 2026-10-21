@@ -1288,6 +1288,10 @@ dialog.scrim::backdrop { background: transparent }
 
 .diag { font-family: var(--f-mono); font-size: 10.5px; line-height: 1.55; white-space: pre;
   overflow-x: auto; padding: 12px 16px; color: var(--ink) }
+/* A section off screen is not laid out at all, and holds its height meanwhile
+   so the scroll doesn't jump: --lines is set by app/diag. */
+.diag-report > .diag { content-visibility: auto;
+  contain-intrinsic-block-size: auto calc(var(--lines) * 10.5px * 1.55 + 24px) }
 
 .banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: 12.5px; flex: none;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge); font-weight: 500 }

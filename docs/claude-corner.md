@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-21* — "The diag screen takes a while to open when there's a lot of
+  logs". The guess was the database wait; a profile said layout, every 2s, of
+  lines that hadn't changed. Measure before choosing which of the owner's
+  offered fixes to build.
+
 - *2026-10-21* — "The copy button wash should respect the margin here", then
   "(or at least have some margin)". The second line widened the first: an inset
   is enough. A press wash only shows while held, so drive learnt `down` to
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-18* — "The Reddit browser escape doesn't work", a /diag and no
   more. A tap I can't watch can't be fixed by guessing how it failed: put the
   host's own way out under the button, and say which guess the fix rests on.
-
-- *2026-10-18* — ""Han settled that one at the table" is funny but the UI
-  doesn't support deletion notes". A demo line nobody can see is a joke told to
-  the log. The demo holds only what a screen shows; a gag the app can't render
-  is the first thing to go.
