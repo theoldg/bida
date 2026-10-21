@@ -1140,7 +1140,6 @@ dialog.scrim::backdrop { background: transparent }
 .bidrop:active { background: var(--press); color: var(--ink) }
 /* A discount or a charge wears its kind; every line's is changed behind its kebab (`.bidrop`). */
 .bikind { flex: none; margin: -4px 0 }
-.birow.biextra, .birow.biextra .bikind { background: var(--card-3) }
 /* Its dots sit as far from the chip as the chip from the name. */
 .bimore { margin-left: -12px }
 .bisign { color: var(--ink-2); font-size: 14.5px }

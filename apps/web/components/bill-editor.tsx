@@ -206,7 +206,7 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
               // Gone once the name is retyped, as it is on save (`billFromRows`).
               const other = otherName(row);
               return (
-                <div key={row.key} className={`card birow${item ? "" : " biextra"}`}>
+                <div key={row.key} className="card birow">
                   <div className="bihead">
                     <span className={`amountfield biname${flashOn(row, "name")}`}
                       {...(nameAimed ? { "data-aimed": "" } : {})}

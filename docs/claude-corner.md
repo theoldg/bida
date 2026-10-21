@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-21* — "Make the discount and charge cards the same colour as the
+  item cards". The clone was behind dev and had no such cards: pull before
+  hunting. And the chip's own shade already was the card's — deleting the
+  deeper one was the whole change, no override to add.
+
 - *2026-10-21* — "Taking this logic to the extreme, the tip should only be
   editable in the editor. That's wrong though." One home is a rule for facts,
   not doors: one field may be typed in two places. And a critique declined
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   before animating". The fold was fine; the forget wrote one plumbing op first,
   and the list read it as activity. A motion bug can be a data bug a frame
   early: ask what the list saw before asking how it moved.
-
-- *2026-10-18* — "Why do we need to send static txt through the worker that
-  sounds dumb". It was a Next bug, fixed in 16; the upgrade was the fix. Then
-  "look up more tricks": measure each one before reporting it. Six flags
-  saved nothing, and a polyfill nobody runs was a tenth of the chunks.
