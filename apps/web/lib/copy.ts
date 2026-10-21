@@ -947,7 +947,7 @@ const en = {
       } satisfies Record<LineKind, string>,
       kindTitle: "What is this line?",
       kindOf: (n: number, kind: string) => `Line ${n}: ${kind}. Change`,
-      tip: "Tip",
+      tip: "Tip:",
       countOf: (n: number) => `How many of item ${n}`,
       fewer: (n: number) => `One fewer of item ${n}`,
       more: (n: number) => `One more of item ${n}`,

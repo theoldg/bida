@@ -118,8 +118,8 @@ them can be ticked for. **A line's kind is a person's to correct**: on the typed
 bill each card is an item, a discount or a charge, so a service line read as an
 item, or a voucher on a bill typed by hand, needs no rescan. **The tip is never
 read off a bill**: a printed service charge is a charge, so the tip starts at
-nothing and stays the table's decision, typed on the grid or as the typed
-bill's last card — one field with two doors, convenience over a single home. Every deduction is gathered into one list first (`readBill`) wherever it
+nothing and stays the table's decision, typed on the grid or over the typed
+bill's total — one field with two doors, convenience over a single home. Every deduction is gathered into one list first (`readBill`) wherever it
 printed — a negative line item, a bill-level credit, a two-for-one — because
 the grid has no way to say who a particular credit belongs to, and inventing
 one is a scope-picking UI on a screen asked to be minimal. They are kept apart

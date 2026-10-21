@@ -107,7 +107,7 @@ words would be no correction.
   nothing, so the others stand out. A discount or a charge has
   no count and is typed positive, its sign beside the field.
   So a service line read as an item is fixed here, and a bill typed by hand can
-  have a voucher. The **tip** is the last card, the same field the grid types.
+  have a voucher. The **tip** sits over the total, off any card, the same field the grid types.
   A card's count survives a change of kind, and an item made a discount and
   back keeps whoever had it, until Done.
 - **Either price can be typed** beside a count above one; the one typed holds

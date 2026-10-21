@@ -90,7 +90,7 @@ charge, the field itself — so the arithmetic downstream sees positive lines an
 a list of figures that come off, and never a sign to get the wrong way round.
 **The tip is the table's, never the scan's**: it starts empty, so a printed
 service charge isn't mistaken for a tip already decided, and it is typed on the
-grid or as the last card of the [typed bill](receipt-scanning.md#typing-a-bill-in)
+grid or over the total of the [typed bill](receipt-scanning.md#typing-a-bill-in)
 — one field, two places to reach it. Charges and discounts are drawn on the
 grid as rows with no cells (`copy.items.extra`), and a caption under them says
 so — naming only the kinds this bill actually has (`copy.items.extraNote`). It

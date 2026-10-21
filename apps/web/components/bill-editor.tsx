@@ -3,12 +3,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { minorToDecimalString, receiptExtras } from "@bida/core";
-import { AmountInput } from "./amount-input";
+import { AmountInput, settleAmount } from "./amount-input";
 import { Body, Screen, Scroll, TopBar } from "./chrome";
 import { ChoiceDialog, ConfirmDialog } from "./dialog";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
-import { money } from "../lib/format";
+import { bare, money } from "../lib/format";
 import { useRefusal } from "../lib/refusal";
 import { seekTarget } from "../lib/reveal";
 import { glide } from "../lib/seek";
@@ -35,7 +35,7 @@ function missingOf(row: ItemRow, currency: string): { name: boolean; price: bool
 
 /** The bill as it would be saved, so leaving untouched never asks. */
 function shapeOf(rows: readonly ItemRow[], tip: string, currency: string): string {
-  return JSON.stringify([tip.trim(), ...rows.filter((r) => !rowIsEmpty(r))
+  return JSON.stringify([settleAmount(tip.trim(), currency), ...rows.filter((r) => !rowIsEmpty(r))
     .map((r) => [r.kind, r.label.trim(), r.kind === "item" ? r.count : 1, rowMinor(r, currency)])]);
 }
 
@@ -68,7 +68,7 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
       ...rowsFromExtras(receiptExtras(draft), english, copy.items.extra.charge),
     ];
   });
-  const [tip, setTip] = useState(draft.receiptTip ?? "");
+  const [tip, setTip] = useState(() => settleAmount(draft.receiptTip ?? "", currency));
   const opened = useRef(shapeOf(rows, tip, currency));
   const [asking, setAsking] = useState(false);
   const [picking, setPicking] = useState<string | null>(null);
@@ -285,18 +285,17 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
               <Icon name="plus" size={14} />
               {copy.scan.byHand.add}
             </button>
-            <div className="card birow bitip">
-              <span className="bitipname">{copy.scan.byHand.tip}</span>
-              <label className="biprice">
-                <AmountInput className="bignum splitin" currency={currency} value={tip}
-                  placeholder="0" enterKeyHint="done" aria-label={copy.items.tipLabel(null)}
-                  onChange={setTip} />
-              </label>
-            </div>
           </div>
         </Scroll>
 
         <div className="pad whodock" style={{ paddingTop: 12 }}>
+          {/* The bill's foot, as the grid's tip row: on no line, so on no card. */}
+          <label className="bisum bitip">
+            <span>{copy.scan.byHand.tip}</span>
+            <AmountInput className="itemamountin" frame="none" currency={currency} value={tip}
+              placeholder={bare(0, currency)} enterKeyHint="done" aria-label={copy.items.tipLabel(null)}
+              onChange={setTip} />
+          </label>
           <div className="bisum">
             <span>{copy.scan.byHand.sum}</span>
             <span className="num">{money(total, currency)}</span>
