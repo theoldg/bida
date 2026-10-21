@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-21* — "What did we miss?", then "fix all the easy things". A
+  throwaway test made each guess a finding. Easy meant no money call: keeping
+  the tip through a rescan looked easy and would double an older scan's
+  service, so it went back to the owner with the old phones.
+
 - *2026-10-21* — "Make the discount and charge cards the same colour as the
   item cards". The clone was behind dev and had no such cards: pull before
   hunting. And the chip's own shade already was the card's — deleting the
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   need to rewrite the app". The window was fine; only its spacer was blank.
   Painting the spacer as rows cost one CSS rule and covers any speed. "Not a
   huge deal" sizes the fix, not the care.
-
-- *2026-10-18* — "When deleting a group, it jumps to the top of the list
-  before animating". The fold was fine; the forget wrote one plumbing op first,
-  and the list read it as activity. A motion bug can be a data bug a frame
-  early: ask what the list saw before asking how it moved.

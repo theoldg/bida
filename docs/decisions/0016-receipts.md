@@ -38,7 +38,7 @@ read by the model was the third door until then, and is gone: it put a caller's
 own words in front of the shared key.
 
 **The parsed bill lives on the expense, not in the draft.** `receiptItems`,
-`receiptTip`, `receiptInvolved` and `receiptAssignments` (and `receiptText`, which nothing writes now) are
+`receiptTip`, `receiptCharges`, `receiptDiscounts`, `receiptInvolved` and `receiptAssignments` (and `receiptText` and `receiptTax`, which nothing writes now) are
 ordinary optional fields on `Expense` — together the `Receipt` type, which
 `receiptOf` carries whole between an expense, the draft and a write — travelling in the op's `patch` like `description` — so they
 sync, replay and fold with no change to `Op`, `fold.ts`, the D1 schema or the

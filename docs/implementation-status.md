@@ -28,12 +28,17 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Five things: Next 16, unchecked on a phone; push notifications, built and unchecked on a phone, the ledger's windowing experiment, Polish, and a quick split's link. The visual review is closed
+Six things: Next 16, unchecked on a phone; push notifications, built and unchecked on a phone, the ledger's windowing experiment, Polish, a quick split's link, and a bill's charges on older phones. The visual review is closed
 ([design-review.md](design-review.md)).
 
 - **A quick split goes out as a link** (ADR-0035), built, driven against a
   local Worker, migrated on both D1s (`0005_splits.sql`) and working on a
   real phone (the owner, 2026-10-16); production serves it once `main` moves.
+
+- **A bill's charges are invisible to a build before them** (`receiptCharges`,
+  [who-had-what.md](who-had-what.md#tip-charges-and-discounts)), on `dev` only:
+  such a phone works a bill's amount out without them, and its next save of
+  that entry writes it so. The owner's call before `main` moves.
 
 - **Next 16 on Turbopack** passes every browser check; untried on a real
   iPhone, where a payload once opened as a page ([pwa.md](pwa.md)).

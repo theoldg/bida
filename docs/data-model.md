@@ -75,9 +75,12 @@ Expense {
   split: { mode: 'equal' | 'exact' | 'shares' | 'receipt', ... },
   attachmentIds?,     // absent when there are none, which is every
                       // expense today: nothing appends an attachment op yet
-  receiptItems?, receiptTip?, receiptInvolved?, receiptAssignments?,
+  receiptItems?, receiptTip?, receiptCharges?, receiptDiscounts?,
+  receiptInvolved?, receiptAssignments?,
                       // the parsed bill behind a `receipt` split, kept so the
                       // who-had-what grid can reopen (ADR-0016)
+  receiptTax?,        // one unnamed charge, from before charges were a list;
+                      // read as the first of them, written by nothing now
   receiptText?,       // a typed bill's text, from builds that read one; written
                       // by nothing now, and still read by history
   receiptEnglish?,    // true: the bill is read in English, not as printed —
