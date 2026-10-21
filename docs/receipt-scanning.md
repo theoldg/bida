@@ -102,9 +102,9 @@ words would be no correction.
 
 - **Every line of the bill is a card** and has a kind — **Item**, **Discount**
   or **Charge** ([who-had-what.md](who-had-what.md#tip-charges-and-discounts)),
-  picked in a `ChoiceDialog`. A discount or a charge wears its kind as a chip
-  beside the name; an item, which most lines are, says nothing and keeps the
-  question behind a kebab, so the others stand out. A discount or a charge has
+  picked in a `ChoiceDialog` behind each card's kebab. A discount or a charge
+  wears its kind as a chip beside the name; an item, which most lines are, says
+  nothing, so the others stand out. A discount or a charge has
   no count and is typed positive, its sign beside the field.
   So a service line read as an item is fixed here, and a bill typed by hand can
   have a voucher. The **tip** is the last card, the same field the grid types.

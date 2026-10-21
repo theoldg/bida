@@ -206,7 +206,7 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
               // Gone once the name is retyped, as it is on save (`billFromRows`).
               const other = otherName(row);
               return (
-                <div key={row.key} className="card birow">
+                <div key={row.key} className={`card birow${item ? "" : " biextra"}`}>
                   <div className="bihead">
                     <span className={`amountfield biname${flashOn(row, "name")}`}
                       {...(nameAimed ? { "data-aimed": "" } : {})}
@@ -218,19 +218,12 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                         onChange={(e) => change(row.key, (r) => ({ ...r, label: e.target.value }))} />
                     </span>
                     {/* An item, which most lines are, says nothing; the others wear their kind. */}
-                    {item ? (
-                      <button type="button" className="bidrop bimore"
-                        aria-label={copy.scan.byHand.kindOf(n, copy.scan.byHand.kind[row.kind])}
-                        onClick={() => setPicking(row.key)}>
-                        <Icon name="more" size={14} />
-                      </button>
-                    ) : (
-                      <button type="button" className="chip kindchip bikind"
-                        aria-label={copy.scan.byHand.kindOf(n, copy.scan.byHand.kind[row.kind])}
-                        onClick={() => setPicking(row.key)}>
-                        {copy.scan.byHand.kind[row.kind]}<Icon name="updown" size={11} className="pickmark" />
-                      </button>
-                    )}
+                    {item ? null : <span className="chip kindchip bikind">{copy.scan.byHand.kind[row.kind]}</span>}
+                    <button type="button" className="bidrop bimore"
+                      aria-label={copy.scan.byHand.kindOf(n, copy.scan.byHand.kind[row.kind])}
+                      onClick={() => setPicking(row.key)}>
+                      <Icon name="more" size={14} />
+                    </button>
                     <button type="button" className="bidrop" onClick={() => remove(row.key)}
                       aria-label={copy.scan.byHand.remove(row.label.trim() || String(n))}>
                       <Icon name="cross" size={12} />
