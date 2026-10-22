@@ -135,6 +135,16 @@ describe("a phone with a key of its own", () => {
     expect((err as ScanKeyError).why).toBe("spent");
   });
 
+  it("sends a Vertex key to Vertex, in the same envelope", async () => {
+    await setGeminiKey(KEY, "vertex");
+    answering(() => answer(BILL));
+    await scanReceipt(PHOTO, "g1", "s3cret", "EUR");
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.url).toContain("aiplatform.googleapis.com");
+    expect((calls[0]!.init.headers as Record<string, string>)["x-goog-api-key"]).toBe(KEY);
+  });
+
   it("is still offline when the phone is", async () => {
     vi.stubGlobal("navigator", { onLine: false });
     answering(() => answer(BILL));

@@ -281,7 +281,7 @@ export const pl: Copy = {
       use: "???",
       checking: "???",
       remove: "???",
-      accepted: "???",
+      accepted: { "ai-studio": "???", vertex: "???" },
       refused: "???",
       blocked: "???",
     },

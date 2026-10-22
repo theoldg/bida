@@ -3,6 +3,7 @@ import type {
   ExtraKind, ImportRefusalCode, ImportSource, ScanProblem, SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
+import type { KeyHost } from "./db/dexie";
 import type { LineKind } from "./scan/manual";
 import { chosenLang } from "./lang";
 import { pl } from "./copy-pl";
@@ -375,19 +376,23 @@ const en = {
     title: "Advanced",
     key: {
       title: "Bring your own key",
-      lede: "Scans normally go through bida’s server, unencrypted and rate limited. You can use your own Gemini API key to avoid the rate limits and send your requests straight to Google.",
+      lede: "Scans normally go through bida’s server, unencrypted and rate limited. You can use your own Gemini or Vertex AI API key to avoid the rate limits and send your requests straight to Google.",
       where: "Get one free at Google AI Studio.",
       whereUrl: "https://aistudio.google.com/apikey",
       /** Google's terms, not ours — re-check before editing. */
       freeTier: "As of September 2026, the free plan allows 500 requests to Gemini 3.1 Flash Lite per day. Data may be used for model training.",
       site: { lede: "Check their ", link: "website", tail: "." },
-      placeholder: "Paste a Gemini API key",
+      placeholder: "Paste a Gemini or Vertex AI key",
       use: "Use this key",
       checking: "Checking…",
       remove: "Remove key",
-      accepted: "This phone scans with your key.",
+      /** Says which host answered: the other one would bill elsewhere. */
+      accepted: {
+        "ai-studio": "This phone scans with your Gemini key.",
+        vertex: "This phone scans with your Vertex AI key.",
+      } satisfies Record<KeyHost, string>,
       refused: "Google wouldn’t accept that key.",
-      blocked: "This browser couldn’t reach Google. Something is blocking generativelanguage.googleapis.com.",
+      blocked: "This browser couldn’t reach Google. Something is blocking googleapis.com.",
     },
   },
 

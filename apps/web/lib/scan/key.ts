@@ -1,4 +1,6 @@
+import { VERTEX_URL } from "@bida/core";
 import { getDevice } from "../db/device";
+import type { KeyHost } from "../db/dexie";
 
 /**
  * The key this phone scans with, when it is not ours. Same envelope
@@ -7,12 +9,19 @@ import { getDevice } from "../db/device";
  * (docs/scan-worker.md#a-key-of-your-own).
  */
 
-/** Where a key is checked. Listing models is free and needs no quota. */
+/** Where an AI Studio key is checked. Listing models is free and needs no quota. */
 const MODELS_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
-/** The key this phone brought, or undefined to use the shared one. */
-export async function ownKey(): Promise<string | undefined> {
-  return (await getDevice()).geminiKey;
+/**
+ * Vertex lists nothing for an API key, so it is asked the real question in a
+ * few tokens — a fraction of a cent on the key's own bill.
+ */
+const VERTEX_PROBE = JSON.stringify({ contents: [{ role: "user", parts: [{ text: "Say OK." }] }] });
+
+/** The key this phone brought and where it goes, or undefined to use the shared one. */
+export async function ownKey(): Promise<{ key: string; host: KeyHost } | undefined> {
+  const { geminiKey, geminiHost } = await getDevice();
+  return geminiKey ? { key: geminiKey, host: geminiHost ?? "ai-studio" } : undefined;
 }
 
 /**
@@ -31,18 +40,32 @@ export function maskKey(key: string): string {
 export type KeyRefusal = "refused" | "blocked";
 
 /**
- * Ask Google whether this key works (one free request); `/advanced` won't
- * store a key it hasn't seen answer. Proves it is a key, and that this
- * browser can reach Google.
+ * Ask both of Google's hosts whether this key works; `/advanced` won't store a
+ * key neither has answered for. Both, because a key's look doesn't say which
+ * it is, and **Vertex wins a tie**: a Cloud key that AI Studio also lists
+ * models for is billed there against a prepay balance the Cloud credit can't
+ * fill (docs/scan-worker.md#a-key-of-your-own).
  */
-export async function checkGeminiKey(key: string): Promise<{ ok: true } | { ok: false; why: KeyRefusal }> {
+export async function checkGeminiKey(key: string): Promise<{ ok: true; host: KeyHost } | { ok: false; why: KeyRefusal }> {
+  const [vertex, aiStudio] = await Promise.all([
+    ask(VERTEX_URL, { method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": key }, body: VERTEX_PROBE }),
+    ask(MODELS_URL, { headers: { "x-goog-api-key": key } }),
+  ]);
+  if (vertex === "ok") return { ok: true, host: "vertex" };
+  if (aiStudio === "ok") return { ok: true, host: "ai-studio" };
+  // Blocked from either says nothing about the key, which may be that host's.
+  return { ok: false, why: vertex === "blocked" || aiStudio === "blocked" ? "blocked" : "refused" };
+}
+
+async function ask(url: string, init: RequestInit): Promise<"ok" | KeyRefusal> {
   let res: Response;
   try {
-    res = await fetch(MODELS_URL, { headers: { "x-goog-api-key": key } });
+    res = await fetch(url, init);
   } catch {
     // fetch only rejects when the request never reached a server — blocked,
     // proxied, or a dead radio. Not a verdict on the key.
-    return { ok: false, why: "blocked" };
+    return "blocked";
   }
-  return res.ok ? { ok: true } : { ok: false, why: "refused" };
+  // A 429 is a key Google knows, out of quota this minute: still the right key.
+  return res.ok || res.status === 429 ? "ok" : "refused";
 }

@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-22* — "BYOK should accept both a vertex and gemini api key". A
+  key's look says nothing about its host, so saving asks both. Not every
+  Google API takes a key: Vertex 401s a bogus one with "API keys are not
+  supported", so probe with curl before trusting a free endpoint to answer.
+
 - *2026-10-22* — "Produce ~10 receipts to test the limits of the scanning", then
   "fell right into the trap". Each receipt aimed at one rule, with an answer
   key saying in advance what passing meant, so the miss came back diagnosed.
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "(or at least have some margin)". The second line widened the first: an inset
   is enough. A press wash only shows while held, so drive learnt `down` to
   photograph one rather than guess it from the CSS.
-
-- *2026-10-20* — "Equally rude but less specific so the model gets to be a
-  bit more creative". Two example roasts and two lists of targets were a
-  script it could only recite. Then "where else": in the reading, each example
-  is a fixed misreading — keep those; only the jokes want room.

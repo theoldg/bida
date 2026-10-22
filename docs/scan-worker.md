@@ -11,25 +11,25 @@ One key everybody shares means no per-user signup, and it cannot be shipped to
 a phone, so it lives on the Worker and **Trust** below is what that costs.
 
 It is an **Agent Platform key, and it goes to Vertex** (`VERTEX_URL`), not to
-the AI Studio API a brought key uses (`AI_STUDIO_URL`). That is not a
+the AI Studio API (`AI_STUDIO_URL`). That is not a
 preference: the two have separate billing, and Google's Cloud credit can only
 be spent on the Vertex side — the AI Studio API has its own prepay balance and
 refuses with *"prepayment credits are depleted"* however much is in the Cloud
 account. Vertex also requires `role` on a `contents` entry, which AI Studio
 defaults silently; core states it so one envelope satisfies both.
 
-Not because the browser can't call Google: it can.
-`generativelanguage.googleapis.com` answers a preflight from any origin and
-allows `x-goog-api-key`. That is what makes the section below possible — and it
+Not because the browser can't call Google: it can. Both hosts answer a
+preflight from any origin and allow `x-goog-api-key`. That is what makes the section below possible — and it
 changes nothing about *our* key, which is shared and therefore never leaves the
 server.
 
 ## A key of your own
 
 **Settings → Advanced → Bring your own key** (`/advanced`, off Settings).
-Paste a Gemini API key and this phone stops using the shared one: it builds the
-envelope itself and calls Google directly, so the scan never touches the
-Worker at all.
+Paste a Gemini (AI Studio) or Vertex AI API key and this phone stops using the
+shared one: it builds the envelope itself and calls Google directly, so the
+scan never touches the Worker at all. Which host the key belongs to is stored
+beside it (`geminiHost`; absent is AI Studio, from before there were two).
 
 What that drops is everything guarding a key that is no longer in play — the
 bearer token, Turnstile, and all three budget buckets. What it does not touch
@@ -47,12 +47,17 @@ Three consequences worth stating plainly, because the screen states them:
 - **The key is on that phone**, in the device record like the group secrets
   beside it (`web/lib/db/dexie.ts`), device-local and never an op.
 
-**Saving checks the key** against Google's free `models` list before storing
-it, which answers two questions at once: whether the key works, and whether
-this browser can reach Google at all. The second has no other moment to be
+**Saving checks the key** on both hosts at once before storing it — a key's
+look doesn't say which it is — which answers two questions: whether the key
+works and where, and whether this browser can reach Google at all. AI Studio is
+asked its free `models` list; Vertex lists nothing for an API key, so it is
+asked a two-word question on the key's own bill. **Vertex wins a tie**: a Cloud
+key AI Studio also lists models for would be billed there against a prepay
+balance the Cloud credit can't fill. The second has no other moment to be
 found in — a content blocker or a shield defeats the whole feature, however
 good the key is, and finding that out with the key in hand beats finding it out
-over a receipt. A key Google refuses is not stored. **A key that validates is
+over a receipt. A key both hosts refuse is not stored, and one host out of
+reach makes it "blocked", not "refused". **An AI Studio key that validates is
 not a key that works**, though: the list answers 200 for a key with no credit,
 so it proves nothing about whether a scan will be paid for (`checkGeminiKey`).
 
@@ -321,17 +326,17 @@ Deliberate, for a group of friends under fifty people:
   photographed. `/about` names it as the exception rather than
   burying it in a clause. It is not training data: Vertex does not train on
   what it reads.
-- **A brought key is the exception to that exception.** `/advanced` takes an AI
-  Studio key, and the free tier of that API *is* used to improve Google's
-  products. So the path that keeps the photo away from our server is the one
+- **A brought AI Studio key is the exception to that exception.** The free
+  tier of that API *is* used to improve Google's products; a brought Vertex
+  key is not. So the path that keeps the photo away from our server is the one
   where Google may train on it, and `/advanced` says so in as many words —
   `/about` only points there, rather than repeating it. The inversion is worth
   re-reading before editing either sentence.
 - **Terms can change overnight.** If they do, scanning 404s and the button
   hides. The app is unaffected.
 
-Training survives only on a brought free-tier key, where the person chose the
-payer. The photo is not stored at all
+Training survives only on a brought free-tier AI Studio key, where the person
+chose the payer. The photo is not stored at all
 ([product.md](product.md#deliberately-not-in-the-mvp)).
 
 ## Gotchas

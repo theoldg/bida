@@ -59,11 +59,16 @@ export interface DeviceRecord {
   scan?: { id: string; secret: string };
   /** A pasted Gemini key: scans go straight to Google. Never an op, never leaves the phone. */
   geminiKey?: string;
+  /** Which of Google's two hosts answered for it; absent is AI Studio, the only one there once was. */
+  geminiHost?: KeyHost;
   /** Advice only, the Worker decides (lib/scan/budget.ts). */
   scanLog?: { id: string; at: number }[];
   /** `demoStamp()` of the seeded demo; a build whose seed differs re-seeds it. */
   demoSeed?: string;
 }
+
+/** AI Studio takes a Gemini API key, Vertex a Cloud one (lib/scan/key.ts). */
+export type KeyHost = "ai-studio" | "vertex";
 
 interface SyncFailure {
   /** Consecutive failures: tells a blip from an outage. */

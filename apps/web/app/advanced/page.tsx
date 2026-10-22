@@ -34,7 +34,8 @@ export default function AdvancedPage() {
 }
 
 /**
- * A Gemini key of your own.
+ * A Gemini key of your own — AI Studio's or a Cloud project's for Vertex,
+ * told apart by asking both (`checkGeminiKey`).
  *
  * **One row, which locks** — the add-a-name row (`components/name-adder.tsx`).
  * Before, you type into it; after, it is disabled and masked with a bin where
@@ -49,6 +50,7 @@ export default function AdvancedPage() {
 function OwnKey() {
   const device = useDevice();
   const saved = device?.geminiKey;
+  const host = device?.geminiHost ?? "ai-studio";
   const { key } = copy.advanced;
 
   const [typed, setTyped] = useState("");
@@ -66,7 +68,7 @@ function OwnKey() {
     // Only a key Google has answered for is written. A refusal leaves what was
     // typed where it is: it may be one character short of right.
     if (!answer.ok) return setRefused(answer.why);
-    await setGeminiKey(candidate);
+    await setGeminiKey(candidate, answer.host);
     setTyped("");
   }
 
@@ -112,9 +114,9 @@ function OwnKey() {
       </form>
 
       {/* One line under the row, whatever it has to say: that the key
-          went in, that Google said no, or that this browser cannot
+          went in and where to, that Google said no, or that this browser cannot
           reach Google at all. */}
-      {saved ? <p className="keynote">{key.accepted}</p> : null}
+      {saved ? <p className="keynote">{key.accepted[host]}</p> : null}
       {checking ? <p className="keynote">{key.checking}</p> : null}
       {refused ? <p className="failure keynote">{key[refused]}</p> : null}
     </>

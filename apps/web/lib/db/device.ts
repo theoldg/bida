@@ -2,7 +2,7 @@
 import { newNodeId } from "@bida/core";
 import { started } from "../diag";
 import { hintResume } from "../first-frame";
-import { db, type DeviceRecord } from "./dexie";
+import { db, type DeviceRecord, type KeyHost } from "./dexie";
 import { whenVisible } from "./visible";
 
 const DEFAULTS: Omit<DeviceRecord, "nodeId"> = {
@@ -127,7 +127,9 @@ export async function setNotifyNudgeCollapsed(collapsed: boolean): Promise<void>
  * because pasted keys carry newlines; removal is `undefined`, the same absent
  * every phone that never pasted one reads.
  */
-export async function setGeminiKey(key: string | undefined): Promise<void> {
+export async function setGeminiKey(key: string | undefined, host: KeyHost = "ai-studio"): Promise<void> {
   const trimmed = key?.trim();
-  await updateDevice({ geminiKey: trimmed ? trimmed : undefined });
+  await updateDevice(trimmed
+    ? { geminiKey: trimmed, geminiHost: host }
+    : { geminiKey: undefined, geminiHost: undefined });
 }

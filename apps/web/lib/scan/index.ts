@@ -1,7 +1,8 @@
 import {
-  AI_STUDIO_URL, buildScanRequestBody, checkScan, correctOneLine,
+  AI_STUDIO_URL, VERTEX_URL, buildScanRequestBody, checkScan, correctOneLine,
   scanCurrency, type ScanLimitScope, type ScanProblem, type ScanResult,
 } from "@bida/core";
+import type { KeyHost } from "../db/dexie";
 import { dateInputValue } from "../format";
 import { groupToken } from "../seal";
 import { noteScan, overCallerBudget } from "./budget";
@@ -83,7 +84,7 @@ async function readBill(
 
   const own = await ownKey();
   const answer = own
-    ? await readOnOwnKey(encode, own)
+    ? await readOnOwnKey(encode, own.key, own.host)
     : await readOnSharedKey(encode, groupId, secret);
 
   const read = parseScanResponse(answer);
@@ -105,11 +106,13 @@ async function readBill(
 async function readOnOwnKey(
   encode: () => Promise<string>,
   key: string,
+  /** One envelope fits both: core states the `role` Vertex insists on. */
+  host: KeyHost,
 ): Promise<unknown> {
   const billBase64 = await encode();
   let res: Response;
   try {
-    res = await fetch(AI_STUDIO_URL, {
+    res = await fetch(host === "vertex" ? VERTEX_URL : AI_STUDIO_URL, {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": key },
       body: JSON.stringify(

@@ -9,7 +9,7 @@ const GEMINI_MODEL = "gemini-3.1-flash-lite";
 
 /**
  * Two hosts, billed differently: Vertex takes our shared key and the Cloud
- * credit; AI Studio takes a person's own key.
+ * credit; a person's own key goes to whichever of the two it belongs to.
  */
 export const VERTEX_URL =
   `https://aiplatform.googleapis.com/v1/publishers/google/models/${GEMINI_MODEL}:generateContent`;
