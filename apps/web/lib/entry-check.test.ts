@@ -38,7 +38,7 @@ describe("checkEntry", () => {
     const c = check(expense({ payers: { [THEO]: 3000, [MARIE]: 2000 } }));
     expect(c.ready).toBe(false);
     expect(c.payersOff).toBe(true);
-    expect(c.blocker).toBe(copy.form.offBy("Paid by", `€10.00 ${copy.payers.over}`));
+    expect(c.blocker).toBe(copy.form.offBy("Paid by", copy.payers.over("€10.00")));
     expect(check(expense({ payers: { [THEO]: 3000, [MARIE]: 1000 } })).payersOff).toBe(false);
   });
 

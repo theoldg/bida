@@ -78,11 +78,11 @@ export function priced(amount: string, currency: CurrencyCode): string {
 function shortfallText(
   check: { problem?: string; diffMinor?: number; message?: string },
   currency: CurrencyCode,
-  words: { under: string; over: string },
+  words: { under: (amount: string) => string; over: (amount: string) => string },
 ): string {
   const diff = check.diffMinor ?? 0;
-  if (check.problem === "under") return `${money(diff, currency)} ${words.under}`;
-  if (check.problem === "over") return `${money(-diff, currency)} ${words.over}`;
+  if (check.problem === "under") return words.under(money(diff, currency));
+  if (check.problem === "over") return words.over(money(-diff, currency));
   return check.message ?? "";
 }
 

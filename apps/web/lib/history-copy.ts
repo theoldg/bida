@@ -211,7 +211,7 @@ export function describe(
         parts.push({ what: said.changedInvolved(who), label: named.involved, rows });
       } else if (rows.length && proportions(was) !== proportions(now)) {
         const mode = modeOf(rev.after);
-        const word = mode ? (copy.split.mode[mode] ?? mode).toLowerCase() : "";
+        const word = mode ? copy.split.how[mode] ?? mode : "";
         sharesPart = mode && mode !== modeOf(rev.before)
           ? { what: said.splitAs(who, word), label: named.splitAs(word), rows }
           : { what: said.changedShares(who), label: named.split, rows };

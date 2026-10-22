@@ -428,7 +428,7 @@ function ExpenseDetail({ expense, kind, group, data }: {
           <Eyebrow style={{ marginBottom: 4 }}>
             {copy.entry.splitMode(copy.entryKind.split[kind],
               // `??`: a mode this build doesn't know heads as itself.
-              (copy.split.mode[expense.split.mode] ?? expense.split.mode).toLowerCase())}
+              copy.split.how[expense.split.mode] ?? expense.split.mode)}
           </Eyebrow>
           {/* Only the people in the split: a row per outsider owing nothing says
               what their absence already says. */}
