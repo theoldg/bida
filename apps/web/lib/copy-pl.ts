@@ -18,11 +18,11 @@ import type { Copy } from "./copy";
  * "Kopiuj link" · group grupa · history historia · people and members osoby ·
  * split podział, podzielić · scan skan, skanuj · amount kwota · currency waluta
  * · rate kurs · title tytuł · note notatka · date data. You owe "masz do
- * oddania", you're owed "należy Ci się". Paid by "zapłacone przez", received
- * by "otrzymane przez"; a missing field says "Wpisz kwotę". A bill's lines are
- * pozycja, zniżka, opłata; a tip is napiwek. Undecided: any past
- * tense that agrees with a name. A verb may change with a count (`byCount`): rearranging a
- * sentence to dodge one reads worse.
+ * oddania", you're owed "należy Ci się". Paid by "zapłacone przez", received by
+ * "otrzymane przez"; a missing field says "Wpisz kwotę". A bill's lines are
+ * pozycja, zniżka, opłata; a tip is napiwek. bida declines: "do bidy", "z
+ * bidą". Undecided: any past tense that agrees with a name. A verb may change
+ * with a count (`byCount`): rearranging a sentence to dodge one reads worse.
  */
 const rules = new Intl.PluralRules("pl");
 
@@ -535,26 +535,34 @@ export const pl: Copy = {
 
   quick: {
     title: "Podziel paragon",
-    lede: "???",
-    who: "???",
-    noLines: "???",
-    keptOld: "???",
-    discardTitle: "???",
+    lede: "Zrób zdjęcie paragonu, potem zaznacz, kto co miał.",
+    who: "Kto się dzieli",
+    noLines: "Na tym paragonie nie ma pozycji. Nie ma czego przypisać.",
+    keptOld: "Poprzedni paragon nadal tu jest.",
+    discardTitle: "Porzucić ten podział?",
     done: "Zakończ",
-    doneTitle: "???",
-    discardBody: "???",
-    split: "???",
-    copy: { verb: "???", label: "???" },
-    copied: "???",
-    fallbackTitle: "???",
-    fallbackBody: "???",
+    doneTitle: "Zakończyć ten podział?",
+    discardBody: "Nic z niego nie zostanie zapisane.",
+    split: "Podział",
+    copy: { verb: "Kopiuj", label: "Sumy i link" },
+    copied: "Skopiowano",
+    fallbackTitle: "Podział",
+    fallbackBody: "Kopiowanie nie zadziałało: przytrzymaj tekst, żeby go skopiować.",
     message: {
       line: (label, amount) => `${label}: ${amount}`,
-      untitled: "???",
-      link: (url) => `??? ${url}`,
+      untitled: "Podział paragonu",
+      link: (url) => `Kto co miał: ${url}`,
     },
-    notShared: { title: "???", offline: "???", unsent: "???" },
-    landing: { none: "???", offline: "???", unreadable: "???" },
+    notShared: {
+      title: "Nie wysłano",
+      offline: "Brak sieci. Spróbuj ponownie, gdy wróci połączenie.",
+      unsent: "Podział nie dotarł do bidy, więc skopiowany link jeszcze się nie otworzy. Spróbuj ponownie.",
+    },
+    landing: {
+      none: "Pod tym linkiem nie ma podziału. Czat mógł go uciąć: poproś o niego jeszcze raz.",
+      offline: "Nie można połączyć się z bidą. Sprawdź połączenie i spróbuj ponownie.",
+      unreadable: "Ten link nie otworzył niczego, co ta wersja bidy umie odczytać.",
+    },
   },
 
   // ------------------------------------------------------------- one entry
@@ -916,32 +924,32 @@ export const pl: Copy = {
     ratePair: (code, rate, base) => `1 ${code} = ${rate} ${base}`,
   },
   currency: {
-    title: "???",
-    other: "???",
-    otherNote: "???",
+    title: "Waluta",
+    other: "Inna…",
+    otherNote: "dowolny trzyliterowy kod",
     otherPlaceholder: "UZS",
-    isBase: "???",
+    isBase: "w tej walucie rozlicza się grupa",
   },
 
   // ------------------------------------------------------ exchange rates
 
   rates: {
-    editTitle: () => "???",
+    editTitle: (code) => `Kurs ${code}`,
     oneOf: (code) => `1 ${code} =`,
     from: {
-      fetched: () => "???",
-      fetchedUndated: "???",
-      typed: "???",
-      copied: "???",
-      imported: "???",
-      group: "???",
-      loading: "???",
-      offline: "???",
-      unavailable: "???",
+      fetched: (date) => `sprawdzony: kurs z ${date}`,
+      fetchedUndated: "sprawdzony",
+      typed: "Twój",
+      copied: "nie udało się sprawdzić: ostatni kurs grupy",
+      imported: "kurs z importu",
+      group: "kurs grupy z chwili zapisu",
+      loading: "sprawdzanie…",
+      offline: "brak sieci: wpisz go",
+      unavailable: "nie udało się sprawdzić: wpisz go",
     },
-    refetch: "???",
-    failed: () => "???",
+    refetch: "Sprawdź kurs",
+    failed: (why) => `Nie udało się zapisać kursu: ${why}`,
     at: "@",
-    openFor: () => "???",
+    openFor: (code) => `Wpisz kurs ${code}`,
   },
 };
