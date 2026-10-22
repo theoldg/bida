@@ -109,8 +109,11 @@ describe("sealOp / openOp", () => {
   it("refuses a flipped bit", async () => {
     const crypto = await deriveGroupCrypto(SECRET, GROUP);
     const sealed = await sealOp(crypto, op());
-    const flipped = sealed.sealed.slice(0, -2)
-      + (sealed.sealed.at(-2) === "A" ? "B" : "A") + sealed.sealed.at(-1);
+    // Mid-body: a character before "=" carries padding bits, and flipping one
+    // of those changes no byte at all — one run in sixteen opened fine.
+    const at = sealed.sealed.length >> 1;
+    const flipped = sealed.sealed.slice(0, at)
+      + (sealed.sealed[at] === "A" ? "B" : "A") + sealed.sealed.slice(at + 1);
     await expect(openOp(crypto, { ...sealed, sealed: flipped })).rejects.toThrow(SealError);
   });
 
