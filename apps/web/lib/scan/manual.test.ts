@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { ReceiptItem } from "@bida/core";
 import {
-  billFromRows, blankRow, keptTip, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, rowsFromExtras, setCount,
-  setTotal, setUnit, withItemAdded,
+  billFromRows, blankRow, keptTip, readIn, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, rowsFromExtras, rowsTranslate,
+  setCount, setTotal, setUnit, withItemAdded,
 } from "./manual";
 import { unfoldAll } from "./items";
 
@@ -87,13 +87,18 @@ describe("rows and the draft's bill", () => {
     expect(back.items.at(-1)).toMatchObject({ label: "Couscous", labelEn: null });
   });
 
-  it("names each line as the bill is read, with the other name under it until retyped", () => {
+  it("names each line as the bill is read, and swaps only the untouched names when read the other way", () => {
     const printed = rowsFromBill(bill, "EUR", false);
-    expect(printed.map((r) => [r.label, otherName(r)])).toEqual([["Soda", null], ["Tagine", "Lamb stew"]]);
-    const english = rowsFromBill(bill, "EUR", true);
-    expect(english.map((r) => [r.label, otherName(r)])).toEqual([["Soda", null], ["Lamb stew", "Tagine"]]);
-    expect(otherName({ ...english[1]!, label: "Lamb stew " })).toBe("Tagine");
-    expect(otherName({ ...english[1]!, label: "Beef stew" })).toBeNull();
+    expect(printed.map((r) => r.label)).toEqual(["Soda", "Tagine"]);
+    expect(rowsTranslate(printed)).toBe(true);
+    const english = readIn(printed, true);
+    expect(english.map((r) => r.label)).toEqual(["Soda", "Lamb stew"]);
+    expect(readIn(english, false).map((r) => r.label)).toEqual(["Soda", "Tagine"]);
+    const typed = [printed[0]!, { ...printed[1]!, label: "Couscous" }];
+    expect(readIn(typed, true).map((r) => r.label)).toEqual(["Soda", "Couscous"]);
+    expect(rowsTranslate(typed)).toBe(false);
+    // Read the other way, the bill saves as it was.
+    expect(billFromRows(english, { items: bill, assignments: null }, "EUR").items).toEqual(bill);
   });
 
   it("saves an untouched English name back as both, and a typed one as the only name", () => {

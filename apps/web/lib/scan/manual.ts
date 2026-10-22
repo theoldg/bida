@@ -1,6 +1,6 @@
 // Doc: docs/receipt-scanning.md#typing-a-bill-in
 import { minorToDecimalString, parseMinor, type BillExtras, type ReceiptExtra, type ReceiptItem } from "@bida/core";
-import { billLabel, MAX_PORTIONS, printedBill, unfoldAll } from "./items";
+import { billLabel, hasTranslation, MAX_PORTIONS, printedBill, unfoldAll } from "./items";
 
 /**
  * What a line does to the money: an item is had by somebody; a discount and a
@@ -18,7 +18,7 @@ export interface ItemRow {
   kind: LineKind;
   label: string;
   /**
-   * The line's two names as it opened, and which of them the field showed.
+   * The line's two names as it opened, and which of them the field shows.
    * Kept only while the field still says `shown`: a typed name is the only one.
    */
   was: { label: string; labelEn: string | null; shown: string } | null;
@@ -114,12 +114,33 @@ export function rowIsBad(row: ItemRow, currency: string): boolean {
   return minor === null || minor <= 0 || row.label.trim() === "";
 }
 
-/** The other name, while the field still says the one it opened on. */
-export function otherName(row: ItemRow): string | null {
-  const was = row.was;
-  if (!was || row.label.trim() !== was.shown) return null;
-  const other = was.shown === was.label ? was.labelEn : was.label;
-  return other && other !== was.shown ? other : null;
+/** A name still as the line opened, which keeps both of the line's names. */
+function untouched(row: ItemRow): boolean {
+  return !!row.was && row.label.trim() === row.was.shown;
+}
+
+/** The names a row is saved under: both while untouched, otherwise the one typed. */
+export function namesOf(row: ItemRow): { label: string; labelEn: string | null } {
+  return row.was && untouched(row)
+    ? { label: row.was.label, labelEn: row.was.labelEn }
+    : { label: row.label.trim(), labelEn: null };
+}
+
+/** Whether any row still has a second name to be read in. */
+export function rowsTranslate(rows: readonly ItemRow[]): boolean {
+  return hasTranslation(rows.flatMap((row) => (row.was && untouched(row) ? [row.was] : [])));
+}
+
+/**
+ * The rows read the other way: an untouched name becomes the line's other
+ * name; a typed one is the line's only name, and stays.
+ */
+export function readIn(rows: readonly ItemRow[], english: boolean): ItemRow[] {
+  return rows.map((row) => {
+    if (!row.was || !untouched(row)) return row;
+    const shown = billLabel(row.was, english) || row.was.shown;
+    return { ...row, label: shown, was: { ...row.was, shown } };
+  });
 }
 
 /**
@@ -190,15 +211,9 @@ export function billFromRows(
   charges: ReceiptExtra[];
 } {
   const lines = rows.filter((row) => !rowIsEmpty(row) && !rowIsBad(row, currency));
-  const line = (row: ItemRow): ReceiptExtra => {
-    const label = row.label.trim();
-    const kept = row.was && label === row.was.shown ? row.was : null;
-    return {
-      label: kept ? kept.label : label,
-      labelEn: kept ? kept.labelEn : null,
-      amount: minorToDecimalString(rowMinor(row, currency)!, currency),
-    };
-  };
+  const line = (row: ItemRow): ReceiptExtra => (
+    { ...namesOf(row), amount: minorToDecimalString(rowMinor(row, currency)!, currency) }
+  );
   const extras = (kind: LineKind) => lines.filter((row) => row.kind === kind).map(line);
   const discounts = extras("discount");
   const charges = extras("charge");

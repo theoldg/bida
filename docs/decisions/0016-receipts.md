@@ -142,7 +142,7 @@ grid is holding the paper, and a screen that silently renames "Tajine" to "Lamb
 stew" cannot be checked against it — the translation is for reading a bill you
 can't, which is a choice and not the resting state. **The choice is the
 bill's** (`receiptEnglish`), saved by the toggle like any edit, and it reaches
-every reading of that bill: the grid, each person's lines on the entry screen,
+every reading of that bill: the grid, the typed bill, each person's lines on the entry screen,
 and a quick split's link. It was the phone's once; but a table reading a bill
 in Huttese wants it in English for everyone, and the demo could not seed a
 per-phone setting without reaching every other group on the phone.

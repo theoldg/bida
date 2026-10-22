@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-22* — "Add a toggle similar to the who-had-what editor ... share
+  the translation state obviously". The "obviously" was the spec: the same
+  draft field, written at once like the grid's, so a look-only toggle never
+  made Back ask to discard.
+
 - *2026-10-22* — "BYOK should accept both a vertex and gemini api key". A
   key's look says nothing about its host, so saving asks both. Not every
   Google API takes a key: Vertex 401s a bogus one with "API keys are not
@@ -80,13 +85,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   build: say yes, then name two flaws seen in the photo. Then "do neither,
   push it" — the critique was the owner's to take, and declining it is an
   answer too.
-
-- *2026-10-21* — "The diag screen takes a while to open when there's a lot of
-  logs". The guess was the database wait; a profile said layout, every 2s, of
-  lines that hadn't changed. Measure before choosing which of the owner's
-  offered fixes to build.
-
-- *2026-10-21* — "The copy button wash should respect the margin here", then
-  "(or at least have some margin)". The second line widened the first: an inset
-  is enough. A press wash only shows while held, so drive learnt `down` to
-  photograph one rather than guess it from the CSS.

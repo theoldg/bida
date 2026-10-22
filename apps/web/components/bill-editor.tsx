@@ -15,8 +15,8 @@ import { glide } from "../lib/seek";
 import { getDraft, saveDraft, tabAfterScan, type EntryDraft } from "../lib/draft";
 import { MAX_PORTIONS, receiptTotalMinor } from "../lib/scan/items";
 import {
-  billFromRows, blankRow, keptTip, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, rowsFromExtras, setCount,
-  setTotal, setUnit, withItemAdded, type ItemRow, type LineKind,
+  billFromRows, blankRow, keptTip, namesOf, readIn, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, rowsFromExtras,
+  rowsTranslate, setCount, setTotal, setUnit, withItemAdded, type ItemRow, type LineKind,
 } from "../lib/scan/manual";
 import { NO_AUTOFILL } from "../lib/autofill";
 
@@ -34,10 +34,10 @@ function missingOf(row: ItemRow, currency: string): { name: boolean; price: bool
   return { name: row.label.trim() === "", price: minor === null || minor <= 0 };
 }
 
-/** The bill as it would be saved, so leaving untouched never asks. */
+/** The bill as it would be saved, so leaving untouched — or only read the other way — never asks. */
 function shapeOf(rows: readonly ItemRow[], tip: string, currency: string): string {
   return JSON.stringify([keptTip(tip, currency), ...rows.filter((r) => !rowIsEmpty(r))
-    .map((r) => [r.kind, r.label.trim(), r.kind === "item" ? r.count : 1, rowMinor(r, currency)])]);
+    .map((r) => [r.kind, namesOf(r), r.kind === "item" ? r.count : 1, rowMinor(r, currency)])]);
 }
 
 /**
@@ -61,8 +61,9 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
 }) {
   const currency = draft.currency;
   const before = draft.receiptItems ?? [];
+  // The bill's reading, the grid's toggle's too: a name not yet retyped follows it.
+  const [english, setEnglish] = useState(draft.receiptEnglish === true);
   const [rows, setRows] = useState<ItemRow[]>(() => {
-    const english = draft.receiptEnglish === true;
     const opened = rowsFromBill(before, currency, english);
     return [
       ...opened.length > 0 ? opened : [blankRow()],
@@ -130,6 +131,13 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
     setRows((all) => withItemAdded(all, row));
   }
   const remove = (key: string) => setRows((all) => all.filter((row) => row.key !== key));
+  // Not a touch: a way of reading the bill, which leaving keeps, as the grid's does.
+  function translate() {
+    const next = !english;
+    setEnglish(next);
+    setRows((all) => readIn(all, next));
+    saveDraft(draftKey, { ...getDraft(draftKey) ?? draft, receiptEnglish: next ? true : null });
+  }
 
   /** What is refused: the missing fields; with no items, "Add an item"; over the bill, every discount. */
   const aimedAt = (row: ItemRow, field: "name" | "price") => !!missing.get(row.key)?.[field]
@@ -209,7 +217,13 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.scan.byHand.title} back={{ ask: mayLeave }} />
+        <TopBar title={copy.scan.byHand.title} back={{ ask: mayLeave }} right={rowsTranslate(rows) ? (
+          <button type="button" className={`iconbtn${english ? " lit" : ""}`} onClick={translate}
+            aria-pressed={english} title={copy.items.translate[english ? "off" : "on"]}
+            aria-label={copy.items.translate[english ? "off" : "on"]}>
+            <Icon name="translate" size={17} />
+          </button>
+        ) : null} />
         <Scroll ref={scroll}>
           <div className="pad birows">
             {rows.map((row, i) => {
@@ -222,8 +236,6 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
               const unitAimed = priceAimed && many && row.by === "unit";
               const totalAimed = priceAimed && !unitAimed;
               const last = i === lastItem;
-              // Gone once the name is retyped, as it is on save (`billFromRows`).
-              const other = otherName(row);
               return (
                 <div key={row.key} className="card birow">
                   <div className="bihead">
@@ -248,7 +260,6 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                       <Icon name="cross" size={12} />
                     </button>
                   </div>
-                  {other ? <div className="bien">{other}</div> : null}
                   <div className="binums">
                     {item ? <span className="partsend bistep">
                       <button type="button" className="partsstep" disabled={row.count <= 1}
