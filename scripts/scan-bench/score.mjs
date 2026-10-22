@@ -3,7 +3,7 @@
  * Scores runs against WildReceipt's labels, side by side. By hand —
  * docs/scan-bench.md, which says what each line means and what it cannot see.
  *
- *   node scripts/scan-bench/score.mjs LABEL [LABEL…]
+ *   node scripts/scan-bench/score.mjs LABEL [LABEL…] [--only r50-r149]
  *
  * WildReceipt labels boxes, not records: a name, a count and a price are not
  * linked, and every box has its spaces stripped. So text is compared with
@@ -14,15 +14,18 @@
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { parseArgs } from "node:util";
 
-const DATA = join(import.meta.dirname, "data");
-const labels = process.argv.slice(2);
+import { DATA, only, sample } from "./sample.mjs";
+
+const { values, positionals: labels } = parseArgs({ options: { only: { type: "string" } }, allowPositionals: true });
 if (!labels.length) {
   const runs = join(DATA, "runs");
-  console.log(`usage: score.mjs LABEL [LABEL…]\nruns: ${existsSync(runs) ? readdirSync(runs).join(" ") : "none"}`);
+  console.log(`usage: score.mjs LABEL [LABEL…] [--only r50-r149]\nruns: ${existsSync(runs) ? readdirSync(runs).join(" ") : "none"}`);
   process.exit(1);
 }
-const { receipts } = JSON.parse(readFileSync(join(DATA, "sample/truth.json"), "utf8"));
+const named = only(values.only);
+const receipts = sample().filter((r) => named(r.id));
 
 const norm = (s) => (s ?? "").normalize("NFKD").replace(/[^\x00-\x7f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -47,11 +50,12 @@ function similar(a, b) {
   return 1 - d[a.length][b.length] / Math.max(a.length, b.length, 1);
 }
 
-/** Each month as English, French, Spanish, Italian and German tills shorten it, accents dropped. */
+/** Each month in full and as English, French, Spanish, Italian and German tills shorten it, accents dropped. */
 const MONTHS = [
-  ["jan", "janv", "ene", "gen"], ["feb", "fev"], ["mar", "mars"], ["apr", "avr", "abr"],
-  ["may", "mai", "mag"], ["jun", "juin", "giu"], ["jul", "juil", "lug"], ["aug", "aout", "ago"],
-  ["sep", "set"], ["oct", "okt", "ott"], ["nov"], ["dec", "dic", "dez"],
+  ["jan", "january", "janv", "ene", "gen"], ["feb", "february", "fev"], ["mar", "march", "mars"],
+  ["apr", "april", "avr", "abr"], ["may", "mai", "mag"], ["jun", "june", "juin", "giu"],
+  ["jul", "july", "juil", "lug"], ["aug", "august", "aout", "ago"], ["sep", "sept", "september", "set"],
+  ["oct", "october", "okt", "ott"], ["nov", "november"], ["dec", "december", "dic", "dez"],
 ];
 
 /** Does the printed date read as the model's day, in any order a till prints one? */
@@ -59,8 +63,8 @@ function dateRight(model, printed) {
   if (!printed.length) return null;
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(model ?? "");
   if (!m || Number(m[2]) < 1 || Number(m[2]) > 12) return false;
-  // The labels' own misreading: "0ct25'14".
-  const p = norm(printed.join(" ")).replace(/0(?=ct)/g, "o");
+  // The labels' own misreading ("0ct25'14"), and an ordinal ("March27th2018").
+  const p = norm(printed.join(" ")).replace(/0(?=ct)/g, "o").replace(/(\d)(st|nd|rd|th)/g, "$1");
   const [y, mo, d] = [m[1], m[2], m[3]];
   const forms = [];
   for (const Y of [y, y.slice(2)]) {

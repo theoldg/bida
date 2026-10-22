@@ -7,9 +7,12 @@ real money on the owner's Vertex key (cents a run).*
 
 ```bash
 node scripts/scan-bench/fetch.mjs                 # once: WildReceipt (~185 MB) and a 50-receipt sample
-node scripts/scan-bench/run.mjs                   # every receipt three times, labelled with the commit
+node scripts/scan-bench/run.mjs                   # every receipt three times (--repeat, --only r50-r149, --failed)
 node scripts/scan-bench/score.mjs LABEL [LABEL…]  # side by side, then every receipt not always accepted
 ```
+
+**Write what a run found in [LOG.md](../scripts/scan-bench/LOG.md)**, beside
+the code: the label, the receipts, and every failure judged by eye.
 
 Everything lands in `scripts/scan-bench/data/`, gitignored: the dataset's
 licence is unstated, so its images never enter the repo. The key is
@@ -22,8 +25,9 @@ licence is unstated, so its images never enter the repo. The key is
 `parseScanResponse`, `correctOneLine` and `checkScan`, exactly as
 `scanReceipt` does. Each image is first shrunk the way the phone shrinks a
 photo — a megapixel, JPEG at 0.7, in Chromium — but not cropped to the bill:
-these are photos of the bill already. A run's label defaults to the commit,
-`-dirty` when the prompt has unsaved edits, so a change is measured by running
+these are photos of the bill already. A run's label defaults to the last commit
+that changed how a bill is read (`scan-body.ts`, `scan.ts`, `response.ts`),
+`-dirty` while those have unsaved edits, so a change is measured by running
 before and after and scoring both labels together.
 
 **Three reads per receipt, because Gemini doesn't answer the same way twice.**
@@ -34,7 +38,8 @@ receipt accepted 3/3 before and 0/3 after has changed.
 
 [WildReceipt](https://download.openmmlab.com/mmocr/data/wildreceipt.tar): 1,740
 receipts photographed in the wild, 472 in the test split the sample is drawn
-from (`--count`, `--seed`; the same seed draws the same receipts anywhere).
+from (`--count`, `--seed`; the same seed draws the same receipts anywhere, and
+a larger count keeps the ones already drawn and adds to them).
 Mostly English and American — a handful in euros, none Polish — so it says
 the scan reads well, and little about the bills this app's people bring.
 

@@ -4,29 +4,32 @@
  * prompt from core, then the phone's own parse, `correctOneLine` and
  * `checkScan` — and keeps each answer. By hand — docs/scan-bench.md.
  *
- *   node scripts/scan-bench/run.mjs [--label NAME] [--repeat 3] [--only r03,r08]
+ *   node scripts/scan-bench/run.mjs [--label NAME] [--repeat 3] [--only r03,r50-r149] [--failed]
  *
  * The key is VERTEX_API_TOKEN, from the environment or the repo's .env. The
- * label defaults to the commit, marked `-dirty` when the prompt has unsaved
- * edits; a run already on disk is skipped, so an interrupted one resumes.
+ * label defaults to the last commit that changed how a bill is read, marked
+ * `-dirty` when those files have unsaved edits. A read already on disk is
+ * skipped, so an interrupted run resumes and a larger --repeat adds reads;
+ * --failed narrows that to the receipts some read so far was refused on.
  */
 import "./ts.mjs";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 
 import { ROOT } from "../lib/together.mjs";
+import { DATA, only, sample } from "./sample.mjs";
 
 const core = await import(join(ROOT, "packages/core/src/index.ts"));
 const { parseScanResponse } = await import(join(ROOT, "apps/web/lib/scan/response.ts"));
 
-const DATA = join(import.meta.dirname, "data");
 const { values } = parseArgs({
   options: {
     label: { type: "string" },
     repeat: { type: "string", default: "3" },
     only: { type: "string" },
+    failed: { type: "boolean", default: false },
   },
 });
 
@@ -38,18 +41,25 @@ function key() {
   return line.slice("VERTEX_API_TOKEN=".length).trim().replace(/^["']|["']$/g, "");
 }
 
+/** What decides a reading: a commit touching none of these reads bills the same way. */
+const READING = ["packages/core/src/scan-body.ts", "packages/core/src/scan.ts", "apps/web/lib/scan/response.ts"];
+
 function defaultLabel() {
   const git = (...args) => execFileSync("git", args, { cwd: ROOT, encoding: "utf8" }).trim();
-  const dirty = git("status", "--porcelain", "--", "packages/core/src/scan-body.ts", "packages/core/src/scan.ts");
-  return git("rev-parse", "--short", "HEAD") + (dirty ? "-dirty" : "");
+  const dirty = git("status", "--porcelain", "--", ...READING);
+  return git("log", "-1", "--format=%h", "--", ...READING) + (dirty ? "-dirty" : "");
 }
 
 const label = values.label ?? defaultLabel();
 const repeat = Number(values.repeat);
-const only = values.only ? new Set(values.only.split(",")) : null;
-const { receipts } = JSON.parse(readFileSync(join(DATA, "sample/truth.json"), "utf8"));
+const named = only(values.only);
 const out = join(DATA, "runs", label);
 mkdirSync(out, { recursive: true });
+const refused = new Set(readdirSync(out).filter((f) => f.endsWith(".json")).flatMap((f) => {
+  const run = JSON.parse(readFileSync(join(out, f), "utf8"));
+  return run.outcome === "ok" || run.outcome === "corrected" ? [] : [run.id];
+}));
+const receipts = sample().filter((r) => named(r.id) && (!values.failed || refused.has(r.id)));
 const apiKey = key();
 // The Worker's own date: today, UTC.
 const today = new Date().toISOString().slice(0, 10);
@@ -93,20 +103,44 @@ async function one(receipt, n) {
   const read = parseScanResponse(json);
   const v = verdict(read);
   writeFileSync(path, JSON.stringify({ id: receipt.id, n, ms, ...v, read }, null, 1));
-  console.log(`${receipt.id}.${n} ${v.outcome} ${ms}ms`);
+  report(`${receipt.id}.${n} ${v.outcome} ${ms}ms`, v.outcome);
 }
 
 const queue = receipts
-  .filter((r) => !only || only.has(r.id))
-  .flatMap((r) => Array.from({ length: repeat }, (_, n) => [r, n]));
-console.log(`${queue.length} reads → ${out}`);
+  .flatMap((r) => Array.from({ length: repeat }, (_, n) => [r, n]))
+  .filter(([r, n]) => !existsSync(join(out, `${r.id}.${n}.json`)));
+const total = queue.length;
+console.log(`${total} reads → ${out}`);
+
+/**
+ * In a terminal, one line redrawn: a bar, the outcomes so far and the time
+ * left. Anywhere else a line per read, so a log keeps every one.
+ */
+const tally = {};
+let done = 0;
+const startedAt = Date.now();
+function report(line, outcome) {
+  if (outcome) {
+    done++;
+    tally[outcome] = (tally[outcome] ?? 0) + 1;
+  }
+  if (!process.stdout.isTTY) return console.log(line);
+  if (!outcome) process.stdout.write(`\r\x1b[K${line}\n`);
+  const filled = Math.round((24 * done) / Math.max(total, 1));
+  const left = done ? Math.round(((Date.now() - startedAt) / done) * (total - done) / 1000) : null;
+  const outcomes = Object.entries(tally).map(([k, v]) => `${k} ${v}`).join(" · ");
+  process.stdout.write(`\r\x1b[K[${"#".repeat(filled)}${".".repeat(24 - filled)}] ${done}/${total}`
+    + `  ${outcomes}${left === null ? "" : `  ~${left}s left`}`);
+}
+
 // Four at once: Vertex's quota is generous, and the latency printed is not a phone's.
 await Promise.all(Array.from({ length: 4 }, async () => {
   for (let job = queue.shift(); job; job = queue.shift()) {
     try {
       await one(...job);
     } catch (err) {
-      console.log(`${job[0].id}.${job[1]} FAILED ${err.message}`);
+      report(`${job[0].id}.${job[1]} FAILED ${err.message}`, null);
     }
   }
 }));
+if (process.stdout.isTTY) process.stdout.write("\n");
