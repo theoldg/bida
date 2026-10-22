@@ -280,25 +280,35 @@ a, button, label, select, .seg button, .itemcell {
 
 a.row, button.row, .fab, .btn, .iconbtn, .tlink, .setlink, .seg button, a.card, button.card,
 .itemfold, a.chip, button.chip, .action, .starttile, .field:has(> .pick), a.field,
-.formhead .field {
+.formhead .field, .searchclear, button.itemtext, button.kv, .kv > .copytotal, button.tside, button.tswap,
+.bidrop, .bistep .partsstep, .drow-pick, .rowmenu-item {
   transition: background-image .2s ease;
 }
 /* A mouse gets half a press on hover; a finger never sees it. Before `:active`,
    which wins the tie. */
 @media (hover: hover) and (pointer: fine) {
   a.row, button.row, .fab, .btn:not(:disabled), .iconbtn, .tlink, .setlink, .seg button, a.card,
-  button.card, .itemfold, a.chip, button.chip, .action:not(:disabled), .starttile { cursor: pointer }
+  button.card, .itemfold, a.chip, button.chip, .action:not(:disabled), .starttile, .searchclear,
+  button.itemtext, .itemwho > button.itemcell, button.kv, .kv > .copytotal, button.tside, button.tswap,
+  .bidrop, .partsstep:not(:disabled), .drow-pick:not(:disabled), .rowmenu-item, .allmark { cursor: pointer }
   a.row:hover, button.row:hover, .fab:hover, .iconbtn:hover,
   .tlink:hover, .setlink:hover, .seg button:hover, a.card:hover, button.card:hover, .itemfold:hover,
   a.chip:hover, button.chip:hover, .btn:hover:not(:disabled), .starttile:hover,
-  .field:has(> .pick:hover), a.field:hover, .action:hover:not(:disabled) {
+  .field:has(> .pick:hover), a.field:hover, .action:hover:not(:disabled),
+  .formhead .field:not(:focus-within):has(> :is(input, label):hover), .searchclear:hover,
+  button.itemtext:hover, .entryhistbody:hover, button.kv:hover, .kv > .copytotal:hover,
+  button.tside:hover, .bidrop:hover, .bistep .partsstep:hover:not(:disabled),
+  .drow-pick:hover:not(:disabled), .rowmenu-item:hover, .allmark:hover .allbox {
     background-image: linear-gradient(color-mix(in srgb, var(--press) 55%, transparent),
       color-mix(in srgb, var(--press) 55%, transparent));
   }
-  .btn-p:hover:not(:disabled), .fab:not(.fab-2):hover, .start-p:hover {
+  .btn-p:hover:not(:disabled), .fab:not(.fab-2):hover, .start-p:hover, button.tswap:hover,
+  .btn-pair.pair-p .btn:hover:not(:disabled), .allmark:hover :is(.allbox.all, .allbox.some) {
     background-image: linear-gradient(color-mix(in srgb, var(--press-i) 55%, transparent),
       color-mix(in srgb, var(--press-i) 55%, transparent));
   }
+  /* The who-had-what press is a tile, not the cell. */
+  .itemwho > .itemcell:hover::before { opacity: .55 }
 }
 a.row:active, button.row:active, .fab:active, .iconbtn:active,
 .tlink:active, .setlink:active, .seg button:active, a.card:active, button.card:active, .itemfold:active,

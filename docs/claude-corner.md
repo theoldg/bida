@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-22* — "Is it an easy fix? what else is missing the effect?", then
+  "do all". Asked a question, answer it — the list with where each lives and
+  which need a variant — and build nothing: the owner chose the scope in two
+  words. Drive is a phone, so check a hover on a desktop page of its own.
+
 - *2026-10-22* — A redditor's "autofill css you didn't override", then two
   interrupts: "we need a garbage value", "fact check me though". The owner's
   memory was half right ("off", not "false"); say which half, with sources,
@@ -86,7 +91,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   sum matching only without them. Asked "would logs help?", say what the
   guess rests on — then build the log that makes the next one a reading.
 
-- *2026-10-19* — "Update the screenshots". One script, six pictures, and all
-  six moved — but a diff of every pixel says nothing. Set each beside its old
-  self and look: the changes were the week's real ones, so the run went in
-  as it came out.

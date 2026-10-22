@@ -304,6 +304,9 @@ in a column of "12.00"s looking like a different kind of number.
 - **`autocomplete="off"` stops Chrome's history, not its autofill** (saved
   names, addresses); a token it doesn't know stops both. Its autofill paint is `!important` in its own sheet, so it can only
   be outwaited — a background transition delayed past anyone's patience.
+- **The hover is an allowlist.** A control whose press is its own rule gets no
+  half wash under a mouse until the hover block in `globals.css` names it too.
+  `pnpm drive` is a phone, so `(hover: hover)` never matches there.
 - iOS Safari in a tab ignores `user-scalable=no`; `preventDefault` on
   `gesturestart` is what holds the scale.
 - **`color-mix` is used unguarded**, which puts the floor at Safari 16.2 and
