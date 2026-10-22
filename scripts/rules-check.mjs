@@ -157,6 +157,11 @@ for (const file of sources(join(ROOT, "apps/web"))) {
         + "fills past \"off\", and the phone offers its saved names and addresses "
         + "(docs/design-system.md#rules-that-are-not-negotiable)");
     }
+    if (/\s(id|name)=/.test(tag)) {
+      fail(file, "an `<input>` with an `id` or `name` — Chrome keeps what was typed under it and "
+        + "offers it back, whatever `autoComplete` says; find it by `data-field` "
+        + "(docs/design-system.md#rules-that-are-not-negotiable)");
+    }
   }
 }
 

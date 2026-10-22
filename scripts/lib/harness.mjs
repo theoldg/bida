@@ -298,7 +298,7 @@ export async function pick(page, opener, row) {
 /** Through the real UI, so a check fails loudly when a screen it isn't looking at breaks. */
 export async function newGroup(page, base, { name, me, members = [], onForm }) {
   await page.goto(`${base}/new`);
-  await page.locator("#g-name").fill(name);
+  await page.locator('[data-field="g-name"]').fill(name);
   for (const member of [me, ...members]) {
     await page.getByLabel("Add someone").fill(member);
     await page.keyboard.press("Enter");

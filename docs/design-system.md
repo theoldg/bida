@@ -285,8 +285,10 @@ in a column of "12.00"s looking like a different kind of number.
    three of `userScalable: false`, `touch-action: pan-x pan-y` on `html, body`
    and `NoPinchZoom` — no one of them covers every browser, and desktop zoom is
    left alone. **Nor does the browser fill a field**: every `<input>` takes
-   `NO_AUTOFILL` (`lib/autofill.ts`, `rules` checks), and one it fills anyway
-   keeps our ground and ink rather than its blue — a web page showing through.
+   `NO_AUTOFILL` (`lib/autofill.ts`) and no `id` or `name` (checks find it by
+   `data-field`; `rules` holds both), and one it fills anyway keeps our ground
+   and ink rather than its blue — a web page showing through. Its paint is
+   `!important`, so a background transition outwaits it, past anyone's patience.
 
 ## Gotchas
 - **In dark, `--card` is darker than `--card-3`.** A raised thing takes
@@ -302,8 +304,8 @@ in a column of "12.00"s looking like a different kind of number.
 - **Native controls follow `color-scheme`, not the tokens.** Without it on the
   theme blocks the date field's calendar glyph stayed black on dark cards.
 - **`autocomplete="off"` stops Chrome's history, not its autofill** (saved
-  names, addresses); a token it doesn't know stops both. Its autofill paint is `!important` in its own sheet, so it can only
-  be outwaited — a background transition delayed past anyone's patience.
+  names, addresses); a token it doesn't know does the reverse — and history is
+  filed under a field's `name`, else its `id`, so ours have neither.
 - **The hover is an allowlist.** A control whose press is its own rule gets no
   half wash under a mouse until the hover block in `globals.css` names it too.
   `pnpm drive` is a phone, so `(hover: hover)` never matches there.

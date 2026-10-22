@@ -112,7 +112,7 @@ an earlier session left behind.
 
 Its first use is the one it is shaped by — handing an agent the app the way a
 stranger gets it, so it has to work the screen out rather than read the source.
-So it offers no vocabulary from the app: no `#g-name`, no `newGroup`, only
+So it offers no vocabulary from the app: no `g-name`, no `newGroup`, only
 numbers. Five rules separate it from dumping `innerText`:
 
 - **Layout decides the lines, not tags.** The app writes `<span>` with

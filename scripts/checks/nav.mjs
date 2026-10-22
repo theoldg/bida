@@ -59,7 +59,7 @@ const group = await (async () => {
   await page.waitForSelector(".starttile");
   await page.locator("a[href='/new']").click();
   await page.waitForURL(/\/new/);
-  await page.locator("#g-name").fill("Trip");
+  await page.locator('[data-field="g-name"]').fill("Trip");
   for (const m of ["Theo", "Marie"]) {
     await page.getByLabel("Add someone").fill(m);
     await page.keyboard.press("Enter");
@@ -91,7 +91,7 @@ async function onLedger() {
   const page = await onLedger();
   await page.locator(".fab").last().click();
   await page.waitForURL(/\/g\/entry\/edit/);
-  await page.locator("#what").fill("Dinner");
+  await page.locator('[data-field="what"]').fill("Dinner");
   await page.locator(".amountfield input, input.amount").first().fill("20");
   await is(page, "the form is pushed onto the ledger", { i: 1, urls: ["/g?id=G", "/g/entry/edit?id=G"] });
   await page.getByRole("button", { name: "Save" }).click();
@@ -277,7 +277,7 @@ async function onLedger() {
   const page = await onLedger();
   await page.locator(".fab").last().click();
   await page.waitForURL(/\/g\/entry\/edit/);
-  await page.locator("#what").fill("Half-typed");
+  await page.locator('[data-field="what"]').fill("Half-typed");
   const before = await stack(page);
   // `page.goBack()` is reported `userInitiated` and `cancelable`; a keyboard
   // shortcut fires no `navigate` in headless Chromium and passes by pressing
@@ -303,7 +303,7 @@ async function onLedger() {
   await page.waitForSelector(".starttile");
   await page.locator("a[href='/new']").click();
   await page.waitForURL(/\/new/);
-  await page.locator("#g-name").fill("Trip");
+  await page.locator('[data-field="g-name"]').fill("Trip");
   void page.goBack().catch(() => {});
   await page.waitForSelector(".scrim").catch(() => {});
   report(await page.locator(".scrim[open]").count() === 1, "a back press on a half-typed /new asks too");
@@ -333,7 +333,7 @@ async function onLedger() {
   await page.waitForSelector(".starttile");
   await page.locator("a[href='/new']").click();
   await page.waitForURL(/\/new/);
-  await page.locator("#g-name").fill("Trip");
+  await page.locator('[data-field="g-name"]').fill("Trip");
   void page.goBack().catch(() => {});
   await page.waitForSelector(".scrim[open]").catch(() => {});
 
@@ -373,7 +373,7 @@ async function onLedger() {
   await page.waitForSelector(".starttile");
   await page.locator("a[href='/new']").click();
   await page.waitForURL(/\/new/);
-  await page.locator("#g-name").fill("Trip");
+  await page.locator('[data-field="g-name"]').fill("Trip");
   void page.goBack().catch(() => {});
   await page.waitForSelector(".scrim[open]");
 
@@ -399,7 +399,7 @@ async function onLedger() {
   const page = await onLedger();
   await page.locator(".fab").last().click();
   await page.waitForURL(/\/g\/entry\/edit/);
-  await page.locator("#what").fill("Half-typed");
+  await page.locator('[data-field="what"]').fill("Half-typed");
   await is(page, "the form sits one entry above a cold ledger",
     { i: 1, urls: ["/g?id=G", "/g/entry/edit?id=G"] });
 
@@ -411,7 +411,7 @@ async function onLedger() {
     window.__blanked = false;
     const look = () => {
       const bar = document.querySelector(".topbar h3");
-      if (bar?.textContent === "New" && !document.querySelector("#what")) window.__blanked = true;
+      if (bar?.textContent === "New" && !document.querySelector('[data-field="what"]')) window.__blanked = true;
     };
     new MutationObserver(look).observe(document.body, { childList: true, subtree: true });
   });
@@ -434,8 +434,8 @@ async function onLedger() {
 // browser's own "Leave site?" guards: answered Discard, it must not ask again.
 for (const [name, from, open, type] of [
   ["the entry form", `/g?id=${group}`, `/g/entry/edit?id=${group}`,
-    (page) => page.locator("#what").click().then(() => page.keyboard.type("Half"))],
-  ["/new", "/", "/new", (page) => page.locator("#g-name").click().then(() => page.keyboard.type("Trip"))],
+    (page) => page.locator('[data-field="what"]').click().then(() => page.keyboard.type("Half"))],
+  ["/new", "/", "/new", (page) => page.locator('[data-field="g-name"]').click().then(() => page.keyboard.type("Trip"))],
 ]) {
   const page = await ctx.newPage();
   await page.goto(`${base}${from}`);
@@ -515,7 +515,7 @@ for (const [name, from, open, type] of [
   await page.locator(".fab").last().click();
   await page.waitForURL(/\/g\/entry\/edit/);
   await page.locator("input.amount").fill("12");
-  await page.locator("#what").fill("Droid oil");
+  await page.locator('[data-field="what"]').fill("Droid oil");
   // Watched frame by frame from inside the page: the live query can draw the
   // saved row a commit after the rest, and that frame is the one that counts.
   await page.evaluate(() => {

@@ -3,7 +3,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Eyebrow } from "@/components/bits";
+import { Eyebrow, FieldLabel } from "@/components/bits";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { CreateAs } from "@/components/create-as";
 import { CurrencyPicker } from "@/components/currency-picker";
@@ -164,10 +164,10 @@ export default function NewGroupPage() {
         <Scroll>
           <div className="pad" style={{ display: "flex", flexDirection: "column", gap: 9, paddingBottom: 10 }}>
             <div className={`field${flashClass(refusedFields.name)}`} onAnimationEnd={settled("name")}>
-              <label htmlFor="g-name">{copy.newGroup.name}</label>
+              <FieldLabel>{copy.newGroup.name}</FieldLabel>
               {/* The same cap every name in the app has: a member's is 40, and
                   a group drawn beside them has no more room than they do. */}
-              <input id="g-name" value={name} autoFocus maxLength={40}
+              <input data-field="g-name" aria-label={copy.newGroup.name} value={name} autoFocus maxLength={40}
                 autoComplete={NO_AUTOFILL} enterKeyHint="next"
                 placeholder={copy.newGroup.namePlaceholder}
                 onChange={(e) => setName(e.target.value)} />

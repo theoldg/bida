@@ -106,7 +106,7 @@ await page.getByRole("button", { name: "Close" }).click();
 // whether the address re-seeds or merely un-hides.
 await page.goto(`${base}/g/entry/edit?id=${groupId}`);
 await page.locator("input.amount").fill("12");
-await page.locator("#what").fill("Droid oil");
+await page.locator('[data-field="what"]').fill("Droid oil");
 await page.getByRole("button", { name: "Save" }).click();
 await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
 await page.waitForFunction(

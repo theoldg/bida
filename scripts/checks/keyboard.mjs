@@ -147,7 +147,7 @@ await page.setViewportSize(phone);
 
 // ---- creating a group ---------------------------------------------------
 await page.goto(`${base}/new`);
-await page.locator("#g-name").fill("Trip");
+await page.locator('[data-field="g-name"]').fill("Trip");
 for (const who of CROWD) {
   await field().fill(who);
   await page.keyboard.press("Enter");
@@ -195,11 +195,11 @@ await clears("people — changing who you are is above the keys", ".pad .btn");
 const caret = () => page.evaluate(() => {
   const el = document.activeElement;
   if (!el || el === document.body) return "nothing";
-  return el.id || el.getAttribute("aria-label") || el.tagName.toLowerCase();
+  return el.dataset.field || el.getAttribute("aria-label") || el.tagName.toLowerCase();
 });
 
 await page.goto(`${base}/new`);
-await page.locator("#g-name").focus();
+await page.locator('[data-field="g-name"]').focus();
 await page.keyboard.press("Enter");
 report(await caret() === "Add someone",
   "/new — the confirm key takes the caret from the name to the add row",
@@ -213,7 +213,7 @@ report(await caret() === "what", "the entry form — the amount hands the caret 
 
 await page.getByRole("button", { name: "As amounts" }).click();
 await settle(page, 120);
-await page.locator("#what").focus();
+await page.locator('[data-field="what"]').focus();
 await page.keyboard.press("Enter");
 report(await caret() === "nothing",
   "the entry form — the note folds the keyboard rather than entering the column",
@@ -269,7 +269,7 @@ report(new Set(payers).size === CROWD.length
 // The add row is the exception: its Enter files the name and hands the caret
 // straight back.
 await page.goto(`${base}/new`);
-await page.locator("#g-name").fill("Trip");
+await page.locator('[data-field="g-name"]').fill("Trip");
 await page.getByLabel("Add someone").fill("Ana");
 await page.keyboard.press("Enter");
 report(await caret() === "Add someone" && await page.locator(".rows .rtitle").count() === 1,

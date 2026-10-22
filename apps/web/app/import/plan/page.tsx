@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { otherCurrencies, plannedCount, ratesWanted } from "@bida/core";
+import { FieldLabel } from "@/components/bits";
 import { Blank, Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { CreateAs } from "@/components/create-as";
 import { copy } from "@/lib/copy";
@@ -120,11 +121,11 @@ export default function ImportPlanPage() {
 
               <div className={`field${nameFlash.flash}`} style={{ marginTop: 14 }}
                 onAnimationEnd={nameFlash.onFlashEnd}>
-                <label htmlFor="i-name">{copy.newGroup.name}</label>
+                <FieldLabel>{copy.newGroup.name}</FieldLabel>
                 {/* Prefilled off the filename, because Splitwise names the
                     export after the group, and editable because a file a
                     mail client renamed says nothing about the trip. */}
-                <input id="i-name" value={name} maxLength={40}
+                <input data-field="i-name" aria-label={copy.newGroup.name} value={name} maxLength={40}
                   autoComplete={NO_AUTOFILL} enterKeyHint="done"
                   placeholder={copy.newGroup.namePlaceholder}
                   onChange={(e) => setPendingImport({ plan, name: e.target.value })} />

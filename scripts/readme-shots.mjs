@@ -71,7 +71,7 @@ async function main() {
 
     await page.goto(`${base}/g/entry/edit?id=${GROUP}`);
     await page.locator("input.amount").fill("320");
-    await page.locator("#what").fill("Hyperdrive coolant");
+    await page.locator('[data-field="what"]').fill("Hyperdrive coolant");
     await settle(page, 300);
     await shot("expense");
 

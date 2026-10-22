@@ -53,7 +53,7 @@ const g = await newGroup(page, base, { name: "Marrakech", me: "Theo", members: [
 for (const [amount, what] of [["4800", "Riad"], ["6200", "Dinner"], ["900", "Taxi"]]) {
   await page.goto(`${base}/g/entry/edit?id=${g}`);
   await page.locator("input.amount").fill(amount);
-  await page.locator("#what").fill(what);
+  await page.locator('[data-field="what"]').fill(what);
   await page.getByRole("button", { name: "Save" }).click();
   await page.waitForURL(/\/g\?id=/);
 }
@@ -154,7 +154,7 @@ await tap("back to the form",
   () => page.locator(".iconbtn[aria-label='Back']").first().click(), "input.amount");
 try {
   await page.locator("input.amount").fill("999");
-  await page.locator("#what").fill("Offline beer");
+  await page.locator('[data-field="what"]').fill("Offline beer");
   await page.getByRole("button", { name: "Save" }).click();
   await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
   await page.waitForSelector("text=Offline beer", { timeout: PATIENCE });

@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-22* — "i still get autocomplete suggestions even after the recent
+  fix". The fact-check before it was half right too: a forum's rule, not
+  Chrome's source. Then a closed window: its transcript held the owner's yes,
+  and the diff showed half its edits never landed. Finish from both.
+
 - *2026-10-22* — "Is it an easy fix? what else is missing the effect?", then
   "do all". Asked a question, answer it — the list with where each lives and
   which need a variant — and build nothing: the owner chose the scope in two
@@ -85,9 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   split". The FAB's scan lands a screen before the button exists, so the
   flash is a mark left by the scan and taken by the button. Sample frames to
   see a flash: one shot at a guessed moment says nothing either way.
-
-- *2026-10-19* — A receipt photo and "it doesn't work". No key here to scan
-  with, but the paper did the arithmetic: three "discount included" notes, a
-  sum matching only without them. Asked "would logs help?", say what the
-  guess rests on — then build the log that makes the next one a reading.
-

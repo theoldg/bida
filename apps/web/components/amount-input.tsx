@@ -55,9 +55,10 @@ function caretAfter(display: string, significant: number): number {
   return display.length;
 }
 
+// No id or name: Chrome files what a field was given under one (lib/autofill.ts).
 type BaseProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
-  "value" | "onChange" | "type" | "inputMode"
+  "value" | "onChange" | "type" | "inputMode" | "id" | "name"
 >;
 
 interface GroupedInputProps extends BaseProps {

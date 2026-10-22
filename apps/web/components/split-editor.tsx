@@ -175,7 +175,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
                   disabled={parts === 0} aria-label={copy.split.fewerParts(m.name)}>
                   <Icon name="minus" size={9} />
                 </button>
-                <PartsInput id={fieldId} className="bignum partsin" autoSize
+                <PartsInput data-field={fieldId} className="bignum partsin" autoSize
                   enterKeyHint={i === members.length - 1 ? "done" : "next"}
                   aria-label={copy.split.partsFor(m.name)}
                   value={parts} placeholder="0"
@@ -187,7 +187,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
               </span>
             ) : spec.mode === "exact" ? (
               <span style={{ display: "flex", alignItems: "center" }}>
-                <MinorAmountInput id={fieldId} className="bignum splitin"
+                <MinorAmountInput data-field={fieldId} className="bignum splitin"
                   enterKeyHint={i === members.length - 1 ? "done" : "next"}
                   aria-label={copy.split.amountFor(m.name)}
                   currency={amountCurrency}

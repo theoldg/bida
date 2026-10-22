@@ -41,7 +41,7 @@ const g = await newGroup(page, base, {
 // ---- an expense --------------------------------------------------------
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("9000");
-await page.locator("#what").fill("Dinner");
+await page.locator('[data-field="what"]').fill("Dinner");
 
 // No feed and no USD entry to borrow from, so it asks — or `rateToBase` would
 // silently stick at "1" (ADR-0005).
@@ -104,7 +104,7 @@ await settle(page, 150);
 const expenseTabs = await page.locator(".splitbox .seg button").count();
 await pick(page, '[aria-label="What kind of entry"]', "Income");
 await page.locator("input.amount").fill("300");
-await page.locator("#what").fill("Deposit back");
+await page.locator('[data-field="what"]').fill("Deposit back");
 report(await page.getByText("Paid to").count() > 0, "an income relabels the payer picker");
 report(await page.locator(".splitbox .seg button").count() === expenseTabs - 1, "an income offers no Items tab");
 
@@ -407,7 +407,7 @@ for (const line of ["created this expense", "created this income", "recorded a t
 // ---- an entry's own rate -----------------------------------------------
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("100");
-await page.locator("#what").fill("Cab");
+await page.locator('[data-field="what"]').fill("Cab");
 await pick(page, '[aria-label="Currency"]', "USD");
 await page.waitForSelector('dialog[aria-label="USD rate"]', { timeout: PATIENCE });
 await page.getByRole("textbox", { name: "Rate, USD to EUR" }).fill("0.8");
@@ -424,7 +424,7 @@ report((await amountOf("Cab")).includes("80"), "and banks it in the group's curr
 
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("10");
-await page.locator("#what").fill("Tram");
+await page.locator('[data-field="what"]').fill("Tram");
 await pick(page, '[aria-label="Currency"]', "USD");
 await page.getByRole("button", { name: "USD rate", exact: true }).filter({ hasText: "0.8" })
   .waitFor({ timeout: PATIENCE }).catch(() => {});
@@ -459,7 +459,7 @@ await settle(page, 200);
 // ---- the cent the form quotes is the cent the ledger keeps -------------
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("10");
-await page.locator("#what").fill("Coffee");
+await page.locator('[data-field="what"]').fill("Coffee");
 await settle(page, 120);
 const rows = () => page.locator(".splitrow").allInnerTexts()
   .then((all) => all.map((t) => t.replace(/\s+/g, " ").trim()).join(" | "));
@@ -554,7 +554,7 @@ report(await page.locator(".rows a.row").count() === beforeDouble + 1,
 
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("6");
-await page.locator("#what").fill("Twice");
+await page.locator('[data-field="what"]').fill("Twice");
 await settle(page, 120);
 await pressSaveTwice();
 await page.waitForFunction(
@@ -577,15 +577,15 @@ report(creates === 1, `one press creates the entry once — ${creates} create(s)
 // ---- a new entry keeps its words across a change of kind ----------------
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("7");
-await page.locator("#what").fill("Convert me");
+await page.locator('[data-field="what"]').fill("Convert me");
 await settle(page, 120);
 await pick(page, '[aria-label="What kind of entry"]', "Transfer");
 await page.waitForSelector(".transfer");
-report((await page.locator("#what").inputValue()) === "Convert me",
+report((await page.locator('[data-field="what"]').inputValue()) === "Convert me",
   "the words survive switching to transfer before saving");
 await pick(page, '[aria-label="What kind of entry"]', "Expense");
 // "7.00", not "7": the kind picker blurs the amount field, which settles.
-report((await page.locator("#what").inputValue()) === "Convert me"
+report((await page.locator('[data-field="what"]').inputValue()) === "Convert me"
   && (await page.locator("input.amount").inputValue()) === "7.00",
   "and switching back before saving loses nothing");
 await page.getByRole("button", { name: "Save" }).click();
@@ -598,7 +598,7 @@ await page.waitForFunction(
 // ---- a refused Save points at the field, once -------------------------
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.waitForSelector("input.amount");
-const titleField = page.locator("#what").locator("xpath=..");
+const titleField = page.locator('[data-field="what"]').locator("xpath=..");
 await page.getByRole("button", { name: "Save" }).click();
 await settle(page, 120);
 report(/flash-/.test(await titleField.getAttribute("class")),
@@ -617,7 +617,7 @@ if (await page.locator("dialog.scrim").count() > 0) {
 }
 const rateNote = page.getByRole("button", { name: "MAD rate", exact: true });
 await page.locator("input.amount").fill("5");
-await page.locator("#what").fill("Rate only");
+await page.locator('[data-field="what"]').fill("Rate only");
 const fullSize = page.viewportSize();
 await page.setViewportSize({ width: fullSize.width, height: 420 });
 await settle(page, 120);
@@ -650,15 +650,15 @@ report(!/flash-/.test(await rateNote.getAttribute("class")),
   "and that flash ends too");
 await pick(page, '[aria-label="Currency"]', "EUR");
 
-await page.locator("#what").fill("Beer");
+await page.locator('[data-field="what"]').fill("Beer");
 await settle(page, 80);
-await page.locator("#what").fill("");
+await page.locator('[data-field="what"]').fill("");
 await settle(page, 80);
 report(!/flash-/.test(await titleField.getAttribute("class")),
   "emptying a field again is not a refusal");
 
 await page.locator("input.amount").fill("40");
-await page.locator("#what").fill("Split check");
+await page.locator('[data-field="what"]').fill("Split check");
 const rowHeights = {};
 for (const tab of ["Evenly", "As amounts", "As parts", "As amounts"]) {
   await page.getByRole("button", { name: tab }).click();
@@ -778,7 +778,7 @@ await settle(page, 120);
 report(/flash-/.test(await payerLine.getAttribute("class")), "and a refused Save flashes them");
 await settle(page, 900);
 await page.locator("input.amount").fill("");
-await page.locator("#what").fill("");
+await page.locator('[data-field="what"]').fill("");
 
 // ---- a refused Done blooms the rows, not the words on them --------------
 await stubScan(page, "cafe-clock");
@@ -836,7 +836,7 @@ for (const path of ["/g/payers", "/g/entry/items", "/g/entry/edit", "/g/claim"])
 const lone = await newGroup(page, base, { name: "Lone", me: "Theo", members: ["Marie"] });
 await page.goto(`${base}/g/entry/edit?id=${lone}`);
 await page.locator("input.amount").fill("10");
-await page.locator("#what").fill("Only");
+await page.locator('[data-field="what"]').fill("Only");
 await save(1);
 await settle(page, 400);
 await hold(page.locator("a.row").first());

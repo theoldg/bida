@@ -40,7 +40,7 @@ async function seed(page, base) {
   await page.getByRole("link", { name: "Edit", exact: true }).click();
   await page.waitForURL(/entry\/edit/);
   await page.locator("input.amount").fill("5100");
-  await page.locator("#what").fill("Riad Jnane, two nights");
+  await page.locator('[data-field="what"]').fill("Riad Jnane, two nights");
   await page.getByRole("button", { name: "Save" }).click();
   // Save goes back to where the form was opened from.
   await page.waitForURL(/\/g\/entry\?/);
@@ -67,7 +67,7 @@ async function addEntry(
     }
   }
   await page.locator("input.amount").fill(amount);
-  await page.locator("#what").fill(what);
+  await page.locator('[data-field="what"]').fill(what);
   if (paidBy) await pick(page, "#paidby", paidBy);
   if (exclude) await page.getByRole("button", { name: `Leave ${exclude} out` }).click();
   if (coSponsor) {
@@ -182,14 +182,14 @@ async function main() {
       await page.goto(`${base}/g/entry/edit?id=${groupId}`);
       await pick(page, '[aria-label="What kind of entry"]', "Income");
       await page.locator("input.amount").fill("300");
-      await page.locator("#what").fill("Deposit back");
+      await page.locator('[data-field="what"]').fill("Deposit back");
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-entry-income.png`) });
       process.stdout.write(`${theme}/entry-income `);
 
       await page.goto(`${base}/g/entry/edit?id=${groupId}`);
       await page.locator("input.amount").fill("120");
-      await page.locator("#what").fill("Hammam");
+      await page.locator('[data-field="what"]').fill("Hammam");
       await page.getByRole("button", { name: "As amounts" }).click();
       // The docked line reads the €95 the rest shares in money.
       await page.getByRole("textbox", { name: /Marie.s amount/ }).fill("25");

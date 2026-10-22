@@ -385,7 +385,7 @@ await short.close();
   // One row: an empty ledger has no first row to bring to the bar's foot.
   await tall.locator("a.fab:not(.fab-2)").click();
   await tall.locator("input.amount").fill("12");
-  await tall.locator("#what").fill("Taxi");
+  await tall.locator('[data-field="what"]').fill("Taxi");
   await tall.getByRole("button", { name: "Save" }).click();
   await tall.waitForURL(/\/g\?id=/);
   await tall.waitForSelector(".rows a.row");

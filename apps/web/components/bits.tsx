@@ -24,6 +24,20 @@ export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
   );
 }
 
+/**
+ * A `.field`'s label, joined to the input beside it by a tap rather than
+ * `htmlFor`: that wants an id, and Chrome files what a field was given under
+ * its id, then offers it back (lib/autofill.ts). The input names itself with
+ * an `aria-label`.
+ */
+export function FieldLabel({ children }: { children: ReactNode }) {
+  return (
+    <label onClick={(e) => e.currentTarget.parentElement?.querySelector("input")?.focus()}>
+      {children}
+    </label>
+  );
+}
+
 export function Chip({ children, variant, style }: {
   children: ReactNode; variant?: "hl" | "pend"; style?: CSSProperties;
 }) {

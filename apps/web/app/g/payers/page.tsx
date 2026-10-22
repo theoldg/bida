@@ -138,7 +138,7 @@ function PayersScreen() {
     const latest = getDraft(gid) ?? current;
     const spec = specOf(latest);
     const tap = tapAmount(spec, memberId, draftAmountMinor(latest));
-    if (tap === "edit") { document.getElementById(fieldId)?.focus(); return; }
+    if (tap === "edit") { document.querySelector<HTMLInputElement>(`[data-field="${fieldId}"]`)?.focus(); return; }
     const others = Object.keys(spec).some((id) => id !== memberId && (spec[id] ?? 0) > 0);
     if (tap.set === 0 && !others) { saveDraft(gid, { ...latest, payers: {} }); return; }
     setAmount(memberId, tap.set);
@@ -179,7 +179,7 @@ function PayersScreen() {
                   </button>
 
                   <span style={{ display: "flex", alignItems: "center" }}>
-                    <MinorAmountInput id={fieldId} className="bignum splitin"
+                    <MinorAmountInput data-field={fieldId} className="bignum splitin"
                       enterKeyHint={last ? "done" : "next"}
                       aria-label={copy.payers.contribution[voice](m.name)}
                       currency={currency}

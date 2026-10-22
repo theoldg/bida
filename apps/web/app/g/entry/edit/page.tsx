@@ -7,7 +7,7 @@ import {
   latestRate, minorToDecimalString, receiptOf, settleRest,
   type ArithmeticSplit, type Group, type RateSource,
 } from "@bida/core";
-import { You } from "@/components/bits";
+import { FieldLabel, You } from "@/components/bits";
 import { AmountInput, clipAmountToCurrency } from "@/components/amount-input";
 import { useReceiptScan } from "@/components/receipt-scan";
 import { useScanAs } from "@/lib/scan/credential";
@@ -420,9 +420,9 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
             ) : null}
 
             <div className={`field${refusals.flash("title")}`} data-refuse="title" onAnimationEnd={refusals.onFlashEnd("title")}>
-              {transfer ? null : <label htmlFor="what">{copy.form.what}</label>}
+              {transfer ? null : <FieldLabel>{copy.form.what}</FieldLabel>}
               {/* The end of the field chain: a press here folds the keyboard. */}
-              <input id="what" value={draft.description}
+              <input data-field="what" value={draft.description}
                 autoComplete={NO_AUTOFILL} enterKeyHint="done"
                 aria-label={transfer ? copy.form.note : copy.form.what}
                 placeholder={transfer ? copy.form.note : copy.form.whatPlaceholder}
@@ -456,8 +456,9 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
             )}
 
             <div className="field">
-              <label htmlFor="when">{copy.form.when}</label>
-              <input id="when" type="date" autoComplete={NO_AUTOFILL} value={dateInputValue(draft.occurredAt)}
+              <FieldLabel>{copy.form.when}</FieldLabel>
+              <input data-field="when" type="date" autoComplete={NO_AUTOFILL} aria-label={copy.form.when}
+                value={dateInputValue(draft.occurredAt)}
                 onChange={(e) => patch(retimed(draft, withDate(draft.occurredAt, e.target.value)))} />
             </div>
           </div>
