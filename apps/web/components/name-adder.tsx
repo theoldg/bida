@@ -8,6 +8,7 @@ import { copy } from "../lib/copy";
 import { useRefusal } from "../lib/refusal";
 import { useHoldsWork } from "../lib/update";
 import { nameTaken } from "@bida/core";
+import { NO_AUTOFILL } from "../lib/autofill";
 
 /**
  * Never a dialog: four names through a scrim is four round trips. A name is filed
@@ -95,7 +96,7 @@ export function AddName({
         onAnimationEnd={(e) => { own.onFlashEnd(e); onFlashEnd?.(e); }}>
         <input ref={field} className="addname" value={value} placeholder={placeholder}
           aria-label={placeholder} maxLength={40} autoCapitalize="words" autoFocus={autoFocus}
-          enterKeyHint="done" onChange={(e) => typed(e.target.value)} />
+          autoComplete={NO_AUTOFILL} enterKeyHint="done" onChange={(e) => typed(e.target.value)} />
         {/* Not the field's name: two things called "Add someone" is one too many. */}
         <button type="submit" className={`iconbtn${onField ? "" : blooming}`} aria-label={copy.act.add}>
           <Icon name="plus" size={15} />

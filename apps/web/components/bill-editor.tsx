@@ -18,6 +18,7 @@ import {
   billFromRows, blankRow, keptTip, otherName, rowIsBad, rowIsEmpty, rowMinor, rowsFromBill, rowsFromExtras, setCount,
   setTotal, setUnit, withItemAdded, type ItemRow, type LineKind,
 } from "../lib/scan/manual";
+import { NO_AUTOFILL } from "../lib/autofill";
 
 const KINDS: readonly LineKind[] = ["item", "discount", "charge"];
 
@@ -232,7 +233,7 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                       <input data-row={row.key} value={row.label}
                         autoFocus={i === 0 && before.length === 0}
                         placeholder={copy.scan.byHand.kind[row.kind]} aria-label={copy.scan.byHand.nameOf(n)}
-                        enterKeyHint="next" autoCapitalize="sentences" maxLength={80}
+                        enterKeyHint="next" autoCapitalize="sentences" autoComplete={NO_AUTOFILL} maxLength={80}
                         onChange={(e) => change(row.key, (r) => ({ ...r, label: e.target.value }))} />
                     </span>
                     {/* An item, which most lines are, says nothing; the others wear their kind. */}
@@ -375,7 +376,7 @@ function CountInput({ count, bump, label, onCount }: {
     // wide as its digits, so the two sit together centred.
     <label className={`amountfield bicount${bump ? (bump % 2 ? " bump-a" : " bump-b") : ""}`}>
       <span aria-hidden="true">×</span>
-      <input inputMode="numeric" enterKeyHint="next" aria-label={label} value={text}
+      <input inputMode="numeric" enterKeyHint="next" autoComplete={NO_AUTOFILL} aria-label={label} value={text}
         style={{ width: `${Math.max(1, text.length)}ch` }}
         onChange={(e) => {
           const next = e.target.value.replace(/\D/g, "").replace(/^0+/, "").slice(0, 3);

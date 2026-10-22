@@ -37,6 +37,7 @@ import {
   type EntryDraft, type SplitTab,
 } from "@/lib/draft";
 import { usePrefetch } from "@/lib/prefetch";
+import { NO_AUTOFILL } from "@/lib/autofill";
 
 /**
  * One form for all three kinds of entry (ADR-0010): switching kind keeps the
@@ -422,7 +423,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
               {transfer ? null : <label htmlFor="what">{copy.form.what}</label>}
               {/* The end of the field chain: a press here folds the keyboard. */}
               <input id="what" value={draft.description}
-                enterKeyHint="done"
+                autoComplete={NO_AUTOFILL} enterKeyHint="done"
                 aria-label={transfer ? copy.form.note : copy.form.what}
                 placeholder={transfer ? copy.form.note : copy.form.whatPlaceholder}
                 onChange={(e) => patch({ description: e.target.value })} />
@@ -456,7 +457,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
 
             <div className="field">
               <label htmlFor="when">{copy.form.when}</label>
-              <input id="when" type="date" value={dateInputValue(draft.occurredAt)}
+              <input id="when" type="date" autoComplete={NO_AUTOFILL} value={dateInputValue(draft.occurredAt)}
                 onChange={(e) => patch(retimed(draft, withDate(draft.occurredAt, e.target.value)))} />
             </div>
           </div>

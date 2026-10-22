@@ -6,6 +6,7 @@ import { useHoldsWork } from "../lib/update";
 import { note, tracePress } from "../lib/press-trace";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
+import { NO_AUTOFILL } from "../lib/autofill";
 
 /**
  * A real `<dialog>` opened with `showModal()`: focus, Escape and the inert screen
@@ -153,7 +154,7 @@ export function PromptDialog({
       <form onSubmit={(e) => void go(e)}>
         <input className="dinput" data-autofocus="" value={value} placeholder={placeholder}
           aria-label={title} maxLength={maxLength} autoCapitalize={autoCapitalize}
-          enterKeyHint="done" onChange={(e) => setValue(clean(e.target.value))} />
+          autoComplete={NO_AUTOFILL} enterKeyHint="done" onChange={(e) => setValue(clean(e.target.value))} />
         {hint ? <div className="hint">{hint}</div> : null}
         <div className="drow">
           <button type="button" className="btn btn-s" onClick={onClose} disabled={busy}>{copy.act.cancel}</button>

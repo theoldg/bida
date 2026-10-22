@@ -13,6 +13,7 @@ import { route } from "@/lib/group-link";
 import { setPendingImport, usePendingImport } from "@/lib/import/pending";
 import { lookUpRates, RatesUnavailableError } from "@/lib/import/rates";
 import { useRefusal } from "@/lib/refusal";
+import { NO_AUTOFILL } from "@/lib/autofill";
 
 /**
  * Past this many entries the write is long enough to watch: ten thousand are
@@ -124,7 +125,7 @@ export default function ImportPlanPage() {
                     export after the group, and editable because a file a
                     mail client renamed says nothing about the trip. */}
                 <input id="i-name" value={name} maxLength={40}
-                  enterKeyHint="done"
+                  autoComplete={NO_AUTOFILL} enterKeyHint="done"
                   placeholder={copy.newGroup.namePlaceholder}
                   onChange={(e) => setPendingImport({ plan, name: e.target.value })} />
               </div>

@@ -12,6 +12,7 @@ import { bare, stamp } from "@/lib/format";
 import { readPastedLink, route, type JoinLink } from "@/lib/group-link";
 import { readClipboardText } from "@/lib/paste";
 import { deleteSharedSplit, fetchSplit, readPastedSplit } from "@/lib/split-link";
+import { NO_AUTOFILL } from "@/lib/autofill";
 
 /**
  * `/delete-my-data` — the hosted service's way to ask for a group to be
@@ -167,7 +168,7 @@ export default function DeleteMyDataPage() {
                 <input className="addname" value={typed} aria-label={c.ask.title}
                   placeholder={c.ask.placeholder}
                   autoCapitalize="none" autoCorrect="off" spellCheck={false}
-                  autoComplete="off" enterKeyHint="go"
+                  autoComplete={NO_AUTOFILL} enterKeyHint="go"
                   onChange={(e) => { setTyped(e.target.value); setProblem(undefined); }} />
                 <button type="button" className="iconbtn" aria-label={c.ask.paste}
                   onClick={() => void paste()}>
@@ -252,7 +253,7 @@ function Found({ found, name, setName, onAsk, onOther }: {
       <form className="row addrow editing" onSubmit={(e) => { e.preventDefault(); if (matches) onAsk(); }}>
         <input className="addname" value={name} aria-label={c.placeholder}
           placeholder={c.placeholder} autoCapitalize="none" autoCorrect="off"
-          spellCheck={false} autoComplete="off" enterKeyHint="done"
+          spellCheck={false} autoComplete={NO_AUTOFILL} enterKeyHint="done"
           onChange={(e) => setName(e.target.value)} />
       </form>
       {name.trim() && !matches ? <p className="failure">{c.mismatch}</p> : null}

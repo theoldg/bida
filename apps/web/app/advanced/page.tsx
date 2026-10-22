@@ -8,6 +8,7 @@ import { setGeminiKey } from "@/lib/db/device";
 import { route } from "@/lib/group-link";
 import { useDevice } from "@/lib/hooks";
 import { checkGeminiKey, maskKey, type KeyRefusal } from "@/lib/scan/key";
+import { NO_AUTOFILL } from "@/lib/autofill";
 
 /**
  * What nobody needs by default, off Settings' last row: for now, a Gemini key
@@ -96,7 +97,7 @@ function OwnKey() {
           // applies, and a capitalised or autocorrected key is one that
           // will be refused for reasons nobody can see.
           autoCapitalize="none" autoCorrect="off" spellCheck={false}
-          autoComplete="off" enterKeyHint="done" />
+          autoComplete={NO_AUTOFILL} enterKeyHint="done" />
         {saved ? (
           <button type="button" className="iconbtn" aria-label={key.remove}
             onClick={() => void forget()}>

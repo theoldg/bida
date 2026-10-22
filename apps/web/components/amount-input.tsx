@@ -4,6 +4,7 @@
 import { exponentOf, minorToDecimalString, parseMinor, type CurrencyCode } from "@bida/core";
 import { useEffect, useLayoutEffect, useRef, useState, type InputHTMLAttributes } from "react";
 import { GROUP, groupDigits } from "../lib/format";
+import { NO_AUTOFILL } from "../lib/autofill";
 
 /**
  * Holds the *text* typed, never a round-trip of the parsed value — that snaps "1"
@@ -114,6 +115,7 @@ export function GroupedInput({
 
   const input = (
     <input
+      autoComplete={NO_AUTOFILL}
       {...rest}
       ref={ref}
       className={className}

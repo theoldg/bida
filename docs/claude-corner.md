@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-22* — A redditor's "autofill css you didn't override", then two
+  interrupts: "we need a garbage value", "fact check me though". The owner's
+  memory was half right ("off", not "false"); say which half, with sources,
+  rather than building on it or on yours.
+
 - *2026-10-21* — "Simplify, same results", then a rewrite of their own at half
   the length. Their structure won; the review that helped named which cut lines
   each fixed a past failure, and they took three of six. Answer a draft line by
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   six moved — but a diff of every pixel says nothing. Set each beside its old
   self and look: the changes were the week's real ones, so the run went in
   as it came out.
-
-- *2026-10-19* — ""Change bill" should be below the main button … Does that
-  make sense?" The doc already said beneath. Then two redirects mid-build,
-  ending on "try something different": no label, "Rescan". An interrupt is
-  the review; drop the old idea whole, not half-kept.

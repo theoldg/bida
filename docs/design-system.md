@@ -284,7 +284,9 @@ in a column of "12.00"s looking like a different kind of number.
    Inputs exempt from both. Zoom needs all
    three of `userScalable: false`, `touch-action: pan-x pan-y` on `html, body`
    and `NoPinchZoom` — no one of them covers every browser, and desktop zoom is
-   left alone.
+   left alone. **Nor does the browser fill a field**: every `<input>` takes
+   `NO_AUTOFILL` (`lib/autofill.ts`, `rules` checks), and one it fills anyway
+   keeps our ground and ink rather than its blue — a web page showing through.
 
 ## Gotchas
 - **In dark, `--card` is darker than `--card-3`.** A raised thing takes
@@ -299,6 +301,9 @@ in a column of "12.00"s looking like a different kind of number.
   (`billextra`).
 - **Native controls follow `color-scheme`, not the tokens.** Without it on the
   theme blocks the date field's calendar glyph stayed black on dark cards.
+- **`autocomplete="off"` stops Chrome's history, not its autofill** (saved
+  names, addresses); a token it doesn't know stops both. Its autofill paint is `!important` in its own sheet, so it can only
+  be outwaited — a background transition delayed past anyone's patience.
 - iOS Safari in a tab ignores `user-scalable=no`; `preventDefault` on
   `gesturestart` is what holds the scale.
 - **`color-mix` is used unguarded**, which puts the floor at Safari 16.2 and

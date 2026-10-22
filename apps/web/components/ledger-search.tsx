@@ -11,6 +11,7 @@ import { returnTo } from "@/lib/nav";
 import { useHoldsWork } from "@/lib/update";
 import { calmly, glide } from "@/lib/seek";
 import { Icon } from "./icons";
+import { NO_AUTOFILL } from "../lib/autofill";
 
 /**
  * The ledger's own address, not `location.href`: a screen mounted in its first
@@ -196,7 +197,7 @@ export function LedgerSearch({ groupId, query, onQuery, listed = query }: {
             <input ref={field} value={query} onChange={(e) => onQuery(e.target.value)}
               placeholder={copy.group.search.field} aria-label={copy.group.search.field}
               inputMode="search" enterKeyHint="search" autoCapitalize="none" autoCorrect="off"
-              autoComplete="off" spellCheck={false}
+              autoComplete={NO_AUTOFILL} spellCheck={false}
               onFocus={(e) => {
                 stopGlide();
                 setFocused(true);

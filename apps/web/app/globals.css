@@ -82,6 +82,13 @@ button, input, select, textarea {
 }
 button, input:where([type="button"], [type="submit"]) { appearance: button }
 
+/* A field the browser filled is painted its blue or yellow with !important,
+   which no rule here outranks: a transition that never ends keeps ours. */
+input:is(:autofill, :-webkit-autofill) {
+  transition: background-color 0s 1e6s, color 0s 1e6s;
+  filter: none;
+}
+
 /* Firefox dims a placeholder on its own account. */
 ::placeholder { opacity: 1; color: color-mix(in oklab, currentcolor 50%, transparent) }
 

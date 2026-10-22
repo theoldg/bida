@@ -13,6 +13,7 @@ import {
   fetchTricount, TricountDownError, TricountOfflineError, tricountKey,
 } from "@/lib/import/tricount";
 import { usePrefetch } from "@/lib/prefetch";
+import { NO_AUTOFILL } from "@/lib/autofill";
 
 /**
  * Somebody else's ledger as a group of ours. Reached only from the groups
@@ -130,7 +131,7 @@ export default function ImportPage() {
               <p className="hint" style={{ marginTop: 14 }}>{words.orTricount}</p>
               <input className="pastebox selectable" type="url" value={link}
                 aria-label={words.orTricount} placeholder={words.tricountPlaceholder}
-                inputMode="url" enterKeyHint="go"
+                inputMode="url" enterKeyHint="go" autoComplete={NO_AUTOFILL}
                 autoCapitalize="none" autoCorrect="off" spellCheck={false}
                 onChange={(e) => { setLink(e.target.value); keepLink(e.target.value); }} />
               <button type="button" className="btn btn-s" style={{ marginTop: 8 }}

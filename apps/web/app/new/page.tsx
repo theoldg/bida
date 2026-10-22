@@ -18,6 +18,7 @@ import { route } from "@/lib/group-link";
 import { useDevice } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
 import { flashClass, NOT_REFUSED, refused, type Refusal } from "@/lib/refusal";
+import { NO_AUTOFILL } from "@/lib/autofill";
 
 /**
  * The whole group, on one screen and then one question.
@@ -167,7 +168,7 @@ export default function NewGroupPage() {
               {/* The same cap every name in the app has: a member's is 40, and
                   a group drawn beside them has no more room than they do. */}
               <input id="g-name" value={name} autoFocus maxLength={40}
-                enterKeyHint="next"
+                autoComplete={NO_AUTOFILL} enterKeyHint="next"
                 placeholder={copy.newGroup.namePlaceholder}
                 onChange={(e) => setName(e.target.value)} />
             </div>

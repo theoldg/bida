@@ -147,6 +147,19 @@ for (const file of sources(join(ROOT, "apps/web"))) {
   }
 }
 
+// docs/design-system.md#rules-that-are-not-negotiable: the phone's autofill
+// offering a saved address under a field is a web page showing through.
+for (const file of sources(join(ROOT, "apps/web"))) {
+  // Raw: `code()` blanks the type, and a file picker has nothing to fill.
+  for (const [tag] of readFileSync(file, "utf8").matchAll(/<input\b[\s\S]*?\/>/g)) {
+    if (!/\bautoComplete=\{NO_AUTOFILL\}/.test(tag) && !/\btype="file"/.test(tag)) {
+      fail(file, "an `<input>` without `autoComplete={NO_AUTOFILL}` (lib/autofill.ts) — Chrome "
+        + "fills past \"off\", and the phone offers its saved names and addresses "
+        + "(docs/design-system.md#rules-that-are-not-negotiable)");
+    }
+  }
+}
+
 // ADR-0008: asking is components/dialog.tsx, never a browser dialog.
 for (const file of sources(join(ROOT, "apps/web"))) {
   const src = code(readFileSync(file, "utf8"));
@@ -219,5 +232,5 @@ console.log(problems.length
   : "rules: core is pure, refusals come from the registry, a bill is priced in one place, "
     + "every live read watched, every /g screen checks its id, the demo holds no key, "
     + "back goes through nav, one door to the clipboard, no browser dialogs, "
-    + "no stray copy, no server page, no em dash in copy");
+    + "no stray copy, no server page, no em dash in copy, no autofill");
 process.exit(problems.length ? 1 : 0);
