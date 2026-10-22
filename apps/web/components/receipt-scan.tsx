@@ -129,8 +129,8 @@ export function useReceiptScan(
           }
           : {}),
         receiptItems: receiptItems.length > 0 ? receiptItems : null,
-        // The tip is the table's to type: a tip the bill printed is a charge.
-        receiptTip: null,
+        // Only a tip written after the total; one printed above it is a charge.
+        receiptTip: bill.extras.tip,
         receiptTax: null,
         receiptCharges: bill.extras.charges.length > 0 ? bill.extras.charges : null,
         receiptDiscounts: bill.extras.discounts.length > 0 ? bill.extras.discounts : null,

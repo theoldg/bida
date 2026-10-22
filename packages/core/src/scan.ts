@@ -42,6 +42,11 @@ export interface ScanResult {
   title: string | null;
   /** Plain decimal, parseMinor()-ready. Not a number. */
   total: string | null;
+  /**
+   * Written after the total, so outside it: a tip somebody already decided. One
+   * printed above the total is a charge.
+   */
+  tip: string | null;
   /** What the bill adds on top of the lines — never VAT already inside them. */
   charges: ScanExtra[];
   discounts: ScanExtra[];
@@ -69,12 +74,14 @@ export interface ScanPatch {
 export function normalizeScan(result: ScanResult, currency: CurrencyCode, now: number): ScanPatch {
   const patch: ScanPatch = {};
   if (result.title) patch.description = result.title;
-  if (result.total) {
+  const tip = tipMinor(result, currency);
+  if (result.total && tip === null) {
     // Re-rendering the prompt's notation would be an opinion.
     patch.amountText = result.total;
   } else {
+    // What was paid: the total, and the tip written after it.
     const minor = billTotalMinor(result, currency);
-    if (minor !== null) patch.amountText = minorToDecimalString(minor, currency);
+    if (minor !== null) patch.amountText = minorToDecimalString(minor + (tip ?? 0), currency);
   }
   const scanned = readCurrency(result);
   if (scanned) patch.currency = scanned;
@@ -108,7 +115,7 @@ export function scanCurrency(result: ScanResult, fallback: CurrencyCode): Curren
 
 /** All positive magnitudes; the sign is applied in `receiptBreakdown` only. */
 export interface BillExtras {
-  /** Typed, never scanned: a tip printed on the bill is a charge. */
+  /** Typed, or a tip the bill shows written after its total. */
   tip: string | null;
   /** Kept apart so the bill can name each one. */
   charges: ReceiptExtra[];
@@ -181,7 +188,14 @@ export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
     });
   }
 
-  return { items, extras: { tip: null, charges, discounts } };
+  const tip = tipMinor(result, currency);
+  return { items, extras: { tip: tip === null ? null : minorToDecimalString(tip, currency), charges, discounts } };
+}
+
+/** Null unless readable and positive: a tip of nothing is no tip. */
+function tipMinor(result: ScanResult, currency: CurrencyCode): number | null {
+  const minor = readAmount(result.tip, currency);
+  return minor !== null && minor > 0 ? minor : null;
 }
 
 export function extrasMinor(extras: BillExtras, currency: CurrencyCode): number | null {
@@ -226,6 +240,7 @@ export function receiptOf(source: Receipt): { [K in keyof Receipt]-?: NonNullabl
 
 export type ScanProblem = "no-total" | "unreadable-line" | "mismatch";
 
+/** Lines, charges and discounts: what the printed total covers, so never the tip after it. */
 function sumBill(result: ScanResult, currency: CurrencyCode): number | null {
   const bill = readBill(result, currency);
   let sum = 0;
@@ -234,7 +249,7 @@ function sumBill(result: ScanResult, currency: CurrencyCode): number | null {
     if (minor === null) return null;
     sum += minor;
   }
-  const extras = extrasMinor(bill.extras, currency);
+  const extras = extrasMinor({ ...bill.extras, tip: null }, currency);
   return extras === null ? null : sum + extras;
 }
 

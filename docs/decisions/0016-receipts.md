@@ -2,7 +2,8 @@
 
 **Status:** Accepted · 2026-08-28 (discounts and tax, 2026-09-12; a bill may be
 typed rather than photographed, 2026-09-19; typed by hand, 2026-10-17; charges
-named and every line's kind correctable, 2026-10-21)
+named and every line's kind correctable, 2026-10-21; a tip written after the
+total read as the tip, 2026-10-22)
 
 **Context.** The owner asked to photograph a bill and assign its lines: *"a
 selection of involved users … then a table with columns as users and rows as
@@ -116,10 +117,13 @@ the tip and every charge on top — service, tax, a fee: they are one family
 (`BillExtras`), the lines a bill charges for that nobody ordered, and none of
 them can be ticked for. **A line's kind is a person's to correct**: on the typed
 bill each card is an item, a discount or a charge, so a service line read as an
-item, or a voucher on a bill typed by hand, needs no rescan. **The tip is never
-read off a bill**: a printed service charge is a charge, so the tip starts at
-nothing and stays the table's decision, typed on the grid or over the typed
-bill's total — one field with two doors, convenience over a single home. Every deduction is gathered into one list first (`readBill`) wherever it
+item, or a voucher on a bill typed by hand, needs no rescan. **The tip is read
+off a bill only once somebody has decided it**: a tip written after the total
+("+ Tip 3.00" on a card slip) arrives as the tip, and the amount is the total
+plus it. A service charge, or a tip printed above the total, is a charge, so
+anywhere else the tip starts at nothing and stays the table's decision, typed on
+the grid or over the typed bill's total — one field with two doors, convenience
+over a single home. Every deduction is gathered into one list first (`readBill`) wherever it
 printed — a negative line item, a bill-level credit, a two-for-one — because
 the grid has no way to say who a particular credit belongs to, and inventing
 one is a scope-picking UI on a screen asked to be minimal. They are kept apart

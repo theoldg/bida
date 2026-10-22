@@ -48,12 +48,9 @@ export function describeReading({ at, outcome, read }: KeptReading): string[] {
   const head = `${when}  ${outcome.toUpperCase()}  total ${or(read.total)} ${or(read.currency)}`
     + `  ${or(read.date)}  ${or(read.title)}`;
   if (read.error) return [head, `  error  ${read.error}`];
-  // Kept before charges were a list, a reading has its tip and tax apart instead.
-  const { tip, tax } = read as { tip?: string | null; tax?: string | null };
-  const charges = [
-    ...read.charges ?? [],
-    ...([["tax", tax], ["tip", tip]] as const).flatMap(([label, amount]) => (amount ? [{ label, amount }] : [])),
-  ];
+  // Kept before charges were a list, a reading has its tax apart instead.
+  const { tax } = read as { tax?: string | null };
+  const charges = [...read.charges ?? [], ...(tax ? [{ label: "tax", amount: tax }] : [])];
   return [
     head,
     ...read.lineItems.map((li) => {
@@ -64,6 +61,8 @@ export function describeReading({ at, outcome, read }: KeptReading): string[] {
     }),
     ...charges.map((c) => `  ${`+${c.amount}`.padStart(9)}  on   ${c.label}`),
     ...read.discounts.map((d) => `  ${`-${d.amount}`.padStart(9)}  off  ${d.label}`),
+    // Outside the total; so was a tip kept back when it meant a charge, which reads the same.
+    ...(read.tip ? [`  ${`+${read.tip}`.padStart(9)}  tip  after the total`] : []),
   ];
 }
 

@@ -4,6 +4,7 @@
   "scan": {
     "title": "Café Clock",
     "total": "76.50",
+    "tip": null,
     "charges": [
       {
         "label": "Service",

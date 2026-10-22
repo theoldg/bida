@@ -1,0 +1,44 @@
+{
+  "note": "a diner's card slip: tax on top under the subtotal, then a tip written after the total",
+  "exercises": "ok",
+  "scan": {
+    "title": "Luna Grill",
+    "total": "19.38",
+    "tip": "3.00",
+    "charges": [
+      {
+        "label": "Sales tax",
+        "labelEn": null,
+        "amount": "1.39"
+      }
+    ],
+    "discounts": [],
+    "currency": "USD",
+    "date": null,
+    "english": true,
+    "error": null,
+    "lineItems": [
+      {
+        "label": "Greek salad",
+        "labelEn": null,
+        "amount": "8.99",
+        "unitAmount": null,
+        "quantity": null
+      },
+      {
+        "label": "Chicken",
+        "labelEn": null,
+        "amount": "4.25",
+        "unitAmount": null,
+        "quantity": null
+      },
+      {
+        "label": "Spicy cilantro hummus",
+        "labelEn": null,
+        "amount": "4.75",
+        "unitAmount": null,
+        "quantity": null
+      }
+    ]
+  }
+}

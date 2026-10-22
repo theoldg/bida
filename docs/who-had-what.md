@@ -82,15 +82,16 @@ wearing its ×N, shared like any other line.
 bill charges for that nobody ordered, so none of them can be ticked for on the
 grid: each is spread across everyone at the table in proportion to what they
 *did* order, and the discount is the one that comes off. A **charge** is what
-the bill adds to its lines — service, tax on top, a tip it printed — kept as a
+the bill adds to its lines — service, tax on top, a tip printed above its total — kept as a
 named list (`receiptCharges`); an older bill's single unnamed `receiptTax` reads
 as the first of them. `readBill` (core) gathers every deduction into
 `discounts` first, wherever it arrived — a negative line item, a negative
 charge, the field itself — so the arithmetic downstream sees positive lines and
 a list of figures that come off, and never a sign to get the wrong way round.
-**The tip is the table's, never the scan's**: it starts empty, so a printed
-service charge isn't mistaken for a tip already decided, and it is typed on the
-grid or over the total of the [typed bill](receipt-scanning.md#typing-a-bill-in)
+**The tip is the table's, unless the bill shows one already decided**: a tip
+written after the total arrives in the field, and otherwise it starts empty, so
+a printed service charge isn't mistaken for a tip already decided. It is typed
+on the grid or over the total of the [typed bill](receipt-scanning.md#typing-a-bill-in)
 — one field, two places to reach it. Charges and discounts are drawn on the
 grid as rows with no cells (`copy.items.extra`), and a caption under them says
 so — naming only the kinds this bill actually has (`copy.items.extraNote`). It

@@ -8,7 +8,7 @@ import {
 const NOW = new Date(2026, 8, 5, 14, 30, 7, 123).getTime();
 
 const blank: ScanResult = {
-  title: null, total: null, charges: [], discounts: [],
+  title: null, total: null, tip: null, charges: [], discounts: [],
   currency: null, date: null, lineItems: [], english: false, error: null,
 };
 
@@ -544,5 +544,60 @@ describe("correctOneLine", () => {
     expect(correctOneLine(yen, "JPY").lineItems[0]!.amount).toBe("900");
     const dinar = { ...blank, total: "3.750", lineItems: [both("2.300", "1.250", 2), line("1.250")] };
     expect(correctOneLine(dinar, "BHD").lineItems[0]!.amount).toBe("2.500");
+  });
+});
+
+describe("a tip written after the total", () => {
+  const line = (label: string, amount: string): ScanLineItem =>
+    ({ label, labelEn: null, amount, unitAmount: null, quantity: null });
+  // "Order Total 19.38", then "+ Tip: 3.00" on the card slip under it.
+  const slip: ScanResult = {
+    ...blank,
+    total: "19.38",
+    tip: "3.00",
+    lineItems: [line("Greek salad", "8.99"), line("Chicken", "4.25"), line("Hummus", "4.75")],
+    charges: [{ label: "Sales tax", labelEn: null, amount: "1.39" }],
+  };
+
+  it("is outside the total, so the bill still reconciles", () => {
+    expect(checkScan(slip, "USD")).toBeNull();
+  });
+
+  it("never closes a gap: lines short of the total stay a mismatch", () => {
+    // Read as if the tip were inside it: the total is what was paid, the lines miss it.
+    expect(checkScan({ ...slip, total: "22.38" }, "USD")).toBe("mismatch");
+  });
+
+  it("is what was paid on top: the amount is the total plus the tip", () => {
+    expect(normalizeScan(slip, "USD", NOW)).toMatchObject({ amountText: "22.38" });
+  });
+
+  it("adds in the currency's own minor units", () => {
+    expect(normalizeScan({ ...blank, total: "1500", tip: "200" }, "JPY", NOW)).toMatchObject({ amountText: "1700" });
+    expect(normalizeScan({ ...blank, total: "12.345", tip: "1.5" }, "TND", NOW)).toMatchObject({ amountText: "13.845" });
+  });
+
+  it("is added to the lines' sum where no total is printed", () => {
+    const unstated = { ...slip, total: null };
+    expect(billTotalMinor(unstated, "USD")).toBe(1938);
+    expect(normalizeScan(unstated, "USD", NOW)).toMatchObject({ amountText: "22.38" });
+  });
+
+  it("reaches the bill as its tip, in the currency's notation", () => {
+    expect(readBill({ ...slip, tip: "3" }, "USD").extras.tip).toBe("3.00");
+  });
+
+  it.each(["0.00", "-3.00", "three", "", null])("is no tip at all when it reads %j", (tip) => {
+    expect(readBill({ ...slip, tip }, "USD").extras.tip).toBeNull();
+    expect(normalizeScan({ ...slip, tip }, "USD", NOW)).toMatchObject({ amountText: "19.38" });
+    expect(checkScan({ ...slip, tip }, "USD")).toBeNull();
+  });
+
+  it("doesn't move a faded line's correction, which squares against the total alone", () => {
+    const faded: ScanResult = {
+      ...slip,
+      lineItems: [{ ...line("Greek salad", "6.99"), unitAmount: "8.99", quantity: 1 }, ...slip.lineItems.slice(1)],
+    };
+    expect(correctOneLine(faded, "USD").lineItems[0]!.amount).toBe("8.99");
   });
 });

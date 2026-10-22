@@ -79,7 +79,8 @@ const READING =
   + "columns, so an amount can sit lower than its label. A label wrapped over several "
   + "rows is one item with one amount. Every amount in the amount column, from the "
   + "first item down to the total you return, belongs to exactly one entry: none "
-  + "dropped, none duplicated. Nothing printed below that total is an entry.\n\n"
+  + "dropped, none duplicated. Nothing printed below that total is an entry; a tip "
+  + "written there is the tip (section 6).\n\n"
   + "4. TITLE\n"
   + "Use the merchant name only. Drop the legal form, owner, address, store number, "
   + "slogan and till or VAT lines (\"Bar Zahra - Sarl M. Benali\" → \"Bar Zahra\").\n"
@@ -112,6 +113,9 @@ const READING =
   + "- service (\"10% Svc chg 10.03\")\n"
   + "- a tip printed above the total\n"
   + "- tax added on top (\"Sales tax 1.39\", \"7% GST 7.72\")\n"
+  + "TIP: a tip printed or written after the total (\"Total 19.38 / + Tip 3.00\", a "
+  + "tip written on a card slip). Return it as tip, never as a charge, and keep total "
+  + "as printed. Otherwise tip is null. A service charge is never a tip.\n"
   + "NEITHER: these only report:\n"
   + "- a subtotal or net figure: \"Subtotal\", \"Mdse st\", \"Netto\", \"Base\", \"HT\"\n"
   + "- tax already in the prices: \"Fuel includes GST 1.57\", \"of which VAT 20%\", "
@@ -121,7 +125,7 @@ const READING =
   + "- what was saved or what a price was before: \"Saved 0.39\", \"You saved 0.50\", "
   + "\"Savings 3.00\", \"Uwzgl. opust: -2,00 st. c 10,99\" (Polish for \"discount "
   + "included, was 10,99\"), \"W tym rabaty 5,00\"\n"
-  + "- anything below the total: payments, change, coupons tendered, a VAT table\n\n"
+  + "- anything else below the total: payments, change, coupons tendered, a VAT table\n\n"
   + "7. LABELS\n"
   + "- Leave out the tax-rate code a till prints at the end of a label (\"PIWO KASZTEL "
   + "4X0.5.A\" → \"Piwo Kasztel 4x0.5\", \"TOST PELNOZ.500G...D\" → \"Tost "
@@ -178,6 +182,7 @@ export function buildScanRequestBody(
           english: { type: "BOOLEAN" },
           title: { type: "STRING", nullable: true },
           total: { type: "STRING", nullable: true },
+          tip: { type: "STRING", nullable: true },
           currency: { type: "STRING", nullable: true },
           date: { type: "STRING", nullable: true },
           lineItems: {
@@ -196,7 +201,7 @@ export function buildScanRequestBody(
           charges: EXTRAS_SCHEMA,
         }),
         required: [
-          "title", "total", "charges", "discounts", "currency", "date", "lineItems", "english",
+          "title", "total", "tip", "charges", "discounts", "currency", "date", "lineItems", "english",
           "error",
         ],
       },

@@ -4,6 +4,7 @@
   "scan": {
     "title": "Slice House - pizza",
     "total": "20.55",
+    "tip": null,
     "charges": [
       {
         "label": "Sales tax",

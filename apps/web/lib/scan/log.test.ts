@@ -7,7 +7,7 @@ describe("a kept reading", () => {
       at: Date.UTC(2026, 9, 19, 14, 20, 1),
       outcome: "mismatch",
       read: {
-        title: "Rossmann", total: "205.92", currency: "PLN",
+        title: "Rossmann", total: "205.92", tip: null, currency: "PLN",
         charges: [{ label: "Torba", labelEn: "Bag", amount: "0.50" }],
         date: "2026-10-19", english: false, error: null,
         lineItems: [
@@ -33,7 +33,7 @@ describe("a kept reading", () => {
     } as unknown as Parameters<typeof describeReading>[0]["read"];
     expect(describeReading({ at: 0, outcome: "ok", read }).slice(1)).toEqual([
       "      +2.00  on   tax",
-      "      +1.00  on   tip",
+      "      +1.00  tip  after the total",
     ]);
   });
 
@@ -42,7 +42,7 @@ describe("a kept reading", () => {
       at: 0,
       outcome: "rejected",
       read: {
-        title: null, total: null, charges: [], currency: null, date: null,
+        title: null, total: null, tip: null, charges: [], currency: null, date: null,
         english: false, error: "Too blurry.", lineItems: [], discounts: [],
       },
     });

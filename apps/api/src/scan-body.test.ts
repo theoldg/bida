@@ -160,6 +160,9 @@ describe("the reading", () => {
     expect(prompt).toContain("A row that only reports a figure is never one");
     // A modifier or a set's part has no price, and isn't refused as unreadable.
     expect(prompt).toContain("A row with no figure of its own in the amount column is not a line item");
+    // Outside the total, and never a service charge.
+    expect(prompt).toContain("Return it as tip, never as a charge");
+    expect(prompt).toContain("A service charge is never a tip");
     // A till roll prints everything in capitals; a name isn't a shout.
     expect(prompt).toContain("never all caps");
     expect(prompt).toContain("40 characters");

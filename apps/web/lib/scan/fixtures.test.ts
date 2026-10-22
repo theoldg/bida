@@ -45,6 +45,9 @@ describe("the canned receipts", () => {
     // discounts are the one row that unfolds to say what it is made of.
     expect(fixtures.some(([, f]) => (f.scan?.discounts?.length ?? 0) > 1 && (f.scan?.charges?.length ?? 0) > 1))
       .toBe(true);
+    // And a tip written after the total, which the grid and the typed bill
+    // open holding, and which the printed total does not include.
+    expect(fixtures.some(([, f]) => f.exercises === "ok" && f.scan?.tip)).toBe(true);
   });
 
   it.each(fixtures)("%s is what it says it is", (_name, fixture) => {
@@ -77,6 +80,11 @@ describe("the canned receipts", () => {
     if (fixture.exercises === "ok") {
       const patch = normalizeScan(result, currency, Date.now());
       expect(() => parseMinor(patch.amountText!, currency)).not.toThrow();
+      // What was paid: the printed total, plus a tip written after it.
+      if (result.tip) {
+        expect(parseMinor(patch.amountText!, currency))
+          .toBe(parseMinor(result.total!, currency) + parseMinor(result.tip, currency));
+      }
     }
   });
 });
