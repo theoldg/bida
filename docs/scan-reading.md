@@ -167,9 +167,9 @@ error to sentence. Anything else falls back to the generic message.
   its own printed total. The prompt says so, and `checkScan` catches it
   when the model does it anyway.
 - **A discount printed as already included is VAT's twin.** Rossmann notes
-  "Uwzgl. opust: -15,00 st. c 42,98" under a line whose 27,98 is already net;
-  listed in `discounts`, every such note came off a second time and the bill
-  missed its total by their sum. The prompt says so beside the discount rule.
+  "Uwzgl. opust: -15,00 st. c 42,98" under a line already net; listed, it comes
+  off twice. The prompt quotes it in Polish: an English paraphrase lost to the
+  note's own minus sign.
 - **`mismatch` on a bill that plainly adds up means the photo was taken at an
   angle.** The shear pulls the amount column out of line with the labels, and a
   wrapped continuation row ends up taking an amount of its own — one line lost

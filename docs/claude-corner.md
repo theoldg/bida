@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-22* — "Produce ~10 receipts to test the limits of the scanning", then
+  "fell right into the trap". Each receipt aimed at one rule, with an answer
+  key saying in advance what passing meant, so the miss came back diagnosed.
+  Then "a bit shorter pls": cut whole examples, not words.
+
 - *2026-10-22* — "i still get autocomplete suggestions even after the recent
   fix". The fact-check before it was half right too: a forum's rule, not
   Chrome's source. Then a closed window: its transcript held the owner's yes,
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   bit more creative". Two example roasts and two lists of targets were a
   script it could only recite. Then "where else": in the reading, each example
   is a fixed misreading — keep those; only the jokes want room.
-
-- *2026-10-19* — "Flash 'assign who had what' after scanning … not in quick
-  split". The FAB's scan lands a screen before the button exists, so the
-  flash is a mark left by the scan and taken by the button. Sample frames to
-  see a flash: one shot at a guessed moment says nothing either way.
