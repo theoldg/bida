@@ -30,7 +30,7 @@ export type ScanTone = "kind" | "stas";
  * **Say how to read, never what it must come to**: told the lines must equal the
  * total, a model adjusts a line.
  */
-const CHECK = "Transcribe this receipt into JSON.\n\n"
+const CHECK = "Read this receipt and return it as JSON.\n\n"
   + "1. CHECK THE PHOTO FIRST\n"
   + "- Unreadable or incomplete means blurry, cropped, folded or angled so that any line "
   + "item, or any line above the total, is hidden. Don't return a partial list.\n";
@@ -67,7 +67,11 @@ const general = (today: string | null): string =>
   + "- Use null for illegible or absent values and [] for empty lists.\n"
   + "- currency: ISO 4217 code. date: YYYY-MM-DD."
   + (today ? ` Today is ${today}.` : "") + "\n"
-  + "- english: true if the receipt is written in English.\n\n";
+  + "- english: true if the receipt is written in English.\n"
+  + "- A till prints in capitals; a name is not written that way. Case the title and "
+  + "all labels as ordinary writing, never all caps (\"POULET ROTI\" → \"Poulet "
+  + "roti\"). Keep a brand's own casing (\"IKEA\", \"McDonald's\"). Change only the "
+  + "case; keep the wording, language and spelling.\n\n";
 
 const READING =
   "3. READING THE LAYOUT\n"
@@ -106,9 +110,6 @@ const READING =
   + "service, tip, or tax added on top.\n"
   + "Exclude tax already included in the prices (e.g. \"of which VAT 20%\").\n\n"
   + "8. LABELS\n"
-  + "- Case the title and all labels as ordinary writing, never all caps (\"POULET "
-  + "ROTI\" → \"Poulet roti\"). Keep a brand's own casing (\"IKEA\", \"McDonald's\"). "
-  + "Change only the case; keep the wording, language and spelling.\n"
   + "- Leave out the tax-rate code a till prints at the end of a label (\"PIWO KASZTEL "
   + "4X0.5.A\" → \"Piwo Kasztel 4x0.5\", \"TOST PELNOZ.500G...D\" → \"Tost "
   + "pelnoz.500g\"); it is not part of the name.\n"

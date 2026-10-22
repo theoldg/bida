@@ -180,9 +180,9 @@ error to sentence. Anything else falls back to the generic message.
   line, and a bill that has been made to add up is the one error `checkScan`
   cannot see.
 - **A rule written for one field governs one field.** A casing rule written
-  for the *title* leaves every label in the till's capitals. Where a convention is about how
-  a string is written rather than which string it is, give it its own paragraph
-  naming every field it covers (LABELS, in the prompt).
+  for the *title* leaves every label in the till's capitals; one left last
+  under a prompt opening "Transcribe" lost to every "as printed" above it. Give
+  it its own rule, near the top, naming every field it covers.
 - **Gemini writes a schema's properties alphabetically** unless it carries
   `propertyOrdering`: `error` came after the fields it empties, `total` after
   the lines it must not be summed from. `ordered()` lists them in schema order.
