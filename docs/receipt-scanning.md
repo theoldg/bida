@@ -1,7 +1,7 @@
 # Receipt scanning
 
 *For: whoever builds or changes the scan. Start here; the table below says
-which of the four scan docs your change needs. All of it is built and deployed;
+which of the five scan docs your change needs. All of it is built and deployed;
 [ADR-0016](decisions/0016-receipts.md) holds the UX rulings.*
 
 Photograph a receipt — or [type its items in](#typing-a-bill-in) — and get the expense
@@ -23,6 +23,7 @@ the photograph you already took, or [type the items in](#typing-a-bill-in).
 | [scan-reading.md](scan-reading.md) | Changing the prompt, what a reading returns, or what the app does with it |
 | [who-had-what.md](who-had-what.md) | Changing the grid a bill is divided on, or how extras and discounts spread |
 | [scan-worker.md](scan-worker.md) | Touching the Worker's half — the shared key, the envelope, the budget, Turnstile, trust — or a key of the phone's own |
+| [scan-bench.md](scan-bench.md) | Measuring a prompt change against 50 strangers' receipts, by hand |
 
 `/g/scan` and `/quick` both have to promise something they can't show, since a
 scan's result is on another screen, so they draw it — one drawing,

@@ -16,7 +16,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 | **Production** | <https://bida.bid> — one Worker serving the static export *and* the sync API, on the `hajsik` D1 ([hosting.md](hosting.md)) |
 | **Dev** | <https://hajsik-dev.hajsik-api.workers.dev>, its own D1 and scan secrets, deployed by every push to `dev`. Production moves only when the owner releases ([hosting.md](hosting.md#dev-and-production)) |
 | **Sealed** | The server cannot read a group ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)); the D1 log is finished data, so a schema change is a new migration ([hosting.md](hosting.md#a-schema-change-from-here-on)) |
-| **Scanning** | A photographed bill, read by the Worker under a budget, or straight from Google on a phone's own key; or its items typed by hand ([receipt-scanning.md](receipt-scanning.md), [scan-worker.md](scan-worker.md)) |
+| **Scanning** | A photographed bill, read by the Worker under a budget, or straight from Google on a phone's own key; or its items typed by hand ([receipt-scanning.md](receipt-scanning.md), [scan-worker.md](scan-worker.md)); a prompt change measured by hand against WildReceipt ([scan-bench.md](scan-bench.md)) |
 | **Versioned** | `major.semi.minor`, bumped by every push; the major is the owner's ([hosting.md](hosting.md#versions)) |
 | **The tip jar** | `/g/tip` off the balances screen, `/tip` off `/about` ([product.md](product.md#the-mvp)) |
 | **Deletable** | `/delete-my-data`, from an invite link, for everybody in the group ([import-export.md](import-export.md#deleting-a-group)) |

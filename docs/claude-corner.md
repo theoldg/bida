@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-22* — "do you have the latest version? i added a rule 20 minutes
+  ago". The benchmark had loaded the prompt 45 seconds before a pull brought
+  that rule in. A measurement names the commit it measured, or nobody can say
+  what it measured: runs are labelled by commit now.
+
 - *2026-10-22* — "Add a toggle similar to the who-had-what editor ... share
   the translation state obviously". The "obviously" was the spec: the same
   draft field, written at once like the grid's, so a look-only toggle never
@@ -80,8 +85,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   editable in the editor. That's wrong though." One home is a rule for facts,
   not doors: one field may be typed in two places. And a critique declined
   ("the top is more header-like") is a decision — build theirs, not yours.
-
-- *2026-10-21* — "Do you like it?" Mid-iteration it asks for a view, not a
-  build: say yes, then name two flaws seen in the photo. Then "do neither,
-  push it" — the critique was the owner's to take, and declining it is an
-  answer too.

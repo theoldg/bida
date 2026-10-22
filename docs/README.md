@@ -29,6 +29,7 @@ them tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 | ↳ [scan-reading.md](scan-reading.md) | The prompt, and what the app does with a reading |
 | ↳ [who-had-what.md](who-had-what.md) | The grid a bill is divided on; tip, tax and discounts |
 | ↳ [scan-worker.md](scan-worker.md) | The shared key, the envelope, the budget, Turnstile, trust |
+| ↳ [scan-bench.md](scan-bench.md) | Measuring a prompt change on a public receipt dataset, by hand |
 | [design-system.md](design-system.md) | Writing anything a person will look at — then: |
 | ↳ [rows.md](rows.md) | Drawing a row: yours, the ledger's motion, a line that says less |
 | ↳ [refusals.md](refusals.md) | A dialog, a picker, or a button that can say no |

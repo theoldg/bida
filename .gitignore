@@ -20,3 +20,5 @@ apps/web/public/scanic/
 .claude/worktrees/
 # A session's claim on the main clone (scripts/on-dev.sh).
 /BUSY
+# The scan benchmark's dataset, sample and answers (docs/scan-bench.md).
+/scripts/scan-bench/data/
