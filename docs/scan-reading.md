@@ -26,7 +26,9 @@ It reads. It doesn't compute — the one multiplication in the whole reading is
 prints, and the title, the line-item labels and the discount labels are all
 written the way a name is written instead: "BAR ZAHRA" → "Bar Zahra", "POULET
 ROTI" → "Poulet roti", keeping the casing a brand owns ("IKEA", "H&M",
-"lululemon"). The casing is the only thing the reading changes about a label —
+"lululemon"). Nor in the till's VAT letters: the rate code a Polish or German
+receipt prints after a name ("PIWO KASZTEL 4X0.5.A") is dropped from the label.
+Those two are the only things the reading changes about a label —
 the words, their language and their spelling are the receipt's, or the person
 checking the grid against the paper is comparing two different bills.
 

@@ -185,5 +185,7 @@ describe("the reading", () => {
     expect(photo).toContain("keep the wording, language and spelling");
     // A brand's own casing isn't a printer's.
     expect(photo).toContain("McDonald's");
+    // Nor is the VAT letter a Polish or German till prints after the name.
+    expect(photo).toContain("Leave out the tax-rate code");
   });
 });
