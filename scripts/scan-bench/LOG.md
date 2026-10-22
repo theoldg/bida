@@ -7,6 +7,41 @@ right refusal from a wrong one, nor the model's mistake from the labels'.
 Receipt ids are the default sample's (`--seed 20261022`); the images are in
 `data/sample/imgs/` once `fetch.mjs` has run.*
 
+## 2026-10-22 — `b1b055c7-dirty`: rows without a figure, DISCOUNT / CHARGE / NEITHER, nothing below the total
+
+The prompt that became the next commit, before its tip field, and with "7% GST
+7.72" still followed by "under a subtotal". One read each, refusals twice.
+
+**On r00–r149, beside `b1b055c7`:** 119 accepted on the first read against
+111, and 121 on some read against 112.
+
+- **Fixed (12):** rows without a figure (r57, r71, r74, r86, r95, r120),
+  included tax with a keyword (r55, r101), the subtotal as a charge (r100),
+  "BB savings" (r42), a tip after the total dropped instead of charged (r12), a
+  misread (r49).
+- **Regressed (2):** r109, whose only total says "SUBTOTAL $11.90" — read as a
+  figure that only reports, so "CASH $12.00" became the total; r106, a card
+  slip with a tip and no items, now refused as "itemized list missing".
+- **Accepted but wrong (2):** r110 ("Summe 89,60 / + Tip 8,90 / Bar 98,50")
+  came back 89.60, the tip dropped; r49's date a day early (2009-06-08 for
+  09/06/2009). r82 is now accepted at 43.15, right, though the photo cuts off
+  the total's last digit.
+
+**On r150–r249, unseen:** 84 accepted on the first read, 87 on some read; 6
+good receipts refused twice, none accepted wrong.
+
+- **Included tax with no keyword** (3) — r181 ("13% VAT" in a 0-decimal
+  currency), r218 ("Liq Tax" above a sub-total that already holds it), r241
+  ("GST @6% Paid" below the total).
+- **Tax on top dropped** (1) — r227 ("TXTL 2.30" with no subtotal over it),
+  which `b1b055c7` read right: the example said "under a subtotal".
+- **A one-cent misread** (1) r190; **a slip with a total and no items** (1)
+  r233, and r188 on one read of two.
+
+**Still failing on both prompts:** discounts already taken off (r01, r48,
+r127), misread figures (r17, r87, r90, r136, r148), cash rounding (r83, r124),
+a credit without a minus (r65), slips with no items (r73).
+
 ## 2026-10-22 — `b1b055c7`, receipts r50–r149, one read each, refusals read twice
 
 | | |

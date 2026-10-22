@@ -153,9 +153,13 @@ describe("the reading", () => {
     // The figure `checkScan` reconciles against is evidence, never a sum.
     expect(prompt).toContain("total the receipt prints, never one you add up");
     // A deduction is a magnitude; a sign read the wrong way round is a surcharge.
-    expect(prompt).toContain("Write the amount as a positive number");
-    // Tax only where it sits on top, or the bill is charged for twice.
-    expect(prompt).toContain("Exclude tax already included in the prices");
+    expect(prompt).toContain("Amounts are written positive");
+    // Tax only where it sits on top, or the bill is charged for twice — and so
+    // for every row that reports a figure rather than changing one.
+    expect(prompt).toContain("tax already in the prices");
+    expect(prompt).toContain("A row that only reports a figure is never one");
+    // A modifier or a set's part has no price, and isn't refused as unreadable.
+    expect(prompt).toContain("A row with no figure of its own in the amount column is not a line item");
     // A till roll prints everything in capitals; a name isn't a shout.
     expect(prompt).toContain("never all caps");
     expect(prompt).toContain("40 characters");
