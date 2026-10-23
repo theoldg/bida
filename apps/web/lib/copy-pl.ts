@@ -636,7 +636,7 @@ export const pl: Copy = {
     noTitle: "Wpisz tytuł",
     noScan: "Zeskanuj paragon albo podziel inaczej",
     offBy: (field, problem) => `${field}: ${problem.charAt(0).toLowerCase()}${problem.slice(1)}`,
-    noItemsGiven: "Przypisz pozycje z paragonu",
+    noItemsGiven: "Przypisz pozycje z paragonu albo podziel inaczej",
     goneMember: (name) => `${name} nie należy już do grupy. Wybierz kogoś innego.`,
     nobodyTitle: "W tej grupie nie ma jeszcze nikogo",
     nobodyBody: "Najpierw dodaj osoby, które się dzielą kosztami.",

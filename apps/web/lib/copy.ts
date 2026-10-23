@@ -833,7 +833,7 @@ const en = {
     noScan: "Scan the bill, or split it another way",
     /** A figure that doesn't add up, named by the field holding it. */
     offBy: (field: string, problem: string) => `${field}: ${problem}`,
-    noItemsGiven: "Assign bill items",
+    noItemsGiven: "Assign bill items, or split it differently",
     goneMember: (name: string) => `${name} is no longer in the group. Pick somebody else.`,
     nobodyTitle: "Nobody in this group yet",
     nobodyBody: "Add the people sharing this first.",

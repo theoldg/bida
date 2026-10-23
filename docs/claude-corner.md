@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-23* — "Also drop all the local uncommitted changes I don't like
+  them", mid-task. Another session's half-built diff sat in the clone; look
+  at it, keep a patch in the scratchpad, then drop it — and the one-line
+  wording change goes out alone.
+
 - *2026-10-23* — "make the split mode tabs look more like tabs", then "maybe
   still do some raise effect?". Tabs alone took the lift away; the answer was
   three variants photographed beside the shipped one, each a step of lift, and
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   key's look says nothing about its host, so saving asks both. Not every
   Google API takes a key: Vertex 401s a bogus one with "API keys are not
   supported", so probe with curl before trusting a free endpoint to answer.
-
-- *2026-10-22* — "Produce ~10 receipts to test the limits of the scanning", then
-  "fell right into the trap". Each receipt aimed at one rule, with an answer
-  key saying in advance what passing meant, so the miss came back diagnosed.
-  Then "a bit shorter pls": cut whole examples, not words.
