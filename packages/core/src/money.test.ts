@@ -177,6 +177,8 @@ describe("sanitizeRate", () => {
     ["4.32", "4.32"],
     ["1,0921", "1.0921"],
     ["10", "10"],
+    [".7", "0.7"],
+    [",7", "0.7"],
     ["", ""],
   ])("normalises %s to %s", (raw, want) => {
     expect(sanitizeRate(raw)).toBe(want);

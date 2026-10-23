@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-23* — "can we accept decimal numbers without the zero, like .7?"
+  Amounts already did, writing in the 0 as you type; only the rate field
+  refused it. Find which field actually fails before changing the parser
+  every field shares.
+
 - *2026-10-23* — "Can't reach the server etc blabla --> you're offline". The
   "etc blabla" was the scope: every string saying the server couldn't be
   reached, not the one in view. Grep the phrase, change its siblings too.
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   fix". The fact-check before it was half right too: a forum's rule, not
   Chrome's source. Then a closed window: its transcript held the owner's yes,
   and the diff showed half its edits never landed. Finish from both.
-
-- *2026-10-22* — "Is it an easy fix? what else is missing the effect?", then
-  "do all". Asked a question, answer it — the list with where each lives and
-  which need a variant — and build nothing: the owner chose the scope in two
-  words. Drive is a phone, so check a hover on a desktop page of its own.

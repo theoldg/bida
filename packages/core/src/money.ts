@@ -148,7 +148,8 @@ export function isValidRate(rate: string): boolean {
 
 /** A keyboard's rate as `isValidRate` reads it ("," is a decimal point too). Never clipped (ADR-0005). */
 export function sanitizeRate(raw: string): string {
-  const text = raw.replace(/[^0-9.,]/g, "").replace(/,/g, ".");
+  // ".7" is "0.7", as an amount reads it: the zero is written in for you.
+  const text = raw.replace(/[^0-9.,]/g, "").replace(/,/g, ".").replace(/^\./, "0.");
   const first = text.indexOf(".");
   if (first === -1) return text;
   return text.slice(0, first + 1) + text.slice(first + 1).replace(/\./g, "");

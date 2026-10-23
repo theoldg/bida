@@ -177,7 +177,7 @@ itself** ([ADR-0005](decisions/0005-money-and-currency.md)).
 
 A real `<input inputMode="decimal">`. It sanitises as you type (digits, one
 separator — "," and "." both accepted — fraction clipped to the currency's
-exponent, leading zeros stripped), **restores the caret** across its own
+exponent, leading zeros stripped, ".7" written as "0.7"), **restores the caret** across its own
 reformatting, and **never autofocuses** — a draft that opens with the keyboard
 up hides the rest of the form before you have looked at it. Its grey placeholder
 goes on focus, since under a caret it reads as a figure to delete — an "as
@@ -189,7 +189,7 @@ holds typed text locally and re-reads the model only on outside change — never
 
 `GroupedInput` is the caret-and-grouping half on its own, and the rate dialog
 types into one: a rate is the other figure here with thousands in it. What may be typed is its `sanitize`
-— `sanitizeRate` clips no decimals, `sanitizeAmount` clips to the currency's
+— `sanitizeRate` clips no decimals but writes in the zero of ".7" the same, `sanitizeAmount` clips to the currency's
 exponent. The grouping itself is `groupDigits` in `lib/format.ts`, with
 `rateText` for the rates we *print*; both are pure and tested.
 
