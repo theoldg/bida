@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-23* — "Clean up after the previous session", then twice "out of
+  scope": the code-substring match stays, the Polish is too far back. A
+  clean-up's scope is the last stretch of work, not the whole history; the
+  find worth keeping was a doc's figure that the screen at 360 contradicted.
+
 - *2026-10-23* — "[price] [quantity (x1)]", then mid-build: "Add the +- buttons
   back to the quantity!" A sketch's brackets name the order, not what is
   inside them; dropping the stepper to make room was my call to make loudly,
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   throwaway test made each guess a finding. Easy meant no money call: keeping
   the tip through a rescan looked easy and would double an older scan's
   service, so it went back to the owner with the old phones.
-
-- *2026-10-21* — "Make the discount and charge cards the same colour as the
-  item cards". The clone was behind dev and had no such cards: pull before
-  hunting. And the chip's own shade already was the card's — deleting the
-  deeper one was the whole change, no override to add.
