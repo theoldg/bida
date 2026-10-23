@@ -111,7 +111,10 @@ still reading.
 
 It also photographs a receipt there, with the network watched: the demo scans
 under this phone's own credential, and its own id must appear in no request at
-all ([sync.md](sync.md#the-demo-group-has-no-key)).
+all ([sync.md](sync.md#the-demo-group-has-no-key)). On a second phone posing
+as Android, the camera press goes unanswered — what Chrome does when it may
+not use the camera — and has to end in "No camera access"; answered, it
+draws no such dialog.
 
 It also sits on the ledger for fourteen seconds and asks for the stall notice,
 which costs the check its slowest assertion and is worth it: a group with no

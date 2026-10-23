@@ -63,6 +63,7 @@ const en = {
     save: "Save",
     useIt: "Use it",
     close: "Close",
+    ok: "Ok",
     retry: "Try again",
     reload: "Reload",
   },
@@ -945,6 +946,11 @@ const en = {
     reading: "Reading…",
     camera: "Take a photo of a receipt",
     library: "Upload a receipt photo",
+    /** Android's camera, when the browser may not use it: nothing opens and nothing says why. */
+    noCamera: {
+      title: "No camera access",
+      body: "Give your browser app camera permissions, or try uploading an image instead.",
+    },
     byHand: {
       open: "Type",
       edit: "Edit",

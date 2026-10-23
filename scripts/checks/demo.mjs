@@ -79,6 +79,33 @@ report(apiCalls.some((path) => path.endsWith("/scan")) && !apiCalls.some((path) 
 await page.goto(`${base}/g?id=${groupId}`);
 await page.waitForSelector(".rows .row:not(.skelrow)");
 
+// ---- an Android camera that opens nothing says so ----------------------
+// Headless, an unanswered file input opens nothing and fires nothing: what
+// Android does when Chrome may not use the camera.
+{
+  const android = await newPhone(browser, {
+    userAgent: "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36",
+  });
+  const phone = await android.newPage();
+  await openDemo(phone, base);
+  await phone.goto(`${base}/g/scan?id=${groupId}`);
+  const snap = phone.getByRole("button", { name: "Scan", exact: true });
+  await phone.waitForFunction(() => [...document.querySelectorAll("button")]
+    .some((b) => b.textContent === "Scan" && !b.disabled), null, { timeout: PATIENCE });
+  await snap.click();
+  const told = await phone.getByText("No camera access").waitFor({ timeout: 5000 }).then(() => true, () => false);
+  report(told, "an Android camera press that opens nothing says why, rather than nothing");
+  await phone.locator("dialog").getByRole("button", { name: "Ok" }).click();
+  report(await phone.locator("dialog").count() === 0, "and Ok puts it away");
+  phone.on("filechooser", (c) => c.setFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO }).catch(() => {}));
+  await stubScan(phone, "cafe-clock");
+  await snap.click();
+  await phone.waitForTimeout(2500);
+  report(await phone.getByText("No camera access").count() === 0,
+    "while a camera that answers draws no such dialog");
+  await android.close();
+}
+
 // ---- the hinge: no key, so no path to the server ------------------------
 report((await keysHeld(page)).length === 0,
   "the phone holds no key for it, so `runSyncAll` can never see it",

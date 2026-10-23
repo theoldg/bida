@@ -48,6 +48,7 @@ export const pl: Copy = {
     save: "Zapisz",
     useIt: "Zapisz",
     close: "Zamknij",
+    ok: "OK",
     retry: "Spróbuj ponownie",
     reload: "Odśwież",
   },
@@ -718,6 +719,10 @@ export const pl: Copy = {
     reading: "Odczytywanie…",
     camera: "Zrób zdjęcie paragonu",
     library: "Prześlij zdjęcie paragonu",
+    noCamera: {
+      title: "Brak dostępu do aparatu",
+      body: "Daj aplikacji przeglądarki uprawnienia do aparatu albo spróbuj przesłać zdjęcie.",
+    },
     byHand: {
       open: "Wpisz",
       edit: "Edytuj",

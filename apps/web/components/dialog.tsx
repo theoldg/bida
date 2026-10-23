@@ -108,15 +108,15 @@ export function ConfirmDialog({ title, confirm, danger, children, onConfirm, onC
   );
 }
 
-export function NoticeDialog({ title, onClose, children, list }: {
-  title: string; onClose: () => void; children: ReactNode; list?: ReactNode;
+export function NoticeDialog({ title, onClose, children, list, button = copy.act.close }: {
+  title: string; onClose: () => void; children: ReactNode; list?: ReactNode; button?: string;
 }) {
   return (
     <Dialog title={title} onClose={onClose}>
       <div className="dbody">{children}</div>
       {list === undefined ? null : <div className="dlist">{list}</div>}
       <div className="drow">
-        <button className="btn btn-p" onClick={onClose}>{copy.act.close}</button>
+        <button className="btn btn-p" onClick={onClose}>{button}</button>
       </div>
     </Dialog>
   );

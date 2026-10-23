@@ -90,3 +90,5 @@ only thing that has one.
   honour and nothing asks it to, so a sideways receipt reaching the model is a
   real find (`lib/scan/downscale.ts`).
 - A HEIC picked from the library rather than shot through the camera input.
+- On Android, Chrome's camera permission off (Settings → Apps → Chrome): Scan
+  says "No camera access" rather than nothing.

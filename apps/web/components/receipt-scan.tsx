@@ -2,7 +2,7 @@
 // Doc: docs/receipt-scanning.md
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { clipAmountToCurrency } from "./amount-input";
 import { copy } from "../lib/copy";
 import { Icon, type IconName } from "./icons";
@@ -21,6 +21,8 @@ import { ScanBusy } from "./scan-bar";
 import type { ScanAs } from "../lib/scan/credential";
 import { warmTurnstile } from "../lib/scan/turnstile";
 import { warmBillFinder } from "../lib/scan/find-bill";
+import { watchCamera } from "../lib/scan/camera";
+import { NoticeDialog } from "./dialog";
 
 export type { ScanState } from "../lib/scan/live";
 
@@ -50,7 +52,7 @@ export interface ReceiptScan {
   openCamera: () => void;
   openLibrary: () => void;
   openTyping: () => void;
-  /** The hidden file inputs. Render once per screen, outside anything a reading rearranges. */
+  /** The hidden file inputs, and the camera's refusal. Render once per screen, outside anything a reading rearranges. */
   inputs: React.ReactNode;
 }
 
@@ -73,6 +75,7 @@ export function useReceiptScan(
   const cameraInput = useRef<HTMLInputElement>(null);
   const libraryInput = useRef<HTMLInputElement>(null);
   const live = useLiveScan(groupId);
+  const [noCamera, setNoCamera] = useState(false);
 
   const onScreen = useRef(true);
   useEffect(() => () => { onScreen.current = false; }, []);
@@ -161,7 +164,13 @@ export function useReceiptScan(
     disabled: !scanAs,
     takeLanded: () => (groupId ? takeLanded(groupId) : false),
     // The crop model downloads while the camera is up, not after the shutter.
-    openCamera: () => { void warmBillFinder(); cameraInput.current?.click(); },
+    openCamera: () => {
+      void warmBillFinder();
+      const input = cameraInput.current;
+      if (!input) return;
+      watchCamera(input, () => setNoCamera(true));
+      input.click();
+    },
     openLibrary: () => { void warmBillFinder(); libraryInput.current?.click(); },
     openTyping: () => { if (billHref) router.push(billHref); },
     inputs: (
@@ -172,6 +181,11 @@ export function useReceiptScan(
         <input ref={libraryInput} type="file" accept="image/*"
           style={{ display: "none" }} onChange={(e) => void onPhoto(e)}
           aria-label={copy.scan.library} />
+        {noCamera ? (
+          <NoticeDialog title={copy.scan.noCamera.title} button={copy.act.ok} onClose={() => setNoCamera(false)}>
+            <p>{copy.scan.noCamera.body}</p>
+          </NoticeDialog>
+        ) : null}
       </>
     ),
   };
