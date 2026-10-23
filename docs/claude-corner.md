@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-23* — "Can't reach the server etc blabla --> you're offline". The
+  "etc blabla" was the scope: every string saying the server couldn't be
+  reached, not the one in view. Grep the phrase, change its siblings too.
+
 - *2026-10-23* — "The camera doesn't work… the button just does nothing", then
   "let's workshop it" on a dialog's words. The diag held no trace of the press,
   so the answer was a guess to check on the phone. Workshop meant notes and two
@@ -85,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "do all". Asked a question, answer it — the list with where each lives and
   which need a variant — and build nothing: the owner chose the scope in two
   words. Drive is a phone, so check a hover on a desktop page of its own.
-
-- *2026-10-22* — A redditor's "autofill css you didn't override", then two
-  interrupts: "we need a garbage value", "fact check me though". The owner's
-  memory was half right ("off", not "false"); say which half, with sources,
-  rather than building on it or on yours.

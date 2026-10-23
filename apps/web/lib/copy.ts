@@ -482,7 +482,7 @@ const en = {
       deleted: "That group has already been deleted.",
       refused: "The server refused that link: its password does not match the group.",
       unreadable: "That link opened nothing this app can read.",
-      offline: "Couldn’t reach the server. Check your connection and try again.",
+      offline: "You’re offline. Check your connection and try again.",
       noSplit: "There’s no split at that link. Nothing of it is here to delete.",
     },
     found: {
@@ -632,13 +632,13 @@ const en = {
 
   group: {
     noGroup: "No group",
-    offlineIdle: "Offline: you may not have everyone’s latest.",
-    offlinePending: (waiting: string) => `Offline: ${waiting} waiting.`,
+    offlineIdle: "You’re offline: you may not have everyone’s latest.",
+    offlinePending: (waiting: string) => `You’re offline: ${waiting} waiting.`,
     // There is no secret rotation, so a "fresh" link is identical; reopening the
     // invite link clears this (`saveGroupKey` unsets the failure).
     rejected: "This phone’s link doesn’t open this group. Open the invite link again.",
-    unreachableIdle: "Can’t reach the server: you may not have everyone’s latest.",
-    unreachablePending: (waiting: string) => `Can’t reach the server: ${waiting} stuck on this phone.`,
+    unreachableIdle: "You’re offline: you may not have everyone’s latest.",
+    unreachablePending: (waiting: string) => `You’re offline: ${waiting} waiting.`,
 
     hasLeft: "removed",
     youTag: "(you)",
@@ -748,7 +748,7 @@ const en = {
     /** `/split`, where the link lands. Its bar is `split`, over the bill's name. */
     landing: {
       none: "There’s no split at this link. A chat may have cut it short: ask for it again.",
-      offline: "Couldn’t reach bida. Check your connection and try again.",
+      offline: "You’re offline. Check your connection and try again.",
       unreadable: "That link opened nothing this version of bida can read.",
     },
   },
