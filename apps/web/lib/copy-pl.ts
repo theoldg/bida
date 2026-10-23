@@ -454,10 +454,10 @@ export const pl: Copy = {
 
   group: {
     noGroup: "Brak grupy",
-    offlineIdle: "Brak sieci: możesz nie widzieć najnowszych zmian.",
+    offlineIdle: "Brak sieci.",
     offlinePending: (waiting) => `Brak sieci: ${waiting} do wysłania.`,
     rejected: "Link na tym telefonie nie otwiera tej grupy. Otwórz ponownie link z zaproszeniem.",
-    unreachableIdle: "Brak sieci: możesz nie widzieć najnowszych zmian.",
+    unreachableIdle: "Brak sieci.",
     unreachablePending: (waiting) => `Brak sieci: ${waiting} do wysłania.`,
     hasLeft: "poza grupą",
     youTag: "(Ty)",

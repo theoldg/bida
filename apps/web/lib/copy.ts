@@ -632,12 +632,12 @@ const en = {
 
   group: {
     noGroup: "No group",
-    offlineIdle: "You’re offline: you may not have everyone’s latest.",
+    offlineIdle: "You’re offline.",
     offlinePending: (waiting: string) => `You’re offline: ${waiting} waiting.`,
     // There is no secret rotation, so a "fresh" link is identical; reopening the
     // invite link clears this (`saveGroupKey` unsets the failure).
     rejected: "This phone’s link doesn’t open this group. Open the invite link again.",
-    unreachableIdle: "You’re offline: you may not have everyone’s latest.",
+    unreachableIdle: "You’re offline.",
     unreachablePending: (waiting: string) => `You’re offline: ${waiting} waiting.`,
 
     hasLeft: "removed",
