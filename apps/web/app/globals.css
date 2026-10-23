@@ -1175,11 +1175,10 @@ dialog.scrim::backdrop { background: transparent }
 .bimore { margin-left: -12px }
 .bisign { color: var(--ink-2); font-size: 14.5px }
 
-/* The first price's field is one width and place, alone or with "each" before
-   it, so neither it nor the count beside it moves as a second price arrives.
-   The steps are narrower than a parts row's: two prices share their line. */
+/* The count ends the line, its "+" under the card's cross. The steps are
+   narrower than a parts row's: two prices share their line. */
 .binums { display: flex; align-items: center; gap: 8px; margin-top: 12px; min-height: 30px }
-.binums > .bistep { flex: none; margin: 0 }
+.binums > .bistep { flex: none; margin: 0 -9px 0 0 }
 /* Every figure on the line is one box — size, line, underline — so centring
    them levels their underlines; the words beside a price sit on its baseline. */
 .binums :is(.splitin, .bicount input) { height: 22px; padding: 0 0 2px; font-size: 14.5px; line-height: 20px }
@@ -1195,19 +1194,10 @@ dialog.scrim::backdrop { background: transparent }
 .bicount.bump-b input { animation: bibump-b .18s ease-out }
 @keyframes bibump-a { 40% { transform: scale(1.25) } }
 @keyframes bibump-b { 40% { transform: scale(1.25) } }
-.biprice { display: flex; align-items: baseline; justify-content: flex-end; gap: 6px; flex: 0 1 auto;
-  min-width: 104px; font-size: 11.5px; color: var(--muted) }
-.biprice .amountfield { flex: 0 1 68px; min-width: 0 }
+.biprice { display: flex; align-items: baseline; justify-content: flex-end; gap: 6px; flex: 1 1 0;
+  min-width: 0; font-size: 11.5px; color: var(--muted) }
+.biprice .amountfield { flex: 0 1 92px; min-width: 0 }
 .biprice .splitin { width: 100%; min-width: 0 }
-/* The second price ends where the card does. */
-.biprice.bitotal { flex: 1 1 0; min-width: 0 }
-.bitotal .amountfield { flex: 0 1 92px }
-/* A 360px phone has a total's width less to spare. */
-@media (max-width: 374px) {
-  .binums { gap: 5px }
-  .biprice { min-width: 94px }
-  .biprice .amountfield { flex-basis: 60px }
-}
 /* The tip and what the bill comes to, under the cards: their figures end where the
    cards' do, inside a card's border and padding. The pair sits as far from "Add"
    as from Done (16px, measured: the total's line box adds 3 to the list's foot and

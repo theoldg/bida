@@ -114,11 +114,9 @@ back to the printed words would be no correction.
   back keeps whoever had it, until Done. "Add an item" puts its card after the
   last item, where the bill reopens it, and so does the last item's confirm key.
 - **Either price can be typed** with a count above one, which reads "each
-  12.00 ×2 total 24.00": the one typed holds and the other follows, in minor
-  units (`lib/scan/manual.ts`). The first price's field keeps its width and
-  place either way, so it and the count stay put as the second arrives. A
-  four-digit price ("1 200.00") scrolls in its field at 360px, a five-digit
-  one at 390. A count raised is
+  12.00 total 24.00 − ×2 +", the count ending the line: the one typed holds
+  and the other follows, in minor units (`lib/scan/manual.ts`). A four-digit
+  price ("1 200.00") scrolls in its field at 360px. A count raised is
   more at the same price: a single item's price is a unit price, and a
   printed line opens on its unit price where its count divides it — where it
   doesn't, on the total printed, so no cent moves.

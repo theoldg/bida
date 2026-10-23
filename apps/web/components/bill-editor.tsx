@@ -237,8 +237,7 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
               const totalAimed = priceAimed && !unitAimed;
               const last = i === lastItem;
               const total = (
-                <label key="total" className={`biprice${many ? " bitotal" : ""}`}
-                  {...(totalAimed ? { "data-aimed": "" } : {})}>
+                <label className="biprice" {...(totalAimed ? { "data-aimed": "" } : {})}>
                   {many ? <span>{copy.scan.byHand.total}</span> : null}
                   {/* Typed positive, as it is kept: the kind is the sign. */}
                   {item ? null : <span className="bisign">{row.kind === "discount" ? "−" : "+"}</span>}
@@ -281,11 +280,11 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                       <Icon name="cross" size={12} />
                     </button>
                   </div>
-                  {/* The count sits after the first price, so it stays put as a
-                      second appears: "each 12.00 ×2 total 24.00". */}
+                  {/* The count ends the line, so the prices before it read
+                      "each 12.00 total 24.00". */}
                   <div className="binums">
                     {many ? (
-                      <label key="unit" className="biprice"
+                      <label className="biprice"
                         {...(unitAimed ? { "data-aimed": "" } : {})}>
                         <span>{copy.scan.byHand.each}</span>
                         <AmountInput className="bignum splitin" currency={currency} value={row.unitText}
@@ -294,9 +293,10 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                           placeholder="0" enterKeyHint="next" aria-label={copy.scan.byHand.eachOf(n)}
                           onChange={(t) => change(row.key, (r) => setUnit(r, t, currency))} />
                       </label>
-                    ) : total}
+                    ) : null}
+                    {total}
                     {item ? (
-                      <span key="count" className="partsend bistep">
+                      <span className="partsend bistep">
                         <button type="button" className="partsstep" disabled={row.count <= 1}
                           onClick={() => step(row.key, -1)}
                           aria-label={copy.scan.byHand.fewer(n)}>
@@ -312,7 +312,6 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                         </button>
                       </span>
                     ) : null}
-                    {many ? total : null}
                   </div>
                 </div>
               );

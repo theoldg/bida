@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-23* — "I don't like the new each/total arrangement, revert… except
+  moving the -xN+ to the right", "keep the improvements made since". Wedging
+  the count between two prices so it never moved was my reason, not theirs:
+  a line reads in order first. A revert is a reorder, not `git revert`.
+
 - *2026-10-23* — "Clean up after the previous session", then twice "out of
   scope": the code-substring match stays, the Polish is too far back. A
   clean-up's scope is the last stretch of work, not the whole history; the
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the length. Their structure won; the review that helped named which cut lines
   each fixed a past failure, and they took three of six. Answer a draft line by
   line, and let "that's obvious" end the line.
-
-- *2026-10-21* — "What did we miss?", then "fix all the easy things". A
-  throwaway test made each guess a finding. Easy meant no money call: keeping
-  the tip through a rescan looked easy and would double an older scan's
-  service, so it went back to the owner with the old phones.
