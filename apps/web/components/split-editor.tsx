@@ -208,7 +208,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
               : row === "rest" ? copy.split.sharingRest : copy.split.fixedAmount;
             const name = (
               <span className="rmain" style={{ opacity: on ? 1 : .45 }}>
-                <span className="rtitle" style={{ display: "block", fontSize: 13.5 }}>
+                <span className="rtitle" style={{ display: "block", fontSize: "var(--fs-body)" }}>
                   {m.name}{m.id === me ? <You /> : null}
                 </span>
                 <span className="rmeta" style={{ display: "block" }}>{meta}</span>
@@ -304,8 +304,8 @@ function ReceiptPanel({
           <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "2px 0 2px" }}>
             {involved.map((m) => (
               <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{m.name}{m.id === me ? <You /> : null}</span>
-                <span className="bignum" style={{ fontSize: 13.5 }}>{money(shares[m.id] ?? 0, currency)}</span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: "var(--fs-body)" }}>{m.name}{m.id === me ? <You /> : null}</span>
+                <span className="bignum" style={{ fontSize: "var(--fs-body)" }}>{money(shares[m.id] ?? 0, currency)}</span>
               </div>
             ))}
           </div>

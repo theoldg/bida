@@ -98,7 +98,7 @@ function Balances({ data }: { data: GroupData }) {
           return (
             <div key={m.id} className="balrow">
               <div>
-                <div className="balname" style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>
+                <div className="balname" style={{ fontSize: "var(--fs-body)", fontWeight: 600, marginBottom: 4 }}>
                   {m.name}
                   {m.id === me ? <>{" "}<span className="baltag">{copy.group.youTag}</span></> : null}
                   {m.gone ? <span className="baltag">{copy.group.hasLeft}</span> : null}
@@ -119,10 +119,10 @@ function Balances({ data }: { data: GroupData }) {
       {balances.problems.length > 0 ? (
         <div className="pad">
           <Card style={{ borderLeft: "2px solid var(--debit)" }}>
-            <div style={{ fontSize: 12.5, color: "var(--debit)", fontWeight: 600 }}>
+            <div style={{ fontSize: "var(--fs-small)", color: "var(--debit)", fontWeight: 600 }}>
               {copy.group.unsplittable(balances.problems.length)}
             </div>
-            <p style={{ fontSize: 11.5, color: "var(--ink-2)", margin: "5px 0 0" }}>
+            <p style={{ fontSize: "var(--fs-caption)", color: "var(--ink-2)", margin: "5px 0 0" }}>
               {copy.group.unsplittableWhy(balances.problems[0]!.reason)}
             </p>
           </Card>
@@ -148,7 +148,7 @@ function Balances({ data }: { data: GroupData }) {
                 <span className="suggestname">{nameOf(t.from)}</span>
                 <Icon name="arrow" size={16} className="muted" />
                 <span className="suggestname">{nameOf(t.to)}</span>
-                <span className="bignum spacer" style={{ fontSize: 13.5 }}>
+                <span className="bignum spacer" style={{ fontSize: "var(--fs-body)" }}>
                   {money(t.amountMinor, group.baseCurrency)}
                 </span>
                 <Icon name="chev" size={18} className="suggestchev" />
@@ -188,9 +188,9 @@ function BalanceFigure({ net, currency }: { net: number; currency: CurrencyCode 
   const { can, copied, copy: write } = useCopyFigure(net, currency);
   const shown = money(net, currency, net !== 0);
   const className = `bignum balfig ${signClass(net)}`;
-  if (!can) return <div className={className} style={{ fontSize: 14 }}>{shown}</div>;
+  if (!can) return <div className={className} style={{ fontSize: "var(--fs-body)" }}>{shown}</div>;
   return (
-    <button type="button" className={`${className} flipfig${copied ? " copied" : ""}`} style={{ fontSize: 14 }}
+    <button type="button" className={`${className} flipfig${copied ? " copied" : ""}`} style={{ fontSize: "var(--fs-body)" }}
       onClick={write}>
       <span className="amtface">{shown}</span>
       {/* Always drawn: the flip back is a transition on a class going away. */}

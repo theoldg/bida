@@ -147,6 +147,10 @@ textarea { resize: vertical }
   --f-mono: "JetBrains Mono", "JetBrains Mono Fallback", ui-monospace, "SF Mono", Menlo, monospace;
   --f-display: var(--f-mono);
   --f-body: var(--f-mono);
+
+  /* The type scale: every size is one of these roles (docs/design-system.md#type). */
+  --fs-caption: 11px; --fs-small: 12.5px; --fs-body: 14px; --fs-lead: 15.5px;
+  --fs-title: 17px; --fs-heading: 20px; --fs-display: 26px;
 }
 
 @media (prefers-color-scheme:dark) {
@@ -217,7 +221,7 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--f-body);
-  font-size: 14px;
+  font-size: var(--fs-body);
   line-height: 1.5;
   letter-spacing: -.005em;
   -webkit-font-smoothing: antialiased;
@@ -243,7 +247,7 @@ input, textarea, .selectable {
 
 .eyebrow {
   font-family: var(--f-mono);
-  font-size: 10.5px;
+  font-size: var(--fs-caption);
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -376,7 +380,7 @@ html[data-banner="manual"] .ghost-manual { display: block }
 
 .topbar { display: flex; align-items: center; gap: 11px; padding: max(10px, env(safe-area-inset-top)) 16px 12px;
   flex: none; position: relative }
-.topbar h3 { font-size: 17px; letter-spacing: -.03em; line-height: 1.15 }
+.topbar h3 { font-size: var(--fs-title); letter-spacing: -.03em; line-height: 1.15 }
 .topbar-title { min-width: 0 }
 .topbar h3, .topbar .sub { display: -webkit-box; -webkit-box-orient: vertical;
   overflow: hidden; overflow-wrap: anywhere }
@@ -389,8 +393,8 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .topbar-mid { position: absolute; inset: max(10px, env(safe-area-inset-top)) 0 12px;
   display: flex; align-items: center; justify-content: center; pointer-events: none }
 .topbar-mid > * { pointer-events: auto }
-.brand { display: flex; align-items: center; font-size: 21px; padding: 4px 0 }
-.topbar .sub { font-size: 10.5px; color: var(--muted); font-family: var(--f-mono); letter-spacing: .02em;
+.brand { display: flex; align-items: center; font-size: var(--fs-heading); padding: 4px 0 }
+.topbar .sub { font-size: var(--fs-caption); color: var(--muted); font-family: var(--f-mono); letter-spacing: .02em;
   text-transform: uppercase }
 .iconbtn { width: 32px; height: 32px; border-radius: var(--r-s); display: grid; place-items: center;
   background: var(--card-2); border: 1px solid var(--rule-soft); color: var(--ink-2); flex: none }
@@ -422,7 +426,7 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .searchclear:active { background: var(--press) }
 .spacer { margin-left: auto }
 .muted { color: var(--muted) }
-.topbarver { font-family: var(--f-mono); font-size: 11px; letter-spacing: .02em;
+.topbarver { font-family: var(--f-mono); font-size: var(--fs-caption); letter-spacing: .02em;
   color: var(--muted) }
 
 
@@ -432,7 +436,7 @@ html[data-banner="manual"] .ghost-manual { display: block }
   border-bottom: 1px solid var(--rule-soft); position: relative; width: 100% }
 .row:last-child { border-bottom: 0 }
 /* Caps only, so the padding is uneven: 7/6 puts the ink 9px from each edge. */
-.daylabel { font-family: var(--f-mono); font-size: 10px; line-height: 13px; letter-spacing: .12em;
+.daylabel { font-family: var(--f-mono); font-size: var(--fs-caption); line-height: 13px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--muted); padding: 7px 16px 6px; background: var(--card-2);
   border-bottom: 1px solid var(--rule-soft); font-weight: 500 }
 .avatar { width: 34px; height: 34px; border-radius: var(--r-s); display: grid; place-items: center;
@@ -449,45 +453,45 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .starttiles { display: flex; justify-content: center; gap: 20px }
 .starttile { flex: 1; max-width: 100px; aspect-ratio: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 9px; border-radius: var(--r-s);
-  font-weight: 600; font-size: 12px; letter-spacing: -.01em; text-align: center }
+  font-weight: 600; font-size: var(--fs-small); letter-spacing: -.01em; text-align: center }
 .start-p { background: var(--brand); color: var(--brand-ink) }
 .start-p:active { background-image: linear-gradient(var(--press-i), var(--press-i)) }
 .start-s { background: var(--card); color: var(--ink); border: 1.5px solid var(--ink) }
 
 .nudgehead { display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; width: 100%; text-align: left; font-size: 14px; font-weight: 600;
+  gap: 10px; width: 100%; text-align: left; font-size: var(--fs-body); font-weight: 600;
   color: var(--ink) }
 .nudgehead .kvchev { margin-right: 4.5px }
 
 .about { display: flex; flex-direction: column; gap: 22px;
   max-width: 34em; margin-inline: auto; padding-top: 6px; padding-bottom: 34px }
-.aboutsect h4 { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .12em;
+.aboutsect h4 { font-family: var(--f-mono); font-size: var(--fs-caption); letter-spacing: .12em;
   text-transform: uppercase; color: var(--ink-2); margin-bottom: 7px }
 /* Not `text-wrap: pretty`: Safari's early breaks leave a fifth of a mono column empty. */
-.aboutsect p { font-size: 13px; line-height: 1.55; color: var(--ink-2) }
+.aboutsect p { font-size: var(--fs-small); line-height: 1.55; color: var(--ink-2) }
 .aboutsect p + p { margin-top: 9px }
 /* The section's paragraph rule outweighs `.failure`. */
-.aboutsect p.failure { font-size: 12px; color: var(--debit) }
+.aboutsect p.failure { font-size: var(--fs-small); color: var(--debit) }
 .aboutsect p strong { color: var(--ink); font-weight: 600 }
 .aboutsect p a, .warnlist li a { text-decoration: underline; text-underline-offset: 2px;
   text-decoration-color: var(--rule) }
 .installfold > button { display: flex; align-items: center; gap: 6px;
-  font-size: 12px; color: var(--muted); text-align: left }
-.aboutsect .installfold p { font-size: 12px; margin-top: 6px; padding-left: 16px }
+  font-size: var(--fs-small); color: var(--muted); text-align: left }
+.aboutsect .installfold p { font-size: var(--fs-small); margin-top: 6px; padding-left: 16px }
 .warnlist { display: flex; flex-direction: column; gap: 9px; margin: 10px 0 0;
   padding: 0; list-style: none }
 /* A sentence with a link must be one element, or the link drops to its own row. */
 .warnlist li { display: grid; grid-template-columns: auto 1fr; gap: 9px;
-  font-size: 13px; line-height: 1.5; color: var(--ink-2) }
+  font-size: var(--fs-small); line-height: 1.5; color: var(--ink-2) }
 .warnlist li svg { color: var(--debit); margin-top: 3px }
 .warnlist + p { margin-top: 10px }
 /* A counter, not a marker, so a wrapped line indents under the text. */
 .installsteps { display: flex; flex-direction: column; gap: 10px; counter-reset: step;
   margin: 0 0 14px; padding: 0; list-style: none }
 .installsteps li { display: grid; grid-template-columns: auto auto 1fr; align-items: center;
-  gap: 8px; font-size: 13px; line-height: 1.5; color: var(--ink-2) }
+  gap: 8px; font-size: var(--fs-small); line-height: 1.5; color: var(--ink-2) }
 .installsteps li::before { counter-increment: step; content: counter(step) ".";
-  font-family: var(--f-mono); font-size: 12px; color: var(--muted) }
+  font-family: var(--f-mono); font-size: var(--fs-small); color: var(--muted) }
 .installsteps .stepicon { color: var(--ink-2) }
 .installclip { display: block; width: 220px; height: auto; margin: 4px auto 12px;
   border: 1px solid var(--rule); border-radius: var(--r-l) }
@@ -502,11 +506,11 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .itemscroll:has(+ .whodock) { flex: 0 1 auto }
 .inappdock { flex: none; padding: 10px 16px max(12px, env(safe-area-inset-bottom)) }
 :root[data-kb] .inappdock { display: none }
-.inapptitle { font-size: 13px; font-weight: 600; color: var(--ink); text-wrap: pretty }
+.inapptitle { font-size: var(--fs-small); font-weight: 600; color: var(--ink); text-wrap: pretty }
 .inapp .hint { margin: 4px 0 0; text-wrap: pretty }
 .linkbox { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px;
   padding: 11px 12px; background: var(--card-2); border: 1px solid var(--rule); border-radius: var(--r-s);
-  font-family: var(--f-mono); font-size: 12px; color: var(--ink); text-align: left;
+  font-family: var(--f-mono); font-size: var(--fs-small); color: var(--ink); text-align: left;
   transition: border-color .2s }
 /* Scrolls rather than ellipsises: with no clipboard the link is selected by
    hand, and text hidden behind an ellipsis can't be. A swipe is not a tap. */
@@ -520,52 +524,52 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .linkbox:active { transform: scale(.99) }
 .aboutrow { margin: 13px auto 0; border-collapse: separate; border-spacing: 0;
   background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-m);
-  font-size: 11.5px; line-height: 1.5; overflow: hidden }
+  font-size: var(--fs-caption); line-height: 1.5; overflow: hidden }
 .aboutrow th, .aboutrow td { text-align: left; padding: 7px 10px; font-weight: 400 }
 .aboutrow th { color: var(--muted); border-bottom: 1px solid var(--rule-soft) }
 .aboutrow td { color: var(--ink); overflow-wrap: anywhere }
 .aboutrow + p { margin-top: 13px }
-.settings .aboutsect h3 { font-size: 16px; font-weight: 650; letter-spacing: -.02em;
+.settings .aboutsect h3 { font-size: var(--fs-lead); font-weight: 600; letter-spacing: -.02em;
   color: var(--ink); margin-bottom: 8px }
 /* Outweighs `.addrow.editing`'s margins by a class: here the row is the column's width. */
 .settings .addrow.keyrow { margin: 16px 0 0; width: 100% }
 .settings .installfold { margin-top: 16px }
 .setlink { display: flex; align-items: center; justify-content: space-between; gap: 12px;
   margin-inline: -16px; padding: 13px 16px; border-top: 1px solid var(--rule-soft);
-  font-size: 14px; font-weight: 500; color: var(--ink-2) }
+  font-size: var(--fs-body); font-weight: 500; color: var(--ink-2) }
 .setlink svg { color: var(--muted) }
 /* As wide as its words, not a tab bar. Equal columns, so the chosen one's weight
    moves nothing. */
 .settings .seg { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; margin-top: 2px }
 .settings .seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 7px 16px; font-size: 12.5px }
+  padding: 7px 16px; font-size: var(--fs-small) }
 /* A glyph a size up mustn't make its button taller than the others. */
 .settings .seg button svg { margin-block: -2px }
 .settings .seg button:disabled { color: var(--muted); opacity: .5 }
 .notwho { margin-top: 14px }
-.notwho p, .diag-what p { font-size: 12px; line-height: 1.55; color: var(--ink-2); margin-top: 6px; padding-left: 16px }
+.notwho p, .diag-what p { font-size: var(--fs-small); line-height: 1.55; color: var(--ink-2); margin-top: 6px; padding-left: 16px }
 .notwho p strong, .diag-what p strong { color: var(--ink); font-weight: 600 }
-.keyinput { font-family: var(--f-mono); font-size: 12.5px; font-weight: 500 }
+.keyinput { font-family: var(--f-mono); font-size: var(--fs-small); font-weight: 500 }
 .keyrow.locked { background: var(--card-2); border-color: var(--rule-soft) }
 .keyrow.locked .keyinput { color: var(--ink-2); -webkit-text-fill-color: var(--ink-2); opacity: 1 }
 .verrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px }
-.vernum { font-family: var(--f-mono); font-size: 13px; color: var(--ink) }
-.vernote { font-size: 12px; line-height: 1.5; color: var(--muted); margin-top: 2px }
-.verrow .btn { width: auto; padding: 7px 16px; font-size: 12.5px }
-.keynote { font-size: 12px; line-height: 1.5; color: var(--muted); margin: 9px 2px 0 }
+.vernum { font-family: var(--f-mono); font-size: var(--fs-small); color: var(--ink) }
+.vernote { font-size: var(--fs-small); line-height: 1.5; color: var(--muted); margin-top: 2px }
+.verrow .btn { width: auto; padding: 7px 16px; font-size: var(--fs-small) }
+.keynote { font-size: var(--fs-small); line-height: 1.5; color: var(--muted); margin: 9px 2px 0 }
 
 .aboutcontact { display: flex; align-items: center; gap: 22px }
 .aboutlinks { display: flex; flex-direction: column; align-items: flex-start; gap: 9px;
   margin-top: 13px }
 .aboutlink { display: inline-flex; align-items: center; gap: 8px; min-height: 32px;
-  font-size: 13px; font-weight: 600; color: var(--ink);
+  font-size: var(--fs-small); font-weight: 600; color: var(--ink);
   text-decoration: underline; text-underline-offset: 3px;
   text-decoration-color: var(--rule) }
 .aboutlink:active { opacity: .6 }
 .aboutlink svg { color: var(--muted); flex: none }
 .addrow { padding-top: 16px }
 .addname { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
-  font-size: 13.5px; font-weight: 600; color: var(--ink); padding: 0 }
+  font-size: var(--fs-body); font-weight: 600; color: var(--ink); padding: 0 }
 .addname::placeholder { color: var(--muted); font-weight: 500 }
 /* The 32px plus borrows the row's padding to make a thumb-sized target. */
 .addrow .iconbtn { position: relative }
@@ -591,9 +595,9 @@ html[data-banner="manual"] .ghost-manual { display: block }
 @media (hover: hover) and (pointer: fine) { .rdrop { cursor: pointer } .rdrop:hover { color: var(--ink-2) } }
 
 .rmain { min-width: 0; flex: 1 }
-.rtitle { font-size: 13.5px; font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden;
+.rtitle { font-size: var(--fs-body); font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis }
-.rmeta { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden;
+.rmeta { font-size: var(--fs-caption); color: var(--muted); white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; margin-top: 1px }
 /* As tall as a name with a line under it: an invisible real pair sets the
    height (`SoloName`), since phones round line boxes their own way. */
@@ -613,15 +617,15 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .paidby .waysbox { display: flex; flex-wrap: wrap; flex: 0 1000 auto; min-width: 0; height: 1.5em; overflow: hidden }
 .paidby .ways { flex: none; display: flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums }
 .paidby .sep { padding: 0 .6ch }
-.paidby .incometag { flex: none; align-self: center; margin-left: 1.2ch; font-size: 10.5px; line-height: 13px;
+.paidby .incometag { flex: none; align-self: center; margin-left: 1.2ch; font-size: var(--fs-caption); line-height: 13px;
   color: var(--hl-ink); background: var(--hl); padding: 1px 6px; border-radius: 2px }
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
 /* Ink: green and red are money's. */
 .rmeta .rnew { color: var(--ink); font-weight: 600 }
 .ramt { text-align: right; flex: none }
-.ramt .big { font-family: var(--f-mono); font-size: 14px; font-weight: 600;
+.ramt .big { font-family: var(--f-mono); font-size: var(--fs-body); font-weight: 600;
   font-variant-numeric: tabular-nums; letter-spacing: -.02em }
-.ramt .sm { font-family: var(--f-mono); font-size: 10.5px; color: var(--muted);
+.ramt .sm { font-family: var(--f-mono); font-size: var(--fs-caption); color: var(--muted);
   font-variant-numeric: tabular-nums; margin-top: 1px }
 /* Copying flips a figure to a check: the groups list's link, a balance on
    Balances. A transition, not keyframes: removing a class replays no
@@ -674,7 +678,7 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .mysum.credit { color: var(--credit) } .mysum.debit { color: var(--debit) }
 a.mysum { transition: background-image .2s ease, color .8s ease }
 .mysumtext { display: flex; flex-direction: column; gap: 2px; min-width: 0 }
-.mysum .eyebrow { font-size: 13px; color: inherit; transition: color .8s ease }
+.mysum .eyebrow { font-size: var(--fs-small); color: inherit; transition: color .8s ease }
 .mysum:not(.credit, .debit) .eyebrow { color: var(--muted) }
 .mysum .bignum { line-height: 1.1;
   font-size: min(var(--mysum-max), (100cqi - 60px) / (var(--chars) * .6)) }
@@ -709,24 +713,24 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='7'%3E%3Cpath d='M0 5.5 4 1.5 8 5.5' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3C/svg%3E") repeat-x left center / 8px 7px;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='7'%3E%3Cpath d='M0 5.5 4 1.5 8 5.5' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3C/svg%3E") repeat-x left center / 8px 7px }
 .torn span { position: relative; padding-left: 8px; background: var(--card); font-family: var(--f-mono);
-  font-size: 10px; line-height: 13px; letter-spacing: .12em; text-transform: uppercase;
+  font-size: var(--fs-caption); line-height: 13px; letter-spacing: .12em; text-transform: uppercase;
   color: var(--ink-2); font-weight: 500 }
 .tlink.entrygroup { margin: 2px 0 0 -3.5px; gap: 10.5px }
 .tlink.entrygroup svg:last-child { margin-left: -7.5px }
 
 /* ---- chips ---- */
-.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; padding: 2.5px 7px;
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-caption); padding: 2.5px 7px;
   border-radius: var(--r-s); border: 1px solid var(--rule); color: var(--ink-2); background: var(--card-2);
   font-weight: 500; white-space: nowrap }
 .chip.hl { border-color: var(--hl-edge); color: var(--hl-ink); background: var(--hl) }
-.chip.kindchip { font-size: 12px; line-height: 1.3; padding: 4px 9px }
+.chip.kindchip { font-size: var(--fs-small); line-height: 1.3; padding: 4px 9px }
 .chip .pickmark { opacity: .65; margin-right: -2px }
 .chip.pend { border-color: var(--hl-edge); color: var(--hl-ink); background: transparent }
 .dot { width: 6px; height: 6px; border-radius: 1px; background: var(--ink-2); flex: none;
   display: inline-block }
 
 /* ---- receipt item assignment ---- */
-.itemchip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
+.itemchip { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-small); font-weight: 500;
   padding: 4px 10px 4px 4px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card-2) }
 /* Only a key to the initials, so nothing about it says press. */
 .itemchip.flat { border-color: transparent; background: none; padding-left: 0; padding-right: 8px }
@@ -746,14 +750,14 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   border-bottom: 1px solid var(--rule-soft) }
 .tot:last-child { border-bottom: 0 }
 .tot .who { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: 12.5px }
-.tot .amt { font-family: var(--f-mono); font-size: 12.5px; font-variant-numeric: tabular-nums;
+  font-size: var(--fs-small) }
+.tot .amt { font-family: var(--f-mono); font-size: var(--fs-small); font-variant-numeric: tabular-nums;
   font-weight: 600 }
 
 /* `separate`: a collapsed border scrolls away from under a sticky cell.
    `fixed`: under `auto`, opening a run re-measures and shifts every column.
    `--cols` lets the table overflow rather than squash its cells. */
-.itemtable { border-collapse: separate; border-spacing: 0; font-size: 12.5px;
+.itemtable { border-collapse: separate; border-spacing: 0; font-size: var(--fs-small);
   table-layout: fixed; width: 100%;
   --label-w: 152px; --who-w: 44px;
   min-width: calc(var(--label-w) + var(--cols, 0) * var(--who-w)) }
@@ -776,15 +780,15 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .itemtext:active { background-image: linear-gradient(var(--press), var(--press)) }
 .itemname { display: block; font-weight: 500 }
 .itemqty { font-weight: 400; color: var(--muted) }
-.itemamount { display: block; font-family: var(--f-mono); font-size: 11px; color: var(--muted); margin-top: 1px }
+.itemamount { display: block; font-family: var(--f-mono); font-size: var(--fs-caption); color: var(--muted); margin-top: 1px }
 .itemfold { display: inline-flex; align-items: center; gap: 2px; flex: none; min-height: 25px;
   padding: 3px 5px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card);
-  font-family: var(--f-mono); font-size: 11px; font-weight: 500; color: var(--ink-2) }
+  font-family: var(--f-mono); font-size: var(--fs-caption); font-weight: 500; color: var(--ink-2) }
 .itemfold svg { color: var(--muted) }
 .itemfold.on { border-color: var(--ink-2); background: var(--card-3); color: var(--ink) }
 .itemfold.on svg { color: var(--ink) }
 /* Outside the table: a `colSpan` cell wraps at the table's width, not the screen's. */
-.itemnote { font-size: 11px; line-height: 1.35; color: var(--muted);
+.itemnote { font-size: var(--fs-caption); line-height: 1.35; color: var(--muted);
   padding: 9px 16px 0 12px }
 .itemtable tr.part td { background: var(--hl-row) }
 /* The sticky column needs an opaque ground, so the band is laid over the card. */
@@ -793,7 +797,7 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   background-image: linear-gradient(var(--hl-row), var(--hl-row)) }
 .itemtable tr.part .itemname { font-weight: 400 }
 .tipfield { display: flex; align-items: center; gap: 5px; margin-top: 3px }
-.itemamountin { width: 72px; font-family: var(--f-mono); font-size: 11px; color: var(--ink);
+.itemamountin { width: 72px; font-family: var(--f-mono); font-size: var(--fs-caption); color: var(--ink);
   background: var(--card-2); border: 1px solid var(--rule); border-radius: var(--r-s);
   outline: none; padding: 3px 6px }
 .itemamountin:focus { border-color: var(--brand) }
@@ -841,7 +845,7 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 /* ---- cards ---- */
 .pad { padding: 14px 16px }
 .padtop { padding: 4px 16px }
-.question { font-size: 20px; font-weight: 700; letter-spacing: -.03em; line-height: 1.2;
+.question { font-size: var(--fs-heading); font-weight: 700; letter-spacing: -.03em; line-height: 1.2;
   text-align: center; text-wrap: balance; padding: 18px 16px 16px }
 .card { background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   padding: 13px 14px }
@@ -854,7 +858,7 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   margin-top: 10px }
 .entryamt { display: flex; align-items: baseline; gap: 8px }
 .entryspent { display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
-.entryspent .num { font-size: 13px; color: var(--muted) }
+.entryspent .num { font-size: var(--fs-small); color: var(--muted) }
 /* 44px until `--chars` at .555em a glyph, plus an em each for fraction and code,
    no longer fits. */
 .entryamt { line-height: 1; font-weight: 600; letter-spacing: -.045em;
@@ -863,14 +867,14 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .entryamt .ccy.sym { font-size: 1em; margin-right: -.12em; color: inherit }
 .entryspent .sym { margin-right: -5px }
 .entryamt .frac { font-size: .55em; font-weight: 500; letter-spacing: -.03em; color: var(--muted) }
-.entryby { font-size: 13px; color: var(--muted) }
+.entryby { font-size: var(--fs-small); color: var(--muted) }
 .entryhead .eyebrow b { color: var(--ink-2); font-weight: 600 }
 .splitrule.entrysplit { margin: 13px 0 }
 .balline { margin-top: 10px; padding-inline: 15px }
 .entryby b { color: var(--ink); font-weight: 600 }
 /* `--ink-2`: at 12px `--muted` is under 4.5:1. `::after` gives the link back a
    thumb's height. */
-.entryhist { display: block; padding: 0 2px; font-size: 12px; color: var(--ink-2) }
+.entryhist { display: block; padding: 0 2px; font-size: var(--fs-small); color: var(--ink-2) }
 .entryhistline { line-height: 44px; margin: 0 -6px; padding: 0 6px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
 .entryhistbody { position: relative; margin: 0 -6px; padding: 4px 6px; border-radius: var(--r-s);
@@ -885,7 +889,7 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .deletedband { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px;
   background: var(--ink); color: var(--paper); border-radius: var(--r-m) }
 .deletedband p { flex: 1; min-width: 0; line-height: 1.4 }
-.deletedband b { display: flex; align-items: center; gap: 6px; font-size: 14px; letter-spacing: -.02em }
+.deletedband b { display: flex; align-items: center; gap: 6px; font-size: var(--fs-body); letter-spacing: -.02em }
 .deletedband .btn { width: auto; flex: none; max-width: 55%; padding: 9px 14px; text-align: center;
   background: var(--paper); color: var(--ink); font-weight: 700 }
 .deletedband .btn:active:not(:disabled) { background-image: linear-gradient(var(--press), var(--press)) }
@@ -893,26 +897,26 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .pad:has(.deletedband) + .pad .entryamt :is(.whole, .sym) { color: var(--ink-2) }
 .bignum { font-family: var(--f-mono); font-variant-numeric: tabular-nums; letter-spacing: -.03em;
   font-weight: 500 }
-.kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px;
+.kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: var(--fs-small);
   padding: 5px 0 }
 .kv .k { color: var(--muted) }
 .kv.who .k { color: var(--ink) }
-.kv .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 13px }
+.kv .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: var(--fs-small) }
 .youtag { color: var(--muted); opacity: .7; font-weight: 400; font-size: .85em }
 .kv.yourbal .v { white-space: nowrap }
 .yourbal > button.kv { width: calc(100% + 30px); margin: 0 -15px; padding: 5px 15px;
   border-radius: var(--r-s) }
 .yourbal > button.kv[aria-expanded="true"] > .v { visibility: hidden }
 .sumrows { display: grid; grid-template-columns: 1fr auto auto; row-gap: 3px; padding: 2px 0 6px;
-  font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right;
+  font-size: var(--fs-small); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right;
   animation: billopen .13s ease-out }
 @media (prefers-reduced-motion: reduce) { .sumrows { animation: none } }
-.sumrows .w { text-align: left; font-size: 12px; color: var(--muted) }
+.sumrows .w { text-align: left; font-size: var(--fs-small); color: var(--muted) }
 .sumrows .eq { border-top: 1px solid var(--ink-2); padding-top: 4px; margin-top: 3px }
 .kv:has(> .v > .twoccy) { align-items: center; padding-block: 6px }
 .kv:has(> .v > .twoccy) > .k { line-height: 1.3 }
-.twoccy { display: flex; flex-direction: column; align-items: flex-end; font-size: 12px; line-height: 1.35 }
-.twoccy .ownccy { font-size: 10.5px; line-height: 1.25; margin-top: 2px; color: var(--muted) }
+.twoccy { display: flex; flex-direction: column; align-items: flex-end; font-size: var(--fs-small); line-height: 1.35 }
+.twoccy .ownccy { font-size: var(--fs-caption); line-height: 1.25; margin-top: 2px; color: var(--muted) }
 /* Still a `.kv`, so the card doesn't restack when it opens. */
 button.kv { width: 100%; background: none; border: 0; font: inherit; text-align: left }
 button.kv:active { background: var(--press) }
@@ -935,7 +939,7 @@ button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 @keyframes billopen { from { opacity: 0; transform: translateY(-2px) } to { opacity: 1; transform: none } }
 @media (prefers-reduced-motion: reduce) { .billlines { animation: none } }
 .billline { display: flex; align-items: baseline; gap: 6px; padding: 2px 0;
-  font-size: 12px; color: var(--ink-2) }
+  font-size: var(--fs-small); color: var(--ink-2) }
 .billline .lbl { min-width: 0; overflow-wrap: anywhere }
 .billline .lead { flex: 1; min-width: 10px; align-self: center;
   border-bottom: 1px dotted var(--rule) }
@@ -947,18 +951,18 @@ button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 .billline.billextra .amt { color: var(--muted) }
 .billline.billextra .lead { border-bottom-color: transparent }
 .billqty { margin-left: 5px; padding: 1px 4px; border-radius: var(--r-s);
-  background: var(--card-3); color: var(--muted); font-size: 10.5px;
+  background: var(--card-3); color: var(--muted); font-size: var(--fs-caption);
   font-variant-numeric: tabular-nums; white-space: nowrap }
 
 .transfer { display: flex; align-items: stretch; padding: 0; overflow: hidden }
 .tside { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;
   gap: 5px; padding: 13px 8px; position: relative }
 button.tside:active { background: var(--press) }
-.tside .who { display: flex; align-items: baseline; font-size: 13px; font-weight: 600; max-width: 100%; white-space: nowrap }
+.tside .who { display: flex; align-items: baseline; font-size: var(--fs-small); font-weight: 600; max-width: 100%; white-space: nowrap }
 .tside .whoname { min-width: 0; overflow: hidden; text-overflow: ellipsis }
 /* A flex item's leading space collapses, so the gap is drawn. */
 .tside .youtag { flex: none; padding-left: .5ch }
-.tside .eyebrow { font-size: 9.5px; margin-bottom: 2px }
+.tside .eyebrow { font-size: var(--fs-caption); margin-bottom: 2px }
 .tside .who.swap-a { animation: swapdip .22s ease-in }
 .tside .who.swap-b { animation: swapdip2 .22s ease-in }
 @keyframes swapdip { 0% { opacity: 1; transform: translateY(0) }
@@ -975,12 +979,12 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 /* The foot padding centres it on the screen rather than the scroll. */
 .tip { display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 22px; min-height: 100%; padding-top: 24px; padding-bottom: 76px; text-align: center }
-.tiplede { margin: 0; font-size: 14px; line-height: 1.5; text-wrap: balance }
-.tipwhy { margin: -12px 0 0; font-size: 14px; line-height: 1.5; color: var(--muted);
+.tiplede { margin: 0; font-size: var(--fs-body); line-height: 1.5; text-wrap: balance }
+.tipwhy { margin: -12px 0 0; font-size: var(--fs-body); line-height: 1.5; color: var(--muted);
   text-wrap: balance }
-.tiprate { font-family: var(--f-mono); font-size: 20px; font-weight: 700;
+.tiprate { font-family: var(--f-mono); font-size: var(--fs-heading); font-weight: 700;
   letter-spacing: -.03em; line-height: 1.25 }
-.tipeach { margin: -8px 0 0; font-size: 14px; line-height: 1.5; color: var(--muted) }
+.tipeach { margin: -8px 0 0; font-size: var(--fs-body); line-height: 1.5; color: var(--muted) }
 .tipacts { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 6px }
 
 /* ---- nav, fab, buttons ---- */
@@ -994,17 +998,17 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
   border: 1.5px solid var(--ink) }
 .fab-w { width: auto; gap: 7px; padding: 0 14px; grid-auto-flow: column;
   right: var(--fab-right);
-  font-size: 12.5px; font-weight: 600; letter-spacing: -.01em }
+  font-size: var(--fs-small); font-weight: 600; letter-spacing: -.01em }
 .fabclear { height: calc(var(--fab-foot) + var(--fab) + 16px) }
 .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-s);
-  padding: 12px; font-weight: 600; font-size: 13.5px; letter-spacing: -.01em; width: 100%;
+  padding: 12px; font-weight: 600; font-size: var(--fs-body); letter-spacing: -.01em; width: 100%;
   transition: background-image .2s ease, opacity .3s ease }
 .btn-p { background: var(--brand); color: var(--brand-ink) }
 /* After the shared `:active` rule, so it wins. `.fab-2` is on paper. */
 .btn-p:active:not(:disabled), .fab:not(.fab-2):active { background-image: linear-gradient(var(--press-i), var(--press-i)) }
 .btn-s { background: var(--card-2); color: var(--ink); border: 1px solid var(--rule) }
 .btn-d { background: transparent; color: var(--debit); border: 1px solid var(--debit) }
-.btn-lg { padding: 16px; font-size: 15px; font-weight: 700; letter-spacing: -.02em }
+.btn-lg { padding: 16px; font-size: var(--fs-lead); font-weight: 700; letter-spacing: -.02em }
 .btn:disabled { opacity: .45; transition-duration: 0s }
 
 /* ---- a button cut in three ----
@@ -1037,7 +1041,7 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 @media (prefers-reduced-motion: reduce) { .gridway.hail { animation-duration: .9s !important } }
 /* Over a held bill: a row shorter, under the way on. */
 .btn-pair.pair-sm { color: var(--ink) }
-.btn-pair.pair-sm .btn { padding: 7px 6px; font-size: 12.5px; gap: 5px }
+.btn-pair.pair-sm .btn { padding: 7px 6px; font-size: var(--fs-small); gap: 5px }
 .btn-pair.pair-p .btn:active:not(:disabled) {
   background-image: linear-gradient(var(--press-i), var(--press-i)) }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
@@ -1052,7 +1056,7 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 /* A wait that knows how far it has got (`WriteBusy`): set, not swept. */
 .scanbar.measured { animation: none; transition: transform .2s linear }
 .pair-busy[role="progressbar"] .btn { font-variant-numeric: tabular-nums }
-.action { font-size: 13px; font-weight: 700; color: var(--ink); text-decoration: underline;
+.action { font-size: var(--fs-small); font-weight: 700; color: var(--ink); text-decoration: underline;
   text-underline-offset: 3px; text-decoration-thickness: 1px }
 .action:disabled { color: var(--muted); text-decoration-color: var(--rule) }
 
@@ -1066,7 +1070,7 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .quickshow { display: flex; flex-direction: column; gap: 14px;
   padding-top: 22px; padding-bottom: 34px }
 .scanlede { margin: 0; text-align: center; text-wrap: balance;
-  font-size: 13px; line-height: 1.45; color: var(--ink-2) }
+  font-size: var(--fs-small); line-height: 1.45; color: var(--ink-2) }
 .scandiagram { display: flex; align-items: stretch; gap: 10px }
 .scanpaper, .scanform { flex: 1; min-width: 0; padding: 11px; font-size: 9.5px;
   line-height: 1.25; color: var(--draw-ink); background: var(--draw-bg);
@@ -1092,7 +1096,7 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .scanform .t { font-size: 10px }
 .scanform .a { font-size: 15px; color: var(--ink); align-self: flex-start }
 .scanarrow { color: var(--draw-ink); flex: none; align-self: center }
-.scanterms { font-size: 11px; color: var(--muted); text-align: center; margin: 5px 0 0 }
+.scanterms { font-size: var(--fs-caption); color: var(--muted); text-align: center; margin: 5px 0 0 }
 
 /* ---- dialogs (ADR-0008) ---- */
 /* Paints its own scrim: ::backdrop doesn't reliably inherit tokens and hides
@@ -1111,26 +1115,26 @@ dialog.scrim::backdrop { background: transparent }
 .dialog:focus { outline: none }
 @keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
 @media (prefers-reduced-motion: reduce) { dialog.scrim, .dialog { animation: none } }
-.dtitle { font-size: 15.5px; letter-spacing: -.03em }
-.dbody { font-size: 13px; line-height: 1.5; color: var(--ink-2); margin-top: 9px }
+.dtitle { font-size: var(--fs-lead); letter-spacing: -.03em }
+.dbody { font-size: var(--fs-small); line-height: 1.5; color: var(--ink-2); margin-top: 9px }
 .dbody p { margin: 0 0 7px }
 .dbody p:last-child { margin-bottom: 0 }
 .dbody b { color: var(--ink); font-weight: 600 }
-.invitelink { font-family: var(--f-mono); font-size: 12px; color: var(--ink);
+.invitelink { font-family: var(--f-mono); font-size: var(--fs-small); color: var(--ink);
   background: var(--card-2); border: 1px solid var(--rule); border-radius: var(--r-s);
   padding: 9px 10px; margin-top: 10px; overflow-wrap: anywhere }
-.quicktext { font-family: var(--f-mono); font-size: 12px; color: var(--ink);
+.quicktext { font-family: var(--f-mono); font-size: var(--fs-small); color: var(--ink);
   background: var(--card-2); border: 1px solid var(--rule); border-radius: var(--r-s);
   padding: 9px 10px; margin-top: 10px; white-space: pre-wrap; overflow-wrap: anywhere }
 .dinput { width: 100%; margin-top: 12px; background: var(--card-2); border: 1px solid var(--rule);
-  border-radius: var(--r-s); padding: 10px 12px; font: inherit; font-size: 15px; font-weight: 600;
+  border-radius: var(--r-s); padding: 10px 12px; font: inherit; font-size: var(--fs-lead); font-weight: 600;
   color: var(--ink); outline: none }
 .dinput:focus { border-color: var(--ink-2) }
 .dinput::placeholder { color: var(--muted); font-weight: 500 }
 /* Smaller, so eight rows don't read as a wall. No resize: dragged, it outgrows the scrim. */
 .dtext { width: 100%; margin-top: 12px; background: var(--card-2);
   border: 1px solid var(--rule); border-radius: var(--r-s); padding: 10px 12px;
-  font: inherit; font-size: 12.5px; line-height: 1.55; color: var(--ink);
+  font: inherit; font-size: var(--fs-small); line-height: 1.55; color: var(--ink);
   outline: none; resize: none; display: block; max-height: 40dvh }
 .dtext:focus { border-color: var(--ink-2) }
 .dtext::placeholder { color: var(--muted) }
@@ -1149,7 +1153,7 @@ dialog.scrim::backdrop { background: transparent }
 .dsearchrow { display: flex; align-items: center; gap: 11px; margin: 11px -15px 0; padding: 11px 15px;
   border-top: 1px solid var(--rule-soft); cursor: text }
 .dsearchrow input { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; padding: 0;
-  font: inherit; font-size: 13.5px; font-weight: 600; line-height: 1.25; color: var(--ink) }
+  font: inherit; font-size: var(--fs-body); font-weight: 600; line-height: 1.25; color: var(--ink) }
 .dsearchrow input::placeholder { color: var(--muted); font-weight: 500 }
 .hint.dnone { margin: 0; padding: 9px 15px 0; border-top: 1px solid var(--rule-soft) }
 /* ---- the bill typed by hand (components/bill-editor.tsx) ----
@@ -1164,7 +1168,7 @@ dialog.scrim::backdrop { background: transparent }
 .bihead { display: flex; align-items: center; gap: 12px }
 .biname { flex: 1; min-width: 0 }
 .biname input { width: 100%; min-width: 0; background: transparent; border: 0; outline: none;
-  padding: 2px 0 5px; font: inherit; font-size: 14.5px; font-weight: 600; color: var(--ink) }
+  padding: 2px 0 5px; font: inherit; font-size: var(--fs-body); font-weight: 600; color: var(--ink) }
 .biname input::placeholder { color: var(--muted); font-weight: 500 }
 .bidrop { flex: none; width: 36px; height: 36px; margin: -8px -12px -8px -4px; display: grid;
   place-items: center; color: var(--muted) }
@@ -1173,7 +1177,7 @@ dialog.scrim::backdrop { background: transparent }
 .bikind { flex: none; margin: -4px 0 }
 /* Its dots sit as far from the chip as the chip from the name. */
 .bimore { margin-left: -12px }
-.bisign { color: var(--ink-2); font-size: 14.5px }
+.bisign { color: var(--ink-2); font-size: var(--fs-body) }
 
 /* The count ends the line, its "+" under the card's cross. The steps are
    narrower than a parts row's: two prices share their line. */
@@ -1181,11 +1185,11 @@ dialog.scrim::backdrop { background: transparent }
 .binums > .bistep { flex: none; margin: 0 -9px 0 0 }
 /* Every figure on the line is one box — size, line, underline — so centring
    them levels their underlines; the words beside a price sit on its baseline. */
-.binums :is(.splitin, .bicount input) { height: 22px; padding: 0 0 2px; font-size: 14.5px; line-height: 20px }
+.binums :is(.splitin, .bicount input) { height: 22px; padding: 0 0 2px; font-size: var(--fs-body); line-height: 20px }
 .binums :is(.bicount > span, .bisign) { line-height: 20px }
 .bistep .partsstep { width: 28px }
 .bistep .partsstep:active:not(:disabled) { background: var(--press); transition-duration: 0s }
-.bicount { width: 4.5ch; justify-content: center; font-size: 14.5px; cursor: text }
+.bicount { width: 4.5ch; justify-content: center; font-size: var(--fs-body); cursor: text }
 .bicount > span { color: var(--muted); margin-right: .1ch }
 .bicount input { max-width: 3ch; min-width: 1ch; text-align: center; background: transparent; border: 0;
   outline: none; font: inherit; font-weight: 500; color: var(--ink);
@@ -1195,7 +1199,7 @@ dialog.scrim::backdrop { background: transparent }
 @keyframes bibump-a { 40% { transform: scale(1.25) } }
 @keyframes bibump-b { 40% { transform: scale(1.25) } }
 .biprice { display: flex; align-items: baseline; justify-content: flex-end; gap: 6px; flex: 1 1 0;
-  min-width: 0; font-size: 11.5px; color: var(--muted) }
+  min-width: 0; font-size: var(--fs-caption); color: var(--muted) }
 .biprice .amountfield { flex: 0 1 92px; min-width: 0 }
 .biprice .splitin { width: 100%; min-width: 0 }
 /* A price alone starts where the name does; of two, each ends at its own
@@ -1208,14 +1212,14 @@ dialog.scrim::backdrop { background: transparent }
    the dock's 12px top), and close together. */
 .bifoot { display: flex; flex-direction: column; gap: 6px; margin-top: 6px }
 .bisum { display: flex; justify-content: flex-end; align-items: baseline; gap: 8px;
-  padding-right: 15px; font-size: 13px; font-weight: 600; color: var(--ink-2) }
+  padding-right: 15px; font-size: var(--fs-small); font-weight: 600; color: var(--ink-2) }
 .bisum.bitip { align-items: center; padding-right: 9px }
-.bitip .itemamountin { width: 84px; font-size: 13px; text-align: right }
-.bisum .num { font-size: 15px; color: var(--ink) }
+.bitip .itemamountin { width: 84px; font-size: var(--fs-small); text-align: right }
+.bisum .num { font-size: var(--fs-lead); color: var(--ink) }
 /* A card's height but not its fill: the act of adding a line is not a line. */
 .biadd { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
   padding: 13px 14px; background: transparent; border-color: var(--rule);
-  font-size: 13.5px; font-weight: 600; color: var(--ink-2) }
+  font-size: var(--fs-body); font-weight: 600; color: var(--ink-2) }
 @media (prefers-reduced-motion: reduce) { .birow, .bicount input { animation: none } }
 .drow-pick { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
   padding: 11px 15px; border-top: 1px solid var(--rule-soft) }
@@ -1233,7 +1237,7 @@ dialog.scrim::backdrop { background: transparent }
   border: 1px solid var(--rule); border-radius: var(--r-m); box-shadow: var(--shadow-s);
   padding: 5px; animation: fadein .1s ease-out }
 .rowmenu-item { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
-  padding: 13px 12px; border-radius: var(--r-s); font-size: 14.5px; font-weight: 600 }
+  padding: 13px 12px; border-radius: var(--r-s); font-size: var(--fs-body); font-weight: 600 }
 .rowmenu-item + .rowmenu-item { border-top: 1px solid var(--rule-soft) }
 /* `.rowmenu-hot`: a finger slid on from the hold, whose `:active` belongs to the row. */
 .rowmenu-item:active, .rowmenu-item.rowmenu-hot { background: var(--press) }
@@ -1286,15 +1290,15 @@ dialog.scrim::backdrop { background: transparent }
   padding-block: 34px 28px }
 .keyless-badge { width: 46px; height: 46px; border-radius: var(--r-s); display: grid; place-items: center;
   background: var(--card-2); border: 1px solid var(--rule-soft); color: var(--ink-2); margin-bottom: 16px }
-.keyless h2 { font-size: 16px; letter-spacing: -.02em; line-height: 1.3; font-weight: 700; color: var(--ink);
+.keyless h2 { font-size: var(--fs-lead); letter-spacing: -.02em; line-height: 1.3; font-weight: 700; color: var(--ink);
   text-wrap: balance }
 /* Centred prose strands its last word without help. */
-.keyless p { margin-top: 8px; max-width: 30em; font-size: 13px; line-height: 1.55; color: var(--muted);
+.keyless p { margin-top: 8px; max-width: 30em; font-size: var(--fs-small); line-height: 1.55; color: var(--muted);
   text-wrap: pretty }
 
 .failedlink { width: 100%; max-width: 30em; margin: 26px auto 0; text-align: left }
-.failedlink span { display: block; margin-bottom: 5px; font-size: 11px; color: var(--muted) }
-.failedlink code { display: block; padding: 6px 9px; font-family: var(--f-mono); font-size: 11px; line-height: 1.45;
+.failedlink span { display: block; margin-bottom: 5px; font-size: var(--fs-caption); color: var(--muted) }
+.failedlink code { display: block; padding: 6px 9px; font-family: var(--f-mono); font-size: var(--fs-caption); line-height: 1.45;
   color: var(--ink-2); background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   overflow-wrap: anywhere }
 .keyless-fig { width: 100%; max-width: 310px; margin-top: 26px; padding: 10px 12px 18px;
@@ -1304,7 +1308,7 @@ dialog.scrim::backdrop { background: transparent }
 .keyless-bar { display: flex; align-items: center; gap: 9px }
 .keyless-bar .iconbtn { width: 28px; height: 28px; background: var(--card) }
 .keyless-bar .iconbtn.back { background: transparent; margin-inline: -7px -4px }
-.keyless-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; letter-spacing: -.02em; color: var(--ink) }
+.keyless-name { flex: 1; min-width: 0; font-size: var(--fs-body); font-weight: 700; letter-spacing: -.02em; color: var(--ink) }
 .keyless-menu { position: static; animation: none; width: max-content; min-width: 190px;
   margin: 6px 0 0 auto; pointer-events: none }
 .keyless-lit { background: var(--hl); box-shadow: inset 0 0 0 1px var(--hl-edge); color: var(--hl-ink) }
@@ -1320,13 +1324,13 @@ dialog.scrim::backdrop { background: transparent }
 
 .diag-stas { display: flex; align-items: center; justify-content: space-between; gap: 12px;
   margin-top: 10px }
-.diag-stas .btn { width: auto; flex: none; padding: 7px 16px; font-size: 12.5px }
-.diag-stas-name { font-size: 13px; font-weight: 600; color: var(--ink) }
-.diag-stas-note { font-size: 11.5px; color: var(--ink-2); margin-top: 1px }
+.diag-stas .btn { width: auto; flex: none; padding: 7px 16px; font-size: var(--fs-small) }
+.diag-stas-name { font-size: var(--fs-small); font-weight: 600; color: var(--ink) }
+.diag-stas-note { font-size: var(--fs-caption); color: var(--ink-2); margin-top: 1px }
 .diag-langs { display: flex; gap: 6px }
 .diag-link { margin-top: 10px }
 
-.cropcheck-model { font-size: 12px; color: var(--ink-2); margin: 8px 0 0 }
+.cropcheck-model { font-size: var(--fs-small); color: var(--ink-2); margin: 8px 0 0 }
 .cropcheck { padding: 12px 16px; border-bottom: 1px solid var(--rule) }
 .cropcheck-pair { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px }
 .cropcheck-pair > * { flex: 1 1 0; min-width: 0 }
@@ -1347,14 +1351,14 @@ dialog.scrim::backdrop { background: transparent }
   width: 44px; height: 44px; border: 0; border-radius: 22px; font-size: 26px; line-height: 1;
   color: #fff; background: rgb(0 0 0 / 55%) }
 
-.diag { font-family: var(--f-mono); font-size: 10.5px; line-height: 1.55; white-space: pre;
+.diag { font-family: var(--f-mono); font-size: var(--fs-caption); line-height: 1.55; white-space: pre;
   overflow-x: auto; padding: 12px 16px; color: var(--ink) }
 /* A section off screen is not laid out at all, and holds its height meanwhile
    so the scroll doesn't jump: --lines is set by app/diag. */
 .diag-report > .diag { content-visibility: auto;
   contain-intrinsic-block-size: auto calc(var(--lines) * 10.5px * 1.55 + 24px) }
 
-.banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: 12.5px; flex: none;
+.banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: var(--fs-small); flex: none;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge); font-weight: 500 }
 /* The in-app browser's: a banner that folds open on the way out. */
 .banner.webview { display: block; padding: 0 }
@@ -1376,13 +1380,13 @@ dialog.scrim::backdrop { background: transparent }
 .webviewlink { margin-top: 6px }
 .webviewlink > .selectable { -webkit-user-select: all; user-select: all }
 .stall { display: flex; align-items: center; gap: 9px; padding: 9px 16px; flex: none;
-  font-size: 12.5px; font-weight: 500;
+  font-size: var(--fs-small); font-weight: 500;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge) }
 .stall span { flex: 1; min-width: 0 }
-.stall-act { flex: none; font-size: 12.5px; font-weight: 700; text-decoration: underline;
+.stall-act { flex: none; font-size: var(--fs-small); font-weight: 700; text-decoration: underline;
   text-underline-offset: 3px; padding: 2px 0 }
 .stall-act:active { opacity: .6 }
-.failure { font-size: 12px; color: var(--debit); line-height: 1.5; font-weight: 500; margin: 8px 2px 0 }
+.failure { font-size: var(--fs-small); color: var(--debit); line-height: 1.5; font-weight: 500; margin: 8px 2px 0 }
 /* Pays `--kb`, or the button a form ends on sits behind the keyboard. */
 .foot { flex: none; border-top: 1px solid var(--rule); padding: 11px 16px;
   padding-bottom: calc(var(--kb) + max(11px, env(safe-area-inset-bottom))) }
@@ -1414,7 +1418,7 @@ dialog.scrim::backdrop { background: transparent }
 
 /* ---- segmented control ---- */
 .seg { display: flex; background: var(--card-3); border-radius: var(--r-s); padding: 2.5px; gap: 2px }
-.seg button { flex: 1; text-align: center; font-size: 11.5px; padding: 5.5px 0; border-radius: 1px;
+.seg button { flex: 1; text-align: center; font-size: var(--fs-caption); padding: 5.5px 0; border-radius: 1px;
   color: var(--muted); font-weight: 500 }
 .seg button.on { background: var(--seg-on); color: var(--ink); box-shadow: var(--shadow-s); font-weight: 600 }
 
@@ -1441,7 +1445,7 @@ dialog.scrim::backdrop { background: transparent }
 /* Sized by label, so at 360 the long ones take the room they need and the
    gaps between labels come out even. Lifted a little off centre: the chosen
    one's bar takes 2px off its foot, and lower-case labels read low. */
-.splitbox .seg button { flex: 1 1 auto; font-size: 12.5px; padding: 9.5px 6px 11.5px }
+.splitbox .seg button { flex: 1 1 auto; font-size: var(--fs-small); padding: 9.5px 6px 11.5px }
 /* Inset, so the bar lands on the strip's rule instead of growing the tab. */
 .splitbox .seg button.on { background: var(--seg-on);
   box-shadow: inset 0 -2px var(--ink), inset 1px 0 var(--rule-soft), inset -1px 0 var(--rule-soft) }
@@ -1461,7 +1465,7 @@ dialog.scrim::backdrop { background: transparent }
 .splithead { display: flex; align-items: center; justify-content: flex-end; gap: 10px; width: 100%;
   min-height: 36px; padding: 0 12px; border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
   position: sticky; bottom: 0; z-index: 2; background: var(--card-2); margin-top: -1px }
-.splitcount { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap }
+.splitcount { font-size: var(--fs-caption); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap }
 .splitcount svg { display: inline-block; vertical-align: -2px }
 .allmark { width: 16px; flex: none; display: flex; justify-content: center; position: relative }
 .allmark::before { content: ""; position: absolute; inset: 50% auto auto 50%; width: 36px; height: 36px;
@@ -1473,7 +1477,7 @@ dialog.scrim::backdrop { background: transparent }
 .allmark:active .allbox { background-image: linear-gradient(var(--press), var(--press)); transition-duration: 0s }
 .allmark:active .allbox.all, .allmark:active .allbox.some { background-image: linear-gradient(var(--press-i), var(--press-i)) }
 .splitin { width: 82px; text-align: right; background: transparent; border: 0;
-  font: inherit; font-size: 14px; color: var(--ink);
+  font: inherit; font-size: var(--fs-body); color: var(--ink);
   outline: none; font-variant-numeric: tabular-nums }
 .partsend { display: flex; align-items: center; margin-right: -10px }
 /* The 36px tap spills into the row's padding rather than heightening it: a
@@ -1482,10 +1486,10 @@ dialog.scrim::backdrop { background: transparent }
 .partsstep:disabled { color: var(--muted); opacity: .5 }
 /* Grows with the count up to six digits, then scrolls inside itself. Its own
    15px, so the ch it is measured in is the figure's. */
-.partsend .amountfield { font-size: 15px; min-width: 4ch; max-width: calc(6ch + .3em);
+.partsend .amountfield { font-size: var(--fs-lead); min-width: 4ch; max-width: calc(6ch + .3em);
   grid-template-columns: minmax(0, 1fr); overflow: clip; margin: 0 2px }
 .partsin { width: 100%; min-width: 0; text-align: center; background: transparent; border: 0; padding: 0;
-  font: inherit; font-size: 15px; font-weight: 500; color: var(--ink);
+  font: inherit; font-size: var(--fs-lead); font-weight: 500; color: var(--ink);
   outline: none; font-variant-numeric: tabular-nums }
 .splitrow:not(.inrow) .partsin { color: var(--muted) }
 /* As amounts' rest: its share is the placeholder, worked out, not typed, and a
@@ -1494,7 +1498,7 @@ dialog.scrim::backdrop { background: transparent }
   border-bottom-color: color-mix(in srgb, var(--ink) 15%, transparent) }
 .splitrow.rest .splitin::placeholder { color: var(--muted); font-weight: 400 }
 .splitrow.rest.short .splitin:not(:focus)::placeholder { color: var(--debit); font-weight: 600 }
-.splitfoot { display: flex; align-items: center; gap: 7px; padding: 8px 12px; font-size: 12px;
+.splitfoot { display: flex; align-items: center; gap: 7px; padding: 8px 12px; font-size: var(--fs-small);
   font-weight: 600; border-top: 1px solid var(--rule-soft) }
 .splitfoot.ok { background: var(--credit-bg); color: var(--credit) }
 .splitfoot.bad { background: var(--debit-bg); color: var(--debit) }
@@ -1527,22 +1531,22 @@ dialog.scrim::backdrop { background: transparent }
 .field .amountfield { flex: 1 }
 .rateinput { width: 78px; background: transparent; border: 0; font: inherit; color: inherit;
   outline: none }
-.rateinput.wide { width: 100%; font-size: 15px; font-weight: 600; text-align: right }
+.rateinput.wide { width: 100%; font-size: var(--fs-lead); font-weight: 600; text-align: right }
 
 /* ---- the rate dialog ---- */
 .ratepair { display: flex; flex-direction: column; gap: 9px; margin-top: 13px }
 .rateside { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline;
-  gap: 8px; font-family: var(--f-mono); font-size: 13px }
+  gap: 8px; font-family: var(--f-mono); font-size: var(--fs-small) }
 .ratelead, .rateunit { color: var(--muted); white-space: nowrap }
 .rateside .amountfield { min-width: 0 }
 .ratefrom { display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  margin-top: 10px; font-size: 12px; color: var(--muted) }
+  margin-top: 10px; font-size: var(--fs-small); color: var(--muted) }
 .ratefrom .chip { flex: none }
 .amtgrid { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, max-content);
   justify-content: center; align-items: center; column-gap: 7px; row-gap: 4px }
 .amtgrid > :nth-child(odd) { justify-self: end }
 .amtgrid > :nth-child(even) { justify-self: start }
-.ratelink { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted);
+.ratelink { font-family: var(--f-mono); font-size: var(--fs-small); color: var(--muted);
   border: 0; background: none; padding: 0 11px 0 0 }
 .ratelink .bad { color: var(--debit) }
 /* With the badge the block keeps its height but is laid out again: the figure's
@@ -1573,7 +1577,7 @@ dialog.scrim::backdrop { background: transparent }
 .amtnotes.open { height: 16px; opacity: 1; visibility: visible }
 .amtpad.noted .amtnotes { margin-top: 5.5px }
 .amtpad.noted.foreign .amtnotes { margin-top: 3.5px }
-.amtnote { font-size: 10.5px; line-height: 14px; color: var(--hl-ink); background: var(--hl);
+.amtnote { font-size: var(--fs-caption); line-height: 14px; color: var(--hl-ink); background: var(--hl);
   padding: 1px 6px; border-radius: 2px }
 .ratechip { font-variant-numeric: tabular-nums }
 .ratechip .at { color: var(--muted) }
@@ -1585,9 +1589,9 @@ dialog.scrim::backdrop { background: transparent }
   border: 1px solid var(--rule-soft); border-radius: var(--r-s); padding: 10px 12px }
 /* One label column, so every field's value starts on the same line. */
 .field label, .fieldlabel {
-  font-size: 13px; color: var(--muted); width: var(--label-w); flex: none; white-space: nowrap }
+  font-size: var(--fs-small); color: var(--muted); width: var(--label-w); flex: none; white-space: nowrap }
 .field input, .field .pick { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
-  font: inherit; font-size: 14px; font-weight: 600; color: var(--ink) }
+  font: inherit; font-size: var(--fs-body); font-weight: 600; color: var(--ink) }
 .field input::placeholder { color: var(--muted); font-weight: 500 }
 /* Picked, not typed: the whole line is the button — its label and padding
    too, which the stretched `::after` lends it. */
@@ -1603,7 +1607,7 @@ dialog.scrim::backdrop { background: transparent }
 .payersfield { align-items: flex-start; color: var(--ink) }
 .payersfield .fieldlabel { line-height: 20px }
 .payersfield .payerlines { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px }
-.payersfield .payerline { display: flex; align-items: baseline; gap: 10px; font-size: 13.5px; line-height: 20px }
+.payersfield .payerline { display: flex; align-items: baseline; gap: 10px; font-size: var(--fs-body); line-height: 20px }
 .payersfield .payerline > :first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .payersfield .pchev { align-self: center; flex: none; --chev-w: 1.5 }
 
@@ -1712,9 +1716,9 @@ dialog.scrim::backdrop { background: transparent }
 /* One line tall, so the check stands beside its word rather than over it. */
 .balfig.flipfig .copiedface { flex-direction: row; align-items: center; justify-content: flex-end; gap: 5px }
 .balfig .copiedface svg { flex: none }
-.balfig .sm { font-size: 10.5px; color: var(--muted); letter-spacing: 0 }
+.balfig .sm { font-size: var(--fs-caption); color: var(--muted); letter-spacing: 0 }
 .balname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.baltag { margin-left: 4px; font-size: 11px; font-weight: 500; color: var(--ink-2) }
+.baltag { margin-left: 4px; font-size: var(--fs-caption); font-weight: 500; color: var(--ink-2) }
 .bar { height: 7px; border-radius: 0; background: var(--card-3); position: relative; overflow: hidden }
 .bar i { position: absolute; top: 0; bottom: 0 }
 .bar i.c { background: var(--credit); left: 50% }
@@ -1730,22 +1734,22 @@ dialog.scrim::backdrop { background: transparent }
 .tle:not(:last-of-type)::after { content: ""; position: absolute; left: -17.5px; top: 9.5px;
   bottom: -9.5px; width: 1px; background: var(--rule) }
 .tle.now::before { border-color: var(--ink); background: var(--ink) }
-.tle .when { font-family: var(--f-mono); font-size: 10px; color: var(--muted); letter-spacing: .04em;
+.tle .when { font-family: var(--f-mono); font-size: var(--fs-caption); color: var(--muted); letter-spacing: .04em;
   padding-right: 32px }
-.tle .what { font-size: 13px; line-height: 1.4; margin-top: 1px }
+.tle .what { font-size: var(--fs-small); line-height: 1.4; margin-top: 1px }
 .tle .what b { font-weight: 600 }
-.diff { font-family: var(--f-mono); font-size: 11.5px; margin-top: 5px; display: flex;
+.diff { font-family: var(--f-mono); font-size: var(--fs-caption); margin-top: 5px; display: flex;
   flex-direction: column; gap: 2px }
 .was { color: var(--debit); text-decoration: line-through; text-decoration-thickness: 1px; opacity: .8 }
 .now2 { color: var(--credit) }
 .also { margin-top: 5px; display: flex; flex-direction: column; gap: 2px }
-.alsoi { font-family: var(--f-mono); font-size: 11px; display: flex; flex-wrap: wrap;
+.alsoi { font-family: var(--f-mono); font-size: var(--fs-caption); display: flex; flex-wrap: wrap;
   align-items: baseline; gap: 6px }
-.alsoi .lbl { font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase;
+.alsoi .lbl { font-size: var(--fs-caption); letter-spacing: .04em; text-transform: uppercase;
   color: var(--muted) }
 .hrows { margin-top: 5px; display: flex; flex-direction: column; gap: 2px; flex-basis: 100% }
 .alsoi .hrows { margin-top: 0 }
-.hrow { font-family: var(--f-mono); font-size: 11.5px; display: flex; flex-wrap: wrap;
+.hrow { font-family: var(--f-mono); font-size: var(--fs-caption); display: flex; flex-wrap: wrap;
   align-items: baseline; column-gap: 6px }
 .hrow .nm { color: var(--ink) }
 .hrow.item .nm { color: var(--ink-2) }
@@ -1754,18 +1758,18 @@ dialog.scrim::backdrop { background: transparent }
 .hrow .mk.out { color: var(--debit) }
 .hrow .to { color: var(--muted) }
 .hrow.item + .hrow:not(.item) { margin-top: 3px }
-.hmore summary { font-family: var(--f-mono); font-size: 11px; color: var(--muted); cursor: pointer;
+.hmore summary { font-family: var(--f-mono); font-size: var(--fs-caption); color: var(--muted); cursor: pointer;
   list-style: none; padding: 2px 0; width: fit-content }
 .hmore summary::-webkit-details-marker { display: none }
 .hmore[open] summary { display: none }
-.note { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px }
+.note { font-size: var(--fs-small); color: var(--muted); font-style: italic; margin-top: 3px }
 .tlink { display: flex; width: fit-content; align-items: center; gap: 3px;
   margin: 1px -6px -3px; padding: 3px 6px; border-radius: var(--r-s);
-  font-size: 12.5px; font-weight: 600; color: var(--ink);
+  font-size: var(--fs-small); font-weight: 600; color: var(--ink);
   text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--rule) }
 .tlink svg { color: var(--muted); flex: none }
 
-.hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 8px 2px 0 }
+.hint { font-size: var(--fs-small); color: var(--muted); line-height: 1.5; margin: 8px 2px 0 }
 
 /* ---- the demo's mark ---- */
 .demomark { border-left: 2px solid var(--muted); border-radius: var(--r-s) }
@@ -1789,18 +1793,18 @@ dialog.scrim::backdrop { background: transparent }
 @keyframes skelveil { to { opacity: 0 } }
 
 /* ---- empty states ---- */
-.empty { padding: 40px 26px; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.5 }
+.empty { padding: 40px 26px; text-align: center; color: var(--muted); font-size: var(--fs-body); line-height: 1.5 }
 .empty.arriving { display: flex; align-items: center; justify-content: center; gap: 8px }
-.empty b { display: block; font-size: 14px; color: var(--ink); letter-spacing: -.02em;
+.empty b { display: block; font-size: var(--fs-body); color: var(--ink); letter-spacing: -.02em;
   margin-bottom: 4px; font-weight: 700 }
 /* ---- import ---- */
 .pastebox { display: block; width: 100%; margin-top: 6px; background: var(--card-2);
   color: var(--ink); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
-  padding: 9px 11px; font-family: var(--f-mono); font-size: 11.5px; line-height: 1.5;
+  padding: 9px 11px; font-family: var(--f-mono); font-size: var(--fs-caption); line-height: 1.5;
   text-overflow: ellipsis; outline: none }
 .pastebox::placeholder { color: var(--muted) }
 /* Qualified, or `.aboutsect p` sets the size. */
-.aboutsect p.fineprint { margin: 9px 2px 0; font-size: 11px; line-height: 1.45;
+.aboutsect p.fineprint { margin: 9px 2px 0; font-size: var(--fs-caption); line-height: 1.45;
   color: var(--muted); text-align: center; text-wrap: balance }
 
 /* Normally invisible; a challenge needing a tap must be reachable. */
@@ -1811,7 +1815,7 @@ dialog.scrim::backdrop { background: transparent }
   position: relative; width: 100%; text-align: left }
 .suggestchev { color: var(--ink); flex: none; margin-left: 2px }
 /* Cut, not wrapped: only the names give way, never the figure. */
-.suggestname { font-size: 13px; font-weight: 600; min-width: 0;
+.suggestname { font-size: var(--fs-small); font-weight: 600; min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .suggestrow > :not(.suggestname) { flex: none }
 
@@ -1820,10 +1824,10 @@ dialog.scrim::backdrop { background: transparent }
 .settleflow { display: flex; align-items: center; justify-content: center; gap: 11px;
   max-width: 100% }
 /* Cut, not wrapped: a wrapped name pushes the arrow off the line. */
-.settlename { font-size: 16.5px; font-weight: 600; color: var(--ink); min-width: 0;
+.settlename { font-size: var(--fs-lead); font-weight: 600; color: var(--ink); min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .settlearrow { color: var(--muted); flex: none }
-.settleamt { font-size: 26px; color: var(--ink) }
+.settleamt { font-size: var(--fs-display); color: var(--ink) }
 /* The glyph hangs off the figure's right, so the figure stays centred. */
 .copyamt { position: relative }
 .copyamt .flipcheck { position: absolute; left: 100%; top: 50%; margin: -8px 0 0 8px; color: var(--muted) }

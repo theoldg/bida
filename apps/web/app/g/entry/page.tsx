@@ -486,7 +486,7 @@ function TransferDetail({ settlement, data }: { settlement: Settlement; data: Gr
         </span>
       </div>
       {settlement.note ? (
-        <p style={{ fontSize: 13, color: "var(--ink-2)", margin: "10px 2px 0" }}>
+        <p style={{ fontSize: "var(--fs-small)", color: "var(--ink-2)", margin: "10px 2px 0" }}>
           {settlement.note}
         </p>
       ) : null}

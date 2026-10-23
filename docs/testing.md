@@ -72,7 +72,7 @@ from being reversed by someone who never read it — an import or a
 watchdog; each rule in `scripts/rules-check.mjs` names the doc it holds. The bar
 for another is in the script: written down as a decision, reversible in one
 line, invisible to every test. Style isn't on the list — there is no linter here
-on purpose. And the version, because a push to `dev` deploys and a deploy has to
+on purpose — except that every font size is a role on the type scale. And the version, because a push to `dev` deploys and a deploy has to
 show a new number: the stage fails a tree that differs from what `dev` is serving
 and still calls itself the same thing ([hosting.md](hosting.md#versions)). Only
 `pre-push` runs it (`check --push`): before then `pnpm push` hasn't bumped yet,

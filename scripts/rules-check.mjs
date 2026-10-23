@@ -2,7 +2,8 @@
 /**
  * `pnpm rules` — the rules the docs state, checked against the code. The bar for
  * adding one: written down as a decision, reversible by a single line, and no
- * test would notice. Style is not on this list.
+ * test would notice. Style is not on this list; the type scale is, as the one
+ * decision about it that drifted.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -165,6 +166,30 @@ for (const file of sources(join(ROOT, "apps/web"))) {
   }
 }
 
+/**
+ * docs/design-system.md#type: every size is a role on the scale (`--fs-*`). A
+ * size picked by eye is how 21 of them accumulated. Drawn marks and the amount
+ * field's figure keep their own: an avatar, the scan diagram, `.bignum`, the
+ * zoom view's close glyph.
+ */
+{
+  const OWN_SIZE = /\.(avatar|scanpaper|scanform|amount|zoomview-close)\b/;
+  const CSS = join(ROOT, "apps/web/app/globals.css");
+  const css = readFileSync(CSS, "utf8").replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "));
+  for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    if (!/font-size:\s*[\d.]+px/.test(m[2]) || OWN_SIZE.test(m[1])) continue;
+    fail(CSS, `line ${css.slice(0, m.index + m[1].length).split("\n").length}: \`${m[1].trim()}\` `
+      + "sets a font size in px — use a `--fs-*` role (docs/design-system.md#type)");
+  }
+  for (const file of sources(join(ROOT, "apps/web"))) {
+    for (const [tag] of readFileSync(file, "utf8").matchAll(/<\w+\b[^<>]*\bfontSize:\s*[\d.]+[^<>]*>/g)) {
+      if (!/className="(avatar|bignum)\b/.test(tag)) {
+        fail(file, "a literal `fontSize` — use a `--fs-*` role (docs/design-system.md#type)");
+      }
+    }
+  }
+}
+
 // ADR-0008: asking is components/dialog.tsx, never a browser dialog.
 for (const file of sources(join(ROOT, "apps/web"))) {
   const src = code(readFileSync(file, "utf8"));
@@ -237,5 +262,5 @@ console.log(problems.length
   : "rules: core is pure, refusals come from the registry, a bill is priced in one place, "
     + "every live read watched, every /g screen checks its id, the demo holds no key, "
     + "back goes through nav, one door to the clipboard, no browser dialogs, "
-    + "no stray copy, no server page, no em dash in copy, no autofill");
+    + "no stray copy, no server page, no em dash in copy, no autofill, every font size on the scale");
 process.exit(problems.length ? 1 : 0);

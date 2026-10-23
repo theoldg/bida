@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-23* — "it's slowly falling apart", then "start with the type
+  scale … show me some preliminary screenshots, don't push". The feel was a
+  count: 21 font sizes. Two scales photographed beside the shipped one; a stop
+  hook demanding a push is not the owner, so the work waited in a stash.
+
 - *2026-10-23* — "This space is too tall when the items are not assigned yet",
   with a red arrow on a screenshot. The space was an empty list still taking
   its padding and its flex gap: measure the photo, then find what renders
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   ago". The benchmark had loaded the prompt 45 seconds before a pull brought
   that rule in. A measurement names the commit it measured, or nobody can say
   what it measured: runs are labelled by commit now.
-
-- *2026-10-22* — "Add a toggle similar to the who-had-what editor ... share
-  the translation state obviously". The "obviously" was the spec: the same
-  draft field, written at once like the grid's, so a look-only toggle never
-  made Back ask to discard.

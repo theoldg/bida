@@ -227,7 +227,26 @@ how "→" once came out small and low: it has its own file now, the face's
 CSS still speaks in roles. Hierarchy is weight and tracking, with size the last
 step: headings 700 at `-.03em` — and a screen whose own title carries it rather
 than the bar (`.question`) sets that title above the bar's 17px, centred — body
-400/500 at 14px, labels and eyebrows uppercase at `.12em`.
+400/500, labels and eyebrows uppercase at `.12em`.
+
+**Every size is a role on one scale**, the `--fs-*` tokens in `:root`:
+
+| Role | px | Holds |
+|---|---|---|
+| `caption` | 11 | eyebrows, day bands, a row's meta line, hints, the bar's sub-line |
+| `small` | 12.5 | chips, banners, notes, dialog prose, About's paragraphs |
+| `body` | 14 | rows, fields, buttons, menus |
+| `lead` | 15.5 | a dialog's title, `.btn-lg`, settle-up names, a dialog's input |
+| `title` | 17 | the top bar |
+| `heading` | 20 | a screen's own question, the tip's figure |
+| `display` | 26 | the settle-up amount |
+
+Adjacent roles are a step apart because each does a different job; a size
+between two of them is a size picked by eye.
+`pnpm run rules` refuses a px size outside the scale, except for what is drawn
+rather than set — an avatar's letter, the scan diagram, the amount field and
+`.bignum`'s figures. A size in `em` is a part of its parent (the faded cents)
+and follows it.
 
 Money keeps `.num` — `font-variant-numeric: tabular-nums` — so decimal points
 align down a column even though everything is already monospaced. Monospace
