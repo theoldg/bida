@@ -1439,8 +1439,9 @@ dialog.scrim::backdrop { background: transparent }
 .splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft); padding: 0; gap: 0;
   position: sticky; top: 0; z-index: 2; background: var(--card-2) }
 /* Sized by label, so at 360 the long ones take the room they need and the
-   gaps between labels come out even. */
-.splitbox .seg button { flex: 1 1 auto; font-size: 12.5px; padding: 11px 6px 10px }
+   gaps between labels come out even. Lifted a little off centre: the chosen
+   one's bar takes 2px off its foot, and lower-case labels read low. */
+.splitbox .seg button { flex: 1 1 auto; font-size: 12.5px; padding: 9.5px 6px 11.5px }
 /* Inset, so the bar lands on the strip's rule instead of growing the tab. */
 .splitbox .seg button.on { background: var(--seg-on);
   box-shadow: inset 0 -2px var(--ink), inset 1px 0 var(--rule-soft), inset -1px 0 var(--rule-soft) }
