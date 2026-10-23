@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-23* — "[price] [quantity (x1)]", then mid-build: "Add the +- buttons
+  back to the quantity!" A sketch's brackets name the order, not what is
+  inside them; dropping the stepper to make room was my call to make loudly,
+  not quietly. Ask the room question, don't answer it by deleting.
+
 - *2026-10-22* — "Quiz me on each word… batch obvious ones". Neither text
   before a question nor an option's preview reached the owner ("I can't see
   them"): the batch goes in the question itself. And one pick can't fill every
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   item cards". The clone was behind dev and had no such cards: pull before
   hunting. And the chip's own shade already was the card's — deleting the
   deeper one was the whole change, no override to add.
-
-- *2026-10-21* — "Taking this logic to the extreme, the tip should only be
-  editable in the editor. That's wrong though." One home is a rule for facts,
-  not doors: one field may be typed in two places. And a critique declined
-  ("the top is more header-like") is a decision — build theirs, not yours.

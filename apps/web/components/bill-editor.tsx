@@ -236,6 +236,27 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
               const unitAimed = priceAimed && many && row.by === "unit";
               const totalAimed = priceAimed && !unitAimed;
               const last = i === lastItem;
+              const total = (
+                <label key="total" className={`biprice${many ? " bitotal" : ""}`}
+                  {...(totalAimed ? { "data-aimed": "" } : {})}>
+                  {/* Typed positive, as it is kept: the kind is the sign. */}
+                  {item ? null : <span className="bisign">{row.kind === "discount" ? "−" : "+"}</span>}
+                  <AmountInput className="bignum splitin" currency={currency} value={row.totalText}
+                    fieldClassName={totalAimed ? refusal.flash.trim() || undefined : undefined}
+                    onAnimationEnd={refusal.onFlashEnd}
+                    placeholder="0" enterKeyHint="next" aria-label={copy.scan.byHand.priceOf(n)}
+                    // The last price's confirm key is the next item: a bill
+                    // is typed without lifting the thumb to "Add".
+                    onKeyDown={last ? (e) => {
+                      if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      add();
+                    } : undefined}
+                    onChange={(t) => change(row.key, (r) => setTotal(r, t, currency))} />
+                  {many ? <span>{copy.scan.byHand.total}</span> : null}
+                </label>
+              );
               return (
                 <div key={row.key} className="card birow">
                   <div className="bihead">
@@ -260,52 +281,38 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                       <Icon name="cross" size={12} />
                     </button>
                   </div>
+                  {/* The count sits after the first price, so it stays put as a
+                      second appears: "12.00 each ×2 24.00 total". */}
                   <div className="binums">
-                    {item ? <span className="partsend bistep">
-                      <button type="button" className="partsstep" disabled={row.count <= 1}
-                        onClick={() => step(row.key, -1)}
-                        aria-label={copy.scan.byHand.fewer(n)}>
-                        <Icon name="minus" size={10} />
-                      </button>
-                      <CountInput count={row.count} bump={stepped?.key === row.key ? stepped.n : 0}
-                        label={copy.scan.byHand.countOf(n)}
-                        onCount={(c) => change(row.key, (r) => setCount(r, c, currency))} />
-                      <button type="button" className="partsstep" disabled={row.count >= MAX_PORTIONS}
-                        onClick={() => step(row.key, 1)}
-                        aria-label={copy.scan.byHand.more(n)}>
-                        <Icon name="plus" size={10} />
-                      </button>
-                    </span> : null}
                     {many ? (
-                      <label className="biprice"
+                      <label key="unit" className="biprice"
                         {...(unitAimed ? { "data-aimed": "" } : {})}>
-                        <span>{copy.scan.byHand.each}</span>
                         <AmountInput className="bignum splitin" currency={currency} value={row.unitText}
                           fieldClassName={unitAimed ? refusal.flash.trim() || undefined : undefined}
                           onAnimationEnd={refusal.onFlashEnd}
                           placeholder="0" enterKeyHint="next" aria-label={copy.scan.byHand.eachOf(n)}
                           onChange={(t) => change(row.key, (r) => setUnit(r, t, currency))} />
+                        <span>{copy.scan.byHand.each}</span>
                       </label>
+                    ) : total}
+                    {item ? (
+                      <span key="count" className="partsend bistep">
+                        <button type="button" className="partsstep" disabled={row.count <= 1}
+                          onClick={() => step(row.key, -1)}
+                          aria-label={copy.scan.byHand.fewer(n)}>
+                          <Icon name="minus" size={10} />
+                        </button>
+                        <CountInput count={row.count} bump={stepped?.key === row.key ? stepped.n : 0}
+                          label={copy.scan.byHand.countOf(n)}
+                          onCount={(c) => change(row.key, (r) => setCount(r, c, currency))} />
+                        <button type="button" className="partsstep" disabled={row.count >= MAX_PORTIONS}
+                          onClick={() => step(row.key, 1)}
+                          aria-label={copy.scan.byHand.more(n)}>
+                          <Icon name="plus" size={10} />
+                        </button>
+                      </span>
                     ) : null}
-                    <label className="biprice"
-                      {...(totalAimed ? { "data-aimed": "" } : {})}>
-                      {many ? <span>{copy.scan.byHand.total}</span> : null}
-                      {/* Typed positive, as it is kept: the kind is the sign. */}
-                      {item ? null : <span className="bisign">{row.kind === "discount" ? "−" : "+"}</span>}
-                      <AmountInput className="bignum splitin" currency={currency} value={row.totalText}
-                        fieldClassName={totalAimed ? refusal.flash.trim() || undefined : undefined}
-                        onAnimationEnd={refusal.onFlashEnd}
-                        placeholder="0" enterKeyHint="next" aria-label={copy.scan.byHand.priceOf(n)}
-                        // The last price's confirm key is the next item: a bill
-                        // is typed without lifting the thumb to "Add".
-                        onKeyDown={last ? (e) => {
-                          if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
-                          e.preventDefault();
-                          e.stopPropagation();
-                          add();
-                        } : undefined}
-                        onChange={(t) => change(row.key, (r) => setTotal(r, t, currency))} />
-                    </label>
+                    {many ? total : null}
                   </div>
                 </div>
               );

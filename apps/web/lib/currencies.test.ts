@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  COMMON_CURRENCIES, currencyChoices, currencyLabel, normalizeCurrencyCode,
+  COMMON_CURRENCIES, currencyChoices, currencyLabel, currencySearch, normalizeCurrencyCode,
 } from "./currencies";
 
 describe("normalizeCurrencyCode", () => {
@@ -44,5 +44,34 @@ describe("currencyChoices", () => {
     for (const code of COMMON_CURRENCIES) {
       expect(currencyChoices(["EUR"], ["MAD"])).toContain(code);
     }
+  });
+});
+
+describe("currencySearch", () => {
+  const choices = currencyChoices(["PLN"], ["MAD"]);
+  const known = ["BRL", "EUR", "KRW", "MAD", "PLN", "USD", "ZAR"];
+
+  it("is the list as it stands until something is typed", () => {
+    expect(currencySearch("  ", choices, known)).toEqual({ codes: choices, typed: null });
+  });
+
+  it("puts the code typed first, then codes starting so, then names", () => {
+    // "Israeli New Shekel" holds "is" too, and is listed first, but only by name.
+    expect(currencySearch("is", ["ILS", "ISK"], []).codes).toEqual(["ISK", "ILS"]);
+    expect(currencySearch("usd", choices, known).codes[0]).toBe("USD");
+  });
+
+  it("reaches past the list to every currency the browser knows", () => {
+    expect(currencySearch("brl", choices, known).codes).toEqual(["BRL"]);
+  });
+
+  it("finds a name without its accents", () => {
+    expect(currencySearch("krona", choices, known).codes).toContain("ISK");
+  });
+
+  it("offers three letters no code answers as typed, and nothing else", () => {
+    expect(currencySearch("qqq", choices, known)).toEqual({ codes: [], typed: "QQQ" });
+    expect(currencySearch("eur", choices, known).typed).toBeNull();
+    expect(currencySearch("q q", choices, known).typed).toBeNull();
   });
 });

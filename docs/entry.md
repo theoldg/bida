@@ -131,10 +131,14 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
   `pnpm verify keyboard` walks each column ([browser-checks.md](checks-forms.md#pnpm-verify-keyboard--a-form-under-a-phone-keyboard)).
 - **The currency picker offers the group's own currencies first** — the base
   one, then whatever the ledger is written in, most spent-in first, then the
-  short common list (`lib/currencies.ts`, `currencyChoices`), then "Other…" for
-  any code — one `CurrencyPicker` in /new and the entry form. A trip spends in
-  two or three, and scrolling past seventeen to reach one of them is the whole
-  of the annoyance. Names come from `Intl.DisplayNames`, with a small fallback
+  short common list (`lib/currencies.ts`, `currencyChoices`) — one
+  `CurrencyPicker` in /new and the entry form. A trip spends in two or three,
+  and scrolling past seventeen to reach one of them is the whole of the
+  annoyance. A search over the list (`currencySearch`) reaches every code the
+  browser knows, by code or name, and offers three letters none of them is as
+  typed; it takes no caret until tapped, so the list opens with no keyboard
+  over it, and its list holds its height as it narrows, so the field stays
+  under the thumb. Names come from `Intl.DisplayNames`, with a small fallback
   map for the codes a trimmed locale build answers bare (ISK, UZS).
 
 ## The entry on screen

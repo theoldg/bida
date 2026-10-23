@@ -346,6 +346,10 @@ body { background: var(--card) }
 @media (display-mode: standalone) and (max-width: 560px) {
   .statusbar { display: block; position: fixed; top: 0; left: 0; right: 0; height: 6px;
     background: var(--card); z-index: 4 }
+  /* Over a banner heading the screen it wears the banner's tint, or it is a
+     band of card across the banner's top. */
+  body:has(.app > .stall:first-child, .app > .appbody:first-child > .banner:first-child) .statusbar {
+    background: linear-gradient(var(--hl), var(--hl)) var(--card) }
 }
 
 /* `height`, not `min-height`, or the document scrolls instead of .scroll.
@@ -1137,6 +1141,10 @@ dialog.scrim::backdrop { background: transparent }
 /* The busy box's border must not grow the row either. */
 .drow > .btn-pair .btn { padding-top: 11px; padding-bottom: 11px }
 .dlist { margin: 11px -15px -13px; max-height: 52dvh; overflow-y: auto }
+/* A searched list keeps its height as it narrows, or the card recentres and
+   the field slides out from under the thumb; the keys shrink it instead. */
+.dialog:has(> .dsearch) { display: flex; flex-direction: column }
+.dialog:has(> .dsearch) > .dlist { flex: 0 1 52dvh; min-height: 0; max-height: none }
 /* ---- the bill typed by hand (components/bill-editor.tsx) ----
    One card per item, the form's own card. The underlines are lighter than a
    lone figure's: a page of them is a ruled sheet otherwise. */
@@ -1160,10 +1168,14 @@ dialog.scrim::backdrop { background: transparent }
 .bimore { margin-left: -12px }
 .bisign { color: var(--ink-2); font-size: 14.5px }
 
-.binums { display: flex; align-items: center; gap: 14px; margin-top: 12px; min-height: 30px }
-.bistep { margin: 0 0 0 -11px; flex: none }
+/* The first price holds one width, typed alone or with "each" after it, so
+   the count beside it doesn't move as a second price arrives. The steps are
+   narrower than a parts row's: two prices share their line. */
+.binums { display: flex; align-items: baseline; gap: 8px; margin-top: 12px; min-height: 30px }
+.binums > .bistep { flex: none; align-self: center; margin: 0 }
+.bistep .partsstep { width: 28px }
 .bistep .partsstep:active:not(:disabled) { background: var(--press); transition-duration: 0s }
-.bicount { width: 5ch; justify-content: center; margin: 0 2px; font-size: 14.5px; cursor: text }
+.bicount { width: 4.5ch; justify-content: center; font-size: 14.5px; cursor: text }
 .bicount > span { color: var(--muted); margin-right: .1ch }
 .bicount input { max-width: 3ch; min-width: 1ch; text-align: center; background: transparent; border: 0;
   outline: none; padding: 0 0 2px; font: inherit; font-size: 14.5px; font-weight: 500; color: var(--ink);
@@ -1172,10 +1184,13 @@ dialog.scrim::backdrop { background: transparent }
 .bicount.bump-b input { animation: bibump-b .18s ease-out }
 @keyframes bibump-a { 40% { transform: scale(1.25) } }
 @keyframes bibump-b { 40% { transform: scale(1.25) } }
-.biprice { display: flex; align-items: baseline; justify-content: flex-end; gap: 7px; flex: 1 1 0;
+.biprice { display: flex; align-items: baseline; gap: 6px; flex: 0 1 104px;
   min-width: 0; font-size: 11.5px; color: var(--muted) }
-.biprice .amountfield { flex: 0 1 92px; min-width: 0 }
+.biprice .amountfield { flex: 1 1 0; min-width: 0 }
 .biprice .splitin { width: 100%; min-width: 0; padding-bottom: 2px }
+/* The second price ends where the card does. */
+.biprice.bitotal { flex: 1 1 0; justify-content: flex-end }
+.bitotal .amountfield { flex: 0 1 92px }
 /* The tip and what the bill comes to, under the cards: their figures end where the
    cards' do, inside a card's border and padding. The pair sits as far from "Add"
    as from Done (16px, measured: the total's line box adds 3 to the list's foot and

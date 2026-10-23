@@ -88,7 +88,7 @@ kinds, no schema change, nothing on the log that nobody looked at.
 
 **The scan control's third door is the bill's items by hand**
 (`/g/entry/bill`, `/quick/bill`, `components/bill-editor.tsx`): a card per
-item — a name, a count (`×3`), a price — the tip and the total under the last card,
+item — a name over a price and a count (`×3`) — the tip and the total under the last card,
 and no model in between. It is for the bill
 nobody photographed, and for fixing the one a photograph misread. The door says
 **"Type"**, with a bill held or not — short, since three doors share a phone's
@@ -113,9 +113,12 @@ back to the printed words would be no correction.
   A card's count survives a change of kind, and an item made a discount and
   back keeps whoever had it, until Done. "Add an item" puts its card after the
   last item, where the bill reopens it, and so does the last item's confirm key.
-- **Either price can be typed** beside a count above one; the one typed holds
-  and the other follows, in minor units (`lib/scan/manual.ts`). "One more" is
-  one more at the same price: a single item's price is a unit price, and a
+- **Either price can be typed** with a count above one, which reads "12.00
+  each ×2 24.00 total": the one typed holds and the other follows, in minor
+  units (`lib/scan/manual.ts`). The first price keeps one width either way,
+  so the count stays put as the second arrives; at 360px a five-digit total
+  scrolls in its field. A count raised is
+  more at the same price: a single item's price is a unit price, and a
   printed line opens on its unit price where its count divides it — where it
   doesn't, on the total printed, so no cent moves.
 - **Done writes the bill whole**; Back with changes asks first. Whoever had a

@@ -170,16 +170,19 @@ export function PromptDialog({
 /**
  * In place of a `<select>`, whose native picker is the intrusion `prompt()` is.
  */
-export function ChoiceDialog<T extends string>({ title, options, value, onPick, onClose, lead }: {
+export function ChoiceDialog<T extends string>({ title, options, value, onPick, onClose, lead, head }: {
   title: string;
   options: { value: T; label: string; note?: string; you?: boolean }[];
   value: T;
   onPick: (value: T) => void;
   onClose: () => void;
   lead?: { label: string; onPick: () => void; disabled?: boolean; note?: string };
+  /** Over the list: a search narrowing it. */
+  head?: ReactNode;
 }) {
   return (
     <Dialog title={title} onClose={onClose}>
+      {head}
       <div className="dlist" role="listbox" aria-label={title}>
         {lead ? (
           <button type="button" className="drow-pick lead" role="option" aria-selected={false}

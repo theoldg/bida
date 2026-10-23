@@ -1,17 +1,18 @@
 "use client";
 // Doc: docs/entry.md#the-keyboards-chain
 
-import { useRef, useState } from "react";
-import { isCurrencyCode } from "@bida/core";
-import { ChoiceDialog, PromptDialog } from "./dialog";
+import { useState } from "react";
+import { ChoiceDialog } from "./dialog";
 import { copy } from "../lib/copy";
-import { currencyChoices, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../lib/currencies";
+import { NO_AUTOFILL } from "../lib/autofill";
+import { currencyChoices, currencyLabel, currencySearch } from "../lib/currencies";
 
 /**
  * Picking a currency, wherever one is picked — a new group's base, an entry's:
- * the list `currencyChoices` orders, then "Other…", which swaps
- * the list for a field taking any three-letter code. `onClose` is heard once,
- * when the whole picker is done, never on the swap.
+ * the list `currencyChoices` orders, under a search that reaches every
+ * currency the browser knows and takes a three-letter code none of them is.
+ * The field takes no caret until tapped, so the list opens with no keyboard
+ * over it.
  */
 export function CurrencyPicker({ value, first, used = [], note, onPick, onClose }: {
   /** The ticked row; picking it again is no change. */
@@ -24,35 +25,35 @@ export function CurrencyPicker({ value, first, used = [], note, onPick, onClose 
   onPick: (code: string) => void;
   onClose: () => void;
 }) {
-  const [other, setOther] = useState(false);
-  // `ChoiceDialog` closes itself right after a pick, in the same tick — before
-  // `other` above is read back — so the swap is told apart by a ref.
-  const swapping = useRef(false);
-
-  if (other) {
-    return (
-      <PromptDialog title={copy.currency.title} placeholder={copy.currency.otherPlaceholder}
-        confirm={copy.act.useIt} maxLength={3}
-        autoCapitalize="characters"
-        clean={normalizeCurrencyCode} valid={isCurrencyCode}
-        onSubmit={(code) => { onPick(code); onClose(); }}
-        onClose={onClose} />
-    );
-  }
+  const [query, setQuery] = useState("");
+  const { codes, typed } = currencySearch(query, currencyChoices(first, used));
+  const options = [
+    ...codes.map((c) => ({ value: c, label: currencyLabel(c), note: note?.(c) })),
+    ...typed ? [{ value: typed, label: typed, note: copy.currency.typed }] : [],
+  ];
   return (
     <ChoiceDialog
       title={copy.currency.title}
       value={value}
-      options={[
-        ...currencyChoices(first, used).map((c) => ({ value: c, label: currencyLabel(c), note: note?.(c) })),
-        { value: OTHER_CURRENCY, label: copy.currency.other, note: copy.currency.otherNote },
-      ]}
-      onPick={(c) => {
-        if (c !== OTHER_CURRENCY) return onPick(c);
-        swapping.current = true;
-        setOther(true);
-      }}
-      onClose={() => { if (!swapping.current) onClose(); }}
+      options={options}
+      onPick={onPick}
+      onClose={onClose}
+      head={
+        // Enter takes the top row, as a search's first answer is the one meant.
+        <form className="dsearch" onSubmit={(e) => {
+          e.preventDefault();
+          const top = options[0]?.value;
+          if (top === undefined) return;
+          if (top !== value) onPick(top);
+          onClose();
+        }}>
+          <input className="dinput" value={query} placeholder={copy.currency.search}
+            aria-label={copy.currency.search} autoCapitalize="none" autoCorrect="off" spellCheck={false}
+            autoComplete={NO_AUTOFILL} enterKeyHint="go" maxLength={40}
+            onChange={(e) => setQuery(e.target.value)} />
+          {options.length === 0 ? <p className="hint">{copy.currency.none}</p> : null}
+        </form>
+      }
     />
   );
 }

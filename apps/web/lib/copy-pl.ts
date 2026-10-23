@@ -925,9 +925,9 @@ export const pl: Copy = {
   },
   currency: {
     title: "Waluta",
-    other: "Inna…",
-    otherNote: "dowolny trzyliterowy kod",
-    otherPlaceholder: "UZS",
+    search: "Szukaj lub wpisz kod",
+    typed: "użyty tak, jak wpisany",
+    none: "Brak wyników. Zadziała też trzyliterowy kod.",
     isBase: "w tej walucie rozlicza się grupa",
   },
 
