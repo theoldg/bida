@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { ChoiceDialog } from "./dialog";
+import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { NO_AUTOFILL } from "../lib/autofill";
 import { currencyChoices, currencyLabel, currencySearch } from "../lib/currencies";
@@ -38,6 +39,7 @@ export function CurrencyPicker({ value, first, used = [], note, onPick, onClose 
       options={options}
       onPick={onPick}
       onClose={onClose}
+      empty={<p className="hint dnone">{copy.currency.none}</p>}
       head={
         // Enter takes the top row, as a search's first answer is the one meant.
         <form className="dsearch" onSubmit={(e) => {
@@ -47,11 +49,14 @@ export function CurrencyPicker({ value, first, used = [], note, onPick, onClose 
           if (top !== value) onPick(top);
           onClose();
         }}>
-          <input className="dinput" value={query} placeholder={copy.currency.search}
-            aria-label={copy.currency.search} autoCapitalize="none" autoCorrect="off" spellCheck={false}
-            autoComplete={NO_AUTOFILL} enterKeyHint="go" maxLength={40}
-            onChange={(e) => setQuery(e.target.value)} />
-          {options.length === 0 ? <p className="hint">{copy.currency.none}</p> : null}
+          {/* A label, so a tap anywhere on the row lands in the field. */}
+          <label className="dsearchrow">
+            <Icon name="search" size={15} className="muted" style={{ flex: "none" }} />
+            <input value={query} placeholder={copy.currency.search}
+              aria-label={copy.currency.search} autoCapitalize="none" autoCorrect="off" spellCheck={false}
+              autoComplete={NO_AUTOFILL} enterKeyHint="go" maxLength={40}
+              onChange={(e) => setQuery(e.target.value)} />
+          </label>
         </form>
       }
     />

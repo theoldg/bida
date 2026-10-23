@@ -170,7 +170,7 @@ export function PromptDialog({
 /**
  * In place of a `<select>`, whose native picker is the intrusion `prompt()` is.
  */
-export function ChoiceDialog<T extends string>({ title, options, value, onPick, onClose, lead, head }: {
+export function ChoiceDialog<T extends string>({ title, options, value, onPick, onClose, lead, head, empty }: {
   title: string;
   options: { value: T; label: string; note?: string; you?: boolean }[];
   value: T;
@@ -179,6 +179,8 @@ export function ChoiceDialog<T extends string>({ title, options, value, onPick, 
   lead?: { label: string; onPick: () => void; disabled?: boolean; note?: string };
   /** Over the list: a search narrowing it. */
   head?: ReactNode;
+  /** In place of a list narrowed to nothing. */
+  empty?: ReactNode;
 }) {
   return (
     <Dialog title={title} onClose={onClose}>
@@ -195,6 +197,7 @@ export function ChoiceDialog<T extends string>({ title, options, value, onPick, 
             <Icon name="chev" size={13} className="spacer muted" />
           </button>
         ) : null}
+        {options.length === 0 && !lead ? empty : null}
         {options.map((o) => (
           <button key={o.value} type="button" className="drow-pick" role="option"
             aria-selected={o.value === value}

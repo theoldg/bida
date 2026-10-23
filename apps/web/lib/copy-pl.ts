@@ -925,8 +925,8 @@ export const pl: Copy = {
   },
   currency: {
     title: "Waluta",
-    search: "Szukaj lub wpisz kod",
-    typed: "użyty tak, jak wpisany",
+    search: "Szukaj",
+    typed: "własny",
     none: "Brak wyników. Zadziała też trzyliterowy kod.",
     isBase: "w tej walucie rozlicza się grupa",
   },

@@ -1175,8 +1175,8 @@ const en = {
 
   currency: {
     title: "Currency",
-    search: "Search, or type a code",
-    typed: "used as typed",
+    search: "Search",
+    typed: "custom",
     none: "No match. A three-letter code works too.",
     isBase: "the group settles in this",
   },

@@ -28,12 +28,18 @@ async function saveAndList(expectRows) {
 const g = await newGroup(page, base, {
   name: "Trip", me: "Theo", members: ["Marie", "Sam"],
   async onForm() {
-    await pick(page, "#g-cur", "Other");
-    await page.locator(".dinput").fill("uzs");
-    await page.getByRole("button", { name: "Use it" }).click();
+    await page.locator("#g-cur").click();
+    await page.getByLabel("Search").fill("brazil");
+    await page.keyboard.press("Enter");
     await settle(page, 120);
-    report((await page.locator("#g-cur").innerText()).includes("UZS"),
-      "an unlisted currency is typed, not scrolled to");
+    report((await page.locator("#g-cur").innerText()).includes("BRL"),
+      "an unlisted currency is searched for by name, not scrolled to");
+    await page.locator("#g-cur").click();
+    await page.getByLabel("Search").fill("xqz");
+    await page.locator(".drow-pick").filter({ hasText: "custom" }).click();
+    await settle(page, 120);
+    report((await page.locator("#g-cur").innerText()).includes("XQZ"),
+      "a code nothing knows is taken as typed");
     await pick(page, "#g-cur", "EUR");
   },
 });

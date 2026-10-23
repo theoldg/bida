@@ -239,6 +239,7 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
               const total = (
                 <label key="total" className={`biprice${many ? " bitotal" : ""}`}
                   {...(totalAimed ? { "data-aimed": "" } : {})}>
+                  {many ? <span>{copy.scan.byHand.total}</span> : null}
                   {/* Typed positive, as it is kept: the kind is the sign. */}
                   {item ? null : <span className="bisign">{row.kind === "discount" ? "−" : "+"}</span>}
                   <AmountInput className="bignum splitin" currency={currency} value={row.totalText}
@@ -254,7 +255,6 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                       add();
                     } : undefined}
                     onChange={(t) => change(row.key, (r) => setTotal(r, t, currency))} />
-                  {many ? <span>{copy.scan.byHand.total}</span> : null}
                 </label>
               );
               return (
@@ -282,17 +282,17 @@ export function BillEditor({ draftKey, draft, onSaved, onBack }: {
                     </button>
                   </div>
                   {/* The count sits after the first price, so it stays put as a
-                      second appears: "12.00 each ×2 24.00 total". */}
+                      second appears: "each 12.00 ×2 total 24.00". */}
                   <div className="binums">
                     {many ? (
                       <label key="unit" className="biprice"
                         {...(unitAimed ? { "data-aimed": "" } : {})}>
+                        <span>{copy.scan.byHand.each}</span>
                         <AmountInput className="bignum splitin" currency={currency} value={row.unitText}
                           fieldClassName={unitAimed ? refusal.flash.trim() || undefined : undefined}
                           onAnimationEnd={refusal.onFlashEnd}
                           placeholder="0" enterKeyHint="next" aria-label={copy.scan.byHand.eachOf(n)}
                           onChange={(t) => change(row.key, (r) => setUnit(r, t, currency))} />
-                        <span>{copy.scan.byHand.each}</span>
                       </label>
                     ) : total}
                     {item ? (
