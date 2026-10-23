@@ -298,15 +298,18 @@ function ReceiptPanel({
     // the bill — the order `/quick` holds a read bill in.
     return (
       <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-        {/* Set as the payers' lines above it are, one list rather than spaced rows. */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "2px 0 2px" }}>
-          {involved.map((m) => (
-            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{m.name}{m.id === me ? <You /> : null}</span>
-              <span className="bignum" style={{ fontSize: 13.5 }}>{money(shares[m.id] ?? 0, currency)}</span>
-            </div>
-          ))}
-        </div>
+        {/* Set as the payers' lines above it are, one list rather than spaced
+            rows; absent until someone is assigned, so its gap goes too. */}
+        {involved.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "2px 0 2px" }}>
+            {involved.map((m) => (
+              <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{m.name}{m.id === me ? <You /> : null}</span>
+                <span className="bignum" style={{ fontSize: 13.5 }}>{money(shares[m.id] ?? 0, currency)}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
         <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-s gridway${flash}${hail ? " hail" : ""}`}
           onAnimationEnd={(e) => { if (e.animationName === "hail") setHail(false); else onFlashEnd(e); }}
           style={{ textDecoration: "none" }}>

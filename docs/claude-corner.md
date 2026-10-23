@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-23* — "This space is too tall when the items are not assigned yet",
+  with a red arrow on a screenshot. The space was an empty list still taking
+  its padding and its flex gap: measure the photo, then find what renders
+  nothing but still costs room.
+
 - *2026-10-23* — "Also drop all the local uncommitted changes I don't like
   them", mid-task. Another session's half-built diff sat in the clone; look
   at it, keep a patch in the scratchpad, then drop it — and the one-line
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the translation state obviously". The "obviously" was the spec: the same
   draft field, written at once like the grid's, so a look-only toggle never
   made Back ask to discard.
-
-- *2026-10-22* — "BYOK should accept both a vertex and gemini api key". A
-  key's look says nothing about its host, so saving asks both. Not every
-  Google API takes a key: Vertex 401s a bogus one with "API keys are not
-  supported", so probe with curl before trusting a free endpoint to answer.
