@@ -136,7 +136,7 @@ export default function QuickPage() {
             <ScanDiagram names={people.map((p) => p.name)} seed={cred?.id ?? ""} />
           </div>
 
-          <Eyebrow style={{ padding: "6px 16px 0" }}>{copy.quick.who}</Eyebrow>
+          <Eyebrow style={{ padding: "6px var(--gutter) 0" }}>{copy.quick.who}</Eyebrow>
           <div className="rows">
             {people.map((person) => (
               <div key={person.id} className="row">

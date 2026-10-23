@@ -71,7 +71,7 @@ export default function SplitPage() {
         <div className="pad" style={{ paddingTop: 2 }}>
           <span className="bignum" style={{ fontSize: 32 }}>{shown(split.totalMinor)}</span>
         </div>
-        <div className="pad" style={{ paddingTop: 2, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+        <div className="pad" style={{ paddingTop: 2, paddingBottom: "var(--dock-foot)" }}>
           <Card>
             {split.people.map((share, i) => (
               <MemberBill key={i} name={share.name} total={shown(share.minor)}

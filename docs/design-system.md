@@ -15,7 +15,7 @@ beside it with `pnpm drive` ([drive.md](drive.md)).
 
 | Read | When you are |
 |---|---|
-| **This file** | Choosing a colour, a size, a face, a press or a wait; laying out a screen's one act |
+| **This file** | Choosing a colour, a size, a spacing, a face, a press or a wait; laying out a screen's one act |
 | [rows.md](rows.md) | Drawing a row: yours, the ledger's motion, a line that says less, an arrow |
 | [entry.md](entry.md) | Laying out the entry form or the entry screen |
 | [refusals.md](refusals.md) | Writing a dialog, a picker, or a button that can say no |
@@ -251,6 +251,23 @@ and follows it.
 Money keeps `.num` — `font-variant-numeric: tabular-nums` — so decimal points
 align down a column even though everything is already monospaced. Monospace
 sets wide, so titles truncate a word earlier: accepted.
+
+## Spacing
+
+**A spacing that is a role has a name** in `:root`, beside the type scale:
+`--gutter` (a screen's edge to its content, 16), `--row-y`/`--row-gap` (a list
+row), `--inset`/`--field-y` (a field's or box's edge to its text), `--card-x`/
+`--card-y`, `--dialog-x`, `--band-y` (banners), `--btn-pad`/`--btn-s-pad`,
+`--dock-foot` (a bottom dock over the home bar), `--section-gap`, `--note-top`.
+Something bleeding to an edge undoes it by name — `calc(-1 * var(--gutter))`
+— so the two can't part. A one-off, an optical nudge or a hairline stays a
+literal. The names were applied without moving a pixel, so values that share a
+role but drifted apart stay literal until someone decides them: the dialog
+rows' and top bar's 11px glyph gap against a row's 12, `.setlink`'s and
+`.rowmenu-item`'s 13px against a row's 11, `.foot`'s 11px against a dock's 12,
+`.keynote`'s and `.fineprint`'s 9px against `--note-top`, `.birow`'s 12px top
+against `--card-y`, `.balrow`'s 9px rows and the 10/11/7/8px heads of fields
+and split rows.
 
 ## A money field has an underline
 

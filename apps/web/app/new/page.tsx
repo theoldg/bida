@@ -182,7 +182,7 @@ export default function NewGroupPage() {
             </div>
           </div>
 
-          <Eyebrow style={{ padding: "6px 16px 0" }}>{copy.newGroup.people}</Eyebrow>
+          <Eyebrow style={{ padding: "6px var(--gutter) 0" }}>{copy.newGroup.people}</Eyebrow>
           <div className="rows">
             {people.map((who, i) => (
               <div key={`${who}-${i}`} className="row">

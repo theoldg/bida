@@ -159,7 +159,7 @@ export default function QuickResultPage() {
                 done={copy.quick.copied} on={copied} />
             </button>
           </div>
-          <div className="pad" style={{ paddingTop: 8, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+          <div className="pad" style={{ paddingTop: 8, paddingBottom: "var(--dock-foot)" }}>
             {/* The way out, in the secondary register: the act this screen
                 exists for is the one above it. */}
             <button type="button" className="btn btn-s"
