@@ -156,6 +156,7 @@ textarea { resize: vertical }
   --gutter: 16px;          /* a screen's edge to its content */
   --row-y: 11px;           /* a list row's top and bottom */
   --row-gap: 12px;         /* a list row's glyph to its text */
+  --item-y: 13px;          /* a one-line row's top and bottom: a link, a menu item */
   --inset: 12px;           /* a field's or box's edge to its text */
   --field-y: 10px;         /* a one-line field's top and bottom */
   --card-x: 14px; --card-y: 13px;
@@ -550,7 +551,7 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .settings .addrow.keyrow { margin: 16px 0 0; width: 100% }
 .settings .installfold { margin-top: 16px }
 .setlink { display: flex; align-items: center; justify-content: space-between; gap: var(--row-gap);
-  margin-inline: calc(-1 * var(--gutter)); padding: 13px var(--gutter); border-top: 1px solid var(--rule-soft);
+  margin-inline: calc(-1 * var(--gutter)); padding: var(--item-y) var(--gutter); border-top: 1px solid var(--rule-soft);
   font-size: var(--fs-body); font-weight: 500; color: var(--ink-2) }
 .setlink svg { color: var(--muted) }
 /* As wide as its words, not a tab bar. Equal columns, so the chosen one's weight
@@ -571,7 +572,7 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .vernum { font-family: var(--f-mono); font-size: var(--fs-small); color: var(--ink) }
 .vernote { font-size: var(--fs-small); line-height: 1.5; color: var(--muted); margin-top: 2px }
 .verrow .btn { width: auto; padding: var(--btn-s-pad); font-size: var(--fs-small) }
-.keynote { font-size: var(--fs-small); line-height: 1.5; color: var(--muted); margin: 9px 2px 0 }
+.keynote { font-size: var(--fs-small); line-height: 1.5; color: var(--muted); margin: var(--note-top) 2px 0 }
 
 .aboutcontact { display: flex; align-items: center; gap: 22px }
 .aboutlinks { display: flex; flex-direction: column; align-items: flex-start; gap: 9px;
@@ -1167,7 +1168,7 @@ dialog.scrim::backdrop { background: transparent }
 .dialog:has(> .dsearch) { display: flex; flex-direction: column }
 .dialog:has(> .dsearch) > .dlist { flex: 0 1 52dvh; min-height: 0; max-height: none; margin-top: 0 }
 /* The search is the list's first row, held while the rest scrolls under it. */
-.dsearchrow { display: flex; align-items: center; gap: 11px; margin: 11px calc(-1 * var(--dialog-x)) 0; padding: var(--row-y) var(--dialog-x);
+.dsearchrow { display: flex; align-items: center; gap: var(--row-gap); margin: 11px calc(-1 * var(--dialog-x)) 0; padding: var(--row-y) var(--dialog-x);
   border-top: 1px solid var(--rule-soft); cursor: text }
 .dsearchrow input { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; padding: 0;
   font: inherit; font-size: var(--fs-body); font-weight: 600; line-height: 1.25; color: var(--ink) }
@@ -1238,7 +1239,7 @@ dialog.scrim::backdrop { background: transparent }
   padding: var(--card-y) var(--card-x); background: transparent; border-color: var(--rule);
   font-size: var(--fs-body); font-weight: 600; color: var(--ink-2) }
 @media (prefers-reduced-motion: reduce) { .birow, .bicount input { animation: none } }
-.drow-pick { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+.drow-pick { display: flex; align-items: center; gap: var(--row-gap); width: 100%; text-align: left;
   padding: var(--row-y) var(--dialog-x); border-top: 1px solid var(--rule-soft) }
 .drow-pick:active:not(:disabled) { background: var(--press) }
 .drow-pick:disabled :is(.rtitle, svg) { color: var(--muted) }
@@ -1256,8 +1257,8 @@ dialog.scrim::backdrop { background: transparent }
   background: var(--card);
   border: 1px solid var(--rule); border-radius: var(--r-m); box-shadow: var(--shadow-s);
   padding: 5px; animation: fadein .1s ease-out }
-.rowmenu-item { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
-  padding: 13px 12px; border-radius: var(--r-s); font-size: var(--fs-body); font-weight: 600 }
+.rowmenu-item { display: flex; align-items: center; gap: var(--row-gap); width: 100%; text-align: left;
+  padding: var(--item-y) var(--inset); border-radius: var(--r-s); font-size: var(--fs-body); font-weight: 600 }
 .rowmenu-item + .rowmenu-item { border-top: 1px solid var(--rule-soft) }
 /* `.rowmenu-hot`: a finger slid on from the hold, whose `:active` belongs to the row. */
 .rowmenu-item:active, .rowmenu-item.rowmenu-hot { background: var(--press) }
@@ -1409,7 +1410,7 @@ dialog.scrim::backdrop { background: transparent }
 .failure { font-size: var(--fs-small); color: var(--debit); line-height: 1.5; font-weight: 500; margin: var(--note-top) 2px 0 }
 /* Pays `--kb`, or the button a form ends on sits behind the keyboard. */
 .foot { flex: none; border-top: 1px solid var(--rule); padding: 11px var(--gutter);
-  padding-bottom: calc(var(--kb) + max(11px, env(safe-area-inset-bottom))) }
+  padding-bottom: calc(var(--kb) + var(--dock-foot)) }
 
 /* ---- the amount input ----
    A real <input>, not a hand-built keypad: a caret mid-number, and the phone's
@@ -1824,7 +1825,7 @@ dialog.scrim::backdrop { background: transparent }
   text-overflow: ellipsis; outline: none }
 .pastebox::placeholder { color: var(--muted) }
 /* Qualified, or `.aboutsect p` sets the size. */
-.aboutsect p.fineprint { margin: 9px 2px 0; font-size: var(--fs-caption); line-height: 1.45;
+.aboutsect p.fineprint { margin: var(--note-top) 2px 0; font-size: var(--fs-caption); line-height: 1.45;
   color: var(--muted); text-align: center; text-wrap: balance }
 
 /* Normally invisible; a challenge needing a tap must be reachable. */

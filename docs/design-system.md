@@ -255,19 +255,18 @@ sets wide, so titles truncate a word earlier: accepted.
 ## Spacing
 
 **A spacing that is a role has a name** in `:root`, beside the type scale:
-`--gutter` (a screen's edge to its content, 16), `--row-y`/`--row-gap` (a list
-row), `--inset`/`--field-y` (a field's or box's edge to its text), `--card-x`/
-`--card-y`, `--dialog-x`, `--band-y` (banners), `--btn-pad`/`--btn-s-pad`,
+`--gutter` (a screen's edge to its content, 16), `--row-y`/`--row-gap`/
+`--item-y` (rows), `--inset`/`--field-y` (a field's or box's edge to its
+text), `--card-x`/`--card-y`, `--dialog-x`, `--band-y` (banners), `--btn-pad`/`--btn-s-pad`,
 `--dock-foot` (a bottom dock over the home bar), `--section-gap`, `--note-top`.
 Something bleeding to an edge undoes it by name — `calc(-1 * var(--gutter))`
 — so the two can't part. A one-off, an optical nudge or a hairline stays a
-literal. The names were applied without moving a pixel, so values that share a
-role but drifted apart stay literal until someone decides them: the dialog
-rows' and top bar's 11px glyph gap against a row's 12, `.setlink`'s and
-`.rowmenu-item`'s 13px against a row's 11, `.foot`'s 11px against a dock's 12,
-`.keynote`'s and `.fineprint`'s 9px against `--note-top`, `.birow`'s 12px top
-against `--card-y`, `.balrow`'s 9px rows and the 10/11/7/8px heads of fields
-and split rows.
+literal. Rows come in two kinds: a list row of two lines (`--row-y`, 11) and a
+one-line row — a settings link, a menu item — that takes `--item-y` (13) to
+stay a full tap. Values that may share a role but differ stay literal until
+someone decides them: the top bar's 11px gap and `.balrow`'s 9px rows,
+`.birow`'s 12px top against `--card-y`, and the 10/11/7/8px heads of fields and
+split rows.
 
 ## A money field has an underline
 
