@@ -79,11 +79,16 @@ export function setTotal(row: ItemRow, text: string, currency: string): ItemRow 
 
 /**
  * "One more" is one more at the same price: from a single item the price is a
- * unit price, and only a total typed beside its count holds still.
+ * unit price, and only a total typed beside its count holds still. The price
+ * moves to the unit's field settled: on an iPhone "+" doesn't blur the field
+ * typed in, so nothing else would turn its "6" into "6.00".
  */
 export function setCount(row: ItemRow, count: number, currency: string): ItemRow {
   const clamped = Math.min(MAX_PORTIONS, Math.max(1, Math.floor(count) || 1));
-  const single = row.count === 1 && row.by === "total" ? { by: "unit" as const, unitText: row.totalText } : {};
+  const price = minorOrNull(row.totalText, currency);
+  const single = row.count === 1 && row.by === "total"
+    ? { by: "unit" as const, unitText: price === null ? row.totalText : textOf(price, currency) }
+    : {};
   return derived({ ...row, ...single, count: clamped }, currency);
 }
 

@@ -25,6 +25,9 @@ describe("a row's price", () => {
     const row = setCount(setTotal(named("a"), "12", "EUR"), 4, "EUR");
     expect(row.by).toBe("unit");
     expect(row.totalText).toBe("48.00");
+    // Still being typed, so never settled by a blur: the step settles it.
+    expect(row.unitText).toBe("12.00");
+    expect(setCount(setTotal(named("a"), "6.", "EUR"), 2, "EUR").unitText).toBe("6.00");
   });
 
   it("holds the typed figure still when the count moves", () => {

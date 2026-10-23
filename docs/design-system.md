@@ -245,7 +245,9 @@ too: "1 EUR = 18 000 UZS" is a rate people type, so it groups, and `rateText`
 groups the ones we print. **The field settles when you leave it**: it holds the
 text you typed while you are typing it — caret and half-finished "1." intact —
 and pads it to the currency's fraction on blur, so a finished "5" doesn't sit
-in a column of "12.00"s looking like a different kind of number.
+in a column of "12.00"s looking like a different kind of number. A figure
+handed to another field settles on the way, since on an iPhone a tapped button
+never blurs the field it came from.
 
 ## Rules that are not negotiable
 
