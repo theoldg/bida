@@ -181,9 +181,9 @@ hand and no stub is needed.
 ## Gotchas
 
 - **An Android camera can refuse in silence.** With Chrome's own camera
-  permission off, `capture` opens nothing and fires nothing. `watchCamera`
-  (`lib/scan/camera.ts`) takes a page that never lost focus within 2s as that,
-  and says so in a dialog.
+  permission off, `capture` opens nothing and says nothing. `watchCamera`
+  (`lib/scan/camera.ts`) takes a page that never lost focus within 2s, or a
+  `cancel` before it did, as that, and says so in a dialog.
 
 - **The sweep is an estimate of a real scan, so it moves when the scan does.**
   `sweepSeconds` is three, covering Turnstile, the budget's D1 round trips and
