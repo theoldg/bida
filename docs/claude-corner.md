@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-23* — "make the split mode tabs look more like tabs", then "maybe
+  still do some raise effect?". Tabs alone took the lift away; the answer was
+  three variants photographed beside the shipped one, each a step of lift, and
+  they picked the quietest. "Carefully" meant small steps.
+
 - *2026-10-23* — "can we accept decimal numbers without the zero, like .7?"
   Amounts already did, writing in the 0 as you type; only the rate field
   refused it. Find which field actually fails before changing the parser
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "fell right into the trap". Each receipt aimed at one rule, with an answer
   key saying in advance what passing meant, so the miss came back diagnosed.
   Then "a bit shorter pls": cut whole examples, not words.
-
-- *2026-10-22* — "i still get autocomplete suggestions even after the recent
-  fix". The fact-check before it was half right too: a forum's rule, not
-  Chrome's source. Then a closed window: its transcript held the owner's yes,
-  and the diff showed half its edits never landed. Finish from both.

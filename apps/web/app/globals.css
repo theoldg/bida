@@ -1433,9 +1433,17 @@ dialog.scrim::backdrop { background: transparent }
    everyone row would stick to it instead of to `.scroll`. */
 .splitbox { background: var(--card-2); border: 1px solid var(--rule-soft);
   border-radius: var(--r-s); overflow: hidden; overflow: clip }
-/* Sticky, over the rows, whose washes are positioned. */
-.splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft);
+/* Tabs, not a segmented control: they change the panel under them, so the
+   chosen one is underlined into it, lit only a little. Sticky,
+   over the rows, whose washes are positioned. */
+.splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft); padding: 0; gap: 0;
   position: sticky; top: 0; z-index: 2; background: var(--card-2) }
+/* Sized by label, so at 360 the long ones take the room they need and the
+   gaps between labels come out even. */
+.splitbox .seg button { flex: 1 1 auto; font-size: 12.5px; padding: 11px 6px 10px }
+/* Inset, so the bar lands on the strip's rule instead of growing the tab. */
+.splitbox .seg button.on { background: var(--seg-on);
+  box-shadow: inset 0 -2px var(--ink), inset 1px 0 var(--rule-soft), inset -1px 0 var(--rule-soft) }
 .splitlist { padding: 0; overflow: hidden }
 /* The soft rule is invisible against a first row's wash. */
 .splitbox:has(.splitlist > .splitrow.inrow:first-child) .seg {
@@ -1444,7 +1452,7 @@ dialog.scrim::backdrop { background: transparent }
 .splitrow { display: flex; align-items: center; gap: 10px; padding: 7px 12px;
   border-bottom: 1px solid var(--rule-soft); position: relative }
 /* Clear of the sticky tabs and everyone row when a field is brought into view. */
-.splitrow input { scroll-margin-block: 44px }
+.splitrow input { scroll-margin-block: 50px }
 /* The shorthand above would undo `.inrow`'s stronger divider. */
 .splitrow.inrow, .splitrow:has(+ .inrow) { border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent) }
 /* Only the box is the button: its 36px tap spills past the 16px column invisibly.

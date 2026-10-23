@@ -119,7 +119,9 @@ detail of the same job — two doors only on `/g/scan`, reached by pressing a
 camera, where typing is not what the picture above it promised: `.btn-pair` is one bordered box with hairlines between
 the doors, the box owning the border as in `.splitbox`. Buttons side by side is
 the shape for *different* jobs, and `.seg` is the app's mode switch — under the split
-editor's tabs it would read "which of these am I in". (The split editor itself
+editor's tabs it would read "which of these am I in". Those tabs are a `.seg`
+drawn as tabs, the chosen one underlined in ink and only lightly lit, since
+each swaps the panel under it. (The split editor itself
 hangs under `.splitrule`, a lone ÷ at half `--muted`, drawn square-dotted as in the logo:
 without it the box read as one more field.) Mid-scan the divider goes
 and the box holds one strip, "Reading…", with the press wash sweeping across it
