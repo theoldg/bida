@@ -1105,6 +1105,8 @@ dialog.scrim { inset: 0; width: 100%; height: 100%; max-width: 100%; max-height:
   margin: 0; border: 0; padding: 22px; padding-bottom: calc(22px + var(--kb)); color: var(--ink);
   background: color-mix(in srgb, var(--ink) 42%, transparent); animation: fadein .12s ease-out }
 dialog.scrim[open] { display: flex; align-items: center; justify-content: center }
+/* Chrome's own sheet sets a modal dialog back to `text`, past the body's `none`. */
+dialog.scrim { -webkit-user-select: none; user-select: none }
 dialog.scrim::backdrop { background: transparent }
 /* `100%` of the scrim, so a tall card scrolls inside itself. 380px fits a
    picker's sentence on a phone line. */
@@ -1228,6 +1230,9 @@ dialog.scrim::backdrop { background: transparent }
 .drow-pick .rtitle, .drow-pick .rmeta { display: block }
 .drow-pick .rmeta { white-space: normal; overflow: visible; line-height: 1.35 }
 .drow-pick[aria-selected="true"] .rtitle { font-weight: 700 }
+/* The card's own bottom padding is the list's, so the last row stands on the
+   card's edge: it gets a little more, or it reads shorter than the rest. */
+.dialog > .dlist:last-child > .drow-pick:last-child { padding-bottom: 15px }
 
 /* ---- row menu ----
    A menu, not a decision, so nothing dims. The invisible veil catches the closing tap. */

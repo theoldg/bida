@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-23* — "I can select text in this dialog… Fix for all list dialogs".
+  Every list dialog was one component, and the body's no-select rule never
+  reached it: the browser's own sheet resets a modal dialog. A rule that
+  "already" holds is worth testing in the top layer before trusting it.
+
 - *2026-10-23* — "it's slowly falling apart", then "start with the type
   scale … show me some preliminary screenshots, don't push". The feel was a
   count: 21 font sizes. Two scales photographed beside the shipped one; a stop
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   before a question nor an option's preview reached the owner ("I can't see
   them"): the batch goes in the question itself. And one pick can't fill every
   slot: "Części" as a tab broke "Podział …", so that was asked again.
-
-- *2026-10-22* — "do you have the latest version? i added a rule 20 minutes
-  ago". The benchmark had loaded the prompt 45 seconds before a pull brought
-  that rule in. A measurement names the commit it measured, or nobody can say
-  what it measured: runs are labelled by commit now.
