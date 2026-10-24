@@ -2,14 +2,14 @@
 // Doc: docs/navigation.md#routing
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { entriesInvolving } from "@bida/core";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { BlockedDialog, blockingEntries, type BlockingEntry } from "@/components/blocked-dialog";
 import { ChoiceDialog, ConfirmDialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
 import { InviteButton } from "@/components/invite";
-import { AddName } from "@/components/name-adder";
+import { AddName, type AddNameHandle } from "@/components/name-adder";
 import { copy } from "@/lib/copy";
 import { addMember, claimIdentity, removeMember } from "@/lib/db/commands";
 import { route } from "@/lib/group-link";
@@ -23,8 +23,9 @@ import { useClaimGate, useGroupData } from "@/lib/hooks";
  * log as someone else. The button opens a `ChoiceDialog` (ADR-0008), and
  * picking writes the claim op (ADR-0003).
  *
- * Adding is the last row of the list (components/name-adder.tsx); removing
- * keeps its dialog, having a consequence to state (ADR-0008).
+ * Adding is the last row of the list (components/name-adder.tsx), and the way
+ * back files what it holds, as leaving the field would; removing keeps its
+ * dialog, having a consequence to state (ADR-0008).
  */
 export default function MembersPage() {
   return <QueryBoundary><MembersScreen /></QueryBoundary>;
@@ -41,6 +42,7 @@ function MembersScreen() {
   const data = useGroupData(groupId);
   const unclaimed = useClaimGate(groupId, data);
   const [ask, setAsk] = useState<Ask | null>(null);
+  const adder = useRef<AddNameHandle | null>(null);
 
   if (!groupId) return <BadLink />;
   if (data.loading || unclaimed) return <Blank back={route.group(groupId)} />;
@@ -99,7 +101,8 @@ function MembersScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.members.title} back={route.group(groupId)}
+        <TopBar title={copy.members.title}
+          back={{ ask: () => { void adder.current?.settle(); return true; }, up: route.group(groupId) }}
           right={<InviteButton groupId={groupId} />} />
 
         <Scroll>
@@ -125,7 +128,7 @@ function MembersScreen() {
               </div>
             ))}
 
-            <AddName placeholder={copy.members.addPlaceholder} taken={names} onAdd={add} />
+            <AddName placeholder={copy.members.addPlaceholder} taken={names} onAdd={add} handle={adder} />
           </div>
         </Scroll>
         {/* Its own button, with the weight of "Edit" on an entry: it rewrites

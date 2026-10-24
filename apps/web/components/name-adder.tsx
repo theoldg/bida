@@ -9,48 +9,68 @@ import { useRefusal } from "../lib/refusal";
 import { useHoldsWork } from "../lib/update";
 import { nameTaken } from "@bida/core";
 import { NO_AUTOFILL } from "../lib/autofill";
+import { isTyping } from "../lib/viewport";
 
 /**
  * Never a dialog: four names through a scrim is four round trips. A name is filed
- * when the plus is pressed, never when the field is left — on blur a name lands
- * while you look elsewhere.
+ * by the plus, by leaving the field, and by the screen's own button before it
+ * acts — people tap away from a name they have typed and expect it kept.
  */
 export interface AddNameHandle {
   clear: () => void;
+  /** Files what is typed, if it can be: a screen's button calls this first. */
+  settle: () => Promise<Settled>;
 }
 
+/** `refused` is a name the list already holds: it stays in the row, warned. */
+export type Settled = "empty" | "filed" | "refused";
+
 export function AddName({
-  placeholder, autoFocus, taken, onAdd, handle, onDraft, flash = "", onFlashEnd,
+  placeholder, autoFocus, taken, onAdd, onTaken, handle, onDraft, flash = "", onFlashEnd,
 }: {
   placeholder: string;
   autoFocus?: boolean;
   taken: readonly string[];
   onAdd: (name: string) => void | Promise<void>;
+  /** A name the list holds is that person, not a refusal — the picker's list. */
+  onTaken?: (name: string) => void;
   handle?: React.RefObject<AddNameHandle | null>;
   onDraft?: (name: string | null) => void;
   flash?: string;
   onFlashEnd?: (e?: React.AnimationEvent) => void;
 }) {
   const [value, setValue] = useState("");
-  const [busy, setBusy] = useState(false);
   useHoldsWork(value.trim() !== "");
   const field = useRef<HTMLInputElement>(null);
-  const already = nameTaken(value, taken);
-  const ready = value.trim().length > 0 && !already && !busy;
+  const already = !onTaken && nameTaken(value, taken);
   const own = useRefusal();
   const blooming = flash || own.flash;
-  const onField = !ready;
 
-  function typed(next: string) {
-    if (blooming) { own.onFlashEnd(); onFlashEnd?.(); }
+  // What the field holds this instant, and a filing still on its way. A blur
+  // files from a closure that may predate the screen's button filing — or a
+  // picked row clearing — the same name.
+  const now = useRef("");
+  const filing = useRef<Promise<Settled> | null>(null);
+  function put(next: string) {
+    now.current = next;
     setValue(next);
   }
 
-  // Follow after the render that added the name, not in the handler.
+  function typed(next: string) {
+    if (blooming) { own.onFlashEnd(); onFlashEnd?.(); }
+    put(next);
+  }
+
+  // Follow after the render that added the name, not in the handler — unless
+  // the caret has gone to another field, which the screen must not be dragged
+  // away from by a name filed on the way out of this one.
   const count = taken.length;
   const seen = useRef(count);
   useEffect(() => {
-    if (count > seen.current && field.current) bringIntoView(field.current);
+    const at = document.activeElement;
+    if (count > seen.current && field.current && (at === field.current || !isTyping(at))) {
+      bringIntoView(field.current);
+    }
     seen.current = count;
   }, [count]);
 
@@ -62,28 +82,74 @@ export function AddName({
     onDraft?.(draft);
   });
 
-  // Re-hung every render, so the closure a screen calls is never a render behind.
+  async function file(name: string): Promise<Settled> {
+    await onAdd(name);
+    put("");
+    return "filed";
+  }
+
+  function settle(): Promise<Settled> {
+    if (filing.current) return filing.current;
+    const name = now.current.trim();
+    if (!name) return Promise.resolve("empty");
+    if (nameTaken(name, taken)) {
+      if (!onTaken) return Promise.resolve("refused");
+      onTaken(name);
+      put("");
+      return Promise.resolve("filed");
+    }
+    const run = file(name).finally(() => { filing.current = null; });
+    filing.current = run;
+    return run;
+  }
+
+  // Re-hung every render, so the closure a screen or a blur calls is never a
+  // render behind.
+  const latest = useRef(settle);
   useEffect(() => {
+    latest.current = settle;
     if (!handle) return;
-    handle.current = { clear: () => setValue("") };
+    handle.current = { clear: () => put(""), settle };
     return () => { handle.current = null; };
   });
 
+  // A mouse button down. Its press blurs the field on the way down, and a row
+  // filed then moves the button before the click lands.
+  const pressing = useRef(false);
+  useEffect(() => {
+    const down = () => { pressing.current = true; };
+    const up = () => { pressing.current = false; };
+    document.addEventListener("pointerdown", down, true);
+    document.addEventListener("pointerup", up, true);
+    document.addEventListener("pointercancel", up, true);
+    return () => {
+      document.removeEventListener("pointerdown", down, true);
+      document.removeEventListener("pointerup", up, true);
+      document.removeEventListener("pointercancel", up, true);
+    };
+  }, []);
+
+  /**
+   * Leaving files the name, after whatever press did the leaving has clicked —
+   * that button may file or clear the row itself. A mouse's click follows its
+   * `pointerup` in the same task; a tap's compatibility `mousedown`, which is
+   * what blurs, comes after its `pointerup`, with the click in that task too.
+   */
+  function left() {
+    const run = () => setTimeout(() => void latest.current());
+    if (!pressing.current) { run(); return; }
+    const done = () => {
+      document.removeEventListener("pointerup", done, true);
+      document.removeEventListener("pointercancel", done, true);
+      run();
+    };
+    document.addEventListener("pointerup", done, true);
+    document.addEventListener("pointercancel", done, true);
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (busy) return;
-    if (!ready) {
-      if (value.trim().length > 0 && already) own.refuse();
-      field.current?.focus();
-      return;
-    }
-    setBusy(true);
-    try {
-      await onAdd(value.trim());
-      setValue("");
-    } finally {
-      setBusy(false);
-    }
+    if (await settle() === "refused") own.refuse();
     field.current?.focus();
   }
 
@@ -91,14 +157,15 @@ export function AddName({
 
   return (
     <>
-      <form className={`row addrow${typing ? " editing" : ""}${onField ? blooming : ""}`}
+      <form className={`row addrow${typing ? " editing" : ""}${blooming}`}
         onSubmit={(e) => void submit(e)} onClick={() => field.current?.focus()}
         onAnimationEnd={(e) => { own.onFlashEnd(e); onFlashEnd?.(e); }}>
         <input ref={field} className="addname" value={value} placeholder={placeholder}
           aria-label={placeholder} maxLength={40} autoCapitalize="words" autoFocus={autoFocus}
-          autoComplete={NO_AUTOFILL} enterKeyHint="done" onChange={(e) => typed(e.target.value)} />
+          autoComplete={NO_AUTOFILL} enterKeyHint="done" onChange={(e) => typed(e.target.value)}
+          onBlur={left} />
         {/* Not the field's name: two things called "Add someone" is one too many. */}
-        <button type="submit" className={`iconbtn${onField ? "" : blooming}`} aria-label={copy.act.add}>
+        <button type="submit" className="iconbtn" aria-label={copy.act.add}>
           <Icon name="plus" size={15} />
         </button>
       </form>

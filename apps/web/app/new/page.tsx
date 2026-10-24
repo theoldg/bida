@@ -9,7 +9,7 @@ import { CreateAs } from "@/components/create-as";
 import { CurrencyPicker } from "@/components/currency-picker";
 import { ConfirmDialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
-import { AddName } from "@/components/name-adder";
+import { AddName, type AddNameHandle } from "@/components/name-adder";
 import { copy } from "@/lib/copy";
 import { currencyLabel } from "@/lib/currencies";
 import { createGroup } from "@/lib/db/commands";
@@ -61,14 +61,15 @@ export default function NewGroupPage() {
   }, [device?.lastOpenedGroupId]);
   const [asking, setAsking] = useState(false);
   const [ask, setAsk] = useState<null | "currency" | "discard">(null);
-  // The name still in the add row. Nothing acts on it — only its own plus files
-  // it (components/name-adder.tsx) — but it is something typed, so leaving with
-  // it on screen is leaving with work unsaved.
+  // The name still in the add row: something typed, so leaving with it on
+  // screen is leaving with work unsaved. Create files it first
+  // (components/name-adder.tsx).
   const [draft, setDraft] = useState<string | null>(null);
+  const adder = useRef<AddNameHandle | null>(null);
   /**
    * The refusal flash, per field (`lib/refusal.ts`). **Create is always
-   * tappable**: a tap that isn't ready blooms the reason. A name left unfiled in
-   * the add row is a person who'd never be in the group, like an empty list.
+   * tappable**: a tap that isn't ready blooms the reason. A name the list
+   * already holds stays in the add row, and blooms it like an empty list.
    */
   const [refusedFields, setRefused] = useState<Record<Refusable, Refusal>>({
     name: NOT_REFUSED, list: NOT_REFUSED,
@@ -124,11 +125,12 @@ export default function NewGroupPage() {
   }
 
   /** Create: ask who you are — unless the form isn't ready to answer yet. */
-  function next() {
-    // A name still in the add row isn't filed, and an empty list isn't a group.
-    // Both bloom their own control rather than greying the button.
+  async function next() {
+    // A name in the add row is filed first; one it refuses, or an empty list,
+    // blooms that row rather than greying the button.
+    const settled = await adder.current?.settle() ?? "empty";
     const nameMissing = name.trim().length === 0;
-    const listMissing = draft !== null || people.length < 1;
+    const listMissing = settled === "refused" || people.length + (settled === "filed" ? 1 : 0) < 1;
     if (nameMissing || listMissing) {
       refuse({ name: nameMissing, list: listMissing });
       return;
@@ -193,7 +195,7 @@ export default function NewGroupPage() {
                 </button>
               </div>
             ))}
-            <AddName placeholder={copy.members.addPlaceholder} taken={people}
+            <AddName placeholder={copy.members.addPlaceholder} taken={people} handle={adder}
               onAdd={(who) => setPeople((list) => [...list, who])}
               onDraft={setDraft}
               flash={flashClass(refusedFields.list)} onFlashEnd={settled("list")} />
@@ -203,7 +205,7 @@ export default function NewGroupPage() {
             list of people scrolls above it rather than pushing it off. Never
             grey: a blank name or empty list points at itself (design-system.md). */}
         <div className="pad whodock" style={{ paddingTop: 18 }}>
-          <button type="button" className="btn btn-p btn-lg" onClick={next}
+          <button type="button" className="btn btn-p btn-lg" onClick={() => void next()}
             disabled={refusing}>
             {copy.act.create}
           </button>

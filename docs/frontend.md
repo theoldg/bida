@@ -51,34 +51,33 @@ API is reached with `fetch`.
 - **Adding people is not a dialog.** `components/name-adder.tsx` is the last row
   of a list of names, built like the rows above it — name on the left, one
   control on the right — because that is what it becomes. **A name is filed by
-  pressing the plus on that row, and by nothing else**; Enter is the keyboard's
-  way of pressing it. Leaving the field files nothing, so a name can sit in the
-  row unfiled — and while one does, the row draws itself as a box
-  (`.addrow.editing`), because a row that looks like the committed rows above it
-  says the opposite of what is true. The box is drawn around the row, not
-  inside it, so nothing — the plus included — moves when it appears. **The plus is never dead** — a control
-  that looks like a button and answers nothing reads as a broken app — and on
-  an empty row it does not refuse either: it takes the caret, and the next
-  press of that same button files what gets typed. The one press of it that
-  says no is a name the list already holds, which blooms that name, since
-  editing it is the fix — **one name, one person** (`core/names.ts`), said
-  under the row in words as it is typed and pointed at by the refusal, on every
-  list including the one you are picking yourself out of, where the name you
-  typed is a row one tap above. How that row blooms, and why a keystroke ends
-  its flash, is [refusals.md](refusals.md#a-refused-action-points-first). The
-  plus is never spent by a flash the way Create is: the next press of it has
-  to file.
-  A screen's own button never *files* what is in the field — an unfiled name is
-  unfiled, whatever else is pressed — but the two that leave the screen with
-  the list behind them **refuse** rather than going on without the name:
-  `/new`'s Create, which writes the group in one go, and the quick split's scan
-  pair, whose photograph opens a grid of the people on the list and nobody
-  else. Both bloom the plus, the entry form's refusal exactly; a blank group
-  name blooms the Name field as a blank title does. The picker's Continue is the
-  exception that stays: filing a name there *is* picking it, so a name that has
-  only been typed is a question it simply does not read. The row also
-  **follows the list down**, as a browser scrolls to a field only as it takes
-  focus, and this one never lets go — clear of the keyboard, and far enough
+  the plus, by leaving the field, and by the screen's own button before it
+  acts** — people tap away from a name they have typed and expect it kept.
+  Enter is the keyboard's way of pressing the plus, which hands the caret back
+  for the next name; leaving is "done". While a name sits in the row it draws
+  itself as a box (`.addrow.editing`), because a row that looks like the
+  committed rows above it says the opposite of what is true. The box is drawn
+  around the row, not inside it, so nothing — the plus included — moves when it
+  appears. **The plus is never dead** — a control that looks like a button and
+  answers nothing reads as a broken app — and on an empty row it does not
+  refuse either: it takes the caret. The one thing that says no is a name the
+  list already holds — **one name, one person** (`core/names.ts`), said under
+  the row in words as it is typed. Leaving keeps that name in the row, unfiled;
+  a press of the plus blooms the row, since editing it is the fix (how, and why
+  a keystroke ends the flash, is
+  [refusals.md](refusals.md#a-refused-action-points-first)). **A press that
+  blurs the field files only once its click has run**: with no keyboard up
+  (`HoldCaret`), the press blurs on its way down, and a row filed then moves
+  the button out from under the finger before the click lands — and the button
+  may file or clear the row itself. With the keyboard up nothing blurs, so the
+  screen's button calls the row's `settle()` first: `/new`'s Create and the
+  quick split's way to the grid file the name and go on, and refuse — blooming
+  the row, the entry form's refusal exactly — only over a name the list holds
+  or a list too short; a blank group name blooms the Name field as a blank
+  title does. People's Back files it too. `/new` and the quick split's Back
+  still ask "discard?", which throws the typed name away with the rest. The row
+  also **follows the list down**, as a browser scrolls to a field only as it
+  takes focus, unless the caret has gone to another field — clear of the keyboard, and far enough
   clear that the act the list ends on comes up with it, per the `--kb` Gotcha in
   [touch-and-viewport.md](touch-and-viewport.md#the-screen-and-the-keyboard-over-it).
 - **"Which one are you?" is one screen, `components/who-picker.tsx`**, ending
@@ -91,10 +90,13 @@ API is reached with `fetch`.
   because the answer is written into every op and a screen that sometimes skips
   the question is a screen you cannot learn. Picking is never a write — the
   button is, whether it claims an identity (ADR-0003) or creates the group with
-  that name as its actor. The button answers to the tick and to nothing else; a
-  name still being typed moves neither. Filing one *does*: the row it adds is
-  ticked as it arrives, because a name typed into the list you are picking
-  yourself out of is the pick. The tick is a check mark **and** `aria-pressed`:
+  that name as its actor. **The button reads the add row as it is typed**
+  ("Continue as M", "…as Ma"), the tick stepping aside meanwhile and back if the
+  row is emptied, and its press files the name and goes on as them: the label
+  has already said who. A name the list holds is not refused here — it is that
+  row, ticked as it is typed. Filing a name by leaving the field ticks the row
+  it adds, because a name typed into the list you are picking yourself out of
+  is the pick. The tick is a check mark **and** `aria-pressed`:
   a shape is not a sentence, and without it the only thing naming the pick was
   the button at the foot of the screen. That button sits **under the list,
   docked** (`.whodock`): under the last name while the list fits, so it reads

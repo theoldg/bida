@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
+import { nameTaken } from "@bida/core";
 import { AddName, type AddNameHandle } from "./name-adder";
 import { Icon } from "./icons";
 import { Scroll } from "./chrome";
@@ -21,9 +22,10 @@ export interface Who {
  * selection, never a claim**: creating writes the group with this actor,
  * joining writes the claim op (ADR-0003), both on the button.
  *
- * **The button answers to the tick and nothing else** — never to a name
- * half-typed in the add row. Filing that name is the plus's job
- * (components/name-adder.tsx), and the filed row is then ticked.
+ * **The button reads the add row as it is typed**: "Continue as M", "…as Ma",
+ * and the tick steps aside meanwhile, back if the row is emptied. Pressed, it
+ * files the name, which is the pick, and goes on in the same press — the label
+ * has already said who. A name the list holds is that row, not a refusal.
  *
  * **Under the list, not in a `Foot`**, so it sits by the tap that lit it;
  * docked beside the scroller (`.whodock`), so a list too long to fit scrolls
@@ -56,17 +58,29 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
   // write on its own schedule, and the button must not sit blank meanwhile.
   const [added, setAdded] = useState<Who | null>(null);
   const adder = useRef<AddNameHandle | null>(null);
+  const [draft, setDraft] = useState<string | null>(null);
   const chosen = people.find((p) => p.id === picked)
     ?? (added?.id === picked ? added : undefined);
+  const match = draft === null ? undefined : people.find((p) => nameTaken(draft, [p.name]));
+  const shown = draft === null ? chosen : match ?? { id: "", name: draft };
+  // Whoever the row's last filing picked, for the press that filed it.
+  const filed = useRef<Who | null>(null);
 
   async function proceed() {
-    if (busy || !picked) return;
+    if (busy || !shown) return;
     setBusy(true);
     try {
-      await onContinue(picked);
+      let who: Who | null | undefined = chosen;
+      if (draft !== null) who = await adder.current?.settle() === "filed" ? filed.current : null;
+      if (who) await onContinue(who.id);
     } finally {
       setBusy(false);
     }
+  }
+
+  function pick(who: Who) {
+    filed.current = who;
+    onPick(who.id);
   }
 
   return (
@@ -79,26 +93,31 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
           {people.map((p) => (
             // The check mark is a shape, and a shape says nothing to a screen
             // reader — without `aria-pressed` nothing on the row names the pick.
-            <button key={p.id} className="row" aria-pressed={p.id === picked}
+            <button key={p.id} className="row" aria-pressed={p.id === shown?.id}
               onClick={() => { adder.current?.clear(); onPick(p.id); }}>
               <div className="rmain">
                 <div className="rtitle">{p.name}</div>
               </div>
               <span className="rmark">
-                {p.id === picked
+                {p.id === shown?.id
                   ? <Icon name="check" size={16} style={{ color: "var(--brand)" }} />
                   : null}
               </span>
             </button>
           ))}
 
-          {/* Filing a name here is picking it. A name already on the list can't be
-              filed — its row is the same answer. */}
+          {/* Filing a name here is picking it. A name already on the list is
+              that row, and picks it. */}
           <AddName placeholder={addPlaceholder} taken={people.map((p) => p.name)} handle={adder}
+            onDraft={setDraft}
+            onTaken={(name) => {
+              const who = people.find((p) => nameTaken(name, [p.name]));
+              if (who) pick(who);
+            }}
             onAdd={async (name) => {
               const who = await onAdd(name);
               setAdded(who);
-              onPick(who.id);
+              pick(who);
             }} />
         </div>
         {after}
@@ -112,8 +131,8 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
           <WriteBusy percent={progress.percent} label={progress.label}
             box="btn-pair pair-p" button="btn btn-lg" />
         ) : (
-          <button className="btn btn-p btn-lg" onClick={() => void proceed()} disabled={busy || !chosen}>
-            {chosen ? copy.claim.continueAs(chosen.name) : copy.claim.pickFirst}
+          <button className="btn btn-p btn-lg" onClick={() => void proceed()} disabled={busy || !shown}>
+            {shown ? copy.claim.continueAs(shown.name) : copy.claim.pickFirst}
           </button>
         )}
       </div>

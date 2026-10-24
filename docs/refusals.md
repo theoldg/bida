@@ -83,15 +83,12 @@ rate. **A control fills whole**,
 ground and border together, rather than colouring its label: that chip, the two ink blocks — the who-had-what door and the scan pair — and
 a field: a red line around unchanged grey writing is the smallest signal in the
 app for the biggest thing it has to say. A label alone is smaller still, and a `--brand` or `--rule-soft`
-frame left around a red block reads as half a refusal. The
-add row's plus fills for the same reason — what Create and a quick split's way
-to the grid point at over a name nobody has filed is 15px of glyph in a 32px box, far
-too little ink to be seen going red, so the ground goes instead. **A refusal
-blooms what has to change**, and on that row that is the plus only while a good
-name is waiting to be pressed in; when the field is the problem the whole row
-blooms instead — its box washes `--debit-wash` in a `--debit` edge, the writing
-goes red and the plus fills, pointing at the press that answers it: the
-placeholder when a screen refuses over a list too short to go on with, the
+frame left around a red block reads as half a refusal. **A refusal
+blooms what has to change**, and on the add row that is the whole row — a good
+name is never refused, since every press files it — so its box washes
+`--debit-wash` in a `--debit` edge, the writing goes red and the plus fills,
+15px of glyph in a 32px box being far too little ink to be seen going red:
+the placeholder when a screen refuses over a list too short to go on with, the
 typed name when the list already holds it. The box is always there with a
 transparent edge, so the wash moves nothing. A press of the plus on an empty row refuses nothing at
 all: it takes the caret, which is the whole answer. And a keystroke ends any

@@ -7,7 +7,7 @@ import { Eyebrow } from "@/components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
-import { AddName } from "@/components/name-adder";
+import { AddName, type AddNameHandle } from "@/components/name-adder";
 import { ScanPair, useReceiptScan } from "@/components/receipt-scan";
 import { ScanDiagram } from "@/components/scan-diagram";
 import { copy } from "@/lib/copy";
@@ -43,14 +43,15 @@ export default function QuickPage() {
   const device = useDevice();
   const [asking, setAsking] = useState(false);
   const [noLines, setNoLines] = useState(false);
-  // The name still in the add row. Nothing acts on it — only its own plus
-  // files it — but it is something typed, so leaving with it on screen is
-  // leaving with work unsaved (components/name-adder.tsx).
+  // The name still in the add row: something typed, so leaving with it on
+  // screen is leaving with work unsaved. The way to the grid files it first
+  // (components/name-adder.tsx).
   const [typing, setTyping] = useState<string | null>(null);
+  const adder = useRef<AddNameHandle | null>(null);
   /**
-   * The grid refused: a name still unfiled, or fewer than two people. It holds
-   * only the listed people, so either would give a bill nobody can split. The
-   * add row's plus fixes both, so it blooms (lib/refusal.ts).
+   * The grid refused: fewer than two people, or a name the list already holds
+   * left in the row. It holds only the listed people, so a bill nobody can
+   * split. The add row fixes both, so it blooms (lib/refusal.ts).
    */
   const refusal = useRefusal();
 
@@ -96,9 +97,10 @@ export default function QuickPage() {
   const reading = scan.live?.state === "scanning";
   const typed = people.length > 0 || typing !== null || bill.length > 0 || reading;
 
-  /** The grid holds only the listed people, so one unfiled or alone can't split. */
-  function toGrid() {
-    if (typing !== null || people.length < 2) refusal.refuse();
+  /** The grid holds only the listed people, so one alone can't split. */
+  async function toGrid() {
+    const settled = await adder.current?.settle() ?? "empty";
+    if (settled === "refused" || people.length + (settled === "filed" ? 1 : 0) < 2) refusal.refuse();
     else router.push(route.quickItems());
   }
 
@@ -147,7 +149,7 @@ export default function QuickPage() {
                 </button>
               </div>
             ))}
-            <AddName placeholder={copy.members.addPlaceholder}
+            <AddName placeholder={copy.members.addPlaceholder} handle={adder}
               taken={people.map((p) => p.name)}
               onAdd={(name) => { if (cred) addQuickPerson(cred.id, name); }}
               onDraft={setTyping}
@@ -165,7 +167,7 @@ export default function QuickPage() {
               {/* Held while a rescan reads: the grid would be of the bill about
                   to be replaced, and the "Reading…" below says why. */}
               <button type="button" className="btn btn-p btn-lg gridway"
-                disabled={refusal.live || reading} onClick={toGrid}>
+                disabled={refusal.live || reading} onClick={() => void toGrid()}>
                 <Icon name="users" size={16} />
                 <span className="wayname">{ticked ? copy.scan.editWhoHadWhat : copy.scan.assignWhoHadWhat}</span>
                 <span className="waycount"><span>{plural(printedCount(bill), copy.noun.item)}</span></span>

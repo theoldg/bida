@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-24* — "People expect commit on blur… propose how", then "the
+  picker's button could update on every new letter?", then "build and ship".
+  It undid a revert from September; git log said why it was reverted, and
+  the proposal answered those reasons before the owner had to remember them.
+
 - *2026-10-24* — "Should we add History to the kebab?", then "a dot on the
   kebab… wdyt?", then "drop the separate button". Two questions were the owner
   thinking aloud; the answer laid out both versions, and they picked the one
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   scope": the code-substring match stays, the Polish is too far back. A
   clean-up's scope is the last stretch of work, not the whole history; the
   find worth keeping was a doc's figure that the screen at 360 contradicted.
-
-- *2026-10-23* — "[price] [quantity (x1)]", then mid-build: "Add the +- buttons
-  back to the quantity!" A sketch's brackets name the order, not what is
-  inside them; dropping the stepper to make room was my call to make loudly,
-  not quietly. Ask the room question, don't answer it by deleting.

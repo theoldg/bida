@@ -79,3 +79,12 @@ to the top. The two assertions that keep the chains apart are the other ones
 worth having — the entry form's note folds rather than diving into the column
 underneath, and the add row, which is a `<form>`, still files the name and
 hands the caret back ([entry.md](entry.md#the-keyboards-chain)).
+
+Last, the add row filing when it is left ([frontend.md](frontend.md#names)):
+by a tap on another field, by Create and "Continue as …" — whose label must
+have followed the typing, a name already on the list ticking its row — and by
+People's Back, each held against a name the list already holds staying put.
+No keyboard is faked here, so every press blurs the field on its way down:
+these are the presses that race a row arriving under the finger. People is
+walked into from the group's menu, never loaded: Back from a loaded screen is
+a page load, which drops the write still in flight.

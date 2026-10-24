@@ -276,6 +276,70 @@ report(await caret() === "Add someone" && await page.locator(".rows .rtitle").co
   "/new — the add row still files the name and keeps the caret",
   `caret on ${await caret()}`);
 
+// ---- leaving the add row files it ---------------------------------------
+// Pressed with no keyboard up, a button blurs the field on its way down, so
+// each press below is also the race the row has to wait out.
+const titles = () => page.locator(".rows .row:not(.addrow) .rtitle").allTextContents();
+const until = async (want) => {
+  await page.waitForFunction((n) =>
+    document.querySelectorAll(".rows .row:not(.addrow) .rtitle").length === n, want,
+  { timeout: PATIENCE }).catch(() => {});
+  return titles();
+};
+await page.getByLabel("Add someone").fill("Bo");
+await page.locator('[data-field="g-name"]').click();
+report((await until(2)).join() === "Ana,Bo", "/new — leaving the add row files the name",
+  `rows: ${await titles()}`);
+
+await page.getByLabel("Add someone").fill("bo");
+await page.locator('[data-field="g-name"]').click();
+await settle(page, 200);
+report((await titles()).length === 2 && await page.getByLabel("Add someone").inputValue() === "bo"
+  && await page.locator(".addwarn").count() === 1,
+  "/new — a name the list holds stays in the row, warned", `rows: ${await titles()}`);
+
+await page.getByLabel("Add someone").fill("Cy");
+await page.getByRole("button", { name: "Create" }).click();
+await page.waitForSelector(".rows button.row", { timeout: PATIENCE });
+report((await page.locator(".rows button.row .rtitle").allTextContents()).join() === "Ana,Bo,Cy",
+  "/new — Create files the name typed and goes on", `picker: ${await titles()}`);
+
+const go = page.locator(".whodock .btn");
+const ticked = () => page.locator('.rows button.row[aria-pressed="true"] .rtitle').allTextContents();
+await page.getByLabel("Add your name").fill("Dee");
+const typedLabel = await go.textContent();
+const typedTick = await ticked();
+await page.getByLabel("Add your name").fill("ana");
+report(typedLabel === "Continue as Dee" && typedTick.length === 0
+  && await go.textContent() === "Continue as Ana" && (await ticked()).join() === "Ana",
+  "which one are you — the button reads the row as it is typed, and a name on the list is that row",
+  `"${typedLabel}" ticking [${typedTick}], then "${await go.textContent()}" ticking [${await ticked()}]`);
+
+await page.getByLabel("Add your name").fill("Dee");
+await go.click();
+await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
+const made = new URL(page.url()).searchParams.get("id");
+// Walked in, not loaded: the way back from a loaded screen is a page load, and
+// a page load drops a write still in flight, which the app's own Back never is.
+const people = async () => {
+  await page.getByRole("button", { name: /^Group menu/ }).click();
+  await page.getByRole("menuitem", { name: "People" }).click();
+  await page.waitForURL(/\/g\/members/, { timeout: PATIENCE });
+  await page.waitForSelector(".rows .row .rtitle");
+};
+await people();
+const mine = await page.locator(".rows .row:not(.addrow):not(:has(.rdrop)) .rtitle").allTextContents();
+report((await titles()).join() === "Ana,Bo,Cy,Dee" && mine.join() === "Dee",
+  "which one are you — Continue files the name typed and goes on as them",
+  `members: ${await titles()}, you: ${mine}`);
+
+await page.getByLabel("Add someone").fill("Eli");
+await page.locator(".topbar .iconbtn").first().click();
+await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
+await people();
+report((await until(5)).includes("Eli"), "people — the way back files the name typed",
+  `members: ${await titles()}`);
+
 await browser.close();
 close();
 finish();
