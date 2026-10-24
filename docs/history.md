@@ -97,9 +97,9 @@ only an id this phone has never had.
 
 ## The clock and its dot
 
-The ledger's history clock (`components/history-button.tsx`) stands in the top
-bar beside the menu, wearing an ink dot while there is something new. History
-pulls those revisions above a torn line labelled "↑ New" (`.torn`) — pulled up
+History is the row under the invite link in the group's menu
+(`components/group-menu.tsx`), its clock wearing an ink dot while there is
+something new, and the menu's button wearing one too. History pulls those revisions above a torn line labelled "↑ New" (`.torn`) — pulled up
 rather than marked in place, since a phone that was offline lands changes
 stamped days back. New is `unseenRevisions` (`core/history.ts`): an op numbered
 past `groupKeys.seenSeq` whose stamp is another phone's, your own laptop

@@ -645,11 +645,11 @@ const en = {
 
     balances: "Balances",
     history: "History",
-    historyNew: "History, new changes",
     people: "People",
     copyLink: "Copy invite link",
     export: "Export data",
     menu: "Group menu",
+    menuNew: "Group menu, new changes",
     linkTitle: "The invite link",
     linkBody: "Copying didn’t work: hold the link to copy it.",
     addEntry: "Add an entry",

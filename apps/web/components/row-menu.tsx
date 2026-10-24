@@ -13,6 +13,8 @@ export interface SheetAction {
   label: string;
   icon?: IconName;
   danger?: boolean;
+  /** Something new waits behind it: a dot on the icon. */
+  dot?: boolean;
   onSelect: () => void;
 }
 
@@ -134,7 +136,10 @@ export function RowMenu({ anchor, actions, onClose }: {
             onPointerCancel={() => { finger.current = -1; }}
             onClick={() => choose(a)}>
             {a.icon
-              ? <Icon name={a.icon} size={17} style={a.danger ? { color: "var(--debit)" } : undefined} />
+              ? <span className="dotted">
+                <Icon name={a.icon} size={17} style={a.danger ? { color: "var(--debit)" } : undefined} />
+                {a.dot ? <span className="newdot" aria-hidden="true" /> : null}
+              </span>
               : null}
             <span style={a.danger ? { color: "var(--debit)" } : undefined}>{a.label}</span>
           </button>
@@ -145,18 +150,23 @@ export function RowMenu({ anchor, actions, onClose }: {
 }
 
 /** The same card off an icon button, for a top bar whose actions outgrow it. */
-export function MenuButton({ icon, label, actions, confirmed = false }: {
+export function MenuButton({ icon, label, actions, confirmed = false, dot = false, onOpen }: {
   icon: IconName; label: string; actions: SheetAction[];
   /** An action just did something: the icon flips to a check, as copying the link does elsewhere. */
   confirmed?: boolean;
+  /** An item wears one (`SheetAction.dot`): so does the button. */
+  dot?: boolean;
+  /** As the finger lands, so an item's screen can start its read. */
+  onOpen?: () => void;
 }) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   return (
     <>
-      <button type="button" className="iconbtn" aria-label={label} aria-haspopup="menu"
-        aria-expanded={anchor ? true : undefined}
+      <button type="button" className="iconbtn dotted" aria-label={label} aria-haspopup="menu"
+        aria-expanded={anchor ? true : undefined} onPointerDown={onOpen}
         onClick={(e) => setAnchor(e.currentTarget.getBoundingClientRect())}>
         <FlipCheck name={icon} size={18} on={confirmed} />
+        {dot ? <span className="newdot" aria-hidden="true" /> : null}
       </button>
       {anchor ? <RowMenu anchor={anchor} actions={actions} onClose={() => setAnchor(null)} /> : null}
     </>

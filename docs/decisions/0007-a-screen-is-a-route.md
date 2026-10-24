@@ -25,10 +25,9 @@ expenses you'd looked at rather than climbing out.
   `/g/payers` stays a screen.
 - **No tab bar: the ledger is the group's screen, and everything else is
   pressed into from it** — the balances (`/g/balances`) from the "you owe" card
-  at its head, History from a clock beside the menu (`components/history-button.tsx`,
-  standing alone because its dot is how the ledger says what changed elsewhere),
-  and the invite link, People, Search, Export, Settings and "Forget group" from one
-  top-bar menu (`components/group-menu.tsx`). Three icons is the ceiling for a
+  at its head, and History, the invite link, People, Search, Export, Settings and
+  "Forget group" from one top-bar menu (`components/group-menu.tsx`), whose dot
+  says what changed elsewhere. Three icons is the ceiling for a
   top bar and the group outgrew it. **Settings is the phone's, not the
   group's** — one screen from both kebabs: light/dark, how much it is
   notified, and a way on to `/advanced` for a key of its own. The personal lens is not a setting; the app

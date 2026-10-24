@@ -650,7 +650,8 @@ for (const [name, from, open, type] of [
   report(seen.tops.length === 1 && seen.tops[0] === left, "without moving the list", `left ${left} got ${seen.tops}`);
   await is(page, "and goes back to the ledger, not over it", { i: 0, urls: ["/g?id=G", "/g/entry?id=G&e=E"] });
 
-  await page.locator(".topbar a[href*='/g/history']").first().click();
+  await page.getByRole("button", { name: /Group menu/ }).click();
+  await page.getByRole("menuitem", { name: "History" }).click();
   await page.waitForURL(/\/g\/history/);
   await page.locator("a[href*='/g/entry']").filter({ hasText: "cantina" }).first().click();
   await remove();

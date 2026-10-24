@@ -16,7 +16,6 @@ import {
 } from "@/components/chrome";
 import { FitLine } from "@/components/fit-line";
 import { GroupMenu } from "@/components/group-menu";
-import { HistoryButton } from "@/components/history-button";
 import { DemoCard } from "@/components/demo";
 import { LedgerInstall, SkeletonBanner } from "@/components/install";
 import { RollingFigure } from "@/components/rolling-figure";
@@ -59,7 +58,7 @@ function GroupScreen() {
   }, [groupId]);
 
   // Every other screen of the group reads what this one does; history starts
-  // its own when its button is pressed (`HistoryButton`). The list is one Back
+  // its own when the menu holding it is pressed (`GroupMenu`). The list is one Back
   // away.
   useEffect(() => {
     if (groupId) warmGroup(groupId);
@@ -109,7 +108,7 @@ function GroupScreen() {
         <TopBar
           title={group.name}
           back={route.groups()}
-          right={<><HistoryButton groupId={group.id} /><GroupMenu groupId={group.id} data={data} /></>}
+          right={<GroupMenu groupId={group.id} data={data} />}
         />
         <Ledger data={data} />
       </Body>

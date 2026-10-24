@@ -154,7 +154,7 @@ export function warmGroup(groupId: string): void {
 }
 
 /**
- * History's read, started by the finger landing on its button. Not kept warm
+ * History's read, started by the finger landing on the menu holding it. Not kept warm
  * from the ledger: a warm log is read again whole on every save, a quarter of
  * a 10,000-entry save's time, for a screen most visits never open.
  */

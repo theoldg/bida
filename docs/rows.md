@@ -109,7 +109,7 @@ line, whose band is its own edge, and under the last row.
   the foot of its day.
 - **A row that arrives** from another phone opens a gap (220ms) and fades in
   (180ms), at the slot's opacity so a dimmed row fades to its own 58% and not
-  past it. No flash: the history clock's dot already says it came. **Above what
+  past it. No flash: the group menu's dot already says it came. **Above what
   you are reading, it grows the list upward instead** — the view is held by
   hand, nothing under your eye moves, and nothing animates. A list moving
   under a finger or still gliding takes no change until 300ms after it stops —

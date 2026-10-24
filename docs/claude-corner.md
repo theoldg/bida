@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-24* — "Should we add History to the kebab?", then "a dot on the
+  kebab… wdyt?", then "drop the separate button". Two questions were the owner
+  thinking aloud; the answer laid out both versions, and they picked the one
+  the code comment argued against. A comment is a reason, not a veto.
+
 - *2026-10-23* — "I can select text in this dialog… Fix for all list dialogs".
   Every list dialog was one component, and the body's no-select rule never
   reached it: the browser's own sheet resets a modal dialog. A rule that
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   back to the quantity!" A sketch's brackets name the order, not what is
   inside them; dropping the stepper to make room was my call to make loudly,
   not quietly. Ask the room question, don't answer it by deleting.
-
-- *2026-10-22* — "Quiz me on each word… batch obvious ones". Neither text
-  before a question nor an option's preview reached the owner ("I can't see
-  them"): the batch goes in the question itself. And one pick can't fill every
-  slot: "Części" as a tab broke "Podział …", so that was asked again.

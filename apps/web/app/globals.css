@@ -719,10 +719,11 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 @keyframes roll-open { from { width: 0 } }
 @keyframes roll-close { to { width: 0 } }
 
-/* Ink, since colour is spent on balances. */
-.histbtn { position: relative }
-.histdot { position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; border-radius: 50%;
+/* Ink, since colour is spent on balances. The ring is the ground it sits on. */
+.dotted { position: relative; display: grid; place-items: center }
+.newdot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%;
   background: var(--ink); box-shadow: 0 0 0 2px var(--card-2) }
+.rowmenu .newdot { top: -3px; right: -3px; width: 7px; height: 7px; box-shadow: 0 0 0 2px var(--card) }
 .torn { position: relative; display: flex; align-items: center; justify-content: flex-end;
   height: 13px; margin: -5px 0 10px -26px }
 .torn::before { content: ""; position: absolute; inset: 3px 0; background: var(--ink-2);
