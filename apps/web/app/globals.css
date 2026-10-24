@@ -601,7 +601,8 @@ html[data-banner="manual"] .ghost-manual { display: block }
   border: 1px solid transparent; border-radius: var(--r-s) }
 .rows > .addrow.editing { border-color: var(--rule) }
 .addrow.editing:has(+ .addwarn) { margin-bottom: 0 }
-.addwarn { margin: 0; padding: 0 var(--gutter) 13px }
+/* The add row's own box, edge for edge, under it. */
+.addwarn { margin: 6px 5px 13px }
 
 .rmark { width: 32px; height: 32px; display: grid; place-items: center; flex: none }
 /* Taking a person off a list: a bare cross in the check's slot, not a boxed

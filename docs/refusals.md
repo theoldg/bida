@@ -89,7 +89,9 @@ name is never refused, since every press files it — so its box washes
 `--debit-wash` in a `--debit` edge, the writing goes red and the plus fills,
 15px of glyph in a 32px box being far too little ink to be seen going red:
 the placeholder when a screen refuses over a list too short to go on with, the
-typed name when the list already holds it. The box is always there with a
+typed name when the list already holds it. That name's line under the row is
+boxed like the entry form's line over Save and fills with the row; the two are
+glided into view together before either blooms, as the grid's rows are. The box is always there with a
 transparent edge, so the wash moves nothing. A press of the plus on an empty row refuses nothing at
 all: it takes the caret, which is the whole answer. And a keystroke ends any
 flash there on the spot, rather than reddening writing that is being typed over,

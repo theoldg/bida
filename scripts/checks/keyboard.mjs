@@ -165,6 +165,25 @@ const unshrink = await shrinkForKeyboard();
 await clears("/new — on Android, where the page shrinks for the keys", "button.btn-lg");
 await unshrink();
 
+// A refusal over a name the list holds glides the row and its line into view
+// before blooming them, from wherever the list was left.
+await field().fill("ana");
+await page.evaluate(() => {
+  document.activeElement?.blur?.();
+  document.querySelector(".scroll").scrollTop = 0;
+});
+await page.getByRole("button", { name: "Create" }).click();
+await page.waitForSelector(".addwarn[class*='flash-']", { timeout: PATIENCE });
+const shown = await page.evaluate(() => {
+  const row = document.querySelector(".addrow").getBoundingClientRect();
+  const line = document.querySelector(".addwarn").getBoundingClientRect();
+  const box = document.querySelector(".scroll").getBoundingClientRect();
+  return { row: Math.round(row.top - box.top), line: Math.round(box.bottom - line.bottom) };
+});
+report(shown.row >= 0 && shown.line >= -1, "/new — a refused name is brought into view, line and all, as it blooms",
+  `row ${shown.row}px under the top, line ${shown.line}px over the foot`);
+await page.waitForFunction(() => !document.querySelector("[class*='flash-']"), null, { timeout: PATIENCE });
+
 // ---- which one are you ---------------------------------------------------
 await field().fill("");
 await closeKeyboard();

@@ -1,11 +1,13 @@
 "use client";
 // Doc: docs/frontend.md#names
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Icon } from "./icons";
 import { bringIntoView } from "./viewport";
 import { copy } from "../lib/copy";
-import { useRefusal } from "../lib/refusal";
+import { bandOf, useRefusal } from "../lib/refusal";
+import { nearestOutOfView, scrollTarget } from "../lib/reveal";
+import { glide } from "../lib/seek";
 import { useHoldsWork } from "../lib/update";
 import { nameTaken } from "@bida/core";
 import { NO_AUTOFILL } from "../lib/autofill";
@@ -45,6 +47,24 @@ export function AddName({
   const already = !onTaken && nameTaken(value, taken);
   const own = useRefusal();
   const blooming = flash || own.flash;
+  const row = useRef<HTMLFormElement>(null);
+  const warning = useRef<HTMLDivElement>(null);
+
+  // The flash as drawn. A refusal nobody can see whole is a press that did
+  // nothing, so the row and the line under it are glided into view first, and
+  // bloom when they land (docs/refusals.md).
+  const [shown, setShown] = useState("");
+  useLayoutEffect(() => {
+    const box = row.current?.closest<HTMLElement>(".scroll");
+    if (!blooming || !box || !row.current) { setShown(blooming); return; }
+    const top = row.current.getBoundingClientRect().top;
+    const bottom = (warning.current ?? row.current).getBoundingClientRect().bottom;
+    const reach = nearestOutOfView([{ top, bottom }], bandOf(box));
+    const target = reach === null ? null : scrollTarget(box, reach);
+    if (target === null || target === box.scrollTop) { setShown(blooming); return; }
+    setShown("");
+    return glide(box, target, () => setShown(blooming));
+  }, [blooming]);
 
   // What the field holds this instant, and a filing still on its way. A blur
   // files from a closure that may predate the screen's button filing — or a
@@ -73,6 +93,14 @@ export function AddName({
     }
     seen.current = count;
   }, [count]);
+
+  // The line arrives under a row the list has followed to its foot, so under
+  // the fold: bring it up with the caret.
+  useEffect(() => {
+    if (already && warning.current && document.activeElement === field.current) {
+      bringIntoView(warning.current);
+    }
+  }, [already]);
 
   const draft = value.trim().length > 0 ? value.trim() : null;
   const told = useRef<string | null>(null);
@@ -157,7 +185,7 @@ export function AddName({
 
   return (
     <>
-      <form className={`row addrow${typing ? " editing" : ""}${blooming}`}
+      <form ref={row} className={`row addrow${typing ? " editing" : ""}${shown}`}
         onSubmit={(e) => void submit(e)} onClick={() => field.current?.focus()}
         onAnimationEnd={(e) => { own.onFlashEnd(e); onFlashEnd?.(e); }}>
         <input ref={field} className="addname" value={value} placeholder={placeholder}
@@ -169,7 +197,13 @@ export function AddName({
           <Icon name="plus" size={15} />
         </button>
       </form>
-      {already ? <p className="failure addwarn">{copy.members.taken(value.trim())}</p> : null}
+      {/* Boxed like the entry form's line over Save, and blooming with the row:
+          it is what the refusal is about. */}
+      {already ? (
+        <div ref={warning} role="status" className={`splitfoot bad alone addwarn${shown}`}>
+          <span>{copy.members.taken(value.trim())}</span>
+        </div>
+      ) : null}
     </>
   );
 }

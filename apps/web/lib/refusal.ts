@@ -67,6 +67,16 @@ export function useRefusal(): {
   };
 }
 
+/** What of `box` can be seen: less its scroll padding, which at the bottom is the keyboard. */
+export function bandOf(box: HTMLElement): { top: number; bottom: number } {
+  const view = box.getBoundingClientRect();
+  const pad = getComputedStyle(box);
+  return {
+    top: view.top + (parseFloat(pad.scrollPaddingTop) || 0),
+    bottom: view.bottom - (parseFloat(pad.scrollPaddingBottom) || 0),
+  };
+}
+
 /**
  * Each control carries `data-refuse="<key>"` inside the page's `.scroll`. A
  * flash out of view is a press that did nothing, so unless a refused control
@@ -124,13 +134,7 @@ export function useRefusals<K extends string>(
         const el = aimed[k] ? box.querySelector(`[data-refuse="${k}"]`) : null;
         return el ? [el] : [];
       });
-      // Less the scroll padding, which at the bottom is the keyboard.
-      const view = box.getBoundingClientRect();
-      const pad = getComputedStyle(box);
-      const band = {
-        top: view.top + (parseFloat(pad.scrollPaddingTop) || 0),
-        bottom: view.bottom - (parseFloat(pad.scrollPaddingBottom) || 0),
-      };
+      const band = bandOf(box);
       const top = toTop?.(aimed) && box.scrollTop > 0
         && !targets.every((el) => wholly(el.getBoundingClientRect(), band));
       const target = top ? 0 : seekTarget(box, targets, band);

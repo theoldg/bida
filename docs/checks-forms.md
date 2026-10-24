@@ -83,7 +83,9 @@ hands the caret back ([entry.md](entry.md#the-keyboards-chain)).
 Last, the add row filing when it is left ([frontend.md](frontend.md#names)):
 by a tap on another field, by Create and "Continue as …" — whose label must
 have followed the typing, a name already on the list ticking its row — and by
-People's Back, each held against a name the list already holds staying put.
+People's Back, each held against a name the list already holds staying put —
+and a Create refused over that name gliding a list left at its head down to the
+row and its line before they bloom.
 No keyboard is faked here, so every press blurs the field on its way down:
 these are the presses that race a row arriving under the finger. People is
 walked into from the group's menu, never loaded: Back from a loaded screen is

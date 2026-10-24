@@ -31,10 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
-- *2026-10-24* — "People expect commit on blur… propose how", then "the
-  picker's button could update on every new letter?", then "build and ship".
-  It undid a revert from September; git log said why it was reverted, and
-  the proposal answered those reasons before the owner had to remember them.
+- *2026-10-24* — "People expect commit on blur… propose how", then "build and
+  ship". It undid a September revert; git log said why, and the proposal met
+  those reasons first. Then "box the refusal like the expense editor": the
+  first photo found the box under the fold at rest, not only on refusal.
 
 - *2026-10-24* — "Should we add History to the kebab?", then "a dot on the
   kebab… wdyt?", then "drop the separate button". Two questions were the owner

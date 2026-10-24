@@ -62,7 +62,7 @@ API is reached with `fetch`.
   answers nothing reads as a broken app — and on an empty row it does not
   refuse either: it takes the caret. The one thing that says no is a name the
   list already holds — **one name, one person** (`core/names.ts`), said under
-  the row in words as it is typed. Leaving keeps that name in the row, unfiled;
+  the row in words as it is typed, boxed red and brought into view with the caret. Leaving keeps that name in the row, unfiled;
   a press of the plus blooms the row, since editing it is the fix (how, and why
   a keystroke ends the flash, is
   [refusals.md](refusals.md#a-refused-action-points-first)). **A press that
