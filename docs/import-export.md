@@ -340,6 +340,13 @@ own door for its own reasons (`lib/paste.ts`, whose calls are all already
 inside the `try` that awaits them). `rules-check` holds the pair, because it
 costs a line to lose and is invisible until it is somebody else's phone.
 
+**Copied text never opens `word:`.** iOS takes such a text for a URL with that
+scheme and percent-encodes the whole of it on its way between apps: a quick
+split titled CBS, copied as `CBS: 155,00…`, reached a chat as
+`CBS:%20155,00%0AJedrek%3A…/split%23<secret>`. So its first line is
+`CBS total: 155,00` (`copy.quick.message.head`), and the 404 page repairs a link
+that went through it anyway ([navigation.md](navigation.md#routing)).
+
 **The invite link is `components/invite.tsx`** (`useCopyLink`), written once for
 the People screen's top bar, the groups list's row menu and the group's own
 menu. A copy that works says so where it was asked for, and **all three places

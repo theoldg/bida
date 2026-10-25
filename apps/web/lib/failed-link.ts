@@ -24,3 +24,18 @@ export function failedLink(): string {
   const { pathname, search, hash, href } = window.location;
   return note && note.at === pathname + search + hash ? note.text : href;
 }
+
+/**
+ * The address before something percent-encoded its `#`: iOS encodes the whole
+ * of a copied text it takes for a URL (docs/import-export.md#the-clipboard),
+ * so `/split%23<secret>` asks the server for a page that isn't there. Null
+ * when there is no fragment to give back.
+ */
+export function unmangledLink(path: string): string | null {
+  if (!/%23/i.test(path)) return null;
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return null;
+  }
+}

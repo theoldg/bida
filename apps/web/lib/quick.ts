@@ -129,7 +129,7 @@ export function quickMessage(split: SharedSplit, link: string): string {
   const words = copy.quick.message;
   const figure = (minor: number) => bare(minor, split.currency);
   return [
-    words.line(split.title || words.untitled, figure(split.totalMinor)),
+    words.head(split.title || words.untitled, figure(split.totalMinor)),
     ...split.people.map((p) => words.line(p.name, figure(p.minor))),
     "",
     words.link(link),

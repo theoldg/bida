@@ -736,6 +736,10 @@ const en = {
     fallbackBody: "Copying didn’t work: hold the text to copy it.",
     /** What is copied: who owes what, then the link to the lines behind it. */
     message: {
+      /** Never `title: total`, which opens `word:` on a one-word title: iOS
+       * takes that for a URL and percent-encodes all of it
+       * (docs/import-export.md#the-clipboard). */
+      head: (title: string, total: string) => `${title} total: ${total}`,
       line: (label: string, amount: string) => `${label}: ${amount}`,
       untitled: "Bill split",
       link: (url: string) => `Who had what: ${url}`,

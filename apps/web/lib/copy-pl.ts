@@ -550,6 +550,7 @@ export const pl: Copy = {
     fallbackTitle: "Podział",
     fallbackBody: "Kopiowanie nie zadziałało: przytrzymaj tekst, żeby go skopiować.",
     message: {
+      head: (title, total) => `${title}, razem: ${total}`,
       line: (label, amount) => `${label}: ${amount}`,
       untitled: "Podział paragonu",
       link: (url) => `Kto co miał: ${url}`,

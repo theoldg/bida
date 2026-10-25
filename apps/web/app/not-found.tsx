@@ -1,8 +1,10 @@
 "use client";
 // Doc: docs/navigation.md#routing
 
+import { useEffect } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { BadLinkNotice } from "@/components/keyless-link";
+import { unmangledLink } from "@/lib/failed-link";
 import { route } from "@/lib/group-link";
 
 /**
@@ -17,8 +19,15 @@ import { route } from "@/lib/group-link";
  *
  * **Not `BadLink` from chrome.tsx**: that draws the invite-menu picture for a
  * link that named a real group and left out its password.
+ *
+ * A link whose `#` arrived as `%23` is no route either, and is replaced by
+ * the link it was (`unmangledLink`).
  */
 export default function NotFound() {
+  useEffect(() => {
+    const link = unmangledLink(window.location.pathname);
+    if (link) window.location.replace(link);
+  }, []);
   return (
     <Screen>
       <Body>

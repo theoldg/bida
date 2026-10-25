@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-25* — "This link doesn't work": one `%23` read as a chat's
+  mangling, not ours, until a screenshot showed the whole message encoded and
+  only its first colon spared: iOS took `CBS:` for a scheme. Ask for what
+  arrived, whole, before blaming the carrier.
+
 - *2026-10-24* — "People expect commit on blur… propose how", then "build and
   ship". It undid a September revert; git log said why, and the proposal met
   those reasons first. Then "box the refusal like the expense editor": the
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   moving the -xN+ to the right", "keep the improvements made since". Wedging
   the count between two prices so it never moved was my reason, not theirs:
   a line reads in order first. A revert is a reorder, not `git revert`.
-
-- *2026-10-23* — "Clean up after the previous session", then twice "out of
-  scope": the code-substring match stays, the Polish is too far back. A
-  clean-up's scope is the last stretch of work, not the whole history; the
-  find worth keeping was a doc's figure that the screen at 360 contradicted.

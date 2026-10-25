@@ -147,7 +147,7 @@ describe("the message it copies", () => {
   it("is the bill and its total, what each person owes, then the link", () => {
     const { totalMinor, shares } = quickShares(bill(), PEOPLE);
     expect(quickMessage(quickSharedSplit("Bar Zahra", totalMinor, shares, "EUR"), LINK)).toBe([
-      "Bar Zahra: 38.80",
+      "Bar Zahra total: 38.80",
       "Ana: 20.10",
       "Bo: 16.60",
       "Cy: 2.10",
@@ -159,7 +159,13 @@ describe("the message it copies", () => {
   it("says Bill split where the scan read no name", () => {
     const { totalMinor, shares } = quickShares(bill(), PEOPLE);
     expect(quickMessage(quickSharedSplit(" ", totalMinor, shares, "EUR"), LINK).split("\n")[0])
-      .toBe("Bill split: 38.80");
+      .toBe("Bill split total: 38.80");
+  });
+
+  it("never opens like a URL, which iOS would percent-encode whole", () => {
+    const { totalMinor, shares } = quickShares(bill(), PEOPLE);
+    expect(quickMessage(quickSharedSplit("CBS", totalMinor, shares, "EUR"), LINK))
+      .not.toMatch(/^[A-Za-z][A-Za-z0-9+.-]*:/);
   });
 
   it("keeps somebody at the table who ordered nothing", () => {
