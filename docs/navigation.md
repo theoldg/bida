@@ -80,7 +80,8 @@ same sentence `/join` says about a link that opens nothing, over a bar back to
 the groups list: this app is pasted links, and a chat client wrapping a long
 one so half of it arrives is the ordinary way here. One that arrived with its
 `#` as `%23` is replaced by the link it was (`unmangledLink`,
-`lib/failed-link.ts`).
+`lib/failed-link.ts`), by the router rather than a reload
+([ios.md](ios.md#gotchas)).
 
 **Back goes up, not back.** A screen's `back` is one of two things and the
 device's button agrees with both (`lib/back-button.ts`,

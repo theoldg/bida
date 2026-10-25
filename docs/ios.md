@@ -353,6 +353,10 @@ Reddit, showed Brave's own group list, under the host's toolbar.
   gives up and loads a page itself the `#` is gone, so "Bad link". Not
   `assign`: the page left behind sits in WebKit's page cache holding the
   database `/join` waits on.
+- **Android Messenger's webview gives a page a script sent it to
+  (`location.replace`) no WebCrypto**; a tapped link's page has it. So the 404
+  page repairs a `%23` link with the router, inside the tapped document
+  (`app/not-found.tsx`) — a split it reloaded into said "couldn't open".
 - **Safari reads the manifest at page load**, so the HTML carries no link: a
   script at the head writes it, and a page whose carry changed reloads once the
   shell is cached. Leave `manifest` out of Next's metadata, which re-inserts its

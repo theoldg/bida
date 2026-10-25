@@ -1,6 +1,7 @@
 "use client";
 // Doc: docs/navigation.md#routing
 
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { BadLinkNotice } from "@/components/keyless-link";
@@ -21,13 +22,16 @@ import { route } from "@/lib/group-link";
  * link that named a real group and left out its password.
  *
  * A link whose `#` arrived as `%23` is no route either, and is replaced by
- * the link it was (`unmangledLink`).
+ * the link it was (`unmangledLink`) — by the router, in this document, never
+ * `location.replace`: Android Messenger's webview loads a page a script sent
+ * it to without WebCrypto, so the split it opened could not unseal.
  */
 export default function NotFound() {
+  const router = useRouter();
   useEffect(() => {
     const link = unmangledLink(window.location.pathname);
-    if (link) window.location.replace(link);
-  }, []);
+    if (link) router.replace(link);
+  }, [router]);
   return (
     <Screen>
       <Body>
