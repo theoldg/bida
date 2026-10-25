@@ -754,6 +754,7 @@ const en = {
       none: "There’s no split at this link. A chat may have cut it short: ask for it again.",
       offline: "You’re offline. Check your connection and try again.",
       unreadable: "That link opened nothing this version of bida can read.",
+      broken: "This browser couldn’t open the split. Try it in Safari or Chrome.",
     },
   },
 

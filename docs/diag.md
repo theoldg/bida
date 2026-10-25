@@ -13,7 +13,10 @@ the only launch worth recording. Timed spans around the four things that can
 make a screen wait: `db.open`, each live read by name, `rebuild`, and
 `sync.pushpull` (plus `heal`), and each write — `sync.commit`, `append`,
 `device.write` — since a write queued behind a lock is what every read then
-queues behind; `sw.controllerchange` marks an update. One clock for all of them, because the question
+queues behind; `sw.controllerchange` marks an update. `split.open` is the
+fetch and unsealing of a quick split's link; a page is kept only once
+something arms the recorder (`keep`, on the first live read), so `/split`,
+which makes none, arms it by hand. One clock for all of them, because the question
 is never "was this slow" but "what was it waiting for", and that is always an
 overlap.
 

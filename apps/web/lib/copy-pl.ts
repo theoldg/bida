@@ -564,6 +564,7 @@ export const pl: Copy = {
       none: "Pod tym linkiem nie ma podziału. Czat mógł go uciąć: poproś o niego jeszcze raz.",
       offline: "Nie można połączyć się z bidą. Sprawdź połączenie i spróbuj ponownie.",
       unreadable: "Ten link nie otworzył niczego, co ta wersja bidy umie odczytać.",
+      broken: "Ta przeglądarka nie otworzyła podziału. Spróbuj w Safari albo Chrome.",
     },
   },
 

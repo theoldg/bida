@@ -65,7 +65,9 @@ tap — Safari refuses a clipboard written after an await. The check comes up as
 the clipboard takes it; an upload not landed half a second after the press
 says the link won't open yet, and a failed one goes again on the next press
 or when the phone comes back online. Until one has landed, an offline phone
-copies nothing. `/split` draws it read-only, as the answer screen does.
+copies nothing. `/split` draws it read-only, as the answer screen does; a
+fetch or seal that throws says the browser couldn't open it, never a blank,
+and `/diag` names the throw (`split.open`).
 
 **One credential per phone, not per bill**, minted on first need and kept in
 the device store. A fresh id per split would write a row for every bill

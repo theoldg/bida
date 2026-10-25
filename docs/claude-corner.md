@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-25* — "Doesn't work in messenger's in-app browser", and I chased
+  iOS WebKit off a status bar until "my screenshot and diag are from android".
+  Ask the platform before theorising; and a page missing from /diag may just
+  be one the recorder never kept.
+
 - *2026-10-25* — "This link doesn't work": one `%23` read as a chat's
   mangling, not ours, until a screenshot showed the whole message encoded and
   only its first colon spared: iOS took `CBS:` for a scheme. Ask for what
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "let's workshop it" on a dialog's words. The diag held no trace of the press,
   so the answer was a guess to check on the phone. Workshop meant notes and two
   drafts; they wrote their own third, terser than either.
-
-- *2026-10-23* — "I don't like the new each/total arrangement, revert… except
-  moving the -xN+ to the right", "keep the improvements made since". Wedging
-  the count between two prices so it never moved was my reason, not theirs:
-  a line reads in order first. A revert is a reorder, not `git revert`.

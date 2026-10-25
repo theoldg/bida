@@ -8,6 +8,7 @@ import { Icon } from "@/components/icons";
 import { BadLinkNotice } from "@/components/keyless-link";
 import { MemberBill } from "@/components/member-bill";
 import { copy } from "@/lib/copy";
+import { keep, started } from "@/lib/diag";
 import { bare, figure } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { fetchSplit, parseSplitLink, type Fetched } from "@/lib/split-link";
@@ -18,9 +19,12 @@ import { fetchSplit, parseSplitLink, type Fetched } from "@/lib/split-link";
  * identity, no group, nothing written on this phone. The secret stays in the
  * fragment, which no browser sends anywhere.
  */
+/** `broken` is anything opening it threw: drawn as a sentence, never left blank. */
+type Shown = Fetched | { kind: "broken" };
+
 export default function SplitPage() {
   const [secret, setSecret] = useState<string | null>();
-  const [fetched, setFetched] = useState<Fetched>();
+  const [fetched, setFetched] = useState<Shown>();
 
   // Another split link tapped in this tab moves only the fragment.
   useEffect(() => {
@@ -34,7 +38,18 @@ export default function SplitPage() {
     if (!secret) return;
     let live = true;
     setFetched(undefined);
-    void fetchSplit(secret).then((f) => { if (live) setFetched(f); });
+    // In /diag, because the failures this answers are an in-app browser's,
+    // read off a phone: a hang shows as STILL RUNNING, a throw by name. Kept
+    // by hand: the recorder arms on a live read, and this page makes none.
+    keep();
+    const done = started("split.open");
+    fetchSplit(secret).then(
+      (f) => { done(f.kind); if (live) setFetched(f); },
+      (err: unknown) => {
+        done(`THREW ${err instanceof Error ? `${err.name}: ${err.message}` : String(err)}`);
+        if (live) setFetched({ kind: "broken" });
+      },
+    );
     return () => { live = false; };
   }, [secret]);
 
