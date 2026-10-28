@@ -3,6 +3,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { isDemo } from "@bida/core";
 import { Eyebrow } from "@/components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
@@ -58,13 +59,14 @@ export default function QuickPage() {
   /**
    * What the bill is counted in until a scan says otherwise. Nothing converts
    * and no symbol is printed (ADR-0035), so this is only the minor-unit
-   * exponent; the phone's last group is the best guess.
+   * exponent; the phone's last group is the best guess, unless that was the
+   * demo, whose currency is made up.
    */
   const [currency, setCurrency] = useState<string>();
   useEffect(() => {
     if (device === undefined) return;
     const last = device.lastOpenedGroupId;
-    if (!last) { setCurrency("EUR"); return; }
+    if (!last || isDemo(last)) { setCurrency("EUR"); return; }
     let live = true;
     void db().groups.get(last).then((group) => {
       if (live) setCurrency(group?.baseCurrency ?? "EUR");

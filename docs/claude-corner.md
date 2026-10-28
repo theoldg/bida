@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-28* — "dont suggest the made up CRD currency when creating a new
+  group, even when it's the last used one". "Made up" named the demo, not a
+  code; the quick split made the same guess from the same group, so it got the
+  same skip without being asked.
+
 - *2026-10-25* — "Doesn't work in messenger's in-app browser", and I chased
   iOS WebKit off a status bar until "my screenshot and diag are from android".
   Ask the platform before theorising; and a page missing from /diag may just
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-10-23* — "Can't reach the server etc blabla --> you're offline". The
   "etc blabla" was the scope: every string saying the server couldn't be
   reached, not the one in view. Grep the phrase, change its siblings too.
-
-- *2026-10-23* — "The camera doesn't work… the button just does nothing", then
-  "let's workshop it" on a dialog's words. The diag held no trace of the press,
-  so the answer was a guess to check on the phone. Workshop meant notes and two
-  drafts; they wrote their own third, terser than either.

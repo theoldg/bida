@@ -40,7 +40,8 @@ API is reached with `fetch`.
   nudge is folded, the last group opened, and the scan credential a quick split
   photographs with — [ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md))
   is in the `device` store. `/new` defaults a fresh group's currency to the
-  last-opened group's, and a launch reopens that group
+  last-opened group's (the quick split too, and neither takes the demo's
+  made-up `CRD`), and a launch reopens that group
   ([navigation.md](navigation.md#a-launch-reopens-where-you-were)).
   *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op

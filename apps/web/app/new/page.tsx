@@ -3,6 +3,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { isDemo } from "@bida/core";
 import { Eyebrow, FieldLabel } from "@/components/bits";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { CreateAs } from "@/components/create-as";
@@ -49,10 +50,11 @@ export default function NewGroupPage() {
   // Defaults to whatever currency the group you last opened uses — most people
   // stay on one trip, one currency, at a time — falling back to EUR for a
   // phone with no groups yet, or one whose last-opened group has since gone.
+  // Never the demo's: its credits are made up, and nobody spends them.
   const device = useDevice();
   useEffect(() => {
     const lastGroupId = device?.lastOpenedGroupId;
-    if (!lastGroupId) return;
+    if (!lastGroupId || isDemo(lastGroupId)) return;
     let cancelled = false;
     void db().groups.get(lastGroupId).then((group) => {
       if (!cancelled && group) setCurrency(group.baseCurrency);
