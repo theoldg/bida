@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-10-31* — "Remove the touch wash on the expense title edit field". One
+  row, not the three that share the rule: a tap on a text field means "put the
+  caret here", while Paid by and When open something. The press stays where
+  the tap is a button press.
+
 - *2026-10-28* — "dont suggest the made up CRD currency when creating a new
   group, even when it's the last used one". "Made up" named the demo, not a
   code; the quick split made the same guess from the same group, so it got the
@@ -85,7 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   Amounts already did, writing in the 0 as you type; only the rate field
   refused it. Find which field actually fails before changing the parser
   every field shares.
-
-- *2026-10-23* — "Can't reach the server etc blabla --> you're offline". The
-  "etc blabla" was the scope: every string saying the server couldn't be
-  reached, not the one in view. Grep the phrase, change its siblings too.

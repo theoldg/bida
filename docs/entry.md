@@ -175,8 +175,9 @@ case has.
 
 **An expense or income is laid out as its form is**: a head card, the ÷
 (`.splitrule`), then the split in a card of its own. On the form the head card
-(`.formhead`) is the figure over What, Paid by and When as ruled rows, each
-washing under a press. Several payers are one row (`.payersfield`): a line
+(`.formhead`) is the figure over What, Paid by and When as ruled rows, the
+last two washing under a press — What is a text field, where a tap only moves
+the caret. Several payers are one row (`.payersfield`): a line
 each in the value column, name and figure with its currency set as the item
 split's summary rows are, and one › centred on the lines — it opens all of them, not the
 first — standing where the date's calendar does and drawn at its weight; on the

@@ -315,7 +315,7 @@ a.row, button.row, .fab, .btn, .iconbtn, .tlink, .setlink, .seg button, a.card, 
   .tlink:hover, .setlink:hover, .seg button:hover, a.card:hover, button.card:hover, .itemfold:hover,
   a.chip:hover, button.chip:hover, .btn:hover:not(:disabled), .starttile:hover,
   .field:has(> .pick:hover), a.field:hover, .action:hover:not(:disabled),
-  .formhead .field:not(:focus-within):has(> :is(input, label):hover), .searchclear:hover,
+  .formhead .field:not(:focus-within, :has([data-field="what"])):has(> :is(input, label):hover), .searchclear:hover,
   button.itemtext:hover, .entryhistbody:hover, button.kv:hover, .kv > .copytotal:hover,
   button.tside:hover, .bidrop:hover, .bistep .partsstep:hover:not(:disabled),
   .drow-pick:hover:not(:disabled), .rowmenu-item:hover, .allmark:hover .allbox {
@@ -334,7 +334,8 @@ a.row:active, button.row:active, .fab:active, .iconbtn:active,
 .tlink:active, .setlink:active, .seg button:active, a.card:active, button.card:active, .itemfold:active,
 a.chip:active, button.chip:active, .btn:active:not(:disabled), .starttile:active,
 .field:has(> .pick:active), a.field:active, .action:active:not(:disabled),
-.formhead .field:has(> :is(input, label):active) {
+/* Not What: a tap there only moves the caret. */
+.formhead .field:not(:has([data-field="what"])):has(> :is(input, label):active) {
   /* A gradient composites over the background instead of replacing it. */
   background-image: linear-gradient(var(--press), var(--press));
   transition-duration: 0s;
