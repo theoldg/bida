@@ -1625,9 +1625,12 @@ dialog.scrim::backdrop { background: transparent }
 .field > .pick::after { content: ""; position: absolute; inset: 0; border-radius: inherit }
 .field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .field .pchev { color: var(--ink); flex: none }
-/* The date draws our calendar, not the browser's (Android's is a ⌄, iOS has
-   none); the row's click opens the picker. Where the pseudo isn't known
-   (Firefox) the browser's own stays and ours goes. */
+/* The date draws our calendar, not the browser's; the row's click opens the
+   picker. Android's ⌄ is the control's own appearance, not the indicator, so
+   both go. Where the pseudo isn't known (Firefox) the browser's own stays and
+   ours goes. */
+@supports selector(::-webkit-calendar-picker-indicator) {
+  .field > input[type="date"] { -webkit-appearance: none; appearance: none } }
 .field > input[type="date"]::-webkit-calendar-picker-indicator { display: none }
 .datemark { pointer-events: none }
 @supports not selector(::-webkit-calendar-picker-indicator) { .datemark { display: none } }
