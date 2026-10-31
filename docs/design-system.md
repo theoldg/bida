@@ -343,7 +343,7 @@ never blurs the field it came from.
   Grep a class before reusing it, and prefix a modifier with its block
   (`billextra`).
 - **Native controls follow `color-scheme`, not the tokens.** Without it on the
-  theme blocks the date field's calendar glyph stayed black on dark cards.
+  theme blocks the date picker stayed light on dark screens.
 - **`autocomplete="off"` stops Chrome's history, not its autofill** (saved
   names, addresses); a token it doesn't know does the reverse — and history is
   filed under a field's `name`, else its `id`, so ours have neither.

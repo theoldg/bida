@@ -180,7 +180,8 @@ last two washing under a press — What is a text field, where a tap only moves
 the caret. Several payers are one row (`.payersfield`): a line
 each in the value column, name and figure with its currency set as the item
 split's summary rows are, and one › centred on the lines — it opens all of them, not the
-first — standing where the date's calendar does and drawn at its weight; on the
+first — standing where the date's calendar does, all three at one size and weight; the
+calendar is ours, since Android draws a ⌄ there and iOS nothing; on the
 entry it is the title, the figure and who paid, with your balance under the
 split, on the screen's ground. A transfer's form has no ÷, so no head card. Under a hairline the head card says who:
 one payer is a line — "paid by **Adaś**" — named nowhere else on the screen;

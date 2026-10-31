@@ -455,11 +455,17 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
               </div>
             )}
 
-            <div className="field">
+            {/* A tap on the input opens its picker itself; one beside it — the
+                label, the calendar — asks for it, so the whole row is the button. */}
+            <div className="field" onClick={(e) => {
+              const input = e.currentTarget.querySelector("input");
+              if (input && e.target !== input) try { input.showPicker(); } catch { input.focus(); }
+            }}>
               <FieldLabel>{copy.form.when}</FieldLabel>
               <input data-field="when" type="date" autoComplete={NO_AUTOFILL} aria-label={copy.form.when}
                 value={dateInputValue(draft.occurredAt)}
                 onChange={(e) => patch(retimed(draft, withDate(draft.occurredAt, e.target.value)))} />
+              <Icon name="calendar" size={18} className="pchev datemark" />
             </div>
           </div>
           </div>
