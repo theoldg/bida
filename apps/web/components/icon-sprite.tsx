@@ -23,7 +23,8 @@ export function IconSprite() {
         <symbol id="i-updown" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><path d="M8 9.5l4-4 4 4M8 14.5l4 4 4-4" /></symbol>
         {/* The date field's, ours: Android Chrome draws a ⌄ there and iOS nothing. */}
         <symbol id="i-calendar" viewBox="0 0 24 24" {...S} strokeWidth="2.2">
-          <rect x="5" y="6" width="14" height="13" rx="2" /><path d="M9 4v3M15 4v3" />
+          <rect x="5" y="6" width="14" height="13" rx="1.5" />
+          <path d="M5 8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1H5z" fill="currentColor" /><path d="M9 4v1.5M15 4v1.5" />
         </symbol>
         <symbol id="i-back" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><path d="M15 6l-6 6 6 6" /></symbol>
         <symbol id="i-plus" viewBox="0 0 24 24" {...S} strokeWidth="2.4"><path d="M12 5v14M5 12h14" /></symbol>
