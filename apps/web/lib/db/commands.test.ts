@@ -283,7 +283,7 @@ describe("commands", () => {
       split: { mode: "equal", members: [theo, marie, sam] },
     });
 
-    await editExpense(groupId, theo, expenseId, { description: "Riad — 3 nights" }, "it was 3");
+    await editExpense(groupId, theo, expenseId, { description: "Riad — 3 nights" });
 
     const ops = await db().ops.where("entityId").equals(expenseId).toArray();
     expect(ops).toHaveLength(2);
@@ -588,7 +588,7 @@ describe("commands", () => {
       paidBy: theo,
       split: { mode: "equal", members: [theo, marie] },
     });
-    await deleteExpense(groupId, theo, expenseId, "double entry");
+    await deleteExpense(groupId, theo, expenseId);
 
     const row = await db().expenses.get(expenseId);
     expect(row?.deletedAt).toBeTruthy();

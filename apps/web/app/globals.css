@@ -1796,7 +1796,6 @@ dialog.scrim::backdrop { background: transparent }
   list-style: none; padding: 2px 0; width: fit-content }
 .hmore summary::-webkit-details-marker { display: none }
 .hmore[open] summary { display: none }
-.note { font-size: var(--fs-small); color: var(--muted); font-style: italic; margin-top: 3px }
 .tlink { display: flex; width: fit-content; align-items: center; gap: 3px;
   margin: 1px -6px -3px; padding: 3px 6px; border-radius: var(--r-s);
   font-size: var(--fs-small); font-weight: 600; color: var(--ink);

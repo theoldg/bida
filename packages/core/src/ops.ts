@@ -29,7 +29,8 @@ export interface Op {
   hlc: Hlc;
   /** memberId that made the change. */
   actor: Id;
-  /** Optional human reason, surfaced in history: "forgot the rug". */
+  /** Unused: nothing writes or shows one. Kept because every sealed op in the
+   *  log already carries `note: null`. */
   note?: string | null;
   /** Wall clock, for DISPLAY ONLY. Never sort by this. */
   createdAt: number;

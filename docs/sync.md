@@ -15,7 +15,7 @@ type Op = {
   patch: Record<string, unknown>   // an entry: the whole entity. Anything else: changed fields
   hlc: string       // hybrid logical clock
   actor: string     // memberId
-  note?: string     // optional human reason, surfaced in history
+  note?: string     // unused, always null — kept as the sealed log's shape
   createdAt: number // wall clock, display only — NEVER for ordering
   seq?: number      // assigned by the server; absent = unsynced
 }

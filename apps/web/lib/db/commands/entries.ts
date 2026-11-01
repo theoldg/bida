@@ -104,7 +104,6 @@ export async function editExpense(
   actor: Id,
   expenseId: Id,
   changes: Partial<ExpenseInput>,
-  note?: string,
 ): Promise<void> {
   const existing = await db().expenses.get(expenseId);
   if (!existing) throw new Error(`unknown expense: ${expenseId}`);
@@ -117,7 +116,7 @@ export async function editExpense(
   const held = { ...existing, split: canonicalSplit(existing.split), splitTab: partsBesideBill(existing) };
   if (!movesAnything(held, patch)) return;
   await write(groupId, actor, [
-    { entity: "expense", entityId: expenseId, kind: "update", patch, note: note ?? null },
+    { entity: "expense", entityId: expenseId, kind: "update", patch },
   ]);
 }
 
@@ -125,10 +124,9 @@ export async function deleteExpense(
   groupId: Id,
   actor: Id,
   expenseId: Id,
-  note?: string,
 ): Promise<void> {
   await write(groupId, actor, [
-    { entity: "expense", entityId: expenseId, kind: "delete", patch: {}, note: note ?? null },
+    { entity: "expense", entityId: expenseId, kind: "delete", patch: {} },
   ]);
 }
 
@@ -188,7 +186,6 @@ export async function editSettlement(
   actor: Id,
   settlementId: Id,
   changes: Partial<SettlementInput>,
-  note?: string,
 ): Promise<void> {
   const existing = await db().settlements.get(settlementId);
   if (!existing) throw new Error(`unknown settlement: ${settlementId}`);
@@ -198,7 +195,7 @@ export async function editSettlement(
 
   if (!movesAnything(existing, patch)) return;
   await write(groupId, actor, [
-    { entity: "settlement", entityId: settlementId, kind: "update", patch, note: note ?? null },
+    { entity: "settlement", entityId: settlementId, kind: "update", patch },
   ]);
 }
 

@@ -113,7 +113,6 @@ export function RevisionEntry({ rev, first, context, linked = true }: {
           ))}
         </div>
       ) : null}
-      {rev.op.note ? <div className="note">&ldquo;{rev.op.note}&rdquo;</div> : null}
       {subject ? (
         <Link className="tlink" href={subject.href}>
           <span>{subject.label}</span><Icon name="chev" size={13} />
