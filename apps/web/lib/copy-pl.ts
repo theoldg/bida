@@ -949,6 +949,7 @@ export const pl: Copy = {
     from: {
       fetched: (date) => `sprawdzony: kurs z ${date}`,
       fetchedUndated: "sprawdzony",
+      madeUp: "zmyślony na potrzeby demo",
       typed: "Twój",
       copied: "nie udało się sprawdzić: ostatni kurs grupy",
       imported: "kurs z importu",

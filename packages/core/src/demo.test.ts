@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { computeBalances } from "./balance";
 import {
-  DEMO_GROUP_ID, DEMO_NAMES, demoOps, demoStamp, demoTimeline, isDemo, type DemoCast,
+  DEMO_GROUP_ID, DEMO_NAMES, demoOps, demoRate, demoStamp, demoTimeline, isDemo, type DemoCast,
 } from "./demo";
 import { foldOps } from "./fold";
 import { createHlcState, hlcSend, type HlcState } from "./hlc";
-import { parseMinor, sumMinor } from "./money";
+import { convertMinor, parseMinor, sumMinor } from "./money";
 import type { Op } from "./ops";
 import { applyTransfers, settleUp } from "./settle";
 import { alive } from "./types";
@@ -170,6 +170,22 @@ describe("demoOps", () => {
     const first = foldOps(stamp());
     expect(later.expenses["demo-passage"]?.occurredAt)
       .toBeGreaterThan(first.expenses["demo-passage"]!.occurredAt!);
+  });
+});
+
+describe("demoRate", () => {
+  it("prices a credit at 21.37 EUR, and the rest through the euro", () => {
+    expect(convertMinor(2_137, "EUR", "CRD", demoRate(DEMO_GROUP_ID, "EUR", "CRD")!)).toBe(100);
+    // 1 CRD = 21.37 × 4.4038 PLN = 94.1092 PLN.
+    expect(convertMinor(9_411, "PLN", "CRD", demoRate(DEMO_GROUP_ID, "PLN", "CRD")!)).toBe(100);
+    expect(convertMinor(3_754, "JPY", "CRD", demoRate(DEMO_GROUP_ID, "JPY", "CRD")!)).toBe(100);
+  });
+
+  it("is the demo's alone: another group in CRD asks the feed", () => {
+    expect(demoRate("someothergroup", "EUR", "CRD")).toBeUndefined();
+    expect(demoRate(undefined, "EUR", "CRD")).toBeUndefined();
+    // And a currency off the table is the dialog's, as anywhere.
+    expect(demoRate(DEMO_GROUP_ID, "THB", "CRD")).toBeUndefined();
   });
 });
 

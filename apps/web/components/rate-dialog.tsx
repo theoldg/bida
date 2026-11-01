@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState, type ButtonHTMLAttributes } from "react";
 import {
-  formatRate, invertRate, isValidRate, sanitizeRate,
+  formatRate, invertRate, isDemo, isValidRate, sanitizeRate,
   RATE_DIGITS, RATE_SHOWN_DIGITS, type EntryRateSource, type Rate, type RateSource,
 } from "@bida/core";
 import { Dialog } from "./dialog";
 import { GroupedInput } from "./amount-input";
 import { copy } from "../lib/copy";
-import { fetchRate, RateOfflineError } from "../lib/rates";
+import { lookUpRate, RateOfflineError } from "../lib/rates";
 import { errorText, rateText } from "../lib/format";
 
 /**
@@ -35,12 +35,14 @@ type Provenance =
   | { kind: "offline" }
   | { kind: "unavailable" };
 
-function provenanceText(from: Provenance): string {
+/** `madeUp`: the demo's table answers its look-ups, so it says so. */
+function provenanceText(from: Provenance, madeUp: boolean): string {
   switch (from.kind) {
     case "loading": return copy.rates.from.loading;
     case "offline": return copy.rates.from.offline;
     case "unavailable": return copy.rates.from.unavailable;
     case "fetched":
+      if (madeUp) return copy.rates.from.madeUp;
       return from.asOf ? copy.rates.from.fetched(from.asOf) : copy.rates.from.fetchedUndated;
     case "typed": return copy.rates.from.typed;
     case "copied": return copy.rates.from.copied;
@@ -77,8 +79,9 @@ function pairFrom(typed: string, side: "forward" | "inverse"): Pair {
 }
 
 export function RateDialog({
-  currency, base, day, current, onSave, onClose,
+  groupId, currency, base, day, current, onSave, onClose,
 }: {
+  groupId: string;
   currency: string;
   base: string;
   /** The entry's local day, "YYYY-MM-DD": what "Look it up" asks the feed for. */
@@ -109,7 +112,7 @@ export function RateDialog({
   async function look() {
     setFrom({ kind: "loading" });
     try {
-      const got = await fetchRate(currency, base, day);
+      const got = await lookUpRate(groupId, currency, base, day);
       if (!live.current || touched.current) return;
       setPair(pairOf(got.rate));
       setHeld({ rate: got.rate, fresh: true });
@@ -165,7 +168,7 @@ export function RateDialog({
         </div>
 
         <div className="ratefrom">
-          <span>{provenanceText(from)}</span>
+          <span>{provenanceText(from, isDemo(groupId))}</span>
           <button type="button" className="chip" onClick={() => { touched.current = false; void look(); }}
             disabled={from.kind === "loading"}>
             {copy.rates.refetch}

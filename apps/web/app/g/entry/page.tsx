@@ -260,6 +260,7 @@ function EntryScreen() {
       {del.dialog}
       {askRate && foreign ? (
         <RateDialog
+          groupId={groupId}
           currency={entry.currency}
           base={group.baseCurrency}
           day={rateDayOf(entry.occurredAt)}

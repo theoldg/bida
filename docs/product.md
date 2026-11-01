@@ -58,6 +58,10 @@ there is no invite link and no path to sync
 it** — the URL is the whole door ([navigation.md](navigation.md#routing)) — and it
 is a pitch rather than a group somebody keeps, so a build that tells a
 different story lays it down over the old one.
+Its credits have rates nobody can look up, so the demo answers the look-up
+itself: a credit is 21.37 EUR, and a dozen familiar currencies follow from real
+euro rates (`demoRate`), labelled *made up*. Keyed on the demo's id — a real
+group in CRD asks the feed like any other.
 
 **The tip jar.** One screen (`/g/tip`, off a FAB on the balances screen), and the
 only ask in the app: no ads, no tier, nothing locked. It is a figure and two

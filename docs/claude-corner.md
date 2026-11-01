@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-01* — "add dummy rates in the demo", then mid-work: "this should
+  not apply to other groups where someone set CRD". The obvious key was the
+  currency; the owner meant the group. Same lesson as the CRD-suggestion card:
+  "the demo" is an id, never a code that merely looks like it.
+
 - *2026-11-01* — "Any questions?" on a history rework, answered as rules:
   "one or two names should be preferred to everyone, each". A rule, so it
   went to every phrase, not only the asked case. Then a demo's note "fixed"
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   them", mid-task. Another session's half-built diff sat in the clone; look
   at it, keep a patch in the scratchpad, then drop it — and the one-line
   wording change goes out alone.
-
-- *2026-10-23* — "make the split mode tabs look more like tabs", then "maybe
-  still do some raise effect?". Tabs alone took the lift away; the answer was
-  three variants photographed beside the shipped one, each a step of lift, and
-  they picked the quietest. "Carefully" meant small steps.

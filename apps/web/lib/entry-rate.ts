@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { isValidRate, type CurrencyCode, type EntryRateSource, type Rate } from "@bida/core";
 import { getDraft, saveDraft, type EntryDraft } from "./draft";
 import { dateInputValue } from "./format";
-import { fetchRate, type FetchedRate } from "./rates";
+import { lookUpRate, type FetchedRate } from "./rates";
 
 /**
  * An entry's own rate, found while the form is open (ADR-0005): the feed's
@@ -106,7 +106,7 @@ export function useEntryRate(
     const [currency, wantedDay] = want.split(" ") as [string, string];
     let live = true;
     setInFlight(want);
-    void fetchRate(currency, base, wantedDay)
+    void lookUpRate(groupId, currency, base, wantedDay)
       .then((got) => got, () => null)
       .then((fetched) => {
         if (!live) return;

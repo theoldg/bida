@@ -1206,6 +1206,7 @@ const en = {
     from: {
       fetched: (date: string) => `looked up: the rate on ${date}`,
       fetchedUndated: "looked up",
+      madeUp: "made up for the demo",
       typed: "yours",
       copied: "couldn’t look it up: the group’s last rate",
       imported: "the rate it was imported with",

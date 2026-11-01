@@ -1,4 +1,4 @@
-import { convertMinor, minorToDecimalString } from "./money";
+import { convertMinor, invertRate, minorToDecimalString, rateFromNumber, type Rate } from "./money";
 import type { OpDraft } from "./invariants";
 import { colorSeedFor, memberIdFor } from "./names";
 import type { Id, SplitSpec } from "./types";
@@ -22,6 +22,29 @@ type DemoName = (typeof DEMO_NAMES)[number];
 const DEMO_CURRENCY = "CRD";
 const DEMO_FOREIGN = "WUP";
 const DEMO_RATE = "0.0625";
+
+/**
+ * A credit is worth 21.37 EUR; every other currency follows from the ECB's
+ * euro rates of 2026-10-30, so a visitor spending in a familiar currency
+ * never meets the rate dialog. Units of each per euro.
+ */
+const CREDIT_IN_EUR = 21.37;
+const PER_EUR: Record<string, number> = {
+  EUR: 1, USD: 1.1172, PLN: 4.4038, GBP: 0.8338, CHF: 0.9194, JPY: 175.68,
+  CZK: 24.353, SEK: 10.978, NOK: 10.312, DKK: 7.4735, HUF: 366.33, CAD: 1.5606, AUD: 1.5904,
+};
+
+/**
+ * The made-up rate a demo entry in `currency` is worth in credits, or
+ * undefined. **Keyed on the group, not on CRD**: a real group somebody set
+ * in CRD asks the feed like any other.
+ */
+export function demoRate(groupId: string | undefined, currency: string, base: string): Rate | undefined {
+  const perEur = PER_EUR[currency];
+  if (!isDemo(groupId) || base !== DEMO_CURRENCY || perEur === undefined) return undefined;
+  // Six figures of "1 CRD = N", as a person would quote it, then read the other way.
+  return invertRate(rateFromNumber(CREDIT_IN_EUR * perEur, 6));
+}
 
 /** Derived from the constant group id, so every phone lays the same seed. */
 export interface DemoCast {

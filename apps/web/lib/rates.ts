@@ -1,4 +1,4 @@
-import { isCurrencyCode, isValidRate, type Rate } from "@bida/core";
+import { demoRate, isCurrencyCode, isValidRate, type Rate } from "@bida/core";
 
 /**
  * Asking the Worker what a currency was worth on an entry's day.
@@ -62,4 +62,13 @@ export async function fetchRate(from: string, to: string, day?: string): Promise
     rate: payload.rate,
     asOf: typeof payload.asOf === "string" ? payload.asOf : null,
   };
+}
+
+/**
+ * `fetchRate` for one group: the demo answers from its own made-up table
+ * (`demoRate`) before anything asks the network.
+ */
+export async function lookUpRate(groupId: string, from: string, to: string, day?: string): Promise<FetchedRate> {
+  const madeUp = demoRate(groupId, from, to);
+  return madeUp ? { rate: madeUp, asOf: null } : fetchRate(from, to, day);
 }

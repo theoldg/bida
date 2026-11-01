@@ -570,6 +570,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
 
       {askRate !== null ? (
         <RateDialog
+          groupId={groupId}
           currency={askRate}
           base={base}
           day={rateDayOf(draft.occurredAt)}
