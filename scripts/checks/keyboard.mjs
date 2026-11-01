@@ -325,10 +325,16 @@ report((await page.locator(".rows button.row .rtitle").allTextContents()).join()
 
 const go = page.locator(".whodock .btn");
 const ticked = () => page.locator('.rows button.row[aria-pressed="true"] .rtitle').allTextContents();
+// A render behind the keystroke, on a loaded runner: wait for the label to
+// move before reading it, or the check reads the screen before the typing.
+const labelled = (want) => page.waitForFunction((w) =>
+  document.querySelector(".whodock .btn")?.textContent === w, want, { timeout: PATIENCE }).catch(() => {});
 await page.getByLabel("Add your name").fill("Dee");
+await labelled("Continue as Dee");
 const typedLabel = await go.textContent();
 const typedTick = await ticked();
 await page.getByLabel("Add your name").fill("ana");
+await labelled("Continue as Ana");
 report(typedLabel === "Continue as Dee" && typedTick.length === 0
   && await go.textContent() === "Continue as Ana" && (await ticked()).join() === "Ana",
   "which one are you — the button reads the row as it is typed, and a name on the list is that row",
