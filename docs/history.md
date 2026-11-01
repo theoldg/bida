@@ -16,6 +16,10 @@ null }` ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).
 
 ## What a revision says
 
+A revision is drawn as its stamp, the entry it is about (a link, in the group
+feed), the sentence, then what moved. The stamp names nobody: every sentence
+names whoever acted, or deliberately nobody, as a repair names its cause.
+
 The sentence for a revision lives in `lib/history-copy.ts` (`describe`), from
 `copy.history` — the app's vocabulary for the log. It names the member a
 membership revision is *about* rather than the actor, or adding three people
@@ -44,9 +48,13 @@ is just the two names. A **bill** reads line by line, paired by what a line
 says, so a reorder is no news and a reprice is a move; a **who-had-what** change
 says in words what happened to each line ("Blue milk: Ben → Chewie", "Jawa
 juice: Chewie joined Han, Luke"), then one line of who now owes more and who
-less ("Chewie +17.00 · Ben −9.00 · Han, Luke −4.00"). A **new entry** is one
-line, the amount and who it was for ("CRD 81.00 · for everyone"): who paid and
-each share are a tap away, and three lines per entry drowned the feed.
+less ("Chewie +17.00 · Ben −9.00 · Han, Luke −4.00"). A **new entry** is two
+lines: the amount and who paid ("CRD 81.00 · paid by Luke 50.00 · Han
+31.00"), then what each owes, a phrase per figure (`figureGroups`) — "for
+everyone · 20.25 each" where three or more owe alike, otherwise "Chewie 24.00 ·
+Han, Luke 20.00 · …", biggest first, with a crowd of three or more last where it can be
+"everyone else". One or two people are named, never counted: "for Teo",
+"Ignaś, Teo 12.00". The sixth phrase and later fold, like rows.
 
 **"Everyone" is about the group as it was.** Each revision carries its
 `roster` — who was in the group as its op landed (`rosterOf`) — so a later

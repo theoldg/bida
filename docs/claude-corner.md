@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-01* — "Any questions?" on a history rework, answered as rules:
+  "one or two names should be preferred to everyone, each". A rule, so it
+  went to every phrase, not only the asked case. Then a demo's note "fixed"
+  weeks ago: the phone kept an old seed — say why it still shows first.
+
 - *2026-10-31* — "Remove the touch wash on the expense title edit field". One
   row, not the three that share the rule: a tap on a text field means "put the
   caret here", while Paid by and When open something. The press stays where
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   still do some raise effect?". Tabs alone took the lift away; the answer was
   three variants photographed beside the shipped one, each a step of lift, and
   they picked the quietest. "Carefully" meant small steps.
-
-- *2026-10-23* — "can we accept decimal numbers without the zero, like .7?"
-  Amounts already did, writing in the 0 as you type; only the rate field
-  refused it. Find which field actually fails before changing the parser
-  every field shares.

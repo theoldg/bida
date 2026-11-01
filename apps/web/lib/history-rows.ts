@@ -52,7 +52,9 @@ export function peopleText(
   const within = roster.size >= 3 && ids.every((id) => roster.has(id));
   if (within && set.size === roster.size) return inPhrase ? said.everyoneIn : said.everyone;
   const missing = people.roster.filter((id) => !set.has(id));
-  if (within && set.size >= 3 && named && missing.every((id) => named.has(id))) return said.everyoneElse;
+  if (within && set.size >= 3 && named && missing.every((id) => named.has(id))) {
+    return inPhrase ? said.everyoneElseIn : said.everyoneElse;
+  }
   // "Everyone but" only where it is the shorter way round.
   if (within && set.size >= 3 && missing.length <= 2 && missing.length < set.size) {
     const left = byName(missing, people).map(people.nameOf).join(", ");
@@ -94,6 +96,34 @@ export function moves(
       const name = peopleText(ids, people, false, named);
       for (const id of ids) named.add(id);
       return { name, ...row };
+    });
+}
+
+/**
+ * A state, not a move, as phrases: who had which figure, the people with the
+ * same one on one phrase — "Ana, Bruno 35.00", "everyone else 25.00". The
+ * biggest figure first, except that a crowd of three or more goes last, where
+ * it can be "everyone else". Every phrase is mid-sentence: the caller has
+ * already started the line.
+ */
+export function figureGroups(figures: ReadonlyMap<Id, { minor: number; shown: string }>, people: People): string[] {
+  const groups = new Map<string, { minor: number; ids: Id[] }>();
+  for (const id of byName(figures.keys(), people)) {
+    const { minor, shown } = figures.get(id)!;
+    const group = groups.get(shown);
+    if (group) group.ids.push(id);
+    else groups.set(shown, { minor, ids: [id] });
+  }
+  const sorted = [...groups].sort(([, a], [, b]) => b.minor - a.minor);
+  const crowd = sorted.reduce<number>((best, [, g], i) =>
+    (g.ids.length >= 3 && (best < 0 || g.ids.length > sorted[best]![1].ids.length) ? i : best), -1);
+  if (crowd >= 0) sorted.push(...sorted.splice(crowd, 1));
+  const named = new Set<Id>();
+  return sorted
+    .map(([shown, { ids }]) => {
+      const name = peopleText(ids, people, true, named);
+      for (const id of ids) named.add(id);
+      return copy.history.shareOf(name, shown);
     });
 }
 

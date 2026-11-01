@@ -42,6 +42,7 @@ async function described(
   said: string;
   diff?: { was?: string; now: string };
   rows?: Row[];
+  shares?: string[];
   also?: Detail[];
 }[]> {
   const members = await db().members.where("groupId").equals(groupId).toArray();
@@ -49,7 +50,7 @@ async function described(
   const group = await db().groups.get(groupId);
   return activityFeed(await opsForGroup(groupId)).map((rev) => {
     const d = describe(rev, byId.get(rev.op.actor)?.name ?? "Someone", byId, group!.baseCurrency);
-    return { rev, said: d.what, diff: d.diff, rows: d.rows, also: d.also };
+    return { rev, said: d.what, diff: d.diff, rows: d.rows, shares: d.shares, also: d.also };
   });
 }
 
@@ -163,7 +164,7 @@ suite("describe", () => {
     expect(latest!.said).toBe("Theo changed who’s involved");
   });
 
-  it("says who a new entry was for, and no more", async () => {
+  it("says who paid a new entry, and what each owes, naming one or two people", async () => {
     const { groupId, memberId: theo } = await createGroup({
       name: "Siurek", baseCurrency: "EUR", myName: "Theo",
     });
@@ -178,9 +179,33 @@ suite("describe", () => {
       split: { mode: "shares", weights: { [theo]: 2, [marie]: 1 } },
     });
 
-    const [latest] = await described(groupId);
-    expect(latest!.diff!.now).toBe("€30.00 · for Marie, Theo");
-    expect(latest!.also).toBeUndefined();
+    await addExpense(groupId, theo, {
+      description: "Gum",
+      occurredAt: Date.now(),
+      amountMinor: 300,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [marie] },
+    });
+    // Two on one figure are named, not "each".
+    await addExpense(groupId, theo, {
+      description: "Taxi",
+      occurredAt: Date.now(),
+      amountMinor: 2_001,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: marie,
+      split: { mode: "equal", members: [theo, marie] },
+    });
+
+    const [taxi, gum, beers] = await described(groupId);
+    expect(beers!.diff!.now).toBe("€30.00 · paid by Theo");
+    expect(beers!.shares).toEqual(["Theo 20.00", "Marie 10.00"]);
+    expect(beers!.also).toBeUndefined();
+    expect(gum!.shares).toEqual(["for Marie"]);
+    expect(taxi!.diff!.now).toBe("€20.01 · paid by Marie");
+    expect(taxi!.shares).toEqual(["Marie, Theo 10.00"]);
   });
 
   it("reads both lines of a split in one order, so the pair can be compared", async () => {
@@ -250,8 +275,43 @@ suite("describe", () => {
     });
 
     const [taxi, , dinner] = await described(groupId);
-    expect(dinner!.diff!.now).toBe("€100.00 · for everyone");
-    expect(taxi!.diff!.now).toBe("€90.00 · for everyone but Zoe");
+    expect(dinner!.diff!.now).toBe("€100.00 · paid by Ana 60.00 · Bruno 40.00");
+    expect(dinner!.shares).toEqual(["for everyone · 25.00 each"]);
+    expect(taxi!.shares).toEqual(["for everyone but Zoe · 22.50 each"]);
+  });
+
+  it("puts a new entry's shares a figure at a time, the crowd last as everyone else", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Siurek", baseCurrency: "EUR", myName: "Theo",
+    });
+    const ana = await addMember(groupId, theo, "Ana");
+    const bruno = await addMember(groupId, theo, "Bruno");
+    const cy = await addMember(groupId, theo, "Cy");
+    const dee = await addMember(groupId, theo, "Dee");
+    await addExpense(groupId, theo, {
+      description: "Dinner",
+      occurredAt: Date.now(),
+      amountMinor: 10_000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "shares", weights: { [ana]: 7, [bruno]: 7, [cy]: 2, [dee]: 2, [theo]: 2 } },
+    });
+    await addExpense(groupId, theo, {
+      description: "Refund",
+      kind: "income",
+      occurredAt: Date.now(),
+      amountMinor: 3_000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: ana,
+      split: { mode: "equal", members: [theo, ana, bruno] },
+    });
+
+    const [refund, dinner] = await described(groupId);
+    expect(dinner!.shares).toEqual(["Ana, Bruno 35.00", "everyone else 10.00"]);
+    expect(refund!.diff!.now).toBe("€30.00 · received by Ana");
+    expect(refund!.shares).toEqual(["for everyone but Cy, Dee · 10.00 each"]);
   });
 
   it("reads the payers in that same order", async () => {

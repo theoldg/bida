@@ -7,7 +7,7 @@ import { copy } from "./copy";
 import { printedBill } from "./scan/items";
 import { bare, dayLabel, money, plural, rateText } from "./format";
 import {
-  billRows, chargeRow, eatersRow, moves, netLine, peopleText, typical, type BillLine, type People, type Row,
+  billRows, chargeRow, eatersRow, figureGroups, moves, netLine, peopleText, typical, type BillLine, type People, type Row,
 } from "./history-rows";
 
 /**
@@ -20,6 +20,8 @@ export interface Described {
   what: string;
   diff?: { was?: string; now: string };
   rows?: Row[];
+  /** A new entry's shares, a phrase each: drawn on one line, the sixth and later folded. */
+  shares?: string[];
   /**
    * Every field the revision changed, a line each. **Never rank the fields**: a
    * caption naming one change hides the money that also moved.
@@ -150,6 +152,28 @@ export function describe(
     return typeof paidBy === "string"
       ? new Map([[paidBy, typeof amountMinor === "number" ? amountMinor : 0]]) : new Map();
   };
+  /**
+   * Who a new entry was for, and what each owes. One or two people are named
+   * rather than counted: "for Teo", "Ignaś 12.50 · Teo 11.49". Three or more
+   * on one figure is "for everyone · 24.50 each"; otherwise a phrase per
+   * figure, "Ana, Bruno 35.00 · everyone else 25.00".
+   */
+  const createdShares = (state: State): string[] => {
+    const shares = sharesOf(state);
+    if (!shares) {
+      const spec = state["split"] as SplitSpec | null | undefined;
+      let ids: Id[] = [];
+      try { ids = spec && typeof spec === "object" ? splitParticipants(spec) : []; } catch { /* nobody, then */ }
+      return ids.length ? [said.forPeople(peopleText(ids, people, true))] : [];
+    }
+    const ids = [...shares.keys()];
+    if (ids.length <= 1) return ids.length ? [said.forPeople(peopleText(ids, people, true))] : [];
+    const figures = new Set(shares.values());
+    if (figures.size === 1 && ids.length >= 3) {
+      return [said.forEach(peopleText(ids, people, true), fig([...figures][0]!, currency))];
+    }
+    return figureGroups(new Map([...shares].map(([id, v]) => [id, { minor: v, shown: fig(v, currency) }])), people);
+  };
   const modeOf = (state: State): SplitSpec["mode"] | undefined => {
     const spec = state["split"] as SplitSpec | null | undefined;
     return spec && typeof spec === "object" && spec.mode in copy.split.mode ? spec.mode : undefined;
@@ -170,14 +194,13 @@ export function describe(
 
     if (rev.isCreate) {
       const amt = cash(field("baseAmountMinor")?.after);
-      const spec = rev.after["split"] as SplitSpec | null | undefined;
-      let ids: Id[] = [];
-      try { ids = spec && typeof spec === "object" ? splitParticipants(spec) : []; } catch { /* just the amount */ }
-      return {
-        what: rev.imported ? said.importedEntry(who, noun, from) : said.createdEntry(who, noun),
-        diff: amt === undefined ? undefined
-          : { now: ids.length ? said.forPeople(amt, peopleText(ids, people, true)) : amt },
-      };
+      const what = rev.imported ? said.importedEntry(who, noun, from) : said.createdEntry(who, noun);
+      const payers = contributions(rev.after);
+      const paid = payers.size === 1 ? nameOf([...payers.keys()][0])
+        : figureGroups(new Map([...payers].map(([id, v]) =>
+          [id, { minor: v, shown: fig(v, ownCurrency(rev.after)) }])), people).join(" · ");
+      const head = [amt, paid ? said.paidBy[kind](paid) : undefined].filter(Boolean).join(" · ");
+      return { what, ...(head ? { diff: { now: head } } : {}), shares: createdShares(rev.after) };
     }
     if (rev.isDelete) return { what: said.deletedEntry(who, noun) };
     if (field("deletedAt")?.after === null) return { what: said.restoredEntry(who, noun) };

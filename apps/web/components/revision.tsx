@@ -81,7 +81,29 @@ function Rows({ rows }: { rows: Row[] }) {
   );
 }
 
-/** One point on a `.tl` timeline: who, when, what moved, and what it was about. */
+/**
+ * A new entry's shares on one line, "Ana, Bruno 35.00 · everyone else 25.00",
+ * the sixth phrase and later behind the same tap as the rows.
+ */
+function Shares({ phrases }: { phrases: string[] }) {
+  const cut = phrases.length > ROWS_SHOWN + 1 ? ROWS_SHOWN : phrases.length;
+  return (
+    <>
+      <span className="now2">{phrases.slice(0, cut).join(" · ")}</span>
+      {cut < phrases.length ? (
+        <details className="hmore">
+          <summary>{copy.history.more(String(phrases.length - cut))}</summary>
+          <span className="now2">{phrases.slice(cut).join(" · ")}</span>
+        </details>
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * One point on a `.tl` timeline: when, what it was about, who did what, and
+ * what moved. The stamp names nobody: every sentence under it does.
+ */
 export function RevisionEntry({ rev, first, context, linked = true }: {
   rev: Revision; first: boolean; context: RevisionContext;
   /** Off in an entry's own history, which is already about that entry. */
@@ -92,12 +114,18 @@ export function RevisionEntry({ rev, first, context, linked = true }: {
   const subject = linked ? subjectOf(rev, context) : undefined;
   return (
     <div className={`tle${first ? " now" : ""}`}>
-      <div className="when">{stamp(rev.op.createdAt)} · {who.toUpperCase()}</div>
+      <div className="when">{stamp(rev.op.createdAt)}</div>
+      {subject ? (
+        <Link className="tlink" href={subject.href}>
+          <span>{subject.label}</span><Icon name="chev" size={13} />
+        </Link>
+      ) : null}
       <div className="what">{d.what}</div>
-      {d.diff ? (
+      {d.diff || d.shares?.length ? (
         <div className="diff">
-          {d.diff.was !== undefined ? <span className="was">{d.diff.was}</span> : null}
-          <span className="now2">{d.diff.now}</span>
+          {d.diff?.was !== undefined ? <span className="was">{d.diff.was}</span> : null}
+          {d.diff ? <span className="now2">{d.diff.now}</span> : null}
+          {d.shares?.length ? <Shares phrases={d.shares} /> : null}
         </div>
       ) : null}
       {d.rows?.length ? <Rows rows={d.rows} /> : null}
@@ -112,11 +140,6 @@ export function RevisionEntry({ rev, first, context, linked = true }: {
             </div>
           ))}
         </div>
-      ) : null}
-      {subject ? (
-        <Link className="tlink" href={subject.href}>
-          <span>{subject.label}</span><Icon name="chev" size={13} />
-        </Link>
       ) : null}
     </div>
   );
