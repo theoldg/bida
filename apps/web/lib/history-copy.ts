@@ -195,10 +195,14 @@ export function describe(
     if (rev.isCreate) {
       const amt = cash(field("baseAmountMinor")?.after);
       const what = rev.imported ? said.importedEntry(who, noun, from) : said.createdEntry(who, noun);
-      const payers = contributions(rev.after);
-      const paid = payers.size === 1 ? nameOf([...payers.keys()][0])
-        : figureGroups(new Map([...payers].map(([id, v]) =>
-          [id, { minor: v, shown: fig(v, ownCurrency(rev.after)) }])), people).join(" · ");
+      // Co-payers are a sum, so they read as one: "Luke 50.00 + Han 31.00",
+      // biggest first, each named — never grouped, which would hide the sum.
+      // A third payer wraps the line, between people, never inside one.
+      const payers = [...contributions(rev.after)].sort(([a, x], [b, y]) =>
+        y - x || nameOf(a).localeCompare(nameOf(b)));
+      const paid = payers.length === 1 ? nameOf(payers[0]![0])
+        : payers.map(([id, v]) => said.shareOf(nameOf(id), fig(v, ownCurrency(rev.after))).replace(/ /g, "\u00a0"))
+          .join(" + ");
       const head = [amt, paid ? said.paidBy[kind](paid) : undefined].filter(Boolean).join(" · ");
       return { what, ...(head ? { diff: { now: head } } : {}), shares: createdShares(rev.after) };
     }

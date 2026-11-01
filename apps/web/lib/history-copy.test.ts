@@ -275,7 +275,8 @@ suite("describe", () => {
     });
 
     const [taxi, , dinner] = await described(groupId);
-    expect(dinner!.diff!.now).toBe("€100.00 · paid by Ana 60.00 · Bruno 40.00");
+    // A sum, biggest first, each person kept whole where the line wraps.
+    expect(dinner!.diff!.now).toBe("€100.00 · paid by Ana\u00a060.00 + Bruno\u00a040.00");
     expect(dinner!.shares).toEqual(["for everyone · 25.00 each"]);
     expect(taxi!.shares).toEqual(["for everyone but Zoe · 22.50 each"]);
   });

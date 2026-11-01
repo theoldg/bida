@@ -50,8 +50,8 @@ says, so a reorder is no news and a reprice is a move; a **who-had-what** change
 says in words what happened to each line ("Blue milk: Ben → Chewie", "Jawa
 juice: Chewie joined Han, Luke"), then one line of who now owes more and who
 less ("Chewie +17.00 · Ben −9.00 · Han, Luke −4.00"). A **new entry** is two
-lines: the amount and who paid ("CRD 81.00 · paid by Luke 50.00 · Han
-31.00"), then what each owes, a phrase per figure (`figureGroups`) — "for
+lines: the amount and who paid ("CRD 81.00 · paid by Luke 50.00 + Han
+31.00" — a sum, biggest first, never grouped), then what each owes, a phrase per figure (`figureGroups`) — "for
 everyone · 20.25 each" where three or more owe alike, otherwise "Chewie 24.00 ·
 Han, Luke 20.00 · …", biggest first, with a crowd of three or more last where it can be
 "everyone else". One or two people are named, never counted: "for Teo",
