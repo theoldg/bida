@@ -39,7 +39,7 @@ export function byName(ids: Iterable<Id>, people: People): Id[] {
  * A set of people as briefly as it can be said truly. "Everyone" and "everyone
  * but" are about the group *as it was*: a later joiner mustn't turn last
  * month's "Everyone" into "Everyone but Zoe". Below three people the names are
- * as short as either. Where everyone left out is `named` just before, on the
+ * as short as either, and three names read quicker than "everyone but" two. Where everyone left out is `named` just before, on the
  * same list, it is "Everyone else" — "− Cy" then "Everyone else", not "Everyone
  * but Cy" again — however many that is.
  */
@@ -55,8 +55,8 @@ export function peopleText(
   if (within && set.size >= 3 && named && missing.every((id) => named.has(id))) {
     return inPhrase ? said.everyoneElseIn : said.everyoneElse;
   }
-  // "Everyone but" only where it is the shorter way round.
-  if (within && set.size >= 3 && missing.length <= 2 && missing.length < set.size) {
+  // "Everyone but" only for four or more: three names read quicker than it.
+  if (within && set.size >= 4 && missing.length <= 2) {
     const left = byName(missing, people).map(people.nameOf).join(", ");
     return inPhrase ? said.everyoneButIn(left) : said.everyoneBut(left);
   }

@@ -6,12 +6,13 @@ const people = (roster: string[]): People => ({ nameOf: (id) => names[id] ?? "so
 const figures = (o: Record<string, string>) => new Map(Object.entries(o));
 
 describe("peopleText", () => {
-  it("says everyone, or everyone but the one or two left out, and names otherwise", () => {
+  it("says everyone, or everyone but the one or two left out of four or more, and names otherwise", () => {
     const five = people(["a", "b", "c", "d", "e"]);
     expect(peopleText(["e", "d", "c", "b", "a"], five)).toBe("Everyone");
     expect(peopleText(["a", "b", "d", "e"], five)).toBe("Everyone but Cy");
-    expect(peopleText(["a", "b", "e"], five)).toBe("Everyone but Cy, Dee");
-    // Left-out as long as left-in: the names are the shorter truth.
+    expect(peopleText(["a", "b", "d", "e"], people(["a", "b", "c", "d", "e", "z"]))).toBe("Everyone but Cy, Zoe");
+    // Three names read quicker than "everyone but" two.
+    expect(peopleText(["a", "b", "e"], five)).toBe("Ana, Bo, Eve");
     expect(peopleText(["a", "b"], five)).toBe("Ana, Bo");
   });
 
@@ -29,7 +30,7 @@ describe("peopleText", () => {
     expect(peopleText(["a", "b", "d", "e"], five, false, new Set(["c"]))).toBe("Everyone else");
     expect(peopleText(["a", "b", "c"], people(["a", "b", "c", "d", "e", "z"]), false, new Set(["d", "e", "z"])))
       .toBe("Everyone else");
-    expect(peopleText(["a", "b", "e"], five, false, new Set(["c"]))).toBe("Everyone but Cy, Dee");
+    expect(peopleText(["a", "b", "e"], five, false, new Set(["c"]))).toBe("Ana, Bo, Eve");
     expect(peopleText(["a", "b"], five, false, new Set(["c", "d", "e"]))).toBe("Ana, Bo");
   });
 });

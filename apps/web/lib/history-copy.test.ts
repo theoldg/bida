@@ -311,7 +311,7 @@ suite("describe", () => {
     const [refund, dinner] = await described(groupId);
     expect(dinner!.shares).toEqual(["Ana, Bruno 35.00", "everyone else 10.00"]);
     expect(refund!.diff!.now).toBe("€30.00 · received by Ana");
-    expect(refund!.shares).toEqual(["for everyone but Cy, Dee · 10.00 each"]);
+    expect(refund!.shares).toEqual(["for Ana, Bruno, Theo · 10.00 each"]);
   });
 
   it("reads the payers in that same order", async () => {
