@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-01* — "the space under the expense link is too small. Adjust it
+  tastefully". A negative margin had tucked the link's tap padding away, so
+  the underline sat on the next line. Measured against the gap above it in
+  the photo, not by eye in the CSS.
+
 - *2026-11-01* — "add dummy rates in the demo", then mid-work: "this should
   not apply to other groups where someone set CRD". The obvious key was the
   currency; the owner meant the group. Same lesson as the CRD-suggestion card:
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   with a red arrow on a screenshot. The space was an empty list still taking
   its padding and its flex gap: measure the photo, then find what renders
   nothing but still costs room.
-
-- *2026-10-23* — "Also drop all the local uncommitted changes I don't like
-  them", mid-task. Another session's half-built diff sat in the clone; look
-  at it, keep a patch in the scratchpad, then drop it — and the one-line
-  wording change goes out alone.

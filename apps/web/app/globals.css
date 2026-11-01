@@ -1797,7 +1797,7 @@ dialog.scrim::backdrop { background: transparent }
 .hmore summary::-webkit-details-marker { display: none }
 .hmore[open] summary { display: none }
 .tlink { display: flex; width: fit-content; align-items: center; gap: 3px;
-  margin: 1px -6px -3px; padding: 3px 6px; border-radius: var(--r-s);
+  margin: 1px -6px 1px; padding: 3px 6px; border-radius: var(--r-s);
   font-size: var(--fs-small); font-weight: 600; color: var(--ink);
   text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--rule) }
 .tlink svg { color: var(--muted); flex: none }
