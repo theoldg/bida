@@ -349,11 +349,14 @@ export function describe(
         diff: { was: text(currencyChange.before), now: text(currencyChange.after) ?? "" },
       });
     }
+    // A new currency brings its own rate: said as what it is now, the old one
+    // being another currency's, and not at all back in the group's, where it is 1.
     const rate = field("rateToBase");
-    if (rate) {
+    const intoBase = currencyChange && ownCurrency(rev.after) === currency;
+    if (rate && !intoBase) {
       parts.push({
         what: said.changedRate(who), label: named.rate,
-        diff: { was: text(rate.before), now: text(rate.after) ?? "" },
+        diff: { was: currencyChange ? undefined : text(rate.before), now: text(rate.after) ?? "" },
       });
     }
     // Read off the fold: adding a co-payer moves only `payers`.
@@ -394,7 +397,7 @@ export function describe(
     if (photos) {
       const before = Array.isArray(photos.before) ? photos.before.length : 0;
       const after = Array.isArray(photos.after) ? photos.after.length : 0;
-      // One kept photo for another: a rescan with Keep still ticked.
+      // One kept photo for another: a rescan.
       if (before === after) parts.push({ what: said.replacedPhoto(who), label: named.photos });
       else parts.push({
         what: said.changedPhotos(who, after > before, plural(Math.abs(after - before), copy.noun.photo)),
@@ -457,11 +460,14 @@ export function describe(
         diff: { was: text(currencyChange.before), now: text(currencyChange.after) ?? "" },
       });
     }
+    // A new currency brings its own rate: said as what it is now, the old one
+    // being another currency's, and not at all back in the group's, where it is 1.
     const rate = field("rateToBase");
-    if (rate) {
+    const intoBase = currencyChange && ownCurrency(rev.after) === currency;
+    if (rate && !intoBase) {
       parts.push({
         what: said.changedRate(who), label: named.rate,
-        diff: { was: text(rate.before), now: text(rate.after) ?? "" },
+        diff: { was: currencyChange ? undefined : text(rate.before), now: text(rate.after) ?? "" },
       });
     }
     if (field("fromMember") ?? field("toMember")) {

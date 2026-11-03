@@ -448,6 +448,18 @@ suite("describe", () => {
     expect(latest!.said).toBe("Theo changed the currency");
   });
 
+  it("gives a new currency's rate as it is now, and none back in the group's", async () => {
+    const { groupId, theo, expenseId } = await expenseIn("EUR", "PLN");
+    await editExpense(groupId, theo, expenseId, { currency: "USD", rateToBase: "0.92", amountMinor: 2_500 });
+    let [latest] = await described(groupId);
+    expect(latest!.also!.find((a) => a.label === "Rate")).toEqual({ label: "Rate", now: "0.92" });
+
+    await editExpense(groupId, theo, expenseId, { currency: "EUR", rateToBase: "1" });
+    [latest] = await described(groupId);
+    expect(latest!.rev.changes.map((c) => c.field)).toContain("rateToBase");
+    expect(latest!.also!.map((a) => a.label)).not.toContain("Rate");
+  });
+
   it("names a rate change that left the figure alone", async () => {
     const { groupId, theo, expenseId } = await expenseIn("EUR", "PLN");
     // 100.00 PLN at 1.000 and at 1.0000 are the same 10000 minor units.
