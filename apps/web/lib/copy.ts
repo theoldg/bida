@@ -923,8 +923,6 @@ const en = {
   // ------------------------------------------------------------- receipts
 
   photo: {
-    /** The form's row, beside the miniature. */
-    label: "Photo",
     view: "View the photo",
     waiting: "The photo is on its way",
     title: "Receipt photo",

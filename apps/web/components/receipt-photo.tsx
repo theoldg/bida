@@ -8,8 +8,9 @@ import { useHoldsWork } from "../lib/update";
 import { Icon } from "./icons";
 
 /**
- * The entry form's Photo row: what it shows is what Save keeps. There is no
- * row without a photo, and nothing here changes one — only a scan does.
+ * The entry form's photo row, the miniature alone: what it shows is what Save
+ * keeps. There is no row without a photo, and nothing here changes one — only
+ * a scan does.
  */
 export function PhotoField({ photo }: {
   /** Undefined is none; a `src`-less one is kept but still on its way here. */
@@ -18,7 +19,6 @@ export function PhotoField({ photo }: {
   if (!photo) return null;
   return (
     <div className="field photofield">
-      <span className="fieldlabel">{copy.photo.label}</span>
       <PhotoThumb src={photo.src} />
     </div>
   );

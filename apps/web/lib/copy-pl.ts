@@ -696,7 +696,6 @@ export const pl: Copy = {
   // ------------------------------------------------------------- receipts
 
   photo: {
-    label: "???",
     view: "???",
     waiting: "???",
     title: "???",

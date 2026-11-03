@@ -1647,12 +1647,9 @@ dialog.scrim::backdrop { background: transparent }
 .photothumb::after { content: ""; position: absolute; inset: 0; transition: background .2s ease }
 .photothumb:active::after { background: var(--press); transition-duration: 0s }
 .photothumb.waiting::after { content: none }
-/* Only there with a photo, tall enough to recognise the bill in. The miniature
-   is centred on the row, not on what the label leaves: half the label column
-   and its gap back to the left. */
+/* Only there with a photo, unlabelled, and large enough to read the bill's head in. */
 .formhead .photofield { padding-block: 12px }
-.photofield .photothumb { width: 64px; height: 64px; margin-inline: auto;
-  position: relative; left: calc((var(--label-w) + 10px) / -2) }
+.photofield .photothumb { width: 128px; height: 128px; margin-inline: auto }
 .entryhead.withphoto { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 14px }
 .entryhead.withphoto > :not(.entryphoto, .entrytitle, .entryfig) { grid-column: 1 / -1 }
 .entryhead.withphoto .entryfig { container-type: inline-size }
