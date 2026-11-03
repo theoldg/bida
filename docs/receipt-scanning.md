@@ -84,7 +84,7 @@ what a machine's reading of a crumpled receipt is. You review the form, and
 saving appends the op the way it always did — one `actor`, one human, no new op
 kinds, no schema change, nothing on the log that nobody looked at.
 The cropped JPEG the model read rides the draft too (`receiptPhoto`), and the
-entry keeps it unless it is cleared ([photos.md](photos.md)).
+entry keeps it until a rescan replaces it ([photos.md](photos.md)).
 
 ## Typing a bill in
 

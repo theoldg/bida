@@ -30,7 +30,7 @@ ledger you cannot take elsewhere is a ledger somebody else owns.
    read only ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).
 2. **A receipt reads itself into the form.** Photograph a bill and it fills the
    expense, line items and all ([ADR-0016](decisions/0016-receipts.md)). The
-   photo is kept with the entry unless you clear it, and every phone in the
+   photo is kept with the entry until a rescan, and every phone in the
    group can see it, sealed like the rest ([photos.md](photos.md)).
 3. **A personal lens, always on.** The app reads as *your* ledger: what each
    row did to your balance, signed and coloured; rows you're not in faded back;

@@ -147,8 +147,8 @@ function EditEntryScreen() {
 
 /**
  * What the save does to the entry's photo (docs/photos.md#saving-and-rescanning):
- * whatever the form shows is what is kept. A photo new to the draft replaces
- * the entry's; a cleared one, or an income, keeps none.
+ * whatever the form shows is what is kept. A photo just scanned replaces the
+ * entry's; an income keeps none.
  */
 function photoChange(draft: EntryDraft, canScan: boolean): PhotoChange | undefined {
   if (canScan && draft.receiptPhoto) return { keep: { id: newId(), ...keptJpeg(draft.receiptPhoto) } };
@@ -169,7 +169,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   usePrefetch([route.payers(groupId), route.bill(groupId, via)]);
   const scan = useReceiptScan(groupId, useScanAs(groupId), undefined, route.bill(groupId, via));
   // The photo just read, else the one the entry keeps (fetched if this phone lacks it).
-  const keptPhoto = usePhoto(groupId, draft.receiptPhoto ? undefined : draft.keptPhotoId ?? undefined);
+  const keptPhoto = usePhoto(groupId, draft.receiptPhoto ? undefined : draft.keptPhotoId);
   const shownPhoto = draft.receiptPhoto ? { src: draft.receiptPhoto } : keptPhoto;
   const saveTo = formParent(groupId, draft.entryId, via);
   const base = group.baseCurrency;
@@ -487,11 +487,9 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
               <Icon name="calendar" size={18} className="pchev datemark" />
             </div>
 
-            {/* What the row shows is what Save keeps. An income has no bill. */}
+            {/* What the row shows is what Save keeps; only a scan changes it. An income has no bill. */}
             {canScan ? (
-              <PhotoField photo={shownPhoto}
-                onAttach={(receiptPhoto) => patch({ receiptPhoto })}
-                onClear={() => patch({ receiptPhoto: null, keptPhotoId: null })} />
+              <PhotoField photo={shownPhoto} />
             ) : null}
           </div>
           </div>
