@@ -394,7 +394,9 @@ export function describe(
     if (photos) {
       const before = Array.isArray(photos.before) ? photos.before.length : 0;
       const after = Array.isArray(photos.after) ? photos.after.length : 0;
-      parts.push({
+      // One kept photo for another: a rescan with Keep still ticked.
+      if (before === after) parts.push({ what: said.replacedPhoto(who), label: named.photos });
+      else parts.push({
         what: said.changedPhotos(who, after > before, plural(Math.abs(after - before), copy.noun.photo)),
         label: named.photos,
         line: { was: plural(before, copy.noun.photo), now: plural(after, copy.noun.photo) },

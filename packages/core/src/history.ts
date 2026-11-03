@@ -61,8 +61,15 @@ const QUIET_FIELDS: Partial<Record<Op["entity"], ReadonlySet<string>>> = {
   identity: new Set(["push"]),
 };
 
+/**
+ * An attachment is the photo's record, never news of its own: the entry's
+ * `attachmentIds` moving in the same save is what the history narrates.
+ */
+const QUIET_ENTITIES: ReadonlySet<Op["entity"]> = new Set(["attachment"]);
+
 /** An op that moves only plumbing: no revision, and no activity on the groups list. */
 export function isQuiet(op: Pick<Op, "entity" | "kind" | "patch">): boolean {
+  if (QUIET_ENTITIES.has(op.entity)) return true;
   const quiet = QUIET_FIELDS[op.entity];
   return !!quiet && op.kind === "update" && Object.keys(op.patch).every((field) => quiet.has(field));
 }
@@ -84,6 +91,7 @@ function revisionsForEntity(
   const lastWriter = new Map<string, number>();
 
   for (const op of sorted) {
+    if (QUIET_ENTITIES.has(op.entity)) continue;
     const changes: FieldChange[] = [];
     const isDelete = op.kind === "delete";
     const before: Record<string, unknown> = { ...running };

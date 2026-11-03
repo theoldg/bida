@@ -1,7 +1,7 @@
 import { deflateRawSync } from "node:zlib";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  deriveGroupCrypto, deriveSplitCrypto, openOp, openSplit, SealError, sealOp, sealSplit,
+  deriveGroupCrypto, deriveSplitCrypto, openOp, openPhoto, openSplit, SealError, sealOp, sealPhoto, sealSplit,
   validateSealedOp, type Op, type SharedSplit,
 } from "./index";
 
@@ -321,5 +321,34 @@ describe("a shared split", () => {
     vi.unstubAllGlobals();
     expect(Buffer.from(sealed, "base64")[0]).toBe(1);
     expect(await openSplit(crypto, sealed)).toEqual(split);
+  });
+});
+
+describe("sealPhoto / openPhoto", () => {
+  const jpeg = new Uint8Array(4000).map((_, i) => (i * 37) % 256);
+
+  it("round-trips the bytes, with no plaintext left in the seal", async () => {
+    const crypto = await deriveGroupCrypto(SECRET, GROUP);
+    const sealed = await sealPhoto(crypto, GROUP, "p-1", jpeg);
+    expect(sealed.length).toBe(jpeg.length + 1 + 12 + 16);
+    expect(Buffer.from(sealed).includes(Buffer.from(jpeg.slice(0, 64)))).toBe(false);
+    expect(await openPhoto(crypto, GROUP, "p-1", sealed)).toEqual(jpeg);
+  });
+
+  it("refuses a photo handed out under another id or group, or another key", async () => {
+    const crypto = await deriveGroupCrypto(SECRET, GROUP);
+    const sealed = await sealPhoto(crypto, GROUP, "p-1", jpeg);
+    await expect(openPhoto(crypto, GROUP, "p-2", sealed)).rejects.toThrow(SealError);
+    await expect(openPhoto(crypto, "other", "p-1", sealed)).rejects.toThrow(SealError);
+    const other = await deriveGroupCrypto("another-secret-entirely-xx", GROUP);
+    await expect(openPhoto(other, GROUP, "p-1", sealed)).rejects.toThrow(SealError);
+  });
+
+  it("refuses a truncated or unknown seal as a SealError", async () => {
+    const crypto = await deriveGroupCrypto(SECRET, GROUP);
+    await expect(openPhoto(crypto, GROUP, "p-1", new Uint8Array(5))).rejects.toThrow(SealError);
+    const sealed = await sealPhoto(crypto, GROUP, "p-1", jpeg);
+    sealed[0] = 9;
+    await expect(openPhoto(crypto, GROUP, "p-1", sealed)).rejects.toThrow(SealError);
   });
 });

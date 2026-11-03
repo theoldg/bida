@@ -1,17 +1,17 @@
 # 0001 — Cloudflare Workers + D1
 
-**Status:** Accepted · 2026-08-27 · R2 dropped 2026-09-05
+**Status:** Accepted · 2026-08-27 · R2 back for kept photos 2026-11-03
 
 **Context.** Personal project, a handful of users, indefinite lifespan, and the
 owner's requirement was "hosted super cheaply or for free".
 
 **Decision.** Everything on Cloudflare: one Worker serving both the static app
-and the Hono API, D1 for the op log.
+and the Hono API, D1 for the op log, R2 for kept receipt photos.
 
-R2 was part of this decision while receipt photos were going to be stored — its
-zero egress was the reason — and left with them
-([product.md](../product.md#deliberately-not-in-the-mvp)). There is no bucket
-and no binding. Storing photos means adding one back, not a new ADR.
+R2 for its zero egress, and because photos in D1 would spend the 500 MB the
+ledger lives in. Unlike Workers and D1, R2 bills past its free tier rather than
+refusing, so the Worker keeps its own budget under it
+([photos.md](../photos.md#the-budget)).
 
 ## Consequences
 

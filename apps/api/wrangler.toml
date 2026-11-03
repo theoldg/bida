@@ -19,6 +19,12 @@ database_name = "hajsik"
 database_id = "809ab9d2-f6b3-4183-a9b1-8204848655f3"
 migrations_dir = "migrations"
 
+# Kept receipt photos, sealed (docs/photos.md). Standard class, no public
+# access: every byte goes through the Worker and its budget.
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "hajsik-photos"
+
 # Not a secret: the private half is `VAPID_PRIVATE_KEY`. Never rotate casually —
 # a new pair silences every subscribed phone. docs/hosting.md#deploying.
 [vars]
@@ -51,3 +57,7 @@ binding = "DB"
 database_name = "hajsik-dev"
 database_id = "add4467a-ebc2-43e5-800d-93cb3545fbbb"
 migrations_dir = "migrations"
+
+[[env.dev.r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "hajsik-photos-dev"

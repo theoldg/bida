@@ -92,8 +92,8 @@ export interface Expense extends Receipt {
   /** In `currency`, summing to `amountMinor`. Absent means `paidBy` paid it all. */
   payers?: Record<Id, number> | null;
   split: SplitSpec;
-  /** Absent, not `[]`: nothing appends an `attachment` op yet. */
-  attachmentIds?: Id[];
+  /** At most one, the kept receipt photo. Absent or `[]` is none. */
+  attachmentIds?: Id[] | null;
   deletedAt?: number | null;
 }
 
@@ -186,18 +186,21 @@ export interface ExchangeRate {
   deletedAt?: number | null;
 }
 
-export type UploadState = "local" | "uploading" | "uploaded";
-
+/**
+ * A receipt photo kept with an expense (docs/photos.md). The op carries what
+ * every phone agrees on; the bytes, sealed, are in R2 under the group and this
+ * id, and whether this phone has them yet is its own business (`photos` in
+ * Dexie), never an op.
+ */
 export interface Attachment {
   id: Id;
   groupId: Id;
   expenseId: Id;
-  r2Key?: string | null;
   mime: string;
+  /** The JPEG's size before sealing. */
   bytes: number;
   width?: number | null;
   height?: number | null;
-  uploadState: UploadState;
   createdAt: number;
   deletedAt?: number | null;
 }

@@ -24,7 +24,7 @@ export interface ExpenseInput extends Receipt {
   payers?: Record<Id, number> | null;
   split: SplitSpec;
   categoryId?: string | null;
-  attachmentIds?: Id[];
+  attachmentIds?: Id[] | null;
 }
 
 /**
@@ -45,6 +45,53 @@ function normalisePayers(input: ExpenseInput): { paidBy: Id; payers: Record<Id, 
 
 function write(groupId: Id, actor: Id, drafts: readonly OpDraft[], now = Date.now()) {
   return appendOps(groupId, actor, drafts, now, { notify: true });
+}
+
+/**
+ * What a save does to the entry's kept photo (docs/photos.md): a new one
+ * replaces whatever was kept, or none is kept. Absent leaves it alone.
+ */
+export type PhotoChange =
+  | { keep: { id: Id; jpeg: string; bytes: number } }
+  | { drop: true };
+
+/**
+ * The ops a photo change adds to the save, and its `attachmentIds`. The new
+ * photo's bytes go into `photos` first, so they are on the phone before any op
+ * names them; the ones replaced are queued for the server to drop once the
+ * save is in (`dropPhotos`).
+ */
+async function photoOps(
+  groupId: Id, expenseId: Id, held: readonly Id[], change: PhotoChange, now: number,
+): Promise<{ drafts: OpDraft[]; attachmentIds: Id[] | null; dropped: Id[] }> {
+  const kept = "keep" in change ? change.keep : null;
+  const dropped = held.filter((id) => id !== kept?.id);
+  const drafts: OpDraft[] = dropped.map((id) => ({
+    entity: "attachment", entityId: id, kind: "delete", patch: {},
+  }));
+  if (kept && !held.includes(kept.id)) {
+    await db().photos.put({ id: kept.id, groupId, jpeg: kept.jpeg, state: "upload" });
+    drafts.unshift({
+      entity: "attachment", entityId: kept.id, kind: "create",
+      patch: { expenseId, mime: "image/jpeg", bytes: kept.bytes, createdAt: now },
+    });
+  }
+  return { drafts, attachmentIds: kept ? [kept.id] : null, dropped };
+}
+
+/** After the save: a dropped photo's bytes leave this phone, and the server is asked to follow. */
+async function dropPhotos(groupId: Id, ids: readonly Id[]): Promise<void> {
+  if (ids.length === 0) return;
+  await db().photos.bulkPut(ids.map((id) => ({ id, groupId, state: "delete" as const })));
+}
+
+/** A save that failed leaves no photo behind for nothing to name. */
+async function unkeep(change: PhotoChange | undefined, held: readonly Id[]): Promise<void> {
+  if (change && "keep" in change && !held.includes(change.keep.id)) await db().photos.delete(change.keep.id);
+}
+
+function liveIds(ids: readonly Id[] | null | undefined): Id[] {
+  return [...(ids ?? [])];
 }
 
 function expenseContent(input: ExpenseInput, base: CurrencyCode) {
@@ -84,14 +131,20 @@ export async function addExpense(
   input: ExpenseInput,
   now = Date.now(),
   expenseId: Id = newId(),
+  photo?: PhotoChange,
 ): Promise<Id> {
   const base = await baseOf(groupId);
-  await write(
-    groupId,
-    actor,
-    [{ entity: "expense", entityId: expenseId, kind: "create", patch: expenseCreatePatch(input, base, now) }],
-    now,
-  );
+  const pictured = photo ? await photoOps(groupId, expenseId, [], photo, now) : undefined;
+  const content = pictured ? { ...input, attachmentIds: pictured.attachmentIds ?? undefined } : input;
+  try {
+    await write(groupId, actor, [
+      ...(pictured?.drafts ?? []),
+      { entity: "expense", entityId: expenseId, kind: "create", patch: expenseCreatePatch(content, base, now) },
+    ], now);
+  } catch (err) {
+    await unkeep(photo, []);
+    throw err;
+  }
   return expenseId;
 }
 
@@ -104,20 +157,33 @@ export async function editExpense(
   actor: Id,
   expenseId: Id,
   changes: Partial<ExpenseInput>,
+  photo?: PhotoChange,
 ): Promise<void> {
   const existing = await db().expenses.get(expenseId);
   if (!existing) throw new Error(`unknown expense: ${expenseId}`);
 
+  const now = Date.now();
   const base = await baseOf(groupId);
-  const patch = wholeEntity(expenseContent({ ...existing, ...changes }, base));
+  const kept = liveIds(existing.attachmentIds);
+  const pictured = photo ? await photoOps(groupId, expenseId, kept, photo, now) : undefined;
+  const patch = wholeEntity(expenseContent({
+    ...existing, ...changes, ...(pictured ? { attachmentIds: pictured.attachmentIds } : {}),
+  }, base));
 
   // A save that moved nothing is a revision saying nothing happened — compared
   // against the stored split made canonical too.
   const held = { ...existing, split: canonicalSplit(existing.split), splitTab: partsBesideBill(existing) };
   if (!movesAnything(held, patch)) return;
-  await write(groupId, actor, [
-    { entity: "expense", entityId: expenseId, kind: "update", patch },
-  ]);
+  try {
+    await write(groupId, actor, [
+      ...(pictured?.drafts ?? []),
+      { entity: "expense", entityId: expenseId, kind: "update", patch },
+    ], now);
+  } catch (err) {
+    await unkeep(photo, kept);
+    throw err;
+  }
+  await dropPhotos(groupId, pictured?.dropped ?? []);
 }
 
 export async function deleteExpense(

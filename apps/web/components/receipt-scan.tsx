@@ -87,7 +87,7 @@ export function useReceiptScan(
   latestScanAs.current = scanAs;
 
   const read = useCallback(async (
-    send: (sender: ScanAs, currency: string) => Promise<ScanResult>,
+    send: (sender: ScanAs, currency: string, keep: (jpegBase64: string) => void) => Promise<ScanResult>,
   ) => {
     if (!groupId || !latestScanAs.current) return;
     const current = getDraft(groupId);
@@ -97,7 +97,8 @@ export function useReceiptScan(
     try {
       const sender = latestScanAs.current;
       await sender.prepare?.();
-      const result = await send(sender, current.currency);
+      let photo: string | null = null;
+      const result = await send(sender, current.currency, (jpeg) => { photo = `data:image/jpeg;base64,${jpeg}`; });
       const currency = scanCurrency(result, current.currency);
       const patch = normalizeScan(result, currency, Date.now());
       // Not the raw result: a negative line is a discount, not something to tick.
@@ -141,6 +142,8 @@ export function useReceiptScan(
         receiptInvolved: null,
         receiptAssignments: null,
         ...(scanTab !== undefined ? { splitTab: scanTab } : {}),
+        // The photo that was read, never one kept from an older bill.
+        receiptPhoto: photo,
       }));
       if (receiptItems.length > 0) landScan(groupId); else clearScan(groupId);
       if (onScreen.current) latestOnScanned.current?.();
@@ -153,7 +156,7 @@ export function useReceiptScan(
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    await read((sender, currency) => scanReceipt(file, sender.id, sender.secret, currency));
+    await read((sender, currency, keep) => scanReceipt(file, sender.id, sender.secret, currency, keep));
   }, [read]);
 
   const said = live?.state === "error" ? live.error ?? copy.scan.failed : null;

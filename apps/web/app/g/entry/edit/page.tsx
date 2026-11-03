@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import {
-  latestRate, minorToDecimalString, receiptOf, settleRest,
+  latestRate, minorToDecimalString, newId, receiptOf, settleRest,
   type ArithmeticSplit, type Group, type RateSource,
 } from "@bida/core";
 import { FieldLabel, You } from "@/components/bits";
 import { AmountInput, clipAmountToCurrency } from "@/components/amount-input";
 import { useReceiptScan } from "@/components/receipt-scan";
+import { PhotoThumb } from "@/components/receipt-photo";
+import { keptJpeg, usePhoto } from "@/lib/db/photos";
 import { useScanAs } from "@/lib/scan/credential";
 import { SplitEditor } from "@/components/split-editor";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
@@ -19,7 +21,7 @@ import { RateChip, RateDialog } from "@/components/rate-dialog";
 import { Icon } from "@/components/icons";
 import { TransferSides } from "@/components/transfer-sides";
 import {
-  addExpense, editExpense, editSettlement, recordSettlement,
+  addExpense, editExpense, editSettlement, recordSettlement, type PhotoChange,
 } from "@/lib/db/commands";
 import { ENTRY_KINDS, type EntryKind } from "@/lib/entry-kind";
 import { copy } from "@/lib/copy";
@@ -74,7 +76,10 @@ function EditEntryScreen() {
     if (entryId) {
       const e = data.expenses.find((x) => x.id === entryId);
       const s = e ? undefined : data.settlements.find((x) => x.id === entryId);
-      const seeded = e ? expenseDraft(e, me, members) : s ? transferDraft(s, me, members) : undefined;
+      // The kept photo stands ticked: reopening an entry never loses one by accident.
+      const kept = e?.attachmentIds?.[0];
+      const seeded = e ? { ...expenseDraft(e, me, members), ...(kept ? { keptPhotoId: kept, keepPhoto: true } : {}) }
+        : s ? transferDraft(s, me, members) : undefined;
       if (seeded) seedDraft(groupId, seeded, seedKey);
       return;
     }
@@ -141,6 +146,17 @@ function EditEntryScreen() {
   );
 }
 
+/**
+ * What the save does to the kept photo (docs/photos.md#saving-and-rescanning): a photo
+ * just read and ticked replaces whatever was kept; unticked, or an income,
+ * keeps none; a kept one still ticked is left alone.
+ */
+function photoChange(draft: EntryDraft, canScan: boolean): PhotoChange | undefined {
+  if (!canScan || !draft.keepPhoto) return draft.entryId ? { drop: true } : undefined;
+  if (draft.receiptPhoto) return { keep: { id: newId(), ...keptJpeg(draft.receiptPhoto) } };
+  return undefined;
+}
+
 function EntryForm({ groupId, group, data, draft, via, leaving }: {
   groupId: string;
   group: Group;
@@ -153,6 +169,9 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
   const router = useRouter();
   usePrefetch([route.payers(groupId), route.bill(groupId, via)]);
   const scan = useReceiptScan(groupId, useScanAs(groupId), undefined, route.bill(groupId, via));
+  // The photo just read, else the one the entry keeps (fetched if this phone lacks it).
+  const keptPhoto = usePhoto(groupId, draft.receiptPhoto ? undefined : draft.keptPhotoId ?? undefined);
+  const shownPhoto = draft.receiptPhoto ? { src: draft.receiptPhoto } : keptPhoto;
   const saveTo = formParent(groupId, draft.entryId, via);
   const base = group.baseCurrency;
   const kind = draft.kind;
@@ -307,9 +326,10 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
           // scan.
           ...receiptOf(canScan ? draft : {}),
         };
-        if (draft.entryId) await editExpense(groupId, actor, draft.entryId, input);
+        const photo = photoChange(draft, canScan);
+        if (draft.entryId) await editExpense(groupId, actor, draft.entryId, input, photo);
         // The id the split was quoted with, so the cent shown is the cent kept.
-        else wrote = await addExpense(groupId, actor, input, Date.now(), draft.newEntryId);
+        else wrote = await addExpense(groupId, actor, input, Date.now(), draft.newEntryId, photo);
       }
       if (wrote && sameScreen(saveTo, route.group(groupId))) markSaved(groupId, wrote);
       leaving.current = true;
@@ -467,6 +487,19 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                 onChange={(e) => patch(retimed(draft, withDate(draft.occurredAt, e.target.value)))} />
               <Icon name="calendar" size={18} className="pchev datemark" />
             </div>
+
+            {/* Only once a photo was read, and kept only by asking. */}
+            {canScan && shownPhoto ? (
+              <div className="field photofield">
+                <span className="fieldlabel">{copy.photo.label}</span>
+                <PhotoThumb src={shownPhoto.src} />
+                <button type="button" className="pick" role="checkbox" aria-checked={draft.keepPhoto === true}
+                  onClick={() => patch({ keepPhoto: !(getDraft(groupId) ?? draft).keepPhoto })}>
+                  <span className="ptext">{copy.photo.keep}</span>
+                  <Icon name={draft.keepPhoto ? "boxed" : "box"} size={18} className="pchev" />
+                </button>
+              </div>
+            ) : null}
           </div>
           </div>
           </div>

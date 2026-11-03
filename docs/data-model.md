@@ -45,8 +45,8 @@ Group      { id, name, baseCurrency, createdAt, archivedAt?, importedFrom? }
 Member     { id, groupId, name, colorSeed, deletedAt? }
 Settlement { id, groupId, fromMember, toMember, amountMinor, currency,
              rateToBase, baseAmountMinor, rateSource?, occurredAt, createdAt?, note?, deletedAt? }
-Attachment { id, groupId, expenseId, r2Key, mime, bytes, width, height,
-             uploadState: 'local'|'uploading'|'uploaded', createdAt }
+Attachment { id, groupId, expenseId, mime, bytes, width?, height?, createdAt,
+             deletedAt? }  // a kept photo; its bytes are in R2 (photos.md)
 Identity   { id /* the device's HLC node id */, groupId, memberId, claimedAt,
              push? /* { endpoint, p256dh, auth, scope? } | null */ }
 ExchangeRate { id /* the ISO 4217 code — the currency IS the entity */, groupId,
@@ -73,8 +73,8 @@ Expense {
   payers?,            // memberId -> minor units in THIS expense's currency,
                       // summing to amountMinor. Absent = one payer (ADR-0010)
   split: { mode: 'equal' | 'exact' | 'shares' | 'receipt', ... },
-  attachmentIds?,     // absent when there are none, which is every
-                      // expense today: nothing appends an attachment op yet
+  attachmentIds?,     // [the kept photo's attachment id], or absent/null
+                      // for none — at most one (photos.md)
   receiptItems?, receiptTip?, receiptCharges?, receiptDiscounts?,
   receiptInvolved?, receiptAssignments?,
                       // the parsed bill behind a `receipt` split, kept so the
@@ -183,9 +183,9 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
 - A settlement (a **transfer**) is structurally separate from an expense so it
   never pollutes "how much did the trip cost". So is income, which is counted in
   `totalIncomeMinor` and never netted into `totalSpendMinor`.
-- `Attachment` is a seam, not a feature: nothing appends one, there is no
-  bucket, and `attachmentIds` is absent on every expense
-  ([product.md](product.md#deliberately-not-in-the-mvp)).
+- An `Attachment` is a kept receipt photo: the op says it exists, R2 holds it
+  sealed, and its ops are quiet in the history, which narrates the entry's
+  `attachmentIds` instead ([photos.md](photos.md)).
 - **Identity is one row per device**, keyed by the node id ending every HLC that
   device stamped. Claims are ops
   ([ADR-0003](decisions/0003-link-only-access.md)); the device's own
@@ -347,9 +347,15 @@ because every window it answers is an hour or a day, and nothing in it says
 what was photographed — only that somebody spent a call
 ([scan-worker.md](scan-worker.md#what-the-scan-costs)).
 
-There is no `attachments` table: attachments are not built
-([product.md](product.md#deliberately-not-in-the-mvp)), and an encrypted one
-would want its own columns.
+`photos` and `photo_usage` (`0006`) are the index of R2's sealed photos and
+the budget that keeps the bucket free — [photos.md](photos.md#the-budget).
+
+```sql
+CREATE TABLE photos (group_id TEXT, id TEXT, bytes INTEGER, created_at INTEGER,
+  PRIMARY KEY (group_id, id)) WITHOUT ROWID;   -- one row per object in R2
+CREATE TABLE photo_usage (key TEXT PRIMARY KEY, value INTEGER) WITHOUT ROWID;
+                                     -- 'stored' bytes, 'writes:YYYY-MM' uploads
+```
 
 ## IndexedDB (Dexie)
 
@@ -362,6 +368,7 @@ would want its own columns.
 | `device` | key | who "you" are, theme, HLC state, whether the install nudge is folded, and the ids of groups known to be deleted |
 | `groupKeys` | `groupId` | the invite secret and sync cursor. Never an op, and never derived-from on disk — [ADR-0003](decisions/0003-link-only-access.md) |
 | `notices` | `id` | push notifications waiting for their ops to land, device-local like `groupKeys` — [notifications.md](notifications.md#how-it-works) |
+| `photos` | `id` | a kept photo's JPEG and what it owes the server, device-local — [photos.md](photos.md#sync) |
 
 **v8 declares all of it but `notices`**, which v9 adds with no upgrade;
 earlier versions are collapsed away. The v8 upgrade does one thing — re-arm every op as pending and reset each sync

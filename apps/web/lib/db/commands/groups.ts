@@ -129,7 +129,7 @@ async function erase(groupId: Id, deleted: boolean): Promise<boolean> {
   const d = db();
   const gone = await d.transaction("rw", [
     d.ops, d.groups, d.members, d.expenses, d.settlements,
-    d.attachments, d.identities, d.rates, d.groupKeys, d.notices, d.device,
+    d.attachments, d.identities, d.rates, d.groupKeys, d.notices, d.device, d.photos,
   ], async () => {
     if (!deleted) {
       const [device, queued] = await Promise.all([
@@ -149,6 +149,7 @@ async function erase(groupId: Id, deleted: boolean): Promise<boolean> {
       d.groups.delete(groupId),
       d.groupKeys.delete(groupId),
       d.notices.where("groupId").equals(groupId).delete(),
+      d.photos.where("groupId").equals(groupId).delete(),
     ]);
     return true;
   });

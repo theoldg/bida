@@ -3,7 +3,9 @@ import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 
 /** `0002` is the scan budget, which no store test reads. */
-const MIGRATIONS = ["0001_init.sql", "0003_group_tombstone.sql", "0004_op_batches.sql", "0005_splits.sql"];
+const MIGRATIONS = [
+  "0001_init.sql", "0003_group_tombstone.sql", "0004_op_batches.sql", "0005_splits.sql", "0006_photos.sql",
+];
 
 type Row = Record<string, unknown>;
 

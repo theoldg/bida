@@ -49,6 +49,8 @@ server is now what holds confidentiality rather than just access.
   a notification, the endpoint it goes to, never stored
   ([0037](0037-a-notification-is-sealed-by-the-phone-that-caused-it.md)).
   Metadata is the price of a server that can route at all.
+- **A kept photo is sealed like an op**, under the same content key
+  ([photos.md](../photos.md)); the server learns its size and when it came.
 - **A receipt still leaves in the clear** — the scan is a passthrough to Gemini
   and the photograph is the thing being read
   ([scan-worker.md](../scan-worker.md#trust-and-what-were-accepting)). The about screen says so.

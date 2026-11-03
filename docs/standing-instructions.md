@@ -110,9 +110,6 @@ to remove more from this list than you add.
   should have transfers, expenses and incomes like tricount. reimbursements
   should be a transfer, and everything should be editable."
   [ADR-0010](decisions/0010-what-an-entry-is.md).
-- **PWA icons are in scope; receipt photo hosting is not.** *2026-08-27* —
-  "what I don't need for the mvp is the hosting of images attached to expenses.
-  I'm okay with the app being text only for now."
 - **Don't make a feature of the odd cent.** *2026-08-27* — "don't highlight cent
   splits, that's the wrong vibe. just draw people at random every time and have
   that be a quiet easter egg." The rotation is deterministic and rendered

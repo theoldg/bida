@@ -30,7 +30,8 @@ ledger you cannot take elsewhere is a ledger somebody else owns.
    read only ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).
 2. **A receipt reads itself into the form.** Photograph a bill and it fills the
    expense, line items and all ([ADR-0016](decisions/0016-receipts.md)). The
-   photo is read and thrown away.
+   photo is thrown away unless you tick Keep, and then every phone in the
+   group can see it, sealed like the rest ([photos.md](photos.md)).
 3. **A personal lens, always on.** The app reads as *your* ledger: what each
    row did to your balance, signed and coloured; rows you're not in faded back;
    your net on top ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
@@ -89,7 +90,6 @@ Leave the seam. Build none of it.
 | Recurring expenses | A generator that appends ops on a schedule; no schema change |
 | Real-time collaboration | Swap polling for a Durable Object; the op log is already the wire format |
 | Spend analytics | All derivable from the fold |
-| Storing receipt photos | `attachment` is a real entity with its own op kind, folded and materialised, and `attachmentIds` is on the expense — nothing appends one. Add an R2 bucket and the upload behind `uploadState` ([ADR-0001](decisions/0001-cloudflare-workers-and-d1.md)) |
 | Categories | `categoryId` is on the entry, diffed by the command layer and reported by history. What's missing is a picker, and a decision about what the categories are |
 
 ## Principles

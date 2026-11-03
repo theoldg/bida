@@ -696,6 +696,14 @@ export const pl: Copy = {
 
   // ------------------------------------------------------------- receipts
 
+  photo: {
+    label: "???",
+    keep: "???",
+    view: "???",
+    waiting: "???",
+    title: "???",
+  },
+
   scan: {
     title: "Zeskanuj paragon",
     diagram: {
@@ -902,6 +910,7 @@ export const pl: Copy = {
     changedDate: () => "???",
     changedCategory: () => "???",
     changedPhotos: () => "???",
+    replacedPhoto: () => "???",
     newDevice: () => "???",
     became: () => "???",
     recordedTransfer: () => "???",

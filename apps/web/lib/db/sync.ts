@@ -1,6 +1,6 @@
 import {
-  MAX_DRIFT_MS, SealError, createHlcState, encryptPush, hlcReceive, isAhead, openOp, parseHlc,
-  chunk, sealOp, toBase64,
+  MAX_DRIFT_MS, SealError, createHlcState, encryptPush, fromBase64, hlcReceive, isAhead, openOp, openPhoto,
+  parseHlc, chunk, sealOp, sealPhoto, toBase64,
   type GroupCrypto, type Op, type SealedOp,
 } from "@bida/core";
 import { keepNote, started } from "../diag";
@@ -9,7 +9,7 @@ import { pushMessages } from "../notify-copy";
 import { groupCrypto } from "../seal";
 import { dropForgotten, eraseGroupLocally } from "./commands/groups";
 import { getDevice } from "./device";
-import { db, type StoredOp, type Unreadable } from "./dexie";
+import { db, type StoredOp, type StoredPhoto, type Unreadable } from "./dexie";
 import { VERSION } from "../version";
 import { groupState, rebuild } from "./fold";
 import { whenVisible } from "./visible";
@@ -364,6 +364,12 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     pulledCount += pulled.length;
   }
 
+  // After the ops: the push registers a new group, and a photo is useless
+  // without the op naming it. Never fails the sync — the ledger doesn't wait
+  // on a picture.
+  await syncPhotos(groupId, key.secret, pulledCount > 0)
+    .catch((err: unknown) => keepNote("photos", errorText(err)));
+
   await leaveCursor(groupId, key.secret, since).catch((err: unknown) => keepNote("stash", errorText(err)));
 
   // Only now: a notification about an op still on this phone would open to
@@ -388,6 +394,124 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   return { pushed, pulled: pulledCount };
 }
 
+
+// ------------------------------------------------------------- kept photos
+
+const photoUrl = (groupId: string, photoId: string) =>
+  `/api/groups/${encodeURIComponent(groupId)}/photos/${encodeURIComponent(photoId)}`;
+
+const HOUR = 3_600_000;
+/** A full month, a full group or a full bucket lifts slowly; a server without photos sooner. */
+const RETRY_AFTER: Record<number, number> = { 503: HOUR, 507: 6 * HOUR };
+
+/**
+ * Upload what this phone kept, drop what it gave up, and forget photos other
+ * phones dropped. Sealed here, beside the ops, for the same reason
+ * (docs/photos.md): the plaintext never leaves this file.
+ */
+async function syncPhotos(groupId: string, secret: string, pulled: boolean): Promise<void> {
+  const d = db();
+  const now = Date.now();
+  const due = (await d.photos.where("[groupId+state]").anyOf([[groupId, "upload"], [groupId, "delete"]]).toArray())
+    .filter((p) => !p.stuck && (p.retryAt ?? 0) <= now)
+    // A replacement lands before the photo it replaces goes.
+    .sort((a, b) => (a.state === b.state ? 0 : a.state === "upload" ? -1 : 1));
+  if (due.length > 0) {
+    const crypto = await groupCrypto(groupId, secret);
+    for (const photo of due) {
+      if (!(await sendPhoto(crypto, photo))) break;
+    }
+  }
+  // Keys only: a held row carries its photo, and there may be hundreds.
+  if (pulled) {
+    const held = await d.photos.where("[groupId+state]").equals([groupId, "held"]).primaryKeys();
+    const records = await d.attachments.bulkGet(held);
+    const gone = held.filter((_, i) => records[i]?.deletedAt);
+    if (gone.length > 0) await d.photos.bulkDelete(gone);
+  }
+}
+
+/** False when the server can't be reached, or the group is gone: the rest waits too. */
+async function sendPhoto(crypto: GroupCrypto, photo: StoredPhoto): Promise<boolean> {
+  const d = db();
+  const upload = photo.state === "upload";
+  const bytes = upload && photo.jpeg ? fromBase64(photo.jpeg) : null;
+  if (upload && !bytes) {
+    await d.photos.update(photo.id, { stuck: true });
+    return true;
+  }
+  const done = started("photo", upload ? "up" : "drop");
+  let res: Response;
+  try {
+    res = await fetch(photoUrl(photo.groupId, photo.id), {
+      method: upload ? "PUT" : "DELETE",
+      headers: {
+        Authorization: `Bearer ${crypto.token}`,
+        ...(upload ? { "Content-Type": "application/octet-stream" } : {}),
+      },
+      body: bytes ? new Blob([await sealPhoto(crypto, photo.groupId, photo.id, bytes) as BlobPart]) : undefined,
+      signal: AbortSignal.timeout(SYNC_PATIENCE_MS),
+    });
+  } catch {
+    done("failed");
+    return false;
+  }
+  done(String(res.status));
+  if (res.status === 410) return false;
+  if (res.ok || (!upload && res.status === 404)) {
+    if (upload) await d.photos.update(photo.id, { state: "held", retryAt: undefined });
+    else await d.photos.delete(photo.id);
+  } else if (RETRY_AFTER[res.status]) {
+    await d.photos.update(photo.id, { retryAt: Date.now() + RETRY_AFTER[res.status]! });
+  } else if (upload && (res.status === 413 || res.status === 400)) {
+    // Refused for what it is, not for when: it stays on this phone.
+    await d.photos.update(photo.id, { stuck: true });
+  }
+  return true;
+}
+
+/** A photo a moment ago not found isn't asked for again on every render. */
+const MISS_MS = 60_000;
+const fetching = new Map<string, Promise<void>>();
+const missed = new Map<string, number>();
+
+/**
+ * Another phone's kept photo, fetched, opened and kept here. Single-flight per
+ * photo; a 404 (not uploaded yet) waits a minute before asking again.
+ */
+export function fetchPhoto(groupId: string, photoId: string): Promise<void> {
+  if ((missed.get(photoId) ?? 0) > Date.now()) return Promise.resolve();
+  let run = fetching.get(photoId);
+  if (!run) {
+    run = fetchPhotoOnce(groupId, photoId)
+      .catch((err: unknown) => {
+        missed.set(photoId, Date.now() + MISS_MS);
+        keepNote("photo", errorText(err));
+      })
+      .finally(() => fetching.delete(photoId));
+    fetching.set(photoId, run);
+  }
+  return run;
+}
+
+async function fetchPhotoOnce(groupId: string, photoId: string): Promise<void> {
+  const d = db();
+  // The demo, or a group this phone only remembers: nothing to ask with.
+  const key = await d.groupKeys.get(groupId);
+  if (!key) return;
+  const crypto = await groupCrypto(groupId, key.secret);
+  const res = await fetch(photoUrl(groupId, photoId), {
+    headers: { Authorization: `Bearer ${crypto.token}` },
+    signal: AbortSignal.timeout(SYNC_PATIENCE_MS),
+  });
+  if (!res.ok) throw new SyncHttpError(res.status, "");
+  const jpeg = await openPhoto(crypto, groupId, photoId, new Uint8Array(await res.arrayBuffer()));
+  await d.transaction("rw", [d.photos, d.groupKeys], async () => {
+    // Erased, or dropped here, while the request was out.
+    if (!(await d.groupKeys.get(groupId)) || (await d.photos.get(photoId))) return;
+    await d.photos.put({ id: photoId, groupId, jpeg: toBase64(jpeg), state: "held" });
+  });
+}
 
 const healedThisSession = new Set<string>();
 

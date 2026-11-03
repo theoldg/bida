@@ -3,7 +3,7 @@
  * docs/drive.md.
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { ROOT, ensureBuild, serveWorker, launch, newPhone } from "./lib/harness.mjs";
 import { PHOTO, receiptList, stubScan } from "./lib/receipts.mjs";
 
@@ -459,13 +459,16 @@ async function start() {
           return say(["this phone scans for real again — which needs a key it hasn't got"]);
         }
         const fixture = await stubScan(page, args[0]);
-        if (!phones.get(who).chooser) {
-          const answer = (chooser) => chooser
-            .setFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO })
-            .catch(() => { /* the page moved on; the next press arms again */ });
-          phones.get(who).chooser = answer;
-          page.on("filechooser", answer);
-        }
+        // A real photo, when one is named, so the crop and what an entry keeps can be looked at.
+        const photo = args[1]
+          ? { name: basename(args[1]), mimeType: args[1].endsWith(".png") ? "image/png" : "image/jpeg",
+            buffer: readFileSync(args[1].startsWith("/") ? args[1] : join(ROOT, args[1])) }
+          : { name: "receipt.png", mimeType: "image/png", buffer: PHOTO };
+        if (phones.get(who).chooser) page.off("filechooser", phones.get(who).chooser);
+        const answer = (chooser) => chooser.setFiles(photo)
+          .catch(() => { /* the page moved on; the next press arms again */ });
+        phones.get(who).chooser = answer;
+        page.on("filechooser", answer);
         return say([
           `the next bill this phone reads answers as "${args[0]}" (${fixture.exercises}) — ${fixture.note}`,
           "press the app's own scan or upload button; a scan is a round trip, so read the screen again if it is still working",

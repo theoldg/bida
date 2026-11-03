@@ -1,7 +1,7 @@
 // Doc: docs/hosting.md
 import { Hono, type Context } from "hono";
 import {
-  VERTEX_URL, isCurrencyCode, rateFromNumber, validateSealedOp, SealError, type SealedOp,
+  MAX_PHOTO_SEALED, VERTEX_URL, isCurrencyCode, rateFromNumber, validateSealedOp, SealError, type SealedOp,
 } from "@bida/core";
 import { bearerToken, sha256Hex } from "./auth";
 import {
@@ -19,6 +19,9 @@ import {
 } from "./store";
 import { parseNotify, relay } from "./relay";
 import { MAX_SPLIT_SEALED, deleteSplit, getSplit, isSplitId, putSplit } from "./splits";
+import {
+  PHOTO_BUDGETS, commitPhoto, deleteGroupPhotos, deletePhoto, giveBack, isPhotoId, photoKey, reservePhoto,
+} from "./photos";
 
 /** Ops arrive and leave sealed; nothing here can read one (ADR-0036). */
 type Env = {
@@ -31,6 +34,8 @@ type Env = {
     BIDA_ENV?: string;
     VAPID_PUBLIC_KEY?: string;
     VAPID_PRIVATE_KEY?: string;
+    /** Absent on a Worker deployed without the bucket: photos answer 503, nothing else notices. */
+    PHOTOS?: R2Bucket;
   };
 };
 
@@ -304,7 +309,99 @@ app.delete("/api/groups/:id", async (c) => {
   const group = await authorizedGroup(c, groupId);
   if (group instanceof Response) return group;
 
+  // Before the tombstone: after it, nothing could ask again. A Worker from
+  // before the photo tables still deletes the group.
+  await deleteGroupPhotos(c.env.DB, c.env.PHOTOS, groupId).catch((err: unknown) => {
+    if (!missingTable(err)) throw err;
+  });
   await deleteGroup(c.env.DB, groupId, Date.now());
+  return c.json({ deleted: true });
+});
+
+// ------------------------------------------------------------- kept photos
+
+/** docs/photos.md: why each refusal is the one it is, and what the phone does. */
+const PHOTOS_OFF = { error: "this server keeps no photos", scope: "off" } as const;
+
+/** The migration not yet applied: photos off, not a 500. */
+function missingTable(err: unknown): boolean {
+  return err instanceof Error && /no such table/i.test(err.message);
+}
+
+async function photoRoute(
+  c: Context<Env>,
+): Promise<{ bucket: R2Bucket; groupId: string; photoId: string } | Response> {
+  const groupId = c.req.param("id") ?? "";
+  const photoId = c.req.param("photo") ?? "";
+  if (!isPhotoId(photoId)) return c.json({ error: "not a photo id" }, 400);
+  const group = await authorizedGroup(c, groupId);
+  if (group instanceof Response) return group;
+  const bucket = c.env.PHOTOS;
+  if (!bucket) return c.json(PHOTOS_OFF, 503);
+  return { bucket, groupId, photoId };
+}
+
+/** The body is the sealed photo itself, not JSON: a third smaller than base64. */
+app.put("/api/groups/:id/photos/:photo", async (c) => {
+  const route = await photoRoute(c);
+  if (route instanceof Response) return route;
+  const { bucket, groupId, photoId } = route;
+
+  const declared = Number(c.req.header("content-length") ?? NaN);
+  if (!Number.isFinite(declared)) return c.json({ error: "content-length required" }, 411);
+  if (declared > MAX_PHOTO_SEALED) return c.json({ error: "photo too large" }, 413);
+  const body = new Uint8Array(await c.req.arrayBuffer());
+  if (body.length > MAX_PHOTO_SEALED) return c.json({ error: "photo too large" }, 413);
+  if (body.length < 32) return c.json({ error: "not a sealed photo" }, 400);
+
+  const now = Date.now();
+  const budget = c.env.BIDA_ENV === "dev" ? PHOTO_BUDGETS.dev : PHOTO_BUDGETS.production;
+  let booked;
+  try {
+    booked = await reservePhoto(c.env.DB, groupId, photoId, body.length, budget, now);
+  } catch (err) {
+    if (missingTable(err)) return c.json(PHOTOS_OFF, 503);
+    throw err;
+  }
+  if (booked === "held") return c.json({ stored: true });
+  if (booked === "group full") return c.json({ error: "this group's photos are full", scope: "group" }, 507);
+  if (booked === "storage full") return c.json({ error: "photo storage is full", scope: "storage" }, 507);
+  if (booked === "month spent") return c.json({ error: "no more photos this month", scope: "month" }, 507);
+
+  try {
+    await bucket.put(photoKey(groupId, photoId), body);
+  } catch (err) {
+    await giveBack(c.env.DB, body.length);
+    throw err;
+  }
+  await commitPhoto(c.env.DB, groupId, photoId, body.length, now);
+  return c.json({ stored: true });
+});
+
+/** Ciphertext, and never different under one id: the phone keeps it, so caching costs nothing. */
+app.get("/api/groups/:id/photos/:photo", async (c) => {
+  const route = await photoRoute(c);
+  if (route instanceof Response) return route;
+  const object = await route.bucket.get(photoKey(route.groupId, route.photoId));
+  if (!object) return c.json({ error: "no such photo" }, 404);
+  return new Response(object.body, {
+    headers: {
+      "content-type": "application/octet-stream",
+      "cache-control": "private, max-age=31536000, immutable",
+    },
+  });
+});
+
+/** Idempotent, and free in R2: a phone that lost the answer asks again. */
+app.delete("/api/groups/:id/photos/:photo", async (c) => {
+  const route = await photoRoute(c);
+  if (route instanceof Response) return route;
+  try {
+    await deletePhoto(c.env.DB, route.bucket, route.groupId, route.photoId);
+  } catch (err) {
+    if (missingTable(err)) return c.json(PHOTOS_OFF, 503);
+    throw err;
+  }
   return c.json({ deleted: true });
 });
 

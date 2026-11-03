@@ -7,7 +7,7 @@
 import type { AmountTap } from "../lib/tap-amount";
 
 export type IconName =
-  | "chev" | "updown" | "calendar" | "back" | "plus" | "minus" | "cross" | "cam" | "off" | "check" | "clock"
+  | "chev" | "updown" | "calendar" | "back" | "plus" | "minus" | "cross" | "cam" | "off" | "check" | "box" | "boxed" | "clock"
   | "users" | "arrow" | "sync" | "trash" | "edit" | "link"
   | "image" | "split" | "merge" | "share" | "import" | "sun" | "moon" | "more" | "info"
   | "mail" | "copy" | "dollar" | "sliders" | "translate" | "search" | "bell" | "bell-off" | "bells";

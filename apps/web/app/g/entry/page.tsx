@@ -12,6 +12,8 @@ import {
 import { Card, Eyebrow, KV, You, signClass } from "@/components/bits";
 import { FitLine, FitTitle } from "@/components/fit-line";
 import { MemberBill } from "@/components/member-bill";
+import { PhotoThumb } from "@/components/receipt-photo";
+import { usePhoto } from "@/lib/db/photos";
 import { SideName } from "@/components/transfer-sides";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { Icon } from "@/components/icons";
@@ -130,6 +132,7 @@ function EntryScreen() {
       lastDelete: ops.filter((o) => o.kind === "delete").at(-1),
     };
   }, [entryId]);
+  const photo = usePhoto(groupId ?? undefined, expense?.attachmentIds?.[0]);
 
   if (!groupId) return <BadLink />;
   if (data.loading || unclaimed) return <Blank back={parent} />;
@@ -213,7 +216,9 @@ function EntryScreen() {
           {/* The screen is the form at rest. A transfer's head stays bare above
               its card. */}
           <div className="pad" style={{ paddingTop: 2, paddingBottom: expense ? 0 : undefined }}>
-          <div className={expense ? "card entryhead" : "entryhead"}>
+          <div className={`${expense ? "card entryhead" : "entryhead"}${photo ? " withphoto" : ""}`}>
+            {/* Beside the title and the figure, the bill they were read off. */}
+            {photo ? <PhotoThumb src={photo.src} className="entryphoto" /> : null}
             {/* The bar already says "Expense". */}
             {title ? (
               <FitTitle className="entrytitle" text={title} sizes={ENTRY_TITLE_SIZES} />

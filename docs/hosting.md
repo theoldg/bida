@@ -10,11 +10,11 @@ Decision and rejected alternatives:
 |---|---|---|
 | **Workers** | Serves the static app *and* the API from one script | 100k req/day, 10 ms CPU per invocation |
 | **D1** | The op log (SQLite), sealed | 500 MB per database (5 GB account total), 5M row reads/day, 100k writes/day |
+| **R2** | Kept receipt photos, sealed (`hajsik-photos`, dev `hajsik-photos-dev`) | 10 GB stored, 1M writes and 10M reads a month — per account, **billed past it**, so the Worker budgets it ([photos.md](photos.md#the-budget)) |
 | Static Assets · custom domain | The Next.js export · a nice URL | included · free with DNS on Cloudflare |
 
 We expect a few hundred requests/day and thousands of rows, ever. (Limits
-verified 2026-08-30; re-check, free tiers move.) Nothing is stored outside D1;
-receipt photos are not kept
+verified 2026-08-30; re-check, free tiers move.) Nothing but kept photos is stored outside D1
 ([ADR-0001](decisions/0001-cloudflare-workers-and-d1.md)).
 
 The one endpoint that spends actual money is the scan, and its budget is
@@ -24,12 +24,14 @@ The one endpoint that spends actual money is the scan, and its budget is
 advertised to users online, and its traffic is strangers' — so every ceiling on
 this page is a threat surface and not only a capacity estimate. The numbers
 above are what a *few hundred honest requests* need; what matters is what one
-unfriendly caller can spend of them. Three endpoints take a body and are
+unfriendly caller can spend of them. Four endpoints take a body and are
 therefore the ones to reason about: the scan, which has a budget; the push,
 which has ceilings on one request and, by decision rather than by oversight,
-no counter across many ([sync.md](sync.md#the-push-has-a-ceiling)); and a quick
+no counter across many ([sync.md](sync.md#the-push-has-a-ceiling)); a quick
 split's link, one row per write under the push's per-op ceiling and the same
-decision ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)). The public repo also makes both
+decision ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md));
+and a kept photo, under global ceilings and one per group
+([photos.md](photos.md#the-budget)). The public repo also makes both
 shapes readable, so read the reasoning there before proposing the counter
 again.
 

@@ -65,8 +65,14 @@ export async function scanReceipt(
   secret: string,
   /** For a receipt that doesn't name its own. */
   currency: string,
+  /** Handed the straightened, cropped JPEG the model is sent — the photo an entry may keep. */
+  keep?: (jpegBase64: string) => void,
 ): Promise<ScanResult> {
-  return readBill(() => downscaleToBase64Jpeg(photo), groupId, secret, currency);
+  return readBill(async () => {
+    const jpeg = await downscaleToBase64Jpeg(photo);
+    keep?.(jpeg);
+    return jpeg;
+  }, groupId, secret, currency);
 }
 
 /** Everything downstream may assume the answer adds up. */

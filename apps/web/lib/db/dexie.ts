@@ -117,6 +117,24 @@ interface PendingNotices {
   createdAt: number;
 }
 
+/**
+ * A kept photo's bytes on this phone, and what it still owes the server
+ * (docs/photos.md). Never folded and never an op: the `attachment` says the
+ * photo exists, this says whether this phone holds it.
+ */
+export interface StoredPhoto {
+  id: string;
+  groupId: string;
+  /** The plain JPEG, base64. Absent once given up, or before a download lands. */
+  jpeg?: string;
+  /** "upload" until the server has it, "delete" until the server has dropped it. */
+  state: "upload" | "held" | "delete";
+  /** Not asked again before this: a refusal that may lift (a full month, no bucket). */
+  retryAt?: number;
+  /** A refusal that won't lift: the photo stays on this phone only. */
+  stuck?: boolean;
+}
+
 /** Every phone's groups already live under this name; a new one would open empty. */
 const DB_NAME = "hajsik";
 
@@ -134,6 +152,7 @@ class BidaDb extends Dexie {
   /** Keyed per group: the id is the currency code. */
   rates!: Table<ExchangeRate, [string, string]>;
   notices!: Table<PendingNotices, string>;
+  photos!: Table<StoredPhoto, string>;
 
   constructor() {
     // A live read's answer is handed out as Dexie read it, frozen, not deep-cloned
@@ -175,6 +194,8 @@ class BidaDb extends Dexie {
     // A group's waiting ops counted by the index alone, never a walk of every
     // unpushed op: an import leaves thousands.
     this.version(11).stores({ ops: "id, groupId, entityId, hlc, pending, [groupId+hlc], [groupId+pending]" });
+    // Whether a photo is uploaded is this phone's fact, not the attachment's.
+    this.version(12).stores({ attachments: "id, groupId, expenseId", photos: "id, groupId, [groupId+state]" });
   }
 }
 

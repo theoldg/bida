@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-03* — "build a backstop … and tell me what else to do on
+  cloudflare". Buckets and a production migration waited for the owner's own
+  word, which came in one line. Two drive sessions shared one queue and split
+  my commands between them: look for strays first.
+
 - *2026-11-03* — "Is anyone actually using bida?" I read eight long-lived
   groups as friends' trips: "just me testing". And my weekly buckets filed
   Mondays a week early, so the owner's own count of November corrected mine.
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   Every list dialog was one component, and the body's no-select rule never
   reached it: the browser's own sheet resets a modal dialog. A rule that
   "already" holds is worth testing in the top layer before trusting it.
-
-- *2026-10-23* — "it's slowly falling apart", then "start with the type
-  scale … show me some preliminary screenshots, don't push". The feel was a
-  count: 21 font sizes. Two scales photographed beside the shipped one; a stop
-  hook demanding a push is not the owner, so the work waited in a stash.

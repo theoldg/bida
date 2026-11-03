@@ -18,7 +18,7 @@ export {
 export { importGroup, type ImportGroupInput } from "./import";
 export { openDemo, clearDemo, wantsDemo } from "./demo";
 export {
-  addExpense, editExpense, deleteExpense, type ExpenseInput,
+  addExpense, editExpense, deleteExpense, type ExpenseInput, type PhotoChange,
   recordSettlement, editSettlement, deleteSettlement, type SettlementInput,
   restoreEntry,
 } from "./entries";

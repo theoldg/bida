@@ -923,6 +923,15 @@ const en = {
 
   // ------------------------------------------------------------- receipts
 
+  photo: {
+    /** The form's row, beside the miniature. */
+    label: "Photo",
+    keep: "Keep",
+    view: "View the photo",
+    waiting: "The photo is on its way",
+    title: "Receipt photo",
+  },
+
   scan: {
     title: "Scan a receipt",
     diagram: {
@@ -1156,6 +1165,7 @@ const en = {
     changedCategory: (who: string) => `${who} changed the category`,
     changedPhotos: (who: string, added: boolean, photos: string) =>
       `${who} ${added ? "added" : "removed"} ${photos}`,
+    replacedPhoto: (who: string) => `${who} replaced the photo`,
     newDevice: (who: string) => `${who} started editing from a new device`,
     became: (was: string, now: string) => `${was} became ${now}`,
     recordedTransfer: (who: string) => `${who} recorded a transfer`,

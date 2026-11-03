@@ -275,6 +275,54 @@ export async function openSplit(crypto: SplitCrypto, sealed: string): Promise<Sh
   return split;
 }
 
+// --------------------------------------------------------------- a kept photo
+
+/** A photo is already JPEG: sealed as it is, never deflated. */
+const PHOTO_RAW = 1;
+
+/**
+ * The sealed photo's ceiling, shared with the Worker, which refuses past it. A
+ * kept photo is the ≤1 MP JPEG the scan read, ~150 KB; this is room, not a target.
+ */
+export const MAX_PHOTO_SEALED = 512_000;
+
+/** The address is the AAD, so the server can't hand one photo out as another. */
+function photoAad(groupId: string, photoId: string): Uint8Array {
+  return utf8.encode(`photo\n${groupId}\n${photoId}`);
+}
+
+/** Under the group's content key: anybody with the link can open it, the server can't. */
+export async function sealPhoto(
+  crypto: GroupCrypto, groupId: string, photoId: string, jpeg: Uint8Array,
+): Promise<Uint8Array> {
+  const iv = getCrypto().getRandomValues(new Uint8Array(IV_BYTES));
+  const ct = await getCrypto().subtle.encrypt(
+    { name: "AES-GCM", iv, additionalData: photoAad(groupId, photoId) }, crypto.key, jpeg,
+  );
+  const packed = new Uint8Array(1 + IV_BYTES + ct.byteLength);
+  packed[0] = PHOTO_RAW;
+  packed.set(iv, 1);
+  packed.set(new Uint8Array(ct), 1 + IV_BYTES);
+  return packed;
+}
+
+/** The JPEG, or a `SealError` for anything that isn't this photo under this key. */
+export async function openPhoto(
+  crypto: GroupCrypto, groupId: string, photoId: string, packed: Uint8Array,
+): Promise<Uint8Array> {
+  if (packed.length <= 1 + IV_BYTES) throw new SealError("sealed photo is too short to be one");
+  if (packed[0] !== PHOTO_RAW) throw new SealError(`unknown photo seal version: ${packed[0]}`);
+  try {
+    return new Uint8Array(await getCrypto().subtle.decrypt(
+      { name: "AES-GCM", iv: packed.slice(1, 1 + IV_BYTES), additionalData: photoAad(groupId, photoId) },
+      crypto.key,
+      packed.slice(1 + IV_BYTES),
+    ));
+  } catch {
+    throw new SealError("sealed photo did not open — wrong key, or it was tampered with");
+  }
+}
+
 function aad(id: string, groupId: string): Uint8Array {
   return utf8.encode(`${id}\n${groupId}`);
 }

@@ -43,7 +43,7 @@ through `/new` costs a command per person ([below](#looking-at-one-screen)).
 | `offline on\|off` | cut this phone's network, or restore it |
 | `theme light\|dark` | the phone's colour scheme — every screen has both looks to get right |
 | `size <w> [h]` | the phone's screen, 390×844 until changed — 360 wide is the narrowest a layout has to hold, and the fold moves with the height |
-| `receipt <name>` · `receipt list` · `receipt off` | hand this phone a canned bill, so the next reading answers with it — a photograph or one typed in |
+| `receipt <name> [photo]` · `receipt list` · `receipt off` | hand this phone a canned bill, so the next reading answers with it — a photograph or one typed in; a photo path rides it in place of a 1×1 blank, for looking at the crop and the photo kept |
 | `clipboard` | read what the page copied — how the invite link travels |
 | `file <path>` | answer the next file chooser with a file from disk, once — how an export from Splitwise or anywhere else reaches **Import a group** |
 | `shot [name]` | save a screenshot to `.drive/shots/` — for what words can't settle: colour, crowding, where the eye lands |
