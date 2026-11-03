@@ -203,19 +203,24 @@ question to the same model:
 | **client** | 20/hour, 50/day | the address, HMAC'd. Loose enough for a table of friends behind one restaurant wifi |
 | **global** | 700/hour, 4300/day | the bill — sized to spend the Cloud credit over two months, against real use of tens of scans a day |
 
-**Measured, not estimated** (one real call through this envelope):
-a scan is ~2,740 input tokens — ~1,530 of prompt and schema, the rest the image
-— and a few hundred out. At `gemini-3.1-flash-lite`'s $0.25/$1.50 per million
-that is **about $11 per 10,000 scans**, and the day cap above is what spends the
-Cloud credit over roughly two months rather than anything derived from a price.
+**Measured, not estimated** (real calls through this envelope): a scan is
+~3,100 input tokens — ~2,000 of prompt and schema, the rest the image — and a
+few hundred out. At `gemini-3-flash-preview`'s $0.50/$3.00 per million that is
+**about $25 per 10,000 scans** (Flash-Lite's $0.25/$1.50, about $12), and the
+day cap above is what spends the Cloud credit rather than anything derived from
+a price.
 
-**Don't move `GEMINI_MODEL` down to save money.** The Flash-Lite line gets
-dearer each generation (2.5 at $0.10/$0.40, 3.1 at $0.25/$1.50), but 2.5 is too
-weak on real receipts, and on the feature whose whole job is reading numbers
-off paper a wrong total costs more than the model does.
+**The shared key reads with 3 Flash while the Cloud credit lasts** (to
+2026-12-18), with thinking at `minimal`: its default thinks for ~25s a bill.
+On the bench it accepts 124/150 reads against Flash-Lite's 118 at a median
+2.7s ([LOG.md](../scripts/scan-bench/LOG.md)). Once the credit is gone,
+`VERTEX_MODEL` goes back to `gemini-3.1-flash-lite`, and the tip below moves
+with it. **Never further down to save money:** Flash-Lite 2.5 is too weak on
+real receipts, and on the feature whose whole job is reading numbers off paper
+a wrong total costs more than the model does.
 
-The tip jar's **$5 ≈ 4,000 scans** (`TIP_USD_MINOR`, `web/lib/tip.ts`) is the
-measured figure rounded down — $5 buys more like 4,400. It understates on
+The tip jar's **$5 ≈ 2,000 scans** (`TIP_USD_MINOR`, `web/lib/tip.ts`) is the
+measured figure rounded down — $5 buys more like 2,040. It understates on
 purpose: a donation ask is the one screen that must not overstate what the
 money buys. It moves with the model; the day cap does not derive from it.
 
@@ -368,6 +373,6 @@ one an entry keeps is sealed on the phone first ([photos.md](photos.md)).
   still truncates a request Gemini has begun — harmless: it receives an
   unterminated JSON string, never the caller's bytes.
 - `gemini-2.5-flash` is **404 for new keys**, and Google's error names the
-  replacement. If `3.1-flash-lite` ever goes the same way, try the current
+  replacement. If either model ever goes the same way — `-preview` ones do, try the current
   `-latest` alias before assuming the free tier is gone. A 503 on the same key
   at the same moment is overload, not a verdict on the model.

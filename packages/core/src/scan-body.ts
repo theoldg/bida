@@ -4,18 +4,23 @@
  * the refusal paragraph.
  */
 
-/** Ours to move, never a caller's. */
-const GEMINI_MODEL = "gemini-3.1-flash-lite";
+/**
+ * Ours to move, never a caller's. Vertex reads with Flash while the Cloud
+ * credit lasts (docs/scan-worker.md#what-the-scan-costs); AI Studio stays on
+ * Flash-Lite, whose free tier a brought key lives on.
+ */
+const VERTEX_MODEL = "gemini-3-flash-preview";
+const AI_STUDIO_MODEL = "gemini-3.1-flash-lite";
 
 /**
  * Two hosts, billed differently: Vertex takes our shared key and the Cloud
  * credit; a person's own key goes to whichever of the two it belongs to.
  */
 export const VERTEX_URL =
-  `https://aiplatform.googleapis.com/v1/publishers/google/models/${GEMINI_MODEL}:generateContent`;
+  `https://aiplatform.googleapis.com/v1/publishers/google/models/${VERTEX_MODEL}:generateContent`;
 
 export const AI_STUDIO_URL =
-  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+  `https://generativelanguage.googleapis.com/v1beta/models/${AI_STUDIO_MODEL}:generateContent`;
 
 /**
  * `kind` jokes about the thumb in the photo, never the person. `stas` aims at the
@@ -175,6 +180,8 @@ export function buildScanRequestBody(
       ],
     }],
     generationConfig: {
+      // Flash thinks at length by default: ~25s a bill, against ~2.5s at minimal.
+      thinkingConfig: { thinkingLevel: "minimal" },
       responseMimeType: "application/json",
       responseSchema: {
         ...ordered({

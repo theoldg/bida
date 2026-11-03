@@ -68,7 +68,7 @@ phone: capture or pick from library → straighten + crop → downscale → base
 worker: verify the browser, count the budget, book the scan,
         then wrap the bill in our prompt + schema and add the API key
   ↓
-Gemini Flash-Lite on Vertex AI, one key shared by everyone
+Gemini 3 Flash on Vertex AI, one key shared by everyone
   ↑ response streamed straight back, untouched
 phone: parse → normalizeScan() → write an EntryDraft, and stop
 ```
@@ -147,7 +147,7 @@ back to the printed words would be no correction.
 · `apps/api`'s `POST
 /api/groups/:id/scan` — the same bearer-token
 check as sync, passing through to
-`GEMINI_MODEL = "gemini-3.1-flash-lite"` (one constant in `packages/core/src/scan-body.ts`;
+`VERTEX_MODEL = "gemini-3-flash-preview"`, a brought AI Studio key `gemini-3.1-flash-lite` (constants in `packages/core/src/scan-body.ts`;
 the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) and the envelope is
 `apps/api/src/scan-body.ts` (an envelope per tone, and the base64 guard

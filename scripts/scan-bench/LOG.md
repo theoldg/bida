@@ -7,6 +7,22 @@ right refusal from a wrong one, nor the model's mistake from the labels'.
 Receipt ids are the default sample's (`--seed 20261022`); the images are in
 `data/sample/imgs/` once `fetch.mjs` has run.*
 
+## 2026-11-03 — 3 Flash against Flash-Lite, receipts r00–r49, three reads each
+
+The prompt of `93b9fd77`, thinking `minimal` on both; `lite` and `flash3`.
+
+| | lite | flash3 |
+|---|---|---|
+| accepted by checkScan | 118/150 | 124/150 |
+| accepted but wrong | 7 — all the labels' dates (r29, r40, r49) | 6 — the same r29, r40 |
+| mismatch · unreadable-line · rejected | 27 · 0 · 5 | 17 · 3 · 6 |
+| line amounts right · found | 97% · 99% | 97% · 96% |
+| median · p90 latency | — | 2.7s · 5.0s |
+
+Flash takes r00 (Lite called a card slip not a receipt), r10 and r36 every
+time, and r01 two times in three; r17 is refused by both, as an unreadable line
+rather than a mismatch. r22, r25, r26, r38 are refused by both, rightly.
+
 ## 2026-10-22 — `b1b055c7-dirty`: rows without a figure, DISCOUNT / CHARGE / NEITHER, nothing below the total
 
 The prompt that became the next commit, before its tip field, and with "7% GST
