@@ -105,7 +105,6 @@ const en = {
       failed: "The crop model didn’t load. Scans will send the whole photo.",
       working: "Working…",
       whole: "whole photo",
-      close: "Close",
     },
   },
 

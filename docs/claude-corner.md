@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-03* — "Make the receipt image viewers zoomable (preferably keeping
+  the exit cross in position)". Two viewers drew pinch twice; one now. Closing
+  on the lift let the tap's click reopen the miniature underneath — the old
+  code's on-click close was a reason, not an accident.
+
 - *2026-11-03* — "build a backstop … and tell me what else to do on
   cloudflare". Buckets and a production migration waited for the owner's own
   word, which came in one line. Two drive sessions shared one queue and split
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   kebab… wdyt?", then "drop the separate button". Two questions were the owner
   thinking aloud; the answer laid out both versions, and they picked the one
   the code comment argued against. A comment is a reason, not a veto.
-
-- *2026-10-23* — "I can select text in this dialog… Fix for all list dialogs".
-  Every list dialog was one component, and the body's no-select rule never
-  reached it: the browser's own sheet resets a modal dialog. A rule that
-  "already" holds is worth testing in the top layer before trusting it.

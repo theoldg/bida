@@ -169,11 +169,10 @@ for (const file of sources(join(ROOT, "apps/web"))) {
 /**
  * docs/design-system.md#type: every size is a role on the scale (`--fs-*`). A
  * size picked by eye is how 21 of them accumulated. Drawn marks and the amount
- * field's figure keep their own: an avatar, the scan diagram, `.bignum`, the
- * zoom view's close glyph.
+ * field's figure keep their own: an avatar, the scan diagram, `.bignum`.
  */
 {
-  const OWN_SIZE = /\.(avatar|scanpaper|scanform|amount|zoomview-close)\b/;
+  const OWN_SIZE = /\.(avatar|scanpaper|scanform|amount)\b/;
   const CSS = join(ROOT, "apps/web/app/globals.css");
   const css = readFileSync(CSS, "utf8").replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "));
   for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {

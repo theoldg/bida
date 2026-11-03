@@ -81,7 +81,6 @@ export const pl: Copy = {
       failed: "???",
       working: "???",
       whole: "???",
-      close: "???",
     },
   },
   export: {

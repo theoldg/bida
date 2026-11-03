@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { PhotoViewer } from "@/components/receipt-photo";
 import { copy } from "@/lib/copy";
 import { route } from "@/lib/group-link";
 import { prepareBill, type PreparedBill } from "@/lib/scan/downscale";
 import { billFinderLoadMs, warmBillFinder } from "@/lib/scan/find-bill";
-import { ZoomView } from "./zoom-view";
 
 /**
  * The scan's crop as a smoke test: pick photos, see the box the model drew on
@@ -66,7 +66,7 @@ export default function DiagCropPage() {
             )}
           </div>
           {results.map((r, i) => <Row key={i} result={r} onZoom={setZoomed} />)}
-          {zoomed ? <ZoomView src={zoomed} onClose={() => setZoomed(null)} /> : null}
+          {zoomed ? <PhotoViewer src={zoomed} onClose={() => setZoomed(null)} /> : null}
         </Scroll>
       </Body>
     </Screen>

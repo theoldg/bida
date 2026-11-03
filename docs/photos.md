@@ -6,7 +6,10 @@ An expense keeps one photo: the cropped, straightened JPEG its last photo
 scan read (≤1 MP, ~40–150 KB). Only a scan sets it — nothing attaches a picture
 by hand or clears one. The entry form's **Photo** row, there only with a photo,
 is its square miniature and what Save keeps. On the entry the miniature
-sits beside the title, and a tap opens it whole. Every phone in the group sees it; the server can't
+sits beside the title, and a tap opens it whole: at the screen's width,
+pinched, dragged and flung by hand (the app turns the browser's zoom off) under
+a cross that stays put, and a tap puts it away. `/diag/crop` opens its images
+in the same viewer. Every phone in the group sees it; the server can't
 ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)).
 
 ## What is stored where
