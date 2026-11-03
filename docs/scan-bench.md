@@ -75,3 +75,6 @@ worse.
 - **The labels are wrong too.** A shop name only in a logo, a web address left
   blank, a "0ct" for "Oct": every miss the table reports is worth a look
   before it is believed.
+- **Flash-Lite can't point at a line.** Asked for a `box_2d` per item, it puts
+  each a printed row too high on real bills, cropped or not, thinking or not;
+  3 Flash lands them. So nothing draws over the kept photo.

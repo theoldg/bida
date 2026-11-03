@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-03* — "Are you sure you're reading them right? There's a consistent
+  upwards bias". I'd called it the model's noise; a synthetic bill proved my
+  reading right, and their two photos proved the bias real. When the owner sees
+  a pattern in the pictures, check your own code first, then show it.
+
 - *2026-11-03* — "Make the receipt image viewers zoomable (preferably keeping
   the exit cross in position)". Two viewers drew pinch twice; one now. Closing
   on the lift let the tap's click reopen the miniature underneath — the old
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   ship". It undid a September revert; git log said why, and the proposal met
   those reasons first. Then "box the refusal like the expense editor": the
   first photo found the box under the fold at rest, not only on refusal.
-
-- *2026-10-24* — "Should we add History to the kebab?", then "a dot on the
-  kebab… wdyt?", then "drop the separate button". Two questions were the owner
-  thinking aloud; the answer laid out both versions, and they picked the one
-  the code comment argued against. A comment is a reason, not a veto.
