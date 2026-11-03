@@ -1655,16 +1655,17 @@ dialog.scrim::backdrop { background: transparent }
 .photothumb::after { content: ""; position: absolute; inset: 0; transition: background .2s ease }
 .photothumb:active::after { background: var(--press); transition-duration: 0s }
 .photothumb.waiting::after { content: none }
-/* Over the row's stretched press, which is the tick's. */
-/* Tall enough for a miniature you can recognise the bill in; the tick is the
-   row's button, pushed to the column every row's icon stands in. */
-.formhead .photofield { padding-block: 12px }
-.photofield .photothumb { width: 54px; height: 72px; z-index: 1 }
-.photofield .pick { justify-content: flex-end; gap: 10px; align-self: stretch }
+/* Empty, an ordinary row: where the miniature would stand, its dashed outline,
+   then the word. Full, tall enough to recognise the bill in, the miniature over
+   the row's stretched press (which is Clear's), Clear in the icon column. */
+.formhead .photofield.full { padding-block: 12px }
+.photofield .photothumb { width: 56px; height: 56px; z-index: 1 }
+.photofield .pick { justify-content: flex-end; gap: 10px }
+.photofield.full .pick { align-self: stretch }
 .entryhead.withphoto { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 14px }
 .entryhead.withphoto > :not(.entryphoto, .entrytitle, .entryfig) { grid-column: 1 / -1 }
 .entryhead.withphoto .entryfig { container-type: inline-size }
-.entryphoto { grid-column: 2; grid-row: 1 / span 2; align-self: start; width: 54px; height: 72px; margin-top: 4px }
+.entryphoto { grid-column: 2; grid-row: 1 / span 2; align-self: start; width: 56px; height: 56px; margin-top: 4px }
 dialog.photoview { inset: 0; width: 100%; height: 100%; max-width: 100%; max-height: 100%; margin: 0;
   border: 0; padding: 0; background: var(--view-bg); color: var(--view-ink); overflow-y: auto;
   overscroll-behavior: contain; -webkit-user-select: none; user-select: none; animation: fadein .12s ease-out }

@@ -10,7 +10,7 @@ import {
 import { FieldLabel, You } from "@/components/bits";
 import { AmountInput, clipAmountToCurrency } from "@/components/amount-input";
 import { useReceiptScan } from "@/components/receipt-scan";
-import { PhotoThumb } from "@/components/receipt-photo";
+import { PhotoField } from "@/components/receipt-photo";
 import { keptJpeg, usePhoto } from "@/lib/db/photos";
 import { useScanAs } from "@/lib/scan/credential";
 import { SplitEditor } from "@/components/split-editor";
@@ -76,9 +76,8 @@ function EditEntryScreen() {
     if (entryId) {
       const e = data.expenses.find((x) => x.id === entryId);
       const s = e ? undefined : data.settlements.find((x) => x.id === entryId);
-      // The kept photo stands ticked: reopening an entry never loses one by accident.
       const kept = e?.attachmentIds?.[0];
-      const seeded = e ? { ...expenseDraft(e, me, members), ...(kept ? { keptPhotoId: kept, keepPhoto: true } : {}) }
+      const seeded = e ? { ...expenseDraft(e, me, members), ...(kept ? { keptPhotoId: kept } : {}) }
         : s ? transferDraft(s, me, members) : undefined;
       if (seeded) seedDraft(groupId, seeded, seedKey);
       return;
@@ -147,14 +146,14 @@ function EditEntryScreen() {
 }
 
 /**
- * What the save does to the kept photo (docs/photos.md#saving-and-rescanning): a photo
- * just read and ticked replaces whatever was kept; unticked, or an income,
- * keeps none; a kept one still ticked is left alone.
+ * What the save does to the entry's photo (docs/photos.md#saving-and-rescanning):
+ * whatever the form shows is what is kept. A photo new to the draft replaces
+ * the entry's; a cleared one, or an income, keeps none.
  */
 function photoChange(draft: EntryDraft, canScan: boolean): PhotoChange | undefined {
-  if (!canScan || !draft.keepPhoto) return draft.entryId ? { drop: true } : undefined;
-  if (draft.receiptPhoto) return { keep: { id: newId(), ...keptJpeg(draft.receiptPhoto) } };
-  return undefined;
+  if (canScan && draft.receiptPhoto) return { keep: { id: newId(), ...keptJpeg(draft.receiptPhoto) } };
+  if (canScan && draft.keptPhotoId) return undefined;
+  return draft.entryId ? { drop: true } : undefined;
 }
 
 function EntryForm({ groupId, group, data, draft, via, leaving }: {
@@ -488,17 +487,11 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
               <Icon name="calendar" size={18} className="pchev datemark" />
             </div>
 
-            {/* Only once a photo was read, and kept only by asking. */}
-            {canScan && shownPhoto ? (
-              <div className="field photofield">
-                <span className="fieldlabel">{copy.photo.label}</span>
-                <PhotoThumb src={shownPhoto.src} />
-                <button type="button" className="pick" role="checkbox" aria-checked={draft.keepPhoto === true}
-                  onClick={() => patch({ keepPhoto: !(getDraft(groupId) ?? draft).keepPhoto })}>
-                  <span className="ptext">{copy.photo.keep}</span>
-                  <Icon name={draft.keepPhoto ? "boxed" : "box"} size={18} className="pchev" />
-                </button>
-              </div>
+            {/* What the row shows is what Save keeps. An income has no bill. */}
+            {canScan ? (
+              <PhotoField photo={shownPhoto}
+                onAttach={(receiptPhoto) => patch({ receiptPhoto })}
+                onClear={() => patch({ receiptPhoto: null, keptPhotoId: null })} />
             ) : null}
           </div>
           </div>

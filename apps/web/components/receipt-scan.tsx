@@ -142,8 +142,8 @@ export function useReceiptScan(
         receiptInvolved: null,
         receiptAssignments: null,
         ...(scanTab !== undefined ? { splitTab: scanTab } : {}),
-        // The photo that was read, never one kept from an older bill.
-        receiptPhoto: photo,
+        // The photo that was read replaces whatever the form held.
+        ...(photo ? { receiptPhoto: photo } : {}),
       }));
       if (receiptItems.length > 0) landScan(groupId); else clearScan(groupId);
       if (onScreen.current) latestOnScanned.current?.();

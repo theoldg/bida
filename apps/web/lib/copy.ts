@@ -926,7 +926,8 @@ const en = {
   photo: {
     /** The form's row, beside the miniature. */
     label: "Photo",
-    keep: "Keep",
+    attach: "Attach a photo",
+    clear: "Clear",
     view: "View the photo",
     waiting: "The photo is on its way",
     title: "Receipt photo",

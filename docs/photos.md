@@ -1,11 +1,13 @@
 # Kept receipt photos
 
-*For: anyone touching the photo a scan can keep, its storage, or its budget.*
+*For: anyone touching an entry's photo, its storage, or its budget.*
 
-A scan reads a cropped, straightened JPEG (≤1 MP, ~150 KB). The entry form
-offers to keep it: a **Photo** row with a miniature and a **Keep** box, off by
-default. Kept, its miniature sits beside the entry's title, and a tap opens it
-whole. Every phone in the group sees it; the server can't
+An expense keeps one photo. The entry form's **Photo** row is what is kept:
+empty, a slim row with a dashed ⊞ at its end that attaches one; full, the
+square miniature and **Clear ×**. A scan fills it with the cropped, straightened JPEG
+it read (≤1 MP, ~40–150 KB); the ⊞ fills it with any picture, through the
+same crop and never read, so the bill's items stay. On the entry the miniature
+sits beside the title, and a tap opens it whole. Every phone in the group sees it; the server can't
 ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)).
 
 ## What is stored where
@@ -28,15 +30,16 @@ photo" — never the attachment's own create.
 The save decides (`photoChange` in the form, `PhotoChange` in
 `commands/entries.ts`), in one `appendOps` with the entry's op:
 
-- **A photo just read, Keep ticked** → a new attachment replaces whatever was
-  kept. The old one gets a `delete` op and its bytes are queued to drop.
-- **Keep unticked, or an income** → none kept. An income has no bill, so
-  turning an expense into one drops its photo with its scan.
-- **A kept photo, still ticked, no new scan** → left alone.
+- **A photo new to the draft** (scanned or attached) → a new attachment
+  replaces whatever was kept. The old one gets a `delete` op and its bytes are
+  queued to drop.
+- **Cleared, or an income** → none kept. An income has no bill, so the row is
+  hidden there and the photo drops with the scan; switching back before saving
+  brings it back, since only Save decides.
+- **The entry's own photo, still shown** → left alone.
 
-So: a successful photo scan replaces the photo shown; a refused scan, a bill
-typed by hand and a tab change leave it; Keep's tick survives a rescan, and an
-entry reopened with a photo opens ticked. Deleting the entry keeps the
+So a successful photo scan replaces the photo; a refused scan, a bill typed by
+hand and a tab change leave it. Deleting the entry keeps the
 attachment, since the entry can be restored. A group's deletion
 (`DELETE /api/groups/:id`) takes every photo with it, found by the D1 index.
 

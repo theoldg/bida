@@ -62,14 +62,12 @@ export interface EntryDraft extends Receipt {
   /** So a rescan can replace its own guess but not a typed title. */
   scannedDescription?: string;
   /**
-   * The cropped photo the last scan read, as a data URL; a rescan replaces it.
-   * Kept, it becomes a new attachment (docs/photos.md).
+   * A photo new to this draft, as a data URL — the one a scan read, or one
+   * attached by hand. Saved, it becomes a new attachment (docs/photos.md).
    */
   receiptPhoto?: string | null;
-  /** The attachment the entry already keeps, when editing one. */
+  /** The attachment the entry already keeps, when editing one; null once cleared. */
   keptPhotoId?: string | null;
-  /** Off until someone ticks it: a photo is kept only by asking. */
-  keepPhoto?: boolean;
 }
 
 /** A tap during the scan must not be overruled by its result. */

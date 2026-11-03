@@ -3,9 +3,70 @@
 
 import { useEffect, useRef, useState } from "react";
 import { copy } from "../lib/copy";
-import { mark } from "../lib/diag";
+import { keepNote, mark } from "../lib/diag";
+import { errorText } from "../lib/format";
+import { downscaleToBase64Jpeg } from "../lib/scan/downscale";
+import { warmBillFinder } from "../lib/scan/find-bill";
 import { useHoldsWork } from "../lib/update";
 import { Icon } from "./icons";
+
+/**
+ * The entry form's Photo row: what it shows is what Save keeps. Empty, it is
+ * one slim row that attaches a photo; full, the miniature and a way to clear
+ * it. A photo attached by hand goes through the scan's own crop and nothing
+ * else — it is never read, so the bill's items stay as they are.
+ */
+export function PhotoField({ photo, onAttach, onClear }: {
+  /** Undefined is none; a `src`-less one is kept but still on its way here. */
+  photo: { src?: string } | undefined;
+  onAttach: (dataUrl: string) => void;
+  onClear: () => void;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const [cropping, setCropping] = useState(false);
+
+  const picked = async (file: File | undefined) => {
+    if (!file) return;
+    setCropping(true);
+    try {
+      onAttach(`data:image/jpeg;base64,${await downscaleToBase64Jpeg(file)}`);
+    } catch (err) {
+      keepNote("photo", errorText(err));
+    } finally {
+      setCropping(false);
+    }
+  };
+
+  const chooser = (
+    // No `capture`: the phone offers the camera and the library both.
+    <input ref={input} type="file" accept="image/*" style={{ display: "none" }} aria-label={copy.photo.attach}
+      onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; void picked(file); }} />
+  );
+
+  if (!photo && !cropping) {
+    return (
+      <div className="field photofield">
+        <span className="fieldlabel">{copy.photo.label}</span>
+        <button type="button" className="pick" aria-label={copy.photo.attach}
+          onClick={() => { void warmBillFinder(); input.current?.click(); }}>
+          <Icon name="attach" size={18} className="pchev" />
+        </button>
+        {chooser}
+      </div>
+    );
+  }
+  return (
+    <div className="field photofield full">
+      <span className="fieldlabel">{copy.photo.label}</span>
+      <PhotoThumb src={cropping ? undefined : photo?.src} />
+      <button type="button" className="pick" disabled={cropping} onClick={onClear}>
+        <span className="ptext">{copy.photo.clear}</span>
+        <Icon name="cross" size={18} className="pchev" />
+      </button>
+      {chooser}
+    </div>
+  );
+}
 
 /**
  * A kept receipt as a miniature, and a tap away the whole of it. The miniature

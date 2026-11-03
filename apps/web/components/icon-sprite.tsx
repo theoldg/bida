@@ -48,10 +48,10 @@ export function IconSprite() {
         </symbol>
         <symbol id="i-search" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5 5" /></symbol>
         {/* The calendar's frame, square: a tick box drawn in a row of these icons. */}
-        <symbol id="i-box" viewBox="0 0 24 24" {...S} strokeWidth="2.2"><rect x="5" y="5" width="14" height="14" rx="1.5" /></symbol>
-        <symbol id="i-boxed" viewBox="0 0 24 24" {...S} strokeWidth="2.2">
-          <rect x="5" y="5" width="14" height="14" rx="1.5" fill="currentColor" />
-          <path d="M8.6 12.3l2.4 2.4 4.4-4.8" style={{ stroke: "var(--card)" }} />
+        {/* Where a photo would go: the box of a row's tick, dashed, with a plus. */}
+        <symbol id="i-attach" viewBox="0 0 24 24" {...S} strokeWidth="2.2">
+          <rect x="5" y="5" width="14" height="14" rx="1.5" strokeDasharray="2.2 3.2" />
+          <path d="M12 9v6M9 12h6" />
         </symbol>
         <symbol id="i-check" viewBox="0 0 24 24" {...S} strokeWidth="2.4"><path d="M4 12.5l5.5 5.5L20 7" /></symbol>
         <symbol id="i-clock" viewBox="0 0 24 24" {...S} strokeWidth="1.8">

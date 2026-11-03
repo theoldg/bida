@@ -336,8 +336,8 @@ Deliberate, for a group of friends under fifty people:
   hides. The app is unaffected.
 
 Training survives only on a brought free-tier AI Studio key, where the person
-chose the payer. The scan stores nothing of the photo; one
-kept with Keep is sealed on the phone first ([photos.md](photos.md)).
+chose the payer. The scan stores nothing of the photo; the
+one an entry keeps is sealed on the phone first ([photos.md](photos.md)).
 
 ## Gotchas
 
