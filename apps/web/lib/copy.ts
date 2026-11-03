@@ -530,7 +530,7 @@ const en = {
      * The same figure as `SCAN_LIMITS`' day cap (core/scan.ts); if the price
      * moves, both move.
      */
-    rate: "$5 ≈ 2,000 receipt scans",
+    rate: "$5 ≈ 5,000 receipt scans",
     each: (share: string) => `You can split it! In this group, that’s ${share} each.`,
     eachSolo: (share: string) => `You can split it! In this group, that’s ${share} each. `
       + "Okay, that doesn’t really land when it’s just you here, but you get the point.",

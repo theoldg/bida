@@ -66,7 +66,7 @@ group in CRD asks the feed like any other.
 
 **The tip jar.** One screen (`/g/tip`, off a FAB on the balances screen), and the
 only ask in the app: no ads, no tier, nothing locked. It is a figure and two
-buttons — `$5 ≈ 2,000 receipt scans`
+buttons — `$5 ≈ 5,000 receipt scans`
 ([what a scan costs](scan-worker.md#what-the-scan-costs)), cut by the
 group the way the group cuts everything else, then Buy Me a Coffee and an
 ordinary expense to record what you gave. Donating happens on somebody else's

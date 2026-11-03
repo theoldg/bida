@@ -214,15 +214,15 @@ a price.
 2026-12-18), with thinking at `minimal`: its default thinks for ~25s a bill.
 On the bench it accepts 124/150 reads against Flash-Lite's 118 at a median
 2.7s ([LOG.md](../scripts/scan-bench/LOG.md)). Once the credit is gone,
-`VERTEX_MODEL` goes back to `gemini-3.1-flash-lite`, and the tip below moves
-with it. **Never further down to save money:** Flash-Lite 2.5 is too weak on
+`VERTEX_MODEL` goes back to `gemini-3.1-flash-lite`. **Never further down to save money:** Flash-Lite 2.5 is too weak on
 real receipts, and on the feature whose whole job is reading numbers off paper
 a wrong total costs more than the model does.
 
-The tip jar's **$5 ≈ 2,000 scans** (`TIP_USD_MINOR`, `web/lib/tip.ts`) is the
-measured figure rounded down — $5 buys more like 2,040. It understates on
-purpose: a donation ask is the one screen that must not overstate what the
-money buys. It moves with the model; the day cap does not derive from it.
+The tip jar's **$5 ≈ 5,000 scans** (`TIP_USD_MINOR`, `web/lib/tip.ts`) is
+the owner's round figure for Flash-Lite, the model a tip pays for once the
+credit is gone: measured, $5 buys about 4,000 there (2,000 on 3 Flash). The
+rounding is up, for the appeal, and stays the owner's call. The day cap does
+not derive from it.
 
 **Only the global cap bounds what the owner pays.** A credential costs one
 unauthenticated request to mint, by design, so the caller bucket is politeness:
