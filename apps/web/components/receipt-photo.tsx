@@ -1,7 +1,7 @@
 "use client";
 // Doc: docs/photos.md
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { copy } from "../lib/copy";
 import { mark } from "../lib/diag";
 import { useHoldsWork } from "../lib/update";
@@ -57,9 +57,15 @@ const GLIDE_MS = 325;
  * An edge stops at the stage's edge, so the head of the bill can always come
  * out from under the cross. A tap anywhere puts it away.
  */
-export function PhotoViewer({ src, onClose }: { src: string; onClose: () => void }) {
+export function PhotoViewer({ src, overlay, onClose }: {
+  src: string;
+  /** Drawn over the photo at its size, and moved with it: /diag/crop's marks. */
+  overlay?: ReactNode;
+  onClose: () => void;
+}) {
   const frame = useRef<HTMLDialogElement>(null);
   const stage = useRef<HTMLDivElement>(null);
+  const plate = useRef<HTMLDivElement>(null);
   const pic = useRef<HTMLImageElement>(null);
   const closed = useRef(onClose);
   closed.current = onClose;
@@ -77,8 +83,8 @@ export function PhotoViewer({ src, onClose }: { src: string; onClose: () => void
   }, []);
 
   useEffect(() => {
-    const el = frame.current, box = stage.current, img = pic.current;
-    if (!el || !box || !img) return;
+    const el = frame.current, box = stage.current, sheet = plate.current, img = pic.current;
+    if (!el || !box || !sheet || !img) return;
     type View = { s: number; x: number; y: number };
     type At = { x: number; y: number };
     /** Scale over the screen's width, and the photo's top left on the stage. */
@@ -98,8 +104,8 @@ export function PhotoViewer({ src, onClose }: { src: string; onClose: () => void
       const s = Math.min(most(), Math.max(1, next.s));
       const pin = (p: number, size: number, space: number) =>
         space >= size ? (space - size) / 2 : Math.min(0, Math.max(space - size, p));
-      view = { s, x: pin(next.x, img.offsetWidth * s, room.width), y: pin(next.y, img.offsetHeight * s, room.height) };
-      img.style.transform = `translate(${view.x}px, ${view.y}px) scale(${s})`;
+      view = { s, x: pin(next.x, sheet.offsetWidth * s, room.width), y: pin(next.y, sheet.offsetHeight * s, room.height) };
+      sheet.style.transform = `translate(${view.x}px, ${view.y}px) scale(${s})`;
     };
     const onStage = (x: number, y: number): At => {
       const r = box.getBoundingClientRect();
@@ -216,7 +222,10 @@ export function PhotoViewer({ src, onClose }: { src: string; onClose: () => void
     <dialog className="photoview" ref={frame} aria-label={copy.photo.title}
       onCancel={(e) => { e.preventDefault(); onClose(); }}>
       <div className="photoframe" ref={stage}>
-        <img ref={pic} src={src} alt={copy.photo.title} draggable={false} />
+        <div className="photoplate" ref={plate}>
+          <img ref={pic} src={src} alt={copy.photo.title} draggable={false} />
+          {overlay}
+        </div>
       </div>
       <button type="button" className="photoclose" aria-label={copy.act.close} onClick={onClose}>
         <Icon name="cross" size={14} />

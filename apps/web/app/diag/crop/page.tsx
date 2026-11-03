@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { PhotoViewer } from "@/components/receipt-photo";
 import { copy } from "@/lib/copy";
@@ -18,8 +18,8 @@ export default function DiagCropPage() {
   const [model, setModel] = useState<"idle" | "loading" | "failed" | number>("idle");
   const [results, setResults] = useState<Result[]>([]);
   const [working, setWorking] = useState(false);
-  /** The image open over the whole screen, either side of a row. */
-  const [zoomed, setZoomed] = useState<string | null>(null);
+  /** The image open over the whole screen, either side of a row, with its marks if any. */
+  const [zoomed, setZoomed] = useState<Zoomed | null>(null);
 
   // Object URLs outlive the screen unless given back.
   useEffect(() => () => { for (const r of results) URL.revokeObjectURL(r.url); }, [results]);
@@ -66,7 +66,7 @@ export default function DiagCropPage() {
             )}
           </div>
           {results.map((r, i) => <Row key={i} result={r} onZoom={setZoomed} />)}
-          {zoomed ? <PhotoViewer src={zoomed} onClose={() => setZoomed(null)} /> : null}
+          {zoomed ? <PhotoViewer src={zoomed.src} overlay={zoomed.marks} onClose={() => setZoomed(null)} /> : null}
         </Scroll>
       </Body>
     </Screen>
@@ -74,32 +74,34 @@ export default function DiagCropPage() {
 }
 
 interface Result { name: string; bytes: number; url: string; bill: PreparedBill }
+interface Zoomed { src: string; marks?: ReactNode }
 
 function Row({ result: { name, bytes, url, bill }, onZoom }: {
-  result: Result; onZoom: (src: string) => void;
+  result: Result; onZoom: (z: Zoomed) => void;
 }) {
   const sent = `data:image/jpeg;base64,${bill.base64}`;
   const { quad, box, source } = bill;
   const sentKb = Math.round((bill.base64.length * 3) / 4 / 1024);
   const pts = (ps: readonly { x: number; y: number }[]) => ps.map((p) => `${p.x},${p.y}`).join(" ");
+  // The model's corners, and the upright box the scan keeps — on the row and full screen.
+  const marks = quad && box ? (
+    <svg className="cropmarks" viewBox={`0 0 ${source.width} ${source.height}`} aria-hidden="true">
+      <polygon className="cropcheck-quad" points={pts(quad)} />
+      <rect className="cropcheck-box" x={box.cx - box.width / 2} y={box.cy - box.height / 2}
+        width={box.width} height={box.height}
+        transform={`rotate(${degrees(box.angle)} ${box.cx} ${box.cy})`} />
+    </svg>
+  ) : undefined;
   return (
     <div className="cropcheck">
       <div className="cropcheck-pair">
-        <div className="cropcheck-src" onClick={() => onZoom(url)}>
+        <div className="cropcheck-src" onClick={() => onZoom({ src: url, marks })}>
           {/* eslint-disable-next-line @next/next/no-img-element -- a local object URL */}
           <img src={url} alt="" />
-          {/* The model's corners, and the upright box the scan keeps. */}
-          {quad && box ? (
-            <svg viewBox={`0 0 ${source.width} ${source.height}`} aria-hidden="true">
-              <polygon className="cropcheck-quad" points={pts(quad)} />
-              <rect className="cropcheck-box" x={box.cx - box.width / 2} y={box.cy - box.height / 2}
-                width={box.width} height={box.height}
-                transform={`rotate(${degrees(box.angle)} ${box.cx} ${box.cy})`} />
-            </svg>
-          ) : null}
+          {marks}
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element -- a data URL */}
-        <img className="cropcheck-out" src={sent} alt="" onClick={() => onZoom(sent)} />
+        <img className="cropcheck-out" src={sent} alt="" onClick={() => onZoom({ src: sent })} />
       </div>
       <pre className="diag">{[
         name,

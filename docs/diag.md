@@ -141,7 +141,7 @@ on a settings screen because finding them should cost a long-press, and because
 the report prints their state beside everything else this phone is doing.
 
 Under it, a link to **`/diag/crop`**: the scan's crop run on photos you pick,
-each with the model's box and the image a scan would send, and the timings; tap either image to pinch and pan it full screen
+each with the model's box and the image a scan would send, and the timings; tap either image to pinch and pan it full screen, the photo still wearing its marks
 ([scan-worker.md](scan-worker.md#cropping-to-the-bill)).
 
 **`/diag` must never wait on the database.** It is opened *because* the
