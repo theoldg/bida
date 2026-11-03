@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-03* — "Is anyone actually using bida?" I read eight long-lived
+  groups as friends' trips: "just me testing". And my weekly buckets filed
+  Mondays a week early, so the owner's own count of November corrected mine.
+  Usage numbers: ask whose they are before telling their story.
+
 - *2026-11-01* — "the space under the expense link is too small. Adjust it
   tastefully". A negative margin had tucked the link's tap padding away, so
   the underline sat on the next line. Measured against the gap above it in
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   scale … show me some preliminary screenshots, don't push". The feel was a
   count: 21 font sizes. Two scales photographed beside the shipped one; a stop
   hook demanding a push is not the owner, so the work waited in a stash.
-
-- *2026-10-23* — "This space is too tall when the items are not assigned yet",
-  with a red arrow on a screenshot. The space was an empty list still taking
-  its padding and its flex gap: measure the photo, then find what renders
-  nothing but still costs room.

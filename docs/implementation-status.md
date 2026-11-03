@@ -20,6 +20,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 | **Versioned** | `major.semi.minor`, bumped by every push; the major is the owner's ([hosting.md](hosting.md#versions)) |
 | **The tip jar** | `/g/tip` off the balances screen, `/tip` off `/about` ([product.md](product.md#the-mvp)) |
 | **Deletable** | `/delete-my-data`, from an invite link, for everybody in the group ([import-export.md](import-export.md#deleting-a-group)) |
+| **Notifying** | Push notifications of the entries you are in, working on a real iPhone and on its Apple Watch (the owner, 2026-11-03); the pull ahead and Settings' All are untried on a phone — `/diag`'s `pull ahead:` lines say whether it ran ([notifications.md](notifications.md)) |
 | **Searchable** | The ledger's search bar ([frontend.md](frontend.md#the-ledgers-search)) |
 | **Installable** | Install and join work on a real iPhone, names included; Android offered, in-app browsers a one-off visit under a banner ([ios.md](ios.md), [pwa.md](pwa.md)) |
 | **Demoable** | `bida.bid/demo`, a keyless group that cannot sync, linked from nowhere ([product.md](product.md), [sync.md](sync.md#the-demo-group-has-no-key)) |
@@ -28,7 +29,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Seven things: Next 16, unchecked on a phone; push notifications, built and unchecked on a phone, the ledger's windowing experiment, Polish, a quick split's link, a bill's charges on older phones, and the add row filing when left. The visual review is closed
+Six things: Next 16, unchecked on a phone; the ledger's windowing experiment, Polish, a quick split's link, a bill's charges on older phones, and the add row filing when left. The visual review is closed
 ([design-review.md](design-review.md)).
 
 - **A quick split goes out as a link** (ADR-0035), built, driven against a
@@ -46,15 +47,6 @@ Seven things: Next 16, unchecked on a phone; push notifications, built and unche
 
 - **Next 16 on Turbopack** passes every browser check; untried on a real
   iPhone, where a payload once opened as a page ([pwa.md](pwa.md)).
-
-- **Push notifications are built and work on dev**
-  ([notifications.md](notifications.md), ADR-0037): an edit from an incognito
-  tab reached the owner's installed app (2026-09-23). The rest of the phone
-  checklist in [on-a-phone.md](on-a-phone.md) is unrun.
-  VAPID keys are set on both Workers. A notification also pulls its group
-  ahead ([sync.md](sync.md#the-pull-ahead)), untried on a phone — `/diag`'s
-  `pull ahead:` lines now say whether it ran. Settings' Off · Just me · All
-  is built; All is untried on a phone.
 
 - **A 10,000-entry group on a slow phone** (4× CPU): the ledger opens and
   moves between screens in under a second, drawing only what is near the

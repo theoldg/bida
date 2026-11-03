@@ -3,9 +3,9 @@
 *For: whoever touches push notifications. Why they work this way is
 [ADR-0037](decisions/0037-a-notification-is-sealed-by-the-phone-that-caused-it.md):
 the phone that made a change encrypts one notification per listening device,
-and the Worker relays them without keeping anything. Seen working on dev
-2026-09-23: an edit from an incognito tab reached the owner's installed app.
-The rest of the [checklist](on-a-phone.md) is unrun.*
+and the Worker relays them without keeping anything. Working on a real
+iPhone, and on its Apple Watch (the owner, 2026-11-03); the
+[checklist](on-a-phone.md) past receiving is unrun.*
 
 ## What is said
 
