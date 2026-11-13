@@ -1349,7 +1349,8 @@ dialog.scrim::backdrop { background: transparent }
   background: var(--card); border-bottom: 1px solid var(--rule) }
 .diag-act .hint:first-child { margin-top: 0; margin-bottom: 9px }
 
-.diag-link { margin-top: 10px }
+/* Flush on the bar's bottom rule, as Settings' row is on the screen's foot. */
+.diag-link { margin-top: 10px; margin-bottom: -10px }
 
 .cropcheck-model { font-size: var(--fs-small); color: var(--ink-2); margin: 8px 0 0 }
 .cropcheck { padding: 12px var(--gutter); border-bottom: 1px solid var(--rule) }

@@ -132,7 +132,7 @@ its address (not a table — this has to work on the launch where IndexedDB is
 the broken thing), because the launch that hung is the launch you killed the
 app to escape, and a paste's `/join` is a page of its own beside the list.
 
-Under the Copy button, a link to **Secret settings** (`/diag/secret`), the
+Under the Copy button, a chevron row to **Secret settings** (`/diag/secret`) — Settings' row to Advanced — the
 app's hidden settings, laid out as Advanced is: **Staś mode**, the switch that
 makes a scan insult whoever sent it a photo that isn't a receipt
 ([scan-worker.md](scan-worker.md#staś-mode)), and **Language**, the only way to

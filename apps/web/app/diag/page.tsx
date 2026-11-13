@@ -61,7 +61,10 @@ export default function DiagPage() {
               }}>
               {copied ? copy.diag.copied : copy.diag.copyAll}
             </button>
-            <Link className="btn btn-s diag-link" href={route.diagSecret()}>{copy.diag.secret.title}</Link>
+            <Link className="setlink diag-link" href={route.diagSecret()}>
+              {copy.diag.secret.title}
+              <Icon name="chev" size={15} />
+            </Link>
           </div>
           {/* A <pre> a section, so a tick redraws only what changed: laying out
               every kept line again each tick was this screen's whole cost. */}
