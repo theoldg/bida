@@ -147,8 +147,8 @@ ever (the owner: they read as machine-written); `copy.none`'s lone dash, a
 blank figure, is the one exception, and `rules` enforces both halves.
 
 **Polish is `lib/copy-pl.ts`**, translated with the owner a section at a time;
-`"???"` is a line not yet done. It is reached only from `/diag`'s Language
-switch, which writes `bida.lang` and reloads, since `copy` is picked once as the
+`"???"` is a line not yet done. It is reached only from the Language
+switch in `/diag`'s secret settings, which writes `bida.lang` and reloads, since `copy` is picked once as the
 app loads. That load is a hydration mismatch: the export is prerendered
 in English, so React finds text it did not write (error #418) and renders the
 page again on the client; shipping Polish means choosing it before React runs. Every page is a client component (`rules`): a server one is prerendered in English and never drawn again, so no switch reaches it. A Polish sentence can't always take a value English hands it (a name

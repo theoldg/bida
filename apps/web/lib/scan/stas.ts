@@ -1,6 +1,6 @@
 // Doc: docs/scan-worker.md#staś-mode
 /**
- * Staś mode's flag, in `localStorage` like the theme: `/diag`, which sets it,
+ * Staś mode's flag, in `localStorage` like the theme: `/diag`, which prints it,
  * must never wait on Dexie, and a scan reads it mid-resize.
  */
 const KEY = "bida.stas";

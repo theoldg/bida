@@ -48,7 +48,7 @@ export default function DiagCropPage() {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.diag.crop.title} back={route.diag()} />
+        <TopBar title={copy.diag.crop.title} back={route.diagSecret()} />
         <Scroll>
           <div className="diag-act">
             <p className="hint">{copy.diag.crop.lede}</p>

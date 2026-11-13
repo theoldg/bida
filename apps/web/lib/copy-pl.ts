@@ -4,7 +4,7 @@ import type { Copy } from "./copy";
 /**
  * Polish, filled in a section at a time with the owner. "???" is a line not yet
  * translated; the shape is `Copy`, so the compiler names anything English has
- * that this lacks. Shown only when /diag's Language says Polski.
+ * that this lacks. Shown only when /diag/secret's Language says Polski.
  *
  * The owner's conventions: "ty", never "Pan/Pani", and capitalised as in a
  * letter: Ty, Twój, Ciebie, Ci. A name is never declined
@@ -66,12 +66,7 @@ export const pl: Copy = {
     reading: "???",
     copyAll: "???",
     copied: "???",
-    stas: "???",
-    stasNote: "???",
-    on: "???",
-    off: "???",
-    lang: "???",
-    cropLink: "???",
+    secret: { title: "???", stas: "???", stasNote: "???", on: "???", off: "???", lang: "???" },
     crop: {
       title: "???",
       lede: "???",

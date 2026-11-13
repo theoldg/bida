@@ -17,8 +17,7 @@ import { route } from "@/lib/group-link";
 import { useFlash } from "@/lib/hooks";
 import { ownKey } from "@/lib/scan/key";
 import { readingsReport } from "@/lib/scan/log";
-import { setLang, type Lang } from "@/lib/lang";
-import { setStasMode, stasMode } from "@/lib/scan/stas";
+import { stasMode } from "@/lib/scan/stas";
 import { VERSION } from "@/lib/version";
 
 /**
@@ -31,11 +30,6 @@ export default function DiagPage() {
   const [logs, setLogs] = useState<string[]>([]);
   const report = head === undefined ? undefined : `${[head, ...logs].join("\n\n")}\n`;
   const [copied, setCopied] = useFlash();
-  // After mount: the static export's first render has no localStorage.
-  const [stas, setStas] = useState(false);
-
-  useEffect(() => { setStas(stasMode()); }, []);
-
   useEffect(() => {
     let alive = true;
     const build = async () => {
@@ -67,35 +61,7 @@ export default function DiagPage() {
               }}>
               {copied ? copy.diag.copied : copy.diag.copyAll}
             </button>
-            {/* Changes how a scan talks to whoever took the photo, so it costs a
-                long-press to find. */}
-            <div className="diag-stas">
-              <div>
-                <div className="diag-stas-name">{copy.diag.stas}</div>
-                <div className="diag-stas-note">{copy.diag.stasNote}</div>
-              </div>
-              <button type="button" className={`btn ${stas ? "btn-p" : "btn-s"}`}
-                aria-pressed={stas}
-                onClick={() => { setStasMode(!stas); setStas(!stas); }}>
-                {stas ? copy.diag.on : copy.diag.off}
-              </button>
-            </div>
-            {/* Polish while it is being translated: "???" is a line not done yet.
-                Each language named in itself, so it reads in either. A reload,
-                since `copy` is picked once as the app loads. */}
-            <div className="diag-stas">
-              <div className="diag-stas-name">{copy.diag.lang}</div>
-              <div className="diag-langs">
-                {(["en", "pl"] as const satisfies readonly Lang[]).map((l) => (
-                  <button key={l} type="button" className={`btn ${l === lang ? "btn-p" : "btn-s"}`}
-                    aria-pressed={l === lang}
-                    onClick={() => { if (l !== lang) { setLang(l); location.reload(); } }}>
-                    {copy.languages[l]}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <Link className="btn btn-s diag-link" href={route.diagCrop()}>{copy.diag.cropLink}</Link>
+            <Link className="btn btn-s diag-link" href={route.diagSecret()}>{copy.diag.secret.title}</Link>
           </div>
           {/* A <pre> a section, so a tick redraws only what changed: laying out
               every kept line again each tick was this screen's whole cost. */}

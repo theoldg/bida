@@ -1349,12 +1349,6 @@ dialog.scrim::backdrop { background: transparent }
   background: var(--card); border-bottom: 1px solid var(--rule) }
 .diag-act .hint:first-child { margin-top: 0; margin-bottom: 9px }
 
-.diag-stas { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  margin-top: 10px }
-.diag-stas .btn { width: auto; flex: none; padding: var(--btn-s-pad); font-size: var(--fs-small) }
-.diag-stas-name { font-size: var(--fs-small); font-weight: 600; color: var(--ink) }
-.diag-stas-note { font-size: var(--fs-caption); color: var(--ink-2); margin-top: 1px }
-.diag-langs { display: flex; gap: 6px }
 .diag-link { margin-top: 10px }
 
 .cropcheck-model { font-size: var(--fs-small); color: var(--ink-2); margin: 8px 0 0 }

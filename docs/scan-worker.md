@@ -100,8 +100,8 @@ wrong one (`scan-body.test.ts` checks exactly that). Each tone's envelope is
 pre-encoded per isolate, so each envelope is two short byte arrays and no
 branch on the hot path.
 
-It is off, and turned on by hand on `/diag` — the hidden diagnostics screen, a
-long-press on the wordmark — which is `localStorage` on that phone
+It is off, and turned on by hand in `/diag`'s secret settings — the hidden
+diagnostics screen is a long-press on the wordmark — which is `localStorage` on that phone
 (`lib/scan/stas.ts`) and therefore per phone, not per group: nobody is
 signed up to be insulted by somebody else's taste. A phone on its own key picks
 the same two paragraphs with an argument instead of a header, there being no

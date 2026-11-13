@@ -135,6 +135,9 @@ export const route = {
   newGroup: () => "/new",
   /** Linked from nowhere: long-press the wordmark. */
   diag: () => "/diag",
+  /** Off `/diag`, and back up to it. */
+  diagSecret: () => "/diag/secret",
+  /** Off the secret settings, and back up to them. */
   diagCrop: () => "/diag/crop",
   about: () => "/about",
   /** Linked from nowhere: `/about` prints the address, as deliberate friction. */

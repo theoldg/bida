@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-13* — "Move Staś mode, the polish language control and the scan
+  crop … to a separate screen … Use the same style as advanced settings".
+  The style was a look, so the toggles became Settings' segmented pairs and
+  the crop a chevron row — not the old buttons on a new page.
+
 - *2026-11-03* — "Are you sure you're reading them right? There's a consistent
   upwards bias". I'd called it the model's noise; a synthetic bill proved my
   reading right, and their two photos proved the bias real. When the owner sees
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   mangling, not ours, until a screenshot showed the whole message encoded and
   only its first colon spared: iOS took `CBS:` for a scheme. Ask for what
   arrived, whole, before blaming the carrier.
-
-- *2026-10-24* — "People expect commit on blur… propose how", then "build and
-  ship". It undid a September revert; git log said why, and the proposal met
-  those reasons first. Then "box the refusal like the expense editor": the
-  first photo found the box under the fold at rest, not only on refusal.

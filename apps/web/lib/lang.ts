@@ -2,7 +2,7 @@
 /**
  * Which language the app speaks, in `localStorage` like the theme: `copy` is
  * picked once as the app loads, before any database could answer. Set only from
- * `/diag` until Polish is finished.
+ * `/diag/secret` until Polish is finished.
  */
 export type Lang = "en" | "pl";
 

@@ -132,15 +132,16 @@ its address (not a table — this has to work on the launch where IndexedDB is
 the broken thing), because the launch that hung is the launch you killed the
 app to escape, and a paste's `/join` is a page of its own beside the list.
 
-It also carries the app's hidden settings: **Staś mode**, the switch that
+Under the Copy button, a link to **Secret settings** (`/diag/secret`), the
+app's hidden settings, laid out as Advanced is: **Staś mode**, the switch that
 makes a scan insult whoever sent it a photo that isn't a receipt
 ([scan-worker.md](scan-worker.md#staś-mode)), and **Language**, the only way to
 Polish until it is finished ([frontend.md](frontend.md#every-word-in-libcopyts)),
-its two buttons each named in its own language. They are here rather than
-on a settings screen because finding them should cost a long-press, and because
-the report prints their state beside everything else this phone is doing.
+its two buttons each named in its own language. They are off `/diag` rather
+than Settings because finding them should cost a long-press; the report still
+prints their state beside everything else this phone is doing.
 
-Under it, a link to **`/diag/crop`**: the scan's crop run on photos you pick,
+Its last row goes on to **`/diag/crop`**: the scan's crop run on photos you pick,
 each with the model's box and the image a scan would send, and the timings; tap either image to pinch and pan it full screen, the photo still wearing its marks
 ([scan-worker.md](scan-worker.md#cropping-to-the-bill)).
 

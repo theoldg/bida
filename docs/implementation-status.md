@@ -63,7 +63,7 @@ Six things: Next 16, unchecked on a phone; the ledger's windowing experiment, Po
 
 - **Polish is being translated with the owner, a section at a time**
   ([frontend.md](frontend.md#every-word-in-libcopyts)): `lib/copy-pl.ts`,
-  `"???"` where not yet done, reached only from `/diag`. Undecided before it
+  `"???"` where not yet done, reached only from `/diag/secret`. Undecided before it
   ships: how a phone gets it, and whether a past tense agrees with a name's
   gender. **Needs thought, flagged by the owner: text one phone writes and
   another reads**, which lands in the writer's language, not the reader's:
