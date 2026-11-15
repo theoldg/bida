@@ -196,7 +196,9 @@ export function chargeRow(name: string, was: string | null, now: string | null):
  * Chewie", "Jawa juice: Chewie joined Han, Luke" — or null where nobody moved.
  * A struck name beside a "+ name" left the reader to work out what happened;
  * this says it. A line whose portions went to different people reads portion
- * by portion, since a set can't say who had which.
+ * by portion, since a set can't say who had which. A line nobody had yet —
+ * the grid filled for the first time — is just who has it: "nobody →" nine
+ * times over says the grid was empty, which the sentence already did.
  */
 export function eatersRow(
   name: string, was: readonly (readonly Id[])[], now: readonly (readonly Id[])[], people: People,
@@ -206,10 +208,9 @@ export function eatersRow(
   if (key(was) === key(now)) return null;
   const names = (ids: readonly Id[]) => byName(ids, people).map(people.nameOf).join(", ") || said.nobody;
   const line = (what: string): Row => ({ name: said.onLine(name, what), item: true });
-  if (was.length > 1 || now.length > 1) {
-    const each = (rows: readonly (readonly Id[])[]) => rows.map(names).join(" / ");
-    return line(said.handedOver(each(was), each(now)));
-  }
+  const each = (rows: readonly (readonly Id[])[]) => rows.map(names).join(" / ");
+  if (was.every((r) => r.length === 0)) return line(each(now));
+  if (was.length > 1 || now.length > 1) return line(said.handedOver(each(was), each(now)));
   const before = new Set(was[0] ?? []);
   const after = new Set(now[0] ?? []);
   const gone = [...before].filter((id) => !after.has(id));

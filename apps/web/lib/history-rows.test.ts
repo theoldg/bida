@@ -113,6 +113,12 @@ describe("eatersRow", () => {
     expect(eatersRow("Salad", [["b", "a"]], [["a", "b"]], p)).toBeNull();
   });
 
+  it("says only who has a line nobody had yet", () => {
+    expect(said([], [["b", "a"]])).toBe("Salad: Ana, Bo");
+    expect(said([[]], [["a"]])).toBe("Salad: Ana");
+    expect(eatersRow("Pizza", [], [["a"], ["b"]], p)?.name).toBe("Pizza: Ana / Bo");
+  });
+
   it("reads a line split into portions portion by portion", () => {
     expect(eatersRow("Pizza", [["a"]], [["a"], ["b"]], p)?.name).toBe("Pizza: Ana → Ana / Bo");
   });

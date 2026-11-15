@@ -50,7 +50,9 @@ now is, with nothing crossed out — and no rate at all back in the group's. A *
 says, so a reorder is no news and a reprice is a move; a **who-had-what** change
 says in words what happened to each line ("Blue milk: Ben → Chewie", "Jawa
 juice: Chewie joined Han, Luke"), then one line of who now owes more and who
-less ("Chewie +17.00 · Ben −9.00 · Han, Luke −4.00"). A **new entry** is two
+less ("Chewie +17.00 · Ben −9.00 · Han, Luke −4.00"). A grid filled for the
+first time is the split going by items ("Theo split it by items"), and its
+lines say only who had each ("Blue milk: Chewie") — there was no one before. A **new entry** is two
 lines: the amount and who paid ("CRD 81.00 · paid by Luke 50.00 + Han
 31.00" — a sum, biggest first, never grouped), then what each owes, a phrase per figure (`figureGroups`) — "for
 everyone · 20.25 each" where three or more owe alike, otherwise "Chewie 24.00 ·

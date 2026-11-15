@@ -226,6 +226,7 @@ export function describe(
     }
     const split = field("split");
     let sharesPart: Part | undefined;
+    let newMode = false;
     if (split) {
       const was = split.before as SplitSpec | null;
       const now = split.after as SplitSpec;
@@ -239,7 +240,8 @@ export function describe(
       } else if (rows.length && proportions(was) !== proportions(now)) {
         const mode = modeOf(rev.after);
         const word = mode ? copy.split.how[mode] ?? mode : "";
-        sharesPart = mode && mode !== modeOf(rev.before)
+        newMode = !!mode && mode !== modeOf(rev.before);
+        sharesPart = newMode
           ? { what: said.splitAs(who, word), label: named.splitAs(word), rows }
           : { what: said.changedShares(who), label: named.split, rows };
         parts.push(sharesPart);
@@ -319,7 +321,11 @@ export function describe(
         if (net) rows.push({ name: net });
         parts.splice(parts.indexOf(sharesPart), 1);
       }
-      parts.push({ what: said.changedWhoHadWhat(who), label: named.whoHadWhat, rows });
+      // A grid filled for the first time is the split becoming by items, not
+      // lines changing hands: there were no hands.
+      parts.push(newMode && sharesPart
+        ? { ...sharesPart, rows }
+        : { what: said.changedWhoHadWhat(who), label: named.whoHadWhat, rows });
     }
     // Stored only when true, so any change here is a flip.
     if (field("receiptEnglish")) {

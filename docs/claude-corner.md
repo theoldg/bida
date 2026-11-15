@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-15* — A screenshot of nine "nobody →" lines: "Handle the history
+  better for this case". The case was the grid's first filling, so its heading
+  became the split going by items too — the photo showed one symptom; the fix
+  owed the sentence above it as well.
+
 - *2026-11-13* — "Move Staś mode, the polish language control and the scan
   crop … to a separate screen … Use the same style as advanced settings".
   The style was a look, so the toggles became Settings' segmented pairs and
@@ -85,8 +90,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   iOS WebKit off a status bar until "my screenshot and diag are from android".
   Ask the platform before theorising; and a page missing from /diag may just
   be one the recorder never kept.
-
-- *2026-10-25* — "This link doesn't work": one `%23` read as a chat's
-  mangling, not ours, until a screenshot showed the whole message encoded and
-  only its first colon spared: iOS took `CBS:` for a scheme. Ask for what
-  arrived, whole, before blaming the carrier.

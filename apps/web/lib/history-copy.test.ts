@@ -698,6 +698,28 @@ suite("describe", () => {
     ]);
   });
 
+  // The grid's first filling: the split goes from evenly to by items, and
+  // every line was nobody's — "Salad: nobody → Theo" was the failure.
+  it("calls a grid filled for the first time a split by items", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    const receiptItems = [{ label: "Salad", amount: "40.00" }, { label: "Beer", amount: "60.00" }];
+    await editExpense(groupId, theo, expenseId, { receiptItems });
+    await editExpense(groupId, theo, expenseId, {
+      receiptInvolved: [theo, marie],
+      receiptAssignments: [[theo], [theo, marie]],
+      split: { mode: "receipt", weights: { [theo]: 7000, [marie]: 3000 } },
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo split it by items");
+    expect(latest!.rows).toEqual([
+      { name: "Salad: Theo", item: true },
+      { name: "Beer: Marie, Theo", item: true },
+      { name: "At the table: Marie, Theo", item: true },
+      { name: "Theo +20.00 · Marie −20.00" },
+    ]);
+  });
+
   // Reassigning a line to somebody else can leave the shares exactly where
   // they were, and then the grid is the only thing that moved.
   it("names a who-had-what grid that moved nothing else", async () => {
