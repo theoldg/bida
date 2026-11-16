@@ -328,10 +328,13 @@ function EntryBy({ expense, kind, group, data }: {
       </p>
     );
   }
-  const payers = payerList(expense);
   const foreign = expense.currency !== group.baseCurrency;
   // In base: the figure that actually moves their balance.
   const putIn = resolvePayers(expense);
+  const nameOf = (id: string) => data.memberById.get(id)?.name ?? copy.someone;
+  // Largest first, as the form lists them; `payerList` orders by id.
+  const payers = payerList(expense)
+    .sort((a, b) => (putIn[b] ?? 0) - (putIn[a] ?? 0) || nameOf(a).localeCompare(nameOf(b)));
   return <>
     <Eyebrow style={{ marginBottom: 4 }}>
       {copy.entryKind.payer[kind]} <b>{plural(payers.length, copy.noun.person)}</b>
@@ -340,9 +343,7 @@ function EntryBy({ expense, kind, group, data }: {
       const own = expense.payers?.[id] ?? 0;
       return (
         <KV key={id}
-          k={id === data.me
-            ? <span>{data.memberById.get(id)?.name ?? copy.someone}<You /></span>
-            : data.memberById.get(id)?.name ?? copy.someone}
+          k={id === data.me ? <span>{nameOf(id)}<You /></span> : nameOf(id)}
           v={foreign
             ? <TwoCurrencies base={money(putIn[id] ?? 0, group.baseCurrency)}
               own={money(own, expense.currency)} />

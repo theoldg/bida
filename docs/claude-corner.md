@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-16* — "Why aren't the payers sorted by amount here?" A why on a
+  screenshot is a fix, not a question. The form already sorted them; the entry
+  screen took core's id order. Where one screen does it right, the answer is
+  "this one forgot", and the fix copies it.
+
 - *2026-11-16* — "make them case insensitive: Teo --> Te, tobi --> To".
   The examples said two things: compare case-blind, and print capitalised —
   "tobi" came out "To", not "to". An example's output is part of the spec.
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   row, not the three that share the rule: a tap on a text field means "put the
   caret here", while Paid by and When open something. The press stays where
   the tap is a button press.
-
-- *2026-10-28* — "dont suggest the made up CRD currency when creating a new
-  group, even when it's the last used one". "Made up" named the demo, not a
-  code; the quick split made the same guess from the same group, so it got the
-  same skip without being asked.
