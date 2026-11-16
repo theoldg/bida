@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-16* — "make them case insensitive: Teo --> Te, tobi --> To".
+  The examples said two things: compare case-blind, and print capitalised —
+  "tobi" came out "To", not "to". An example's output is part of the spec.
+
 - *2026-11-15* — A screenshot of nine "nobody →" lines: "Handle the history
   better for this case". The case was the grid's first filling, so its heading
   became the split going by items too — the photo showed one symptom; the fix
@@ -85,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   group, even when it's the last used one". "Made up" named the demo, not a
   code; the quick split made the same guess from the same group, so it got the
   same skip without being asked.
-
-- *2026-10-25* — "Doesn't work in messenger's in-app browser", and I chased
-  iOS WebKit off a status bar until "my screenshot and diag are from android".
-  Ask the platform before theorising; and a page missing from /diag may just
-  be one the recorder never kept.

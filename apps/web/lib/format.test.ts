@@ -157,6 +157,12 @@ describe("distinctInitials", () => {
     expect(codes(["Ana", "Anouk", "Bea"])).toEqual(["Ana", "Ano", "B"]);
   });
 
+  it("tells names apart case-blind and prints them capitalised", () => {
+    expect(codes(["Teo", "tobi"])).toEqual(["Te", "To"]);
+    expect(codes(["alice", "Bob"])).toEqual(["A", "B"]);
+    expect(codes(["martin", "Marta"])).toEqual(["Ma1", "Ma2"]);
+  });
+
   it("numbers whoever still collides at three, rather than growing", () => {
     expect(codes(["Bartholomew", "Bartholomew Junior"])).toEqual(["Ba1", "Ba2"]);
   });
@@ -219,7 +225,7 @@ describe("distinctInitials", () => {
   });
 
   it("does not number a group that has no collision left at three", () => {
-    expect(codes(["ba12", "Zoe"])).toEqual(["b", "Z"]);
+    expect(codes(["ba12", "Zoe"])).toEqual(["B", "Z"]);
   });
 });
 

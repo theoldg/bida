@@ -138,23 +138,31 @@ const CODE_MAX = 3;
 
 /**
  * The shortest prefix that tells everyone apart ("Jo"/"Ja"), up to
- * `CODE_MAX`; whoever still collides is numbered per prefix: "Ma1 Ma2 Ju1".
+ * `CODE_MAX`, compared case-blind and printed capitalised — "Teo" and "tobi"
+ * are "Te"/"To", never "T"/"t"; whoever still collides is numbered per
+ * prefix: "Ma1 Ma2 Ju1".
  * A group with a digit in any name gets bare prefixes, repeats and all, since
  * "ba1" would equal "Ba" numbered 1.
  */
 export function distinctInitials(members: readonly { id: string; name: string }[]): Map<string, string> {
   const out = new Map<string, string>();
   const chars = new Map(members.map((m) => [m.id, graphemes(m.name.trim())]));
-  const prefix = (id: string, len: number) => chars.get(id)!.slice(0, len).join("") || copy.unknown;
+  const prefix = (id: string, len: number) => {
+    const [first = "", ...rest] = chars.get(id)!.slice(0, len);
+    // "ß" upper-cases to two letters, which would outgrow the column.
+    const up = first.toUpperCase();
+    return (graphemes(up).length === 1 ? up : first) + rest.join("") || copy.unknown;
+  };
+  const same = (code: string) => code.toLowerCase();
   for (let len = 1; len <= CODE_MAX; len++) {
     const byPrefix = new Map<string, string[]>();
     for (const m of members) {
       if (out.has(m.id)) continue;
-      const p = prefix(m.id, len);
+      const p = same(prefix(m.id, len));
       byPrefix.set(p, [...(byPrefix.get(p) ?? []), m.id]);
     }
-    for (const [p, ids] of byPrefix) {
-      if (ids.length === 1) out.set(ids[0]!, p);
+    for (const ids of byPrefix.values()) {
+      if (ids.length === 1) out.set(ids[0]!, prefix(ids[0]!, len));
     }
   }
   const left = members.filter((m) => !out.has(m.id));
@@ -171,14 +179,14 @@ export function distinctInitials(members: readonly { id: string; name: string }[
   // Runs by the prefix a one-digit code leaves room for: "Martin" and "Matteo" are both "Ma".
   const runs = new Map<string, string[]>();
   for (const m of left) {
-    const key = prefix(m.id, CODE_MAX - 1);
+    const key = same(prefix(m.id, CODE_MAX - 1));
     runs.set(key, [...(runs.get(key) ?? []), m.id]);
   }
   const codes = new Map<string, string>();
   for (const ids of runs.values()) ids.forEach((id, i) => codes.set(id, code(id, i)));
   // Ten in a run needs two digits, which can shorten a prefix into another
   // run's. Distinct numbers across all leftovers can't collide.
-  if (new Set(codes.values()).size < codes.size) {
+  if (new Set([...codes.values()].map(same)).size < codes.size) {
     left.forEach((m, i) => codes.set(m.id, code(m.id, i)));
   }
   for (const [id, c] of codes) out.set(id, c);
