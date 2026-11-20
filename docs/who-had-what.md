@@ -151,7 +151,9 @@ crossing the rules, with a grip at each end.
 **Only an end drags** (`dragStayEnd`), and only an end takes the finger from
 the scroller (`touch-action: none`): a grid this tall is scrolled far more than
 it is painted, and a drag from anywhere would leave nowhere to scroll from. A tap
-anywhere else flips one night. A total opens that person's dates to type, the
+anywhere else flips one night. **A touch drag ends in no click**, where a
+mouse's ends in one on its first cell, so the click after a drag is swallowed
+for a moment, never by a flag left waiting: that flag ate the next tap. A total opens that person's dates to type, the
 way in for a month-long stay nobody wants to drag: dates outside the stay widen
 it, with nobody else on the nights added. The range moves whole when its first
 date does; a row added by widening copies the row it grows from, so somebody

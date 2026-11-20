@@ -62,8 +62,10 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   const wrap = useRef<HTMLDivElement | null>(null);
   const rowEl = useRef<(HTMLTableRowElement | null)[]>([]);
   const drag = useRef<Drag | null>(null);
-  // A drag ends in a click on the cell it started on, which must not flip it.
-  const swallowClick = useRef(false);
+  // A drag can end in a click on the cell it started on, which must not flip
+  // it — and on a touch screen often ends in none, so the guard is a moment,
+  // never a flag left waiting: a flag outlived the drag and ate the next tap.
+  const swallowUntil = useRef(0);
   // Read off a ref by every change: two quick taps can land before a render.
   const now = useRef(stay);
   now.current = stay;
@@ -106,7 +108,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   }
 
   function toggleCell(id: string, row: number) {
-    if (swallowClick.current) { swallowClick.current = false; return; }
+    if (Date.now() < swallowUntil.current) return;
     change(toggleStayRow(now.current, id, row));
   }
 
@@ -121,6 +123,8 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   }
 
   function startDrag(e: React.PointerEvent, id: string, row: number) {
+    // A new press is a new tap, whatever the last drag left behind.
+    swallowUntil.current = 0;
     const run = stayRunAt(now.current, id, row);
     if (!run || (row !== run.first && row !== run.last)) return;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -141,7 +145,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   }
 
   function endDrag() {
-    if (drag.current?.moved) swallowClick.current = true;
+    if (drag.current?.moved) swallowUntil.current = Date.now() + 400;
     drag.current = null;
   }
 
@@ -228,9 +232,9 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
             </div>
             <div className="stayrange">
               <label className="stayfield">
-                <span className="fieldlabel">{copy.stay.from}</span>
+                <span className="fieldlabel">{copy.stay.from[stay.unit]}</span>
                 <input type="date" data-field="stay-from" autoComplete={NO_AUTOFILL} value={stay.from}
-                  aria-label={copy.stay.from}
+                  aria-label={copy.stay.from[stay.unit]}
                   onChange={(e) => {
                     // The stay moves whole: its length is kept, as a booking moved is.
                     const shift = daysBetween(stay.from, e.target.value);
@@ -311,7 +315,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
                     aria-label={copy.stay.share(m.name)}>
                     <span className="who">{m.name}</span>
                     <span className="staynights">
-                      {copy.stay.of(stayCount(stay, m.id), plural(stay.count, word))}
+                      {plural(stayCount(stay, m.id), word)}
                     </span>
                     <span className="amt">{empty.size > 0 ? "–" : money(shares[m.id] ?? 0, draft.currency)}</span>
                     <Icon name="chev" size={12} className="staychev" />
@@ -381,9 +385,9 @@ function PersonDates({ name, id, stay, onClose, onSet }: {
     <Dialog title={copy.stay.person.title(name)} onClose={onClose}>
       <div className="dbody staydates">
         <label className="stayfield">
-          <span className="fieldlabel">{copy.stay.person.arrived}</span>
+          <span className="fieldlabel">{copy.stay.person.arrived[stay.unit]}</span>
           <input type="date" className="dinput" autoComplete={NO_AUTOFILL} value={arrived}
-            aria-label={copy.stay.person.arrived} onChange={(e) => setArrived(e.target.value)} />
+            aria-label={copy.stay.person.arrived[stay.unit]} onChange={(e) => setArrived(e.target.value)} />
         </label>
         <label className="stayfield">
           <span className="fieldlabel">{copy.stay.person.left[stay.unit]}</span>

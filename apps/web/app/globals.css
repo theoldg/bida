@@ -857,8 +857,9 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   border: 1px solid var(--rule); border-radius: var(--r-s); padding: 6px 8px; outline: none; min-width: 0 }
 .stayfield input:focus { border-color: var(--brand) }
 .stayarrow { color: var(--muted); padding-bottom: 8px }
-.stayunit { flex: none }
-.stayunit button { flex: none; padding: 5px 12px }
+/* Doubled: `.seg button` comes later and would stretch these to nothing. */
+.seg.stayunit { flex: none }
+.seg.stayunit button { flex: none; padding: 5px 14px }
 .staytable { --label-w: 112px }
 .staytable thead th.stayrowhead { text-align: left; padding-left: var(--inset); font-size: var(--fs-caption);
   font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted) }
@@ -873,7 +874,10 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .staycell.last .staybar::after { bottom: 0 }
 .staycell:is(.first, .last) { touch-action: none; cursor: ns-resize }
 .staycell:not(.in) .dot { width: 4px; height: 4px; background: var(--rule) }
-.staytot { width: 100%; text-align: left; position: relative }
+/* A row to tap, not a line to read: a full one-line row, its wash edge to edge. */
+.staytot { width: calc(100% + 2 * var(--gutter)); margin: 0 calc(-1 * var(--gutter)); text-align: left;
+  position: relative; gap: 10px; padding: var(--item-y) var(--gutter) }
+.staytot .who, .staytot .amt { font-size: var(--fs-body) }
 .staytot:active { background-image: linear-gradient(var(--press), var(--press)) }
 .staytot .staynights { font-size: var(--fs-caption); color: var(--muted); white-space: nowrap }
 .staytot .amt { min-width: 8ch; text-align: right }

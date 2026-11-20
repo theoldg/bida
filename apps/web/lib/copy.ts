@@ -1094,8 +1094,7 @@ const en = {
     } satisfies Record<StayUnit, Noun>,
     /** Over the first column: what one row is. */
     row: { night: "Night", day: "Day" } satisfies Record<StayUnit, string>,
-    from: "From",
-    to: { night: "To", day: "To" } satisfies Record<StayUnit, string>,
+    from: { night: "From", day: "First day" } satisfies Record<StayUnit, string>,
     toLabel: { night: "Leaving", day: "Last day" } satisfies Record<StayUnit, string>,
     edit: "Edit who stayed when",
     /** A row's figure: how many were there, and what that cost each. */
@@ -1104,12 +1103,10 @@ const en = {
     there: (name: string, day: string) => `${name} there on ${day}`,
     away: (name: string, day: string) => `${name} away on ${day}`,
     share: (name: string) => `${name}’s dates and share`,
-    /** "5 of 7 nights": the total says the noun. */
-    of: (n: number, total: string) => `${n} of ${total}`,
     badRange: "The last date has to come after the first.",
     person: {
       title: (name: string) => `${name}’s dates`,
-      arrived: "Arrived",
+      arrived: { night: "Arrived", day: "First day" } satisfies Record<StayUnit, string>,
       left: { night: "Left", day: "Last day" } satisfies Record<StayUnit, string>,
       whole: "Whole stay",
       set: "Set",

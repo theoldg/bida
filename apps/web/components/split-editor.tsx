@@ -298,7 +298,7 @@ function DaysPanel({ stay, editHref, flash, onFlashEnd, members, me, currency, s
               <span style={{ flex: 1, minWidth: 0, fontSize: "var(--fs-body)" }}>
                 {m.name}{m.id === me ? <You /> : null}
               </span>
-              <span className="rmeta">{copy.stay.of(stayCount(stay, m.id), plural(stay.count, word))}</span>
+              <span className="rmeta">{plural(stayCount(stay, m.id), word)}</span>
               <span className="bignum" style={{ fontSize: "var(--fs-body)", minWidth: "7ch", textAlign: "right" }}>
                 {shares[m.id] === undefined ? "–" : money(shares[m.id] ?? 0, currency)}
               </span>
