@@ -845,6 +845,8 @@ export const pl: Copy = {
     edit: "???",
     each: (heads, figure) => `÷${heads} · ${figure}`,
     nobody: "???",
+    departure: "???",
+    leaves: () => "???",
     there: () => "???",
     away: () => "???",
     share: () => "???",

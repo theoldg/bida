@@ -830,11 +830,13 @@ await page.waitForURL(/\/g\/entry\/days\?/);
 const stayFrom = await page.locator('[data-field="stay-from"]').inputValue();
 const plusDays = (iso, n) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 864e5).toISOString().slice(0, 10);
 await page.locator('[data-field="stay-to"]').fill(plusDays(stayFrom, 3));
-report(await page.locator("table.staytable tbody tr").count() === 3, "a stay of three nights is three rows");
-// Sam's bar, dragged by its foot up to its first night: one night left.
+report(await page.locator("table.staytable tbody tr:not(.staydeparture)").count() === 3, "a stay of three nights is three rows");
+// Sam's bar, held by the morning they leave and dragged up to the morning
+// after the first night: one night left.
 const samThere = page.locator('button[aria-label^="Sam there on"]');
-const foot = await samThere.nth(2).boundingBox(), head = await samThere.nth(0).boundingBox();
-await page.mouse.move(foot.x + foot.width / 2, foot.y + foot.height - 12);
+const foot = await page.locator('button[aria-label^="Sam leaves on"]').boundingBox();
+const head = await samThere.nth(1).boundingBox();
+await page.mouse.move(foot.x + foot.width / 2, foot.y + foot.height / 2);
 await page.mouse.down();
 await page.mouse.move(head.x + head.width / 2, head.y + head.height / 2, { steps: 6 });
 await page.mouse.up();
@@ -846,7 +848,7 @@ await page.getByLabel("Left", { exact: true }).fill(plusDays(stayFrom, 1));
 await page.getByRole("button", { name: "Set", exact: true }).click();
 report(await page.locator('button[aria-label^="Marie there on"]').count() === 1, "a total opens that person's dates to type");
 // Nobody on the last night is refused, said over Done.
-const lastNight = page.locator("table.staytable tbody tr").last();
+const lastNight = page.locator("table.staytable tbody tr:not(.staydeparture)").last();
 await lastNight.locator('button[aria-label^="Theo there on"]').click();
 await page.getByRole("button", { name: "Done" }).click();
 report(await page.getByText("Every day needs at least one person.").isVisible(), "a night nobody stayed is refused");

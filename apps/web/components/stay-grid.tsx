@@ -26,6 +26,8 @@ type Drag = {
   from: number;
   base: DaysSplit;
   moved: boolean;
+  /** Held by the morning after: the finger is where they leave, a night past the last. */
+  morning: boolean;
 };
 
 /**
@@ -83,6 +85,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   const empty = new Set(emptyStayRows(stay));
   const total = draftAmountMinor(draft);
   const word = copy.stay.noun[stay.unit];
+  const nights = stay.unit === "night";
 
   // What each is owed for, as the form will save it: the same seed, the same cent.
   let shares: Record<string, number> = {};
@@ -112,26 +115,39 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
     change(toggleStayRow(now.current, id, row));
   }
 
-  /** The row under a finger, clamped to the table: past either end is that end. */
+  /**
+   * The row under a finger, clamped to the table: past either end is that end.
+   * By nights the departure row counts, one past the last night.
+   */
   function rowAt(y: number): number {
-    const rows = rowEl.current.slice(0, dates.length);
+    const n = dates.length + (nights ? 1 : 0);
+    const rows = rowEl.current.slice(0, n);
     for (let i = 0; i < rows.length; i++) {
       const box = rows[i]?.getBoundingClientRect();
       if (box && y < box.bottom) return i;
     }
-    return Math.max(0, dates.length - 1);
+    return Math.max(0, n - 1);
   }
 
+  /**
+   * By days a bar's two ends are its first and last cells. By nights the last
+   * night's bar runs on into the next morning, the row below, and that is
+   * where its end is held — the cell of the last night itself is no handle.
+   */
   function startDrag(e: React.PointerEvent, id: string, row: number) {
     // A new press is a new tap, whatever the last drag left behind.
     swallowUntil.current = 0;
-    const run = stayRunAt(now.current, id, row);
-    if (!run || (row !== run.first && row !== run.last)) return;
+    const s = now.current;
+    const morning = nights && !stayAt(s, id, row) && stayAt(s, id, row - 1);
+    const run = stayRunAt(s, id, morning ? row - 1 : row);
+    if (!run) return;
+    let end: Drag["end"];
+    if (morning) end = "last";
+    else if (nights) { if (row !== run.first) return; end = "first"; }
+    else if (row !== run.first && row !== run.last) return;
+    else end = run.first === run.last ? null : row === run.first ? "first" : "last";
     e.currentTarget.setPointerCapture(e.pointerId);
-    drag.current = {
-      member: id, run, from: row, base: now.current, moved: false,
-      end: run.first === run.last ? null : row === run.first ? "first" : "last",
-    };
+    drag.current = { member: id, run, from: row, base: s, moved: false, end, morning };
   }
 
   function moveDrag(e: React.PointerEvent) {
@@ -141,7 +157,8 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
     if (row === d.from && !d.moved) return;
     d.moved = true;
     const end = d.end ?? (row < d.from ? "first" : "last");
-    change(dragStayEnd(d.base, d.member, d.run, end, row));
+    // Held by the morning, the finger is the day they leave: the night before is the last.
+    change(dragStayEnd(d.base, d.member, d.run, end, d.morning ? row - 1 : row));
   }
 
   function endDrag() {
@@ -252,7 +269,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
             </div>
           </div>
 
-          <table className="itemtable staytable" style={{ "--cols": columns.length } as CSSProperties}
+          <table className={`itemtable staytable${nights ? " bynight" : ""}`} style={{ "--cols": columns.length } as CSSProperties}
             onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
             <colgroup>
               <col className="collabel" />
@@ -288,10 +305,13 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
                       const there = stayAt(stay, m.id, i);
                       const first = there && !stayAt(stay, m.id, i - 1);
                       const last = there && !stayAt(stay, m.id, i + 1);
+                      // The morning after a last night: where its bar ends, and is held.
+                      const morning = nights && !there && stayAt(stay, m.id, i - 1);
                       return (
                         <td key={m.id} className="itemwho">
                           <button type="button"
-                            className={`itemcell staycell${there ? " in" : ""}${first ? " first" : ""}${last ? " last" : ""}`}
+                            className={`itemcell staycell${there ? " in" : ""}${first ? " first" : ""}${
+                              last ? " last" : ""}${morning ? " morning" : ""}`}
                             aria-pressed={there}
                             aria-label={there ? copy.stay.there(m.name, day) : copy.stay.away(m.name, day)}
                             onPointerDown={(e) => startDrag(e, m.id, i)}
@@ -304,6 +324,25 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
                   </tr>
                 );
               })}
+              {nights && dates.length > 0 ? (
+                // The morning everyone has gone: no night to pay for, only the
+                // last night's bars landing, and their ends to hold.
+                <tr className="staydeparture" ref={(el) => { rowEl.current[dates.length] = el; }}>
+                  <td className="itemlabel">
+                    <span className="itemname">{stayDay(end)}</span>
+                    <span className="itemamount">{copy.stay.departure}</span>
+                  </td>
+                  {columns.map((m) => (
+                    <td key={m.id} className="itemwho">
+                      {stayAt(stay, m.id, dates.length - 1) ? (
+                        <button type="button" className="itemcell staycell morning"
+                          aria-label={copy.stay.leaves(m.name, stayDay(end))}
+                          onPointerDown={(e) => startDrag(e, m.id, dates.length)} />
+                      ) : null}
+                    </td>
+                  ))}
+                </tr>
+              ) : null}
             </tbody>
           </table>
 

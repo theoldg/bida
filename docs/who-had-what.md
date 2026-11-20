@@ -146,7 +146,10 @@ and share) under a way in that counts them. It wears the grid's own parts: the
 chips with their initials (who stayed at all), the initials over the columns,
 a row a night with what one head paid that night under its date ("÷3 · 57.14"),
 the totals under the table, Done docked. A stay is one ink bar down its column,
-crossing the rules, with a grip at each end.
+crossing the rules, with a grip at each end. By nights a row's middle is that
+night: a bar starts there, and its last night runs on into the morning below —
+where its end is held — so the stay ends on a departure row of its own, a date
+with no night to pay for.
 
 **Only an end drags** (`dragStayEnd`), and only an end takes the finger from
 the scroller (`touch-action: none`): a grid this tall is scrolled far more than

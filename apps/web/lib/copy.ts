@@ -1102,6 +1102,9 @@ const en = {
     /** A row's figure: how many were there, and what that cost each. */
     each: (heads: number, figure: string) => `÷${heads} · ${figure}`,
     nobody: "nobody",
+    /** Under the morning after the last night. */
+    departure: "departure",
+    leaves: (name: string, day: string) => `${name} leaves on ${day}: drag to move`,
     there: (name: string, day: string) => `${name} there on ${day}`,
     away: (name: string, day: string) => `${name} away on ${day}`,
     share: (name: string) => `${name}’s dates and share`,
