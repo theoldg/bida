@@ -72,7 +72,19 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   const now = useRef(stay);
   now.current = stay;
 
+  // Who was there on every date this screen has shown, so a night narrowed
+  // out of the range and widened back in comes back as it was.
+  const seen = useRef(new Map<string, Map<string, boolean>>());
+  const remember = (s: DaysSplit) => {
+    const dates = stayDates(s);
+    for (const id of Object.keys(s.stays)) {
+      const mine = seen.current.get(id) ?? new Map<string, boolean>();
+      dates.forEach((d, i) => mine.set(d, stayAt(s, id, i)));
+      seen.current.set(id, mine);
+    }
+  };
   const change = (next: DaysSplit) => {
+    remember(next);
     now.current = next;
     setStay(next);
     setTouched(true);
@@ -166,9 +178,27 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
     drag.current = null;
   }
 
+  /**
+   * New dates keep who was there on every date still in them, and the nights
+   * added start empty: a selection is work, and moving a date must not undo
+   * it. Only a stay with nothing chosen yet — everyone there throughout, as the
+   * tab first opens it — fills the new nights with everyone too, or the first
+   * date typed would leave a week to paint by hand.
+   */
   function setRange(from: string, end: string, unit: StayUnit = stay.unit) {
-    const next = restay(now.current, from, end, unit);
-    if (next) change(next);
+    const s = now.current;
+    const untouched = Object.values(s.stays).every((row) => row.slice(0, s.count) === "1".repeat(s.count));
+    const next = restay(s, from, end, unit, untouched ? "edge" : "away");
+    if (!next) return;
+    remember(s);
+    const had = new Set(stayDates(s));
+    const stays = { ...next.stays };
+    for (const [id, mine] of seen.current) {
+      if (!(id in stays) && !involved.has(id)) continue;
+      stays[id] = stayDates(next).map((d, i) => (had.has(d) || !mine.has(d)
+        ? (stayAt(next, id, i) ? "1" : "0") : mine.get(d) ? "1" : "0")).join("");
+    }
+    change({ ...next, stays });
   }
 
   /** Scrolls the first row nobody was at into view, then blooms them all. */
@@ -253,9 +283,12 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
                 <input type="date" data-field="stay-from" autoComplete={NO_AUTOFILL} value={stay.from}
                   aria-label={copy.stay.from[stay.unit]}
                   onChange={(e) => {
-                    // The stay moves whole: its length is kept, as a booking moved is.
-                    const shift = daysBetween(stay.from, e.target.value);
-                    if (shift !== null) setRange(e.target.value, addDays(end, shift));
+                    const from = e.target.value;
+                    // Past the end, the end follows: one night, or one day.
+                    const span = daysBetween(from, end);
+                    if (span === null) return;
+                    const minimum = nights ? 1 : 0;
+                    setRange(from, span < minimum ? addDays(from, minimum) : end);
                   }} />
               </label>
               <span className="stayarrow" aria-hidden="true">→</span>

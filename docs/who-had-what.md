@@ -158,9 +158,10 @@ anywhere else flips one night. **A touch drag ends in no click**, where a
 mouse's ends in one on its first cell, so the click after a drag is swallowed
 for a moment, never by a flag left waiting: that flag ate the next tap. A total opens that person's dates to type, the
 way in for a month-long stay nobody wants to drag: dates outside the stay widen
-it, with nobody else on the nights added. The range moves whole when its first
-date does; a row added by widening copies the row it grows from, so somebody
-who arrived late doesn't arrive early. A night nobody stayed is refused on Done
+it, with nobody else on the nights added. A date changed keeps who was there on
+every date still in range, and the nights it adds start empty — or as they
+were, for a night this screen dropped and gets back; only a stay nobody has
+chosen in yet (everyone, throughout) fills them with everyone. A night nobody stayed is refused on Done
 as an unassigned line is, and in the form's dock ("Nobody is there on Fri 15
 May"): its cost would otherwise fall on everyone else, unasked.
 
