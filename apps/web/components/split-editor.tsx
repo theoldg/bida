@@ -260,8 +260,10 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
         </div>
         {head ? (
           <div className="splithead">
-            {seatedBy?.split.mode === "days" ? (
-              <span className="seatedby">{copy.split.seatedBy(seatedBy.description, seatedBy.split.unit)}</span>
+            {seatedBy ? (
+              <span className="seatedby">
+                {copy.split.seatedBy.lead}<span>{seatedBy.description}</span>{copy.split.seatedBy.tail}
+              </span>
             ) : null}
             <span className="splitcount" aria-hidden="true">
               {partCount === null ? null : <>{plural(partCount, copy.noun.part)} · </>}

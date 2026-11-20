@@ -1523,9 +1523,10 @@ dialog.scrim::backdrop { background: transparent }
   position: sticky; bottom: 0; z-index: 2; background: var(--card-2); margin-top: -1px }
 .splitcount { font-size: var(--fs-caption); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap }
 .splitcount svg { display: inline-block; vertical-align: -2px }
-/* Left, taking what the count leaves; a long title ends in an ellipsis. */
-.seatedby { margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+/* Left, taking what the count leaves; a long title ends in an ellipsis inside its quotes. */
+.seatedby { display: flex; margin-right: auto; min-width: 0; white-space: nowrap;
   font-size: var(--fs-caption); color: var(--muted) }
+.seatedby > span { min-width: 0; overflow: hidden; text-overflow: ellipsis }
 .allmark { width: 16px; flex: none; display: flex; justify-content: center; position: relative }
 .allmark::before { content: ""; position: absolute; inset: 50% auto auto 50%; width: 36px; height: 36px;
   transform: translate(-50%, -50%) }

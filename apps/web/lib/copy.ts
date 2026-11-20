@@ -917,8 +917,8 @@ const en = {
       in: "Include everyone",
       out: "Leave everyone out",
     },
-    /** Why somebody is out of a new entry: who stayed, in the stay this names. */
-    seatedBy: (title: string, unit: "night" | "day") => unit === "night" ? `At ${title} that night` : `In ${title} that day`,
+    /** Why somebody is out of a new entry: who stayed, in the stay named between these. */
+    seatedBy: { lead: "Based on “", tail: "”" },
     /** Wording checked by lib/format.test.ts. */
     nobody: "Nobody is included yet",
     under: (amount: string) => `${amount} left to split`,
