@@ -35,7 +35,7 @@ import { markSaved } from "@/lib/ledger-motion";
 import { goUp, goBack, sameScreen } from "@/lib/nav";
 import {
   arithmeticSplit, blankDraft, changeSplitTab, clearDraft, draftSeedKey, expenseDraft, getDraft, isDraftDirty, newEntryKey,
-  retimed, saveDraft, seedDraft, splitSeed, transferDraft, useDraft, withSplit,
+  reseated, retimed, saveDraft, seatedDraft, seedDraft, splitSeed, transferDraft, useDraft, withSplit,
   type EntryDraft, type SplitTab,
 } from "@/lib/draft";
 import { usePrefetch } from "@/lib/prefetch";
@@ -84,10 +84,18 @@ function EditEntryScreen() {
     }
     const kind: EntryKind = wantedKind && ENTRY_KINDS.includes(wantedKind) ? wantedKind : "expense";
     seedDraft(groupId, {
-      ...blankDraft(kind, me, data.group.baseCurrency, members),
+      ...seatedDraft(blankDraft(kind, me, data.group.baseCurrency, members), data.expenses, members),
       ...(prefillTitle ? { description: prefillTitle } : {}),
     }, seedKey);
   }, [groupId, entryId, seedKey, wantedKind, prefillTitle, data.loading, data.group, data.members, data.me, data.expenses, data.settlements]);
+
+  // A new entry's Evenly follows its date, typed or scanned, until it is touched.
+  useEffect(() => {
+    if (!groupId || !draft || data.loading) return;
+    const moved = reseated(draft, data.expenses, data.members.map((m) => m.id));
+    const latest = getDraft(groupId);
+    if (moved && latest) saveDraft(groupId, { ...latest, ...moved });
+  }, [groupId, draft, data.loading, data.expenses, data.members]);
 
   const leaving = useRef(false);
 

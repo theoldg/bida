@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-20* — "Use the most expensive days and nights type expense as the
+  source of truth for who's checked". Two questions it left open — a date
+  that stay doesn't reach, a date moved after — answered as the trip would:
+  the priciest stay reaching the day, followed until touched.
+
 - *2026-11-20* — "prototype without pushing", then "make it a separate
   screen … reuse as many styles from the item assigner as possible … push to
   dev". My mock drew a new grid; the answer was the one we had. Sketch a new
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   not apply to other groups where someone set CRD". The obvious key was the
   currency; the owner meant the group. Same lesson as the CRD-suggestion card:
   "the demo" is an id, never a code that merely looks like it.
-
-- *2026-11-01* — "Any questions?" on a history rework, answered as rules:
-  "one or two names should be preferred to everyone, each". A rule, so it
-  went to every phrase, not only the asked case. Then a demo's note "fixed"
-  weeks ago: the phone kept an old seed — say why it still shows first.

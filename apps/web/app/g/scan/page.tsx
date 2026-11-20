@@ -7,7 +7,7 @@ import { ScanPair, useReceiptScan } from "@/components/receipt-scan";
 import { ScanDiagram } from "@/components/scan-diagram";
 import { BadLink, Blank, Body, Failure, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { copy } from "@/lib/copy";
-import { blankDraft, draftSeedKey, newEntryKey, seedDraft } from "@/lib/draft";
+import { blankDraft, draftSeedKey, newEntryKey, seatedDraft, seedDraft } from "@/lib/draft";
 import { route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 import { useScanAs } from "@/lib/scan/credential";
@@ -50,10 +50,10 @@ function ScanScreen() {
     if (draftSeedKey(groupId) === NEW_EXPENSE) return;
     const me = data.me ?? data.members[0]?.id;
     if (!me) return;
-    seedDraft(groupId, blankDraft(
-      "expense", me, data.group.baseCurrency, data.members.map((m) => m.id),
-    ), NEW_EXPENSE);
-  }, [groupId, data.loading, data.group, data.me, data.members]);
+    const members = data.members.map((m) => m.id);
+    seedDraft(groupId, seatedDraft(blankDraft("expense", me, data.group.baseCurrency, members), data.expenses, members),
+      NEW_EXPENSE);
+  }, [groupId, data.loading, data.group, data.me, data.members, data.expenses]);
 
   /**
    * Leaving by any way but a scan landing clears the refusal — otherwise the

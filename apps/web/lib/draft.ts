@@ -4,7 +4,7 @@
 import { useSyncExternalStore } from "react";
 import {
   convertSplitMode, minorToDecimalString, newId, ownCurrencySplit, parseMinor, receiptExtras, receiptOf,
-  sameLocalDay, seedStay, splitParticipants,
+  sameLocalDay, seedStay, splitParticipants, stayersOn,
   type ArithmeticMode, type ArithmeticSplit, type DaysSplit, type EntryRateSource, type Expense, type Receipt, type ReceiptItem,
   type Settlement, type SplitMode, type SplitSpec,
 } from "@bida/core";
@@ -64,6 +64,11 @@ export interface EntryDraft extends Receipt {
    * Seeded the first time the tab opens (`changeSplitTab`).
    */
   stay?: DaysSplit | null;
+  /**
+   * The day a new entry's Evenly was seated on (`seatedDraft`), so moving the
+   * date can seat it again; null once the split is touched.
+   */
+  seatedDay?: string | null;
   /** So a rescan can replace its own guess but not a typed title. */
   scannedDescription?: string;
   /**
@@ -319,6 +324,44 @@ export function blankDraft(
     dateOnly: false,
     categoryId: null,
   };
+}
+
+/**
+ * Who a new entry is for until somebody says: whoever stayed that night in the
+ * priciest split by days reaching it — the house, not the car — else everyone.
+ */
+export function presentOn(expenses: readonly Expense[], day: string, members: readonly string[]): string[] {
+  let best: { cost: number; there: string[] } | null = null;
+  for (const e of expenses) {
+    if (e.split.mode !== "days" || kindOf(e) !== "expense") continue;
+    const there = stayersOn(e.split, day);
+    if (there && (!best || e.baseAmountMinor > best.cost)) best = { cost: e.baseAmountMinor, there };
+  }
+  const there = best ? members.filter((id) => best.there.includes(id)) : [];
+  return there.length > 0 ? there : [...members];
+}
+
+/** A blank draft's Evenly seated on who was there its day (`presentOn`). */
+export function seatedDraft(draft: EntryDraft, expenses: readonly Expense[], members: readonly string[]): EntryDraft {
+  const day = dateInputValue(draft.occurredAt);
+  return { ...draft, splits: { equal: { mode: "equal", members: presentOn(expenses, day, members) } }, seatedDay: day };
+}
+
+/**
+ * The date moved, by hand or by a scan: seated again while the split is still
+ * the one seated, else never again. Null when there is nothing to do.
+ */
+export function reseated(
+  draft: EntryDraft, expenses: readonly Expense[], members: readonly string[],
+): Pick<EntryDraft, "splits" | "seatedDay"> | null {
+  if (!draft.seatedDay || draft.seatedDay === dateInputValue(draft.occurredAt)) return null;
+  const seated = presentOn(expenses, draft.seatedDay, members);
+  const evenly = draft.splits.equal?.members ?? [];
+  const untouched = Object.keys(draft.splits).length === 1 && evenly.length === seated.length
+    && seated.every((id) => evenly.includes(id));
+  if (!untouched) return { splits: draft.splits, seatedDay: null };
+  const { splits, seatedDay } = seatedDraft(draft, expenses, members);
+  return { splits, seatedDay };
 }
 
 /** So opening it to edit looks nothing up (ADR-0005). */

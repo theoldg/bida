@@ -47,6 +47,11 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
   it keeps a bill.
   Which tab is showing lives on the draft alone; a saved entry carries its
   mode, and that is what reopens it.
+- **A new entry is for whoever stayed that night** (`presentOn`): its Evenly
+  starts on who the priciest split by days reaching its date has there — the
+  house, not the car — and on everyone where no stay reaches it or all of them
+  have left. Until the split is touched it follows the date, typed or scanned
+  (`seatedDay`, `reseated`); once touched, never again.
 - **A count of parts** is typed with the money field's caret and Backspace
   (`PartsInput`), between − and + drawn small and grey, up to 999 999 999 — the
   field widens to six digits, then scrolls; having parts puts you in, none

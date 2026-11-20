@@ -71,6 +71,13 @@ export function stayers(spec: DaysSplit): Id[] {
     .sort();
 }
 
+/** Who was there on `day`, or null where the stay doesn't reach it. */
+export function stayersOn(spec: DaysSplit, day: string): Id[] | null {
+  const row = daysBetween(spec.from, day);
+  if (!stayShapeOk(spec) || row === null || row < 0 || row >= spec.count) return null;
+  return stayers(spec).filter((id) => stayAt(spec, id, row));
+}
+
 /** How many rows each person was there. */
 export function stayCount(spec: DaysSplit, id: Id): number {
   let n = 0;

@@ -5,7 +5,7 @@ import {
 } from "@bida/core";
 import {
   activeSplit, arithmeticSplit, blankDraft, changeSplitTab, draftReceiptSplit, expenseDraft, newEntryKey,
-  openSplitTab, receiptBill, retimed, splitSeed, tabAfterScan, transferDraft, withSplit,
+  openSplitTab, presentOn, receiptBill, reseated, retimed, seatedDraft, splitSeed, tabAfterScan, transferDraft, withSplit,
   type EntryDraft, type SplitTab,
 } from "./draft";
 
@@ -515,5 +515,49 @@ describe("the Days tab", () => {
     expect(d.splitTab).toBe("days");
     expect(activeSplit(d)).toEqual(split);
     expect(arithmeticSplit(d).mode).toBe("equal");
+  });
+});
+
+describe("who a new entry is for", () => {
+  const D = "m-dee";
+  const ALL = [A, B, C, D];
+  const stayed = (id: string, cost: number, from: string, stays: Record<string, string>, over: Partial<Expense> = {}): Expense => ({
+    id, groupId: "g", description: id, occurredAt: 0, amountMinor: cost, currency: "EUR", rateToBase: "1",
+    baseAmountMinor: cost, paidBy: A,
+    split: { mode: "days", unit: "night", from, count: Object.values(stays)[0]!.length, stays }, ...over,
+  });
+  // The house is the trip; the car, dearer some days, only its drivers.
+  const house = stayed("e-house", 90000, "2026-05-14", { [A]: "111", [B]: "111", [C]: "011" });
+  const car = stayed("e-car", 20000, "2026-05-14", { [A]: "111", [D]: "111" });
+  const on = (day: string): EntryDraft =>
+    seatedDraft(blankDraft("expense", A, "EUR", ALL, new Date(`${day}T12:00`).getTime()), [car, house], ALL);
+
+  it("is whoever stayed that night in the priciest stay reaching it", () => {
+    expect(presentOn([car, house], "2026-05-14", ALL)).toEqual([A, B]);
+    expect(presentOn([car, house], "2026-05-15", ALL)).toEqual([A, B, C]);
+    expect(on("2026-05-15").splits.equal?.members).toEqual([A, B, C]);
+  });
+
+  it("is everyone on a day no stay reaches, and never a stay that was an income", () => {
+    expect(presentOn([car, house], "2026-05-17", ALL)).toEqual(ALL);
+    expect(presentOn([stayed("e-refund", 99999, "2026-05-14", { [D]: "1" }, { kind: "income" }), car], "2026-05-14", ALL))
+      .toEqual([A, D]);
+  });
+
+  it("leaves out whoever has left the group, and is everyone when nobody is left", () => {
+    expect(presentOn([house], "2026-05-14", [A, C, D])).toEqual([A]);
+    expect(presentOn([house], "2026-05-14", [C, D])).toEqual([C, D]);
+  });
+
+  it("follows the date until the split is touched", () => {
+    const d = on("2026-05-14");
+    const moved = { ...d, occurredAt: new Date("2026-05-15T12:00").getTime() };
+    expect(reseated(moved, [car, house], ALL)).toEqual({
+      splits: { equal: { mode: "equal", members: [A, B, C] } }, seatedDay: "2026-05-15",
+    });
+    expect(reseated(d, [car, house], ALL)).toBeNull();
+    const touched = { ...moved, splits: withSplit(moved.splits, { mode: "equal", members: [A] }) };
+    expect(reseated(touched, [car, house], ALL)).toEqual({ splits: touched.splits, seatedDay: null });
+    expect(reseated({ ...touched, seatedDay: null }, [car, house], ALL)).toBeNull();
   });
 });

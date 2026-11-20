@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { canonicalSplit, convertSplitMode, resolveEntrySplit, resolveSplit, splitParticipants, validateSplit } from "./split";
 import {
   addDays, daysBetween, dragStayEnd, emptyStayRows, restay, seedStay, setStayAll, setStayRun, stayCount,
-  stayDates, stayEnd, stayHeads, stayRunAt, stayWeights, toggleStayRow, MAX_STAY,
+  stayDates, stayEnd, stayersOn, stayHeads, stayRunAt, stayWeights, toggleStayRow, MAX_STAY,
 } from "./stay";
 import type { DaysSplit } from "./types";
 
@@ -135,6 +135,13 @@ describe("a stay's calendar", () => {
     expect(stayEnd(villa)).toBe("2026-05-21");
     expect(stayEnd({ ...villa, unit: "day" })).toBe("2026-05-20");
     expect(stayDates(villa)[6]).toBe("2026-05-20");
+  });
+
+  it("says who was there on a date, and nothing outside the stay", () => {
+    expect(stayersOn(villa, "2026-05-14")).toEqual(["bruno", "chloe"]);
+    expect(stayersOn(villa, "2026-05-20")).toEqual(["ana", "dev", "eli"]);
+    expect(stayersOn(villa, "2026-05-21")).toBeNull();
+    expect(stayersOn(villa, "2026-05-13")).toBeNull();
   });
 
   it("crosses a month, a leap day and a clock change as calendar dates", () => {
