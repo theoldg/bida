@@ -36,6 +36,10 @@ type Drag = {
   held: boolean;
   x: number;
   y: number;
+  /** Where the finger is now: what the edge scroll reads while it rests. */
+  at: number;
+  /** Moved since picked up: an end picked up by an edge doesn't scroll until it is. */
+  travelled: boolean;
 };
 
 /**
@@ -44,6 +48,19 @@ type Drag = {
  * sooner, but a scroll begun on an end must have moved past `SLOP_PX` first.
  */
 const DRAG_HOLD_MS = 300;
+
+/**
+ * A carried end scrolls the grid from a band at either edge of its rows: slow
+ * as the finger enters, quicker deeper in and past the edge, to `EDGE_SPEED`
+ * a `EDGE_PAST_PX` beyond it. Squared, so the band's near half is for aiming
+ * at a row and only its far side is for travel; eased in over `EDGE_RAMP_MS`,
+ * so a finger arriving deep doesn't throw the grid.
+ */
+const EDGE_PX = 56;
+const EDGE_PAST_PX = 48;
+/** px a millisecond: some twenty-five rows a second, flat out. */
+const EDGE_SPEED = 1.1;
+const EDGE_RAMP_MS = 220;
 
 /** Once an end is picked up, the page's scroll is the finger's to refuse. */
 const keepFinger = (e: TouchEvent) => { if (e.cancelable) e.preventDefault(); };
@@ -92,9 +109,11 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   // never a flag left waiting: a flag outlived the drag and ate the next tap.
   const swallowUntil = useRef(0);
   const holdTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const edge = useRef<{ raf: number; last: number; since: number; top: number } | null>(null);
   // Leaving mid-hold must not leave the page's scroll refused.
   useEffect(() => () => {
     clearTimeout(holdTimer.current);
+    if (edge.current) cancelAnimationFrame(edge.current.raf);
     document.removeEventListener("touchmove", keepFinger, { capture: true });
   }, []);
   // Read off a ref by every change: two quick taps can land before a render.
@@ -190,7 +209,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
     else end = run.first === run.last ? null : row === run.first ? "first" : "last";
     const el = e.currentTarget as HTMLElement;
     const d: Drag = { member: id, run, from: row, base: s, moved: false, end, morning,
-      armed: false, held: false, x: e.clientX, y: e.clientY };
+      armed: false, held: false, x: e.clientX, y: e.clientY, at: e.clientY, travelled: false };
     drag.current = d;
     const pick = () => {
       if (drag.current !== d) return;
@@ -215,6 +234,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
     clearTimeout(holdTimer.current);
     document.removeEventListener("touchmove", keepFinger, { capture: true });
     drag.current = null;
+    stopEdge();
     setHolding(null);
   }
 
@@ -226,12 +246,70 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
       if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > SLOP_PX) dropDrag();
       return;
     }
-    const row = rowAt(e.clientY);
+    d.at = e.clientY;
+    if (Math.abs(d.at - d.y) > SLOP_PX) d.travelled = true;
+    follow(d);
+    if (d.travelled && edgeSpeed(d.at) !== 0) startEdge();
+  }
+
+  /** The end to the row under the finger, wherever the grid has scrolled to. */
+  function follow(d: Drag) {
+    const row = rowAt(d.at);
     if (row === d.from && !d.moved) return;
     d.moved = true;
     const end = d.end ?? (row < d.from ? "first" : "last");
-    // Held by the morning, the finger is the day they leave: the night before is the last.
-    change(dragStayEnd(d.base, d.member, d.run, end, d.morning ? row - 1 : row));
+    const next = dragStayEnd(d.base, d.member, d.run, end, d.morning ? row - 1 : row);
+    // Each frame of an edge scroll asks; only a row crossed is a change.
+    if (next.stays[d.member] !== now.current.stays[d.member]) change(next);
+  }
+
+  /**
+   * px a millisecond, up negative, for a finger at `y`: nothing outside the
+   * bands, which lie inside the rows' view — under the sticky heads, above the
+   * grid's bottom — and never take more than a third of it each.
+   */
+  function edgeSpeed(y: number): number {
+    const box = wrap.current;
+    if (!box) return 0;
+    const view = box.getBoundingClientRect();
+    const top = box.querySelector("thead th")?.getBoundingClientRect().bottom ?? view.top;
+    const band = Math.min(EDGE_PX, (view.bottom - top) / 3);
+    const depth = y < top + band ? y - (top + band) : y > view.bottom - band ? y - (view.bottom - band) : 0;
+    if (depth === 0) return 0;
+    const f = Math.min(1, Math.abs(depth) / (band + EDGE_PAST_PX));
+    return Math.sign(depth) * EDGE_SPEED * f * f;
+  }
+
+  // A finger resting in a band sends no moves, so the scroll runs on frames.
+  // Its position is kept as a float: scrollTop rounds, and a slow scroll's
+  // fraction of a pixel a frame would round to nothing.
+  const step = useRef<(t: number) => void>(() => {});
+  step.current = (t: number) => {
+    const e = edge.current, d = drag.current, box = wrap.current;
+    if (!e || !d?.armed || !box) { stopEdge(); return; }
+    const v = edgeSpeed(d.at);
+    if (v === 0) { stopEdge(); return; }
+    const dt = Math.min(32, t - e.last);
+    e.last = t;
+    const ramp = Math.min(1, (t - e.since) / EDGE_RAMP_MS);
+    const max = box.scrollHeight - box.clientHeight;
+    e.top = Math.max(0, Math.min(max, e.top + v * dt * ramp));
+    if (Math.round(e.top) !== box.scrollTop) {
+      box.scrollTop = e.top;
+      follow(d);
+    }
+    e.raf = requestAnimationFrame((n) => step.current(n));
+  };
+
+  function startEdge() {
+    if (edge.current || !wrap.current) return;
+    const t = performance.now();
+    edge.current = { raf: requestAnimationFrame((n) => step.current(n)), last: t, since: t, top: wrap.current.scrollTop };
+  }
+
+  function stopEdge() {
+    if (edge.current) cancelAnimationFrame(edge.current.raf);
+    edge.current = null;
   }
 
   function endDrag() {

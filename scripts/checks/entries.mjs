@@ -891,6 +891,36 @@ report(/Split by days/i.test(cabin) && /Sam · 1 night/.test(cabin) && /33\.33/.
 await page.getByRole("link", { name: "Edit", exact: true }).click();
 report(await page.getByRole("button", { name: "Days", exact: true }).getAttribute("aria-pressed") === "true",
   "and reopens on its Days tab");
+// An end carried to the bottom edge scrolls the grid on, its bar with it,
+// though the finger rests; deeper, past the edge, faster.
+await page.getByRole("link", { name: /Edit who stayed when/ }).click();
+await page.waitForURL(/\/g\/entry\/days\?/);
+await page.locator('[data-field="stay-to"]').fill(plusDays(stayFrom, 40));
+const grid = page.locator(".itemscroll");
+const gridBox = await grid.boundingBox();
+const scrolled = () => grid.evaluate((el) => el.scrollTop);
+const samFoot40 = centre(await page.locator("table.staytable tbody tr").nth(1)
+  .locator('button[aria-label^="Sam away on"]').boundingBox());
+await touch("touchStart", samFoot40.x, samFoot40.y);
+await settle(page, 450);
+const nearBottom = gridBox.y + gridBox.height - 20;
+for (let i = 1; i <= 6; i++) {
+  await touch("touchMove", samFoot40.x, samFoot40.y + (nearBottom - samFoot40.y) * i / 6);
+  await settle(page, 25);
+}
+const top0 = await scrolled();
+await settle(page, 500);
+const slow = (await scrolled()) - top0;
+await touch("touchMove", samFoot40.x, gridBox.y + gridBox.height + 40);
+const top1 = await scrolled();
+await settle(page, 500);
+const fast = (await scrolled()) - top1;
+await touch("touchEnd", samFoot40.x, gridBox.y + gridBox.height + 40);
+const nights40 = await samThere.count();
+report(slow > 0 && fast > slow * 1.5 && nights40 > 8,
+  "an end held at the grid's edge scrolls it on, faster past the edge, and the stay follows",
+  `scrolled ${slow}px then ${fast}px in 500ms each; Sam ${nights40} nights`);
+await page.waitForTimeout(250);
 await page.goto(`${base}/g?id=${g}`);
 
 // ---- a screen whose draft is gone hands back -------------------------
