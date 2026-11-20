@@ -841,6 +841,31 @@ await page.mouse.down();
 await page.mouse.move(head.x + head.width / 2, head.y + head.height / 2, { steps: 6 });
 await page.mouse.up();
 report(await samThere.count() === 1, "the end of a stay's bar drags it shorter");
+// A finger takes an end only once held there: moved straight off, it scrolls.
+const fingerFrom = async (from, to, rest) => {
+  await touch("touchStart", from.x, from.y);
+  await settle(page, rest);
+  for (let i = 1; i <= 6; i++) {
+    await touch("touchMove", from.x, from.y + (to.y - from.y) * i / 6);
+    await settle(page, 25);
+  }
+  await touch("touchEnd", from.x, to.y);
+  await page.waitForTimeout(250);
+};
+const centre = (b) => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
+// One night: the morning they leave is the second row.
+const samFoot = centre(await page.locator("table.staytable tbody tr").nth(1)
+  .locator('button[aria-label^="Sam away on"]').boundingBox());
+const lowerRow = centre(await page.locator("table.staytable tr.staydeparture").boundingBox());
+await fingerFrom(samFoot, lowerRow, 0);
+report(await samThere.count() === 1, "a finger moving straight off an end scrolls, and drags nothing");
+await fingerFrom(samFoot, lowerRow, 450);
+report(await samThere.count() === 3, "a finger held on an end picks it up and drags it");
+// Back to one night, by the mouse, for what follows.
+await page.mouse.move(samFoot.x, lowerRow.y);
+await page.mouse.down();
+await page.mouse.move(head.x + head.width / 2, head.y + head.height / 2, { steps: 6 });
+await page.mouse.up();
 // Marie's dates typed: the first night only.
 await page.getByRole("button", { name: "Marie’s dates and share" }).click();
 await page.getByLabel("Arrived").fill(stayFrom);

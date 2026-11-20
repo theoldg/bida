@@ -848,8 +848,8 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 /* ---- who stayed when (components/stay-grid.tsx) ----
    The item grid's table with a row a night. A stay is one unbroken ink bar down
    its column, crossing the rules, its ends inset so arriving and leaving read
-   at a glance; an end has a grip, and only an end drags — anywhere else a
-   finger scrolls the grid. */
+   at a glance; an end has a grip, and only an end drags, once held — anything
+   else a finger does scrolls the grid. */
 .stayeyebrow { margin: 14px 0 8px }
 .stayrange { display: flex; align-items: center; gap: 10px }
 .stayfield { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 }
@@ -872,13 +872,21 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   left: -4px; right: -4px; height: 2px; background: var(--ink) }
 .staycell.first .staybar::before { top: 0 }
 .staycell.last .staybar::after { bottom: 0 }
-.staycell:is(.first, .last) { touch-action: none; cursor: ns-resize }
+/* An end scrolls like any cell until held (`DRAG_HOLD_MS`). */
+.staycell:is(.first, .last) { cursor: ns-resize }
+.staycell { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none }
+/* The whole column, once, as an end is picked up: ready to drag. Two names,
+   so a second hold replays it without remounting the cell under the finger. */
+@keyframes picked-a { from { background-color: color-mix(in srgb, var(--brand) 14%, transparent) } }
+@keyframes picked-b { from { background-color: color-mix(in srgb, var(--brand) 14%, transparent) } }
+.staytable td.picked-a { animation: picked-a .6s ease-out }
+.staytable td.picked-b { animation: picked-b .6s ease-out }
 /* By nights a night is evening to morning: the last night's bar runs on into
    the row below, the morning they leave, and is held there rather than by the
    night's own cell. */
 .bynight .staycell.last .staybar { bottom: -15px }
-.bynight .staycell.last:not(.first) { touch-action: manipulation; cursor: pointer }
-.bynight .staycell.morning { touch-action: none; cursor: ns-resize }
+.bynight .staycell.last:not(.first) { cursor: pointer }
+.bynight .staycell.morning { cursor: ns-resize }
 .staytable tr.staydeparture td { height: 34px }
 .staycell:not(.in) .dot { width: 4px; height: 4px; background: var(--rule) }
 /* A row to tap, not a line to read: a full one-line row, its wash edge to edge. */

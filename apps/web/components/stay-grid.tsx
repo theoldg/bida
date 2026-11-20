@@ -10,6 +10,8 @@ import {
 import { Body, Screen, TopBar } from "./chrome";
 import { ConfirmDialog, Dialog } from "./dialog";
 import { Icon } from "./icons";
+import { SLOP_PX } from "./long-press";
+import { tick } from "../lib/haptics";
 import { copy } from "../lib/copy";
 import { NO_AUTOFILL } from "../lib/autofill";
 import { useRefusal } from "../lib/refusal";
@@ -28,7 +30,23 @@ type Drag = {
   moved: boolean;
   /** Held by the morning after: the finger is where they leave, a night past the last. */
   morning: boolean;
+  /** A finger's end is picked up only once held: until then, it may yet be a scroll. */
+  armed: boolean;
+  /** Picked up by a hold, so its lift is no tap even unmoved; a mouse's unmoved press is one. */
+  held: boolean;
+  x: number;
+  y: number;
 };
+
+/**
+ * How long a finger rests on an end before it picks it up. Under a menu's
+ * hold (`useHold`): the drag is this screen's own gesture, so it can come
+ * sooner, but a scroll begun on an end must have moved past `SLOP_PX` first.
+ */
+const DRAG_HOLD_MS = 300;
+
+/** Once an end is picked up, the page's scroll is the finger's to refuse. */
+const keepFinger = (e: TouchEvent) => { if (e.cancelable) e.preventDefault(); };
 
 /**
  * The calendar a rental is divided on: a row a night (or day), a column a
@@ -61,6 +79,8 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   const [told, setTold] = useState(false);
   const refusal = useRefusal();
   const [seeking, setSeeking] = useState(false);
+  /** The column whose end a finger just picked up, washed once; the count's parity replays it. */
+  const [picked, setPicked] = useState<{ id: string; n: number } | null>(null);
   const wrap = useRef<HTMLDivElement | null>(null);
   const rowEl = useRef<(HTMLTableRowElement | null)[]>([]);
   const drag = useRef<Drag | null>(null);
@@ -68,6 +88,12 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   // it — and on a touch screen often ends in none, so the guard is a moment,
   // never a flag left waiting: a flag outlived the drag and ate the next tap.
   const swallowUntil = useRef(0);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Leaving mid-hold must not leave the page's scroll refused.
+  useEffect(() => () => {
+    clearTimeout(holdTimer.current);
+    document.removeEventListener("touchmove", keepFinger, { capture: true });
+  }, []);
   // Read off a ref by every change: two quick taps can land before a render.
   const now = useRef(stay);
   now.current = stay;
@@ -149,6 +175,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   function startDrag(e: React.PointerEvent, id: string, row: number) {
     // A new press is a new tap, whatever the last drag left behind.
     swallowUntil.current = 0;
+    dropDrag();
     const s = now.current;
     const morning = nights && !stayAt(s, id, row) && stayAt(s, id, row - 1);
     const run = stayRunAt(s, id, morning ? row - 1 : row);
@@ -158,13 +185,43 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
     else if (nights) { if (row !== run.first) return; end = "first"; }
     else if (row !== run.first && row !== run.last) return;
     else end = run.first === run.last ? null : row === run.first ? "first" : "last";
-    e.currentTarget.setPointerCapture(e.pointerId);
-    drag.current = { member: id, run, from: row, base: s, moved: false, end, morning };
+    const el = e.currentTarget as HTMLElement;
+    const d: Drag = { member: id, run, from: row, base: s, moved: false, end, morning,
+      armed: false, held: false, x: e.clientX, y: e.clientY };
+    drag.current = d;
+    const pick = () => {
+      if (drag.current !== d) return;
+      d.armed = true;
+      try { el.setPointerCapture(pointer); } catch { /* lifted already */ }
+    };
+    const pointer = e.pointerId;
+    // A mouse or a pen scrolls nothing by pressing: theirs is picked up at once.
+    if (e.pointerType !== "touch") { pick(); return; }
+    holdTimer.current = setTimeout(() => {
+      if (drag.current !== d) return;
+      pick();
+      d.held = true;
+      document.addEventListener("touchmove", keepFinger, { passive: false, capture: true });
+      tick();
+      setPicked((p) => ({ id: d.member, n: (p?.n ?? 0) + 1 }));
+    }, DRAG_HOLD_MS);
+  }
+
+  /** Whatever was held or pending let go: the timer, and the scroll refused. */
+  function dropDrag() {
+    clearTimeout(holdTimer.current);
+    document.removeEventListener("touchmove", keepFinger, { capture: true });
+    drag.current = null;
   }
 
   function moveDrag(e: React.PointerEvent) {
     const d = drag.current;
     if (!d) return;
+    if (!d.armed) {
+      // Moved before the hold: a scroll, which the browser is already doing.
+      if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > SLOP_PX) dropDrag();
+      return;
+    }
     const row = rowAt(e.clientY);
     if (row === d.from && !d.moved) return;
     d.moved = true;
@@ -174,8 +231,8 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   }
 
   function endDrag() {
-    if (drag.current?.moved) swallowUntil.current = Date.now() + 400;
-    drag.current = null;
+    if (drag.current?.moved || drag.current?.held) swallowUntil.current = Date.now() + 400;
+    dropDrag();
   }
 
   /**
@@ -338,12 +395,14 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
                       // The morning after a last night: where its bar ends, and is held.
                       const morning = nights && !there && stayAt(stay, m.id, i - 1);
                       return (
-                        <td key={m.id} className="itemwho">
+                        <td key={m.id} className={picked?.id === m.id ? `itemwho picked-${picked.n % 2 ? "a" : "b"}` : "itemwho"}
+                          onAnimationEnd={() => setPicked(null)}>
                           <button type="button"
                             className={`itemcell staycell${there ? " in" : ""}${first ? " first" : ""}${
                               last ? " last" : ""}${morning ? " morning" : ""}`}
                             aria-pressed={there}
                             aria-label={there ? copy.stay.there(m.name, day) : copy.stay.away(m.name, day)}
+                            onContextMenu={(e) => e.preventDefault()}
                             onPointerDown={(e) => startDrag(e, m.id, i)}
                             onClick={() => toggleCell(m.id, i)}>
                             {there ? <span className="staybar" /> : <span className="dot" />}
@@ -363,11 +422,13 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
                     <span className="itemamount">{copy.stay.departure}</span>
                   </td>
                   {columns.map((m) => (
-                    <td key={m.id} className="itemwho">
+                    <td key={m.id} className={picked?.id === m.id ? `itemwho picked-${picked.n % 2 ? "a" : "b"}` : "itemwho"}
+                          onAnimationEnd={() => setPicked(null)}>
                       {stayAt(stay, m.id, dates.length - 1) ? (
                         <button type="button" className="itemcell staycell morning"
                           aria-label={copy.stay.leaves(m.name, stayDay(end))}
-                          onPointerDown={(e) => startDrag(e, m.id, dates.length)} />
+                          onContextMenu={(e) => e.preventDefault()}
+                            onPointerDown={(e) => startDrag(e, m.id, dates.length)} />
                       ) : null}
                     </td>
                   ))}

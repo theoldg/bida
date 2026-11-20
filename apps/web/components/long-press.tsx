@@ -9,7 +9,7 @@ import { RowMenu, type SheetAction } from "./row-menu";
 /** iOS's own long-press default; Android's is 400–500ms. */
 const HOLD_MS = 500;
 /** Before the hold, past this is a scroll; after it, a reach for the menu. */
-const SLOP_PX = 10;
+export const SLOP_PX = 10;
 /**
  * The finger still down once a touch hold is answered. Its next move is the
  * hand reaching for the menu, so the browser's scroll is refused and the item
