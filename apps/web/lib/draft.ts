@@ -326,18 +326,21 @@ export function blankDraft(
   };
 }
 
-/**
- * Who a new entry is for until somebody says: whoever stayed that night in the
- * priciest split by days reaching it — the house, not the car — else everyone.
- */
-export function presentOn(expenses: readonly Expense[], day: string, members: readonly string[]): string[] {
-  let best: { cost: number; there: string[] } | null = null;
+/** The priciest split by days reaching `day` — the house, not the car — and who was there. */
+function stayOn(expenses: readonly Expense[], day: string): { expense: Expense; there: string[] } | null {
+  let best: { expense: Expense; there: string[] } | null = null;
   for (const e of expenses) {
     if (e.split.mode !== "days" || kindOf(e) !== "expense") continue;
     const there = stayersOn(e.split, day);
-    if (there && (!best || e.baseAmountMinor > best.cost)) best = { cost: e.baseAmountMinor, there };
+    if (there && (!best || e.baseAmountMinor > best.expense.baseAmountMinor)) best = { expense: e, there };
   }
-  const there = best ? members.filter((id) => best.there.includes(id)) : [];
+  return best;
+}
+
+/** Who a new entry is for until somebody says: whoever stayed that night (`stayOn`), else everyone. */
+export function presentOn(expenses: readonly Expense[], day: string, members: readonly string[]): string[] {
+  const stay = stayOn(expenses, day);
+  const there = stay ? members.filter((id) => stay.there.includes(id)) : [];
   return there.length > 0 ? there : [...members];
 }
 
@@ -345,6 +348,15 @@ export function presentOn(expenses: readonly Expense[], day: string, members: re
 export function seatedDraft(draft: EntryDraft, expenses: readonly Expense[], members: readonly string[]): EntryDraft {
   const day = dateInputValue(draft.occurredAt);
   return { ...draft, splits: { equal: { mode: "equal", members: presentOn(expenses, day, members) } }, seatedDay: day };
+}
+
+/** Whether the split is still the one seated on `seatedDay`. */
+function untouched(draft: EntryDraft, expenses: readonly Expense[], members: readonly string[]): boolean {
+  if (!draft.seatedDay) return false;
+  const seated = presentOn(expenses, draft.seatedDay, members);
+  const evenly = draft.splits.equal?.members ?? [];
+  return Object.keys(draft.splits).length === 1 && evenly.length === seated.length
+    && seated.every((id) => evenly.includes(id));
 }
 
 /**
@@ -355,13 +367,20 @@ export function reseated(
   draft: EntryDraft, expenses: readonly Expense[], members: readonly string[],
 ): Pick<EntryDraft, "splits" | "seatedDay"> | null {
   if (!draft.seatedDay || draft.seatedDay === dateInputValue(draft.occurredAt)) return null;
-  const seated = presentOn(expenses, draft.seatedDay, members);
-  const evenly = draft.splits.equal?.members ?? [];
-  const untouched = Object.keys(draft.splits).length === 1 && evenly.length === seated.length
-    && seated.every((id) => evenly.includes(id));
-  if (!untouched) return { splits: draft.splits, seatedDay: null };
+  if (!untouched(draft, expenses, members)) return { splits: draft.splits, seatedDay: null };
   const { splits, seatedDay } = seatedDraft(draft, expenses, members);
   return { splits, seatedDay };
+}
+
+/**
+ * The stay a new entry's Evenly still stands on, for the footer to name: none
+ * once touched, or where it is everyone anyway.
+ */
+export function seatedStay(draft: EntryDraft, expenses: readonly Expense[], members: readonly string[]): Expense | null {
+  if (!draft.seatedDay || draft.splitTab !== "equal" || !untouched(draft, expenses, members)) return null;
+  const stay = stayOn(expenses, draft.seatedDay);
+  const there = stay ? members.filter((id) => stay.there.includes(id)) : [];
+  return stay && there.length > 0 && there.length < members.length ? stay.expense : null;
 }
 
 /** So opening it to edit looks nothing up (ADR-0005). */

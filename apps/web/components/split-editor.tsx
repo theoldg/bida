@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   exactFigures, resolveSplit, restOf, splitParticipants, stayCount, toggleEveryone, validateSplit,
-  type ArithmeticSplit, type DaysSplit, type Id, type Member, type SplitSpec,
+  type ArithmeticSplit, type DaysSplit, type Expense, type Id, type Member, type SplitSpec,
 } from "@bida/core";
 import { MAX_PARTS, MinorAmountInput, PartsInput } from "./amount-input";
 import { Failure } from "./chrome";
@@ -48,7 +48,7 @@ interface DaysTabProps {
   onFlashEnd: (e: React.AnimationEvent) => void;
 }
 
-export function SplitEditor({ members, me, title, amountMinor, amountCurrency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt, days }: {
+export function SplitEditor({ members, me, title, amountMinor, amountCurrency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt, days, seatedBy = null }: {
   members: Member[];
   me: string | undefined;
   title: string;
@@ -67,6 +67,8 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   receipt: ReceiptTabProps | null;
   /** A transfer has no split, so no Days. */
   days: DaysTabProps | null;
+  /** The stay a new entry's Evenly was seated on, while it still is (`seatedStay`). */
+  seatedBy?: Expense | null;
 }) {
   const opts = { tiebreakSeed: seed };
   const showReceipt = tab === "receipt" && receipt !== null;
@@ -258,6 +260,9 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
         </div>
         {head ? (
           <div className="splithead">
+            {seatedBy?.split.mode === "days" ? (
+              <span className="seatedby">{copy.split.seatedBy(seatedBy.description, seatedBy.split.unit)}</span>
+            ) : null}
             <span className="splitcount" aria-hidden="true">
               {partCount === null ? null : <>{plural(partCount, copy.noun.part)} · </>}
               <Icon name="users" size={12} /> {inCount}/{members.length}

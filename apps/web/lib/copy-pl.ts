@@ -682,6 +682,7 @@ export const pl: Copy = {
       in: "Uwzględnij wszystkich",
       out: "Pomiń wszystkich",
     },
+    seatedBy: (title, unit) => unit === "night" ? `${title}: tej nocy` : `${title}: tego dnia`,
     nobody: "Nikt nie jest jeszcze uwzględniony",
     under: (amount) => `${amount} do podziału`,
     over: (amount) => `${amount} za dużo`,

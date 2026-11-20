@@ -35,7 +35,7 @@ import { markSaved } from "@/lib/ledger-motion";
 import { goUp, goBack, sameScreen } from "@/lib/nav";
 import {
   arithmeticSplit, blankDraft, changeSplitTab, clearDraft, draftSeedKey, expenseDraft, getDraft, isDraftDirty, newEntryKey,
-  reseated, retimed, saveDraft, seatedDraft, seedDraft, splitSeed, transferDraft, useDraft, withSplit,
+  reseated, retimed, saveDraft, seatedDraft, seatedStay, seedDraft, splitSeed, transferDraft, useDraft, withSplit,
   type EntryDraft, type SplitTab,
 } from "@/lib/draft";
 import { usePrefetch } from "@/lib/prefetch";
@@ -530,6 +530,7 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                   flash: refusals.flash("split"),
                   onFlashEnd: refusals.onFlashEnd("split"),
                 }}
+                seatedBy={seatedStay(draft, data.expenses, data.members.map((m) => m.id))}
               />
             </div>
           )}
