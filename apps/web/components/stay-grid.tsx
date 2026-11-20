@@ -266,20 +266,18 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
                 </button>
               ))}
             </div>
-            <div className="stayhead">
-              <div className="eyebrow">{copy.stay.dates}</div>
-              <div className="seg stayunit">
-                {(["night", "day"] as const).map((u) => (
-                  <button key={u} type="button" className={stay.unit === u ? "on" : ""} aria-pressed={stay.unit === u}
-                    onClick={() => setRange(stay.from, stayEnd({ ...stay, unit: u }), u)}>
-                    {copy.stay.unit[u]}
-                  </button>
-                ))}
-              </div>
+            <div className="eyebrow stayeyebrow">{copy.stay.mode}</div>
+            <div className="seg stayunit">
+              {(["night", "day"] as const).map((u) => (
+                <button key={u} type="button" className={stay.unit === u ? "on" : ""} aria-pressed={stay.unit === u}
+                  onClick={() => setRange(stay.from, stayEnd({ ...stay, unit: u }), u)}>
+                  {copy.stay.unit[u]}
+                </button>
+              ))}
             </div>
+            <div className="eyebrow stayeyebrow">{copy.stay.dates}</div>
             <div className="stayrange">
               <label className="stayfield">
-                <span className="fieldlabel">{copy.stay.from[stay.unit]}</span>
                 <input type="date" data-field="stay-from" autoComplete={NO_AUTOFILL} value={stay.from}
                   aria-label={copy.stay.from[stay.unit]}
                   onChange={(e) => {
@@ -293,7 +291,6 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
               </label>
               <span className="stayarrow" aria-hidden="true">→</span>
               <label className="stayfield">
-                <span className="fieldlabel">{copy.stay.toLabel[stay.unit]}</span>
                 <input type="date" data-field="stay-to" autoComplete={NO_AUTOFILL} value={end}
                   min={stay.unit === "night" ? addDays(stay.from, 1) : stay.from}
                   aria-label={copy.stay.toLabel[stay.unit]}

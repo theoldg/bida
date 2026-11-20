@@ -831,6 +831,7 @@ export const pl: Copy = {
   stay: {
     title: "???",
     whoStayed: "???",
+    mode: "???",
     dates: "???",
     stayed: () => "???",
     didntStay: () => "???",

@@ -1086,6 +1086,7 @@ const en = {
   stay: {
     title: "Who stayed when",
     whoStayed: "Who stayed",
+    mode: "Mode",
     dates: "Dates",
     stayed: (name: string) => `${name} stayed`,
     didntStay: (name: string) => `${name} didn’t stay`,

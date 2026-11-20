@@ -850,15 +850,15 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
    its column, crossing the rules, its ends inset so arriving and leaving read
    at a glance; an end has a grip, and only an end drags — anywhere else a
    finger scrolls the grid. */
-.stayhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px }
-.stayrange { display: flex; align-items: flex-end; gap: 10px; margin-top: 8px }
+.stayeyebrow { margin: 14px 0 8px }
+.stayrange { display: flex; align-items: center; gap: 10px }
 .stayfield { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 }
 .stayfield input { width: 100%; font-size: var(--fs-body); font-weight: 600; color: var(--ink); background: var(--card-2);
   border: 1px solid var(--rule); border-radius: var(--r-s); padding: 6px 8px; outline: none; min-width: 0 }
 .stayfield input:focus { border-color: var(--brand) }
-.stayarrow { color: var(--muted); padding-bottom: 8px }
+.stayarrow { color: var(--muted) }
 /* Doubled: `.seg button` comes later and would stretch these to nothing. */
-.seg.stayunit { flex: none }
+.seg.stayunit { display: inline-flex }
 .seg.stayunit button { flex: none; padding: 5px 14px }
 .staytable { --label-w: 112px }
 .staytable thead th.stayrowhead { text-align: left; padding-left: var(--inset); font-size: var(--fs-caption);
