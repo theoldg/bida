@@ -3,10 +3,13 @@ import type { Hlc } from "./hlc";
 
 export type Id = string;
 
-export type SplitMode = "equal" | "exact" | "shares" | "receipt";
+export type SplitMode = "equal" | "exact" | "shares" | "receipt" | "days";
 
-/** `receipt`'s weights are read off a scanned bill: no editor tab writes it. */
-export type ArithmeticMode = Exclude<SplitMode, "receipt">;
+/**
+ * `receipt`'s weights are read off a scanned bill and `days`' off a calendar:
+ * each has a screen of its own, and no row of the editor writes either.
+ */
+export type ArithmeticMode = Exclude<SplitMode, "receipt" | "days">;
 
 /**
  * `income` is an expense whose sign is applied once, in `computeBalances`;
@@ -25,7 +28,17 @@ export type SplitSpec =
   | { mode: "exact"; amounts: Record<Id, number>; rest?: Id[] }
   | { mode: "shares"; weights: Record<Id, number> }
   /** `shares` arithmetic, kept apart because a bill read out is not parts somebody chose. ADR-0016. */
-  | { mode: "receipt"; weights: Record<Id, number> };
+  | { mode: "receipt"; weights: Record<Id, number> }
+  /**
+   * A rental: every row (a night or a day, from `from`, `count` of them) costs
+   * the same, and is shared evenly by whoever was there. `stays` is a string a
+   * person, one `1` or `0` a row. core/stay.ts.
+   */
+  | { mode: "days"; unit: StayUnit; from: string; count: number; stays: Record<Id, string> };
+
+/** A house is paid by the night, a car by the day, and only the label differs. */
+export type StayUnit = "night" | "day";
+export type DaysSplit = Extract<SplitSpec, { mode: "days" }>;
 
 export type ArithmeticSplit = Extract<SplitSpec, { mode: ArithmeticMode }>;
 

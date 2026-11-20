@@ -3,7 +3,7 @@
 **Status:** Accepted · 2026-08-28 (discounts and tax, 2026-09-12; a bill may be
 typed rather than photographed, 2026-09-19; typed by hand, 2026-10-17; charges
 named and every line's kind correctable, 2026-10-21; a tip written after the
-total read as the tip, 2026-10-22)
+total read as the tip, 2026-10-22; a split by days follows it, 2026-11-20)
 
 **Context.** The owner asked to photograph a bill and assign its lines: *"a
 selection of involved users … then a table with columns as users and rows as
@@ -29,6 +29,12 @@ parts" over weights nobody typed, leaving Receipt for As parts arrived with the
 bill's own weights in it. A receipt is a mode — **"By items"**, because the
 photograph is how the lines got typed in and a mode's name is how the money
 divides — it names itself (`copy.split.mode`), and nothing asks a second field.
+
+**A split by days is a mode for the same reason** (`days`): its weights are a
+calendar read out, not parts anybody chose, so it names itself ("By days") and
+history never prices a rental in parts. The cost of a mode over a flag is paid
+by older builds, which read one they don't know as naming nobody
+([implementation-status.md](../implementation-status.md#what-is-open)).
 
 **A photograph is how the lines usually got in, and not the only way.** They
 may be typed in by hand, a card per item with no model in between, and edited

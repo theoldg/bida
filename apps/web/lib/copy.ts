@@ -1,6 +1,6 @@
 // Doc: docs/frontend.md#every-word-in-libcopyts
 import type {
-  ExtraKind, ImportRefusalCode, ImportSource, ScanProblem, SplitSpec,
+  ExtraKind, ImportRefusalCode, ImportSource, ScanProblem, SplitSpec, StayUnit,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 import type { KeyHost } from "./db/dexie";
@@ -889,6 +889,7 @@ const en = {
       shares: "As parts",
       exact: "As amounts",
       receipt: "By items",
+      days: "By days",
     } as Record<SplitSpec["mode"], string>,
     /** The mode inside a sentence: "Split evenly", and the history's "split it as parts". */
     how: {
@@ -896,8 +897,10 @@ const en = {
       shares: "as parts",
       exact: "as amounts",
       receipt: "by items",
+      days: "by days",
     } as Record<SplitSpec["mode"], string>,
     receipt: "Items",
+    days: "Days",
     include: (name: string) => `Include ${name}`,
     leaveOut: (name: string) => `Leave ${name} out`,
     fewerParts: (name: string) => `Fewer parts for ${name}`,
@@ -919,6 +922,8 @@ const en = {
     under: (amount: string) => `${amount} left to split`,
     over: (amount: string) => `${amount} too much`,
     nothingLeft: (who: string) => `Nothing left for ${who}`,
+    emptyDay: (day: string, more: number) =>
+      more > 0 ? `Nobody is there on ${day} and ${more} more` : `Nobody is there on ${day}`,
     people: (n: number) => `${n} people`,
   },
 
@@ -1071,6 +1076,47 @@ const en = {
     },
     discardTitle: "Discard this grid?",
     discardBody: "The bill goes back to the lines the scan read.",
+  },
+
+  // ------------------------------------------------------------- split by days
+
+  /** A rental split by the nights (or days) each person was there. */
+  stay: {
+    title: "Who stayed when",
+    whoStayed: "Who stayed",
+    dates: "Dates",
+    stayed: (name: string) => `${name} stayed`,
+    didntStay: (name: string) => `${name} didn’t stay`,
+    unit: { night: "Nights", day: "Days" } satisfies Record<StayUnit, string>,
+    noun: {
+      night: { one: "night", many: "nights" } as Noun,
+      day: { one: "day", many: "days" } as Noun,
+    } satisfies Record<StayUnit, Noun>,
+    /** Over the first column: what one row is. */
+    row: { night: "Night", day: "Day" } satisfies Record<StayUnit, string>,
+    from: "From",
+    to: { night: "To", day: "To" } satisfies Record<StayUnit, string>,
+    toLabel: { night: "Leaving", day: "Last day" } satisfies Record<StayUnit, string>,
+    edit: "Edit who stayed when",
+    /** A row's figure: how many were there, and what that cost each. */
+    each: (heads: number, figure: string) => `÷${heads} · ${figure}`,
+    nobody: "nobody",
+    there: (name: string, day: string) => `${name} there on ${day}`,
+    away: (name: string, day: string) => `${name} away on ${day}`,
+    share: (name: string) => `${name}’s dates and share`,
+    /** "5 of 7 nights": the total says the noun. */
+    of: (n: number, total: string) => `${n} of ${total}`,
+    badRange: "The last date has to come after the first.",
+    person: {
+      title: (name: string) => `${name}’s dates`,
+      arrived: "Arrived",
+      left: { night: "Left", day: "Last day" } satisfies Record<StayUnit, string>,
+      whole: "Whole stay",
+      set: "Set",
+    },
+    needsSomeone: "Every day needs at least one person.",
+    discardTitle: "Discard these dates?",
+    discardBody: "The split goes back to how it was.",
   },
 
   // ------------------------------------------------------------- history

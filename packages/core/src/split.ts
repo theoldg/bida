@@ -1,5 +1,6 @@
 // Doc: docs/data-model.md#splits--the-only-tricky-arithmetic
 import type { ArithmeticSplit, ArithmeticMode, Id, SplitSpec } from "./types";
+import { emptyStayRows, stayDates, stayers, stayShapeOk, stayWeights } from "./stay";
 
 /**
  * Shares sum to the total exactly, identically on every device — hence
@@ -13,7 +14,7 @@ interface SplitResult {
 }
 
 /** Core names the problem and never formats it: it doesn't know the currency. */
-export type SplitProblem = "empty" | "under" | "over" | "nothingLeft";
+export type SplitProblem = "empty" | "under" | "over" | "nothingLeft" | "emptyDay";
 
 export interface SplitValidation {
   ok: boolean;
@@ -24,6 +25,8 @@ export interface SplitValidation {
   diffMinor?: number;
   message?: string;
   rest?: { ids: Id[]; leftMinor: number };
+  /** A split by days with rows nobody was at: the first of them, and how many. */
+  emptyDays?: { first: string; count: number };
 }
 
 export class SplitError extends Error {}
@@ -60,6 +63,7 @@ export function splitParticipants(spec: SplitSpec): Id[] {
     case "equal": ids = spec.members; break;
     case "exact": ids = [...Object.keys(exactAmounts(spec.amounts)), ...restOf(spec)]; break;
     case "shares": case "receipt": ids = Object.keys(spec.weights); break;
+    case "days": ids = stayers(spec); break;
     // Names nobody, so `resolveSplit` refuses it rather than a screen throwing.
     default: ids = [];
   }
@@ -133,17 +137,32 @@ export function canonicalSplit(spec: SplitSpec): SplitSpec {
         : { mode: "exact", amounts: sortedKeys(spec.amounts) };
     }
     case "receipt": return { mode: "receipt", weights: sortedKeys(spec.weights) };
+    case "days": {
+      // Somebody never there is not in it, and every string is the stay's length.
+      if (!stayShapeOk(spec)) return spec;
+      const stays: Record<Id, string> = {};
+      for (const id of stayers(spec)) stays[id] = (spec.stays[id] ?? "").slice(0, spec.count).padEnd(spec.count, "0");
+      return { mode: "days", unit: spec.unit, from: spec.from, count: spec.count, stays };
+    }
     default: return spec;
   }
 }
 
 function weightsOf(spec: SplitSpec, participants: Id[]): Map<Id, number> {
   const out = new Map<Id, number>();
+  let stay: Record<Id, number> | null = null;
+  if (spec.mode === "days") {
+    // A night with nobody there would be paid by everyone else, unasked.
+    if (emptyStayRows(spec).length > 0) throw new SplitError("a day of the stay has nobody there");
+    stay = stayWeights(spec);
+    if (!stay) throw new SplitError("too many people with too many head counts to weigh exactly");
+  }
   for (const id of participants) {
     let w: number;
     switch (spec.mode) {
       case "equal": w = 1; break;
       case "shares": case "receipt": w = spec.weights[id] ?? 0; break;
+      case "days": w = stay?.[id] ?? 0; break;
       case "exact": w = 0; break;
     }
     if (!Number.isInteger(w) || w < 0) {
@@ -351,6 +370,18 @@ export function validateSplit(
     return { ok: true, allocatedMinor: totalMinor, totalMinor, rest: { ids, leftMinor } };
   }
 
+  if (spec.mode === "days") {
+    const empty = emptyStayRows(spec);
+    const first = empty[0];
+    if (first !== undefined) {
+      return {
+        ok: false, allocatedMinor: 0, totalMinor, problem: "emptyDay",
+        message: "A day of the stay has nobody there",
+        emptyDays: { first: stayDates(spec)[first] ?? spec.from, count: empty.length },
+      };
+    }
+  }
+
   try {
     resolveSplit(totalMinor, spec, options);
     return { ok: true, allocatedMinor: totalMinor, totalMinor };
@@ -390,7 +421,7 @@ export function shareOf(
 
 /**
  * Carries who is in and none of the numbers: a figure nobody typed is not one.
- * Never into `receipt`, which nobody types (ADR-0016).
+ * Never into `receipt` or `days`, which have screens of their own (ADR-0016).
  */
 export function convertSplitMode(spec: SplitSpec, mode: ArithmeticMode): ArithmeticSplit {
   if (spec.mode === mode) return spec as ArithmeticSplit;

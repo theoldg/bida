@@ -486,3 +486,34 @@ describe("where a scan leaves the split editor", () => {
     expect(tabAfterScan(expense({ splitTab: "equal" }), "equal", false)).toBeUndefined();
   });
 });
+
+describe("the Days tab", () => {
+  it("opens on the entry's own day, one night, whoever the split had: Evenly until the calendar says otherwise", () => {
+    let d = expense({ occurredAt: new Date(2026, 4, 14, 18).getTime() });
+    d = { ...d, splits: withSplit(d.splits, { mode: "equal", members: [A, C] }) };
+    d = { ...d, ...changeSplitTab(d, "days") };
+    expect(d.stay).toEqual({ mode: "days", unit: "night", from: "2026-05-14", count: 1, stays: { [A]: "1", [C]: "1" } });
+    expect(activeSplit(d)).toBe(d.stay);
+  });
+
+  it("keeps the calendar while another tab shows, and writes that tab's split", () => {
+    let d = { ...expense(), ...changeSplitTab(expense(), "days") };
+    const stay = { mode: "days" as const, unit: "night" as const, from: "2026-05-14", count: 2, stays: { [A]: "11", [B]: "01" } };
+    d = { ...d, stay };
+    d = { ...d, ...changeSplitTab(d, "equal") };
+    expect(activeSplit(d).mode).toBe("equal");
+    d = { ...d, ...changeSplitTab(d, "days") };
+    expect(activeSplit(d)).toEqual(stay);
+  });
+
+  it("reopens a saved stay on its own tab", () => {
+    const split = { mode: "days" as const, unit: "day" as const, from: "2026-05-14", count: 3, stays: { [A]: "111", [B]: "100" } };
+    const d = expenseDraft({
+      id: "e1", groupId: "g", description: "Car", occurredAt: 1000, amountMinor: 300, currency: "EUR",
+      rateToBase: "1", baseAmountMinor: 300, paidBy: A, split,
+    }, A, MEMBERS);
+    expect(d.splitTab).toBe("days");
+    expect(activeSplit(d)).toEqual(split);
+    expect(arithmeticSplit(d).mode).toBe("equal");
+  });
+});

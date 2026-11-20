@@ -4,8 +4,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
-  exactFigures, resolveSplit, restOf, splitParticipants, toggleEveryone, validateSplit,
-  type ArithmeticSplit, type Id, type Member, type SplitSpec,
+  exactFigures, resolveSplit, restOf, splitParticipants, stayCount, toggleEveryone, validateSplit,
+  type ArithmeticSplit, type DaysSplit, type Id, type Member, type SplitSpec,
 } from "@bida/core";
 import { MAX_PARTS, MinorAmountInput, PartsInput } from "./amount-input";
 import { Failure } from "./chrome";
@@ -41,7 +41,14 @@ interface ReceiptTabProps {
   editItemsHref: string;
 }
 
-export function SplitEditor({ members, me, title, amountMinor, amountCurrency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt }: {
+interface DaysTabProps {
+  stay: DaysSplit | null;
+  editHref: string;
+  flash: string;
+  onFlashEnd: (e: React.AnimationEvent) => void;
+}
+
+export function SplitEditor({ members, me, title, amountMinor, amountCurrency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt, days }: {
   members: Member[];
   me: string | undefined;
   title: string;
@@ -58,10 +65,13 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
   tab: SplitTab;
   onTabChange: (next: SplitTab) => void;
   receipt: ReceiptTabProps | null;
+  /** A transfer has no split, so no Days. */
+  days: DaysTabProps | null;
 }) {
   const opts = { tiebreakSeed: seed };
   const showReceipt = tab === "receipt" && receipt !== null;
-  const shown: SplitSpec | null = showReceipt ? receiptSplit : spec;
+  const showDays = tab === "days" && days !== null;
+  const shown: SplitSpec | null = showReceipt ? receiptSplit : showDays ? days.stay : spec;
   const included = new Set(shown ? splitParticipants(shown) : []);
 
   let shares: Record<string, number> = {};
@@ -91,7 +101,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
     });
   }
 
-  const head = !showReceipt && members.length >= 3 ? spec : null;
+  const head = !showReceipt && !showDays && members.length >= 3 ? spec : null;
   const inCount = members.filter((m) => included.has(m.id)).length;
   const headState = inCount === 0 ? "none" : inCount === members.length ? "all" : "some";
   // The denominator a share is a fraction of, which no row says.
@@ -143,7 +153,7 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
       <div className="splitbox">
         <div className="seg">
           {MODES.map((mode) => {
-            const on = !showReceipt && tab === mode;
+            const on = !showReceipt && !showDays && tab === mode;
             return (
               <button key={mode} type="button" className={on ? "on" : ""} aria-pressed={on}
                 onClick={() => onTabChange(mode)}>{copy.split.mode[mode]}</button>
@@ -155,12 +165,20 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
               {copy.split.receipt}
             </button>
           ) : null}
+          {days ? (
+            <button type="button" className={showDays ? "on" : ""} aria-pressed={showDays}
+              onClick={() => onTabChange("days")}>
+              {copy.split.days}
+            </button>
+          ) : null}
         </div>
 
         <div className="splitlist">
           {showReceipt && receipt ? (
             <ReceiptPanel {...receipt} members={members} me={me} currency={amountCurrency}
               shares={shares} included={included} />
+          ) : showDays && days ? (
+            <DaysPanel {...days} members={members} me={me} currency={amountCurrency} shares={shares} />
           ) : members.map((m, i) => {
             const on = included.has(m.id);
             // A toggle answering on its left half only reads as broken.
@@ -256,6 +274,46 @@ export function SplitEditor({ members, me, title, amountMinor, amountCurrency, s
         ) : null}
       </div>
     </section>
+  );
+}
+
+/**
+ * The stay read out: who was there how many nights, and what that comes to.
+ * The calendar itself is `/g/entry/days`, which a split this size can't hold.
+ */
+function DaysPanel({ stay, editHref, flash, onFlashEnd, members, me, currency, shares }: DaysTabProps & {
+  members: Member[];
+  me: string | undefined;
+  currency: string;
+  shares: Record<string, number>;
+}) {
+  const word = stay ? copy.stay.noun[stay.unit] : copy.stay.noun.night;
+  const there = stay ? members.filter((m) => stayCount(stay, m.id) > 0) : [];
+  return (
+    <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+      {stay && there.length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "2px 0 2px" }}>
+          {there.map((m) => (
+            <div key={m.id} style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+              <span style={{ flex: 1, minWidth: 0, fontSize: "var(--fs-body)" }}>
+                {m.name}{m.id === me ? <You /> : null}
+              </span>
+              <span className="rmeta">{copy.stay.of(stayCount(stay, m.id), plural(stay.count, word))}</span>
+              <span className="bignum" style={{ fontSize: "var(--fs-body)", minWidth: "7ch", textAlign: "right" }}>
+                {shares[m.id] === undefined ? "–" : money(shares[m.id] ?? 0, currency)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <Link href={editHref} data-refuse="split" className={`btn btn-s gridway${flash}`}
+        onAnimationEnd={onFlashEnd} style={{ textDecoration: "none" }}>
+        <Icon name="calendar" size={16} />
+        <span className="wayname">{copy.stay.edit}</span>
+        <span className="waycount"><span>{stay ? plural(stay.count, word) : ""}</span></span>
+        <Icon name="chev" size={14} />
+      </Link>
+    </div>
   );
 }
 

@@ -30,12 +30,18 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Six things: Next 16, unchecked on a phone; the ledger's windowing experiment, Polish, a quick split's link, a bill's charges on older phones, and the add row filing when left. The visual review is closed
+Seven things: Next 16, unchecked on a phone; the ledger's windowing experiment, Polish, a quick split's link, a bill's charges on older phones, the add row filing when left, and a split by days. The visual review is closed
 ([design-review.md](design-review.md)).
 
 - **A quick split goes out as a link** (ADR-0035), built, driven against a
   local Worker, migrated on both D1s (`0005_splits.sql`) and working on a
   real phone (the owner, 2026-10-16); production serves it once `main` moves.
+
+- **A split by days** ([who-had-what.md](who-had-what.md#a-split-by-days)),
+  on `dev`, driven headless; untried on a phone, where an end's drag is the
+  gesture to try. A build before it reads such an entry as naming nobody, so
+  that phone's balances leave it out until it updates — the owner's call before
+  `main` moves.
 
 - **A bill's charges are invisible to a build before them** (`receiptCharges`,
   [who-had-what.md](who-had-what.md#tip-charges-and-discounts)), on `dev` only:

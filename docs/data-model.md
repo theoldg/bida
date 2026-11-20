@@ -90,7 +90,8 @@ Expense {
 ```
 
 Split payloads: `equal { members[] }`, `exact { amounts, rest? }`, `shares { weights }`,
-`receipt { weights }`. **An `exact` zero is
+`receipt { weights }`, `days { unit, from, count, stays }` (a `1`/`0` string a
+person, a character a night; `core/stay.ts`). **An `exact` zero is
 nobody**: none is ever written, and `splitParticipants` reads one as out.
 **`rest` is who is in with no figure typed**: they share what the typed figures
 leave, evenly and seeded as Evenly is (`exactFigures`), worked out again at
@@ -101,8 +102,9 @@ key is absent when nobody floats, so older splits serialise unchanged.
 amounts" as everyone in `rest`, nothing typed. A mode this build doesn't know
 (the retired `percent`, written for a day before the September wipe) names nobody, so it reads as a split
 that can't be resolved, not a crash: the screen heads it by its own name and
-the form opens it on Evenly. **`receipt` is the only mode nobody types** — a scanned bill writes it and `convertSplitMode`
-never converts into it ([ADR-0016](decisions/0016-receipts.md)). A `shares`
+the form opens it on Evenly. **`receipt` and `days` are the modes nobody types** — a bill and a calendar write them
+on screens of their own, and `convertSplitMode` never converts into either
+([ADR-0016](decisions/0016-receipts.md)). A `shares`
 split saved beside a kept bill is written with `splitTab: "shares"`, the one
 field an op carries that no state keeps: the fold reads it and drops it
 (`upgradeReceiptSplit`). Builds between `receipt` becoming a mode and that flag
@@ -247,6 +249,9 @@ the form converts them on opening (`ownCurrencySplit`). Every tab reads out in
 the entry's own currency too, so a WUP bill is never cut into CRD shares; the
 entry screen puts the base figure first and the own one beside it, as it does
 for payers.
+
+**A split by days is weights, never a cent a night**: Σ 1/heads over a person's nights,
+times the head counts' lowest common multiple (`stayWeights`), rounded once; an empty night is refused.
 
 **`remainderAbsorbedBy` is diagnostic, not UI.** Determinism outranks fairness:
 two phones folding the same ops must produce byte-identical splits or balances

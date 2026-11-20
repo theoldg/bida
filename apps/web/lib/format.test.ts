@@ -44,6 +44,12 @@ describe("splitProblemText", () => {
     expect(splitProblemText(check, "EUR")).toBe("Nobody is included yet");
   });
 
+  it("names the first night of a stay nobody was at", () => {
+    const stay = { mode: "days" as const, unit: "night" as const, from: "2026-05-14", count: 4, stays: { a: "1001" } };
+    expect(splitProblemText(validateSplit(4000, stay), "EUR")).toBe("Nobody is there on Fri 15 May and 1 more");
+    expect(splitProblemText(validateSplit(4000, { ...stay, stays: { a: "1011" } }), "EUR")).toBe("Nobody is there on Fri 15 May");
+  });
+
   it("says nothing of a split that adds up", () => {
     expect(splitProblemText(validateSplit(4500, { mode: "exact", amounts: { a: 2500, b: 2000 } }), "EUR")).toBeNull();
     expect(splitProblemText(validateSplit(6000, { mode: "exact", amounts: { a: 2400 }, rest: ["b"] }), "EUR")).toBeNull();

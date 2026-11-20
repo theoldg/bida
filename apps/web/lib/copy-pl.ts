@@ -662,9 +662,10 @@ export const pl: Copy = {
   // ------------------------------------------------------------- the split
 
   split: {
-    mode: { equal: "Po równo", shares: "Części", exact: "Kwoty", receipt: "Pozycje" },
-    how: { equal: "po równo", shares: "na części", exact: "na kwoty", receipt: "według pozycji" },
+    mode: { equal: "Po równo", shares: "Części", exact: "Kwoty", receipt: "Pozycje", days: "???" },
+    how: { equal: "po równo", shares: "na części", exact: "na kwoty", receipt: "według pozycji", days: "???" },
     receipt: "Pozycje",
+    days: "???",
     include: (name) => `Uwzględnij: ${name}`,
     leaveOut: (name) => `Pomiń: ${name}`,
     fewerParts: (name) => `Mniej części: ${name}`,
@@ -685,6 +686,7 @@ export const pl: Copy = {
     under: (amount) => `${amount} do podziału`,
     over: (amount) => `${amount} za dużo`,
     nothingLeft: (who) => `Nic nie zostaje dla: ${who}`,
+    emptyDay: () => "???",
     people: (n) => `${n} ${byCount(n, "osoba", "osoby", "osób")}`,
   },
 
@@ -824,6 +826,40 @@ export const pl: Copy = {
     },
     discardTitle: "Porzucić zmiany?",
     discardBody: "Paragon wróci do wierszy odczytanych ze skanu.",
+  },
+  stay: {
+    title: "???",
+    whoStayed: "???",
+    dates: "???",
+    stayed: () => "???",
+    didntStay: () => "???",
+    unit: { night: "???", day: "???" },
+    noun: {
+      night: { one: "???", few: "???", many: "???" },
+      day: { one: "???", few: "???", many: "???" },
+    },
+    row: { night: "???", day: "???" },
+    from: "???",
+    to: { night: "???", day: "???" },
+    toLabel: { night: "???", day: "???" },
+    edit: "???",
+    each: (heads, figure) => `÷${heads} · ${figure}`,
+    nobody: "???",
+    there: () => "???",
+    away: () => "???",
+    share: () => "???",
+    of: (n, total) => `${n} / ${total}`,
+    badRange: "???",
+    person: {
+      title: () => "???",
+      arrived: "???",
+      left: { night: "???", day: "???" },
+      whole: "???",
+      set: "???",
+    },
+    needsSomeone: "???",
+    discardTitle: "???",
+    discardBody: "???",
   },
 
   // ------------------------------------------------------------- history

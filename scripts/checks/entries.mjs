@@ -820,8 +820,54 @@ const tapped = await page.evaluate(() => {
 report(tapped.join() === "true,false", "taps faster than a render each build on the last",
   `item 1, item 2 pressed: ${tapped.join(", ")}`);
 
+// ---- a rental split by the nights each person stayed -------------------
+await page.goto(`${base}/g/entry/edit?id=${g}`);
+await page.locator("input.amount").fill("300");
+await page.locator('[data-field="what"]').fill("Cabin");
+await page.getByRole("button", { name: "Days", exact: true }).click();
+await page.getByRole("link", { name: /Edit who stayed when/ }).click();
+await page.waitForURL(/\/g\/entry\/days\?/);
+const stayFrom = await page.locator('[data-field="stay-from"]').inputValue();
+const plusDays = (iso, n) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 864e5).toISOString().slice(0, 10);
+await page.locator('[data-field="stay-to"]').fill(plusDays(stayFrom, 3));
+report(await page.locator("table.staytable tbody tr").count() === 3, "a stay of three nights is three rows");
+// Sam's bar, dragged by its foot up to its first night: one night left.
+const samThere = page.locator('button[aria-label^="Sam there on"]');
+const foot = await samThere.nth(2).boundingBox(), head = await samThere.nth(0).boundingBox();
+await page.mouse.move(foot.x + foot.width / 2, foot.y + foot.height - 12);
+await page.mouse.down();
+await page.mouse.move(head.x + head.width / 2, head.y + head.height / 2, { steps: 6 });
+await page.mouse.up();
+report(await samThere.count() === 1, "the end of a stay's bar drags it shorter");
+// Marie's dates typed: the first night only.
+await page.getByRole("button", { name: "Marie’s dates and share" }).click();
+await page.getByLabel("Arrived").fill(stayFrom);
+await page.getByLabel("Left", { exact: true }).fill(plusDays(stayFrom, 1));
+await page.getByRole("button", { name: "Set", exact: true }).click();
+report(await page.locator('button[aria-label^="Marie there on"]').count() === 1, "a total opens that person's dates to type");
+// Nobody on the last night is refused, said over Done.
+const lastNight = page.locator("table.staytable tbody tr").last();
+await lastNight.locator('button[aria-label^="Theo there on"]').click();
+await page.getByRole("button", { name: "Done" }).click();
+report(await page.getByText("Every day needs at least one person.").isVisible(), "a night nobody stayed is refused");
+await lastNight.locator('button[aria-label^="Theo away on"]').click();
+await page.getByRole("button", { name: "Done" }).click();
+await page.waitForURL(/\/g\/entry\/edit\?/);
+await page.getByRole("button", { name: "Save" }).click();
+await page.waitForURL(/\/g\?id=/);
+await page.locator("a.row").filter({ hasText: "Cabin" }).click();
+await page.waitForURL(/\/g\/entry\?/);
+// A night is 100.00: the first three ways, the other two Theo's alone.
+const cabin = (await page.locator(".card").last().innerText()).replace(/\s+/g, " ");
+report(/Split by days/i.test(cabin) && /Sam · 1 night/.test(cabin) && /33\.33/.test(cabin) && /233\.3[34]/.test(cabin),
+  "an entry split by days reads each person's nights and share", cabin);
+await page.getByRole("link", { name: "Edit", exact: true }).click();
+report(await page.getByRole("button", { name: "Days", exact: true }).getAttribute("aria-pressed") === "true",
+  "and reopens on its Days tab");
+await page.goto(`${base}/g?id=${g}`);
+
 // ---- a screen whose draft is gone hands back -------------------------
-for (const [name, path] of [["payers", "/g/payers"], ["who had what", "/g/entry/items"]]) {
+for (const [name, path] of [["payers", "/g/payers"], ["who had what", "/g/entry/items"], ["who stayed when", "/g/entry/days"]]) {
   await page.goto(`${base}${path}?id=${g}`);
   const back = await page.waitForURL((url) => url.pathname === "/g", { timeout: 8000 })
     .then(() => true, () => false);

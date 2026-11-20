@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-20* — "prototype without pushing", then "make it a separate
+  screen … reuse as many styles from the item assigner as possible … push to
+  dev". My mock drew a new grid; the answer was the one we had. Sketch a new
+  screen in an old screen's parts first.
+
 - *2026-11-16* — "Why aren't the payers sorted by amount here?" A why on a
   screenshot is a fix, not a question. The form already sorted them; the entry
   screen took core's id order. Where one screen does it right, the answer is
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "one or two names should be preferred to everyone, each". A rule, so it
   went to every phrase, not only the asked case. Then a demo's note "fixed"
   weeks ago: the phone kept an old seed — say why it still shows first.
-
-- *2026-10-31* — "Remove the touch wash on the expense title edit field". One
-  row, not the three that share the rule: a tap on a text field means "put the
-  caret here", while Paid by and When open something. The press stays where
-  the tap is a button press.

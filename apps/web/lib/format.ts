@@ -95,6 +95,9 @@ export function splitProblemText(
   if (check.problem === "empty") return copy.split.nobody;
   // A zero total is the amount field's to report, flashing on Save.
   if (check.ok || check.totalMinor <= 0) return null;
+  if (check.problem === "emptyDay" && check.emptyDays) {
+    return copy.split.emptyDay(stayDay(check.emptyDays.first), check.emptyDays.count - 1);
+  }
   if (check.problem === "nothingLeft" && check.rest) {
     const [only] = check.rest.ids;
     const who = check.rest.ids.length === 1 && only ? nameOf(only) : copy.split.people(check.rest.ids.length);
@@ -210,6 +213,16 @@ export function dayLabel(ts: number, now = Date.now()): string {
   return d.getFullYear() === new Date(now).getFullYear()
     ? copy.time.day(copy.time.weekdays[d.getDay()]!, d.getDate(), month)
     : copy.time.dayInYear(d.getDate(), month, d.getFullYear());
+}
+
+/**
+ * A stay's calendar date, "Fri 14 May": a date with no clock, so read in UTC
+ * and never shifted a day by the phone's zone.
+ */
+export function stayDay(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return copy.time.day(copy.time.weekdays[d.getUTCDay()]!, d.getUTCDate(), copy.time.monthsShort[d.getUTCMonth()]!);
 }
 
 /** "2h ago", "yesterday", "Feb" — deliberately vague past a week. */

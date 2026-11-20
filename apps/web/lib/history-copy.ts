@@ -1,6 +1,6 @@
 // Doc: docs/history.md#what-a-revision-says
 import {
-  isValidRate, resolveEntrySplit, resolveSplit, splitParticipants,
+  isValidRate, resolveEntrySplit, resolveSplit, splitParticipants, stayWeights,
   type CurrencyCode, type Id, type ImportSource, type Member, type ReceiptItem, type Revision, type SplitSpec,
 } from "@bida/core";
 import { copy } from "./copy";
@@ -65,10 +65,12 @@ function proportions(spec: SplitSpec | null | undefined): string {
   if (!spec) return "";
   const weights: Record<Id, number> = {};
   try {
+    const stay = spec.mode === "days" ? stayWeights(spec) ?? {} : null;
     for (const id of splitParticipants(spec)) {
       const w = spec.mode === "equal" ? 1
         : spec.mode === "shares" || spec.mode === "receipt" ? spec.weights[id] ?? 0
-          : spec.amounts[id] ?? 0;
+          : spec.mode === "days" ? stay?.[id] ?? 0
+            : spec.amounts[id] ?? 0;
       if (Number.isSafeInteger(w) && w > 0) weights[id] = w;
     }
     return JSON.stringify(resolveSplit(10_000, { mode: "shares", weights }).shares);

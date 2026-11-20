@@ -39,7 +39,12 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
   read off the bill. Which tab is lit is `splitTab` alone, never the spec. What a first-time
   tab is handed is who `arithmeticSplit` has in, never the receipt: a scan is an answer of
   its own, in a mode of its own, and does not fill in As parts (ADR-0016).
-  Items opens the Evenly under it the same way, so that is never nobody.
+  Items opens the Evenly under it the same way, so that is never nobody. Days
+  stands on Evenly too, and the first time it opens holds the entry's day, one
+  night, everyone in that Evenly (`firstStay`): the same split until the
+  calendar (`/g/entry/days`, [who-had-what.md](who-had-what.md#a-split-by-days))
+  says otherwise. The draft keeps the stay (`stay`) while another tab shows, as
+  it keeps a bill.
   Which tab is showing lives on the draft alone; a saved entry carries its
   mode, and that is what reopens it.
 - **A count of parts** is typed with the money field's caret and Backspace

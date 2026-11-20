@@ -845,6 +845,44 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .itemcell .dot.some::after { bottom: 0; right: 0; box-shadow: -1px -1px 0 var(--card) }
 .itemcell .dot.off { background: transparent }
 
+/* ---- who stayed when (components/stay-grid.tsx) ----
+   The item grid's table with a row a night. A stay is one unbroken ink bar down
+   its column, crossing the rules, its ends inset so arriving and leaving read
+   at a glance; an end has a grip, and only an end drags — anywhere else a
+   finger scrolls the grid. */
+.stayhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px }
+.stayrange { display: flex; align-items: flex-end; gap: 10px; margin-top: 8px }
+.stayfield { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 }
+.stayfield input { width: 100%; font-size: var(--fs-body); font-weight: 600; color: var(--ink); background: var(--card-2);
+  border: 1px solid var(--rule); border-radius: var(--r-s); padding: 6px 8px; outline: none; min-width: 0 }
+.stayfield input:focus { border-color: var(--brand) }
+.stayarrow { color: var(--muted); padding-bottom: 8px }
+.stayunit { flex: none }
+.stayunit button { flex: none; padding: 5px 12px }
+.staytable { --label-w: 112px }
+.staytable thead th.stayrowhead { text-align: left; padding-left: var(--inset); font-size: var(--fs-caption);
+  font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted) }
+.staytable td.itemwho { height: 44px }
+.staycell .staybar { position: absolute; left: 50%; width: 10px; margin-left: -5px; top: 0; bottom: -1px;
+  background: var(--ink); pointer-events: none }
+.staycell.first .staybar { top: 9px }
+.staycell.last .staybar { bottom: 9px }
+.staycell.first .staybar::before, .staycell.last .staybar::after { content: ""; position: absolute;
+  left: -4px; right: -4px; height: 2px; background: var(--ink) }
+.staycell.first .staybar::before { top: 0 }
+.staycell.last .staybar::after { bottom: 0 }
+.staycell:is(.first, .last) { touch-action: none; cursor: ns-resize }
+.staycell:not(.in) .dot { width: 4px; height: 4px; background: var(--rule) }
+.staytot { width: 100%; text-align: left; position: relative }
+.staytot:active { background-image: linear-gradient(var(--press), var(--press)) }
+.staytot .staynights { font-size: var(--fs-caption); color: var(--muted); white-space: nowrap }
+.staytot .amt { min-width: 8ch; text-align: right }
+.staytot .staychev { color: var(--muted); flex: none }
+.staydates { display: flex; gap: 10px }
+.staydates .stayfield { flex: 1 }
+.staydates .hint { flex-basis: 100% }
+.staydates { flex-wrap: wrap }
+
 /* Pointing at where an answer could go in a run just opened. A state, not an
    animation: dimming freshly painted rows a beat later flickers. */
 .itemcell.point-hold .dot { opacity: .35 }

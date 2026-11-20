@@ -516,6 +516,12 @@ function EntryForm({ groupId, group, data, draft, via, leaving }: {
                   onFlashEnd: refusals.onFlashEnd("receipt"),
                   editItemsHref: route.items(groupId, via),
                 } : null}
+                days={{
+                  stay: draft.stay ?? null,
+                  editHref: route.days(groupId, via),
+                  flash: refusals.flash("split"),
+                  onFlashEnd: refusals.onFlashEnd("split"),
+                }}
               />
             </div>
           )}

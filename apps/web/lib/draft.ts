@@ -4,8 +4,8 @@
 import { useSyncExternalStore } from "react";
 import {
   convertSplitMode, minorToDecimalString, newId, ownCurrencySplit, parseMinor, receiptExtras, receiptOf,
-  sameLocalDay,
-  type ArithmeticMode, type ArithmeticSplit, type EntryRateSource, type Expense, type Receipt, type ReceiptItem,
+  sameLocalDay, seedStay, splitParticipants,
+  type ArithmeticMode, type ArithmeticSplit, type DaysSplit, type EntryRateSource, type Expense, type Receipt, type ReceiptItem,
   type Settlement, type SplitMode, type SplitSpec,
 } from "@bida/core";
 import { kindOf, type EntryKind } from "./entry-kind";
@@ -59,6 +59,11 @@ export interface EntryDraft extends Receipt {
    * The one thing that says which tab shows. A saved entry reopens on its mode.
    */
   splitTab: SplitTab;
+  /**
+   * The Days tab's calendar, kept while another tab shows as a bill is.
+   * Seeded the first time the tab opens (`changeSplitTab`).
+   */
+  stay?: DaysSplit | null;
   /** So a rescan can replace its own guess but not a typed title. */
   scannedDescription?: string;
   /**
@@ -162,18 +167,32 @@ export function draftReceiptSplit(draft: EntryDraft): SplitSpec | null {
 
 /** What a save writes. Receipt falls back to Evenly while the grid is unfilled. */
 export function activeSplit(draft: EntryDraft): SplitSpec {
+  if (draft.splitTab === "days" && draft.kind !== "transfer" && draft.stay) return draft.stay;
   return draftReceiptSplit(draft) ?? arithmeticSplit(draft);
+}
+
+/** The tabs with a screen of their own stand on Evenly underneath. */
+function arithmeticTab(tab: SplitTab): ArithmeticMode {
+  return tab === "receipt" || tab === "days" ? "equal" : tab;
 }
 
 /** Ignores the bill, so a scan never feeds As parts (ADR-0016). */
 export function arithmeticSplit(draft: EntryDraft): ArithmeticSplit {
-  const tab: ArithmeticMode = draft.splitTab === "receipt" ? "equal" : draft.splitTab;
+  const tab = arithmeticTab(draft.splitTab);
   return draft.splits[tab] ?? emptySplit(tab);
+}
+
+/**
+ * The first stay is the entry's own day, one night, everyone in the split
+ * there: Evenly, until the calendar says otherwise.
+ */
+export function firstStay(draft: EntryDraft): DaysSplit {
+  return seedStay(dateInputValue(draft.occurredAt), "night", 1, splitParticipants(arithmeticSplit(draft)));
 }
 
 /** A tab opened for the first time starts from who is in, never the numbers. */
 export function openSplitTab(draft: EntryDraft, tab: SplitTab): SplitInputs {
-  const opened: ArithmeticMode = tab === "receipt" ? "equal" : tab;
+  const opened = arithmeticTab(tab);
   if (draft.splitTab === tab || draft.splits[opened]) return draft.splits;
   return withSplit(draft.splits, convertSplitMode(arithmeticSplit(draft), opened));
 }
@@ -184,11 +203,12 @@ export function openSplitTab(draft: EntryDraft, tab: SplitTab): SplitInputs {
  */
 export function changeSplitTab(
   draft: EntryDraft, tab: SplitTab,
-): Pick<EntryDraft, "splitTab" | "splits" | "amountText"> {
+): Pick<EntryDraft, "splitTab" | "splits" | "amountText" | "stay"> {
   const total = tab === "receipt" ? null : draftReceiptTotal(draft);
   return {
     splitTab: tab,
     splits: openSplitTab(draft, tab),
+    stay: tab === "days" && !draft.stay ? firstStay(draft) : draft.stay ?? null,
     // Not `bare`, which groups thousands that `parseMinor` can't read back.
     amountText: total === null ? draft.amountText : minorToDecimalString(total, draft.currency),
   };
@@ -302,7 +322,7 @@ export function blankDraft(
 }
 
 /** So opening it to edit looks nothing up (ADR-0005). */
-const KNOWN_MODES: ReadonlySet<string> = new Set<SplitTab>(["equal", "shares", "exact", "receipt"]);
+const KNOWN_MODES: ReadonlySet<string> = new Set<SplitTab>(["equal", "shares", "exact", "receipt", "days"]);
 
 function ownRate(
   e: Expense | Settlement,
@@ -331,7 +351,9 @@ export function expenseDraft(e: Expense, me: string, members: string[]): EntryDr
     paidBy: e.paidBy,
     payers: e.payers ?? null,
     // A mode this build doesn't know opens on Evenly.
-    ...(e.split.mode === "receipt" || !known ? {} : { splits: withSplit({}, ownCurrencySplit({ ...e, split: e.split })) }),
+    ...(e.split.mode === "receipt" || e.split.mode === "days" || !known ? {}
+      : { splits: withSplit({}, ownCurrencySplit({ ...e, split: e.split })) }),
+    ...(e.split.mode === "days" ? { stay: e.split } : {}),
     occurredAt: e.occurredAt,
     dateOnly: e.dateOnly === true,
     recordedAt: e.createdAt ?? e.occurredAt,

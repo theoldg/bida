@@ -137,6 +137,30 @@ the bill — and each total, the figure somebody types into a bank app, copies
 with a tap, the small copy glyph left of it so totals and lines keep one column. Weights and lines come out of one pass, so a row and the lines
 under it cannot disagree.
 
+## A split by days
+
+A rental — a house by the night, a car by the day — is the same kind of screen
+with a calendar in place of a bill: `/g/entry/days` (`components/stay-grid.tsx`),
+reached from the Days tab, which only reads the stay out (each person's nights
+and share) under a way in that counts them. It wears the grid's own parts: the
+chips with their initials (who stayed at all), the initials over the columns,
+a row a night with what one head paid that night under its date ("÷3 · 57.14"),
+the totals under the table, Done docked. A stay is one ink bar down its column,
+crossing the rules, with a grip at each end.
+
+**Only an end drags** (`dragStayEnd`), and only an end takes the finger from
+the scroller (`touch-action: none`): a grid this tall is scrolled far more than
+it is painted, and a drag from anywhere would leave nowhere to scroll from. A tap
+anywhere else flips one night. A total opens that person's dates to type, the
+way in for a month-long stay nobody wants to drag: dates outside the stay widen
+it, with nobody else on the nights added. The range moves whole when its first
+date does; a row added by widening copies the row it grows from, so somebody
+who arrived late doesn't arrive early. A night nobody stayed is refused on Done
+as an unassigned line is, and in the form's dock ("Nobody is there on Fri 15
+May"): its cost would otherwise fall on everyone else, unasked.
+
+The arithmetic is core's ([data-model.md](data-model.md#splits--the-only-tricky-arithmetic)).
+
 ## Gotchas
 
 - **`receiptItems.length` is not how many items the bill has.** A line of

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   entryEffect, groupCreateOf, isCoSponsored, isImported, ownCurrencySplit, payerList, resolvePayers,
-  resolveEntrySplit, resolveSplit, restoreEntryDrafts, sortOps, splitParticipants,
+  resolveEntrySplit, resolveSplit, restoreEntryDrafts, sortOps, splitParticipants, stayCount,
   type CurrencyCode, type Expense, type Group, type Op, type RateSource, type Settlement,
 } from "@bida/core";
 import { Card, Eyebrow, KV, You, signClass } from "@/components/bits";
@@ -446,7 +446,9 @@ function ExpenseDetail({ expense, kind, group, data }: {
             // instead.
             const detail = expense.split.mode === "shares"
               ? ` · ${plural(expense.split.weights[m.id] ?? 0, copy.noun.part)}`
-              : "";
+              : expense.split.mode === "days"
+                ? ` · ${plural(stayCount(expense.split, m.id), copy.stay.noun[expense.split.unit])}`
+                : "";
             const k = yours(m.id, m.name, detail);
             const v = foreign
               ? <TwoCurrencies base={money(shares[m.id] ?? 0, group.baseCurrency)}
