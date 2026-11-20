@@ -875,12 +875,13 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 /* An end scrolls like any cell until held (`DRAG_HOLD_MS`). */
 .staycell:is(.first, .last) { cursor: ns-resize }
 .staycell { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none }
-/* The whole column, once, as an end is picked up: ready to drag. Two names,
-   so a second hold replays it without remounting the cell under the finger. */
-@keyframes picked-a { from { background-color: color-mix(in srgb, var(--brand) 14%, transparent) } }
-@keyframes picked-b { from { background-color: color-mix(in srgb, var(--brand) 14%, transparent) } }
-.staytable td.picked-a { animation: picked-a .6s ease-out }
-.staytable td.picked-b { animation: picked-b .6s ease-out }
+/* A finger resting on an end: its whole column washes in over the hold, a
+   held row's curve, and stays while the end is carried. Let go, it fades. */
+.staytable td.itemwho { transition: background-color .12s ease-out }
+.staytable td.itemwho.holding { background-color: var(--press);
+  transition: background-color .3s cubic-bezier(.4, 0, .6, 1) }
+/* The column is the press: a tile snapping on inside it would be the flash. */
+.staytable td.holding > .itemcell::before { opacity: 0 }
 /* By nights a night is evening to morning: the last night's bar runs on into
    the row below, the morning they leave, and is held there rather than by the
    night's own cell. */

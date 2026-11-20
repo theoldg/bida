@@ -154,8 +154,9 @@ with no night to pay for.
 **Only an end drags** (`dragStayEnd`), and a finger only once it has rested
 on one (`DRAG_HOLD_MS`, 300ms, under a row menu's 500): a grid this tall is
 scrolled far more than it is painted, and a finger moved past `SLOP_PX` before
-then is a scroll. Picked up, its column washes once with a tick and the page's
-scroll is refused, as a row's held menu does; a mouse picks it up at once, and
+then is a scroll. Its column washes in over the hold as a held row's does,
+never a flash, and stays while the end is carried; picked up, it ticks and the
+page's scroll is refused, as a row's held menu does; a mouse picks it up at once, and
 its unmoved press is still a tap. A tap anywhere else flips one night. **A touch drag ends in no click**, where a
 mouse's ends in one on its first cell, so the click after a drag is swallowed
 for a moment, never by a flag left waiting: that flag ate the next tap. A total opens that person's dates to type, the

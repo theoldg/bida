@@ -79,8 +79,11 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   const [told, setTold] = useState(false);
   const refusal = useRefusal();
   const [seeking, setSeeking] = useState(false);
-  /** The column whose end a finger just picked up, washed once; the count's parity replays it. */
-  const [picked, setPicked] = useState<{ id: string; n: number } | null>(null);
+  /**
+   * The column a finger rests on an end of: its wash builds over the hold, as a
+   * held row's does, and stays while the end is carried — never a flash.
+   */
+  const [holding, setHolding] = useState<string | null>(null);
   const wrap = useRef<HTMLDivElement | null>(null);
   const rowEl = useRef<(HTMLTableRowElement | null)[]>([]);
   const drag = useRef<Drag | null>(null);
@@ -197,13 +200,13 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
     const pointer = e.pointerId;
     // A mouse or a pen scrolls nothing by pressing: theirs is picked up at once.
     if (e.pointerType !== "touch") { pick(); return; }
+    setHolding(id);
     holdTimer.current = setTimeout(() => {
       if (drag.current !== d) return;
       pick();
       d.held = true;
       document.addEventListener("touchmove", keepFinger, { passive: false, capture: true });
       tick();
-      setPicked((p) => ({ id: d.member, n: (p?.n ?? 0) + 1 }));
     }, DRAG_HOLD_MS);
   }
 
@@ -212,6 +215,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
     clearTimeout(holdTimer.current);
     document.removeEventListener("touchmove", keepFinger, { capture: true });
     drag.current = null;
+    setHolding(null);
   }
 
   function moveDrag(e: React.PointerEvent) {
@@ -395,8 +399,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
                       // The morning after a last night: where its bar ends, and is held.
                       const morning = nights && !there && stayAt(stay, m.id, i - 1);
                       return (
-                        <td key={m.id} className={picked?.id === m.id ? `itemwho picked-${picked.n % 2 ? "a" : "b"}` : "itemwho"}
-                          onAnimationEnd={() => setPicked(null)}>
+                        <td key={m.id} className={holding === m.id ? "itemwho holding" : "itemwho"}>
                           <button type="button"
                             className={`itemcell staycell${there ? " in" : ""}${first ? " first" : ""}${
                               last ? " last" : ""}${morning ? " morning" : ""}`}
@@ -422,8 +425,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
                     <span className="itemamount">{copy.stay.departure}</span>
                   </td>
                   {columns.map((m) => (
-                    <td key={m.id} className={picked?.id === m.id ? `itemwho picked-${picked.n % 2 ? "a" : "b"}` : "itemwho"}
-                          onAnimationEnd={() => setPicked(null)}>
+                    <td key={m.id} className={holding === m.id ? "itemwho holding" : "itemwho"}>
                       {stayAt(stay, m.id, dates.length - 1) ? (
                         <button type="button" className="itemcell staycell morning"
                           aria-label={copy.stay.leaves(m.name, stayDay(end))}
