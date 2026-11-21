@@ -486,6 +486,7 @@ export const pl: Copy = {
     you: { owe: "Masz do oddania", owed: "Należy Ci się", square: "Jesteś kwita" },
     morePayers: (n) => `+${n}`,
     sharedBy: (people) => `podział: ${people}`,
+    hasPhoto: "zdjęcie paragonu",
     metaLine: (a, b) => `${a} · ${b}`,
     transfer: "Przelew",
     incomeTag: "wpływ",

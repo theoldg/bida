@@ -677,6 +677,7 @@ const en = {
     },
     morePayers: (n: number) => `+${n}`,
     sharedBy: (people: string) => `shared by ${people}`,
+    hasPhoto: "receipt photo attached",
     metaLine: (a: string, b: string) => `${a} · ${b}`,
     transfer: "Transfer",
     incomeTag: "income",

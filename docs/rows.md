@@ -148,7 +148,8 @@ the sums — above the screen, by scrolling as much.
 ## A row says less rather than being cut off
 
 An expense row's second line is the payer and a head count, "Alice +1 · 👥5",
-plus an income's tag; the split mode is the entry's own screen's to say. The
+with a receipt after the count where a photo is kept (the notification badge's
+receipt without its ÷), plus an income's tag; the split mode is the entry's own screen's to say. The
 name is never dropped and takes the ellipsis; the "+1" for co-payers and the
 tag stay beside it, since leaving either out would be untrue; the head count is
 what a long name pushes out. That needs no measuring — the count's box shrinks

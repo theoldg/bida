@@ -10,7 +10,7 @@ export type IconName =
   | "chev" | "updown" | "calendar" | "back" | "plus" | "minus" | "cross" | "cam" | "off" | "check" | "clock"
   | "users" | "arrow" | "sync" | "trash" | "edit" | "link"
   | "image" | "split" | "merge" | "share" | "import" | "sun" | "moon" | "more" | "info"
-  | "mail" | "copy" | "dollar" | "sliders" | "translate" | "search" | "bell" | "bell-off" | "bells";
+  | "mail" | "copy" | "receipt" | "dollar" | "sliders" | "translate" | "search" | "bell" | "bell-off" | "bells";
 
 export function Icon({ name, size = 16, className, style }: {
   name: IconName; size?: number; className?: string; style?: React.CSSProperties;

@@ -91,6 +91,11 @@ export function IconSprite() {
         <symbol id="i-copy" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
           <rect x="8.5" y="8.5" width="11.5" height="11.5" rx="1.5" /><path d="M15.5 5.5V5.5A1.5 1.5 0 0014 4H5.5A1.5 1.5 0 004 5.5V14a1.5 1.5 0 001.5 1.5" />
         </symbol>
+        {/* The notification badge's receipt (scripts/icons.mjs) without its ÷:
+            three teeth, solid, in the logo's own grid. */}
+        <symbol id="i-receipt" viewBox="88 88 336 336">
+          <path fill="currentColor" d="M140,128 L178.667,96 L217.333,128 L256,96 L294.667,128 L333.333,96 L372,128 L372,384 L333.333,416 L294.667,384 L256,416 L217.333,384 L178.667,416 L140,384 Z" />
+        </symbol>
         <symbol id="i-link" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
           <path d="M9.5 14.5l5-5M8 12.2l-2 2a3.5 3.5 0 004.9 4.9l2.4-2.4M16 11.8l2-2a3.5 3.5 0 00-4.9-4.9l-2.4 2.4" />
         </symbol>

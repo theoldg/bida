@@ -270,7 +270,8 @@ const ExpenseRow = memo(function ExpenseRow({ expense, gid, base, me, memberById
         <div className="rmain">
           <div className="rtitle">{expense.description || copy.group.untitled}</div>
           <ExpenseMeta payer={payer?.name ?? copy.someone} income={income}
-            coPayers={payers.filter((id) => id !== expense.paidBy).length} ways={participants} />
+            coPayers={payers.filter((id) => id !== expense.paidBy).length} ways={participants}
+            photo={(expense.attachmentIds?.length ?? 0) > 0} />
         </div>
         <div className="ramt">
           {/* An income's figure carries a "−", or it reads as one more thing
@@ -294,8 +295,8 @@ const ExpenseRow = memo(function ExpenseRow({ expense, gid, base, me, memberById
  * The name is never dropped and takes the ellipsis; the head count is the one
  * thing that goes, wrapping onto a clipped line. No measuring.
  */
-function ExpenseMeta({ payer, coPayers, ways, income }: {
-  payer: string; coPayers: number; ways: number; income: boolean;
+function ExpenseMeta({ payer, coPayers, ways, income, photo }: {
+  payer: string; coPayers: number; ways: number; income: boolean; photo: boolean;
 }) {
   return (
     <div className="rmeta paidby">
@@ -309,6 +310,10 @@ function ExpenseMeta({ payer, coPayers, ways, income }: {
           <Icon name="users" size={12} />
           <span aria-hidden="true">{ways}</span>
           <span className="vh">{copy.group.sharedBy(plural(ways, copy.noun.person))}</span>
+          {photo ? <>
+            <Icon name="receipt" size={12} className="rowphoto" />
+            <span className="vh">{copy.group.hasPhoto}</span>
+          </> : null}
         </span>
       </span>
       {income ? <span className="incometag">{copy.group.incomeTag}</span> : null}
