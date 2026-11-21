@@ -886,7 +886,9 @@ await page.locator("a.row").filter({ hasText: "Cabin" }).click();
 await page.waitForURL(/\/g\/entry\?/);
 // A night is 100.00: the first three ways, the other two Theo's alone.
 const cabin = (await page.locator(".card").last().innerText()).replace(/\s+/g, " ");
-report(/Split by days/i.test(cabin) && /Sam · 1 night/.test(cabin) && /33\.33/.test(cabin) && /233\.3[34]/.test(cabin),
+// Counted in nights, its heading says so, with what a night cost.
+report(/Split by nights · €100\.00 a night/i.test(cabin) && /Sam · 1 night/.test(cabin) && /33\.33/.test(cabin)
+  && /233\.3[34]/.test(cabin) && /Details/.test(cabin),
   "an entry split by days reads each person's nights and share", cabin);
 await page.getByRole("link", { name: "Edit", exact: true }).click();
 report(await page.getByRole("button", { name: "Days", exact: true }).getAttribute("aria-pressed") === "true",
