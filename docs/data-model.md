@@ -90,9 +90,9 @@ Expense {
 ```
 
 Split payloads: `equal { members[] }`, `exact { amounts, rest? }`, `shares { weights }`,
-`receipt { weights }`, `days { unit, from, count, stays }` (a `1`/`0` string a
-person, a character a night; `core/stay.ts`). **An `exact` zero is
-nobody**: none is ever written, and `splitParticipants` reads one as out.
+`receipt { weights }`, `days { unit, from, count, stays }` (a `1`/`0` string a person,
+a character a night, `unit` always `night` and an old `day` read as one; `core/stay.ts`).
+**An `exact` zero is nobody**: none is ever written, and `splitParticipants` reads one as out.
 **`rest` is who is in with no figure typed**: they share what the typed figures
 leave, evenly and seeded as Evenly is (`exactFigures`), worked out again at
 every read. Their figures are still written into `amounts` (`settleRest`, on

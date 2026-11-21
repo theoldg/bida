@@ -863,8 +863,6 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .stayfield input:focus { border-color: var(--brand) }
 .stayarrow { color: var(--muted) }
 /* Doubled: `.seg button` comes later and would stretch these to nothing. */
-.seg.stayunit { display: inline-flex }
-.seg.stayunit button { flex: none; padding: 5px 14px }
 .staytable { --label-w: 112px }
 /* The details screen's calendar: the same bars, nothing to press. */
 .stayread .staycell, .stayread .staycell:is(.first, .last) { cursor: default }
@@ -875,7 +873,6 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .staycell .staybar { position: absolute; left: 50%; width: 10px; margin-left: -5px; top: 0; bottom: -1px;
   background: var(--ink); pointer-events: none }
 .staycell.first .staybar { top: 9px }
-.staycell.last .staybar { bottom: 9px }
 .staycell.first .staybar::before, .staycell.last .staybar::after { content: ""; position: absolute;
   left: -4px; right: -4px; height: 2px; background: var(--ink) }
 .staycell.first .staybar::before { top: 0 }
@@ -890,12 +887,12 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
   transition: background-color .3s cubic-bezier(.4, 0, .6, 1) }
 /* The column is the press: a tile snapping on inside it would be the flash. */
 .staytable td.holding > .itemcell::before { opacity: 0 }
-/* By nights a night is evening to morning: the last night's bar runs on into
-   the row below, the morning they leave, and is held there rather than by the
-   night's own cell. */
-.bynight .staycell.last .staybar { bottom: -15px }
-.bynight .staycell.last:not(.first) { cursor: pointer }
-.bynight .staycell.morning { cursor: ns-resize }
+/* A night is evening to morning: the last night's bar runs on into the row
+   below, the morning they leave, and is held there rather than by the night's
+   own cell. */
+.staycell.last .staybar { bottom: -15px }
+.staycell.last:not(.first) { cursor: pointer }
+.staycell.morning { cursor: ns-resize }
 .staytable tr.staydeparture td { height: 34px }
 .staycell:not(.in) .dot { width: 4px; height: 4px; background: var(--rule) }
 /* A row to tap, not a line to read: a full one-line row, its wash edge to edge. */

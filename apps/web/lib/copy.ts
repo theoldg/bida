@@ -1,6 +1,6 @@
 // Doc: docs/frontend.md#every-word-in-libcopyts
 import type {
-  ExtraKind, ImportRefusalCode, ImportSource, ScanProblem, SplitSpec, StayUnit,
+  ExtraKind, ImportRefusalCode, ImportSource, ScanProblem, SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 import type { KeyHost } from "./db/dexie";
@@ -1085,7 +1085,7 @@ const en = {
 
   // ------------------------------------------------------------- split by days
 
-  /** A rental split by the nights (or days) each person was there. */
+  /** A rental split by the nights each person was there. */
   stay: {
     rounding: "rounding",
     calendar: "Who stayed when",
@@ -1093,19 +1093,14 @@ const en = {
     details: "Details",
     title: "Who stayed when",
     whoStayed: "Who stayed",
-    mode: "Mode",
     dates: "Dates",
     stayed: (name: string) => `${name} stayed`,
     didntStay: (name: string) => `${name} didn’t stay`,
-    unit: { night: "Nights", day: "Days" } satisfies Record<StayUnit, string>,
-    noun: {
-      night: { one: "night", many: "nights" } as Noun,
-      day: { one: "day", many: "days" } as Noun,
-    } satisfies Record<StayUnit, Noun>,
+    noun: { one: "night", many: "nights" } as Noun,
     /** Over the first column: what one row is. */
-    row: { night: "Night", day: "Day" } satisfies Record<StayUnit, string>,
-    from: { night: "From", day: "First day" } satisfies Record<StayUnit, string>,
-    toLabel: { night: "Leaving", day: "Last day" } satisfies Record<StayUnit, string>,
+    row: "Night",
+    from: "From",
+    toLabel: "Leaving",
     edit: "Edit who stayed when",
     /** A row's figure: how many were there, and what that cost each. */
     each: (heads: number, figure: string) => `÷${heads} · ${figure}`,
@@ -1119,8 +1114,8 @@ const en = {
     badRange: "The last date has to come after the first.",
     person: {
       title: (name: string) => `${name}’s dates`,
-      arrived: { night: "Arrived", day: "First day" } satisfies Record<StayUnit, string>,
-      left: { night: "Left", day: "Last day" } satisfies Record<StayUnit, string>,
+      arrived: "Arrived",
+      left: "Left",
       whole: "Whole stay",
       set: "Set",
     },
@@ -1151,6 +1146,8 @@ const en = {
       receipt: "Receipt",
       billText: "Bill text",
       whoHadWhat: "Who had what",
+      stay: "Who stayed when",
+      dates: "Dates",
       billLanguage: "Bill shown",
       amount: "Amount",
       currency: "Currency",
@@ -1201,6 +1198,10 @@ const en = {
     removedReceipt: (who: string) => `${who} removed the receipt`,
     retypedBill: (who: string) => `${who} retyped the bill`,
     changedWhoHadWhat: (who: string) => `${who} changed who had what`,
+    changedStay: (who: string) => `${who} changed who stayed when`,
+    /** A stay's dates, first night to the morning after the last. */
+    range: (from: string, leave: string) => `${from} – ${leave}`,
+    stayAt: (nights: string, range: string) => `${nights}, ${range}`,
     readBill: (who: string, english: boolean) =>
       english ? `${who} showed the bill in English` : `${who} showed the bill as printed`,
     changedAmount: (who: string) => `${who} changed the amount`,

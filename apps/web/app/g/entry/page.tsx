@@ -440,12 +440,12 @@ function ExpenseDetail({ expense, kind, group, data, groupId, via }: {
           <Eyebrow style={{ marginBottom: 4 }}>
             {copy.entry.splitMode(copy.entryKind.split[kind],
               // `??`: a mode this build doesn't know heads as itself.
-              expense.split.mode === "days" && expense.split.unit === "night" ? copy.split.byNights
+              expense.split.mode === "days" ? copy.split.byNights
                 : copy.split.how[expense.split.mode] ?? expense.split.mode)}
             {/* What every row of the stay cost: the figure each line below divides. */}
             {expense.split.mode === "days" && expense.split.count > 0 ? <> · <b>{copy.stay.perRow(
               money(Math.round(expense.baseAmountMinor / expense.split.count), group.baseCurrency),
-              copy.stay.noun[expense.split.unit].one)}</b></> : null}
+              copy.stay.noun.one)}</b></> : null}
           </Eyebrow>
           {/* Only the people in the split: a row per outsider owing nothing says
               what their absence already says. */}
@@ -457,7 +457,7 @@ function ExpenseDetail({ expense, kind, group, data, groupId, via }: {
             const detail = expense.split.mode === "shares"
               ? ` · ${plural(expense.split.weights[m.id] ?? 0, copy.noun.part)}`
               : expense.split.mode === "days"
-                ? ` · ${plural(stayCount(expense.split, m.id), copy.stay.noun[expense.split.unit])}`
+                ? ` · ${plural(stayCount(expense.split, m.id), copy.stay.noun)}`
                 : "";
             const k = yours(m.id, m.name, detail);
             const v = foreign

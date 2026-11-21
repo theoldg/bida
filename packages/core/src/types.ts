@@ -30,14 +30,15 @@ export type SplitSpec =
   /** `shares` arithmetic, kept apart because a bill read out is not parts somebody chose. ADR-0016. */
   | { mode: "receipt"; weights: Record<Id, number> }
   /**
-   * A rental: every row (a night or a day, from `from`, `count` of them) costs
-   * the same, and is shared evenly by whoever was there. `stays` is a string a
-   * person, one `1` or `0` a row. core/stay.ts.
+   * A rental: every night (from `from`, `count` of them) costs the same, and
+   * is shared evenly by whoever was there. `stays` is a string a person, one
+   * `1` or `0` a night. core/stay.ts.
+   *
+   * `unit` is always written "night", so a build from before it was dropped
+   * still reads the stay. An older stay's "day" only labelled the rows: it
+   * reads as nights, its shares the same.
    */
-  | { mode: "days"; unit: StayUnit; from: string; count: number; stays: Record<Id, string> };
-
-/** A house is paid by the night, a car by the day, and only the label differs. */
-export type StayUnit = "night" | "day";
+  | { mode: "days"; unit: "night" | "day"; from: string; count: number; stays: Record<Id, string> };
 export type DaysSplit = Extract<SplitSpec, { mode: "days" }>;
 
 export type ArithmeticSplit = Extract<SplitSpec, { mode: ArithmeticMode }>;

@@ -57,7 +57,6 @@ function StayScreen() {
   const columns = people.filter((m) => ids.has(m.id));
   const dates = stayDates(spec);
   const heads = stayHeads(spec);
-  const nights = spec.unit === "night";
   const end = stayEnd(spec);
 
   return (
@@ -81,16 +80,16 @@ function StayScreen() {
             <div className="eyebrow stayeyebrow">{copy.stay.dates}</div>
             <div className="stayrange">
               <label className="stayfield">
-                <input type="date" readOnly autoComplete={NO_AUTOFILL} value={spec.from} aria-label={copy.stay.from[spec.unit]} />
+                <input type="date" readOnly autoComplete={NO_AUTOFILL} value={spec.from} aria-label={copy.stay.from} />
               </label>
               <span className="stayarrow" aria-hidden="true">→</span>
               <label className="stayfield">
-                <input type="date" readOnly autoComplete={NO_AUTOFILL} value={end} aria-label={copy.stay.toLabel[spec.unit]} />
+                <input type="date" readOnly autoComplete={NO_AUTOFILL} value={end} aria-label={copy.stay.toLabel} />
               </label>
             </div>
           </div>
 
-          <table className={`itemtable staytable stayread${nights ? " bynight" : ""}`}
+          <table className="itemtable staytable stayread"
             style={{ "--cols": columns.length } as CSSProperties}>
             <colgroup>
               <col className="collabel" />
@@ -98,7 +97,7 @@ function StayScreen() {
             </colgroup>
             <thead>
               <tr>
-                <th className="stayrowhead">{copy.stay.row[spec.unit]}</th>
+                <th className="stayrowhead">{copy.stay.row}</th>
                 {columns.map((m) => (
                   <th key={m.id}>
                     <span className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>{labels.get(m.id)}</span>
@@ -131,7 +130,7 @@ function StayScreen() {
                   </tr>
                 );
               })}
-              {nights && dates.length > 0 ? (
+              {dates.length > 0 ? (
                 <tr className="staydeparture">
                   <td className="itemlabel">
                     <span className="itemname">{stayDay(end)}</span>

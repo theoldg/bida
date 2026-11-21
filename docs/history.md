@@ -52,7 +52,12 @@ says in words what happened to each line ("Blue milk: Ben → Chewie", "Jawa
 juice: Chewie joined Han, Luke"), then one line of who now owes more and who
 less ("Chewie +17.00 · Ben −9.00 · Han, Luke −4.00"). A grid filled for the
 first time is the split going by items ("Theo split it by items"), and its
-lines say only who had each ("Blue milk: Chewie") — there was no one before. A **new entry** is two
+lines say only who had each ("Blue milk: Chewie") — there was no one before.
+A **stay** changed is "changed who stayed when" (`stayRows`): its dates if
+they moved, a row a person whose nights moved — "2 nights → 3", or which
+nights where the count held — and the same net line; a stay moved whole
+moves nobody. A split becoming one, and a new one, lead with when it is ("3
+nights, Thu 14 May – Sun 17 May"). A **new entry** is two
 lines: the amount and who paid ("CRD 81.00 · paid by Luke 50.00 + Han
 31.00" — a sum, biggest first, never grouped), then what each owes, a phrase per figure (`figureGroups`) — "for
 everyone · 20.25 each" where three or more owe alike, otherwise "Chewie 24.00 ·

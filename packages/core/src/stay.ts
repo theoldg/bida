@@ -1,8 +1,8 @@
 // Doc: docs/data-model.md#splits--the-only-tricky-arithmetic
-import type { DaysSplit, Id, StayUnit } from "./types";
+import type { DaysSplit, Id } from "./types";
 
 /**
- * A split by days: a rental's every night (or day) costs the same, and each is
+ * A split by days: a rental's every night costs the same, and each is
  * shared evenly by whoever was there that night — so a night three people
  * share costs each of them more than a night five do.
  *
@@ -41,7 +41,7 @@ export function daysBetween(a: string, b: string): number | null {
 /** Whether the spec is one a reader can trust at all; a broken one names nobody. */
 export function stayShapeOk(spec: DaysSplit): boolean {
   return utc(spec.from) !== null && Number.isInteger(spec.count)
-    && spec.count >= 1 && spec.count <= MAX_STAY && (spec.unit === "night" || spec.unit === "day");
+    && spec.count >= 1 && spec.count <= MAX_STAY;
 }
 
 /** Row `i` of one person's string. A short or garbled string is away, never a throw. */
@@ -55,12 +55,9 @@ export function stayDates(spec: DaysSplit): string[] {
   return Array.from({ length: spec.count }, (_, i) => addDays(spec.from, i));
 }
 
-/**
- * The date the range's second field shows: the morning you leave for nights,
- * the last day itself for days — what a booking says either way.
- */
-export function stayEnd(spec: Pick<DaysSplit, "unit" | "from" | "count">): string {
-  return addDays(spec.from, spec.unit === "night" ? spec.count : spec.count - 1);
+/** The morning after the last night: what a booking calls leaving. */
+export function stayEnd(spec: Pick<DaysSplit, "from" | "count">): string {
+  return addDays(spec.from, spec.count);
 }
 
 /** Who has at least one row, sorted. */
@@ -130,11 +127,11 @@ export function stayWeights(spec: DaysSplit): Record<Id, number> | null {
 }
 
 /** Everyone in `ids` there every row. */
-export function seedStay(from: string, unit: StayUnit, count: number, ids: readonly Id[]): DaysSplit {
+export function seedStay(from: string, count: number, ids: readonly Id[]): DaysSplit {
   const n = Math.min(MAX_STAY, Math.max(1, count));
   const stays: Record<Id, string> = {};
   for (const id of [...ids].sort()) stays[id] = "1".repeat(n);
-  return { mode: "days", unit, from, count: n, stays };
+  return { mode: "days", unit: "night", from, count: n, stays };
 }
 
 function rows(spec: DaysSplit, id: Id): boolean[] {
@@ -201,12 +198,11 @@ export function dragStayEnd(
  * for a range grown to fit one person's dates.
  */
 export function restay(
-  spec: DaysSplit, from: string, end: string, unit: StayUnit = spec.unit, grown: "edge" | "away" = "edge",
+  spec: DaysSplit, from: string, end: string, grown: "edge" | "away" = "edge",
 ): DaysSplit | null {
   const shift = daysBetween(spec.from, from);
-  const span = daysBetween(from, end);
-  if (shift === null || span === null) return null;
-  const count = unit === "night" ? span : span + 1;
+  const count = daysBetween(from, end);
+  if (shift === null || count === null) return null;
   if (count < 1 || count > MAX_STAY) return null;
   const stays: Record<Id, string> = {};
   for (const id of Object.keys(spec.stays)) {
@@ -217,7 +213,7 @@ export function restay(
       return was[Math.min(spec.count - 1, Math.max(0, at))] ? "1" : "0";
     }).join("");
   }
-  return { mode: "days", unit, from, count, stays };
+  return { mode: "days", unit: "night", from, count, stays };
 }
 
 /** One person's nights that a given number shared: "3 nights ÷ 4", and what they cost. */

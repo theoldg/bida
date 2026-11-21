@@ -141,15 +141,14 @@ under it cannot disagree.
 
 ## A split by days
 
-A rental — a house by the night, a car by the day — is the same kind of screen
+A rental, counted by the night, is the same kind of screen
 with a calendar in place of a bill: `/g/entry/days` (`components/stay-grid.tsx`),
 reached from the Days tab, which only reads the stay out (each person's nights
 and share) under a way in that counts them. It wears the grid's own parts: the
 chips with their initials (who stayed at all), the initials over the columns,
 a row a night with what one head paid that night under its date ("÷3 · 57.14"),
 the totals under the table, Done docked. A stay is one ink bar down its column,
-crossing the rules, with a grip at each end. By nights a row's middle is that
-night: a bar starts there, and its last night runs on into the morning below —
+crossing the rules, with a grip at each end. A row's middle is that night: a bar starts there, and its last night runs on into the morning below —
 where its end is held — so the stay ends on a departure row of its own, a date
 with no night to pay for.
 
@@ -180,7 +179,7 @@ line per head count, "3 nights ÷3 · 66.67 … 200.01" — the calendar's own
 caption, and the figure exactly nights × it, so every line checks by hand. The
 split rounds once over the whole stay, so what the lines miss of the share is
 a "rounding" line of its own, never a cent hidden in one of them. The heading
-carries the nightly price, and says "by nights" for a stay counted so. Under
+carries the nightly price and says "by nights". Under
 the rows, Details opens `/g/entry/stay`: the calendar read-only, its head the
 editing one's controls held `inert`, so Edit opens onto the same picture. Edit
 seeds the draft from the saved entry on the tap and goes straight into the

@@ -1,6 +1,7 @@
 // Doc: docs/history.md#what-a-revision-says
-import { type Id } from "@bida/core";
+import { addDays, stayAt, stayCount, stayEnd, stayers, stayShapeOk, type DaysSplit, type Id } from "@bida/core";
 import { copy } from "./copy";
+import { plural, stayDay } from "./format";
 
 /**
  * The rows under a history sentence: what moved, one row per *kind* of move
@@ -249,4 +250,50 @@ export function netLine(
       return copy.history.shareOf(name, `${delta > 0 ? "+" : "−"}${show(Math.abs(delta))}`);
     })
     .join(" · ");
+}
+
+/** "Thu 14 May – Sun 17 May": a stay from its first night to the morning after its last. */
+export function stayRange(from: string, leave: string): string {
+  return copy.history.range(stayDay(from), stayDay(leave));
+}
+
+/**
+ * A stay at a glance, for a new one: "3 nights, Thu 14 May – Sun 17 May".
+ * Empty for one too broken to read.
+ */
+export function stayText(spec: DaysSplit): string {
+  return stayShapeOk(spec) ? copy.history.stayAt(plural(spec.count, copy.stay.noun), stayRange(spec.from, stayEnd(spec))) : "";
+}
+
+/**
+ * What changed in who stayed when: the dates, then a row a person whose nights
+ * moved — how many, or, where that held, which ("Fri 15 May – Sun 17 May");
+ * somebody who came or went is the count alone, marked.
+ */
+export function stayRows(was: DaysSplit, now: DaysSplit, people: People): Row[] {
+  const rows: Row[] = [];
+  if (!stayShapeOk(was) || !stayShapeOk(now)) return rows;
+  const dates = [stayRange(was.from, stayEnd(was)), stayRange(now.from, stayEnd(now))];
+  if (dates[0] !== dates[1]) rows.push({ name: copy.history.field.dates, was: dates[0], now: dates[1], item: true });
+  const nights = (spec: DaysSplit, id: Id) =>
+    Array.from({ length: spec.count }, (_, i) => i).filter((i) => stayAt(spec, id, i)).map((i) => addDays(spec.from, i));
+  const own = (spec: DaysSplit, id: Id) => {
+    const there = nights(spec, id);
+    const run = there.length > 0 && there.every((d, i) => i === 0 || d === addDays(there[i - 1]!, 1));
+    return run ? stayRange(there[0]!, addDays(there[there.length - 1]!, 1)) : plural(there.length, copy.stay.noun);
+  };
+  const [before, after] = [new Set(stayers(was)), new Set(stayers(now))];
+  for (const id of byName(new Set([...before, ...after]), people)) {
+    const count = (spec: DaysSplit) => plural(stayCount(spec, id), copy.stay.noun);
+    if (!before.has(id)) rows.push({ name: people.nameOf(id), mark: "+", now: count(now) });
+    else if (!after.has(id)) rows.push({ name: people.nameOf(id), mark: "−", was: count(was) });
+    // Moved on the calendar and within the stay: a stay moved whole moves
+    // nobody, nor does one whose start moved past somebody's own nights.
+    else if (nights(was, id).join() !== nights(now, id).join()
+      && was.stays[id]!.slice(0, was.count) !== now.stays[id]!.slice(0, now.count)) {
+      const same = stayCount(was, id) === stayCount(now, id);
+      rows.push({ name: people.nameOf(id), was: same ? own(was, id) : count(was), now: same ? own(now, id) : count(now) });
+    }
+  }
+  return rows;
 }

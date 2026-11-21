@@ -15,7 +15,7 @@ export function stayBill(
   const out: Record<string, MemberLine[]> = {};
   for (const [id, { lines, rounding }] of Object.entries(stayLines(total, spec, shares))) {
     out[id] = lines.map((l) => ({
-      label: plural(l.count, copy.stay.noun[spec.unit]),
+      label: plural(l.count, copy.stay.noun),
       qty: copy.stay.each(l.heads, bare(l.each, currency)),
       count: { n: l.count, d: 1 },
       minor: l.minor,

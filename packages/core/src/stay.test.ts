@@ -47,7 +47,7 @@ describe("a split by days", () => {
   });
 
   it("is evenly when everyone is there throughout", () => {
-    const all = seedStay("2026-01-01", "day", 5, ["a", "b", "c"]);
+    const all = seedStay("2026-01-01", 5, ["a", "b", "c"]);
     expect(resolveSplit(1000, all, { tiebreakSeed: "s" }).shares)
       .toEqual(resolveSplit(1000, { mode: "equal", members: ["a", "b", "c"] }, { tiebreakSeed: "s" }).shares);
   });
@@ -131,9 +131,10 @@ describe("a split by days", () => {
 });
 
 describe("a stay's calendar", () => {
-  it("counts nights to the morning you leave, and days to the last one", () => {
+  it("counts nights to the morning you leave, an older stay by days too", () => {
     expect(stayEnd(villa)).toBe("2026-05-21");
-    expect(stayEnd({ ...villa, unit: "day" })).toBe("2026-05-20");
+    const old: DaysSplit = { ...villa, unit: "day" };
+    expect(stayEnd(old)).toBe("2026-05-21");
     expect(stayDates(villa)[6]).toBe("2026-05-20");
   });
 
@@ -160,13 +161,14 @@ describe("a stay's calendar", () => {
     expect(shorter.stays["bruno"]).toBe("11");
     expect(restay(villa, "2026-05-16", "2026-05-16")).toBeNull();
     // Grown for one person's dates, nobody else is on the new nights.
-    expect(restay(villa, "2026-05-13", "2026-05-21", "night", "away")!.stays["ana"]).toBe("00111111");
+    expect(restay(villa, "2026-05-13", "2026-05-21", "away")!.stays["ana"]).toBe("00111111");
   });
 
-  it("switches nights to days without moving anybody", () => {
-    const days = restay(villa, villa.from, stayEnd({ ...villa, unit: "day" }), "day")!;
-    expect(days.count).toBe(7);
-    expect(days.stays).toEqual(villa.stays);
+  it("reads an older stay by days as nights, every share where it was", () => {
+    const old: DaysSplit = { ...villa, unit: "day" };
+    expect(resolveSplit(70_000, old).shares).toEqual(resolveSplit(70_000, villa).shares);
+    // Its dates moved, it is written as nights.
+    expect(restay(old, old.from, "2026-05-22")!.unit).toBe("night");
   });
 
   it("flips a row, sets a run, and takes a person in or out whole", () => {

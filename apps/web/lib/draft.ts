@@ -192,7 +192,7 @@ export function arithmeticSplit(draft: EntryDraft): ArithmeticSplit {
  * there: Evenly, until the calendar says otherwise.
  */
 export function firstStay(draft: EntryDraft): DaysSplit {
-  return seedStay(dateInputValue(draft.occurredAt), "night", 1, splitParticipants(arithmeticSplit(draft)));
+  return seedStay(dateInputValue(draft.occurredAt), 1, splitParticipants(arithmeticSplit(draft)));
 }
 
 /** A tab opened for the first time starts from who is in, never the numbers. */

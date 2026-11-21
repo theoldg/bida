@@ -294,7 +294,7 @@ function DaysPanel({ stay, editHref, flash, onFlashEnd, members, me, currency, s
   currency: string;
   shares: Record<string, number>;
 }) {
-  const word = stay ? copy.stay.noun[stay.unit] : copy.stay.noun.night;
+  const word = copy.stay.noun;
   const there = stay ? members.filter((m) => stayCount(stay, m.id) > 0) : [];
   return (
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>

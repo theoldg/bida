@@ -1,13 +1,14 @@
 // Doc: docs/history.md#what-a-revision-says
 import {
   isValidRate, resolveEntrySplit, resolveSplit, splitParticipants, stayWeights,
-  type CurrencyCode, type Id, type ImportSource, type Member, type ReceiptItem, type Revision, type SplitSpec,
+  type CurrencyCode, type DaysSplit, type Id, type ImportSource, type Member, type ReceiptItem, type Revision, type SplitSpec,
 } from "@bida/core";
 import { copy } from "./copy";
 import { printedBill } from "./scan/items";
 import { bare, dayLabel, money, plural, rateText } from "./format";
 import {
-  billRows, chargeRow, eatersRow, figureGroups, moves, netLine, peopleText, typical, type BillLine, type People, type Row,
+  billRows, chargeRow, eatersRow, figureGroups, moves, netLine, peopleText, stayRows, stayText, typical,
+  type BillLine, type People, type Row,
 } from "./history-rows";
 
 /**
@@ -206,7 +207,11 @@ export function describe(
         : payers.map(([id, v]) => said.shareOf(nameOf(id), fig(v, ownCurrency(rev.after))).replace(/ /g, "\u00a0"))
           .join(" + ");
       const head = [amt, paid ? said.paidBy[kind](paid) : undefined].filter(Boolean).join(" · ");
-      return { what, ...(head ? { diff: { now: head } } : {}), shares: createdShares(rev.after) };
+      // A stay says when before what each owes.
+      const spec = rev.after["split"] as SplitSpec | null | undefined;
+      const stay = spec && typeof spec === "object" && spec.mode === "days" ? stayText(spec) : "";
+      const shares = [...(stay ? [stay] : []), ...createdShares(rev.after)];
+      return { what, ...(head ? { diff: { now: head } } : {}), shares };
     }
     if (rev.isDelete) return { what: said.deletedEntry(who, noun) };
     if (field("deletedAt")?.after === null) return { what: said.restoredEntry(who, noun) };
@@ -229,12 +234,27 @@ export function describe(
     const split = field("split");
     let sharesPart: Part | undefined;
     let newMode = false;
-    if (split) {
+    const days = (v: unknown): v is DaysSplit => !!v && typeof v === "object" && (v as SplitSpec).mode === "days";
+    if (split && days(split.before) && days(split.after)) {
+      // A stay changed is said as nights and dates, then what that did to whom
+      // — unless the amount moved too, which moves every share on its own line.
+      const rows = stayRows(split.before, split.after, people);
+      const [was, now] = [sharesOf(rev.before), sharesOf(rev.after)];
+      const moved = field("amountMinor") || field("baseAmountMinor");
+      const net = was && now && !moved ? netLine(was, now, (v) => fig(v, currency), people) : "";
+      if (net) rows.push({ name: net });
+      if (rows.length) parts.push({ what: said.changedStay(who), label: named.stay, rows });
+    } else if (split) {
       const was = split.before as SplitSpec | null;
       const now = split.after as SplitSpec;
       const wasFigures = was ? shareFigures(rev.before) : null;
       const nowFigures = shareFigures(rev.after);
       const rows = moves(wasFigures, nowFigures, people);
+      // Becoming a stay says when it is.
+      if (days(now)) {
+        const when = stayText(now);
+        if (when) rows.unshift({ name: named.dates, now: when, item: true });
+      }
       const sameWho = !!wasFigures && wasFigures.size === nowFigures.size
         && [...nowFigures.keys()].every((id) => wasFigures.has(id));
       if (!sameWho) {

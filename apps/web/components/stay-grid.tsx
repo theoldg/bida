@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   addDays, canonicalSplit, daysBetween, dragStayEnd, emptyStayRows, resolveSplit, restay,
   setStayAll, setStayRun, stayAt, stayCount, stayDates, stayEnd, stayers, stayHeads, stayRunAt,
-  toggleStayRow, type DaysSplit, type StayUnit,
+  toggleStayRow, type DaysSplit,
 } from "@bida/core";
 import { Body, Screen, TopBar } from "./chrome";
 import { ConfirmDialog, Dialog } from "./dialog";
@@ -148,8 +148,6 @@ export function StayGrid({ people, draft, save, up, doneLabel = copy.act.done, o
   const heads = stayHeads(stay);
   const empty = new Set(emptyStayRows(stay));
   const total = draftAmountMinor(draft);
-  const word = copy.stay.noun[stay.unit];
-  const nights = stay.unit === "night";
 
   // What each is owed for, as the form will save it: the same seed, the same cent.
   let shares: Record<string, number> = {};
@@ -181,10 +179,10 @@ export function StayGrid({ people, draft, save, up, doneLabel = copy.act.done, o
 
   /**
    * The row under a finger, clamped to the table: past either end is that end.
-   * By nights the departure row counts, one past the last night.
+   * The departure row counts, one past the last night.
    */
   function rowAt(y: number): number {
-    const n = dates.length + (nights ? 1 : 0);
+    const n = dates.length + 1;
     const rows = rowEl.current.slice(0, n);
     for (let i = 0; i < rows.length; i++) {
       const box = rows[i]?.getBoundingClientRect();
@@ -194,23 +192,21 @@ export function StayGrid({ people, draft, save, up, doneLabel = copy.act.done, o
   }
 
   /**
-   * By days a bar's two ends are its first and last cells. By nights the last
-   * night's bar runs on into the next morning, the row below, and that is
-   * where its end is held — the cell of the last night itself is no handle.
+   * The last night's bar runs on into the next morning, the row below, and
+   * that is where its end is held — the cell of the last night itself is no
+   * handle.
    */
   function startDrag(e: React.PointerEvent, id: string, row: number) {
     // A new press is a new tap, whatever the last drag left behind.
     swallowUntil.current = 0;
     dropDrag();
     const s = now.current;
-    const morning = nights && !stayAt(s, id, row) && stayAt(s, id, row - 1);
+    const morning = !stayAt(s, id, row) && stayAt(s, id, row - 1);
     const run = stayRunAt(s, id, morning ? row - 1 : row);
     if (!run) return;
     let end: Drag["end"];
     if (morning) end = "last";
-    else if (nights) { if (row !== run.first) return; end = "first"; }
-    else if (row !== run.first && row !== run.last) return;
-    else end = run.first === run.last ? null : row === run.first ? "first" : "last";
+    else { if (row !== run.first) return; end = "first"; }
     const el = e.currentTarget as HTMLElement;
     const d: Drag = { member: id, run, from: row, base: s, moved: false, end, morning,
       armed: false, held: false, x: e.clientX, y: e.clientY, at: e.clientY, travelled: false };
@@ -328,10 +324,10 @@ export function StayGrid({ people, draft, save, up, doneLabel = copy.act.done, o
    * tab first opens it — fills the new nights with everyone too, or the first
    * date typed would leave a week to paint by hand.
    */
-  function setRange(from: string, end: string, unit: StayUnit = stay.unit) {
+  function setRange(from: string, end: string) {
     const s = now.current;
     const untouched = Object.values(s.stays).every((row) => row.slice(0, s.count) === "1".repeat(s.count));
-    const next = restay(s, from, end, unit, untouched ? "edge" : "away");
+    const next = restay(s, from, end, untouched ? "edge" : "away");
     if (!next) return;
     remember(s);
     const had = new Set(stayDates(s));
@@ -409,40 +405,30 @@ export function StayGrid({ people, draft, save, up, doneLabel = copy.act.done, o
                 </button>
               ))}
             </div>
-            <div className="eyebrow stayeyebrow">{copy.stay.mode}</div>
-            <div className="seg stayunit">
-              {(["night", "day"] as const).map((u) => (
-                <button key={u} type="button" className={stay.unit === u ? "on" : ""} aria-pressed={stay.unit === u}
-                  onClick={() => setRange(stay.from, stayEnd({ ...stay, unit: u }), u)}>
-                  {copy.stay.unit[u]}
-                </button>
-              ))}
-            </div>
             <div className="eyebrow stayeyebrow">{copy.stay.dates}</div>
             <div className="stayrange">
               <label className="stayfield">
                 <input type="date" data-field="stay-from" autoComplete={NO_AUTOFILL} value={stay.from}
-                  aria-label={copy.stay.from[stay.unit]}
+                  aria-label={copy.stay.from}
                   onChange={(e) => {
                     const from = e.target.value;
-                    // Past the end, the end follows: one night, or one day.
+                    // Past the end, the end follows: one night.
                     const span = daysBetween(from, end);
                     if (span === null) return;
-                    const minimum = nights ? 1 : 0;
-                    setRange(from, span < minimum ? addDays(from, minimum) : end);
+                    setRange(from, span < 1 ? addDays(from, 1) : end);
                   }} />
               </label>
               <span className="stayarrow" aria-hidden="true">→</span>
               <label className="stayfield">
                 <input type="date" data-field="stay-to" autoComplete={NO_AUTOFILL} value={end}
-                  min={stay.unit === "night" ? addDays(stay.from, 1) : stay.from}
-                  aria-label={copy.stay.toLabel[stay.unit]}
+                  min={addDays(stay.from, 1)}
+                  aria-label={copy.stay.toLabel}
                   onChange={(e) => setRange(stay.from, e.target.value)} />
               </label>
             </div>
           </div>
 
-          <table className={`itemtable staytable${nights ? " bynight" : ""}`} style={{ "--cols": columns.length } as CSSProperties}
+          <table className="itemtable staytable" style={{ "--cols": columns.length } as CSSProperties}
             onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag}>
             <colgroup>
               <col className="collabel" />
@@ -450,7 +436,7 @@ export function StayGrid({ people, draft, save, up, doneLabel = copy.act.done, o
             </colgroup>
             <thead>
               <tr>
-                <th className="stayrowhead">{copy.stay.row[stay.unit]}</th>
+                <th className="stayrowhead">{copy.stay.row}</th>
                 {columns.map((m) => (
                   <th key={m.id}>
                     <span className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>{labels.get(m.id)}</span>
@@ -479,7 +465,7 @@ export function StayGrid({ people, draft, save, up, doneLabel = copy.act.done, o
                       const first = there && !stayAt(stay, m.id, i - 1);
                       const last = there && !stayAt(stay, m.id, i + 1);
                       // The morning after a last night: where its bar ends, and is held.
-                      const morning = nights && !there && stayAt(stay, m.id, i - 1);
+                      const morning = !there && stayAt(stay, m.id, i - 1);
                       return (
                         <td key={m.id} className={holding === m.id ? "itemwho holding" : "itemwho"}>
                           <button type="button"
@@ -498,7 +484,7 @@ export function StayGrid({ people, draft, save, up, doneLabel = copy.act.done, o
                   </tr>
                 );
               })}
-              {nights && dates.length > 0 ? (
+              {dates.length > 0 ? (
                 // The morning everyone has gone: no night to pay for, only the
                 // last night's bars landing, and their ends to hold.
                 <tr className="staydeparture" ref={(el) => { rowEl.current[dates.length] = el; }}>
@@ -529,7 +515,7 @@ export function StayGrid({ people, draft, save, up, doneLabel = copy.act.done, o
                     aria-label={copy.stay.share(m.name)}>
                     <span className="who">{m.name}</span>
                     <span className="staynights">
-                      {plural(stayCount(stay, m.id), word)}
+                      {plural(stayCount(stay, m.id), copy.stay.noun)}
                     </span>
                     <span className="amt">{empty.size > 0 ? "–" : money(shares[m.id] ?? 0, draft.currency)}</span>
                     <Icon name="chev" size={12} className="staychev" />
@@ -577,21 +563,19 @@ function PersonDates({ name, id, stay, onClose, onSet }: {
   onSet: (next: DaysSplit) => void;
 }) {
   const there = stayDates(stay).filter((_, i) => stayAt(stay, id, i));
-  const nights = stay.unit === "night";
   const [arrived, setArrived] = useState(there[0] ?? stay.from);
-  const [left, setLeft] = useState(
-    there.length ? addDays(there[there.length - 1]!, nights ? 1 : 0) : stayEnd(stay));
+  const [left, setLeft] = useState(there.length ? addDays(there[there.length - 1]!, 1) : stayEnd(stay));
   const span = daysBetween(arrived, left);
-  const ok = span !== null && (nights ? span >= 1 : span >= 0);
+  const ok = span !== null && span >= 1;
 
   function set() {
     if (!ok) return;
     const from = arrived < stay.from ? arrived : stay.from;
     const end = left > stayEnd(stay) ? left : stayEnd(stay);
-    const wide = restay(stay, from, end, stay.unit, "away");
+    const wide = restay(stay, from, end, "away");
     if (!wide) return;
     const first = daysBetween(wide.from, arrived) ?? 0;
-    const last = (daysBetween(wide.from, left) ?? 0) - (nights ? 1 : 0);
+    const last = (daysBetween(wide.from, left) ?? 0) - 1;
     onSet(setStayRun(wide, id, first, last));
   }
 
@@ -599,14 +583,14 @@ function PersonDates({ name, id, stay, onClose, onSet }: {
     <Dialog title={copy.stay.person.title(name)} onClose={onClose}>
       <div className="dbody staydates">
         <label className="stayfield">
-          <span className="fieldlabel">{copy.stay.person.arrived[stay.unit]}</span>
+          <span className="fieldlabel">{copy.stay.person.arrived}</span>
           <input type="date" className="dinput" autoComplete={NO_AUTOFILL} value={arrived}
-            aria-label={copy.stay.person.arrived[stay.unit]} onChange={(e) => setArrived(e.target.value)} />
+            aria-label={copy.stay.person.arrived} onChange={(e) => setArrived(e.target.value)} />
         </label>
         <label className="stayfield">
-          <span className="fieldlabel">{copy.stay.person.left[stay.unit]}</span>
+          <span className="fieldlabel">{copy.stay.person.left}</span>
           <input type="date" className="dinput" autoComplete={NO_AUTOFILL} value={left}
-            aria-label={copy.stay.person.left[stay.unit]} onChange={(e) => setLeft(e.target.value)} />
+            aria-label={copy.stay.person.left} onChange={(e) => setLeft(e.target.value)} />
         </label>
         {ok ? null : <p className="hint">{copy.stay.badRange}</p>}
       </div>

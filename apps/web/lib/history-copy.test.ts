@@ -973,3 +973,76 @@ suite("describe", () => {
     for (const { said } of all) expect(said).not.toBe("");
   });
 });
+
+suite("describe, a split by days", () => {
+  beforeEach(wipe);
+
+  const stay = (from: string, stays: Record<string, string>) =>
+    ({ mode: "days" as const, unit: "night" as const, from, count: Object.values(stays)[0]!.length, stays });
+
+  it("says when a new stay is before what each owes", async () => {
+    const { groupId, theo, marie } = await sharedExpense();
+    await addExpense(groupId, theo, {
+      description: "Cabin", occurredAt: Date.now(), amountMinor: 30_000, currency: "EUR", rateToBase: "1",
+      paidBy: theo, split: stay("2026-05-14", { [theo]: "111", [marie]: "100" }),
+    });
+    const [latest] = await described(groupId);
+    expect(latest!.shares![0]).toBe("3 nights, Thu 14 May – Sun 17 May");
+  });
+
+  it("says becoming a stay with its dates", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "11", [marie]: "01" }) });
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo split it by days");
+    expect(latest!.rows![0]).toEqual({ name: "Dates", now: "2 nights, Thu 14 May – Sat 16 May", item: true });
+  });
+
+  it("says whose nights moved, the dates, and what that did to whom", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "11", [marie]: "01" }) });
+    await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "11", [marie]: "11" }) });
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed who stayed when");
+    expect(latest!.rows).toEqual([
+      { name: "Marie", was: "1 night", now: "2 nights" },
+      { name: "Marie +25.00 · Theo −25.00" },
+    ]);
+  });
+
+  it("says a stay moved whole as its dates, and nobody else", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "11", [marie]: "11" }) });
+    await editExpense(groupId, theo, expenseId, { split: stay("2026-05-15", { [theo]: "11", [marie]: "11" }) });
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed who stayed when");
+    expect(latest!.rows).toEqual([
+      { name: "Dates", was: "Thu 14 May – Sat 16 May", now: "Fri 15 May – Sun 17 May", item: true },
+    ]);
+  });
+
+  it("says the nights of somebody who kept their count but moved them", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "111", [marie]: "100" }) });
+    await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "111", [marie]: "001" }) });
+    const [latest] = await described(groupId);
+    expect(latest!.rows).toEqual([{ name: "Marie", was: "Thu 14 May – Fri 15 May", now: "Sat 16 May – Sun 17 May" }]);
+  });
+
+  it("marks somebody who came or went with their nights", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "11" }) });
+    await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "11", [marie]: "01" }) });
+    const [latest] = await described(groupId);
+    expect(latest!.rows![0]).toEqual({ name: "Marie", mark: "+", now: "1 night" });
+  });
+
+  it("reads an older stay by days as nights, and survives a broken one", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, { split: { ...stay("2026-05-14", { [theo]: "11", [marie]: "01" }), unit: "day" } });
+    await editExpense(groupId, theo, expenseId, { split: { ...stay("2026-05-14", { [theo]: "11" }), count: -3 } });
+    const all = await described(groupId);
+    expect(all[1]!.rows![0]).toEqual({ name: "Dates", now: "2 nights, Thu 14 May – Sat 16 May", item: true });
+    for (const { said } of all) expect(said).not.toBe("");
+  });
+});
