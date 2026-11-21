@@ -5,16 +5,15 @@ import { FlipCheck, Icon } from "./icons";
 import { hasClipboard, writeClipboardText } from "../lib/clipboard";
 import { copy } from "../lib/copy";
 import { useFold } from "../lib/fold";
-import { countText } from "../lib/format";
 import { tick } from "../lib/haptics";
 import { useFlash } from "../lib/hooks";
-import type { MemberLine } from "../lib/scan/items";
+import { lineQty, type MemberLine } from "../lib/scan/items";
 
 /**
  * One person's row on a scanned bill: what they had, as printed.
  *
  * Counts are fractions of lines — "×1/2" shared, "×1 1/2", "×2"
- * (`countText`) — and amounts are the cents the split was derived from, so a
+ * (`lineQty`) — and amounts are the cents the split was derived from, so a
  * row and its lines agree by construction.
  *
  * Used by a saved expense (ADR-0016), where it folds, and a quick split
@@ -58,7 +57,7 @@ export function MemberBill({ name, total, lines, format, fixed }: {
       {shown ? (
         <div className="billlines">
           {lines.map((line, i) => {
-            const count = line.qty ?? (line.extra ? null : `×${countText(line.count)}`);
+            const count = lineQty(line);
             return (
               <div className={`billline${line.extra ? " billextra" : ""}`} key={i}>
                 <span className="lbl">

@@ -3,6 +3,7 @@ import {
   extrasMinor, minorToDecimalString, parseMinor, resolveSplit,
   type BillExtras, type ExtraKind, type ReceiptItem,
 } from "@bida/core";
+import { countText } from "../format";
 
 export interface MemberLine {
   label: string;
@@ -16,6 +17,16 @@ export interface MemberLine {
 }
 
 interface Count { n: number; d: number }
+
+/**
+ * The tag beside a line: its `qty`, else "×1/2", "×2" — and nothing for a
+ * whole one, or a tip, where a count would only say what the line already does.
+ */
+export function lineQty(line: MemberLine): string | null {
+  if (line.qty !== undefined) return line.qty || null;
+  const count = line.extra ? null : countText(line.count);
+  return count === null ? null : `×${count}`;
+}
 
 interface BillLine { amount: string; label?: string; quantity?: number | null; portionOf?: number | null }
 

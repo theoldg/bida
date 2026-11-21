@@ -127,7 +127,7 @@ the number of people on the row — how much of it each of them had.
 The grid is kept on the expense, so the entry screen can read it back:
 `receiptBreakdown` returns the split weights *and* the lines they were summed
 from, and each person's row on a scanned expense opens onto their own copy of
-the bill — "Beer ×2", "Fries ×1 1/2", "Tagine ×1/3", then the charges and the tip,
+the bill — "Beer ×2", "Fries ×1 1/2", "Tagine ×1/3", a whole one bare (`lineQty`), then the charges and the tip,
 muted, below what was ordered. Nothing is ruled or washed anywhere in it: not
 between the people, not between a person's items and their extras, because a
 name, a figure and a shift to muted ink already say where one thing ends. Each

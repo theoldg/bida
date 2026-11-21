@@ -3,7 +3,7 @@ import {
   demoOps, foldOps, parseMinor, receiptExtras, DEMO_GROUP_ID, type BillExtras, type ReceiptItem,
 } from "@bida/core";
 import {
-  billCharges, billExtrasIn, billLabel, billLabels, foldedLine, hasTranslation, portions, receiptBreakdown, receiptTotalMinor,
+  billCharges, billExtrasIn, billLabel, billLabels, foldedLine, hasTranslation, lineQty, portions, receiptBreakdown, receiptTotalMinor,
   runAssignment,
   printedBill, printedCount, unfoldAll, unfoldItem,
   MAX_PORTIONS, unfoldableInto,
@@ -603,5 +603,25 @@ describe("the demo's itemised cantina tab", () => {
       dinner.currency,
       dinner.id,
     )).toEqual(dinner.split.mode === "receipt" ? dinner.split.weights : null);
+  });
+});
+
+describe("lineQty", () => {
+  const line = (over: Partial<Parameters<typeof lineQty>[0]>) =>
+    lineQty({ label: "Americano", count: { n: 1, d: 1 }, minor: 250, ...over });
+  it("says nothing for a whole one — never \"×null\"", () => {
+    expect(line({})).toBe(null);
+  });
+  it("tags shares and multiples", () => {
+    expect(line({ count: { n: 1, d: 2 } })).toBe("×1/2");
+    expect(line({ count: { n: 2, d: 1 } })).toBe("×2");
+    expect(line({ count: { n: 3, d: 2 } })).toBe("×1 1/2");
+  });
+  it("leaves a tip or a tax uncounted", () => {
+    expect(line({ extra: "tip", count: { n: 1, d: 2 } })).toBe(null);
+  });
+  it("says a stay's own words in place of a count, and an empty one as nothing", () => {
+    expect(line({ qty: "÷3 · 25.00", count: { n: 3, d: 1 } })).toBe("÷3 · 25.00");
+    expect(line({ qty: "" })).toBe(null);
   });
 });
