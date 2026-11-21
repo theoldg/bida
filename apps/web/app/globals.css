@@ -1688,10 +1688,10 @@ dialog.scrim::backdrop { background: transparent }
 /* The date draws our calendar, not the browser's; the row's click opens the
    picker. Android's ⌄ is the control's own appearance, not the indicator, so
    both go. Where the pseudo isn't known (Firefox) the browser's own stays and
-   ours goes. */
+   ours goes. A saved stay's read-only dates lose both too: they open nothing. */
 @supports selector(::-webkit-calendar-picker-indicator) {
-  .field > input[type="date"] { -webkit-appearance: none; appearance: none } }
-.field > input[type="date"]::-webkit-calendar-picker-indicator { display: none }
+  :is(.field > input, .stayfield > input[readonly])[type="date"] { -webkit-appearance: none; appearance: none } }
+:is(.field > input, .stayfield > input[readonly])[type="date"]::-webkit-calendar-picker-indicator { display: none }
 .datemark { pointer-events: none }
 @supports not selector(::-webkit-calendar-picker-indicator) { .datemark { display: none } }
 .formhead { padding: 0; overflow: hidden; overflow: clip }
