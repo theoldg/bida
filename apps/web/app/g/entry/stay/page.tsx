@@ -11,13 +11,14 @@ import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "@/co
 import { NO_AUTOFILL } from "@/lib/autofill";
 import { copy } from "@/lib/copy";
 import { bare, distinctInitials, stayDay } from "@/lib/format";
+import { expenseDraft, seedDraft } from "@/lib/draft";
 import { parseEntrySource, route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 
 /**
  * A saved stay, read back: the calendar as `/g/entry/days` draws it, with
  * nothing to press. The sums behind each share are the entry screen's; Edit
- * goes through the form into the calendar that changes it.
+ * opens the calendar that changes it, its draft seeded here as the form would.
  */
 export default function StayPage() {
   return <QueryBoundary><StayScreen /></QueryBoundary>;
@@ -146,7 +147,13 @@ function StayScreen() {
 
         {expense.deletedAt ? null : (
           <div className="pad whodock" style={{ paddingTop: 18 }}>
-            <Link href={route.editStay(groupId, entryId, via)} className="btn btn-s">{copy.act.edit}</Link>
+            {/* Straight into the calendar, seeded before the tap navigates: through
+                the form, the form flashed by and Back stopped on it. Always from
+                the saved entry, since this screen draws that and nothing else. */}
+            <Link href={route.days(groupId, via, true)} className="btn btn-s" onClick={() => {
+              const me = data.me ?? data.members[0]?.id;
+              if (me) seedDraft(groupId, expenseDraft(expense, me, data.members.map((m) => m.id)), entryId);
+            }}>{copy.act.edit}</Link>
           </div>
         )}
       </Body>

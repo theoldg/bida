@@ -421,6 +421,7 @@ export function expenseDraft(e: Expense, me: string, members: string[]): EntryDr
     recordedAt: e.createdAt ?? e.occurredAt,
     categoryId: e.categoryId ?? null,
     ...receiptOf(e),
+    ...(e.attachmentIds?.[0] ? { keptPhotoId: e.attachmentIds[0] } : {}),
     splitTab: known ? e.split.mode : "equal",
   };
 }

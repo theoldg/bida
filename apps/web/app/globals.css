@@ -1005,8 +1005,9 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .kv:has(> .v > .twoccy) > .k { line-height: 1.3 }
 .twoccy { display: flex; flex-direction: column; align-items: flex-end; font-size: var(--fs-small); line-height: 1.35 }
 .twoccy .ownccy { font-size: var(--fs-caption); line-height: 1.25; margin-top: 2px; color: var(--muted) }
-/* Still a `.kv`, so the card doesn't restack when it opens. */
-button.kv { width: 100%; background: none; border: 0; font: inherit; text-align: left }
+/* Still a `.kv`, so the card doesn't restack when it opens — and its size
+   again after `font: inherit`, or a row that opens reads larger than one that doesn't. */
+button.kv { width: 100%; background: none; border: 0; font: inherit; font-size: var(--fs-small); text-align: left }
 button.kv:active { background: var(--press) }
 /* The reset makes every `svg` a block. */
 button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }

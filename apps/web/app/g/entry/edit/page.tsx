@@ -62,18 +62,6 @@ function EditEntryScreen() {
   const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
 
-  // The stay details screen's Edit: on into the calendar once the draft is
-  // seeded. The flag leaves the URL first, so coming back to the form stays.
-  const router = useRouter();
-  const openDays = params.get("open") === "days";
-  useEffect(() => {
-    if (!openDays || !groupId || !draft || draft.entryId !== entryId) return;
-    const url = new URL(window.location.href);
-    url.searchParams.delete("open");
-    window.history.replaceState(window.history.state, "", url);
-    router.push(route.days(groupId, parseEntrySource(params.get("via")), true));
-  }, [openDays, groupId, draft, entryId, router, params]);
-
   // Returning from the payers editor or the grid re-mounts with the same key, so
   // the draft survives; a different link replaces a leftover draft.
   const seedKey = entryId ?? newEntryKey(wantedKind, { title: prefillTitle });
@@ -88,8 +76,7 @@ function EditEntryScreen() {
     if (entryId) {
       const e = data.expenses.find((x) => x.id === entryId);
       const s = e ? undefined : data.settlements.find((x) => x.id === entryId);
-      const kept = e?.attachmentIds?.[0];
-      const seeded = e ? { ...expenseDraft(e, me, members), ...(kept ? { keptPhotoId: kept } : {}) }
+      const seeded = e ? expenseDraft(e, me, members)
         : s ? transferDraft(s, me, members) : undefined;
       if (seeded) seedDraft(groupId, seeded, seedKey);
       return;

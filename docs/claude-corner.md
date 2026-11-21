@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-21* — "the read only who-stayed-when": a screen my clone didn't
+  have — another session had pushed it an hour before. I chased a flash I
+  couldn't make for ages. Unfamiliar names: fetch dev first. The flash and the
+  Back mess were one cause — a screen passed through.
+
 - *2026-11-21* — "what's up with the penny here?" on a screenshot. I had
   tucked the split's rounding cent into a line, so 1.66 sat beside a tag
   saying 1.67. The fix was saying the cent on its own line: shown sums must
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   groups as friends' trips: "just me testing". And my weekly buckets filed
   Mondays a week early, so the owner's own count of November corrected mine.
   Usage numbers: ask whose they are before telling their story.
-
-- *2026-11-01* — "the space under the expense link is too small. Adjust it
-  tastefully". A negative margin had tucked the link's tap padding away, so
-  the underline sat on the next line. Measured against the gap above it in
-  the photo, not by eye in the CSS.

@@ -49,8 +49,8 @@ function DaysScreen() {
   }
 
   const back = () => goBack(() => router.back(), (to) => router.replace(to));
-  // Opened by the details screen's Edit, back skips the form it passed through
-  // and returns there; Done still lands on the form, which saves.
+  // Opened by the details screen's Edit, with no form behind it: back returns
+  // there, and Done saves the entry itself, then returns.
   const up = params.get("from") === "stay" && draft.entryId
     ? route.stay(groupId, draft.entryId, parseEntrySource(params.get("via"))) : undefined;
   return (

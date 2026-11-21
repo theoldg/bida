@@ -181,8 +181,10 @@ a "rounding" line of its own, never a cent hidden in one of them. The heading
 carries the nightly price, and says "by nights" for a stay counted so. Under
 the rows, Details opens `/g/entry/stay`: the calendar read-only, its head the
 editing one's controls held `inert`, so Edit opens onto the same picture. Edit
-goes through the form (`&open=days`) into the calendar, whose back then climbs
-to the details and whose Done is Save, writing the entry itself.
+seeds the draft from the saved entry on the tap and goes straight into the
+calendar (`&from=stay`) — never through the form, which flashed by and left a
+stop for Back — whose back climbs to the details and whose Done is Save,
+writing the entry itself.
 
 The arithmetic is core's ([data-model.md](data-model.md#splits--the-only-tricky-arithmetic)).
 

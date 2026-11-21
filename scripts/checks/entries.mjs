@@ -890,6 +890,37 @@ const cabin = (await page.locator(".card").last().innerText()).replace(/\s+/g, "
 report(/Split by nights · €100\.00 a night/i.test(cabin) && /Sam · 1 night/.test(cabin) && /33\.33/.test(cabin)
   && /233\.3[34]/.test(cabin) && /Details/.test(cabin),
   "an entry split by days reads each person's nights and share", cabin);
+// A row that opens is read at the size of one that doesn't: `font: inherit` once lost it.
+const rowSizes = await page.locator(".card").last().locator("button.kv").first().evaluate((row) =>
+  [row, row.querySelector(".v")].map((el) => getComputedStyle(el).fontSize));
+report(rowSizes[0] === rowSizes[1], "a stay's opening row is the size of the figures beside it", rowSizes.join(" vs "));
+// Details' Edit goes straight into the calendar: no frame of the form on the
+// way, nor a form in the history for Back to stop on.
+await page.getByRole("link", { name: /Details/ }).click();
+await page.waitForURL(/\/g\/entry\/stay\?/);
+await page.evaluate(() => {
+  const w = /** @type {any} */ (window);
+  w.__formSeen = false;
+  const look = () => {
+    if (document.querySelector("input.amount")) w.__formSeen = true;
+    if (!document.querySelector("table.staytable tbody button")) requestAnimationFrame(look);
+  };
+  requestAnimationFrame(look);
+});
+await page.getByRole("link", { name: "Edit", exact: true }).click();
+await page.waitForURL(/\/g\/entry\/days\?/);
+await page.locator("table.staytable tbody button").first().waitFor();
+report(!(await page.evaluate(() => /** @type {any} */ (window).__formSeen)),
+  "a saved stay's Edit opens the calendar without the form flashing by");
+const behind = await page.evaluate(() => {
+  const nav = /** @type {any} */ (window).navigation;
+  return new URL(nav.entries()[nav.currentEntry.index - 1].url).pathname;
+});
+await page.locator(".iconbtn.back").first().click();
+await page.waitForURL(/\/g\/entry\/stay\?/);
+await page.locator(".iconbtn.back").first().click();
+await page.waitForURL(/\/g\/entry\?/);
+report(behind === "/g/entry/stay", "and Back climbs calendar → details → entry, past no form", `behind the calendar: ${behind}`);
 await page.getByRole("link", { name: "Edit", exact: true }).click();
 report(await page.getByRole("button", { name: "Days", exact: true }).getAttribute("aria-pressed") === "true",
   "and reopens on its Days tab");

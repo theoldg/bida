@@ -175,9 +175,6 @@ export const route = {
   /** A saved stay's calendar, read-only, with the sums behind each share. */
   stay: (groupId: string, entryId: string, via?: EntrySource) =>
     withGroup("/g/entry/stay", groupId) + entryParam(entryId) + viaParam(via),
-  /** The form, straight on into its calendar: the details screen's Edit. */
-  editStay: (groupId: string, entryId: string, via?: EntrySource) =>
-    `${withGroup("/g/entry/edit", groupId)}${entryParam(entryId)}${viaParam(via)}&open=days`,
   /** The bill typed by hand, a detour off the form like `items`. */
   bill: (groupId: string, via?: EntrySource) => withGroup("/g/entry/bill", groupId) + viaParam(via),
   history: (groupId: string, entryId?: string, via?: EntrySource) =>
