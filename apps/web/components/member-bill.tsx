@@ -24,7 +24,7 @@ export function MemberBill({ name, total, lines, format, fixed }: {
   name: React.ReactNode;
   total: React.ReactNode;
   lines: MemberLine[];
-  format: (minor: number) => string;
+  format: (minor: number, signed?: boolean) => string;
   /**
    * A quick split's row: its answer *is* the bill, read out at the table, so
    * the lines are always there and nothing folds — and the total is what
@@ -58,19 +58,19 @@ export function MemberBill({ name, total, lines, format, fixed }: {
       {shown ? (
         <div className="billlines">
           {lines.map((line, i) => {
-            const count = line.extra ? null : countText(line.count);
+            const count = line.qty ?? (line.extra ? null : `×${countText(line.count)}`);
             return (
               <div className={`billline${line.extra ? " billextra" : ""}`} key={i}>
                 <span className="lbl">
                   {/* A deduction carries the name the bill gave it ("2 for 1");
                       the tip and the tax are only ever what they are. */}
                   {line.extra ? line.label || copy.items.extra[line.extra] : line.label}
-                  {count ? <span className="billqty">×{count}</span> : null}
+                  {count ? <span className="billqty">{count}</span> : null}
                 </span>
                 {/* A printed bill's dotted leader: what carries the eye from a
                     label of any length to the figure at the right margin. */}
                 <span className="lead" aria-hidden="true" />
-                <span className="amt">{format(line.minor)}</span>
+                <span className="amt">{format(line.minor, line.signed)}</span>
               </div>
             );
           })}

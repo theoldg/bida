@@ -172,6 +172,18 @@ chosen in yet (everyone, throughout) fills them with everyone. A night nobody st
 as an unassigned line is, and in the form's dock ("Nobody is there on Fri 15
 May"): its cost would otherwise fall on everyone else, unasked.
 
+**Read back**, a saved stay's rows on the entry screen open as a bill's do
+(`MemberBill`), to the sum the share is (`stayLines`, `lib/stay-bill.ts`): a
+line per head count, "3 nights ÷3 · 66.67 … 200.01" — the calendar's own
+caption, and the figure exactly nights × it, so every line checks by hand. The
+split rounds once over the whole stay, so what the lines miss of the share is
+a "rounding" line of its own, never a cent hidden in one of them. The heading
+carries the nightly price, and says "by nights" for a stay counted so. Under
+the rows, Details opens `/g/entry/stay`: the calendar read-only, its head the
+editing one's controls held `inert`, so Edit opens onto the same picture. Edit
+goes through the form (`&open=days`) into the calendar, whose back then climbs
+to the details and whose Done is Save, writing the entry itself.
+
 The arithmetic is core's ([data-model.md](data-model.md#splits--the-only-tricky-arithmetic)).
 
 ## Gotchas

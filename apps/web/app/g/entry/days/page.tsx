@@ -2,14 +2,16 @@
 // Doc: docs/who-had-what.md#a-split-by-days
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-import { goBack } from "@/lib/nav";
+import { useEffect, useRef } from "react";
+import { settleRest } from "@bida/core";
+import { editExpense } from "@/lib/db/commands";
+import { goBack, goUp } from "@/lib/nav";
 import { BadLink, Blank, QueryBoundary } from "@/components/chrome";
 import { StayGrid } from "@/components/stay-grid";
 import { copy } from "@/lib/copy";
-import { route } from "@/lib/group-link";
+import { parseEntrySource, route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
-import { getDraft, saveDraft, useDraft } from "@/lib/draft";
+import { clearDraft, getDraft, saveDraft, splitSeed, useDraft } from "@/lib/draft";
 
 /**
  * Who stayed when: the Days tab's calendar, a detour off the entry form as
@@ -27,11 +29,15 @@ function DaysScreen() {
   const data = useGroupData(groupId);
   const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
+  // Saving from the details screen's Edit: the draft goes once this screen does,
+  // not before, or it would blank and send itself to the group on the way out.
+  const leaving = useRef(false);
+  useEffect(() => () => { if (leaving.current && groupId) clearDraft(groupId); }, [groupId]);
 
   // No draft: a reload or a bookmark. It is in memory only, so leave for the
   // group as `/g/entry/items` does.
   useEffect(() => {
-    if (groupId && !data.loading && data.group && !unclaimed && !draft) {
+    if (groupId && !data.loading && data.group && !unclaimed && !draft && !leaving.current) {
       router.replace(route.group(groupId));
     }
   }, [groupId, data.loading, data.group, unclaimed, draft, router]);
@@ -43,12 +49,30 @@ function DaysScreen() {
   }
 
   const back = () => goBack(() => router.back(), (to) => router.replace(to));
+  // Opened by the details screen's Edit, back skips the form it passed through
+  // and returns there; Done still lands on the form, which saves.
+  const up = params.get("from") === "stay" && draft.entryId
+    ? route.stay(groupId, draft.entryId, parseEntrySource(params.get("via"))) : undefined;
   return (
     <StayGrid
       people={data.members}
       draft={draft}
       save={(change) => saveDraft(groupId, change(getDraft(groupId) ?? draft))}
-      onDone={back}
-      onBack={back} />
+      up={up}
+      doneLabel={up ? copy.act.save : undefined}
+      onDone={up ? async () => {
+        // The entry written here, as the form's Save would, then up to the details.
+        const latest = getDraft(groupId);
+        const saved = data.expenses.find((e) => e.id === latest?.entryId);
+        if (leaving.current || !latest?.stay || !saved || !data.me) return;
+        leaving.current = true;
+        try {
+          await editExpense(groupId, data.me, saved.id, {
+            split: settleRest(saved.amountMinor, latest.stay, { tiebreakSeed: splitSeed(latest) }),
+          });
+        } catch { leaving.current = false; return; }
+        goUp(up, (to) => router.replace(to));
+      } : back}
+      onBack={up ? () => goUp(up, (to) => router.replace(to)) : back} />
   );
 }

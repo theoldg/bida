@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
-  entryEffect, groupCreateOf, isCoSponsored, isImported, ownCurrencySplit, payerList, resolvePayers,
+  entryEffect, formatMinor, groupCreateOf, isCoSponsored, isImported, ownCurrencySplit, payerList, resolvePayers,
   resolveEntrySplit, resolveSplit, restoreEntryDrafts, sortOps, splitParticipants, stayCount,
   type CurrencyCode, type Expense, type Group, type Op, type RateSource, type Settlement,
 } from "@bida/core";
@@ -28,7 +28,8 @@ import { rateDayOf } from "@/lib/entry-rate";
 import { copy } from "@/lib/copy";
 import { bare, money, moneyParts, plural, whenLabel } from "@/lib/format";
 import { savedBill } from "@/lib/draft";
-import { entryParent, parseEntrySource, route } from "@/lib/group-link";
+import { stayBill } from "@/lib/stay-bill";
+import { entryParent, parseEntrySource, route, type EntrySource } from "@/lib/group-link";
 import { slidingDock, useFold } from "@/lib/fold";
 import { markDeleted } from "@/lib/ledger-motion";
 import { goUp, sameScreen } from "@/lib/nav";
@@ -242,7 +243,7 @@ function EntryScreen() {
           </div>
 
           {expense
-            ? <ExpenseDetail expense={expense} kind={kind} group={group} data={data} />
+            ? <ExpenseDetail expense={expense} kind={kind} group={group} data={data} groupId={groupId} via={via} />
             : <TransferDetail settlement={settlement!} data={data} />}
 
         </Scroll>
@@ -396,8 +397,9 @@ function YourBalance({ kind, up, down, net, currency }: {
   );
 }
 
-function ExpenseDetail({ expense, kind, group, data }: {
+function ExpenseDetail({ expense, kind, group, data, groupId, via }: {
   expense: Expense; kind: EntryKind; group: Group; data: GroupData;
+  groupId?: string; via?: EntrySource;
 }) {
   const english = expense.receiptEnglish === true;
   const me = data.me;
@@ -419,6 +421,9 @@ function ExpenseDetail({ expense, kind, group, data }: {
     } catch { /* as above */ }
   }
   const bill = savedBill(expense, english);
+  // A stay's rows open to the sum each share is, as a bill's open to its lines.
+  const stay = expense.split.mode === "days"
+    ? stayBill(expense.baseAmountMinor, expense.split, shares, group.baseCurrency) : undefined;
   // One person in the split is a line, as one payer is: their share is the
   // figure above. A bill keeps its rows, since its lines are the point.
   const lone = participants.length === 1 && !bill ? data.memberById.get(participants[0]!) : undefined;
@@ -435,7 +440,12 @@ function ExpenseDetail({ expense, kind, group, data }: {
           <Eyebrow style={{ marginBottom: 4 }}>
             {copy.entry.splitMode(copy.entryKind.split[kind],
               // `??`: a mode this build doesn't know heads as itself.
-              copy.split.how[expense.split.mode] ?? expense.split.mode)}
+              expense.split.mode === "days" && expense.split.unit === "night" ? copy.split.byNights
+                : copy.split.how[expense.split.mode] ?? expense.split.mode)}
+            {/* What every row of the stay cost: the figure each line below divides. */}
+            {expense.split.mode === "days" && expense.split.count > 0 ? <> · <b>{copy.stay.perRow(
+              money(Math.round(expense.baseAmountMinor / expense.split.count), group.baseCurrency),
+              copy.stay.noun[expense.split.unit].one)}</b></> : null}
           </Eyebrow>
           {/* Only the people in the split: a row per outsider owing nothing says
               what their absence already says. */}
@@ -454,12 +464,23 @@ function ExpenseDetail({ expense, kind, group, data }: {
               ? <TwoCurrencies base={money(shares[m.id] ?? 0, group.baseCurrency)}
                 own={money(ownShares[m.id] ?? 0, expense.currency)} />
               : money(shares[m.id] ?? 0, group.baseCurrency);
-            const lines = bill?.[m.id];
+            const lines = bill?.[m.id] ?? stay?.[m.id];
             if (!lines?.length) return <KV key={m.id} k={k} v={v} />;
             return <MemberBill key={m.id} name={k} total={v} lines={lines}
-              format={(minor) => money(minor, expense.currency)} />;
+              format={(minor, signed) => (stay
+                ? formatMinor(minor, group.baseCurrency, { showCurrency: false, signDisplay: signed ? "always" : "auto" })
+                : money(minor, expense.currency))} />;
           })}
         </>}
+        {expense.split.mode === "days" && groupId ? (
+          <Link href={route.stay(groupId, expense.id, via)} className="btn btn-s gridway"
+            style={{ textDecoration: "none", marginTop: 10 }}>
+            <Icon name="calendar" size={16} />
+            {/* No count beside it, so the name takes the room and the chevron sits at the edge. */}
+            <span className="wayname" style={{ flex: 1, textAlign: "left" }}>{copy.stay.details}</span>
+            <Icon name="chev" size={14} />
+          </Link>
+        ) : null}
       </Card>
       {me && kind !== "transfer" && ((putIn[me] ?? 0) > 0 || participants.includes(me)) ? (
         <div className="balline">

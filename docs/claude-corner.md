@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-21* — "what's up with the penny here?" on a screenshot. I had
+  tucked the split's rounding cent into a line, so 1.66 sat beside a tag
+  saying 1.67. The fix was saying the cent on its own line: shown sums must
+  check by hand, or the owner will check them.
+
 - *2026-11-20* — "Use the most expensive days and nights type expense as the
   source of truth for who's checked". Two questions it left open — a date
   that stay doesn't reach, a date moved after — answered as the trip would:
@@ -84,8 +89,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   tastefully". A negative margin had tucked the link's tap padding away, so
   the underline sat on the next line. Measured against the gap above it in
   the photo, not by eye in the CSS.
-
-- *2026-11-01* — "add dummy rates in the demo", then mid-work: "this should
-  not apply to other groups where someone set CRD". The obvious key was the
-  currency; the owner meant the group. Same lesson as the CRD-suggestion card:
-  "the demo" is an id, never a code that merely looks like it.

@@ -866,6 +866,9 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .seg.stayunit { display: inline-flex }
 .seg.stayunit button { flex: none; padding: 5px 14px }
 .staytable { --label-w: 112px }
+/* The details screen's calendar: the same bars, nothing to press. */
+.stayread .staycell, .stayread .staycell:is(.first, .last) { cursor: default }
+.stayread .itemwho > .itemcell::before { display: none }
 .staytable thead th.stayrowhead { text-align: left; padding-left: var(--inset); font-size: var(--fs-caption);
   font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted) }
 .staytable td.itemwho { height: 44px }

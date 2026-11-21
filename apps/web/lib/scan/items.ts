@@ -9,6 +9,10 @@ export interface MemberLine {
   extra?: ExtraKind;
   count: Count;
   minor: number;
+  /** Said in place of the count: a stay's "3 × 25.00". */
+  qty?: string;
+  /** A correction, either way: its figure carries its sign. */
+  signed?: boolean;
 }
 
 interface Count { n: number; d: number }

@@ -39,7 +39,8 @@ Seven things: Next 16, unchecked on a phone; the ledger's windowing experiment, 
 
 - **A split by days** ([who-had-what.md](who-had-what.md#a-split-by-days)),
   on `dev`, driven headless; untried on a phone, where an end's drag is the
-  gesture to try. A build before it reads such an entry as naming nobody, so
+  gesture to try. A saved stay reads back as sums and a read-only calendar
+  (`/g/entry/stay`); its Polish copy is still "???". A build before it reads such an entry as naming nobody, so
   that phone's balances leave it out until it updates — the owner's call before
   `main` moves.
 

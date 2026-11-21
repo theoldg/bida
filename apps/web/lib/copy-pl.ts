@@ -665,6 +665,7 @@ export const pl: Copy = {
   split: {
     mode: { equal: "Po równo", shares: "Części", exact: "Kwoty", receipt: "Pozycje", days: "???" },
     how: { equal: "po równo", shares: "na części", exact: "na kwoty", receipt: "według pozycji", days: "???" },
+    byNights: "???",
     receipt: "Pozycje",
     days: "???",
     include: (name) => `Uwzględnij: ${name}`,
@@ -830,6 +831,10 @@ export const pl: Copy = {
     discardBody: "Paragon wróci do wierszy odczytanych ze skanu.",
   },
   stay: {
+    rounding: "zaokrąglenie",
+    calendar: "Kto kiedy był",
+    perRow: (figure, unit) => `${figure} za ${unit}`,
+    details: "Szczegóły",
     title: "???",
     whoStayed: "???",
     mode: "???",

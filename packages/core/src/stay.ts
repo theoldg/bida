@@ -219,3 +219,39 @@ export function restay(
   }
   return { mode: "days", unit, from, count, stays };
 }
+
+/** One person's nights that a given number shared: "3 nights ÷ 4", and what they cost. */
+export interface StayLine {
+  heads: number;
+  count: number;
+  /** What one head paid one of these rows, to the minor unit: the calendar's caption. */
+  each: number;
+  /** `count × each`, exactly, so the line can be checked by hand. */
+  minor: number;
+}
+
+/**
+ * A person's share, written out as the sum it is: their rows grouped by how
+ * many were there, each group `count × each` with `each` the rounded figure
+ * the calendar prints under those rows. Most crowded first — the cheapest
+ * nights lead. What the lines miss of the `shares` the split gave them is
+ * `rounding`, said rather than hidden in a line: the split rounds once over the
+ * whole stay, so a night three share costs one of them a cent less.
+ */
+export function stayLines(
+  total: number, spec: DaysSplit, shares: Record<Id, number>,
+): Record<Id, { lines: StayLine[]; rounding: number }> {
+  const heads = stayHeads(spec);
+  const out: Record<Id, { lines: StayLine[]; rounding: number }> = {};
+  if (heads.length === 0) return out;
+  for (const id of stayers(spec)) {
+    const by = new Map<number, number>();
+    heads.forEach((h, i) => { if (h > 0 && stayAt(spec, id, i)) by.set(h, (by.get(h) ?? 0) + 1); });
+    const lines = [...by].sort(([a], [b]) => b - a).map(([h, count]) => {
+      const each = Math.round(total / (spec.count * h));
+      return { heads: h, count, each, minor: count * each };
+    });
+    out[id] = { lines, rounding: (shares[id] ?? 0) - lines.reduce((a, l) => a + l.minor, 0) };
+  }
+  return out;
+}

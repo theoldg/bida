@@ -71,9 +71,13 @@ const keepFinger = (e: TouchEvent) => { if (e.cancelable) e.preventDefault(); };
  * columns, the running totals under them. A tap flips one night; the ends of a
  * stay's bar drag; a total opens that person's dates to type.
  */
-export function StayGrid({ people, draft, save, onDone, onBack }: {
+export function StayGrid({ people, draft, save, up, doneLabel = copy.act.done, onDone, onBack }: {
   people: readonly { id: string; name: string }[];
   draft: EntryDraft;
+  /** Where back climbs to, past the screens between: the details screen. */
+  up?: string;
+  /** "Save" where Done writes the entry itself, with no form after it. */
+  doneLabel?: string;
   save: (change: (latest: EntryDraft) => EntryDraft) => void;
   onDone: () => void;
   onBack: () => void;
@@ -386,7 +390,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.stay.title} back={{ ask: mayLeave }} />
+        <TopBar title={copy.stay.title} back={{ ask: mayLeave, up }} />
 
         <div className="itemscroll" ref={wrap}>
           <div className="itemhead itemwide">
@@ -539,7 +543,7 @@ export function StayGrid({ people, draft, save, onDone, onBack }: {
         <div className="pad whodock" style={{ paddingTop: note ? 9 : 18 }}>
           {note}
           <button type="button" className="btn btn-p btn-lg" onClick={finish} disabled={refusal.live || seeking}>
-            {copy.act.done}
+            {doneLabel}
           </button>
         </div>
       </Body>

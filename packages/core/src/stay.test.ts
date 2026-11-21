@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { canonicalSplit, convertSplitMode, resolveEntrySplit, resolveSplit, splitParticipants, validateSplit } from "./split";
 import {
   addDays, daysBetween, dragStayEnd, emptyStayRows, restay, seedStay, setStayAll, setStayRun, stayCount,
-  stayDates, stayEnd, stayersOn, stayHeads, stayRunAt, stayWeights, toggleStayRow, MAX_STAY,
+  stayDates, stayEnd, stayersOn, stayHeads, stayLines, stayRunAt, stayWeights, toggleStayRow, MAX_STAY,
 } from "./stay";
 import type { DaysSplit } from "./types";
 
@@ -183,5 +183,39 @@ describe("a stay's calendar", () => {
     expect(dragStayEnd(villa, "bruno", run, "last", 1).stays["bruno"]).toBe("1100000");
     expect(dragStayEnd(villa, "bruno", run, "first", 6).stays["bruno"]).toBe("0001000");
     expect(stayRunAt(villa, "ana", 0)).toBeNull();
+  });
+});
+
+describe("stayLines", () => {
+  it("writes each share as count × the calendar's figure, the rest said as rounding", () => {
+    for (const total of [0, 1, 7, 100, 99_999, 123_457]) {
+      const { shares } = resolveSplit(total, villa, { tiebreakSeed: "x" });
+      const out = stayLines(total, villa, shares);
+      for (const id of Object.keys(shares)) {
+        const { lines, rounding } = out[id]!;
+        expect(lines.reduce((a, l) => a + l.minor, 0) + rounding).toBe(shares[id]);
+        expect(lines.reduce((a, l) => a + l.count, 0)).toBe(stayCount(villa, id));
+        for (const l of lines) expect(l.minor).toBe(l.count * l.each);
+        // Half a minor unit per row at most, either way.
+        expect(Math.abs(rounding)).toBeLessThanOrEqual(stayCount(villa, id));
+      }
+    }
+  });
+
+  it("reads the villa as the sum it is", () => {
+    // Heads by night: 2, 3, 4, 5, 5, 4, 2. 700.00 is 100.00 a night.
+    const { shares } = resolveSplit(70_000, villa, { tiebreakSeed: "x" });
+    const bruno = stayLines(70_000, villa, shares).bruno!;
+    expect(bruno.lines).toEqual([
+      { heads: 5, count: 1, each: 2_000, minor: 2_000 },
+      { heads: 4, count: 1, each: 2_500, minor: 2_500 },
+      { heads: 3, count: 1, each: 3_333, minor: 3_333 },
+      { heads: 2, count: 1, each: 5_000, minor: 5_000 },
+    ]);
+    expect(bruno.rounding).toBe(shares.bruno! - 12_833);
+  });
+
+  it("is empty for a broken stay", () => {
+    expect(stayLines(100, { ...villa, count: 0 }, {})).toEqual({});
   });
 });

@@ -169,7 +169,15 @@ export const route = {
   /** Carries the form's own `via`, so a detour here doesn't change where saving lands. */
   items: (groupId: string, via?: EntrySource) => withGroup("/g/entry/items", groupId) + viaParam(via),
   /** Who stayed when, a detour off the form like `items`. */
-  days: (groupId: string, via?: EntrySource) => withGroup("/g/entry/days", groupId) + viaParam(via),
+  /** `fromStay`: opened by the details screen's Edit, whose back returns there. */
+  days: (groupId: string, via?: EntrySource, fromStay?: boolean) =>
+    withGroup("/g/entry/days", groupId) + viaParam(via) + (fromStay ? "&from=stay" : ""),
+  /** A saved stay's calendar, read-only, with the sums behind each share. */
+  stay: (groupId: string, entryId: string, via?: EntrySource) =>
+    withGroup("/g/entry/stay", groupId) + entryParam(entryId) + viaParam(via),
+  /** The form, straight on into its calendar: the details screen's Edit. */
+  editStay: (groupId: string, entryId: string, via?: EntrySource) =>
+    `${withGroup("/g/entry/edit", groupId)}${entryParam(entryId)}${viaParam(via)}&open=days`,
   /** The bill typed by hand, a detour off the form like `items`. */
   bill: (groupId: string, via?: EntrySource) => withGroup("/g/entry/bill", groupId) + viaParam(via),
   history: (groupId: string, entryId?: string, via?: EntrySource) =>

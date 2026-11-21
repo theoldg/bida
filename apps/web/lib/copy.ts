@@ -900,6 +900,8 @@ const en = {
       receipt: "by items",
       days: "by days",
     } as Record<SplitSpec["mode"], string>,
+    /** A split by days whose rows are nights says so. */
+    byNights: "by nights",
     receipt: "Items",
     days: "Days",
     include: (name: string) => `Include ${name}`,
@@ -1085,6 +1087,10 @@ const en = {
 
   /** A rental split by the nights (or days) each person was there. */
   stay: {
+    rounding: "rounding",
+    calendar: "Who stayed when",
+    perRow: (figure: string, unit: string) => `${figure} a ${unit}`,
+    details: "Details",
     title: "Who stayed when",
     whoStayed: "Who stayed",
     mode: "Mode",
