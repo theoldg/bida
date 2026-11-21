@@ -472,21 +472,23 @@ async function sendPhoto(crypto: GroupCrypto, photo: StoredPhoto): Promise<boole
 
 /** A photo a moment ago not found isn't asked for again on every render. */
 const MISS_MS = 60_000;
-const fetching = new Map<string, Promise<void>>();
+const fetching = new Map<string, Promise<boolean>>();
 const missed = new Map<string, number>();
 
 /**
  * Another phone's kept photo, fetched, opened and kept here. Single-flight per
  * photo; a 404 (not uploaded yet) waits a minute before asking again.
  */
-export function fetchPhoto(groupId: string, photoId: string): Promise<void> {
-  if ((missed.get(photoId) ?? 0) > Date.now()) return Promise.resolve();
+/** Resolves true once the photo is on this phone, false if it is not coming yet. */
+export function fetchPhoto(groupId: string, photoId: string): Promise<boolean> {
+  if ((missed.get(photoId) ?? 0) > Date.now()) return Promise.resolve(false);
   let run = fetching.get(photoId);
   if (!run) {
     run = fetchPhotoOnce(groupId, photoId)
       .catch((err: unknown) => {
         missed.set(photoId, Date.now() + MISS_MS);
         keepNote("photo", errorText(err));
+        return false;
       })
       .finally(() => fetching.delete(photoId));
     fetching.set(photoId, run);
@@ -494,11 +496,11 @@ export function fetchPhoto(groupId: string, photoId: string): Promise<void> {
   return run;
 }
 
-async function fetchPhotoOnce(groupId: string, photoId: string): Promise<void> {
+async function fetchPhotoOnce(groupId: string, photoId: string): Promise<boolean> {
   const d = db();
   // The demo, or a group this phone only remembers: nothing to ask with.
   const key = await d.groupKeys.get(groupId);
-  if (!key) return;
+  if (!key) return false;
   const crypto = await groupCrypto(groupId, key.secret);
   const res = await fetch(photoUrl(groupId, photoId), {
     headers: { Authorization: `Bearer ${crypto.token}` },
@@ -506,10 +508,11 @@ async function fetchPhotoOnce(groupId: string, photoId: string): Promise<void> {
   });
   if (!res.ok) throw new SyncHttpError(res.status, "");
   const jpeg = await openPhoto(crypto, groupId, photoId, new Uint8Array(await res.arrayBuffer()));
-  await d.transaction("rw", [d.photos, d.groupKeys], async () => {
+  return d.transaction("rw", [d.photos, d.groupKeys], async () => {
     // Erased, or dropped here, while the request was out.
-    if (!(await d.groupKeys.get(groupId)) || (await d.photos.get(photoId))) return;
+    if (!(await d.groupKeys.get(groupId)) || (await d.photos.get(photoId))) return false;
     await d.photos.put({ id: photoId, groupId, jpeg: toBase64(jpeg), state: "held" });
+    return true;
   });
 }
 

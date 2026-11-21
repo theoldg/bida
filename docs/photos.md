@@ -52,8 +52,8 @@ replacement lands before the photo it replaces goes. **Photos never fail a
 sync** — the ledger doesn't wait on a picture.
 
 Another phone fetches a photo the first time a screen draws it (`usePhoto`),
-opens it and keeps it; until then the miniature is an empty frame. A 404 (not
-uploaded yet) is asked again after a minute. A pull that brings an attachment's
+opens it and keeps it; until then the miniature is an empty frame, spinning
+while the fetch is out. A 404 (not uploaded yet) is asked again after a minute. A pull that brings an attachment's
 `delete` drops the bytes here too. The demo has no key, so its photos never
 leave the phone.
 

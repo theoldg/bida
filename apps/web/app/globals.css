@@ -1713,6 +1713,8 @@ dialog.scrim::backdrop { background: transparent }
 .photothumb::after { content: ""; position: absolute; inset: 0; transition: background .2s ease }
 .photothumb:active::after { background: var(--press); transition-duration: 0s }
 .photothumb.waiting::after { content: none }
+.photothumb.waiting { display: grid; place-items: center; color: var(--muted) }
+.photothumb .spinner { width: 18px; height: 18px }
 /* Only there with a photo, unlabelled, and large enough to read the bill's head in. */
 .formhead .photofield { padding-block: 12px }
 .photofield .photothumb { width: 128px; height: 128px; margin-inline: auto }

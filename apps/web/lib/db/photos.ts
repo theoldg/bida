@@ -1,7 +1,7 @@
 "use client";
 // Doc: docs/photos.md
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Id } from "@bida/core";
 import { db } from "./dexie";
 import { useLive } from "./live";
@@ -23,6 +23,8 @@ export function keptJpeg(dataUrl: string): { jpeg: string; bytes: number } {
 /** What a screen draws for a kept photo: the photo, or a frame it will arrive in. */
 export interface ShownPhoto {
   src?: string;
+  /** No `src` yet and a fetch out for it: the frame spins. */
+  loading?: boolean;
 }
 
 /**
@@ -39,11 +41,18 @@ export function usePhoto(groupId: Id | undefined, attachmentId: Id | undefined):
   }, [groupId, attachmentId]);
 
   const missing = !!row && !row.jpeg;
+  // Spins only while asked: one not uploaded yet is a still frame, not a
+  // spinner for ever. A fetch that got it spins on until the row lands.
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
-    if (missing && groupId && attachmentId) void fetchPhoto(groupId, attachmentId);
+    if (!missing || !groupId || !attachmentId) return;
+    let live = true;
+    setLoading(true);
+    void fetchPhoto(groupId, attachmentId).then((got) => { if (live && !got) setLoading(false); });
+    return () => { live = false; setLoading(false); };
   }, [missing, groupId, attachmentId]);
 
   const present = !!row;
   const jpeg = row?.jpeg;
-  return useMemo(() => (present ? { src: jpeg ? photoUrl(jpeg) : undefined } : undefined), [present, jpeg]);
+  return useMemo(() => (present ? (jpeg ? { src: photoUrl(jpeg) } : { loading }) : undefined), [present, jpeg, loading]);
 }

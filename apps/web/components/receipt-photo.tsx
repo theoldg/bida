@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { copy } from "../lib/copy";
 import { mark } from "../lib/diag";
+import type { ShownPhoto } from "../lib/db/photos";
 import { useHoldsWork } from "../lib/update";
 import { Icon } from "./icons";
 
@@ -14,12 +15,12 @@ import { Icon } from "./icons";
  */
 export function PhotoField({ photo }: {
   /** Undefined is none; a `src`-less one is kept but still on its way here. */
-  photo: { src?: string } | undefined;
+  photo: ShownPhoto | undefined;
 }) {
   if (!photo) return null;
   return (
     <div className="field photofield">
-      <PhotoThumb src={photo.src} />
+      <PhotoThumb src={photo.src} loading={photo.loading} />
     </div>
   );
 }
@@ -29,10 +30,14 @@ export function PhotoField({ photo }: {
  * shows the head of the bill, where the name is; the viewer opens it at the
  * screen's width, a till roll running down past the foot.
  */
-export function PhotoThumb({ src, className = "" }: { src?: string; className?: string }) {
+export function PhotoThumb({ src, loading, className = "" }: ShownPhoto & { className?: string }) {
   const [open, setOpen] = useState(false);
   // Kept on another phone and not here yet: the frame it will land in.
-  if (!src) return <span className={`photothumb waiting ${className}`} role="img" aria-label={copy.photo.waiting} />;
+  if (!src) return (
+    <span className={`photothumb waiting ${className}`} role="img" aria-label={copy.photo.waiting}>
+      {loading ? <span className="spinner" aria-hidden="true" /> : null}
+    </span>
+  );
   return <>
     <button type="button" className={`photothumb ${className}`} aria-label={copy.photo.view}
       onClick={() => setOpen(true)}>

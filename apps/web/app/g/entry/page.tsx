@@ -219,7 +219,7 @@ function EntryScreen() {
           <div className="pad" style={{ paddingTop: 2, paddingBottom: expense ? 0 : undefined }}>
           <div className={`${expense ? "card entryhead" : "entryhead"}${photo ? " withphoto" : ""}`}>
             {/* Beside the title and the figure, the bill they were read off. */}
-            {photo ? <PhotoThumb src={photo.src} className="entryphoto" /> : null}
+            {photo ? <PhotoThumb src={photo.src} loading={photo.loading} className="entryphoto" /> : null}
             {/* The bar already says "Expense". */}
             {title ? (
               <FitTitle className="entrytitle" text={title} sizes={ENTRY_TITLE_SIZES} />
