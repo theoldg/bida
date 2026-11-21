@@ -36,7 +36,9 @@ A quick split's chips press nothing and have no eyebrow (`fixedTable`): its
 people are changed on `/quick` behind, so they are only the key to the
 initials, drawn flat. Back there keeps the ticks; somebody taken off the list
 takes theirs.
-Everyone starts at the table and **nothing starts assigned**: ticking what you
+A new table starts on whoever stayed the bill's night, as Evenly does
+([entry.md](entry.md)), with "Based on “…”" under the chips until one is
+pressed; on everyone where no stay reaches it. **Nothing starts assigned**: ticking what you
 had is the work, so the grid asks for it rather than handing you a bill already
 split evenly to untick your way out of. **A tap on the line itself — the name
 and amount — is everybody, or nobody**: the two answers a whole row of a bill

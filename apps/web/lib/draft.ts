@@ -344,6 +344,17 @@ export function presentOn(expenses: readonly Expense[], day: string, members: re
   return there.length > 0 ? there : [...members];
 }
 
+/**
+ * Who a bill's grid starts with at the table, as Evenly does (`presentOn`), and
+ * the stay to name while that is not everyone.
+ */
+export function seatedTable(
+  expenses: readonly Expense[], day: string, members: readonly string[],
+): { there: string[]; by: Expense | null } {
+  const there = presentOn(expenses, day, members);
+  return { there, by: there.length < members.length ? stayOn(expenses, day)?.expense ?? null : null };
+}
+
 /** A blank draft's Evenly seated on who was there its day (`presentOn`). */
 export function seatedDraft(draft: EntryDraft, expenses: readonly Expense[], members: readonly string[]): EntryDraft {
   const day = dateInputValue(draft.occurredAt);

@@ -770,6 +770,7 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
    scroller's own. */
 .itemhead { padding: 10px var(--gutter) 12px; border-bottom: 1px solid var(--rule) }
 .whostrip { display: flex; flex-wrap: wrap; gap: 6px }
+.itemseat { margin-top: 8px }
 .itemtotals { padding: 10px var(--gutter) 14px }
 .totalstrip { display: flex; flex-direction: column }
 .tot { display: flex; align-items: center; gap: 8px; padding: 5px 0;

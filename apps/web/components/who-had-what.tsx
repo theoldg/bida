@@ -36,7 +36,7 @@ const inColumn = (
  * props are what the two differ in.
  */
 export function WhoHadWhat({
-  title, people, draft, save, format, saysCurrency = true, onDone, onBack, fixedTable = false,
+  title, people, draft, save, format, saysCurrency = true, onDone, onBack, fixedTable = false, seated,
 }: {
   title: string;
   people: readonly { id: string; name: string }[];
@@ -57,6 +57,11 @@ export function WhoHadWhat({
    * there and back rather than asking.
    */
   fixedTable?: boolean;
+  /**
+   * Who a bill with no table yet starts with (`seatedTable`) — everyone if
+   * absent — and the stay it came from, named until a chip is pressed.
+   */
+  seated?: { there: readonly string[]; by: { description: string } | null };
 }) {
   const items = draft.receiptItems ?? [];
   // The draft's, so the saved expense reads the same on every phone. **Never
@@ -66,6 +71,7 @@ export function WhoHadWhat({
   const [involved, setInvolved] = useState<Set<string>>(new Set());
   const [assignments, setAssignments] = useState<Set<string>[]>([]);
   const seeded = useRef(false);
+  const [seatedBy, setSeatedBy] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const [openDiscounts, setOpenDiscounts] = useState(false);
   // Older bills are split into portions as the grid opens: **keep what was found
@@ -106,8 +112,10 @@ export function WhoHadWhat({
     // Somebody removed since was only ticked as there — a line would have kept
     // them (`expenseInvolves`) — so they leave the bill with their chip.
     const here = people.map((m) => m.id);
+    const sat = !saved && !fixedTable && seated ? here.filter((id) => seated.there.includes(id)) : [];
     setInvolved(new Set(saved && !fixedTable
-      ? (draft.receiptInvolved ?? []).filter((id) => here.includes(id)) : here));
+      ? (draft.receiptInvolved ?? []).filter((id) => here.includes(id)) : sat.length !== 0 ? sat : here));
+    if (sat.length !== 0 && sat.length !== here.length && seated?.by) setSeatedBy(seated.by.description);
     // Somebody taken off the list behind takes their ticks with them.
     const rows = saved
       ? saved.map((row) => new Set(fixedTable ? row.filter((id) => here.includes(id)) : row))
@@ -122,7 +130,7 @@ export function WhoHadWhat({
       receiptItems: split.items,
       ...(saved ? { receiptAssignments: widened.map((row) => [...row]) } : {}),
     }));
-  }, [people, items, draft, save, fixedTable]);
+  }, [people, items, draft, save, fixedTable, seated]);
 
   const labels = distinctInitials(people);
   const runs = portions(items);
@@ -137,6 +145,7 @@ export function WhoHadWhat({
     const adding = !was.has(memberId);
     if (!adding && was.size === 1) return;
     setTouched(true);
+    setSeatedBy(null);
     const nextInvolved = new Set(was);
     if (adding) nextInvolved.add(memberId); else nextInvolved.delete(memberId);
     involvedNow.current = nextInvolved;
@@ -416,6 +425,11 @@ export function WhoHadWhat({
                 </button>
               ))}
             </div>
+            {seatedBy ? (
+              <div className="seatedby itemseat">
+                {copy.split.seatedBy.lead}<span>{seatedBy}</span>{copy.split.seatedBy.tail}
+              </div>
+            ) : null}
           </div>
 
           <table className="itemtable"

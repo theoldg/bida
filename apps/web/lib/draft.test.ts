@@ -5,7 +5,7 @@ import {
 } from "@bida/core";
 import {
   activeSplit, arithmeticSplit, blankDraft, changeSplitTab, draftReceiptSplit, expenseDraft, newEntryKey,
-  openSplitTab, presentOn, receiptBill, reseated, retimed, seatedDraft, splitSeed, tabAfterScan, transferDraft, withSplit,
+  openSplitTab, presentOn, receiptBill, reseated, retimed, seatedDraft, seatedTable, splitSeed, tabAfterScan, transferDraft, withSplit,
   type EntryDraft, type SplitTab,
 } from "./draft";
 
@@ -547,6 +547,12 @@ describe("who a new entry is for", () => {
   it("leaves out whoever has left the group, and is everyone when nobody is left", () => {
     expect(presentOn([house], "2026-05-14", [A, C, D])).toEqual([A]);
     expect(presentOn([house], "2026-05-14", [C, D])).toEqual([C, D]);
+  });
+
+  it("seats a bill's table the same way, naming the stay only when it leaves someone out", () => {
+    expect(seatedTable([car, house], "2026-05-14", ALL)).toEqual({ there: [A, B], by: house });
+    expect(seatedTable([car, house], "2026-05-17", ALL)).toEqual({ there: ALL, by: null });
+    expect(seatedTable([house], "2026-05-15", [A, B, C])).toEqual({ there: [A, B, C], by: null });
   });
 
   it("follows the date until the split is touched", () => {

@@ -51,7 +51,8 @@ an entry is laid out. Part of the [frontend](frontend.md) docs.*
   starts on who the priciest split by days reaching its date has there — the
   house, not the car — and on everyone where no stay reaches it or all of them
   have left. Until the split is touched it follows the date, typed or scanned
-  (`seatedDay`, `reseated`); once touched, never again. While it stands and
+  (`seatedDay`, `reseated`); once touched, never again. A bill's grid seats
+  its first table the same way (`seatedTable`), on the date as it is then. While it stands and
   leaves somebody out, the footer names the stay at its left (`seatedStay`).
 - **A count of parts** is typed with the money field's caret and Backspace
   (`PartsInput`), between − and + drawn small and grey, up to 999 999 999 — the

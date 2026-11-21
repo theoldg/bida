@@ -39,6 +39,10 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   spec — the camera and its dot come only with a photo. A camera already sat
   in the sprite; the receipt glyph it replaced had no other use, so it went.
 
+- *2026-11-21* — "the people at the table … also when entered through the scan
+  fab": both doors meet at one grid, so one change covered them. Evenly's
+  "Based on" note came along, since an unlit chip nobody pressed needs a why.
+
 - *2026-11-21* — "the read only who-stayed-when": a screen my clone didn't
   have — another session had pushed it an hour before. I chased a flash I
   couldn't make for ages. Unfamiliar names: fetch dev first. The flash and the
@@ -77,13 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   crop … to a separate screen … Use the same style as advanced settings".
   The style was a look, so the toggles became Settings' segmented pairs and
   the crop a chevron row — not the old buttons on a new page.
-
-- *2026-11-03* — "Are you sure you're reading them right? There's a consistent
-  upwards bias". I'd called it the model's noise; a synthetic bill proved my
-  reading right, and their two photos proved the bias real. When the owner sees
-  a pattern in the pictures, check your own code first, then show it.
-
-- *2026-11-03* — "Make the receipt image viewers zoomable (preferably keeping
-  the exit cross in position)". Two viewers drew pinch twice; one now. Closing
-  on the lift let the tap's click reopen the miniature underneath — the old
-  code's on-click close was a reason, not an accident.

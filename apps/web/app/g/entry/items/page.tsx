@@ -9,7 +9,8 @@ import { copy } from "@/lib/copy";
 import { money } from "@/lib/format";
 import { parseEntrySource, route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
-import { getDraft, saveDraft, useDraft } from "@/lib/draft";
+import { getDraft, saveDraft, seatedTable, useDraft } from "@/lib/draft";
+import { dateInputValue } from "@/lib/format";
 
 /**
  * Who had what, filled from a receipt scan and reopenable later via "Edit
@@ -74,6 +75,8 @@ function ItemsScreen() {
       title={copy.items.title}
       people={data.members}
       draft={draft}
+      // A new table starts on whoever stayed the bill's night, as Evenly does.
+      seated={seatedTable(data.expenses, dateInputValue(draft.occurredAt), data.members.map((m) => m.id))}
       save={(change) => saveDraft(groupId, change(getDraft(groupId) ?? draft))}
       format={(minor) => money(minor, draft.currency)}
       // Both ways off this screen are the way back onto the form, which is
