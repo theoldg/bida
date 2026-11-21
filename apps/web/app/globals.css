@@ -638,7 +638,6 @@ html[data-banner="manual"] .ghost-manual { display: block }
 .paidby .waysbox { display: flex; flex-wrap: wrap; flex: 0 1000 auto; min-width: 0; height: 1.5em; overflow: hidden }
 .paidby .ways { flex: none; display: flex; align-items: center; gap: 3px; font-variant-numeric: tabular-nums }
 .paidby .sep { padding: 0 .6ch }
-.paidby .rowphoto { margin-left: .9ch }
 .paidby .incometag { flex: none; align-self: center; margin-left: 1.2ch; font-size: var(--fs-caption); line-height: 13px;
   color: var(--hl-ink); background: var(--hl); padding: 1px 6px; border-radius: 2px }
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }

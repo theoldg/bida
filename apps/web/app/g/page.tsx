@@ -311,7 +311,8 @@ function ExpenseMeta({ payer, coPayers, ways, income, photo }: {
           <span aria-hidden="true">{ways}</span>
           <span className="vh">{copy.group.sharedBy(plural(ways, copy.noun.person))}</span>
           {photo ? <>
-            <Icon name="receipt" size={12} className="rowphoto" />
+            <span className="sep" aria-hidden="true">·</span>
+            <Icon name="cam" size={12} />
             <span className="vh">{copy.group.hasPhoto}</span>
           </> : null}
         </span>

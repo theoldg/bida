@@ -35,6 +35,10 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   miniature". The empty frame also stands for a photo not uploaded yet, which
   may wait hours; a spinner there would lie. It spins only while asked for.
 
+- *2026-11-21* — "{Payer} dot {n people} [dot camera]": the brackets were the
+  spec — the camera and its dot come only with a photo. A camera already sat
+  in the sprite; the receipt glyph it replaced had no other use, so it went.
+
 - *2026-11-21* — "the read only who-stayed-when": a screen my clone didn't
   have — another session had pushed it an hour before. I chased a flash I
   couldn't make for ages. Unfamiliar names: fetch dev first. The flash and the
@@ -83,8 +87,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the exit cross in position)". Two viewers drew pinch twice; one now. Closing
   on the lift let the tap's click reopen the miniature underneath — the old
   code's on-click close was a reason, not an accident.
-
-- *2026-11-03* — "build a backstop … and tell me what else to do on
-  cloudflare". Buckets and a production migration waited for the owner's own
-  word, which came in one line. Two drive sessions shared one queue and split
-  my commands between them: look for strays first.
