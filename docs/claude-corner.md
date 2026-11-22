@@ -43,6 +43,11 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   fab": both doors meet at one grid, so one change covered them. Evenly's
   "Based on" note came along, since an unlit chip nobody pressed needs a why.
 
+- *2026-11-21* — "Drop days mode completely … it can still be called days".
+  The log is finished data, so "completely" stopped at the screen: old stays
+  still say "day" and read as nights, new ones still write "night" so an old
+  phone can read them.
+
 - *2026-11-21* — "the read only who-stayed-when": a screen my clone didn't
   have — another session had pushed it an hour before. I chased a flash I
   couldn't make for ages. Unfamiliar names: fetch dev first. The flash and the
