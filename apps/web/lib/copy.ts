@@ -882,15 +882,15 @@ const en = {
 
   split: {
     /**
-     * "By items", not "From receipt": these name how money divides, not how it
-     * was typed. One word where it can be, so five tabs fit a small phone.
+     * "Items", not "Receipt": these name how money divides, not how it
+     * was typed. One word each, so five tabs fit a small phone.
      */
     mode: {
       equal: "Evenly",
       shares: "Parts",
       exact: "Amounts",
-      receipt: "By items",
-      days: "By days",
+      receipt: "Items",
+      days: "Days",
     } as Record<SplitSpec["mode"], string>,
     /** The mode inside a sentence: "Split evenly", and the history's "split it as parts". */
     how: {

@@ -43,7 +43,7 @@ involved" and "changed how it's split" both answer with figures, and a new mode
 is said ("Theo split it by items"). Where nobody's proportion moved it says
 nothing and the next field speaks (a new amount moves every share, and its own
 line says so) — except where a rewrite is the whole of the save, which gets the
-mode ("Evenly" → "By items") as a last resort. The **payer** side is the same
+mode ("Evenly" → "Items") as a last resort. The **payer** side is the same
 rows over what each put in, in the entry's own currency; one payer for another
 is just the two names. A new **currency** brings its own rate, given as it
 now is, with nothing crossed out — and no rate at all back in the group's. A **bill** reads line by line, paired by what a line

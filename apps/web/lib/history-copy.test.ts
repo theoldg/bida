@@ -797,7 +797,7 @@ suite("describe", () => {
     expect(printed).toContain("Receipt");
   });
 
-  it("names the mode as By items when leaving the tab is all the save did", async () => {
+  it("names the mode as Items when leaving the tab is all the save did", async () => {
     const { groupId, theo, marie, expenseId } = await sharedExpense();
     await editExpense(groupId, theo, expenseId, {
       receiptItems: [{ label: "Salad", amount: "50.00" }, { label: "Beer", amount: "50.00" }],
@@ -812,7 +812,7 @@ suite("describe", () => {
 
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo changed how the split is written");
-    expect(latest!.diff).toEqual({ was: "By items", now: "Evenly" });
+    expect(latest!.diff).toEqual({ was: "Items", now: "Evenly" });
   });
 
   // The mode is a last resort, not a field: it is dropped beside a real change
