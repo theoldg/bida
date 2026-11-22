@@ -883,12 +883,12 @@ const en = {
   split: {
     /**
      * "By items", not "From receipt": these name how money divides, not how it
-     * was typed.
+     * was typed. One word where it can be, so five tabs fit a small phone.
      */
     mode: {
       equal: "Evenly",
-      shares: "As parts",
-      exact: "As amounts",
+      shares: "Parts",
+      exact: "Amounts",
       receipt: "By items",
       days: "By days",
     } as Record<SplitSpec["mode"], string>,

@@ -179,7 +179,7 @@ to remove more from this list than you add.
   ceiling) — never a menu row duplicating one
   ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 - **Fewer options.** *2026-08-28* — three split modes, in the owner's labels:
-  **Evenly · As parts · As amounts**. Dropping a button is not the same act as
+  **Evenly · Parts · Amounts** (*2026-11-22*, so the tabs fit a small phone). Dropping a button is not the same act as
   dropping a variant from the data model: old ops keep meaning what they meant.
 - **Say what is true of the phone, and say it at once.** *2026-09-03* — being
   offline is named as such the moment it is, never disguised as a failure of the

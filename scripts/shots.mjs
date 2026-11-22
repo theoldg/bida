@@ -190,7 +190,7 @@ async function main() {
       await page.goto(`${base}/g/entry/edit?id=${groupId}`);
       await page.locator("input.amount").fill("120");
       await page.locator('[data-field="what"]').fill("Hammam");
-      await page.getByRole("button", { name: "As amounts" }).click();
+      await page.getByRole("button", { name: "Amounts", exact: true }).click();
       // The docked line reads the €95 the rest shares in money.
       await page.getByRole("textbox", { name: /Marie.s amount/ }).fill("25");
       await page.waitForTimeout(200);

@@ -825,7 +825,7 @@ suite("describe", () => {
 
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo changed how the split is written");
-    expect(latest!.diff).toEqual({ was: "Evenly", now: "As parts" });
+    expect(latest!.diff).toEqual({ was: "Evenly", now: "Parts" });
   });
 
   it("says a deleted entry was restored, and a transfer too", async () => {

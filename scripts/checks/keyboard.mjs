@@ -230,7 +230,7 @@ await page.keyboard.press("Enter");
 report(await caret() === "what", "the entry form — the amount hands the caret to the note",
   `caret on ${await caret()}`);
 
-await page.getByRole("button", { name: "As amounts" }).click();
+await page.getByRole("button", { name: "Amounts", exact: true }).click();
 await settle(page, 120);
 await page.locator('[data-field="what"]').focus();
 await page.keyboard.press("Enter");
@@ -253,7 +253,7 @@ await page.keyboard.press("Enter");
 report(await caret() === "nothing", "the last row folds the keyboard",
   `caret on ${await caret()}, was ${walked[walked.length - 1]}`);
 
-await page.getByRole("button", { name: "As parts" }).click();
+await page.getByRole("button", { name: "Parts", exact: true }).click();
 await settle(page, 120);
 await page.locator("input.partsin").first().focus();
 const parted = [await caret()];

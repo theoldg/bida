@@ -666,8 +666,8 @@ report(!/flash-/.test(await titleField.getAttribute("class")),
 await page.locator("input.amount").fill("40");
 await page.locator('[data-field="what"]').fill("Split check");
 const rowHeights = {};
-for (const tab of ["Evenly", "As amounts", "As parts", "As amounts"]) {
-  await page.getByRole("button", { name: tab }).click();
+for (const tab of ["Evenly", "Amounts", "Parts", "Amounts"]) {
+  await page.getByRole("button", { name: tab, exact: true }).click();
   await settle(page, 80);
   rowHeights[tab] = await page.locator(".splitrow").evaluateAll((rows) =>
     [...new Set(rows.map((r) => r.getBoundingClientRect().height.toFixed(2)))].join("/"));
@@ -708,7 +708,7 @@ await settle(page, 900);
 await page.getByRole("button", { name: "Evenly" }).click();
 await settle(page, 120);
 report(await splitLine.count() === 0, "and a tab that adds up takes it away");
-await page.getByRole("button", { name: "As amounts" }).click();
+await page.getByRole("button", { name: "Amounts", exact: true }).click();
 const firstName = page.locator(".splitrow > button").first();
 const tapMark = async () => {
   const box = await firstName.boundingBox();
@@ -728,7 +728,7 @@ report(cleared === "" && outRow && sharing && await firstShare.inputValue() === 
 
 // Taps faster than a render — an iPhone's — each build on the last, not on
 // the split this render drew.
-await page.getByRole("button", { name: "As parts" }).click();
+await page.getByRole("button", { name: "Parts", exact: true }).click();
 await settle(page, 80);
 const parts = page.locator("input.partsin").first();
 const partsBefore = Number(await parts.inputValue() || 0);
