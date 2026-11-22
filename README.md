@@ -74,10 +74,6 @@ These features exist in other splitters. I might add them if people ask.
 
 - **Recurring payments.** E.g. for utility bills in a shared flat.
 
-### Won't add
-
-- **Image hosting.** Keeping the app text-only is what makes it dirt cheap to run. The item details from receipts aren't lost, they are parsed and stored in text form too.
-
 ## Privacy needs an audit
 
 I am not a cybersecurity expert! The whole thing is set up with E2EE in mind, the data is encrypted, and the key never reaches the server... But I can't guarantee there isn't some subtle fingerprinting possibility or other bug. I hope to eventually get a code audit from someone more qualified. For now, please treat bida as "probably E2EE".
