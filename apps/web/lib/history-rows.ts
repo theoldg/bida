@@ -252,13 +252,13 @@ export function netLine(
     .join(" · ");
 }
 
-/** "Thu 14 May – Sun 17 May": a stay from its first night to the morning after its last. */
+/** "Thu 14 May – Sun 17 May": a stay from its first day to the morning after its last. */
 export function stayRange(from: string, leave: string): string {
   return copy.history.range(stayDay(from), stayDay(leave));
 }
 
 /**
- * A stay at a glance, for a new one: "3 nights, Thu 14 May – Sun 17 May".
+ * A stay at a glance, for a new one: "3 days, Thu 14 May – Sun 17 May".
  * Empty for one too broken to read.
  */
 export function stayText(spec: DaysSplit): string {
@@ -266,7 +266,7 @@ export function stayText(spec: DaysSplit): string {
 }
 
 /**
- * What changed in who stayed when: the dates, then a row a person whose nights
+ * What changed in who stayed when: the dates, then a row a person whose days
  * moved — how many, or, where that held, which ("Fri 15 May – Sun 17 May");
  * somebody who came or went is the count alone, marked.
  */

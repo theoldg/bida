@@ -900,8 +900,6 @@ const en = {
       receipt: "by items",
       days: "by days",
     } as Record<SplitSpec["mode"], string>,
-    /** A split by days whose rows are nights says so. */
-    byNights: "by nights",
     receipt: "Items",
     days: "Days",
     include: (name: string) => `Include ${name}`,
@@ -1096,9 +1094,10 @@ const en = {
     dates: "Dates",
     stayed: (name: string) => `${name} stayed`,
     didntStay: (name: string) => `${name} didn’t stay`,
-    noun: { one: "night", many: "nights" } as Noun,
+    // A row is a night, evening to the morning after, but it is called a day.
+    noun: { one: "day", many: "days" } as Noun,
     /** Over the first column: what one row is. */
-    row: "Night",
+    row: "Day",
     from: "From",
     toLabel: "Leaving",
     edit: "Edit who stayed when",
@@ -1199,9 +1198,9 @@ const en = {
     retypedBill: (who: string) => `${who} retyped the bill`,
     changedWhoHadWhat: (who: string) => `${who} changed who had what`,
     changedStay: (who: string) => `${who} changed who stayed when`,
-    /** A stay's dates, first night to the morning after the last. */
+    /** A stay's dates, first day to the morning after the last. */
     range: (from: string, leave: string) => `${from} – ${leave}`,
-    stayAt: (nights: string, range: string) => `${nights}, ${range}`,
+    stayAt: (days: string, range: string) => `${days}, ${range}`,
     readBill: (who: string, english: boolean) =>
       english ? `${who} showed the bill in English` : `${who} showed the bill as printed`,
     changedAmount: (who: string) => `${who} changed the amount`,

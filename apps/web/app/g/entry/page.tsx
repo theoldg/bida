@@ -440,8 +440,7 @@ function ExpenseDetail({ expense, kind, group, data, groupId, via }: {
           <Eyebrow style={{ marginBottom: 4 }}>
             {copy.entry.splitMode(copy.entryKind.split[kind],
               // `??`: a mode this build doesn't know heads as itself.
-              expense.split.mode === "days" ? copy.split.byNights
-                : copy.split.how[expense.split.mode] ?? expense.split.mode)}
+              copy.split.how[expense.split.mode] ?? expense.split.mode)}
             {/* What every row of the stay cost: the figure each line below divides. */}
             {expense.split.mode === "days" && expense.split.count > 0 ? <> · <b>{copy.stay.perRow(
               money(Math.round(expense.baseAmountMinor / expense.split.count), group.baseCurrency),

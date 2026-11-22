@@ -5,7 +5,7 @@ import {
 import {
   billCharges, billExtrasIn, billLabel, billLabels, foldedLine, hasTranslation, lineQty, portions, receiptBreakdown, receiptTotalMinor,
   runAssignment,
-  printedBill, printedCount, unfoldAll, unfoldItem,
+  printedBill, unfoldAll, unfoldItem,
   MAX_PORTIONS, unfoldableInto,
 } from "./items";
 
@@ -226,7 +226,6 @@ describe("printedBill", () => {
   it("reads a bill in portions as the bill it was printed as", () => {
     expect(printedBill(split, null, "EUR").lines).toEqual(printedBill(whole, null, "EUR").lines);
     expect(printedBill(split, null, "EUR").lines).toHaveLength(2);
-    expect(printedCount(split)).toBe(2);
   });
 
   it("reads a run everybody shares alike as one row of eaters", () => {

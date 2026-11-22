@@ -13,7 +13,6 @@ import { ScanPair, useReceiptScan } from "@/components/receipt-scan";
 import { ScanDiagram } from "@/components/scan-diagram";
 import { copy } from "@/lib/copy";
 import { plural } from "@/lib/format";
-import { printedCount } from "@/lib/scan/items";
 import { db } from "@/lib/db/dexie";
 import { billAssigned, blankDraft, getDraft, seedDraft, useDraft } from "@/lib/draft";
 import { route } from "@/lib/group-link";
@@ -172,7 +171,7 @@ export default function QuickPage() {
                 disabled={refusal.live || reading} onClick={() => void toGrid()}>
                 <Icon name="users" size={16} />
                 <span className="wayname">{ticked ? copy.scan.editWhoHadWhat : copy.scan.assignWhoHadWhat}</span>
-                <span className="waycount"><span>{plural(printedCount(bill), copy.noun.item)}</span></span>
+                <span className="waycount" />
                 <Icon name="chev" size={14} />
               </button>
               <div>

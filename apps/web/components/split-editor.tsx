@@ -13,7 +13,6 @@ import { ScanPair, type ReceiptScan } from "./receipt-scan";
 import { Icon } from "./icons";
 import { You } from "./bits";
 import { copy } from "../lib/copy";
-import { printedCount } from "../lib/scan/items";
 import { bare, money, plural } from "../lib/format";
 import type { SplitTab } from "../lib/draft";
 
@@ -294,7 +293,6 @@ function DaysPanel({ stay, editHref, flash, onFlashEnd, members, me, currency, s
   currency: string;
   shares: Record<string, number>;
 }) {
-  const word = copy.stay.noun;
   const there = stay ? members.filter((m) => stayCount(stay, m.id) > 0) : [];
   return (
     <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -305,7 +303,7 @@ function DaysPanel({ stay, editHref, flash, onFlashEnd, members, me, currency, s
               <span style={{ flex: 1, minWidth: 0, fontSize: "var(--fs-body)" }}>
                 {m.name}{m.id === me ? <You /> : null}
               </span>
-              <span className="rmeta">{plural(stayCount(stay, m.id), word)}</span>
+              <span className="rmeta">{plural(stayCount(stay, m.id), copy.stay.noun)}</span>
               <span className="bignum" style={{ fontSize: "var(--fs-body)", minWidth: "7ch", textAlign: "right" }}>
                 {shares[m.id] === undefined ? "–" : money(shares[m.id] ?? 0, currency)}
               </span>
@@ -317,7 +315,9 @@ function DaysPanel({ stay, editHref, flash, onFlashEnd, members, me, currency, s
         onAnimationEnd={onFlashEnd} style={{ textDecoration: "none" }}>
         <Icon name="calendar" size={16} />
         <span className="wayname">{copy.stay.edit}</span>
-        <span className="waycount"><span>{stay ? plural(stay.count, word) : ""}</span></span>
+        {/* No count: the rows above already say each person's days. The box
+            still takes the slack, holding the chevron at the right. */}
+        <span className="waycount" />
         <Icon name="chev" size={14} />
       </Link>
     </div>
@@ -380,7 +380,7 @@ function ReceiptPanel({
           style={{ textDecoration: "none" }}>
           <Icon name="users" size={16} />
           <span className="wayname">{included.size === 0 ? copy.scan.assignWhoHadWhat : copy.scan.editWhoHadWhat}</span>
-          <span className="waycount"><span>{plural(printedCount(items), copy.noun.item)}</span></span>
+          <span className="waycount" />
           <Icon name="chev" size={14} />
         </Link>
         <div>

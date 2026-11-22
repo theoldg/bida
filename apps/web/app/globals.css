@@ -1114,17 +1114,12 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 /* A `--rule` hairline across ink is invisible. */
 .btn-pair.pair-p { background: var(--brand); border-color: var(--brand); color: var(--brand-ink) }
 .btn-pair.pair-p .btn + .btn { border-left-color: color-mix(in srgb, var(--brand-ink) 26%, transparent) }
-/* The way into the who-had-what grid: its name, then the bill's count where
-   the line holds both. The count wraps onto a second line, clipped, when it
-   can't — `::before` is the first item on the line, so the count can leave it,
-   and a line tall, or the empty line takes no height and the count stays up. */
+/* A way in (the who-had-what grid, the stay calendar): its name, and an empty
+   `.waycount` taking the slack so the chevron sits at the right. It counts
+   nothing — the rows over it already say what is there. */
 .gridway { justify-content: flex-start }
 .gridway .wayname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.gridway .waycount { flex: 1 1 0; min-width: 0; display: flex; flex-wrap: wrap;
-  justify-content: flex-end; height: 1.3em; line-height: 1.3; overflow: hidden;
-  font-weight: 500; opacity: .85 }
-.gridway .waycount::before { content: ""; height: 100% }
-.gridway .waycount > span { white-space: nowrap }
+.gridway .waycount { flex: 1 1 0; min-width: 0 }
 /* A scan just brought lines back: the way on fills with ink once, a beat after
    the form appears. Ink, not `--debit` — nothing is wrong. A colour settling,
    so exempt from the motion clamp. */

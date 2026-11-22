@@ -222,10 +222,6 @@ export function portions<T extends Pick<BillLine, "label" | "portionOf">>(items:
   return out;
 }
 
-export function printedCount(items: readonly ReceiptItem[]): number {
-  return portions(items).filter((p) => !p || p.index === 1).length;
-}
-
 /**
  * Above it a line stays whole: a typed "1 million tomatoes" is a million rows
  * otherwise.

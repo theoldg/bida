@@ -142,7 +142,7 @@ shorter, beneath the way into the grid: inked on `/quick`, a plain
 `.btn-s` on the Items tab.
 The Items tab holds a bill as `/quick` does: what each person came to (no
 list, and no gap for one, until someone is ticked), then
-"Edit who-had-what" (its item count dropped where the line can't hold both),
+"Edit who-had-what" (no count: the people over it say what the bill came to),
 then the doors. Each door names itself ("Scan", "Upload",
 "Type"); the screen around them has already named the job. Over a bill they
 say "Rescan", "Reupload" and "Edit", since each replaces or opens the bill held. On `/g/scan` and `/quick` "Type"

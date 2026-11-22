@@ -987,7 +987,7 @@ suite("describe, a split by days", () => {
       paidBy: theo, split: stay("2026-05-14", { [theo]: "111", [marie]: "100" }),
     });
     const [latest] = await described(groupId);
-    expect(latest!.shares![0]).toBe("3 nights, Thu 14 May – Sun 17 May");
+    expect(latest!.shares![0]).toBe("3 days, Thu 14 May – Sun 17 May");
   });
 
   it("says becoming a stay with its dates", async () => {
@@ -995,17 +995,17 @@ suite("describe, a split by days", () => {
     await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "11", [marie]: "01" }) });
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo split it by days");
-    expect(latest!.rows![0]).toEqual({ name: "Dates", now: "2 nights, Thu 14 May – Sat 16 May", item: true });
+    expect(latest!.rows![0]).toEqual({ name: "Dates", now: "2 days, Thu 14 May – Sat 16 May", item: true });
   });
 
-  it("says whose nights moved, the dates, and what that did to whom", async () => {
+  it("says whose days moved, the dates, and what that did to whom", async () => {
     const { groupId, theo, marie, expenseId } = await sharedExpense();
     await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "11", [marie]: "01" }) });
     await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "11", [marie]: "11" }) });
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo changed who stayed when");
     expect(latest!.rows).toEqual([
-      { name: "Marie", was: "1 night", now: "2 nights" },
+      { name: "Marie", was: "1 day", now: "2 days" },
       { name: "Marie +25.00 · Theo −25.00" },
     ]);
   });
@@ -1021,7 +1021,7 @@ suite("describe, a split by days", () => {
     ]);
   });
 
-  it("says the nights of somebody who kept their count but moved them", async () => {
+  it("says the days of somebody who kept their count but moved them", async () => {
     const { groupId, theo, marie, expenseId } = await sharedExpense();
     await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "111", [marie]: "100" }) });
     await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "111", [marie]: "001" }) });
@@ -1029,12 +1029,12 @@ suite("describe, a split by days", () => {
     expect(latest!.rows).toEqual([{ name: "Marie", was: "Thu 14 May – Fri 15 May", now: "Sat 16 May – Sun 17 May" }]);
   });
 
-  it("marks somebody who came or went with their nights", async () => {
+  it("marks somebody who came or went with their days", async () => {
     const { groupId, theo, marie, expenseId } = await sharedExpense();
     await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "11" }) });
     await editExpense(groupId, theo, expenseId, { split: stay("2026-05-14", { [theo]: "11", [marie]: "01" }) });
     const [latest] = await described(groupId);
-    expect(latest!.rows![0]).toEqual({ name: "Marie", mark: "+", now: "1 night" });
+    expect(latest!.rows![0]).toEqual({ name: "Marie", mark: "+", now: "1 day" });
   });
 
   it("reads an older stay by days as nights, and survives a broken one", async () => {
@@ -1042,7 +1042,7 @@ suite("describe, a split by days", () => {
     await editExpense(groupId, theo, expenseId, { split: { ...stay("2026-05-14", { [theo]: "11", [marie]: "01" }), unit: "day" } });
     await editExpense(groupId, theo, expenseId, { split: { ...stay("2026-05-14", { [theo]: "11" }), count: -3 } });
     const all = await described(groupId);
-    expect(all[1]!.rows![0]).toEqual({ name: "Dates", now: "2 nights, Thu 14 May – Sat 16 May", item: true });
+    expect(all[1]!.rows![0]).toEqual({ name: "Dates", now: "2 days, Thu 14 May – Sat 16 May", item: true });
     for (const { said } of all) expect(said).not.toBe("");
   });
 });

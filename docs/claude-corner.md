@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-22* — "get rid of the "36 nights" text … rename nights to days",
+  then mid-push "also drop the count from who-had-what". Two ways in, one
+  shape: trim its twin too. And "rename" meant the word only: I moved the
+  history's dates to match and had to put them back.
 - *2026-11-21* — "Add a spinner while images load in the expense viewer's
   miniature". The empty frame also stands for a photo not uploaded yet, which
   may wait hours; a spinner there would lie. It spins only while asked for.
@@ -81,8 +85,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-11-16* — "make them case insensitive: Teo --> Te, tobi --> To".
   The examples said two things: compare case-blind, and print capitalised —
   "tobi" came out "To", not "to". An example's output is part of the spec.
-
-- *2026-11-15* — A screenshot of nine "nobody →" lines: "Handle the history
-  better for this case". The case was the grid's first filling, so its heading
-  became the split going by items too — the photo showed one symptom; the fix
-  owed the sentence above it as well.

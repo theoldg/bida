@@ -665,7 +665,6 @@ export const pl: Copy = {
   split: {
     mode: { equal: "Po równo", shares: "Części", exact: "Kwoty", receipt: "Pozycje", days: "???" },
     how: { equal: "po równo", shares: "na części", exact: "na kwoty", receipt: "według pozycji", days: "???" },
-    byNights: "???",
     receipt: "Pozycje",
     days: "???",
     include: (name) => `Uwzględnij: ${name}`,
@@ -935,7 +934,7 @@ export const pl: Copy = {
     changedWhoHadWhat: () => "???",
     changedStay: () => "???",
     range: (from, leave) => `${from} – ${leave}`,
-    stayAt: (nights, range) => `${nights}, ${range}`,
+    stayAt: (days, range) => `${days}, ${range}`,
     readBill: () => "???",
     changedAmount: () => "???",
     changedCurrency: () => "???",

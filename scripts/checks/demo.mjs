@@ -72,7 +72,7 @@ await page.waitForURL(/\/g\/entry\/edit/, { timeout: PATIENCE });
 await page.waitForSelector('input[aria-label="What"]');
 const what = await page.locator('input[aria-label="What"]').inputValue();
 const amount = await page.locator('input[aria-label^="Amount"]').inputValue();
-report(what === "Caf\u00e9 Clock" && amount === "76.50" && await page.getByText("9 items").count() > 0,
+report(what === "Caf\u00e9 Clock" && amount === "76.50" && await page.getByRole("link", { name: /who-had-what/ }).count() > 0,
   "and the bill it read comes back as an expense form, filled in", `${what} ${amount}`);
 report(apiCalls.some((path) => path.endsWith("/scan")) && !apiCalls.some((path) => path.includes(groupId)),
   "with the demo's id in none of it", apiCalls.join(" "));
