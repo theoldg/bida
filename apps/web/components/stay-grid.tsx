@@ -407,23 +407,29 @@ export function StayGrid({ people, draft, save, up, doneLabel = copy.act.done, o
             </div>
             <div className="eyebrow stayeyebrow">{copy.stay.dates}</div>
             <div className="stayrange">
-              <label className="stayfield">
-                <input type="date" data-field="stay-from" autoComplete={NO_AUTOFILL} value={stay.from}
-                  aria-label={copy.stay.from}
-                  onChange={(e) => {
-                    const from = e.target.value;
-                    // Past the end, the end follows: one night.
-                    const span = daysBetween(from, end);
-                    if (span === null) return;
-                    setRange(from, span < 1 ? addDays(from, 1) : end);
-                  }} />
+              <label className="stayfield" onClick={openPicker}>
+                <span className="datebox">
+                  <input type="date" data-field="stay-from" autoComplete={NO_AUTOFILL} value={stay.from}
+                    aria-label={copy.stay.from}
+                    onChange={(e) => {
+                      const from = e.target.value;
+                      // Past the end, the end follows: one night.
+                      const span = daysBetween(from, end);
+                      if (span === null) return;
+                      setRange(from, span < 1 ? addDays(from, 1) : end);
+                    }} />
+                  <Icon name="calendar" size={16} className="datemark" />
+                </span>
               </label>
               <span className="stayarrow" aria-hidden="true">→</span>
-              <label className="stayfield">
-                <input type="date" data-field="stay-to" autoComplete={NO_AUTOFILL} value={end}
-                  min={addDays(stay.from, 1)}
-                  aria-label={copy.stay.toLabel}
-                  onChange={(e) => setRange(stay.from, e.target.value)} />
+              <label className="stayfield" onClick={openPicker}>
+                <span className="datebox">
+                  <input type="date" data-field="stay-to" autoComplete={NO_AUTOFILL} value={end}
+                    min={addDays(stay.from, 1)}
+                    aria-label={copy.stay.toLabel}
+                    onChange={(e) => setRange(stay.from, e.target.value)} />
+                  <Icon name="calendar" size={16} className="datemark" />
+                </span>
               </label>
             </div>
           </div>
@@ -551,6 +557,15 @@ export function StayGrid({ people, draft, save, up, doneLabel = copy.act.done, o
 }
 
 /**
+ * A tap on the input opens its picker itself; one beside it — the label, the
+ * calendar — asks for it, as the entry form's date row does.
+ */
+function openPicker(e: React.MouseEvent<HTMLElement>) {
+  const input = e.currentTarget.querySelector("input");
+  if (input && e.target !== input) try { input.showPicker(); } catch { input.focus(); }
+}
+
+/**
  * One person's dates, typed: the way in for a stay too long to drag, or a
  * person who came for one weekend of a month. Dates outside the stay widen it,
  * nobody else on the nights added.
@@ -582,15 +597,21 @@ function PersonDates({ name, id, stay, onClose, onSet }: {
   return (
     <Dialog title={copy.stay.person.title(name)} onClose={onClose}>
       <div className="dbody staydates">
-        <label className="stayfield">
+        <label className="stayfield" onClick={openPicker}>
           <span className="fieldlabel">{copy.stay.person.arrived}</span>
-          <input type="date" className="dinput" autoComplete={NO_AUTOFILL} value={arrived}
-            aria-label={copy.stay.person.arrived} onChange={(e) => setArrived(e.target.value)} />
+          <span className="datebox">
+            <input type="date" className="dinput" autoComplete={NO_AUTOFILL} value={arrived}
+              aria-label={copy.stay.person.arrived} onChange={(e) => setArrived(e.target.value)} />
+            <Icon name="calendar" size={16} className="datemark" />
+          </span>
         </label>
-        <label className="stayfield">
+        <label className="stayfield" onClick={openPicker}>
           <span className="fieldlabel">{copy.stay.person.left}</span>
-          <input type="date" className="dinput" autoComplete={NO_AUTOFILL} value={left}
-            aria-label={copy.stay.person.left} onChange={(e) => setLeft(e.target.value)} />
+          <span className="datebox">
+            <input type="date" className="dinput" autoComplete={NO_AUTOFILL} value={left}
+              aria-label={copy.stay.person.left} onChange={(e) => setLeft(e.target.value)} />
+            <Icon name="calendar" size={16} className="datemark" />
+          </span>
         </label>
         {ok ? null : <p className="hint">{copy.stay.badRange}</p>}
       </div>

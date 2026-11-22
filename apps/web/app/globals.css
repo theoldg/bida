@@ -861,6 +861,12 @@ a.mysum { transition: background-image .2s ease, color .8s ease }
 .stayfield input { width: 100%; font-size: var(--fs-body); font-weight: 600; color: var(--ink); background: var(--card-2);
   border: 1px solid var(--rule); border-radius: var(--r-s); padding: 6px 8px; outline: none; min-width: 0 }
 .stayfield input:focus { border-color: var(--brand) }
+/* Our calendar inside the field's right edge, over room left for it. */
+.datebox { position: relative; display: block }
+.datebox > input { padding-right: 32px }
+.datebox .datemark { position: absolute; right: 10px; top: 50%; translate: 0 -50%; color: var(--ink) }
+.datebox:has(> .dinput) { margin-top: 12px }
+.datebox > .dinput { margin-top: 0 }
 .stayarrow { color: var(--muted) }
 /* Doubled: `.seg button` comes later and would stretch these to nothing. */
 .staytable { --label-w: 112px }
@@ -1685,10 +1691,11 @@ dialog.scrim::backdrop { background: transparent }
 /* The date draws our calendar, not the browser's; the row's click opens the
    picker. Android's ⌄ is the control's own appearance, not the indicator, so
    both go. Where the pseudo isn't known (Firefox) the browser's own stays and
-   ours goes. A saved stay's read-only dates lose both too: they open nothing. */
+   ours goes. A stay's dates are the same (`.datebox`), and its saved,
+   read-only ones lose both: they open nothing. */
 @supports selector(::-webkit-calendar-picker-indicator) {
-  :is(.field > input, .stayfield > input[readonly])[type="date"] { -webkit-appearance: none; appearance: none } }
-:is(.field > input, .stayfield > input[readonly])[type="date"]::-webkit-calendar-picker-indicator { display: none }
+  :is(.field, .datebox, .stayfield) > input[type="date"] { -webkit-appearance: none; appearance: none } }
+:is(.field, .datebox, .stayfield) > input[type="date"]::-webkit-calendar-picker-indicator { display: none }
 .datemark { pointer-events: none }
 @supports not selector(::-webkit-calendar-picker-indicator) { .datemark { display: none } }
 .formhead { padding: 0; overflow: hidden; overflow: clip }

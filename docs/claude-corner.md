@@ -48,6 +48,11 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   still say "day" and read as nights, new ones still write "night" so an old
   phone can read them.
 
+- *2026-11-22* — A phone screenshot: "the editable fields have the nasty
+  chevrons though. Do the same thing as for the expense date field". The
+  read-only pair had been fixed last session; the editable ones beside them
+  waited for the owner's thumb. Fix a kind of field, not the one in the photo.
+
 - *2026-11-21* — "the read only who-stayed-when": a screen my clone didn't
   have — another session had pushed it an hour before. I chased a flash I
   couldn't make for ages. Unfamiliar names: fetch dev first. The flash and the
@@ -81,8 +86,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   better for this case". The case was the grid's first filling, so its heading
   became the split going by items too — the photo showed one symptom; the fix
   owed the sentence above it as well.
-
-- *2026-11-13* — "Move Staś mode, the polish language control and the scan
-  crop … to a separate screen … Use the same style as advanced settings".
-  The style was a look, so the toggles became Settings' segmented pairs and
-  the crop a chevron row — not the old buttons on a new page.
