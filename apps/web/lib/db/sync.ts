@@ -61,7 +61,33 @@ async function pushPullGroup(
   pending: readonly StoredOp[],
 ): Promise<PushPullResult> {
   const crypto = await groupCrypto(groupId, secret);
-  const ops = await Promise.all(pending.map((op) => sealOp(crypto, {
+  const ops = await sealAll(crypto, pending);
+  for (const op of pending) carrying.add(op.id);
+  let res: Response;
+  let response: PushPullResponse;
+  try {
+    res = await fetch(opsUrl(groupId), {
+      method: "POST",
+      headers: opsHeaders(crypto),
+      body: JSON.stringify({ ops, since }),
+      signal: AbortSignal.timeout(SYNC_PATIENCE_MS),
+    });
+    if (!res.ok) {
+      throw new SyncHttpError(res.status, await res.text().catch(() => ""));
+    }
+    response = (await res.json()) as PushPullResponse;
+  } finally {
+    for (const op of pending) carrying.delete(op.id);
+  }
+  return { response, ...(await openPulled(crypto, response.ops)) };
+}
+
+const opsUrl = (groupId: string) => `/api/groups/${encodeURIComponent(groupId)}/ops`;
+const opsHeaders = (crypto: GroupCrypto) =>
+  ({ "Content-Type": "application/json", Authorization: `Bearer ${crypto.token}` });
+
+function sealAll(crypto: GroupCrypto, pending: readonly StoredOp[]): Promise<SealedOp[]> {
+  return Promise.all(pending.map((op) => sealOp(crypto, {
     id: op.id,
     groupId: op.groupId,
     entity: op.entity,
@@ -74,18 +100,24 @@ async function pushPullGroup(
     createdAt: op.createdAt,
     seq: null,
   })));
+}
 
-  const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/ops`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${crypto.token}` },
-    body: JSON.stringify({ ops, since }),
-    signal: AbortSignal.timeout(SYNC_PATIENCE_MS),
-  });
-  if (!res.ok) {
-    throw new SyncHttpError(res.status, await res.text().catch(() => ""));
-  }
-  const response = (await res.json()) as PushPullResponse;
-  return { response, ...(await openPulled(crypto, response.ops)) };
+/**
+ * Ops on a request still out. Two pushes of one op at once both pass the
+ * server's look for a re-push before either stores it, so the flush on hiding
+ * leaves these to the request already carrying them.
+ */
+const carrying = new Set<string>();
+
+/**
+ * By the index: the waiting ops, never a walk of the whole log. In the order
+ * they were written, not the index's (random ids): a group's `create` goes up
+ * first, so a phone joining mid-import has the group to open rather than
+ * thousands of entries in nothing.
+ */
+async function queuedOps(groupId: string): Promise<StoredOp[]> {
+  const queued = await db().ops.where("[groupId+pending]").equals([groupId, 1]).toArray();
+  return queued.sort((a, b) => (a.hlc < b.hlc ? -1 : a.hlc > b.hlc ? 1 : 0));
 }
 
 /**
@@ -271,12 +303,11 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   const key = await d.groupKeys.get(groupId);
   if (!key) return undefined;
 
-  // By the index: the waiting ops, never a walk of the whole log.
-  const queued = await d.ops.where("[groupId+pending]").equals([groupId, 1]).toArray();
-  // In the order they were written, not the index's (random ids): a group's
-  // `create` goes up first, so a phone joining mid-import has the group to
-  // open rather than thousands of entries in nothing.
-  queued.sort((a, b) => (a.hlc < b.hlc ? -1 : a.hlc > b.hlc ? 1 : 0));
+  // A flush still out pushes what this would, and both at once can store it
+  // twice; but one with no answer yet is on a link too poor to wait on.
+  const flush = flushing.get(groupId);
+  if (flush) await Promise.race([flush, new Promise((r) => setTimeout(r, FLUSH_WAIT_MS))]);
+  const queued = await queuedOps(groupId);
   const rounds = chunk(queued, PUSH_CHUNK);
   // Skipping is safe only because the op is still on the server; a new build
   // re-pulls from the earliest skipped op, once per deploy.
@@ -648,7 +679,6 @@ async function sendNotices(groupId: string, secret: string): Promise<void> {
 }
 
 let running: Promise<void> | undefined;
-let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 let backoffTimer: ReturnType<typeof setTimeout> | undefined;
 let backoffMs = 2000;
 const BACKOFF_MAX_MS = 60000;
@@ -716,18 +746,75 @@ async function hasPending(groupId: string): Promise<boolean> {
   return (await db().ops.where("[groupId+pending]").equals([groupId, 1]).count()) > 0;
 }
 
-const written = new Set<string>();
+/** Groups with a push waiting for the one in flight, which read its queue too early. */
+const rerun = new Set<string>();
 
+/**
+ * After a write, at once: a wait here was a second in which the person could
+ * pocket the phone, and a hidden page pushes nothing. A write landing while
+ * its group's push is out gets one more push after it, however many land.
+ * Hidden, it is left to the flush and the sweep on coming back.
+ */
 export function scheduleSync(groupId: string): void {
-  if (typeof window === "undefined") return;
-  written.add(groupId);
-  if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    if (document.visibilityState === "hidden") return;
-    const ids = [...written];
-    written.clear();
-    void Promise.all(ids.map((id) => syncGroup(id))).catch(() => syncAll());
-  }, 1000);
+  if (typeof window === "undefined" || document.visibilityState === "hidden") return;
+  const busy = inFlight.get(groupId);
+  if (!busy) {
+    void syncGroup(groupId).catch(() => syncAll());
+    return;
+  }
+  if (rerun.has(groupId)) return;
+  rerun.add(groupId);
+  void busy.catch(() => undefined)
+    .then(() => {
+      rerun.delete(groupId);
+      return syncGroup(groupId);
+    })
+    .catch(() => syncAll());
+}
+
+/** Each group's flush still out, for its next run to wait on — this long at most. */
+const FLUSH_WAIT_MS = 5_000;
+const flushing = new Map<string, Promise<void>>();
+
+/**
+ * Going to the background, the waiting ops go up in a `keepalive` request,
+ * which the browser finishes after the page is frozen or gone. Only sent:
+ * marking them waits for the push on coming back, which the server answers
+ * with the seqs it already gave, because nothing writes while hidden
+ * (`whenVisible`). No photos — a keepalive body is capped at 64 KiB for the
+ * whole page, and past it the request is refused at once; so is a queue too
+ * long for it, which then waits for the next open as before.
+ */
+export async function flushOnHide(): Promise<void> {
+  const keys = await db().groupKeys.toArray().catch(() => []);
+  await Promise.all(keys.map(({ groupId, secret, lastSeq }) => {
+    let run = flushing.get(groupId);
+    if (!run) {
+      run = flushGroup(groupId, secret, lastSeq)
+        .catch(() => {})
+        .finally(() => { flushing.delete(groupId); });
+      flushing.set(groupId, run);
+    }
+    return run;
+  }));
+}
+
+async function flushGroup(groupId: string, secret: string, since: number): Promise<void> {
+  const queued = (await queuedOps(groupId)).filter((op) => !carrying.has(op.id));
+  if (queued.length === 0) return;
+  const crypto = await groupCrypto(groupId, secret);
+  const body = JSON.stringify({ ops: await sealAll(crypto, queued), since });
+  const what = `${queued.length} ops, ${body.length} B`;
+  const sent = started("sync.flush", what);
+  try {
+    // No timeout: one can fire on thawing, and would cancel a request that went.
+    const res = await fetch(opsUrl(groupId), {
+      method: "POST", headers: opsHeaders(crypto), body, keepalive: true,
+    });
+    sent(`${what}, ${res.ok ? "sent" : res.status}`);
+  } catch (err) {
+    sent(`${what}, refused: ${errorText(err)}`);
+  }
 }
 
 export const TICK_MS = 60_000;
@@ -762,7 +849,11 @@ export function startSyncLoop(): () => void {
     void syncAll();
   };
   const onVisible = () => {
-    if (document.visibilityState !== "visible") return unsettleStashes();
+    if (document.visibilityState !== "visible") {
+      unsettleStashes();
+      void flushOnHide();
+      return;
+    }
     lastInput = Date.now();
     markInFlightStale();
     void applyStashes();

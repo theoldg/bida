@@ -184,10 +184,8 @@ base64 text: D1 hands a BLOB back as an array of numbers, ~20× the CPU to read.
 
 ### The push has a ceiling
 
-**This is the one door that registers its own credential.** There is no
-create-group endpoint, so a first push stores whatever token hash it arrives
-with — meaning the bearer gates a stranger out of *someone else's* group and
-nothing else. Anyone can mint group ids, and the log they write into is finished
+**This is the one door that registers its own credential** (above), so the
+bearer gates a stranger out of *someone else's* group and nothing else. Anyone can mint group ids, and the log they write into is finished
 data that gets no further resets
 ([standing-instructions](standing-instructions.md#product)).
 
@@ -241,38 +239,38 @@ that lives on ([below](#a-forgotten-group-is-erased)).
 
 `apps/web/lib/db/sync.ts`, which is also **the boundary the plaintext stops
 at**: ops are plain in Dexie and on every screen, and the `sealOp`/`openOp` pair
-in `pushPullGroup` (and `applyStash`, [below](#the-pull-ahead)) is the whole of why the server holds ciphertext. A pulled op
-is opened before anything is stored, so a run never half-applies. One that will
-not open is skipped rather than fatal — it is counted on the group key and
-printed on `/diag` — since the same row comes back on every retry and would
-wedge the group for good. What mints one is a newer build — a new entity or op kind,
-or a second seal format — so `openOp` turns anything wrong with an opened row
-into a `SealError`, the one error the pull skips. The cursor moves past a
-skipped op, so the record carries `fromSeq` and the build that skipped it, and
-the first run of any other build — or the first past `retryAt` — pulls again
-from `fromSeq - 1`: a row nothing can read costs a re-pull per deploy. A single-flight loop triggered by a local write
-(debounced ~1 s, that group only), `visibilitychange` → visible, `online`, and
-a foreground tick. **Each group is a request**, so the tick is thrifty
-(`planTick`): the group on screen every 60 s, every group every 5 min, nothing
-once nobody has touched the app for 5 min — and the first touch after that
-syncs everything. A sweep asks for every group at once, newest change first:
-in turn, six round trips were the seconds a reopened app took to show news in
-the fifth. Backoff 2/4/8 s capped at 60 s, reset on success. Never
-block the UI; never let two runs overlap — `syncAll` is single-flight over the
-whole run and `syncGroup` over one group, and an overlapping call gets back the
-promise already in flight — **unless that run is stale**: coming back to the
+in `pushPullGroup` (and `applyStash`, [below](#the-pull-ahead)) is the whole of
+why the server holds ciphertext. A pulled op is opened before anything is
+stored, so a run never half-applies. One that will not open is skipped rather
+than fatal — it is counted on the group key and printed on `/diag` — since the
+same row comes back on every retry and would wedge the group for good. What
+mints one is a newer build — a new entity or op kind, or a second seal format —
+so `openOp` turns anything wrong with an opened row into a `SealError`, the one
+error the pull skips. The cursor moves past a skipped op, so the record carries
+`fromSeq` and the build that skipped it, and the first run of any other build —
+or the first past `retryAt` — pulls again from `fromSeq - 1`: a row nothing can
+read costs a re-pull per deploy. A single-flight loop triggered by a local write
+(that group only, at once — a write during its push gets one more push after
+it), `visibilitychange` → visible, `online`, and a foreground tick. **Each group
+is a request**, so the tick is thrifty (`planTick`): the group on screen every
+60 s, every group every 5 min, nothing once nobody has touched the app for 5 min
+— and the first touch after that syncs everything. A sweep asks for every group
+at once, newest change first. Backoff 2/4/8 s capped at 60 s, reset on success.
+Never block the UI; never let two runs overlap — `syncAll` is single-flight over
+the whole run and `syncGroup` over one group, and an overlapping call gets back
+the promise already in flight — **unless that run is stale**: coming back to the
 front marks every run in flight (`markInFlightStale`), since none starts while
 hidden and its pull is from before the app went away. The next call queues a
-fresh run behind it instead of joining it, or a reopened app left the groups a
-parked run had already pulled to the next sweep. Both guards are needed: opening a group syncs it
-directly, and without the per-group guard that races the loop into pushing and
-pulling the same ops twice and taking the `rebuild()` lock twice. A run that attempted nothing must never conclude "no
-failures" and reset a backoff the failing run had grown. **Nothing writes while
-the app is hidden:** no run starts, and an answer that lands after the app
-went to the background — a success, a failure, a 410, `/notify`'s — waits for
-it to come back before anything is written (`parked` on `/diag`) — a phone freezes a hidden app, and a transaction frozen
-half way keeps its lock. The rule is the app's, not sync's: `lib/db/visible.ts`
-([live-reads.md](live-reads.md#a-live-read-can-die)).
+fresh run behind it instead of joining it. A run that attempted nothing must
+never conclude "no failures" and reset a backoff the failing run had grown.
+**Nothing writes while the app is hidden:** no run starts, and an answer that
+lands after the app went to the background — a success, a failure, a 410,
+`/notify`'s — waits for it to come back before anything is written (`parked` on
+`/diag`) — a phone freezes a hidden app, and a transaction frozen half way keeps
+its lock. The rule is the app's, not sync's: `lib/db/visible.ts`
+([live-reads.md](live-reads.md#a-live-read-can-die)). Hiding still *sends*:
+`flushOnHide` pushes each queue in a `keepalive` request, which outlives the
+page, and marks nothing — the push on return gets the same seqs, and marks.
 
 ### The demo group has no key
 
@@ -367,14 +365,13 @@ has caught up posts what it just pulled, so in practice both changes survive —
 only a save from a snapshot older than the peer's edit loses one. Members, rates
 and identities still merge per field.
 
-We never present a conflict-resolution dialog. For an expense splitter that
-would be worse than being briefly wrong — the group can see the history and fix
-it in one tap.
+We never present a conflict-resolution dialog: being briefly wrong is better,
+and the group can see the history and fix it in one tap.
 
 ## Gotchas
 
 - **A second path to the server is a second place to forget the seal.** Anything
-  that ships an op goes through `pushPullGroup`, and a quick split's link through
+  that ships an op goes through `sealAll` (`pushPullGroup`, `flushOnHide`), and a quick split's link through
   `sealSplit` (ADR-0035), or the claim on `/about` quietly stops being true.
 - **Never garbage-collect ops.** They are the history feature. If the log ever
   got genuinely large the answer is snapshotting, and that's a new ADR.
@@ -393,6 +390,9 @@ it in one tap.
 - **Every request a sync run awaits has a timeout** (`SYNC_PATIENCE_MS`). A
   fetch the app was backgrounded on can stay pending with its connection gone,
   and the single-flight run waiting on it holds every run queued behind it.
+  Bar the hidden flush's: a timer firing on thaw would cancel a request that went.
+- **`keepalive` bodies share 64 KiB per page**, refused at once past it: a
+  day's ops (~0.6 KB each) fit, a long offline queue waits for the next open.
 - **A seq number must never exist before its row does.** `acceptOps` reserves
   and inserts in one `db.batch`, which D1 runs as a transaction, because a phone
   that pulls in between is told `latestSeq` covers rows it cannot read yet —

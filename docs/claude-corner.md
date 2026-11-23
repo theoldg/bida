@@ -31,6 +31,10 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-23* — "The 1 second wait seems useless … what is it for?" A doubt
+  about a number: say what it bought and what it cost (tobi's entry, pocketed
+  inside that second), offer the fix, and build on the yes. It came at once.
+
 - *2026-11-23* — "Check out this group … anything bugged?" A live group is
   people's money: read it through the API, never join it. The NUL I called a
   blank gap draws as a box on the owner's phone. "Let's wait for more data":
@@ -81,8 +85,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   screen … reuse as many styles from the item assigner as possible … push to
   dev". My mock drew a new grid; the answer was the one we had. Sketch a new
   screen in an old screen's parts first.
-
-- *2026-11-16* — "Why aren't the payers sorted by amount here?" A why on a
-  screenshot is a fix, not a question. The form already sorted them; the entry
-  screen took core's id order. Where one screen does it right, the answer is
-  "this one forgot", and the fix copies it.

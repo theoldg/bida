@@ -5,7 +5,8 @@ import { formatHlc, createHlcState } from "@bida/core";
 import { addExpense, addMember, createGroup, forgetGroup, markEditsSeen, saveGroupKey } from "./commands";
 import { getDevice, updateDevice } from "./device";
 import {
-  IDLE_MS, SWEEP_MS, TICK_MS, byRecency, groupOnScreen, planTick, pullWholeGroup, startSyncLoop, syncAll,
+  IDLE_MS, SWEEP_MS, TICK_MS, byRecency, flushOnHide, groupOnScreen, planTick, pullWholeGroup, scheduleSync,
+  startSyncLoop, syncAll,
   pullProgress, syncGroup, watchPullProgress, type PullProgress,
 } from "./sync";
 import { VERSION } from "../version";
@@ -1214,5 +1215,113 @@ describe("the sync loop's requests", () => {
     await syncAll();
     expect(asked).toHaveLength(2);
     stop();
+  });
+});
+
+describe("pushing before the app goes away", () => {
+  beforeEach(wipe);
+  afterEach(() => vi.unstubAllGlobals());
+
+  /**
+   * A server that, like the real one, gives an op id one seq however often it
+   * is pushed. `hold` keeps the next answer until `release`.
+   */
+  function server() {
+    const seqOf = new Map<string, number>();
+    const calls: { ids: string[]; keepalive: boolean }[] = [];
+    let held: Promise<void> | undefined;
+    let release = () => {};
+    const hold = () => { held = new Promise((r) => { release = r; }); };
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as { ops: { id: string }[] };
+      calls.push({ ids: body.ops.map((op) => op.id), keepalive: init.keepalive === true });
+      const waiting = held;
+      held = undefined;
+      await waiting;
+      for (const op of body.ops) if (!seqOf.has(op.id)) seqOf.set(op.id, seqOf.size + 1);
+      const assigned = Object.fromEntries(body.ops.map((op) => [op.id, seqOf.get(op.id)!]));
+      return new Response(JSON.stringify({ assigned, ops: [], latestSeq: seqOf.size }));
+    }));
+    return { seqOf, calls, hold, release: () => release() };
+  }
+
+  const queued = async (groupId: string) =>
+    (await db().ops.where("groupId").equals(groupId).toArray()).filter((op) => op.pending === 1);
+
+  it("sends the queue on hiding and marks it only once the app is back", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    const waiting = await queued(groupId);
+    const { page, show } = stubPage();
+    const { seqOf, calls } = server();
+
+    page.visibilityState = "hidden";
+    await flushOnHide();
+
+    expect(calls).toEqual([{ ids: expect.arrayContaining(waiting.map((op) => op.id)), keepalive: true }]);
+    expect(await queued(groupId)).toHaveLength(waiting.length);
+
+    show();
+    await syncGroup(groupId);
+    expect(await queued(groupId)).toEqual([]);
+    // Pushed twice, stored once: the second push is told the first one's seqs.
+    expect(seqOf.size).toBe(waiting.length);
+    for (const op of await db().ops.where("groupId").equals(groupId).toArray()) {
+      expect(op.seq).toBe(seqOf.get(op.id));
+    }
+  });
+
+  it("leaves the queue for the next open when the browser refuses the request", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    const waiting = await queued(groupId);
+    stubPage().page.visibilityState = "hidden";
+    // What a body past keepalive's 64 KiB gets, at once.
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("Failed to fetch"); }));
+
+    await expect(flushOnHide()).resolves.toBeUndefined();
+    expect(await queued(groupId)).toHaveLength(waiting.length);
+  });
+
+  it("leaves ops already on a request still out to that request", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    const { page, show } = stubPage();
+    const { calls, hold, release } = server();
+    hold();
+    const run = syncGroup(groupId);
+    await vi.waitFor(() => expect(calls).toHaveLength(1));
+
+    page.visibilityState = "hidden";
+    await flushOnHide();
+    expect(calls).toHaveLength(1);
+
+    release();
+    show();
+    await run;
+    expect(await queued(groupId)).toEqual([]);
+  });
+
+  it("pushes a write at once, and once more for any written while it was out", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    const me = (await db().members.where("groupId").equals(groupId).toArray())[0]!;
+    stubPage();
+    vi.stubGlobal("window", new EventTarget());
+    const { calls, hold, release } = server();
+    const spend = (description: string) => addExpense(groupId, me.id, {
+      description, occurredAt: 1, amountMinor: 1200, currency: "EUR",
+      rateToBase: "1", paidBy: me.id, split: { mode: "equal", members: [me.id] },
+    });
+
+    hold();
+    const saved = Date.now();
+    await spend("tagine");
+    await vi.waitFor(() => expect(calls).toHaveLength(1), { timeout: 500, interval: 5 });
+    expect(Date.now() - saved).toBeLessThan(500); // no second's wait first
+    await spend("mint tea");
+    await spend("taxi");
+    scheduleSync(groupId); // a third ask while one is queued queues nothing
+    release();
+
+    await vi.waitFor(async () => expect(await queued(groupId)).toEqual([]));
+    expect(calls).toHaveLength(2);
+    expect(calls[1]!.ids.length).toBeGreaterThanOrEqual(2);
   });
 });
