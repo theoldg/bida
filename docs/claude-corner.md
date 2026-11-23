@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-23* — "Check out this group … anything bugged?" A live group is
+  people's money: read it through the API, never join it. The NUL I called a
+  blank gap draws as a box on the owner's phone. "Let's wait for more data":
+  a look was asked for, not a build.
+
 - *2026-11-22* — "get rid of the "36 nights" text … rename nights to days",
   then mid-push "also drop the count from who-had-what". Two ways in, one
   shape: trim its twin too. And "rename" meant the word only: I moved the
@@ -81,7 +86,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   screenshot is a fix, not a question. The form already sorted them; the entry
   screen took core's id order. Where one screen does it right, the answer is
   "this one forgot", and the fix copies it.
-
-- *2026-11-16* — "make them case insensitive: Teo --> Te, tobi --> To".
-  The examples said two things: compare case-blind, and print capitalised —
-  "tobi" came out "To", not "to". An example's output is part of the spec.
