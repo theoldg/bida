@@ -86,6 +86,11 @@ it is still missing after.
   `renotify`, so a group's latest replaces its last and still buzzes; a tap
   focuses or opens the url, kept same-origin. Alongside, the group is pulled
   ahead ([sync.md](sync.md#the-pull-ahead)).
+- **Taking down** (`lib/tray.ts`). Once a group has nothing new
+  ([history.md](history.md#the-clock-and-its-dot)) its notifications close,
+  after each sync and whenever the mark moves — but only those shown before
+  the latest landed pull began, since a later one may be about ops not pulled
+  yet. Safari gives no `timestamp`, so there nothing closes but a tap.
 - **Leaving** (`forgetGroup`) writes `push: null` first, and the group is kept
   on the phone until the sync that pushes it, then erased. That sync heals
   nothing: forgetting drops the claim. Rejoining puts the subscription back.
@@ -101,6 +106,9 @@ it is still missing after.
   the receipt as an alpha mask, since Android reads nothing else, redrawn
   with three teeth and a larger ÷ because the logo's blur at 24px. Without one,
   Android shows the browser's icon there.
+- **On Android the icon's dot is the tray.** No Badging API there: the
+  launcher dots the icon while any notification stands, and opening the app
+  clears none — hence `lib/tray.ts`.
 - **The large `icon` is a transparent PNG** (`notify-blank.png`). The app's
   icon there repeats the badge, and with none Android draws a grey letter
   avatar of the host name.

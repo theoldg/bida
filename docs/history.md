@@ -122,14 +122,24 @@ stamped days back. New is `unseenRevisions` (`core/history.ts`): an op numbered
 past `groupKeys.seenSeq` whose stamp is another phone's, your own laptop
 included, less a device claiming a name.
 
-**Opening history is seeing it** (`useCatchUp`, `lib/catch-up.ts`): the dot
-stays, across visits, until the group's history is opened, which moves the mark
-past everything there and everything landing while it is open. The mark from
-before is held in memory for that look, so the line survives a trip into an
-entry and back; the ledger or the groups list ends the look. What waits on a
-group nobody opens ages out after a week (`CATCH_UP_MS`) rather than sitting on
-the groups list forever. The first pull sets the mark at the cursor, so a joined
-group opens with nothing new, and the mark is device-local, never an op.
+**Seen is either of two doors** (`lib/db/news.ts`), both moving `seenSeq`:
+
+- **Opening history** (`useCatchUp`, `lib/catch-up.ts`) moves the mark past
+  everything there and everything landing while it is open. The mark from
+  before is held in memory for that look, so the line survives a trip into an
+  entry and back; the ledger or the groups list ends the look.
+- **Opening the ledger a second time** (`useLedgerLook`): while the ledger is on
+  screen the cursor is recorded as `shownSeq`, and the next look counts it as
+  seen — the dot, the torn line, the groups list's count and the group's
+  notifications all go. A look begins from the groups list, at launch or back
+  from the background, and lasts through the group's entries and history, so
+  Back from an entry is the same look. The menu's dot is read only once the
+  look's mark has moved, or it would flash the last look's answer.
+
+What waits on a group nobody opens ages out after a week (`CATCH_UP_MS`) rather
+than sitting on the groups list forever. The first pull sets the mark at the
+cursor, so a joined group opens with nothing new, and the mark is device-local,
+never an op.
 
 The groups list is ordered by when each group last changed — its newest op, an
 edit or a delete as much as a new entry — never by its latest entry's date. It

@@ -31,6 +31,11 @@ sentence is the same earnestness, compressed.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-11-28* — "a dot I can't get rid of" on the home screen, and the app
+  had no badge code at all. The dot was the tray: notifications nothing ever
+  closed. When a symptom names a part you can't find, find what the platform
+  draws it from.
+
 - *2026-11-23* — "The 1 second wait seems useless … what is it for?" A doubt
   about a number: say what it bought and what it cost (tobi's entry, pocketed
   inside that second), offer the fix, and build on the yes. It came at once.
@@ -80,8 +85,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   source of truth for who's checked". Two questions it left open — a date
   that stay doesn't reach, a date moved after — answered as the trip would:
   the priciest stay reaching the day, followed until touched.
-
-- *2026-11-20* — "prototype without pushing", then "make it a separate
-  screen … reuse as many styles from the item assigner as possible … push to
-  dev". My mock drew a new grid; the answer was the one we had. Sketch a new
-  screen in an old screen's parts first.

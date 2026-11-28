@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Dexie from "dexie";
 import {
-  CATCH_UP_MS, emptyGroupState, isDemo, isQuiet, parseHlc, unseenRevisions, type BalanceReport, type Group,
+  emptyGroupState, isDemo, isQuiet, parseHlc, type BalanceReport, type Group,
 } from "@bida/core";
 import { db, type DeviceRecord } from "./db/dexie";
 import { keepWarm, useLive } from "./db/live";
 import { opsForGroup } from "./db/fold";
+import { newsCount } from "./db/news";
 import { getDevice, getMe } from "./db/device";
 import { applyStash, pullProgress, stashSettled, watchPullProgress } from "./db/sync";
 import { writeClipboardText } from "./clipboard";
@@ -275,10 +276,7 @@ async function groupSummaries(): Promise<GroupSummary[]> {
   ]);
   const newCount = async (groupId: string): Promise<number> => {
     const key = keys.find((k) => k.groupId === groupId);
-    if (!device || key?.seenSeq === undefined || key.lastSeq <= key.seenSeq) return 0;
-    const ops = await d.ops.where("groupId").equals(groupId).toArray();
-    return unseenRevisions(ops, key.seenSeq, device.nodeId, Date.now() - CATCH_UP_MS)
-      .revisions.length;
+    return device && key ? newsCount(groupId, key) : 0;
   };
   // An edit, a delete or a back-dated expense is activity too; plumbing isn't —
   // forgetting a subscribed group writes `push: null`, and counted, the row

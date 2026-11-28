@@ -6,6 +6,9 @@ import { CATCH_UP_MS, unseenRevisions, type Op } from "@bida/core";
 import { markEditsSeen } from "@/lib/db/commands";
 import { getDevice } from "@/lib/db/device";
 import { db } from "@/lib/db/dexie";
+import { useLive } from "@/lib/db/live";
+import { beginLook, recordShown } from "@/lib/db/news";
+import { closeSeen } from "@/lib/tray";
 
 /**
  * Where a group's history last stood before it was opened: the seen mark from
@@ -17,8 +20,74 @@ import { db } from "@/lib/db/dexie";
 const since = new Map<string, { seq: number; node: string }>();
 
 export function endCatchUp(groupId?: string): void {
-  if (groupId === undefined) since.clear();
-  else since.delete(groupId);
+  if (groupId === undefined) {
+    since.clear();
+    looks.clear();
+  } else since.delete(groupId);
+}
+
+/**
+ * Groups whose ledger is being looked at, each with its look's number. A look
+ * begins when the ledger is drawn with none going — from the groups list, at
+ * launch, back from the background — and lasts through its entries and
+ * history. **What one look showed, the next counts as seen** (`beginLook`):
+ * the dot, the groups list's count and the tray clear on the second opening.
+ */
+const looks = new Map<string, Look>();
+interface Look { n: number; ready: Promise<unknown>; done: boolean }
+let looked = 0;
+let watching = false;
+
+function lookAt(groupId: string): Look {
+  const going = looks.get(groupId);
+  if (going) return going;
+  const look: Look = { n: ++looked, done: false, ready: Promise.resolve() };
+  look.ready = beginLook(groupId).catch(() => false).then((moved) => {
+    look.done = true;
+    if (moved) void closeSeen(groupId);
+  });
+  looks.set(groupId, look);
+  return look;
+}
+
+/**
+ * This look's number once its mark has moved, for the ledger's dot to read
+ * after; `undefined` before. The cursor is recorded as shown while the ledger
+ * is on screen, landing pulls included.
+ */
+export function useLedgerLook(groupId: string): number | undefined {
+  const [look, setLook] = useState(() => {
+    const going = looks.get(groupId);
+    return going?.done ? going.n : undefined;
+  });
+  useEffect(() => {
+    if (!watching) {
+      watching = true;
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") looks.clear();
+      });
+    }
+    let live = true;
+    const begin = () => {
+      if (document.visibilityState !== "visible") return;
+      const going = lookAt(groupId);
+      void going.ready.then(() => { if (live && looks.get(groupId) === going) setLook(going.n); });
+    };
+    begin();
+    document.addEventListener("visibilitychange", begin);
+    return () => {
+      live = false;
+      document.removeEventListener("visibilitychange", begin);
+    };
+  }, [groupId]);
+
+  const cursor = useLive("ledgerCursor", async () => (await db().groupKeys.get(groupId))?.lastSeq, [groupId]);
+  useEffect(() => {
+    if (look !== undefined && cursor !== undefined && looks.get(groupId)?.n === look) {
+      void recordShown(groupId, cursor);
+    }
+  }, [groupId, look, cursor]);
+  return look;
 }
 
 /**

@@ -3,13 +3,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { CATCH_UP_MS, unseenRevisions } from "@bida/core";
-import { endCatchUp } from "../lib/catch-up";
+import { endCatchUp, useLedgerLook } from "../lib/catch-up";
 import { copy } from "../lib/copy";
-import { getDevice } from "../lib/db/device";
-import { db } from "../lib/db/dexie";
-import { opsForGroup } from "../lib/db/fold";
 import { useLive } from "../lib/db/live";
+import { newsCount } from "../lib/db/news";
 import { exportFilename, groupCsv, handOffCsv } from "../lib/export";
 import { route } from "../lib/group-link";
 import { usePrefetch } from "../lib/prefetch";
@@ -76,23 +73,19 @@ export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData 
 }
 
 /**
- * Whether other phones changed something since this one last looked at the
- * group's history — the menu's dot.
+ * Whether other phones changed something this one hasn't seen — the menu's dot.
  *
- * **New** is `unseenRevisions` (core/history.ts), which the groups list counts
- * too. The dot stays until history is opened — opening it is seeing it
- * (`useCatchUp`, lib/catch-up.ts) — or the change ages out after
- * `CATCH_UP_MS`. Being back on the ledger ends the last look at history, so
- * the next one draws its torn line afresh.
+ * **New** is `newsCount` (lib/db/news.ts), which the groups list counts too.
+ * The dot stays until history is opened (`useCatchUp`) or the ledger is opened
+ * again (`useLedgerLook`), or the change ages out after `CATCH_UP_MS`. Being
+ * back on the ledger ends the last look at history, so the next one draws its
+ * torn line afresh.
  */
 function useHistoryNews(groupId: string): boolean {
-  const news = useLive("newEdits", async () => {
-    const key = await db().groupKeys.get(groupId);
-    // No key is the demo; no mark is a group whose first pull hasn't landed.
-    if (key?.seenSeq === undefined || key.lastSeq <= key.seenSeq) return false;
-    return unseenRevisions(await opsForGroup(groupId), key.seenSeq,
-      (await getDevice()).nodeId, Date.now() - CATCH_UP_MS).revisions.length > 0;
-  }, [groupId]);
+  const look = useLedgerLook(groupId);
+  // Keyed by the look: the last look's answer, remembered, would flash its dot.
+  const news = useLive("newEdits", async () => look !== undefined && await newsCount(groupId) > 0,
+    [groupId, look]);
 
   useEffect(() => endCatchUp(groupId), [groupId]);
   return news === true;

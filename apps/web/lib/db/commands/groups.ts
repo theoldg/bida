@@ -7,6 +7,8 @@ import { groupState } from "../fold";
 import { getDevice, getMe, hideGroup, setMe, unhideGroup, updateDevice } from "../device";
 import { requestPersistence } from "../../persist";
 import { reconcilePush } from "../../push";
+import { closeSeen } from "../../tray";
+import { markSeen } from "../news";
 import { forgetShown } from "../../roll";
 import type { CarriedGroup } from "../../group-link";
 import { appendOps } from "./append";
@@ -288,11 +290,7 @@ export async function healGroup(groupId: Id): Promise<number> {
   return written;
 }
 
-/** Device-local, so no op. Only forward: a screen leaving with a stale count mustn't bring old edits back. */
+/** History has shown the group to `seq` (`markSeen`); what it is no longer new about leaves the tray. */
 export async function markEditsSeen(groupId: Id, seq: number): Promise<void> {
-  const d = db();
-  await d.transaction("rw", d.groupKeys, async () => {
-    const key = await d.groupKeys.get(groupId);
-    if (key && seq > (key.seenSeq ?? 0)) await d.groupKeys.update(groupId, { seenSeq: seq });
-  });
+  if (await markSeen(groupId, seq)) await closeSeen(groupId);
 }

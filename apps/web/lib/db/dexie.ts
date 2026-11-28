@@ -98,8 +98,10 @@ interface GroupKey {
   secret: string;
   /** The sync cursor. */
   lastSeq: number;
-  /** Highest seq the group's history has shown (`useCatchUp`); a joining group starts with nothing new. */
+  /** Highest seq counted as seen (lib/db/news.ts); a joining group starts with nothing new. */
   seenSeq?: number;
+  /** The cursor as the ledger last showed it: seen once the ledger opens again (`beginLook`). */
+  shownSeq?: number;
   lastSyncedAt?: number;
   failure?: SyncFailure;
   unreadable?: Unreadable;

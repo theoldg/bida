@@ -6,6 +6,7 @@ import {
 import { keepNote, started } from "../diag";
 import { errorText } from "../format";
 import { pushMessages } from "../notify-copy";
+import { pulled } from "../tray";
 import { groupCrypto } from "../seal";
 import { dropForgotten, eraseGroupLocally } from "./commands/groups";
 import { getDevice } from "./device";
@@ -299,6 +300,7 @@ function syncGroupWalked(groupId: string): Promise<SyncOutcome | undefined> {
 }
 
 async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> {
+  const begun = Date.now();
   const d = db();
   const key = await d.groupKeys.get(groupId);
   if (!key) return undefined;
@@ -406,6 +408,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   // Only now: a notification about an op still on this phone would open to
   // nothing.
   await sendNotices(groupId, key.secret).catch((err: unknown) => keepNote("notify", errorText(err)));
+  pulled(groupId, begun);
 
   if ((await getDevice()).leftGroups?.includes(groupId) && await dropForgotten(groupId)) {
     return { pushed, pulled: pulledCount };

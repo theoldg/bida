@@ -21,7 +21,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 | **Versioned** | `major.semi.minor`, bumped by every push; the major is the owner's ([hosting.md](hosting.md#versions)) |
 | **The tip jar** | `/g/tip` off the balances screen, `/tip` off `/about` ([product.md](product.md#the-mvp)) |
 | **Deletable** | `/delete-my-data`, from an invite link, for everybody in the group ([import-export.md](import-export.md#deleting-a-group)) |
-| **Notifying** | Push notifications of the entries you are in, working on a real iPhone and on its Apple Watch (the owner, 2026-11-03); the pull ahead and Settings' All are untried on a phone — `/diag`'s `pull ahead:` lines say whether it ran ([notifications.md](notifications.md)) |
+| **Notifying** | Push notifications of the entries you are in, working on a real iPhone and on its Apple Watch (the owner, 2026-11-03); the pull ahead, Settings' All and the tray clearing seen groups (Android's icon dot) are untried on a phone — `/diag`'s `pull ahead:` lines say whether it ran ([notifications.md](notifications.md)) |
 | **Searchable** | The ledger's search bar ([frontend.md](frontend.md#the-ledgers-search)) |
 | **Installable** | Install and join work on a real iPhone, names included; Android offered, in-app browsers a one-off visit under a banner ([ios.md](ios.md), [pwa.md](pwa.md)) |
 | **Demoable** | `bida.bid/demo`, a keyless group that cannot sync, linked from nowhere ([product.md](product.md), [sync.md](sync.md#the-demo-group-has-no-key)) |
