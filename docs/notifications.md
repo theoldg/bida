@@ -86,9 +86,9 @@ it is still missing after.
   `renotify`, so a group's latest replaces its last and still buzzes; a tap
   focuses or opens the url, kept same-origin. Alongside, the group is pulled
   ahead ([sync.md](sync.md#the-pull-ahead)).
-- **Taking down** (`lib/tray.ts`). Once a group has nothing new
-  ([history.md](history.md#the-clock-and-its-dot)) its notifications close,
-  after each sync and whenever the mark moves — but only those shown before
+- **Taking down** (`lib/tray.ts`). Once its ledger has been opened on
+  everything new ([history.md](history.md#the-clock-and-its-dot)) a group's
+  notifications close, after each sync and whenever a mark moves — but only those shown before
   the latest landed pull began, since a later one may be about ops not pulled
   yet. Safari gives no `timestamp`, so there nothing closes but a tap.
 - **Leaving** (`forgetGroup`) writes `push: null` first, and the group is kept

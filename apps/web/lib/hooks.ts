@@ -276,7 +276,7 @@ async function groupSummaries(): Promise<GroupSummary[]> {
   ]);
   const newCount = async (groupId: string): Promise<number> => {
     const key = keys.find((k) => k.groupId === groupId);
-    return device && key ? newsCount(groupId, key) : 0;
+    return device && key ? newsCount(groupId, key, true) : 0;
   };
   // An edit, a delete or a back-dated expense is activity too; plumbing isn't —
   // forgetting a subscribed group writes `push: null`, and counted, the row

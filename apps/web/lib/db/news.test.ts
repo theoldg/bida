@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "./dexie";
-import { beginLook, markSeen, recordShown } from "./news";
+import { beginLook, markSeen, newsCount, recordShown } from "./news";
 
 /** The seen mark's two doors: history moving it, and the ledger opened again. */
 const g = "g1";
@@ -41,5 +41,13 @@ describe("a look at the ledger", () => {
     expect(await markSeen(g, 5)).toBe(true);
     expect(await beginLook(g)).toBe(false);
     expect((await key())?.seenSeq).toBe(5);
+  });
+});
+
+describe("what a ledger has shown", () => {
+  it("is out of the groups list's count and the tray at once, still in the dot's", async () => {
+    await recordShown(g, 5);
+    expect(await newsCount(g, undefined, true)).toBe(0);
+    expect((await key())?.seenSeq).toBe(2);
   });
 });

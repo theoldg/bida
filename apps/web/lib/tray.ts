@@ -16,10 +16,11 @@ export function pulled(groupId: string, from: number): void {
 }
 
 /**
- * Takes down a group's notifications once nothing in it is new. Opening the app
- * never does, and on Android a notification left in the tray is the dot on the
- * app's icon, standing after every change in it was seen. An untagged one (a
- * payload that wouldn't open) goes once any pull has landed after it.
+ * Takes down a group's notifications once its ledger has shown everything new
+ * in it (`newsCount`'s `shown`) — the first opening, not the second. Opening
+ * the app never does, and on Android a notification left in the tray is the
+ * dot on the app's icon. An untagged one (a payload that wouldn't open) goes
+ * once any pull has landed after it.
  */
 export async function closeSeen(groupId: string): Promise<void> {
   const from = pulledFrom.get(groupId);
@@ -28,7 +29,7 @@ export async function closeSeen(groupId: string): Promise<void> {
   try {
     const registration = await navigator.serviceWorker.getRegistration();
     if (!registration?.getNotifications) return;
-    const [shown, news] = await Promise.all([registration.getNotifications(), newsCount(groupId)]);
+    const [shown, news] = await Promise.all([registration.getNotifications(), newsCount(groupId, undefined, true)]);
     for (const n of shown) {
       // Not in TypeScript's DOM, and not in Safari: unknown age is never closed.
       const at = (n as Notification & { timestamp?: number }).timestamp;

@@ -30,8 +30,8 @@ export function endCatchUp(groupId?: string): void {
  * Groups whose ledger is being looked at, each with its look's number. A look
  * begins when the ledger is drawn with none going — from the groups list, at
  * launch, back from the background — and lasts through its entries and
- * history. **What one look showed, the next counts as seen** (`beginLook`):
- * the dot, the groups list's count and the tray clear on the second opening.
+ * history. The tray and the groups list's count let go of what a look shows at
+ * once; **the dot and the torn line, at the next look** (`beginLook`).
  */
 const looks = new Map<string, Look>();
 interface Look { n: number; ready: Promise<unknown>; done: boolean }
@@ -42,10 +42,7 @@ function lookAt(groupId: string): Look {
   const going = looks.get(groupId);
   if (going) return going;
   const look: Look = { n: ++looked, done: false, ready: Promise.resolve() };
-  look.ready = beginLook(groupId).catch(() => false).then((moved) => {
-    look.done = true;
-    if (moved) void closeSeen(groupId);
-  });
+  look.ready = beginLook(groupId).catch(() => false).then(() => { look.done = true; });
   looks.set(groupId, look);
   return look;
 }
@@ -86,7 +83,7 @@ export function useLedgerLook(groupId: string): number | undefined {
     [groupId]);
   useEffect(() => {
     if (look !== undefined && typeof cursor === "number" && looks.get(groupId)?.n === look) {
-      void recordShown(groupId, cursor);
+      void recordShown(groupId, cursor).then((moved) => moved ? closeSeen(groupId) : undefined, () => undefined);
     }
   }, [groupId, look, cursor]);
   return look;

@@ -130,11 +130,14 @@ included, less a device claiming a name.
   entry and back; the ledger or the groups list ends the look.
 - **Opening the ledger a second time** (`useLedgerLook`): while the ledger is on
   screen the cursor is recorded as `shownSeq`, and the next look counts it as
-  seen — the dot, the torn line, the groups list's count and the group's
-  notifications all go. A look begins from the groups list, at launch or back
-  from the background, and lasts through the group's entries and history, so
-  Back from an entry is the same look. The menu's dot is read only once the
-  look's mark has moved, or it would flash the last look's answer.
+  seen — the dot and the torn line go. A look begins from the groups list, at
+  launch or back from the background, and lasts through the group's entries
+  and history, so Back from an entry is the same look. The menu's dot is read
+  only once the look's mark has moved, or it would flash the last look's answer.
+
+**The groups list's count and the tray go at the first opening**: they count
+past `shownSeq` as well (`newsCount`'s `shown`), so "2 new changes" is read
+once, on the way in.
 
 What waits on a group nobody opens ages out after a week (`CATCH_UP_MS`) rather
 than sitting on the groups list forever. The first pull sets the mark at the
