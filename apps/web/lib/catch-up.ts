@@ -81,9 +81,11 @@ export function useLedgerLook(groupId: string): number | undefined {
     };
   }, [groupId]);
 
-  const cursor = useLive("ledgerCursor", async () => (await db().groupKeys.get(groupId))?.lastSeq, [groupId]);
+  // `null`, never `undefined`, for the keyless demo (docs/live-reads.md).
+  const cursor = useLive("ledgerCursor", async () => (await db().groupKeys.get(groupId))?.lastSeq ?? null,
+    [groupId]);
   useEffect(() => {
-    if (look !== undefined && cursor !== undefined && looks.get(groupId)?.n === look) {
+    if (look !== undefined && typeof cursor === "number" && looks.get(groupId)?.n === look) {
       void recordShown(groupId, cursor);
     }
   }, [groupId, look, cursor]);
