@@ -278,7 +278,7 @@ const ExpenseRow = memo(function ExpenseRow({ expense, gid, base, me, memberById
               spent. Display only — the stored amount stays positive. */}
           <div className="big">{money(income ? -expense.baseAmountMinor : expense.baseAmountMinor, base)}</div>
           {foreign ? (
-            <div className="sm">{money(expense.amountMinor, expense.currency)}</div>
+            <div className="sm">{money(income ? -expense.amountMinor : expense.amountMinor, expense.currency)}</div>
           ) : null}
           <div className={`sm share ${signClass(myNet)}`}>
             {mine ? money(myNet, base, myNet !== 0) : copy.group.notYours}
@@ -353,6 +353,9 @@ const SettlementRow = memo(function SettlementRow({ settlement, gid, base, me, m
         </div>
         <div className="ramt">
           <div className="big">{money(settlement.baseAmountMinor, base)}</div>
+          {settlement.currency !== base ? (
+            <div className="sm">{money(settlement.amountMinor, settlement.currency)}</div>
+          ) : null}
           <div className={`sm share ${signClass(myNet)}`}>
             {myNet !== 0 ? money(myNet, base, true) : copy.group.notYours}
           </div>

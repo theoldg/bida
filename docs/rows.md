@@ -37,7 +37,9 @@ each would mark nothing: ledger rows are the plain rows of the groups list. What
 green, `−€14,28` red: what you put in for that entry minus what you owe for it
 (`entryEffect` in core, which is `computeBalances` run on that entry alone),
 changing rendering only, never data — and the exception is what the list marks: a row you are
-no part of drops to 58% opacity rather than disappearing. Balances' suggested
+no part of drops to 58% opacity rather than disappearing. An entry of any
+kind kept in another currency gives that amount under the figure, signed as
+the figure is. Balances' suggested
 reimbursements do the same, under rows that do wear the bar: a bar there
 would say "you" about a payment, and they end in the ledger card's chevron.
 
